@@ -1,0 +1,443 @@
+{
+  "atom_type_rules": [
+    {
+      "component_family": "acyclic_alkane",
+      "family": "alkane_carbon_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 0,
+            "path": "formal_charge"
+          },
+          {
+            "equals": "exact",
+            "path": "valence.status"
+          },
+          {
+            "equals": 4,
+            "path": "valence.inferred_valence"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 3
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": "non_aromatic",
+            "path": "aromaticity.status"
+          }
+        ]
+      },
+      "precedence": 100,
+      "rule_id": "atom_alkane_carbon_sp3"
+    },
+    {
+      "component_family": "acyclic_alkane",
+      "family": "hydrogen_on_alkane_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": 0,
+            "path": "formal_charge"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 3
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          },
+          {
+            "equals": 4,
+            "path": "attached_atom.valence.inferred_valence"
+          }
+        ]
+      },
+      "precedence": 110,
+      "rule_id": "atom_hydrogen_on_alkane_sp3"
+    },
+    {
+      "component_family": "acyclic_ether",
+      "family": "ether_alpha_carbon_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 0,
+            "path": "formal_charge"
+          },
+          {
+            "equals": 4,
+            "path": "valence.inferred_valence"
+          },
+          {
+            "equals": {
+              "H": 3,
+              "O": 1
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 100,
+      "rule_id": "atom_ether_alpha_carbon_sp3"
+    },
+    {
+      "component_family": "acyclic_ether",
+      "family": "ether_oxygen_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": 0,
+            "path": "formal_charge"
+          },
+          {
+            "equals": 2,
+            "path": "valence.inferred_valence"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 110,
+      "rule_id": "atom_ether_oxygen_sp3"
+    },
+    {
+      "component_family": "acyclic_ether",
+      "family": "hydrogen_on_ether_alpha_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "H": 3,
+              "O": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          },
+          {
+            "equals": 4,
+            "path": "attached_atom.valence.inferred_valence"
+          }
+        ]
+      },
+      "precedence": 120,
+      "rule_id": "atom_hydrogen_on_ether_alpha_carbon"
+    },
+    {
+      "component_family": "lithium_cation",
+      "family": "lithium_monoatomic_cation",
+      "match": {
+        "conditions": [
+          {
+            "equals": "Li",
+            "path": "element"
+          },
+          {
+            "equals": 1,
+            "path": "formal_charge"
+          },
+          {
+            "equals": 0,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 0,
+            "path": "valence.inferred_valence"
+          }
+        ]
+      },
+      "precedence": 100,
+      "rule_id": "atom_lithium_monoatomic_cation"
+    },
+    {
+      "component_family": "tfsi_like_sulfonimide",
+      "family": "sulfonimide_n_anion",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": -1,
+            "path": "formal_charge"
+          },
+          {
+            "equals": {
+              "S": 2
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 2,
+            "path": "valence.inferred_valence"
+          }
+        ]
+      },
+      "precedence": 100,
+      "rule_id": "atom_sulfonimide_n_anion"
+    },
+    {
+      "component_family": "tfsi_like_sulfonimide",
+      "family": "sulfonyl_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "S",
+            "path": "element"
+          },
+          {
+            "equals": 0,
+            "path": "formal_charge"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "N": 1,
+              "O": 2
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 6,
+            "path": "valence.inferred_valence"
+          }
+        ]
+      },
+      "precedence": 110,
+      "rule_id": "atom_sulfonyl_sulfur"
+    },
+    {
+      "component_family": "tfsi_like_sulfonimide",
+      "family": "sulfonyl_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": 0,
+            "path": "formal_charge"
+          },
+          {
+            "equals": {
+              "S": 1
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 2,
+            "path": "valence.inferred_valence"
+          },
+          {
+            "equals": 2,
+            "path": "attached_bond.order"
+          }
+        ]
+      },
+      "precedence": 120,
+      "rule_id": "atom_sulfonyl_oxygen"
+    },
+    {
+      "component_family": "tfsi_like_sulfonimide",
+      "family": "trifluoromethyl_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": {
+              "F": 3,
+              "S": 1
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 4,
+            "path": "valence.inferred_valence"
+          }
+        ]
+      },
+      "precedence": 130,
+      "rule_id": "atom_trifluoromethyl_carbon"
+    },
+    {
+      "component_family": "tfsi_like_sulfonimide",
+      "family": "fluorine_on_trifluoromethyl",
+      "match": {
+        "conditions": [
+          {
+            "equals": "F",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "F": 3,
+              "S": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 140,
+      "rule_id": "atom_fluorine_on_trifluoromethyl"
+    }
+  ],
+  "component_rules": [
+    {
+      "failure_code": "unsupported_element",
+      "kind": "reject",
+      "precedence": 10,
+      "predicate": {
+        "builtin": "component_has_unsupported_element"
+      },
+      "rule_id": "reject_unsupported_element"
+    },
+    {
+      "failure_code": "unsupported_transition_metal_or_coordination",
+      "kind": "reject",
+      "precedence": 15,
+      "predicate": {
+        "builtin": "component_has_bound_lithium"
+      },
+      "rule_id": "reject_lithium_coordination"
+    },
+    {
+      "failure_code": "unsupported_aromatic_sp2_ring",
+      "kind": "reject",
+      "precedence": 20,
+      "predicate": {
+        "builtin": "component_has_aromatic_ring"
+      },
+      "rule_id": "reject_aromatic_sp2_ring"
+    },
+    {
+      "failure_code": "unsupported_resonance_encoding",
+      "kind": "reject",
+      "precedence": 30,
+      "predicate": {
+        "builtin": "component_has_indeterminate_ring_aromaticity"
+      },
+      "rule_id": "reject_indeterminate_ring_aromaticity"
+    },
+    {
+      "failure_code": "unsupported_carbonyl_chemistry",
+      "kind": "reject",
+      "precedence": 40,
+      "predicate": {
+        "builtin": "component_has_carbonyl_bond"
+      },
+      "rule_id": "reject_carbonyl_chemistry"
+    },
+    {
+      "family": "lithium_cation",
+      "kind": "support",
+      "precedence": 100,
+      "predicate": {
+        "builtin": "component_is_lithium_cation"
+      },
+      "rule_id": "classify_lithium_cation"
+    },
+    {
+      "family": "tfsi_like_sulfonimide",
+      "kind": "support",
+      "precedence": 110,
+      "predicate": {
+        "builtin": "component_is_tfsi_like_sulfonimide"
+      },
+      "rule_id": "classify_tfsi_like_sulfonimide"
+    },
+    {
+      "family": "acyclic_ether",
+      "kind": "support",
+      "precedence": 120,
+      "predicate": {
+        "builtin": "component_is_acyclic_ether"
+      },
+      "rule_id": "classify_acyclic_ether"
+    },
+    {
+      "family": "acyclic_alkane",
+      "kind": "support",
+      "precedence": 130,
+      "predicate": {
+        "builtin": "component_is_acyclic_alkane"
+      },
+      "rule_id": "classify_acyclic_alkane"
+    },
+    {
+      "failure_code": "unsupported_component_family",
+      "kind": "reject",
+      "precedence": 999,
+      "predicate": {
+        "builtin": "always_true"
+      },
+      "rule_id": "reject_unsupported_component_family"
+    }
+  ],
+  "description": "Deterministic PT3 PCFF atom type-family rules for the frozen PT0 golden corpus and supported chemistry subset.",
+  "ruleset_id": "pcff_atom_types_pt3_v1",
+  "schema_name": "pcff_atom_type_rules",
+  "schema_version": 1,
+  "supported_elements": [
+    "H",
+    "C",
+    "O",
+    "Li",
+    "N",
+    "S",
+    "F"
+  ]
+}
