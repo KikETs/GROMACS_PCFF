@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "case_id": "benzene_aromatic_unsupported",
+  "status": "unsupported",
+  "failure_code": "unsupported_aromatic_sp2_ring",
+  "diagnostic_substrings": [
+    "aromatic",
+    "sp2 ring",
+    "PT0"
+  ]
+}

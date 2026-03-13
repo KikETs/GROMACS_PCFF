@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "tfsi_anion_explicit",
+  "display_name": "TFSI anion explicit",
+  "status": "supported",
+  "description": "Explicit bond-order and formal-charge encoding of a TFSI-like sulfonimide anion.",
+  "input": {
+    "format": "mol_v2000",
+    "path": "inputs/structure.mol",
+    "explicit_hydrogens_required": false
+  },
+  "chemistry": {
+    "tags": [
+      "anion",
+      "tfsi_like",
+      "sulfonimide",
+      "fluorinated",
+      "supported_pt0"
+    ],
+    "atom_count": 15,
+    "bond_count": 14,
+    "formal_charge_total": -1,
+    "element_counts": {
+      "C": 2,
+      "F": 6,
+      "N": 1,
+      "O": 4,
+      "S": 2
+    },
+    "bond_order_histogram": {
+      "1": 10,
+      "2": 4
+    }
+  },
+  "expected": {
+    "path": "expected/outcome.json"
+  },
+  "notes": [
+    "PT0 supports only this explicit TFSI-style encoding, not arbitrary resonance-normalized alternatives."
+  ]
+}

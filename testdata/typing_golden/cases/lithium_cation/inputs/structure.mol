@@ -1,0 +1,7 @@
+lithium_cation
+Codex PT0
+
+  1  0  0  0  0  0            999 V2000
+    0.0000    0.0000    0.0000 Li  0  0  0  0  0  0  0  0  0  0  0  0
+M  CHG  1   1   1
+M  END

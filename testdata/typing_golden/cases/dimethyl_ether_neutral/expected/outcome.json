@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "case_id": "dimethyl_ether_neutral",
+  "status": "supported",
+  "atom_type_family_expectations": [
+    {
+      "atom_index": 1,
+      "element": "C",
+      "family": "ether_alpha_carbon_sp3"
+    },
+    {
+      "atom_index": 2,
+      "element": "O",
+      "family": "ether_oxygen_sp3"
+    },
+    {
+      "atom_index": 3,
+      "element": "C",
+      "family": "ether_alpha_carbon_sp3"
+    },
+    {
+      "atom_index": 4,
+      "element": "H",
+      "family": "hydrogen_on_ether_alpha_carbon"
+    },
+    {
+      "atom_index": 5,
+      "element": "H",
+      "family": "hydrogen_on_ether_alpha_carbon"
+    },
+    {
+      "atom_index": 6,
+      "element": "H",
+      "family": "hydrogen_on_ether_alpha_carbon"
+    },
+    {
+      "atom_index": 7,
+      "element": "H",
+      "family": "hydrogen_on_ether_alpha_carbon"
+    },
+    {
+      "atom_index": 8,
+      "element": "H",
+      "family": "hydrogen_on_ether_alpha_carbon"
+    },
+    {
+      "atom_index": 9,
+      "element": "H",
+      "family": "hydrogen_on_ether_alpha_carbon"
+    }
+  ],
+  "expected_diagnostics": []
+}

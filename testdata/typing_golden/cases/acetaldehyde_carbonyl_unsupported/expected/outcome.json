@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "case_id": "acetaldehyde_carbonyl_unsupported",
+  "status": "unsupported",
+  "failure_code": "unsupported_carbonyl_chemistry",
+  "diagnostic_substrings": [
+    "carbonyl",
+    "unsupported",
+    "PT0"
+  ]
+}

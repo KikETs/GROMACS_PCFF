@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "acetaldehyde_carbonyl_unsupported",
+  "display_name": "acetaldehyde carbonyl unsupported",
+  "status": "unsupported",
+  "description": "Simple aldehyde negative case for explicit PT0 carbonyl rejection.",
+  "input": {
+    "format": "mol_v2000",
+    "path": "inputs/structure.mol",
+    "explicit_hydrogens_required": true
+  },
+  "chemistry": {
+    "tags": [
+      "carbonyl",
+      "aldehyde",
+      "unsupported_pt0"
+    ],
+    "atom_count": 7,
+    "bond_count": 6,
+    "formal_charge_total": 0,
+    "element_counts": {
+      "C": 2,
+      "H": 4,
+      "O": 1
+    },
+    "bond_order_histogram": {
+      "1": 5,
+      "2": 1
+    }
+  },
+  "expected": {
+    "path": "expected/outcome.json"
+  },
+  "notes": [
+    "Carbonyl chemistry is deliberately deferred in PT0 even though it is relevant to solvent classes."
+  ]
+}

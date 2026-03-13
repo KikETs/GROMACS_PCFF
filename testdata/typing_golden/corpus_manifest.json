@@ -1,0 +1,195 @@
+{
+  "cases": [
+    {
+      "atom_count": 7,
+      "bond_count": 6,
+      "bond_order_histogram": {
+        "1": 5,
+        "2": 1
+      },
+      "case_sha256": "2c17463a2f271e4f9f543643fcbd57ca6ec85a154fe33953e7a2685eac4ac69c",
+      "chemistry_tags": [
+        "carbonyl",
+        "aldehyde",
+        "unsupported_pt0"
+      ],
+      "description": "Simple aldehyde negative case for explicit PT0 carbonyl rejection.",
+      "display_name": "acetaldehyde carbonyl unsupported",
+      "element_counts": {
+        "C": 2,
+        "H": 4,
+        "O": 1
+      },
+      "expected_failure_code": "unsupported_carbonyl_chemistry",
+      "expected_sha256": "c8332c2548013ab8a7be9f6033909ac4908c30e4bed28210ea4c2c4b67f1795f",
+      "formal_charge_total": 0,
+      "id": "acetaldehyde_carbonyl_unsupported",
+      "input_format": "mol_v2000",
+      "input_sha256": "ada240148182ba74f3ea1811c4fdeb0d91952adb4aa9427b5bbb1f117feafc39",
+      "path": "cases/acetaldehyde_carbonyl_unsupported",
+      "status": "unsupported"
+    },
+    {
+      "atom_count": 12,
+      "bond_count": 12,
+      "bond_order_histogram": {
+        "1": 9,
+        "2": 3
+      },
+      "case_sha256": "4cb2a73618e689c1aa248f446e93fd3924eec126edb8cd153da753a640acbb08",
+      "chemistry_tags": [
+        "aromatic_like",
+        "ring",
+        "sp2",
+        "unsupported_pt0"
+      ],
+      "description": "Alternating-bond aromatic ring negative case for explicit PT0 aromatic rejection.",
+      "display_name": "benzene aromatic unsupported",
+      "element_counts": {
+        "C": 6,
+        "H": 6
+      },
+      "expected_failure_code": "unsupported_aromatic_sp2_ring",
+      "expected_sha256": "1678ac26933534d1bac15a2f6c90cf1bc2e1466d411ac27e89a34e51f68af69f",
+      "formal_charge_total": 0,
+      "id": "benzene_aromatic_unsupported",
+      "input_format": "mol_v2000",
+      "input_sha256": "52d42c8e3e5dc24f66e8fa29d84b7c77e477097447ebd01cead91a3fe2541c67",
+      "path": "cases/benzene_aromatic_unsupported",
+      "status": "unsupported"
+    },
+    {
+      "atom_count": 9,
+      "bond_count": 8,
+      "bond_order_histogram": {
+        "1": 8
+      },
+      "case_sha256": "8c14c07dd7aa139ee9cf7ea022376d9700a2583dfa295e4afbd4c6458b8b500b",
+      "chemistry_tags": [
+        "acyclic",
+        "ether",
+        "polyether_local_environment",
+        "supported_pt0"
+      ],
+      "description": "Explicit-hydrogen acyclic ether fragment covering the minimal PT0 polyether environment.",
+      "display_name": "dimethyl ether neutral",
+      "element_counts": {
+        "C": 2,
+        "H": 6,
+        "O": 1
+      },
+      "expected_failure_code": null,
+      "expected_sha256": "9d927cffa5421b187d2d59c16c4a480dc441580f0d1583e29360a570a4e6dadc",
+      "formal_charge_total": 0,
+      "id": "dimethyl_ether_neutral",
+      "input_format": "mol_v2000",
+      "input_sha256": "fd15707bd90b8438d6d68f600e5c33f698bc918f09638519029f871806ea6a2e",
+      "path": "cases/dimethyl_ether_neutral",
+      "status": "supported"
+    },
+    {
+      "atom_count": 8,
+      "bond_count": 7,
+      "bond_order_histogram": {
+        "1": 7
+      },
+      "case_sha256": "adbd84340a884497cdd437ea6020ea42835653a5a4a66ff3c3a748a0ae24f3ab",
+      "chemistry_tags": [
+        "acyclic",
+        "alkane",
+        "sp3_carbon",
+        "supported_pt0"
+      ],
+      "description": "Explicit-hydrogen acyclic alkane baseline for PT0 sp3 carbon and hydrogen coverage.",
+      "display_name": "ethane neutral",
+      "element_counts": {
+        "C": 2,
+        "H": 6
+      },
+      "expected_failure_code": null,
+      "expected_sha256": "89e4c3f1d4efbc207762da462e50e45b628c4f314a0d8e4e62199a3a846e698a",
+      "formal_charge_total": 0,
+      "id": "ethane_neutral",
+      "input_format": "mol_v2000",
+      "input_sha256": "c4208841072dec473a699ee884d82be4fd51494d0034d47523f218a5e4ca2040",
+      "path": "cases/ethane_neutral",
+      "status": "supported"
+    },
+    {
+      "atom_count": 1,
+      "bond_count": 0,
+      "bond_order_histogram": {},
+      "case_sha256": "5ba47e0e65c673be8100b10a56189a8106e65d250ade8f6630dc2fb1067b986a",
+      "chemistry_tags": [
+        "monatomic_ion",
+        "lithium",
+        "supported_pt0"
+      ],
+      "description": "Monatomic lithium cation baseline with explicit formal charge.",
+      "display_name": "lithium cation",
+      "element_counts": {
+        "Li": 1
+      },
+      "expected_failure_code": null,
+      "expected_sha256": "cab34b132f04012897a25086f7a6f4d32f35fd3a0be8387bffa50bb52f47282e",
+      "formal_charge_total": 1,
+      "id": "lithium_cation",
+      "input_format": "mol_v2000",
+      "input_sha256": "f5b50b612f66dabbb152b11cb13dacc4851323d913a51a17abeb9521d3ae4ad3",
+      "path": "cases/lithium_cation",
+      "status": "supported"
+    },
+    {
+      "atom_count": 15,
+      "bond_count": 14,
+      "bond_order_histogram": {
+        "1": 10,
+        "2": 4
+      },
+      "case_sha256": "f3a178e8b3d7e019671dc1f59ec788f1396be98a0087f612aa3143b7658378c1",
+      "chemistry_tags": [
+        "anion",
+        "tfsi_like",
+        "sulfonimide",
+        "fluorinated",
+        "supported_pt0"
+      ],
+      "description": "Explicit bond-order and formal-charge encoding of a TFSI-like sulfonimide anion.",
+      "display_name": "TFSI anion explicit",
+      "element_counts": {
+        "C": 2,
+        "F": 6,
+        "N": 1,
+        "O": 4,
+        "S": 2
+      },
+      "expected_failure_code": null,
+      "expected_sha256": "6b830b873405c89ad73c1be62ad46111cbe0ab10f20a04a754585a122b0ed98f",
+      "formal_charge_total": -1,
+      "id": "tfsi_anion_explicit",
+      "input_format": "mol_v2000",
+      "input_sha256": "8eb32820f383429ce94a1b97611a13b4ee9d2baf32a2e783722327e0b6dbfb21",
+      "path": "cases/tfsi_anion_explicit",
+      "status": "supported"
+    }
+  ],
+  "corpus_version": "pt0-v1",
+  "milestone": "PT0",
+  "planned_output_formats": [
+    "typed_system_json_v1",
+    "typing_diagnostics_json_v1"
+  ],
+  "schema_version": 1,
+  "structure": {
+    "case_metadata": "cases/<id>/case.json",
+    "expected_outcome": "cases/<id>/expected/outcome.json",
+    "input_structure": "cases/<id>/inputs/structure.mol"
+  },
+  "supported_input_formats": [
+    "mol_v2000"
+  ],
+  "unsupported_failure_codes": [
+    "unsupported_aromatic_sp2_ring",
+    "unsupported_carbonyl_chemistry"
+  ]
+}

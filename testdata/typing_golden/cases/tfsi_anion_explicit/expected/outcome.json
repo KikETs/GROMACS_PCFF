@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "case_id": "tfsi_anion_explicit",
+  "status": "supported",
+  "atom_type_family_expectations": [
+    {
+      "atom_index": 1,
+      "element": "N",
+      "family": "sulfonimide_n_anion"
+    },
+    {
+      "atom_index": 2,
+      "element": "S",
+      "family": "sulfonyl_sulfur"
+    },
+    {
+      "atom_index": 3,
+      "element": "O",
+      "family": "sulfonyl_oxygen"
+    },
+    {
+      "atom_index": 4,
+      "element": "O",
+      "family": "sulfonyl_oxygen"
+    },
+    {
+      "atom_index": 5,
+      "element": "C",
+      "family": "trifluoromethyl_carbon"
+    },
+    {
+      "atom_index": 6,
+      "element": "F",
+      "family": "fluorine_on_trifluoromethyl"
+    },
+    {
+      "atom_index": 7,
+      "element": "F",
+      "family": "fluorine_on_trifluoromethyl"
+    },
+    {
+      "atom_index": 8,
+      "element": "F",
+      "family": "fluorine_on_trifluoromethyl"
+    },
+    {
+      "atom_index": 9,
+      "element": "S",
+      "family": "sulfonyl_sulfur"
+    },
+    {
+      "atom_index": 10,
+      "element": "O",
+      "family": "sulfonyl_oxygen"
+    },
+    {
+      "atom_index": 11,
+      "element": "O",
+      "family": "sulfonyl_oxygen"
+    },
+    {
+      "atom_index": 12,
+      "element": "C",
+      "family": "trifluoromethyl_carbon"
+    },
+    {
+      "atom_index": 13,
+      "element": "F",
+      "family": "fluorine_on_trifluoromethyl"
+    },
+    {
+      "atom_index": 14,
+      "element": "F",
+      "family": "fluorine_on_trifluoromethyl"
+    },
+    {
+      "atom_index": 15,
+      "element": "F",
+      "family": "fluorine_on_trifluoromethyl"
+    }
+  ],
+  "expected_diagnostics": []
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "case_id": "lithium_cation",
+  "status": "supported",
+  "atom_type_family_expectations": [
+    {
+      "atom_index": 1,
+      "element": "Li",
+      "family": "lithium_monoatomic_cation"
+    }
+  ],
+  "expected_diagnostics": []
+}

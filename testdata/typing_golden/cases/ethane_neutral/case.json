@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "ethane_neutral",
+  "display_name": "ethane neutral",
+  "status": "supported",
+  "description": "Explicit-hydrogen acyclic alkane baseline for PT0 sp3 carbon and hydrogen coverage.",
+  "input": {
+    "format": "mol_v2000",
+    "path": "inputs/structure.mol",
+    "explicit_hydrogens_required": true
+  },
+  "chemistry": {
+    "tags": [
+      "acyclic",
+      "alkane",
+      "sp3_carbon",
+      "supported_pt0"
+    ],
+    "atom_count": 8,
+    "bond_count": 7,
+    "formal_charge_total": 0,
+    "element_counts": {
+      "C": 2,
+      "H": 6
+    },
+    "bond_order_histogram": {
+      "1": 7
+    }
+  },
+  "expected": {
+    "path": "expected/outcome.json"
+  },
+  "notes": [
+    "This case should type without any resonance, ring, or charge ambiguity.",
+    "It freezes the minimum positive organic baseline."
+  ]
+}

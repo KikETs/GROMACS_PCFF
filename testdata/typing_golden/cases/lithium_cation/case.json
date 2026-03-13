@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "lithium_cation",
+  "display_name": "lithium cation",
+  "status": "supported",
+  "description": "Monatomic lithium cation baseline with explicit formal charge.",
+  "input": {
+    "format": "mol_v2000",
+    "path": "inputs/structure.mol",
+    "explicit_hydrogens_required": false
+  },
+  "chemistry": {
+    "tags": [
+      "monatomic_ion",
+      "lithium",
+      "supported_pt0"
+    ],
+    "atom_count": 1,
+    "bond_count": 0,
+    "formal_charge_total": 1,
+    "element_counts": {
+      "Li": 1
+    },
+    "bond_order_histogram": {}
+  },
+  "expected": {
+    "path": "expected/outcome.json"
+  },
+  "notes": [
+    "This case freezes the PT0 cation baseline independently from any coordination environment."
+  ]
+}

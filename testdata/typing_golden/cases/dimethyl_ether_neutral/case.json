@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "dimethyl_ether_neutral",
+  "display_name": "dimethyl ether neutral",
+  "status": "supported",
+  "description": "Explicit-hydrogen acyclic ether fragment covering the minimal PT0 polyether environment.",
+  "input": {
+    "format": "mol_v2000",
+    "path": "inputs/structure.mol",
+    "explicit_hydrogens_required": true
+  },
+  "chemistry": {
+    "tags": [
+      "acyclic",
+      "ether",
+      "polyether_local_environment",
+      "supported_pt0"
+    ],
+    "atom_count": 9,
+    "bond_count": 8,
+    "formal_charge_total": 0,
+    "element_counts": {
+      "C": 2,
+      "H": 6,
+      "O": 1
+    },
+    "bond_order_histogram": {
+      "1": 8
+    }
+  },
+  "expected": {
+    "path": "expected/outcome.json"
+  },
+  "notes": [
+    "This case freezes the supported C-O-C ether core used by PEO-like chains."
+  ]
+}

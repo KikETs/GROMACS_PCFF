@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "case_id": "ethane_neutral",
+  "status": "supported",
+  "atom_type_family_expectations": [
+    {
+      "atom_index": 1,
+      "element": "C",
+      "family": "alkane_carbon_sp3"
+    },
+    {
+      "atom_index": 2,
+      "element": "C",
+      "family": "alkane_carbon_sp3"
+    },
+    {
+      "atom_index": 3,
+      "element": "H",
+      "family": "hydrogen_on_alkane_sp3"
+    },
+    {
+      "atom_index": 4,
+      "element": "H",
+      "family": "hydrogen_on_alkane_sp3"
+    },
+    {
+      "atom_index": 5,
+      "element": "H",
+      "family": "hydrogen_on_alkane_sp3"
+    },
+    {
+      "atom_index": 6,
+      "element": "H",
+      "family": "hydrogen_on_alkane_sp3"
+    },
+    {
+      "atom_index": 7,
+      "element": "H",
+      "family": "hydrogen_on_alkane_sp3"
+    },
+    {
+      "atom_index": 8,
+      "element": "H",
+      "family": "hydrogen_on_alkane_sp3"
+    }
+  ],
+  "expected_diagnostics": []
+}

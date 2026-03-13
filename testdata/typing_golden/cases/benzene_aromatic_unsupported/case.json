@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "benzene_aromatic_unsupported",
+  "display_name": "benzene aromatic unsupported",
+  "status": "unsupported",
+  "description": "Alternating-bond aromatic ring negative case for explicit PT0 aromatic rejection.",
+  "input": {
+    "format": "mol_v2000",
+    "path": "inputs/structure.mol",
+    "explicit_hydrogens_required": true
+  },
+  "chemistry": {
+    "tags": [
+      "aromatic_like",
+      "ring",
+      "sp2",
+      "unsupported_pt0"
+    ],
+    "atom_count": 12,
+    "bond_count": 12,
+    "formal_charge_total": 0,
+    "element_counts": {
+      "C": 6,
+      "H": 6
+    },
+    "bond_order_histogram": {
+      "1": 9,
+      "2": 3
+    }
+  },
+  "expected": {
+    "path": "expected/outcome.json"
+  },
+  "notes": [
+    "PT0 does not support aromatic or generic sp2 ring typing."
+  ]
+}
