@@ -1,0 +1,547 @@
+{
+  "lammps_root": "/home/user/\ubc14\ud0d5\ud654\uba74/DL/LAMMPS_NEW",
+  "local_gromacs_root": "/home/user/\ubc14\ud0d5\ud654\uba74/DL/gromacs",
+  "method_readiness": {
+    "artifact_registry_status_counts": {
+      "derived_metrics_without_raw_artifacts": 2
+    },
+    "blocking_gaps": [
+      "no paired system currently passes the GROMACS PCFF provenance gate",
+      "screening cohort is prepared with ACPYPE/GAFF2 rather than PCFF",
+      "paired density provenance is unresolved",
+      "paired chain-size observables are unavailable on the GROMACS side",
+      "paired raw production artifacts are missing while run_results.csv still reports completed analysis",
+      "polymer diffusivity parity is unavailable",
+      "strict parity coverage is limited to two representative systems"
+    ],
+    "overall_status": "pcff_provenance_blocked",
+    "pcff_provenance_gate_status_counts": {
+      "acpype_gaff2_atomtyping_failed": 1,
+      "acpype_gaff2_topology": 1
+    },
+    "recommended_use": [
+      "use the current M10 artifacts only for provenance debugging and workflow scaffolding",
+      "do not interpret the current screening cohort as a PCFF-vs-LAMMPS validation set",
+      "rebuild M10 on GROMACS systems prepared with actual PCFF parameters before making any transport claim"
+    ],
+    "screening_usefulness_readiness": {
+      "basis": [
+        "screening cohort comes from a GROMACS ACPYPE/GAFF2 preparation pipeline rather than PCFF class2",
+        "conductivity screening rho=0.17609659327683028",
+        "Li diffusivity screening rho=0.27920008841355376",
+        "anion diffusivity screening rho=0.4627668042952399",
+        "density subset rho=0.7185757571479553"
+      ],
+      "status": "not_pcff_qualified"
+    },
+    "strict_parity_readiness": {
+      "basis": [
+        "PCFF-qualified paired systems available: 0",
+        "density strict parity is unavailable because production-density provenance is unresolved",
+        "chain-size parity is unavailable because matched GROMACS Rg artifacts were not found",
+        "paired raw-production provenance is incomplete even where derived GROMACS sampled metrics exist"
+      ],
+      "status": "blocked_by_provenance"
+    }
+  },
+  "milestone": "M10",
+  "provenance_diagnostics": {
+    "paired_artifact_registry_audit": {
+      "n_systems": 2,
+      "status_counts": {
+        "derived_metrics_without_raw_artifacts": 2
+      }
+    },
+    "paired_chain_size_artifacts": {
+      "n_systems": 2,
+      "status_counts": {
+        "unavailable": 2
+      }
+    },
+    "paired_density_provenance": {
+      "n_systems": 2,
+      "status_counts": {
+        "inconsistent": 1,
+        "unavailable": 1
+      }
+    },
+    "paired_topology_recovery": {
+      "n_missing_topologies": 1,
+      "n_systems": 2,
+      "recoverable_with_donor_topology": [
+        "27670"
+      ]
+    },
+    "pcff_paired_provenance_gate": {
+      "eligible_for_pcff_strict_parity": [],
+      "n_systems": 2,
+      "status_counts": {
+        "acpype_gaff2_atomtyping_failed": 1,
+        "acpype_gaff2_topology": 1
+      }
+    }
+  },
+  "reference_aggregate": "/home/user/\ubc14\ud0d5\ud654\uba74/DL/gromacs/simulation-trajectory-aggregate.csv",
+  "results_root": "/home/user/\ubc14\ud0d5\ud654\uba74/DL/gromacs/eval_top10_bottom10_stratified100/results",
+  "screening_usefulness": {
+    "completion": {
+      "n_completed": 107,
+      "n_failed": 13,
+      "n_total": 120,
+      "per_group_completed": {
+        "bottom": 9,
+        "middle_stratified": 88,
+        "top": 10
+      }
+    },
+    "limitations": [
+      "screening outputs are not PCFF-qualified because the local GROMACS preparation pipeline uses ACPYPE/GAFF2",
+      "conductivity usefulness mixes cNE and NE-derived GROMACS conductivity outputs depending on artifact availability",
+      "density usefulness is based on the local final_summary subset only",
+      "screening transference uses tplus_NE because cNE transference outputs are frequently unphysical"
+    ],
+    "metrics": {
+      "anion_diffusivity": {
+        "bottom10_overlap": {
+          "k": 10,
+          "overlap_count": 2,
+          "overlap_fraction": 0.2,
+          "predicted_only": [
+            "13578",
+            "14072",
+            "26854",
+            "27337",
+            "27443",
+            "29412",
+            "9465",
+            "9511"
+          ],
+          "reference_only": [
+            "26491",
+            "26636",
+            "27053",
+            "27601",
+            "27607",
+            "27650",
+            "27655",
+            "29300"
+          ],
+          "shared": [
+            "27622",
+            "27659"
+          ]
+        },
+        "max_abs_log10_error": 1.556150783655698,
+        "mean_abs_log10_error": 0.3676674608385791,
+        "median_abs_log10_error": 0.25763584902011794,
+        "n_compared": 107,
+        "spearman_rank_correlation": 0.4627668042952399,
+        "top10_overlap": {
+          "k": 10,
+          "overlap_count": 4,
+          "overlap_fraction": 0.4,
+          "predicted_only": [
+            "13414",
+            "14750",
+            "24419",
+            "26863",
+            "27340",
+            "29471"
+          ],
+          "reference_only": [
+            "14754",
+            "14764",
+            "14768",
+            "27670",
+            "27710",
+            "27723"
+          ],
+          "shared": [
+            "14748",
+            "14769",
+            "27624",
+            "27628"
+          ]
+        }
+      },
+      "conductivity": {
+        "bottom10_overlap": {
+          "k": 10,
+          "overlap_count": 2,
+          "overlap_fraction": 0.2,
+          "predicted_only": [
+            "13352",
+            "13578",
+            "14224",
+            "14268",
+            "14373",
+            "26636",
+            "28930",
+            "9511"
+          ],
+          "reference_only": [
+            "25052",
+            "26640",
+            "26854",
+            "27053",
+            "27622",
+            "27650",
+            "27655",
+            "27659"
+          ],
+          "shared": [
+            "27601",
+            "27607"
+          ]
+        },
+        "max_abs_log10_error": 5.6237186951060325,
+        "mean_abs_log10_error": 1.2896120525950778,
+        "median_abs_log10_error": 0.7770120369212411,
+        "n_compared": 107,
+        "prediction_source_counts": {
+          "NE_fallback": 58,
+          "cNE": 49
+        },
+        "spearman_rank_correlation": 0.17609659327683028,
+        "top10_overlap": {
+          "k": 10,
+          "overlap_count": 0,
+          "overlap_fraction": 0.0,
+          "predicted_only": [
+            "13773",
+            "13978",
+            "14056",
+            "14307",
+            "24419",
+            "26863",
+            "27340",
+            "29471",
+            "29600",
+            "9536"
+          ],
+          "reference_only": [
+            "14748",
+            "14754",
+            "14760",
+            "14764",
+            "14768",
+            "14769",
+            "27624",
+            "27628",
+            "27670",
+            "27710"
+          ],
+          "shared": []
+        }
+      },
+      "density": {
+        "availability_scope": "local final_summary subset only",
+        "max_abs_error": 0.14721540080844941,
+        "mean_abs_error": 0.026119872952206913,
+        "median_abs_error": 0.0008702974220433646,
+        "n_compared": 8,
+        "spearman_rank_correlation": 0.7185757571479553,
+        "top3_overlap": {
+          "k": 3,
+          "overlap_count": 3,
+          "overlap_fraction": 1.0,
+          "predicted_only": [],
+          "reference_only": [],
+          "shared": [
+            "27622",
+            "27650",
+            "9425"
+          ]
+        }
+      },
+      "li_diffusivity": {
+        "bottom10_overlap": {
+          "k": 10,
+          "overlap_count": 1,
+          "overlap_fraction": 0.1,
+          "predicted_only": [
+            "13578",
+            "14009",
+            "14072",
+            "24008",
+            "24426",
+            "26854",
+            "27217",
+            "29099",
+            "9511"
+          ],
+          "reference_only": [
+            "13857",
+            "25052",
+            "27053",
+            "27141",
+            "27607",
+            "27650",
+            "27655",
+            "27659",
+            "9612"
+          ],
+          "shared": [
+            "27622"
+          ]
+        },
+        "max_abs_log10_error": 1.6543850311460446,
+        "mean_abs_log10_error": 0.5506815113020456,
+        "median_abs_log10_error": 0.4648854951579768,
+        "n_compared": 107,
+        "spearman_rank_correlation": 0.27920008841355376,
+        "top10_overlap": {
+          "k": 10,
+          "overlap_count": 2,
+          "overlap_fraction": 0.2,
+          "predicted_only": [
+            "13414",
+            "14750",
+            "24419",
+            "26863",
+            "27141",
+            "27340",
+            "28736",
+            "29471"
+          ],
+          "reference_only": [
+            "14754",
+            "14764",
+            "14768",
+            "14769",
+            "27628",
+            "27670",
+            "27710",
+            "27723"
+          ],
+          "shared": [
+            "14748",
+            "27624"
+          ]
+        }
+      },
+      "transference_number": {
+        "bottom10_overlap": {
+          "k": 10,
+          "overlap_count": 0,
+          "overlap_fraction": 0.0,
+          "predicted_only": [
+            "14072",
+            "14672",
+            "14760",
+            "14764",
+            "14769",
+            "24008",
+            "24453",
+            "27622",
+            "27624",
+            "27628"
+          ],
+          "reference_only": [
+            "13414",
+            "14954",
+            "24419",
+            "25052",
+            "26556",
+            "26854",
+            "27053",
+            "27929",
+            "28620",
+            "29121"
+          ],
+          "shared": []
+        },
+        "max_abs_error": 2.1357110061103883,
+        "mean_abs_error": 0.47456686421469485,
+        "median_abs_error": 0.42068889190993863,
+        "n_compared": 107,
+        "spearman_rank_correlation": -0.18137466205135114,
+        "top10_overlap": {
+          "k": 10,
+          "overlap_count": 0,
+          "overlap_fraction": 0.0,
+          "predicted_only": [
+            "13857",
+            "14318",
+            "24372",
+            "26556",
+            "26662",
+            "27053",
+            "27443",
+            "27817",
+            "29412",
+            "9826"
+          ],
+          "reference_only": [
+            "14006",
+            "14764",
+            "14768",
+            "24426",
+            "24521",
+            "26636",
+            "27601",
+            "27655",
+            "28980",
+            "29300"
+          ],
+          "shared": []
+        }
+      }
+    },
+    "provenance_status": {
+      "gromacs_pipeline_preparation": "ACPYPE/GAFF2 with Li amber99sb-ildn fallback",
+      "pcff_qualified_for_current_m10_claim": false,
+      "reason": "the screening pipeline prepares GROMACS systems with ACPYPE/GAFF2 rather than PCFF class2 parameters"
+    },
+    "status": "not_pcff_qualified",
+    "strict_vs_screening_separation": {
+      "screening_usefulness_basis": "cohort-level ranking and error analysis on completed GROMACS screening runs",
+      "strict_parity_basis": "paired-system direct comparisons on representative systems"
+    }
+  },
+  "strict_parity": {
+    "aggregates": {
+      "coordination": {
+        "mean_abs_delta_frac_li_ge2": null,
+        "mean_abs_delta_mean_n_per_li": null,
+        "mean_abs_delta_mean_nn_nm": null
+      },
+      "li_oxygen_contacts": {
+        "mean_abs_delta_li_polyO_contacts": null,
+        "mean_abs_delta_li_tfsiO_contacts": null
+      },
+      "population_matrix": {
+        "max_bin_abs_diff_10x10": null,
+        "mean_total_abs_diff_10x10": null
+      },
+      "rdf_curve": {
+        "max_rmse": null,
+        "mean_peak_g_abs_delta": null,
+        "mean_peak_r_abs_delta_nm": null,
+        "mean_rmse": null,
+        "n_compared": 0
+      },
+      "transport": {
+        "anion_diffusivity": {
+          "max_abs_log10_error": null,
+          "mean_abs_log10_error": null,
+          "median_abs_log10_error": null,
+          "n_compared": 0
+        },
+        "conductivity": {
+          "max_abs_log10_error": null,
+          "mean_abs_log10_error": null,
+          "median_abs_log10_error": null,
+          "n_compared": 0
+        },
+        "li_diffusivity": {
+          "max_abs_log10_error": null,
+          "mean_abs_log10_error": null,
+          "median_abs_log10_error": null,
+          "n_compared": 0
+        },
+        "tplus_ne": {
+          "max_abs_error": null,
+          "mean_abs_error": null,
+          "median_abs_error": null,
+          "n_compared": 0
+        }
+      }
+    },
+    "candidate_paired_system_ids": [
+      "14748",
+      "27670"
+    ],
+    "missing_strict_metrics": [
+      {
+        "metric": "pcff_provenance_gate",
+        "reason": "no paired system passed the GROMACS PCFF provenance gate",
+        "status": "blocked"
+      },
+      {
+        "metric": "density",
+        "reason": "paired-system density provenance is unresolved because sampled structural CSV counts do not match the full GROMACS topol.top molecule counts",
+        "status": "unavailable"
+      },
+      {
+        "metric": "chain_size_observables",
+        "reason": "LAMMPS radgyr.txt exists for paired systems but no matched GROMACS production Rg artifact was found",
+        "status": "unavailable"
+      },
+      {
+        "metric": "polymer_diffusivity",
+        "reason": "no matched paired-system GROMACS-vs-LAMMPS polymer diffusivity artifact was found",
+        "status": "unavailable"
+      }
+    ],
+    "n_paired_systems": 0,
+    "paired_system_ids": [],
+    "rejected_candidate_systems": [
+      {
+        "gromacs_preparation": "acpype_gaff2_topology",
+        "lammps_reference": "pcff_class2",
+        "reason": "GROMACS paired topology was generated with ACPYPE/GAFF2, not PCFF",
+        "trajectory_id": "14748"
+      },
+      {
+        "gromacs_preparation": "acpype_gaff2_atomtyping_failed",
+        "lammps_reference": "pcff_class2",
+        "reason": "GROMACS paired topology is missing and the preserved typing attempt is ACPYPE/GAFF2",
+        "trajectory_id": "27670"
+      }
+    ],
+    "status": "blocked_by_pcff_provenance",
+    "strict_metric_scope": [
+      "rdf_li_n_curve",
+      "coordination_li_n",
+      "li_tfsiO_vs_li_polyO_contacts",
+      "population_matrix_bins",
+      "conductivity",
+      "li_diffusivity",
+      "anion_diffusivity",
+      "transference_number"
+    ]
+  },
+  "transport_mismatch_diagnostics": {
+    "conductivity_error_modes": {
+      "sigma_NE_mean_abs_log10_error": 0.33427152925090114,
+      "sigma_cNE_mean_abs_log10_error": 1.4114328575513861
+    },
+    "heuristic_driver_order": [
+      "electrostatics_relative_delta_score",
+      "lj_relative_delta_score",
+      "volume_ratio_delta_score"
+    ],
+    "heuristic_driver_scores": {
+      "electrostatics_relative_delta_score": 1.1545367439934284,
+      "lj_relative_delta_score": 0.3314639962332441,
+      "volume_ratio_delta_score": 0.27411432246365164
+    },
+    "ion_lj_deltas": {
+      "mean_abs_delta_li_epsilon_kj": 1.4828097999999998,
+      "mean_abs_delta_li_sigma_nm": 0.039089999999999986,
+      "mean_abs_delta_n_sigma_nm": 0.05058299999999999,
+      "mean_abs_delta_o_sigma_nm": 0.049507999999999996
+    },
+    "n_paired_systems": 2,
+    "pair_parameter_deltas": {
+      "mean_abs_delta_li_n_qprod": 0.4558687,
+      "mean_abs_delta_li_o_qprod": 0.05303269999999996,
+      "mean_abs_delta_li_o_sigma_nm": 0.06246813417751207
+    },
+    "population_bin_agreement": {
+      "top_bin_match_count": 2,
+      "top_bin_match_fraction": 1.0
+    },
+    "site_charge_deltas": {
+      "mean_abs_delta_n_charge": 0.651241,
+      "mean_abs_delta_o_charge": 0.07576099999999997,
+      "mean_abs_delta_s_charge": 0.272251
+    },
+    "state_variable_ratios": {
+      "mean_anion_diffusivity_ratio_g_over_l": 1.297564095091174,
+      "mean_li_diffusivity_ratio_g_over_l": 0.9702999680194413,
+      "mean_volume_ratio_g_over_l": 1.2741143224636517
+    }
+  }
+}

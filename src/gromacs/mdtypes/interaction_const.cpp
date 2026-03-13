@@ -236,12 +236,12 @@ interaction_const_t init_interaction_const(FILE*               fp,
         case InteractionModifiers::PotShift:
             /* Only shift the potential, don't touch the force */
             vdw.dispersionShift.cpot = -1.0 / gmx::power6(vdw.cutoff);
-            vdw.repulsionShift.cpot  = -1.0 / gmx::power12(vdw.cutoff);
+            vdw.repulsionShift.cpot  = -std::pow(vdw.cutoff, -vdw.repulsionPower);
             break;
         case InteractionModifiers::ForceSwitch:
             /* Switch the force, switch and shift the potential */
             force_switch_constants(6.0, vdw.switchDistance, vdw.cutoff, &vdw.dispersionShift);
-            force_switch_constants(12.0, vdw.switchDistance, vdw.cutoff, &vdw.repulsionShift);
+            force_switch_constants(vdw.repulsionPower, vdw.switchDistance, vdw.cutoff, &vdw.repulsionShift);
             break;
         case InteractionModifiers::PotSwitch:
             /* Switch the potential and force */
@@ -311,7 +311,11 @@ interaction_const_t init_interaction_const(FILE*               fp,
         {
             dispersionShift -= vdw.ewaldShift;
         }
-        fprintf(fp, "Potential shift: LJ r^-12: %.3e r^-6: %.3e", vdw.repulsionShift.cpot, dispersionShift);
+        fprintf(fp,
+                "Potential shift: LJ r^-%.0f: %.3e r^-6: %.3e",
+                vdw.repulsionPower,
+                vdw.repulsionShift.cpot,
+                dispersionShift);
 
         if (coulomb.type == CoulombInteractionType::Cut)
         {

@@ -43,11 +43,15 @@
 #include <cstring>
 
 #include <array>
+#include <cstdlib>
 #include <filesystem>
 #include <memory>
+#include <limits>
 #include <optional>
 #include <string>
 #include <tuple>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -90,6 +94,7 @@
 #include "gromacs/mdlib/wholemoleculetransform.h"
 #include "gromacs/mdrunutility/mdmodulesnotifiers.h"
 #include "gromacs/mdtypes/commrec.h"
+#include "gromacs/mdtypes/atominfo.h"
 #include "gromacs/mdtypes/enerdata.h"
 #include "gromacs/mdtypes/forcebuffers.h"
 #include "gromacs/mdtypes/forceoutput.h"
@@ -108,6 +113,7 @@
 #include "gromacs/nbnxm/gpu_data_mgmt.h"
 #include "gromacs/nbnxm/nbnxm.h"
 #include "gromacs/nbnxm/nbnxm_gpu.h"
+#include "gromacs/nbnxm/pairlist.h"
 #include "gromacs/pbcutil/ishift.h"
 #include "gromacs/pbcutil/pbc.h"
 #include "gromacs/pulling/pull.h"
@@ -473,6 +479,486 @@ static void do_nb_verlet(t_forcerec*                fr,
             nrnb);
 }
 
+struct LammpsRespaSplitWeights
+{
+    real inner  = 0;
+    real middle = 0;
+    real outer  = 1;
+};
+
+static real respaSwitchIn(const real r, const real off, const real on)
+{
+    if (on <= off)
+    {
+        return (r >= on ? 1.0_real : 0.0_real);
+    }
+    if (r <= off)
+    {
+        return 0.0_real;
+    }
+    if (r >= on)
+    {
+        return 1.0_real;
+    }
+
+    const real x = (r - off) / (on - off);
+    return x * x * (3.0_real - 2.0_real * x);
+}
+
+static LammpsRespaSplitWeights computeLammpsRespaSplitWeights(const t_inputrec& inputrec, const real r)
+{
+    LammpsRespaSplitWeights weights;
+    const auto&             respa = inputrec.lammpsRespa;
+
+    if (!respa.hasPairSplitting())
+    {
+        return weights;
+    }
+
+    if (respa.hasMiddle())
+    {
+        const real switchIntoMiddle = respaSwitchIn(r, respa.innerOff, respa.innerOn);
+        const real switchIntoOuter  = respaSwitchIn(r, respa.outerOn, respa.outerOff);
+        weights.inner               = 1.0_real - switchIntoMiddle;
+        weights.middle              = switchIntoMiddle * (1.0_real - switchIntoOuter);
+        weights.outer               = switchIntoOuter;
+    }
+    else
+    {
+        const real switchIntoOuter = respaSwitchIn(r, respa.outerOn, respa.outerOff);
+        weights.inner              = 1.0_real - switchIntoOuter;
+        weights.middle             = 0.0_real;
+        weights.outer              = switchIntoOuter;
+    }
+
+    return weights;
+}
+
+static void accumulatePairVirial(const RVec& dx, const RVec& force, matrix virial)
+{
+    for (int dim1 = 0; dim1 < DIM; dim1++)
+    {
+        for (int dim2 = 0; dim2 < DIM; dim2++)
+        {
+            virial[dim1][dim2] -= 0.5_real * dx[dim1] * force[dim2];
+        }
+    }
+}
+
+static int energyGroupPairIndex(const int ai, const int aj, const t_forcerec& fr, const t_mdatoms& mdatoms)
+{
+    if (mdatoms.nenergrp <= 1)
+    {
+        return 0;
+    }
+
+    const int gidI = fr.atomInfo[ai] & gmx::sc_atomInfo_EnergyGroupIdMask;
+    const int gidJ = fr.atomInfo[aj] & gmx::sc_atomInfo_EnergyGroupIdMask;
+    return gidI * mdatoms.nenergrp + gidJ;
+}
+
+static void computePmeRealSpaceCoulombComponents(const interaction_const_t::CoulombSettings& coulomb,
+                                                 const EwaldCorrectionTables*                 coulombTables,
+                                                 const real                                   qq,
+                                                 const real                                   r,
+                                                 const real                                   rinv,
+                                                 const real                                   factorCoulomb,
+                                                 real*                                        bareCoulombScalar,
+                                                 real*                                        correctionScalar,
+                                                 real*                                        fullCoulombEnergy)
+{
+    GMX_RELEASE_ASSERT(coulombTables != nullptr, "PME real-space split requires Coulomb Ewald tables");
+
+    const real scaledR    = r * coulombTables->scale;
+    const int  tableIndex = static_cast<int>(scaledR);
+    const real frac       = scaledR - tableIndex;
+    const real halfsp     = 0.5_real / coulombTables->scale;
+
+#if !GMX_DOUBLE
+    const real* table = coulombTables->tableFDV0.data();
+    const real  fexcl = table[tableIndex * 4] + frac * table[tableIndex * 4 + 1];
+    const real  vcorr = table[tableIndex * 4 + 2] - halfsp * frac * (table[tableIndex * 4] + fexcl);
+#else
+    const real* tableF = coulombTables->tableF.data();
+    const real* tableV = coulombTables->tableV.data();
+    const real  fexcl  = (1 - frac) * tableF[tableIndex] + frac * tableF[tableIndex + 1];
+    const real  vcorr  = tableV[tableIndex] - halfsp * frac * (tableF[tableIndex] + fexcl);
+#endif
+
+    *bareCoulombScalar = factorCoulomb * qq * rinv;
+    *correctionScalar  = -qq * fexcl / rinv;
+    *fullCoulombEnergy = qq * (factorCoulomb * (rinv - coulomb.ewaldShift) - vcorr);
+}
+
+static real computePmeSelfEnergy(const interaction_const_t& ic)
+{
+    GMX_RELEASE_ASSERT(ic.coulombEwaldTables, "PME self-energy requires Coulomb Ewald tables");
+    return 0.5_real
+#if !GMX_DOUBLE
+           * ic.coulombEwaldTables->tableFDV0[2]
+#else
+           * ic.coulombEwaldTables->tableV[0]
+#endif
+            ;
+}
+
+static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inputrec,
+                                           const InteractionDefinitions&    idef,
+                                           t_forcerec*                      fr,
+                                           const t_mdatoms&                 mdatoms,
+                                           ArrayRef<const RVec>             coordinates,
+                                           ArrayRef<ForceOutputs*>          forceOutByMtsLevel,
+                                           gmx_enerdata_t*                  enerd,
+                                           const StepWorkload&              stepWork)
+{
+    GMX_RELEASE_ASSERT(fr->plainPairlistRange.has_value(),
+                       "Exact LAMMPS-style r-RESPA requires a plain pairlist");
+    GMX_RELEASE_ASSERT(fr->efep == FreeEnergyPerturbationType::No,
+                       "Exact LAMMPS-style r-RESPA does not support free-energy perturbation yet");
+    GMX_RELEASE_ASSERT(fr->ic->vdw.type == VanDerWaalsType::Cut,
+                       "Exact LAMMPS-style r-RESPA currently supports cut-off Van der Waals only");
+    GMX_RELEASE_ASSERT(fr->ic->vdw.modifier == InteractionModifiers::None,
+                       "Exact LAMMPS-style r-RESPA currently supports unmodified real-space LJ only");
+    GMX_RELEASE_ASSERT(usingPmeOrEwald(fr->ic->coulomb.type),
+                       "Exact LAMMPS-style r-RESPA currently supports Coulomb long-range treatment only");
+    GMX_RELEASE_ASSERT(fr->ic->coulomb.modifier == InteractionModifiers::None,
+                       "Exact LAMMPS-style r-RESPA currently supports unmodified real-space Coulomb only");
+
+    const auto& plainPairlist = fr->nbv->plainPairlist(fr->plainPairlistRange.value(), fr->shift_vec);
+
+    struct ContributionAccumulator
+    {
+        MtsNonbondedRespaContribution contribution;
+        ForceOutputs*                 outputs = nullptr;
+        ArrayRef<RVec>                force;
+        ArrayRef<RVec>                shift;
+        ForceWithVirial*              forceWithVirial = nullptr;
+        bool                          accumulateEnergy = false;
+        matrix                        virial           = { { 0 } };
+    };
+
+    std::vector<ContributionAccumulator> activeContributions;
+
+    const auto appendContribution = [&](const MtsNonbondedRespaContribution contribution)
+    {
+        const int mtsLevel = nonbondedRespaContributionMtsLevel(inputrec, contribution);
+        if (mtsLevel < 0 || mtsLevel > stepWork.highestActiveMtsLevel || mtsLevel >= forceOutByMtsLevel.ssize()
+            || forceOutByMtsLevel[mtsLevel] == nullptr)
+        {
+            return;
+        }
+
+        ForceOutputs* outputs = forceOutByMtsLevel[mtsLevel];
+
+        ContributionAccumulator accumulator;
+        accumulator.contribution = contribution;
+        accumulator.outputs      = outputs;
+        accumulator.accumulateEnergy =
+                (contribution == MtsNonbondedRespaContribution::Outer
+                 || contribution == MtsNonbondedRespaContribution::Full)
+                && stepWork.computeEnergy;
+
+        const bool directVirialContribution =
+                stepWork.computeVirial
+                && (contribution == MtsNonbondedRespaContribution::Outer
+                    || contribution == MtsNonbondedRespaContribution::Full);
+        if (directVirialContribution)
+        {
+            GMX_RELEASE_ASSERT(outputs->haveForceWithVirial(),
+                               "Exact LAMMPS-style r-RESPA outer forces require a direct-virial buffer");
+            accumulator.forceWithVirial = &outputs->forceWithVirial();
+            accumulator.force           = accumulator.forceWithVirial->force_;
+        }
+        else
+        {
+            accumulator.force = outputs->forceWithShiftForces().force();
+            accumulator.shift = outputs->forceWithShiftForces().shiftForces();
+        }
+
+        activeContributions.push_back(accumulator);
+    };
+
+    appendContribution(MtsNonbondedRespaContribution::Inner);
+    appendContribution(MtsNonbondedRespaContribution::Middle);
+    appendContribution(MtsNonbondedRespaContribution::Outer);
+
+    GMX_RELEASE_ASSERT(!stepWork.computeVirial
+                               || std::any_of(activeContributions.begin(),
+                                              activeContributions.end(),
+                                              [](const ContributionAccumulator& accumulator)
+                                              {
+                                                  return accumulator.contribution
+                                                                 == MtsNonbondedRespaContribution::Outer
+                                                         || accumulator.contribution
+                                                                    == MtsNonbondedRespaContribution::Full;
+                                              }),
+                       "Exact LAMMPS-style r-RESPA virial steps require the outer contribution to be active");
+
+    const real coulombCutoff2   = gmx::square(fr->ic->coulomb.cutoff);
+    const real vdwCutoff2       = gmx::square(fr->ic->vdw.cutoff);
+    const real repulsionPower   = static_cast<real>(fr->ic->vdw.repulsionPower);
+    const int  ntype2           = 2 * fr->ntype;
+    auto&      vdwEnergyTerms   = enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::LJSR];
+    auto&      coulEnergyTerms  = enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR];
+    const bool debugExactRespa  = (std::getenv("GMX_PCFF_RESPA_DEBUG") != nullptr);
+    const real pmeSelfEnergy    = computePmeSelfEnergy(*fr->ic);
+    const auto pairKey = [](const int ai, const int aj)
+    {
+        const uint32_t first  = static_cast<uint32_t>(std::min(ai, aj));
+        const uint32_t second = static_cast<uint32_t>(std::max(ai, aj));
+        return (static_cast<uint64_t>(first) << 32) | second;
+    };
+    std::unordered_set<uint64_t> listedPairKeys;
+    if (debugExactRespa)
+    {
+        const auto appendInteractionList = [&listedPairKeys, &idef, &pairKey](const InteractionFunction ftype)
+        {
+            const auto& iatoms = idef.il[ftype].iatoms;
+            const int   stride = NRAL(ftype) + 1;
+            for (int index = 0; index < static_cast<int>(iatoms.size()); index += stride)
+            {
+                listedPairKeys.insert(pairKey(iatoms[index + 1], iatoms[index + 2]));
+            }
+        };
+        appendInteractionList(InteractionFunction::LennardJones14);
+        appendInteractionList(InteractionFunction::LennardJonesCoulomb14Q);
+        appendInteractionList(InteractionFunction::LennardJonesCoulombNonBondedPairs);
+    }
+
+    struct PairDebugStats
+    {
+        const char* label        = nullptr;
+        int         count        = 0;
+        double      ljEnergy     = 0;
+        double      coulEnergy   = 0;
+        double      qqSum        = 0;
+        double      selfEnergy   = 0;
+    };
+
+    const auto processPairlist = [&](const auto& pairEntries,
+                                     const real factorCoulomb,
+                                     const real factorLj,
+                                     const auto& includePair,
+                                     PairDebugStats* debugStats = nullptr)
+    {
+        for (const auto& entry : pairEntries)
+        {
+            const int ai         = entry.first.first;
+            const int aj         = entry.first.second;
+            const int shiftIndex = entry.second;
+
+            if (!includePair(ai, aj))
+            {
+                continue;
+            }
+
+            RVec dx;
+            for (int dim = 0; dim < DIM; dim++)
+            {
+                dx[dim] = coordinates[ai][dim] - coordinates[aj][dim] + fr->shift_vec[shiftIndex][dim];
+            }
+
+            real rsq = iprod(dx, dx);
+            rsq      = std::max(rsq, c_nbnxnMinDistanceSquared);
+
+            const real rinv   = gmx::invsqrt(rsq);
+            const real rinvsq = rinv * rinv;
+            const real r      = rsq * rinv;
+
+            const auto splitWeights = computeLammpsRespaSplitWeights(inputrec, r);
+
+            real rawLjScalar = 0;
+            real rawLjEnergy = 0;
+            if (factorLj != 0.0_real && rsq < vdwCutoff2)
+            {
+                const int  typeI     = mdatoms.typeA[ai];
+                const int  typeJ     = mdatoms.typeA[aj];
+                const real c6        = fr->nbfp[typeI * ntype2 + typeJ * 2];
+                const real cRepulsive = fr->nbfp[typeI * ntype2 + typeJ * 2 + 1];
+                const real rinvsix   = rinvsq * rinvsq * rinvsq;
+                const real repulsiveTerm =
+                        (repulsionPower == 12.0_real ? rinvsix * rinvsix : std::pow(rinv, repulsionPower));
+                rawLjScalar = cRepulsive * repulsiveTerm - c6 * rinvsix;
+                rawLjEnergy = cRepulsive * repulsiveTerm / repulsionPower - c6 * rinvsix / 6.0_real;
+            }
+
+            real bareCoulombScalar = 0;
+            real correctionScalar  = 0;
+            real fullCoulombEnergy = 0;
+            real qq                = 0;
+            if (rsq < coulombCutoff2)
+            {
+                qq = mdatoms.chargeA[ai] * mdatoms.chargeA[aj] * fr->ic->coulomb.epsfac;
+                if (qq != 0.0_real)
+                {
+                    computePmeRealSpaceCoulombComponents(fr->ic->coulomb,
+                                                         fr->ic->coulombEwaldTables.get(),
+                                                         qq,
+                                                         r,
+                                                         rinv,
+                                                         factorCoulomb,
+                                                         &bareCoulombScalar,
+                                                         &correctionScalar,
+                                                         &fullCoulombEnergy);
+                }
+            }
+
+            if (debugStats != nullptr)
+            {
+                debugStats->count++;
+                debugStats->ljEnergy += rawLjEnergy * factorLj;
+                debugStats->coulEnergy += fullCoulombEnergy;
+                debugStats->qqSum += qq;
+            }
+
+            for (auto& accumulator : activeContributions)
+            {
+                real scalar = 0;
+                switch (accumulator.contribution)
+                {
+                    case MtsNonbondedRespaContribution::Inner:
+                        scalar = bareCoulombScalar * splitWeights.inner
+                                 + factorLj * rawLjScalar * splitWeights.inner;
+                        break;
+                    case MtsNonbondedRespaContribution::Middle:
+                        scalar = bareCoulombScalar * splitWeights.middle
+                                 + factorLj * rawLjScalar * splitWeights.middle;
+                        break;
+                    case MtsNonbondedRespaContribution::Outer:
+                        scalar = correctionScalar + bareCoulombScalar * splitWeights.outer
+                                 + factorLj * rawLjScalar * splitWeights.outer;
+                        break;
+                    case MtsNonbondedRespaContribution::Full:
+                        scalar = correctionScalar + bareCoulombScalar + factorLj * rawLjScalar;
+                        break;
+                    default: GMX_RELEASE_ASSERT(false, "Unexpected nonbonded r-RESPA contribution");
+                }
+
+                if (scalar == 0.0_real)
+                {
+                    continue;
+                }
+
+                RVec force;
+                svmul(scalar * rinvsq, dx, force);
+                rvec_inc(accumulator.force[ai], force);
+                rvec_dec(accumulator.force[aj], force);
+
+                if (!accumulator.shift.empty() && shiftIndex != c_centralShiftIndex)
+                {
+                    rvec_inc(accumulator.shift[shiftIndex], force);
+                    rvec_dec(accumulator.shift[c_centralShiftIndex], force);
+                }
+
+                if (accumulator.accumulateEnergy)
+                {
+                    const int energyIndex = energyGroupPairIndex(ai, aj, *fr, mdatoms);
+                    vdwEnergyTerms[energyIndex] += factorLj * rawLjEnergy;
+                    coulEnergyTerms[energyIndex] += fullCoulombEnergy;
+                }
+
+                if (stepWork.computeVirial && accumulator.forceWithVirial != nullptr)
+                {
+                    accumulatePairVirial(dx, force, accumulator.virial);
+                }
+            }
+        }
+    };
+
+    PairDebugStats pairStats{ "pairs", 0, 0, 0, 0 };
+    PairDebugStats excludedStats{ "excludedPairs", 0, 0, 0, 0 };
+    int            listedPairsInPairlist         = 0;
+    int            listedPairsInExcludedPairlist = 0;
+    int            duplicatePairs                = 0;
+    int            duplicateExcludedPairs        = 0;
+    if (debugExactRespa)
+    {
+        std::unordered_set<uint64_t> uniquePairs;
+        std::unordered_set<uint64_t> uniqueExcludedPairs;
+        for (const auto& entry : plainPairlist.pairs)
+        {
+            duplicatePairs += !uniquePairs.insert(pairKey(entry.first.first, entry.first.second)).second;
+            listedPairsInPairlist += listedPairKeys.count(pairKey(entry.first.first, entry.first.second)) != 0;
+        }
+        for (const auto& entry : plainPairlist.excludedPairs)
+        {
+            duplicateExcludedPairs +=
+                    !uniqueExcludedPairs.insert(pairKey(entry.first.first, entry.first.second)).second;
+            listedPairsInExcludedPairlist +=
+                    listedPairKeys.count(pairKey(entry.first.first, entry.first.second)) != 0;
+        }
+    }
+    processPairlist(plainPairlist.pairs,
+                    1.0_real,
+                    1.0_real,
+                    [](const int, const int) { return true; },
+                    debugExactRespa ? &pairStats : nullptr);
+    /* PME real-space bookkeeping for exact PME parity requires all excluded pairs,
+     * not only the listed 1-4 subset. */
+    processPairlist(plainPairlist.excludedPairs,
+                    0.0_real,
+                    0.0_real,
+                    [](const int, const int) { return true; },
+                    debugExactRespa ? &excludedStats : nullptr);
+
+    for (auto& accumulator : activeContributions)
+    {
+        if (!accumulator.accumulateEnergy)
+        {
+            continue;
+        }
+
+        for (int atom = 0; atom < fr->natoms_force_constr; ++atom)
+        {
+            const real charge = mdatoms.chargeA[atom];
+            if (charge == 0.0_real)
+            {
+                continue;
+            }
+
+            const int energyIndex = energyGroupPairIndex(atom, atom, *fr, mdatoms);
+            const real selfEnergy = -fr->ic->coulomb.epsfac * charge * charge * pmeSelfEnergy;
+            coulEnergyTerms[energyIndex] += selfEnergy;
+            if (debugExactRespa)
+            {
+                pairStats.selfEnergy += selfEnergy;
+            }
+        }
+    }
+
+    if (debugExactRespa)
+    {
+        std::fprintf(stderr,
+                     "GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=%d excludedPairs=%d duplicatePairs=%d duplicateExcludedPairs=%d\n",
+                     listedPairsInPairlist,
+                     listedPairsInExcludedPairlist,
+                     duplicatePairs,
+                     duplicateExcludedPairs);
+        std::fprintf(stderr,
+                     "GMX_PCFF_RESPA_DEBUG pairs count=%d lj=% .9f coul=% .9f qq=% .9f self=% .9f\n",
+                     pairStats.count,
+                     pairStats.ljEnergy,
+                     pairStats.coulEnergy,
+                     pairStats.qqSum,
+                     pairStats.selfEnergy);
+        std::fprintf(stderr,
+                     "GMX_PCFF_RESPA_DEBUG excludedPairs count=%d lj=% .9f coul=% .9f qq=% .9f self=% .9f\n",
+                     excludedStats.count,
+                     excludedStats.ljEnergy,
+                     excludedStats.coulEnergy,
+                     excludedStats.qqSum,
+                     excludedStats.selfEnergy);
+    }
+
+    for (auto& accumulator : activeContributions)
+    {
+        if (accumulator.forceWithVirial != nullptr)
+        {
+            accumulator.forceWithVirial->addVirialContribution(accumulator.virial);
+        }
+    }
+}
+
 static inline void clearRVecs(ArrayRef<RVec> v, const bool useOpenmpThreading)
 {
     int nth = gmx_omp_nthreads_get_simple_rvec_task(ModuleMultiThread::Default, v.ssize());
@@ -643,8 +1129,7 @@ static void computeSpecialForces(FILE*                fplog,
                                  const t_mdatoms*     mdatoms,
                                  ArrayRef<const real> lambda,
                                  const StepWorkload&  stepWork,
-                                 ForceWithVirial*     forceWithVirialMtsLevel0,
-                                 ForceWithVirial*     forceWithVirialMtsLevel1,
+                                 ArrayRef<ForceWithVirial*> forceWithVirialPerMtsLevel,
                                  gmx_enerdata_t*      enerd,
                                  gmx_edsam*           ed,
                                  bool                 didNeighborSearch)
@@ -663,7 +1148,7 @@ static void computeSpecialForces(FILE*                fplog,
                                               box,
                                               mpiComm,
                                               dd);
-        ForceProviderOutput forceProviderOutput(forceWithVirialMtsLevel0, enerd);
+        ForceProviderOutput forceProviderOutput(forceWithVirialPerMtsLevel[0], enerd);
 
         /* Collect forces from modules */
         forceProviders->calculateForces(forceProviderInput, &forceProviderOutput);
@@ -671,7 +1156,7 @@ static void computeSpecialForces(FILE*                fplog,
 
     const int  pullMtsLevel = forceGroupMtsLevel(inputrec.mtsLevels, MtsForceGroups::Pull);
     const bool doPulling    = (inputrec.bPull && pull_have_potential(*pull_work)
-                            && (pullMtsLevel == 0 || stepWork.computeSlowForces));
+                            && pullMtsLevel <= stepWork.highestActiveMtsLevel);
 
     /* pull_potential_wrapper(), awh->applyBiasForcesAndUpdateBias(), pull_apply_forces()
      * have to be called in this order
@@ -683,7 +1168,7 @@ static void computeSpecialForces(FILE*                fplog,
                 mpiComm, inputrec, box, x, mdatoms, enerd, pull_work, lambda.data(), t, wcycle);
     }
     // Note: the awh condition is mirrored in haveSpecialForces()
-    if (awh && (pullMtsLevel == 0 || stepWork.computeSlowForces))
+    if (awh && pullMtsLevel <= stepWork.highestActiveMtsLevel)
     {
         const bool          needForeignEnergyDifferences = awh->needForeignEnergyDifferences(step);
         std::vector<double> foreignLambdaDeltaH, foreignLambdaDhDl;
@@ -701,8 +1186,7 @@ static void computeSpecialForces(FILE*                fplog,
     if (doPulling)
     {
         wallcycle_start_nocount(wcycle, WallCycleCounter::PullPot);
-        auto& forceWithVirial = (pullMtsLevel == 0) ? forceWithVirialMtsLevel0 : forceWithVirialMtsLevel1;
-        pull_apply_forces(pull_work, mdatoms->massT, mpiComm, forceWithVirial);
+        pull_apply_forces(pull_work, mdatoms->massT, mpiComm, forceWithVirialPerMtsLevel[pullMtsLevel]);
         wallcycle_stop(wcycle, WallCycleCounter::PullPot);
     }
 
@@ -712,7 +1196,7 @@ static void computeSpecialForces(FILE*                fplog,
     {
         wallcycle_start(wcycle, WallCycleCounter::RotAdd);
         enerd->term[InteractionFunction::CenterOfMassPullingEnergy] +=
-                add_rot_forces(enforcedRotation, forceWithVirialMtsLevel0->force_, mpiComm, step, t);
+                add_rot_forces(enforcedRotation, forceWithVirialPerMtsLevel[0]->force_, mpiComm, step, t);
         wallcycle_stop(wcycle, WallCycleCounter::RotAdd);
     }
 
@@ -724,14 +1208,14 @@ static void computeSpecialForces(FILE*                fplog,
          * Thus if no other algorithm (e.g. PME) requires it, the forces
          * here will contribute to the virial.
          */
-        do_flood(mpiComm, inputrec, x, forceWithVirialMtsLevel0->force_, ed, box, step, didNeighborSearch);
+        do_flood(mpiComm, inputrec, x, forceWithVirialPerMtsLevel[0]->force_, ed, box, step, didNeighborSearch);
     }
 
     /* Add forces from interactive molecular dynamics (IMD), if any */
     // Note: this condition is mirrored in haveSpecialForces()
     if (inputrec.bIMD && stepWork.computeForces)
     {
-        imdSession->applyForces(forceWithVirialMtsLevel0->force_);
+        imdSession->applyForces(forceWithVirialPerMtsLevel[0]->force_);
     }
 }
 
@@ -1028,7 +1512,7 @@ static int getExpectedLocalXReadyOnDeviceConsumptionCount(const SimulationWorklo
                                                           const bool pmeSendCoordinatesFromGpu)
 {
     int result = 0;
-    if (stepWork.computeSlowForces)
+    if (stepWork.computeLongRangeNonbondedForces)
     {
         if (pmeSendCoordinatesFromGpu)
         {
@@ -1161,25 +1645,37 @@ static void reduceAndUpdateMuTot(DipoleData*                   dipoleData,
     }
 }
 
-/*! \brief Combines MTS level0 and level1 force buffers into a full and MTS-combined force buffer.
+/*! \brief Combines MTS level0..N force buffers into a physical and an impulse-combined force buffer.
  *
- * \param[in]     numAtoms        The number of atoms to combine forces for
- * \param[in,out] forceMtsLevel0  Input: F_level0, output: F_level0 + F_level1
- * \param[in,out] forceMts        Input: F_level1, output: F_level0 + mtsFactor * F_level1
- * \param[in]     mtsFactor       The factor between the level0 and level1 time step
+ * \param[in]     numAtoms              The number of atoms to combine forces for
+ * \param[in,out] forceMtsLevel0        Input: F_level0, output: sum_j F_levelj
+ * \param[in,out] forceMtsCombined      Output: F_level0 + sum_{j>0} factor_j * F_levelj
+ * \param[in]     slowLevelForces       Force buffers for the active non-zero MTS levels
+ * \param[in]     slowLevelStepFactors  Absolute step factors for the active non-zero MTS levels
  */
-static void combineMtsForces(const int      numAtoms,
-                             ArrayRef<RVec> forceMtsLevel0,
-                             ArrayRef<RVec> forceMts,
-                             const real     mtsFactor)
+static void combineMtsForces(const int                                numAtoms,
+                             ArrayRef<RVec>                           forceMtsLevel0,
+                             ArrayRef<RVec>                           forceMtsCombined,
+                             const std::vector<ArrayRef<const RVec>>& slowLevelForces,
+                             ArrayRef<const int>                      slowLevelStepFactors)
 {
+    GMX_RELEASE_ASSERT(slowLevelForces.size() == slowLevelStepFactors.size(),
+                       "Need the same number of slow force buffers and MTS factors");
+
     const int gmx_unused numThreads = gmx_omp_nthreads_get(ModuleMultiThread::Default);
 #pragma omp parallel for num_threads(numThreads) schedule(static)
     for (int i = 0; i < numAtoms; i++)
     {
-        const RVec forceMtsLevel0Tmp = forceMtsLevel0[i];
-        forceMtsLevel0[i] += forceMts[i];
-        forceMts[i] = forceMtsLevel0Tmp + mtsFactor * forceMts[i];
+        RVec physicalForce = forceMtsLevel0[i];
+        RVec combinedForce = forceMtsLevel0[i];
+        for (int slowLevelIndex = 0; slowLevelIndex < static_cast<int>(slowLevelForces.size()); slowLevelIndex++)
+        {
+            physicalForce += slowLevelForces[slowLevelIndex][i];
+            combinedForce += static_cast<real>(slowLevelStepFactors[slowLevelIndex])
+                             * slowLevelForces[slowLevelIndex][i];
+        }
+        forceMtsLevel0[i]   = physicalForce;
+        forceMtsCombined[i] = combinedForce;
     }
 }
 
@@ -1989,25 +2485,69 @@ void do_force(FILE*                         fplog,
      */
     ForceOutputs forceOutMtsLevel0 = setupForceOutputs(
             &fr->forceHelperBuffers[0], force, domainWork, stepWork, simulationWork.havePpDomainDecomposition, wcycle);
+    const bool useMultiLevelMts = (simulationWork.useMts && inputrec.mtsLevels.size() > 2);
+    const int  longrangeMtsLevel =
+            simulationWork.useMts ? forceGroupMtsLevel(inputrec.mtsLevels, MtsForceGroups::LongrangeNonbonded) : 0;
 
-    // Force output for MTS combined forces, only set at level1 MTS steps
-    std::optional<ForceOutputs> forceOutMts =
-            (simulationWork.useMts && stepWork.computeSlowForces)
-                    ? std::optional(setupForceOutputs(&fr->forceHelperBuffers[1],
-                                                      forceView->forceMtsCombinedWithPadding(),
-                                                      domainWork,
-                                                      stepWork,
-                                                      simulationWork.havePpDomainDecomposition,
-                                                      wcycle))
-                    : std::nullopt;
+    std::optional<ForceOutputs>              forceOutSingleSlowLevel;
+    std::vector<std::optional<ForceOutputs>> forceOutMultiLevel;
+    std::vector<ForceOutputs*>               forceOutByMtsLevel(
+            simulationWork.useMts ? inputrec.mtsLevels.size() : 1, nullptr);
+    forceOutByMtsLevel[0] = &forceOutMtsLevel0;
 
-    ForceOutputs* forceOutMtsLevel1 =
-            simulationWork.useMts ? (stepWork.computeSlowForces ? &forceOutMts.value() : nullptr)
-                                  : &forceOutMtsLevel0;
+    if (simulationWork.useMts && stepWork.computeSlowForces)
+    {
+        if (!useMultiLevelMts)
+        {
+            forceOutSingleSlowLevel.emplace(setupForceOutputs(&fr->forceHelperBuffers[1],
+                                                              forceView->forceMtsCombinedWithPadding(),
+                                                              domainWork,
+                                                              stepWork,
+                                                              simulationWork.havePpDomainDecomposition,
+                                                              wcycle));
+            forceOutByMtsLevel[1] = &forceOutSingleSlowLevel.value();
+        }
+        else
+        {
+            forceOutMultiLevel.resize(inputrec.mtsLevels.size());
+            for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; mtsLevel++)
+            {
+                forceOutMultiLevel[mtsLevel].emplace(setupForceOutputs(&fr->forceHelperBuffers[mtsLevel],
+                                                                       forceView->forceForMtsLevelWithPadding(mtsLevel),
+                                                                       domainWork,
+                                                                       stepWork,
+                                                                       simulationWork.havePpDomainDecomposition,
+                                                                       wcycle));
+                forceOutByMtsLevel[mtsLevel] = &forceOutMultiLevel[mtsLevel].value();
+            }
+        }
+    }
 
-    const bool nonbondedAtMtsLevel1 = runScheduleWork.simulationWork.computeNonbondedAtMtsLevel1;
+    ForceOutputs* forceOutMtsLevel1 = simulationWork.useMts
+                                              ? (stepWork.computeLongRangeNonbondedForces
+                                                         ? forceOutByMtsLevel[longrangeMtsLevel]
+                                                         : nullptr)
+                                              : &forceOutMtsLevel0;
+    GMX_ASSERT(!stepWork.computeLongRangeNonbondedForces
+                       || forceOutMtsLevel1 == nullptr
+                       || forceOutMtsLevel1->haveForceWithVirial(),
+               "Active long-range nonbonded work requires a force-with-virial output buffer");
 
-    ForceOutputs* forceOutNonbonded = nonbondedAtMtsLevel1 ? forceOutMtsLevel1 : &forceOutMtsLevel0;
+    ForceOutputs* forceOutNonbonded = &forceOutMtsLevel0;
+    if (simulationWork.useMts && simulationWork.nonbondedMtsLevel > 0 && stepWork.computeNonbondedForces)
+    {
+        forceOutNonbonded = forceOutByMtsLevel[simulationWork.nonbondedMtsLevel];
+    }
+    std::vector<ForceWithVirial*> forceWithVirialByMtsLevel(forceOutByMtsLevel.size(), nullptr);
+    forceWithVirialByMtsLevel[0] = &forceOutMtsLevel0.forceWithVirial();
+    for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel && mtsLevel < static_cast<int>(forceOutByMtsLevel.size());
+         mtsLevel++)
+    {
+        if (forceOutByMtsLevel[mtsLevel] != nullptr)
+        {
+            forceWithVirialByMtsLevel[mtsLevel] = &forceOutByMtsLevel[mtsLevel]->forceWithVirial();
+        }
+    }
 
     if (inputrec.bPull && pull_have_constraint(*pull_work))
     {
@@ -2084,8 +2624,23 @@ void do_force(FILE*                         fplog,
      */
 
     const bool useOrEmulateGpuNb = simulationWork.useGpuNonbonded || fr->nbv->emulateGpu();
+    const bool useExactLammpsRespaNonbonded =
+            stepWork.computeNonbondedForces && inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa
+            && inputrec.lammpsRespa.hasPairSplitting();
 
-    if (!useOrEmulateGpuNb)
+    GMX_RELEASE_ASSERT(!useExactLammpsRespaNonbonded || !useOrEmulateGpuNb,
+                       "Exact LAMMPS-style r-RESPA is CPU-only");
+    GMX_RELEASE_ASSERT(!useExactLammpsRespaNonbonded || !domainWork.haveCpuNonbondedFreeEnergyWork,
+                       "Exact LAMMPS-style r-RESPA does not support nonbonded free-energy work yet");
+
+    if (useExactLammpsRespaNonbonded)
+    {
+        wallcycle_start_nocount(wcycle, WallCycleCounter::Force);
+        computeLammpsRespaNonbondedCpu(
+                inputrec, top->idef, fr, *mdatoms, x.unpaddedArrayRef(), forceOutByMtsLevel, enerd, stepWork);
+        wallcycle_stop(wcycle, WallCycleCounter::Force);
+    }
+    else if (!useOrEmulateGpuNb)
     {
         wallcycle_start_nocount(wcycle, WallCycleCounter::Force);
         do_nb_verlet(fr, ic, enerd, stepWork, InteractionLocality::Local, enbvClearFYes, step, nrnb, wcycle);
@@ -2120,7 +2675,7 @@ void do_force(FILE*                         fplog,
                                           nrnb);
     }
 
-    if (stepWork.computeNonbondedForces && !useOrEmulateGpuNb)
+    if (stepWork.computeNonbondedForces && !useOrEmulateGpuNb && !useExactLammpsRespaNonbonded)
     {
         if (simulationWork.havePpDomainDecomposition)
         {
@@ -2192,11 +2747,11 @@ void do_force(FILE*                         fplog,
             set_pbc_dd(&pbc, fr->pbcType, haveDDAtomOrdering(*cr) ? &cr->dd->numCells : nullptr, TRUE, box);
         }
 
-        for (int mtsIndex = 0; mtsIndex < (simulationWork.useMts && stepWork.computeSlowForces ? 2 : 1);
-             mtsIndex++)
+        const int numActiveMtsLevels = simulationWork.useMts ? (stepWork.highestActiveMtsLevel + 1) : 1;
+        for (int mtsIndex = 0; mtsIndex < numActiveMtsLevels; mtsIndex++)
         {
             ListedForces& listedForces = fr->listedForces[mtsIndex];
-            ForceOutputs& forceOut     = (mtsIndex == 0 ? forceOutMtsLevel0 : *forceOutMtsLevel1);
+            ForceOutputs& forceOut     = *forceOutByMtsLevel[mtsIndex];
             listedForces.calculate(wcycle,
                                    box,
                                    x,
@@ -2219,7 +2774,7 @@ void do_force(FILE*                         fplog,
         }
     }
 
-    if (stepWork.computeSlowForces)
+    if (stepWork.computeLongRangeNonbondedForces)
     {
         longRangeNonbondeds->calculate(fr->pmedata,
                                        cr,
@@ -2264,7 +2819,7 @@ void do_force(FILE*                         fplog,
      * GPU we must wait for the PME calculation (dhdl) results to finish before sampling the
      * FEP dimension with AWH. */
     const bool needEarlyPmeResults = (awh != nullptr && awh->hasFepLambdaDimension() && needToReceivePmeResults
-                                      && stepWork.computeEnergy && stepWork.computeSlowForces);
+                                      && stepWork.computeEnergy && stepWork.computeLongRangeNonbondedForces);
     if (needEarlyPmeResults)
     {
         if (stepWork.haveGpuPmeOnThisRank)
@@ -2313,8 +2868,7 @@ void do_force(FILE*                         fplog,
                              mdatoms,
                              lambda,
                              stepWork,
-                             &forceOutMtsLevel0.forceWithVirial(),
-                             forceOutMtsLevel1 ? &forceOutMtsLevel1->forceWithVirial() : nullptr,
+                             forceWithVirialByMtsLevel,
                              enerd,
                              ed,
                              stepWork.doNeighborSearch);
@@ -2326,14 +2880,14 @@ void do_force(FILE*                         fplog,
         stateGpu->copyForcesToGpu(forceOutMtsLevel0.forceWithShiftForces().force(), AtomLocality::Local);
     }
 
-    GMX_ASSERT(!(nonbondedAtMtsLevel1 && stepWork.useGpuFBufferOps),
+    GMX_ASSERT(!(simulationWork.nonbondedMtsLevel > 0 && stepWork.useGpuFBufferOps),
                "The schedule below does not allow for nonbonded MTS with GPU buffer ops");
-    GMX_ASSERT(!(nonbondedAtMtsLevel1 && stepWork.useGpuFHalo),
+    GMX_ASSERT(!(nonbondedAtMtsNonzeroLevel && stepWork.useGpuFHalo),
                "The schedule below does not allow for nonbonded MTS with GPU halo exchange");
     // Will store the amount of cycles spent waiting for the GPU that
     // will be later used in the DLB accounting.
     float cycles_wait_gpu = 0;
-    if (useOrEmulateGpuNb && stepWork.computeNonbondedForces)
+    if (useOrEmulateGpuNb && stepWork.computeNonbondedForces && !useExactLammpsRespaNonbonded)
     {
         auto& forceWithShiftForces = forceOutNonbonded->forceWithShiftForces();
 
@@ -2398,11 +2952,16 @@ void do_force(FILE*                         fplog,
      */
     if (stepWork.combineMtsForcesBeforeHaloExchange)
     {
+        const std::vector<ArrayRef<const RVec>> slowLevelForces = {
+            forceOutByMtsLevel[1]->forceWithShiftForces().force()
+        };
+        const std::array<int, 1> slowLevelFactors = { inputrec.mtsLevels[1].stepFactor };
         wallcycle_start_nocount(wcycle, WallCycleCounter::Force);
         combineMtsForces(getLocalAtomCount(cr->dd, *mdatoms, simulationWork.havePpDomainDecomposition),
                          force.unpaddedArrayRef(),
                          forceView->forceMtsCombined(),
-                         inputrec.mtsLevels[1].stepFactor);
+                         slowLevelForces,
+                         slowLevelFactors);
         wallcycle_stop(wcycle, WallCycleCounter::Force);
     }
 
@@ -2467,7 +3026,10 @@ void do_force(FILE*                         fplog,
                 // With MTS we need to communicate the slow or combined (in forceOutMtsLevel1) forces
                 if (simulationWork.useMts && stepWork.computeSlowForces)
                 {
-                    dd_move_f(cr->dd, &forceOutMtsLevel1->forceWithShiftForces(), wcycle);
+                    for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; mtsLevel++)
+                    {
+                        dd_move_f(cr->dd, &forceOutByMtsLevel[mtsLevel]->forceWithShiftForces(), wcycle);
+                    }
                 }
             }
         }
@@ -2532,7 +3094,7 @@ void do_force(FILE*                         fplog,
         }
     }
 
-    if (fr->nbv->emulateGpu())
+    if (fr->nbv->emulateGpu() && !useExactLammpsRespaNonbonded)
     {
         // NOTE: emulation kernel is not included in the balancing region,
         // but emulation mode does not target performance anyway
@@ -2570,7 +3132,7 @@ void do_force(FILE*                         fplog,
 
     /* Do the nonbonded GPU (or emulation) force buffer reduction
      * on the non-alternating path. */
-    GMX_ASSERT(!(nonbondedAtMtsLevel1 && stepWork.useGpuFBufferOps),
+    GMX_ASSERT(!(nonbondedAtMtsNonzeroLevel && stepWork.useGpuFBufferOps),
                "The schedule below does not allow for nonbonded MTS with GPU buffer ops");
     if (useOrEmulateGpuNb && !alternateGpuWait)
     {
@@ -2647,8 +3209,19 @@ void do_force(FILE*                         fplog,
 
         if (simulationWork.useMts && stepWork.computeSlowForces && !haveCombinedMtsForces)
         {
-            postProcessForceWithShiftForces(
-                    nrnb, wcycle, box, x.unpaddedArrayRef(), forceOutMtsLevel1, vir_force, *mdatoms, *fr, vsite, stepWork);
+            for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; mtsLevel++)
+            {
+                postProcessForceWithShiftForces(nrnb,
+                                                wcycle,
+                                                box,
+                                                x.unpaddedArrayRef(),
+                                                forceOutByMtsLevel[mtsLevel],
+                                                vir_force,
+                                                *mdatoms,
+                                                *fr,
+                                                vsite,
+                                                stepWork);
+            }
         }
     }
 
@@ -2675,29 +3248,37 @@ void do_force(FILE*                         fplog,
          * need to post-process one ForceOutputs object here, called forceOutCombined,
          * otherwise we have to post-process two outputs and then combine them.
          */
-        ForceOutputs& forceOutCombined = (haveCombinedMtsForces ? forceOutMts.value() : forceOutMtsLevel0);
+        ForceOutputs& forceOutCombined = (haveCombinedMtsForces ? forceOutSingleSlowLevel.value() : forceOutMtsLevel0);
         postProcessForces(
                 cr->dd, step, nrnb, wcycle, box, x.unpaddedArrayRef(), &forceOutCombined, vir_force, mdatoms, fr, vsite, stepWork);
 
         if (simulationWork.useMts && stepWork.computeSlowForces && !haveCombinedMtsForces)
         {
-            postProcessForces(cr->dd,
-                              step,
-                              nrnb,
-                              wcycle,
-                              box,
-                              x.unpaddedArrayRef(),
-                              forceOutMtsLevel1,
-                              vir_force,
-                              mdatoms,
-                              fr,
-                              vsite,
-                              stepWork);
+            std::vector<ArrayRef<const RVec>> slowLevelForces;
+            std::vector<int>                  slowLevelFactors;
+            for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; mtsLevel++)
+            {
+                postProcessForces(cr->dd,
+                                  step,
+                                  nrnb,
+                                  wcycle,
+                                  box,
+                                  x.unpaddedArrayRef(),
+                                  forceOutByMtsLevel[mtsLevel],
+                                  vir_force,
+                                  mdatoms,
+                                  fr,
+                                  vsite,
+                                  stepWork);
+                slowLevelForces.push_back(forceOutByMtsLevel[mtsLevel]->forceWithShiftForces().force());
+                slowLevelFactors.push_back(inputrec.mtsLevels[mtsLevel].stepFactor);
+            }
 
             combineMtsForces(mdatoms->homenr,
                              force.unpaddedArrayRef(),
                              forceView->forceMtsCombined(),
-                             inputrec.mtsLevels[1].stepFactor);
+                             slowLevelForces,
+                             slowLevelFactors);
         }
     }
 

@@ -1,0 +1,3 @@
+trajectory_id,status,reason,gromacs_topol_exists,gromacs_topol_counts,packmol_counts,gromacs_structural_sampled_n_li,gromacs_structural_sampled_n_n,gromacs_production_box_volume_nm3,lammps_production_box_volume_nm3,gromacs_topol_density_g_cm3_if_used
+14748,inconsistent,GROMACS sampled structural counts do not match the paired topol.top molecule counts,True,"{'polymer': 30, 'LI': 100, 'tfsi': 100}","{'polymer': 30, 'LI': 100, 'tfsi': 100}",50,50,177.5915152150827,,0.8903356941305208
+27670,unavailable,"GROMACS paired topology is missing, but packmol input still records the intended molecule counts",False,,"{'polymer': 30, 'LI': 100, 'tfsi': 100}",50,50,168.28620688116516,,

@@ -140,6 +140,17 @@ TEST(ForceBuffers, CopyDoesNotPin)
     EXPECT_EQ(forceBuffersCopy.pinningPolicy(), PinningPolicy::CannotBePinned);
 }
 
+TEST(ForceBuffers, AllocatesPerLevelMtsBuffers)
+{
+    ForceBuffers forceBuffers(3, PinningPolicy::CannotBePinned);
+
+    forceBuffers.resize(2);
+    EXPECT_EQ(forceBuffers.view().numMtsLevelForceBuffers(), 2);
+    EXPECT_EQ(forceBuffers.view().forceForMtsLevel(1).size(), 2);
+    EXPECT_EQ(forceBuffers.view().forceForMtsLevel(2).size(), 2);
+    EXPECT_EQ(forceBuffers.view().forceMtsCombined().size(), 2);
+}
+
 } // namespace
 } // namespace test
 } // namespace gmx

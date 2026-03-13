@@ -1,0 +1,63 @@
+{
+  "reference": {
+    "nve": {
+      "final_total_kcal_mol": 99.991653,
+      "initial_total_kcal_mol": 100.16231,
+      "ion_distance_nm": 1.0688001276617214,
+      "polymer_end_to_end_nm": 0.9765552774955926,
+      "polymer_rg_nm": 0.3195366332846596,
+      "step0_potential_kcal_mol": 92.11412,
+      "total_energy_drift_abs_kcal_mol": 0.1706570000000056,
+      "total_energy_span_kcal_mol": 0.17742300000000455
+    },
+    "nvt": {
+      "final_potential_kcal_mol": -18.220878,
+      "final_pressure_atm": -205.15437,
+      "final_temperature_K": 3623.1817,
+      "final_total_kcal_mol": 78.979269,
+      "ion_distance_nm": 1.0694880229359505,
+      "polymer_end_to_end_nm": 0.968031825541905,
+      "polymer_rg_nm": 0.3180142383417158,
+      "step0_potential_kcal_mol": 92.11412
+    },
+    "single_point": {
+      "potential_kcal_mol": 92.11412
+    }
+  },
+  "schema_version": 1,
+  "sources": {
+    "lammps_observables": {
+      "nve_drift": "tests/reference_results/m4/small_salt_polymer_box/nve_drift.json",
+      "nvt_snapshot": "tests/reference_results/m4/small_salt_polymer_box/nvt_snapshot.json",
+      "single_point": "tests/reference_results/m4/small_salt_polymer_box/single_point.json"
+    },
+    "parameters": "testdata/lammps_golden/systems/small_salt_polymer_box/lammps/system.in",
+    "topology": "testdata/lammps_golden/systems/small_salt_polymer_box/lammps/system.data"
+  },
+  "system_id": "small_salt_polymer_box",
+  "tolerances": {
+    "nve": {
+      "final_total_kcal_mol": 0.06,
+      "initial_total_kcal_mol": 0.03,
+      "ion_distance_nm": 0.02,
+      "polymer_end_to_end_nm": 0.01,
+      "polymer_rg_nm": 0.01,
+      "step0_potential_kcal_mol": 0.02,
+      "total_energy_drift_abs_kcal_mol": 0.06,
+      "total_energy_span_kcal_mol": 0.08
+    },
+    "nvt": {
+      "final_potential_kcal_mol": 0.25,
+      "final_pressure_atm": 120.0,
+      "final_temperature_K": 25.0,
+      "final_total_kcal_mol": 0.25,
+      "ion_distance_nm": 0.02,
+      "polymer_end_to_end_nm": 0.015,
+      "polymer_rg_nm": 0.015,
+      "step0_potential_kcal_mol": 0.02
+    }
+  },
+  "unresolved_items": [
+    "NVT parity remains thermostat-algorithm-sensitive across engines; tolerances are defined on final observables rather than exact trajectory identity."
+  ]
+}

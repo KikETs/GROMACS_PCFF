@@ -267,7 +267,7 @@
 
             // Compute the Lennard Jones force and optionally the energy
             ljCalculator.template forceC6C12<c_nRLJ, c_haveExclusionForces>(
-                    rSquaredV, rInvV, rInvSquaredV, interactV, c6V, c12V, sixth_S, twelveth_S, frLJV, vLJV);
+                    rSquaredV, rInvV, rInvSquaredV, interactV, c6V, c12V, sixth_S, repulsionFraction_S, frLJV, vLJV);
         }
 
         if constexpr (ljCombinationRule == LJCombinationRule::LorentzBerthelot)

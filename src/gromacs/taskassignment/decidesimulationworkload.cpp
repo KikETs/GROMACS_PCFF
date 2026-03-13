@@ -96,36 +96,44 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
                                             bool       useGpuPmeDecomposition)
 {
     SimulationWorkload simulationWorkload;
+    const bool         useExactLammpsRespa =
+            inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa;
+    const bool disableGpuForExactLammpsRespa = useExactLammpsRespa;
+
     simulationWorkload.computeNonbonded = !disableNonbondedCalculation;
-    simulationWorkload.computeNonbondedAtMtsLevel1 =
-            simulationWorkload.computeNonbonded && inputrec.useMts
-            && inputrec.mtsLevels.back().forceGroups[static_cast<int>(MtsForceGroups::Nonbonded)];
+    simulationWorkload.nonbondedMtsLevel =
+            (simulationWorkload.computeNonbonded && inputrec.useMts
+             && !(useExactLammpsRespa && inputrec.lammpsRespa.hasPairSplitting()))
+                    ? forceGroupMtsLevel(inputrec.mtsLevels, MtsForceGroups::Nonbonded)
+                    : 0;
     simulationWorkload.computeMuTot      = inputrecNeedMutot(&inputrec);
     simulationWorkload.haveDynamicBox    = haveDynamicBox;
-    simulationWorkload.useCpuNonbonded   = !useGpuForNonbonded;
-    simulationWorkload.useGpuNonbonded   = useGpuForNonbonded;
-    simulationWorkload.useCpuNonbondedFE = !useGpuForNonbondedFE;
-    simulationWorkload.useGpuNonbondedFE = useGpuForNonbondedFE;
+    simulationWorkload.useCpuNonbonded   = disableGpuForExactLammpsRespa || !useGpuForNonbonded;
+    simulationWorkload.useGpuNonbonded   = !disableGpuForExactLammpsRespa && useGpuForNonbonded;
+    simulationWorkload.useCpuNonbondedFE = disableGpuForExactLammpsRespa || !useGpuForNonbondedFE;
+    simulationWorkload.useGpuNonbondedFE = !disableGpuForExactLammpsRespa && useGpuForNonbondedFE;
     simulationWorkload.useGpuForeignNonbondedFE =
-            useGpuForNonbondedFE && inputrec.fepvals->n_lambda > 0
+            !disableGpuForExactLammpsRespa && useGpuForNonbondedFE && inputrec.fepvals->n_lambda > 0
             && inputrec.fepvals->softcoreFunction == SoftcoreType::Beutler
             && inputrec.fepvals->sc_alpha != 0;
-    simulationWorkload.useCpuPme = (pmeRunMode == PmeRunMode::CPU);
-    simulationWorkload.useGpuPme = (pmeRunMode == PmeRunMode::GPU || pmeRunMode == PmeRunMode::Mixed);
-    simulationWorkload.useGpuPmeFft                    = (pmeRunMode == PmeRunMode::GPU);
-    simulationWorkload.useGpuBonded                    = useGpuForBonded;
-    simulationWorkload.useGpuUpdate                    = useGpuForUpdate;
+    simulationWorkload.useCpuPme = disableGpuForExactLammpsRespa || (pmeRunMode == PmeRunMode::CPU);
+    simulationWorkload.useGpuPme =
+            !disableGpuForExactLammpsRespa && (pmeRunMode == PmeRunMode::GPU || pmeRunMode == PmeRunMode::Mixed);
+    simulationWorkload.useGpuPmeFft = !disableGpuForExactLammpsRespa && (pmeRunMode == PmeRunMode::GPU);
+    simulationWorkload.useGpuBonded = !disableGpuForExactLammpsRespa && useGpuForBonded;
+    simulationWorkload.useGpuUpdate = !disableGpuForExactLammpsRespa && useGpuForUpdate;
     simulationWorkload.haveFillerParticlesInLocalState = haveFillerParticlesInLocalState;
     simulationWorkload.havePpDomainDecomposition       = havePpDomainDecomposition;
-    simulationWorkload.useCpuHaloExchange = havePpDomainDecomposition && !useGpuDirectHalo;
-    simulationWorkload.useGpuHaloExchange = useGpuDirectHalo;
+    simulationWorkload.useCpuHaloExchange =
+            havePpDomainDecomposition && (disableGpuForExactLammpsRespa || !useGpuDirectHalo);
+    simulationWorkload.useGpuHaloExchange = !disableGpuForExactLammpsRespa && useGpuDirectHalo;
     if (pmeRunMode == PmeRunMode::None)
     {
         GMX_RELEASE_ASSERT(!haveSeparatePmeRank, "Can not have separate PME rank(s) without PME.");
     }
     simulationWorkload.haveSeparatePmeRank = haveSeparatePmeRank;
     simulationWorkload.useGpuPmePpCommunication =
-            haveSeparatePmeRank && canUseDirectGpuComm
+            !disableGpuForExactLammpsRespa && haveSeparatePmeRank && canUseDirectGpuComm
             && (pmeRunMode == PmeRunMode::GPU || pmeRunMode == PmeRunMode::Mixed);
     simulationWorkload.useCpuPmePpCommunication =
             haveSeparatePmeRank && !simulationWorkload.useGpuPmePpCommunication;
@@ -262,13 +270,18 @@ StepWorkload setupStepWorkload(const int                     legacyFlags,
                                const DomainLifetimeWorkload& domainWork,
                                const SimulationWorkload&     simulationWork)
 {
-    GMX_ASSERT(mtsLevels.empty() || mtsLevels.size() == 2, "Expect 0 or 2 MTS levels");
-    const bool computeSlowForces = (mtsLevels.empty() || step % mtsLevels[1].stepFactor == 0);
+    const int highestActiveLevel = highestActiveMtsLevel(mtsLevels, step);
+    const bool computeSlowForces = (highestActiveLevel > 0);
+    const bool computeLongRangeNonbondedForces =
+            mtsLevels.empty()
+            || highestActiveLevel >= forceGroupMtsLevel(mtsLevels, MtsForceGroups::LongrangeNonbonded);
 
     StepWorkload flags;
     flags.stateChanged                  = ((legacyFlags & GMX_FORCE_STATECHANGED) != 0);
     flags.doNeighborSearch              = ((legacyFlags & GMX_FORCE_NS) != 0);
+    flags.highestActiveMtsLevel         = highestActiveLevel;
     flags.computeSlowForces             = computeSlowForces;
+    flags.computeLongRangeNonbondedForces = computeLongRangeNonbondedForces;
     flags.computeVirial                 = ((legacyFlags & GMX_FORCE_VIRIAL) != 0);
     flags.computeEnergy                 = ((legacyFlags & GMX_FORCE_ENERGY) != 0);
     flags.computeForces                 = ((legacyFlags & GMX_FORCE_FORCES) != 0);
@@ -276,7 +289,8 @@ StepWorkload setupStepWorkload(const int                     legacyFlags,
     flags.computeListedForces           = ((legacyFlags & GMX_FORCE_LISTED) != 0);
     flags.computeNonbondedForces =
             ((legacyFlags & GMX_FORCE_NONBONDED) != 0) && simulationWork.computeNonbonded
-            && !(simulationWork.computeNonbondedAtMtsLevel1 && !computeSlowForces);
+            && !(simulationWork.nonbondedMtsLevel > 0
+                 && highestActiveLevel < simulationWork.nonbondedMtsLevel);
     flags.computeDhdl = ((legacyFlags & GMX_FORCE_DHDL) != 0);
 
     if (simulationWork.useGpuXBufferOpsWhenAllowed || simulationWork.useGpuFBufferOpsWhenAllowed)
@@ -288,15 +302,17 @@ StepWorkload setupStepWorkload(const int                     legacyFlags,
     // on virial steps the CPU reduction path is taken
     flags.useGpuFBufferOps = simulationWork.useGpuFBufferOpsWhenAllowed && !flags.computeVirial;
     flags.useGpuPmeFReduction =
-            flags.computeSlowForces && flags.useGpuFBufferOps
+            flags.computeLongRangeNonbondedForces && flags.useGpuFBufferOps
             && (simulationWork.haveGpuPmeOnPpRank() || simulationWork.useGpuPmePpCommunication);
     flags.useGpuXHalo              = simulationWork.useGpuHaloExchange && !flags.doNeighborSearch;
     flags.useGpuFHalo              = simulationWork.useGpuHaloExchange && flags.useGpuFBufferOps;
-    flags.haveGpuPmeOnThisRank     = simulationWork.haveGpuPmeOnPpRank() && flags.computeSlowForces;
-    flags.computePmeOnSeparateRank = simulationWork.haveSeparatePmeRank && flags.computeSlowForces;
+    flags.haveGpuPmeOnThisRank     = simulationWork.haveGpuPmeOnPpRank() && flags.computeLongRangeNonbondedForces;
+    flags.computePmeOnSeparateRank = simulationWork.haveSeparatePmeRank && flags.computeLongRangeNonbondedForces;
     flags.combineMtsForcesBeforeHaloExchange =
             (flags.computeForces && simulationWork.useMts && flags.computeSlowForces
              && flags.useOnlyMtsCombinedForceBuffer
+             && mtsLevels.size() == 2
+             && flags.highestActiveMtsLevel == 1
              && !(flags.computeVirial || simulationWork.useGpuNonbonded || flags.haveGpuPmeOnThisRank));
     // On NS steps, the buffer is cleared in stateGpu->reinit, no need to clear it twice.
     flags.clearGpuFBufferEarly =

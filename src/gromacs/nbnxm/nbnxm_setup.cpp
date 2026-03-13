@@ -414,6 +414,12 @@ static int getMinimumIlistCountForGpuBalancing(NbnxmGpu* nbnxmGpu)
 //! Returns the LJ combination rule choices for the LJ pair parameters
 static std::optional<LJCombinationRule> chooseLJCombinationRule(const t_forcerec& forcerec)
 {
+    if (!gmx_within_tol(forcerec.ic->vdw.repulsionPower, 12.0, 10 * GMX_DOUBLE_EPS))
+    {
+        /* Non-12 repulsion uses the explicit pair matrix as the CPU reference path. */
+        return LJCombinationRule::None;
+    }
+
     if (forcerec.ic->vdw.type == VanDerWaalsType::Cut
         && (forcerec.ic->vdw.modifier == InteractionModifiers::None
             || forcerec.ic->vdw.modifier == InteractionModifiers::PotShift)

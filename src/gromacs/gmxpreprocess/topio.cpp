@@ -134,7 +134,8 @@ static void gen_pairs(const InteractionsOfType& nbs, InteractionsOfType* pairs, 
              * should be scaled, but not sigma.
              * The sigma values have even indices 0,2, etc.
              */
-            if ((comb == CombinationRule::Arithmetic || comb == CombinationRule::GeomSigEps)
+            if ((comb == CombinationRule::Arithmetic || comb == CombinationRule::GeomSigEps
+                 || comb == CombinationRule::SixthPower)
                 && (j % 2 == 0))
             {
                 scaling = 1.0;

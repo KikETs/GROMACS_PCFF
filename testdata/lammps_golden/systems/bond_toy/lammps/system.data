@@ -1,0 +1,24 @@
+LAMMPS data file for bond_toy
+
+2 atoms
+1 bonds
+
+1 atom types
+1 bond types
+
+-5.0 5.0 xlo xhi
+-5.0 5.0 ylo yhi
+-5.0 5.0 zlo zhi
+
+Masses
+
+1 12.011
+
+Atoms # full
+
+1 1 1 0.0 -0.800000 0.000000 0.000000
+2 1 1 0.0 0.800000 0.000000 0.000000
+
+Bonds
+
+1 1 1 2

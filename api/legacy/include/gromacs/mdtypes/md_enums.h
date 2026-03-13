@@ -445,6 +445,7 @@ enum class CombinationRule : int
     Geometric,
     Arithmetic,
     GeomSigEps,
+    SixthPower,
     Count,
     Default = Geometric
 };

@@ -46,6 +46,7 @@
 #include <string>
 #include <vector>
 
+#include "gromacs/math/units.h"
 #include "gromacs/topology/forcefieldparameters.h"
 #include "gromacs/topology/ifunc.h"
 #include "gromacs/utility/basedefinitions.h"
@@ -104,6 +105,22 @@ void printInteractionParameters(gmx::TextWriter* writer, InteractionFunction fty
                                        iparams.cross_ba.r3e,
                                        iparams.cross_ba.krt);
             break;
+        case InteractionFunction::AngleClass2:
+            writer->writeLineFormatted(
+                    "theta0=%15.8e deg, k2=%15.8e, k3=%15.8e, k4=%15.8e, bb_k=%15.8e, bb_r1=%15.8e, "
+                    "bb_r2=%15.8e, ba_k1=%15.8e, ba_k2=%15.8e, ba_r1=%15.8e, ba_r2=%15.8e",
+                    iparams.angle_class2.theta0 * gmx::c_rad2Deg,
+                    iparams.angle_class2.k2,
+                    iparams.angle_class2.k3,
+                    iparams.angle_class2.k4,
+                    iparams.angle_class2.bb_k,
+                    iparams.angle_class2.bb_r1,
+                    iparams.angle_class2.bb_r2,
+                    iparams.angle_class2.ba_k1,
+                    iparams.angle_class2.ba_k2,
+                    iparams.angle_class2.ba_r1,
+                    iparams.angle_class2.ba_r2);
+            break;
         case InteractionFunction::LinearAngles:
             writer->writeLineFormatted("klinA=%15.8e, aA=%15.8e, klinB=%15.8e, aB=%15.8e",
                                        iparams.linangle.klinA,
@@ -144,6 +161,61 @@ void printInteractionParameters(gmx::TextWriter* writer, InteractionFunction fty
         case InteractionFunction::ImproperDihedrals:
             printHarmonicInteraction(writer, iparams, "xi", "cx");
             break;
+        case InteractionFunction::DihedralClass2:
+            writer->writeLineFormatted(
+                    "k1=%15.8e, phi1=%15.8e deg, k2=%15.8e, phi2=%15.8e deg, k3=%15.8e, phi3=%15.8e deg, "
+                    "mbt_f1=%15.8e, mbt_f2=%15.8e, mbt_f3=%15.8e, mbt_r0=%15.8e, "
+                    "ebt_f1_1=%15.8e, ebt_f2_1=%15.8e, ebt_f3_1=%15.8e, ebt_f1_2=%15.8e, ebt_f2_2=%15.8e, "
+                    "ebt_f3_2=%15.8e, ebt_r0_1=%15.8e, ebt_r0_2=%15.8e, at_f1_1=%15.8e, at_f2_1=%15.8e, "
+                    "at_f3_1=%15.8e, at_f1_2=%15.8e, at_f2_2=%15.8e, at_f3_2=%15.8e, at_theta0_1=%15.8e deg, "
+                    "at_theta0_2=%15.8e deg, aat_k=%15.8e, aat_theta0_1=%15.8e deg, aat_theta0_2=%15.8e deg, "
+                    "bb13t_k=%15.8e, bb13t_r10=%15.8e, bb13t_r30=%15.8e",
+                    iparams.dihedral_class2.k1,
+                    iparams.dihedral_class2.phi1 * gmx::c_rad2Deg,
+                    iparams.dihedral_class2.k2,
+                    iparams.dihedral_class2.phi2 * gmx::c_rad2Deg,
+                    iparams.dihedral_class2.k3,
+                    iparams.dihedral_class2.phi3 * gmx::c_rad2Deg,
+                    iparams.dihedral_class2.mbt_f1,
+                    iparams.dihedral_class2.mbt_f2,
+                    iparams.dihedral_class2.mbt_f3,
+                    iparams.dihedral_class2.mbt_r0,
+                    iparams.dihedral_class2.ebt_f1_1,
+                    iparams.dihedral_class2.ebt_f2_1,
+                    iparams.dihedral_class2.ebt_f3_1,
+                    iparams.dihedral_class2.ebt_f1_2,
+                    iparams.dihedral_class2.ebt_f2_2,
+                    iparams.dihedral_class2.ebt_f3_2,
+                    iparams.dihedral_class2.ebt_r0_1,
+                    iparams.dihedral_class2.ebt_r0_2,
+                    iparams.dihedral_class2.at_f1_1,
+                    iparams.dihedral_class2.at_f2_1,
+                    iparams.dihedral_class2.at_f3_1,
+                    iparams.dihedral_class2.at_f1_2,
+                    iparams.dihedral_class2.at_f2_2,
+                    iparams.dihedral_class2.at_f3_2,
+                    iparams.dihedral_class2.at_theta0_1 * gmx::c_rad2Deg,
+                    iparams.dihedral_class2.at_theta0_2 * gmx::c_rad2Deg,
+                    iparams.dihedral_class2.aat_k,
+                    iparams.dihedral_class2.aat_theta0_1 * gmx::c_rad2Deg,
+                    iparams.dihedral_class2.aat_theta0_2 * gmx::c_rad2Deg,
+                    iparams.dihedral_class2.bb13t_k,
+                    iparams.dihedral_class2.bb13t_r10,
+                    iparams.dihedral_class2.bb13t_r30);
+            break;
+        case InteractionFunction::ImproperClass2:
+            writer->writeLineFormatted(
+                    "k0=%15.8e, chi0=%15.8e deg, aa_k1=%15.8e, aa_k2=%15.8e, aa_k3=%15.8e, "
+                    "aa_theta0_1=%15.8e deg, aa_theta0_2=%15.8e deg, aa_theta0_3=%15.8e deg",
+                    iparams.improper_class2.k0,
+                    iparams.improper_class2.chi0 * gmx::c_rad2Deg,
+                    iparams.improper_class2.aa_k1,
+                    iparams.improper_class2.aa_k2,
+                    iparams.improper_class2.aa_k3,
+                    iparams.improper_class2.aa_theta0_1 * gmx::c_rad2Deg,
+                    iparams.improper_class2.aa_theta0_2 * gmx::c_rad2Deg,
+                    iparams.improper_class2.aa_theta0_3 * gmx::c_rad2Deg);
+            break;
         case InteractionFunction::MorsePotential:
             writer->writeLineFormatted(
                     "b0A=%15.8e, cbA=%15.8e, betaA=%15.8e, b0B=%15.8e, cbB=%15.8e, betaB=%15.8e",
@@ -159,6 +231,13 @@ void printInteractionParameters(gmx::TextWriter* writer, InteractionFunction fty
                                        iparams.cubic.b0,
                                        iparams.cubic.kb,
                                        iparams.cubic.kcub);
+            break;
+        case InteractionFunction::BondClass2:
+            writer->writeLineFormatted("r0=%15.8e, k2=%15.8e, k3=%15.8e, k4=%15.8e",
+                                       iparams.bond_class2.r0,
+                                       iparams.bond_class2.k2,
+                                       iparams.bond_class2.k3,
+                                       iparams.bond_class2.k4);
             break;
         case InteractionFunction::ConnectBonds: writer->ensureEmptyLine(); break;
         case InteractionFunction::FENEBonds:

@@ -67,8 +67,12 @@ public:
     bool stateChanged = false;
     //! Whether neighbor searching needs to be done this step
     bool doNeighborSearch = false;
+    //! Highest active MTS level on this step, 0 without MTS or on the fastest steps
+    int highestActiveMtsLevel = 0;
     //! Whether the slow forces need to be computed this step (in addition to the faster forces)
     bool computeSlowForces = false;
+    //! Whether long-range nonbonded forces need to be computed this step
+    bool computeLongRangeNonbondedForces = false;
     //! Whether virial needs to be computed this step
     bool computeVirial = false;
     //! Whether energies need to be computed this step this step
@@ -165,8 +169,8 @@ class SimulationWorkload
 public:
     //! Whether to compute nonbonded pair interactions
     bool computeNonbonded = false;
-    //! Whether nonbonded pair forces are to be computed at slow MTS steps only
-    bool computeNonbondedAtMtsLevel1 = false;
+    //! MTS level for nonbonded pair forces, 0 without MTS or when evaluated every base step
+    int nonbondedMtsLevel = 0;
     //! Whether total dipole needs to be computed
     bool computeMuTot = false;
     //! Whether the box might change over the course of the simulation

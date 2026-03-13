@@ -41,6 +41,7 @@
 #include <vector>
 
 #include "gromacs/mdtypes/md_enums.h"
+#include "gromacs/mdtypes/multipletimestepping.h"
 #include "gromacs/utility/arrayref.h"
 #include "gromacs/utility/enumerationhelpers.h"
 #include "gromacs/utility/real.h"
@@ -60,7 +61,6 @@ class AwhParams;
 template<typename T1, typename T2, T1 U>
 struct EnumerationArray;
 class KeyValueTreeObject;
-struct MtsLevel;
 } // namespace gmx
 
 struct t_grpopts
@@ -430,8 +430,12 @@ struct t_inputrec // NOLINT (clang-analyzer-optin.performance.Padding)
     double delta_t = 0;
     //! Whether we use multiple time stepping
     bool useMts = false;
+    //! The MTS semantics to apply
+    gmx::MtsMode mtsMode = gmx::MtsMode::Legacy;
     //! The multiple time stepping levels
     std::vector<gmx::MtsLevel> mtsLevels;
+    //! Exact LAMMPS-style r-RESPA settings
+    gmx::LammpsRespaParameters lammpsRespa;
 
     //! The factor for repartitioning atom masses
     real massRepartitionFactor = 1;

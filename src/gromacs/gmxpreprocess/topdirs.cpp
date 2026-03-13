@@ -116,6 +116,7 @@ InteractionFunction ifunc_index(Directive d, int type)
                 case 2: return InteractionFunction::GROMOS96Bonds;
                 case 3: return InteractionFunction::MorsePotential;
                 case 4: return InteractionFunction::CubicBonds;
+                case 11: return InteractionFunction::BondClass2;
                 case 5: return InteractionFunction::ConnectBonds;
                 case 6: return InteractionFunction::HarmonicPotential;
                 case 7: return InteractionFunction::FENEBonds;
@@ -134,6 +135,7 @@ InteractionFunction ifunc_index(Directive d, int type)
                 case 4: return InteractionFunction::CrossBondAngles;
                 case 5: return InteractionFunction::UreyBradleyPotential;
                 case 6: return InteractionFunction::QuarticAngles;
+                case 11: return InteractionFunction::AngleClass2;
                 case 8: return InteractionFunction::TabulatedAngles;
                 case 9: return InteractionFunction::LinearAngles;
                 case 10: return InteractionFunction::RestrictedBendingPotential;
@@ -163,6 +165,8 @@ InteractionFunction ifunc_index(Directive d, int type)
                 case 3: return InteractionFunction::RyckaertBellemansDihedrals;
                 case 4: return InteractionFunction::PeriodicImproperDihedrals;
                 case 5: return InteractionFunction::FourierDihedrals;
+                case 13: return InteractionFunction::DihedralClass2;
+                case 12: return InteractionFunction::ImproperClass2;
                 case 8: return InteractionFunction::TabulatedDihedrals;
                 case 9:
                     return InteractionFunction::ProperDihedrals; /* proper dihedrals where we allow multiple terms over single bond */

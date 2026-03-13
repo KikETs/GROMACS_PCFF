@@ -74,9 +74,13 @@ class ForceBuffersView
 public:
     //! Constructor, creates a view to \p force
     ForceBuffersView(const ArrayRefWithPadding<RVec>& force,
+                     const std::vector<ArrayRefWithPadding<RVec>>& mtsLevelForces,
                      const ArrayRefWithPadding<RVec>& forceMtsCombined,
                      const bool                       useForceMtsCombined) :
-        force_(force), forceMtsCombined_(forceMtsCombined), useForceMtsCombined_(useForceMtsCombined)
+        force_(force),
+        mtsLevelForces_(mtsLevelForces),
+        forceMtsCombined_(forceMtsCombined),
+        useForceMtsCombined_(useForceMtsCombined)
     {
     }
 
@@ -102,6 +106,23 @@ public:
 
     //! Returns an ArrayRefWithPadding to the force buffer
     ArrayRefWithPadding<RVec> forceWithPadding() { return force_; }
+
+    //! Returns the number of dedicated per-level MTS force buffers
+    int numMtsLevelForceBuffers() const { return mtsLevelForces_.size(); }
+
+    //! Returns an arrayref to the force buffer for non-zero MTS level \p mtsLevel
+    ArrayRef<RVec> forceForMtsLevel(const int mtsLevel)
+    {
+        GMX_ASSERT(mtsLevel > 0 && mtsLevel <= numMtsLevelForceBuffers(), "Need a valid non-zero MTS level");
+        return mtsLevelForces_[mtsLevel - 1].unpaddedArrayRef();
+    }
+
+    //! Returns an ArrayRefWithPadding to the force buffer for non-zero MTS level \p mtsLevel
+    ArrayRefWithPadding<RVec> forceForMtsLevelWithPadding(const int mtsLevel)
+    {
+        GMX_ASSERT(mtsLevel > 0 && mtsLevel <= numMtsLevelForceBuffers(), "Need a valid non-zero MTS level");
+        return mtsLevelForces_[mtsLevel - 1];
+    }
 
     //! Returns a const arrayref to the MTS force buffer without padding
     ArrayRef<const RVec> forceMtsCombined() const
@@ -130,6 +151,8 @@ public:
 private:
     //! The force buffer
     ArrayRefWithPadding<RVec> force_;
+    //! Force buffers for each explicit non-zero MTS level
+    std::vector<ArrayRefWithPadding<RVec>> mtsLevelForces_;
     //! The force buffer for combined fast and slow forces with MTS
     ArrayRefWithPadding<RVec> forceMtsCombined_;
     //! Whether we use forceMtsCombined_
@@ -150,6 +173,13 @@ class ForceBuffers
 public:
     //! Constructor, creates an empty force buffer with pinning not active and no MTS force buffer
     ForceBuffers();
+
+    /*! \brief Constructor with an explicit number of MTS levels
+     *
+     * \param[in] numMtsLevels      Number of MTS levels, 0 or 1 disables MTS buffers
+     * \param[in] pinningPolicy     The pinning policy for the primary force buffer
+     */
+    ForceBuffers(int numMtsLevels, PinningPolicy pinningPolicy);
 
     /*! \brief Constructor, with options for using the MTS force buffer and the pinning policy
      *
@@ -190,6 +220,8 @@ public:
 private:
     //! The force buffer
     PaddedHostVector<RVec> force_;
+    //! Force buffers for each explicit non-zero MTS level
+    std::vector<PaddedHostVector<RVec>> mtsLevelForces_;
     //! Force buffer with combined fast and slow forces for use with multiple time stepping
     PaddedHostVector<RVec> forceMtsCombined_;
     //! The view to the force buffer

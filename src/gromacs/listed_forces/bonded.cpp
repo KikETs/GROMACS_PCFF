@@ -365,6 +365,55 @@ real cubic_bonds(int              nbonds,
 }
 
 template<BondedKernelFlavor flavor>
+real bond_class2(int              nbonds,
+                 const t_iatom    forceatoms[],
+                 const t_iparams  forceparams[],
+                 const rvec       x[],
+                 rvec4            f[],
+                 rvec             fshift[],
+                 const t_pbc*     pbc,
+                 real gmx_unused  lambda,
+                 real gmx_unused* dvdlambda,
+                 gmx::ArrayRef<const real> /*charge*/,
+                 t_fcdata gmx_unused*     fcd,
+                 t_disresdata gmx_unused* disresdata,
+                 t_oriresdata gmx_unused* oriresdata,
+                 int gmx_unused*          global_atom_index)
+{
+    real vtot = 0;
+    rvec dx;
+
+    for (int i = 0; i < nbonds;)
+    {
+        const int type = forceatoms[i++];
+        const int ai   = forceatoms[i++];
+        const int aj   = forceatoms[i++];
+
+        const int  ki  = pbc_rvec_sub(pbc, x[ai], x[aj], dx);
+        const real rsq = iprod(dx, dx);
+        const real r   = std::sqrt(rsq);
+        const real dr  = r - forceparams[type].bond_class2.r0;
+        const real dr2 = dr * dr;
+        const real dr3 = dr2 * dr;
+        const real dr4 = dr3 * dr;
+        const real de  = 2 * forceparams[type].bond_class2.k2 * dr
+                        + 3 * forceparams[type].bond_class2.k3 * dr2
+                        + 4 * forceparams[type].bond_class2.k4 * dr3;
+        const real fbond = (r > 0 ? -de / r : 0);
+
+        vtot += forceparams[type].bond_class2.k2 * dr2 + forceparams[type].bond_class2.k3 * dr3
+                + forceparams[type].bond_class2.k4 * dr4;
+
+        if (rsq > 0)
+        {
+            spreadBondForces<flavor>(fbond, dx, ai, aj, f, ki, fshift);
+        }
+    }
+
+    return vtot;
+}
+
+template<BondedKernelFlavor flavor>
 real FENE_bonds(int              nbonds,
                 const t_iatom    forceatoms[],
                 const t_iparams  forceparams[],
@@ -1653,6 +1702,151 @@ real quartic_angles(int              nbonds,
     return vtot;
 }
 
+template<BondedKernelFlavor flavor>
+real angle_class2(int              nbonds,
+                  const t_iatom    forceatoms[],
+                  const t_iparams  forceparams[],
+                  const rvec       x[],
+                  rvec4            f[],
+                  rvec             fshift[],
+                  const t_pbc*     pbc,
+                  real gmx_unused  lambda,
+                  real gmx_unused* dvdlambda,
+                  gmx::ArrayRef<const real> /*charge*/,
+                  t_fcdata gmx_unused*     fcd,
+                  t_disresdata gmx_unused* disresdata,
+                  t_oriresdata gmx_unused* oriresdata,
+                  int gmx_unused*          global_atom_index)
+{
+    constexpr real c_small = 0.001_real;
+
+    real vtot = 0;
+    rvec del1, del2;
+
+    for (int i = 0; i < nbonds;)
+    {
+        const int type = forceatoms[i++];
+        const int ai   = forceatoms[i++];
+        const int aj   = forceatoms[i++];
+        const int ak   = forceatoms[i++];
+
+        const int t1 = pbc_rvec_sub(pbc, x[ai], x[aj], del1);
+        const int t2 = pbc_rvec_sub(pbc, x[ak], x[aj], del2);
+
+        const real rsq1 = iprod(del1, del1);
+        const real rsq2 = iprod(del2, del2);
+        const real r1   = std::sqrt(rsq1);
+        const real r2   = std::sqrt(rsq2);
+        const real r12  = r1 * r2;
+
+        real c = iprod(del1, del2) / r12;
+        c      = std::clamp(c, -1.0_real, 1.0_real);
+
+        real s = std::sqrt(1 - c * c);
+        if (s < c_small)
+        {
+            s = c_small;
+        }
+        s = 1 / s;
+
+        const real dtheta  = std::acos(c) - forceparams[type].angle_class2.theta0;
+        const real dtheta2 = dtheta * dtheta;
+        const real dtheta3 = dtheta2 * dtheta;
+        const real dtheta4 = dtheta3 * dtheta;
+
+        const real deAngle = 2 * forceparams[type].angle_class2.k2 * dtheta
+                             + 3 * forceparams[type].angle_class2.k3 * dtheta2
+                             + 4 * forceparams[type].angle_class2.k4 * dtheta3;
+        const real a   = -deAngle * s;
+        const real a11 = a * c / rsq1;
+        const real a12 = -a / r12;
+        const real a22 = a * c / rsq2;
+
+        rvec f_i = { a11 * del1[XX] + a12 * del2[XX],
+                     a11 * del1[YY] + a12 * del2[YY],
+                     a11 * del1[ZZ] + a12 * del2[ZZ] };
+        rvec f_k = { a22 * del2[XX] + a12 * del1[XX],
+                     a22 * del2[YY] + a12 * del1[YY],
+                     a22 * del2[ZZ] + a12 * del1[ZZ] };
+
+        vtot += forceparams[type].angle_class2.k2 * dtheta2 + forceparams[type].angle_class2.k3 * dtheta3
+                + forceparams[type].angle_class2.k4 * dtheta4;
+
+        real dr1 = r1 - forceparams[type].angle_class2.bb_r1;
+        real dr2 = r2 - forceparams[type].angle_class2.bb_r2;
+        const real tk1 = forceparams[type].angle_class2.bb_k * dr1;
+        const real tk2 = forceparams[type].angle_class2.bb_k * dr2;
+
+        f_i[XX] -= del1[XX] * tk2 / r1;
+        f_i[YY] -= del1[YY] * tk2 / r1;
+        f_i[ZZ] -= del1[ZZ] * tk2 / r1;
+        f_k[XX] -= del2[XX] * tk1 / r2;
+        f_k[YY] -= del2[YY] * tk1 / r2;
+        f_k[ZZ] -= del2[ZZ] * tk1 / r2;
+
+        vtot += forceparams[type].angle_class2.bb_k * dr1 * dr2;
+
+        dr1 = r1 - forceparams[type].angle_class2.ba_r1;
+        dr2 = r2 - forceparams[type].angle_class2.ba_r2;
+
+        const real aa1 = s * dr1 * forceparams[type].angle_class2.ba_k1;
+        const real aa2 = s * dr2 * forceparams[type].angle_class2.ba_k2;
+
+        real aa11 = aa1 * c / rsq1;
+        real aa12 = -aa1 / r12;
+        real aa21 = aa2 * c / rsq1;
+        real aa22 = -aa2 / r12;
+
+        const rvec v1 = { aa11 * del1[XX] + aa12 * del2[XX],
+                          aa11 * del1[YY] + aa12 * del2[YY],
+                          aa11 * del1[ZZ] + aa12 * del2[ZZ] };
+        const rvec v2 = { aa21 * del1[XX] + aa22 * del2[XX],
+                          aa21 * del1[YY] + aa22 * del2[YY],
+                          aa21 * del1[ZZ] + aa22 * del2[ZZ] };
+
+        aa11 = aa1 * c / rsq2;
+        aa21 = aa2 * c / rsq2;
+
+        const rvec v3 = { aa11 * del2[XX] + aa12 * del1[XX],
+                          aa11 * del2[YY] + aa12 * del1[YY],
+                          aa11 * del2[ZZ] + aa12 * del1[ZZ] };
+        const rvec v4 = { aa21 * del2[XX] + aa22 * del1[XX],
+                          aa21 * del2[YY] + aa22 * del1[YY],
+                          aa21 * del2[ZZ] + aa22 * del1[ZZ] };
+
+        const real b1 = forceparams[type].angle_class2.ba_k1 * dtheta / r1;
+        const real b2 = forceparams[type].angle_class2.ba_k2 * dtheta / r2;
+
+        f_i[XX] -= v1[XX] + b1 * del1[XX] + v2[XX];
+        f_i[YY] -= v1[YY] + b1 * del1[YY] + v2[YY];
+        f_i[ZZ] -= v1[ZZ] + b1 * del1[ZZ] + v2[ZZ];
+        f_k[XX] -= v3[XX] + b2 * del2[XX] + v4[XX];
+        f_k[YY] -= v3[YY] + b2 * del2[YY] + v4[YY];
+        f_k[ZZ] -= v3[ZZ] + b2 * del2[ZZ] + v4[ZZ];
+
+        vtot += forceparams[type].angle_class2.ba_k1 * dr1 * dtheta
+                + forceparams[type].angle_class2.ba_k2 * dr2 * dtheta;
+
+        rvec f_j;
+        for (int m = 0; m < DIM; m++)
+        {
+            f_j[m] = -f_i[m] - f_k[m];
+            f[ai][m] += f_i[m];
+            f[aj][m] += f_j[m];
+            f[ak][m] += f_k[m];
+        }
+
+        if (computeVirial(flavor))
+        {
+            rvec_inc(fshift[t1], f_i);
+            rvec_inc(fshift[c_centralShiftIndex], f_j);
+            rvec_inc(fshift[t2], f_k);
+        }
+    }
+
+    return vtot;
+}
+
 
 #if GMX_SIMD_HAVE_REAL
 
@@ -2241,6 +2435,795 @@ rbdihs(int              nbonds,
 
 #endif // GMX_SIMD_HAVE_REAL
 
+
+static inline void pcffClass2Cross(const real a[DIM], const real b[DIM], real c[DIM])
+{
+    c[XX] = a[YY] * b[ZZ] - a[ZZ] * b[YY];
+    c[YY] = a[ZZ] * b[XX] - a[XX] * b[ZZ];
+    c[ZZ] = a[XX] * b[YY] - a[YY] * b[XX];
+}
+
+static inline real pcffClass2Dot(const real a[DIM], const real b[DIM])
+{
+    return a[XX] * b[XX] + a[YY] * b[YY] + a[ZZ] * b[ZZ];
+}
+
+template<BondedKernelFlavor flavor>
+real dihedral_class2(int             nbonds,
+                     const t_iatom   forceatoms[],
+                     const t_iparams forceparams[],
+                     const rvec      x[],
+                     rvec4           f[],
+                     rvec            fshift[],
+                     const t_pbc*    pbc,
+                     real gmx_unused lambda,
+                     real* /*dvdlambda*/,
+                     gmx::ArrayRef<const real> /*charge*/,
+                     t_fcdata gmx_unused*     fcd,
+                     t_disresdata gmx_unused* disresdata,
+                     t_oriresdata gmx_unused* oriresdata,
+                     int gmx_unused*          global_atom_index)
+{
+    constexpr real c_tolerance = 0.05_real;
+    constexpr real c_small     = 1.0e-7_real;
+
+    real vtot = 0;
+
+    for (int n = 0; n < nbonds;)
+    {
+        const int type = forceatoms[n++];
+        const int ai   = forceatoms[n++];
+        const int aj   = forceatoms[n++];
+        const int ak   = forceatoms[n++];
+        const int al   = forceatoms[n++];
+
+        const auto& params = forceparams[type].dihedral_class2;
+
+        rvec vb1, vb2, vb3;
+        const int t1 = pbc_rvec_sub(pbc, x[ai], x[aj], vb1);
+        const int t2 = pbc_rvec_sub(pbc, x[ak], x[aj], vb2);
+        pbc_rvec_sub(pbc, x[al], x[ak], vb3);
+
+        const real vb2xm = -vb2[XX];
+        const real vb2ym = -vb2[YY];
+        const real vb2zm = -vb2[ZZ];
+
+        const real r1mag2 = pcffClass2Dot(vb1, vb1);
+        const real r2mag2 = pcffClass2Dot(vb2, vb2);
+        const real r3mag2 = pcffClass2Dot(vb3, vb3);
+        const real r1     = std::sqrt(r1mag2);
+        const real r2     = std::sqrt(r2mag2);
+        const real r3     = std::sqrt(r3mag2);
+        const real sb1    = 1.0_real / r1mag2;
+        const real rb1    = 1.0_real / r1;
+        const real sb2    = 1.0_real / r2mag2;
+        const real rb2    = 1.0_real / r2;
+        const real sb3    = 1.0_real / r3mag2;
+        const real rb3    = 1.0_real / r3;
+
+        real c0      = pcffClass2Dot(vb1, vb3) * rb1 * rb3;
+        const real r12c1 = rb1 * rb2;
+        const real r12c2 = rb2 * rb3;
+        real costh12 = pcffClass2Dot(vb1, vb2) * r12c1;
+        real costh13 = c0;
+        real costh23 = (vb2xm * vb3[XX] + vb2ym * vb3[YY] + vb2zm * vb3[ZZ]) * r12c2;
+
+        costh12 = std::clamp(costh12, -1.0_real, 1.0_real);
+        costh13 = std::clamp(costh13, -1.0_real, 1.0_real);
+        costh23 = std::clamp(costh23, -1.0_real, 1.0_real);
+        c0      = costh13;
+
+        real sin2 = std::max(1.0_real - costh12 * costh12, 0.0_real);
+        real sc1  = std::sqrt(sin2);
+        if (sc1 < c_small)
+        {
+            sc1 = c_small;
+        }
+        sc1 = 1.0_real / sc1;
+
+        sin2      = std::max(1.0_real - costh23 * costh23, 0.0_real);
+        real sc2  = std::sqrt(sin2);
+        if (sc2 < c_small)
+        {
+            sc2 = c_small;
+        }
+        sc2 = 1.0_real / sc2;
+
+        const real s1  = sc1 * sc1;
+        const real s2  = sc2 * sc2;
+        const real s12 = sc1 * sc2;
+        real       c   = (c0 + costh12 * costh23) * s12;
+
+        if (c > 1.0_real + c_tolerance || c < -1.0_real - c_tolerance)
+        {
+            c = std::clamp(c, -1.0_real, 1.0_real);
+        }
+        else
+        {
+            c = std::clamp(c, -1.0_real, 1.0_real);
+        }
+
+        real cosphi = c;
+        real phi    = std::acos(c);
+
+        real sinphi = std::sqrt(std::max(1.0_real - c * c, 0.0_real));
+        sinphi      = std::max(sinphi, c_small);
+
+        const real n123x = vb1[YY] * vb2[ZZ] - vb1[ZZ] * vb2[YY];
+        const real n123y = vb1[ZZ] * vb2[XX] - vb1[XX] * vb2[ZZ];
+        const real n123z = vb1[XX] * vb2[YY] - vb1[YY] * vb2[XX];
+        const real n123DotVb3 = n123x * vb3[XX] + n123y * vb3[YY] + n123z * vb3[ZZ];
+        if (n123DotVb3 > 0.0_real)
+        {
+            phi    = -phi;
+            sinphi = -sinphi;
+        }
+
+        const real a11 = -c * sb1 * s1;
+        const real a22 = sb2 * (2.0_real * costh13 * s12 - c * (s1 + s2));
+        const real a33 = -c * sb3 * s2;
+        const real a12 = r12c1 * (costh12 * c * s1 + costh23 * s12);
+        const real a13 = rb1 * rb3 * s12;
+        const real a23 = r12c2 * (-costh23 * c * s2 - costh12 * s12);
+
+        const real sx1  = a11 * vb1[XX] + a12 * vb2[XX] + a13 * vb3[XX];
+        const real sx2  = a12 * vb1[XX] + a22 * vb2[XX] + a23 * vb3[XX];
+        const real sx12 = a13 * vb1[XX] + a23 * vb2[XX] + a33 * vb3[XX];
+        const real sy1  = a11 * vb1[YY] + a12 * vb2[YY] + a13 * vb3[YY];
+        const real sy2  = a12 * vb1[YY] + a22 * vb2[YY] + a23 * vb3[YY];
+        const real sy12 = a13 * vb1[YY] + a23 * vb2[YY] + a33 * vb3[YY];
+        const real sz1  = a11 * vb1[ZZ] + a12 * vb2[ZZ] + a13 * vb3[ZZ];
+        const real sz2  = a12 * vb1[ZZ] + a22 * vb2[ZZ] + a23 * vb3[ZZ];
+        const real sz12 = a13 * vb1[ZZ] + a23 * vb2[ZZ] + a33 * vb3[ZZ];
+
+        real dcosphidr[4][DIM];
+        real dphidr[4][DIM];
+        dcosphidr[0][XX] = -sx1;
+        dcosphidr[0][YY] = -sy1;
+        dcosphidr[0][ZZ] = -sz1;
+        dcosphidr[1][XX] = sx2 + sx1;
+        dcosphidr[1][YY] = sy2 + sy1;
+        dcosphidr[1][ZZ] = sz2 + sz1;
+        dcosphidr[2][XX] = sx12 - sx2;
+        dcosphidr[2][YY] = sy12 - sy2;
+        dcosphidr[2][ZZ] = sz12 - sz2;
+        dcosphidr[3][XX] = -sx12;
+        dcosphidr[3][YY] = -sy12;
+        dcosphidr[3][ZZ] = -sz12;
+
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < DIM; j++)
+            {
+                dphidr[i][j] = -dcosphidr[i][j] / sinphi;
+            }
+        }
+
+        real fabcd[4][DIM] = { { 0 } };
+
+        const real dphi1 = phi - params.phi1;
+        const real dphi2 = 2.0_real * phi - params.phi2;
+        const real dphi3 = 3.0_real * phi - params.phi3;
+        if (computeEnergy(flavor))
+        {
+            vtot += params.k1 * (1.0_real - std::cos(dphi1)) + params.k2 * (1.0_real - std::cos(dphi2))
+                    + params.k3 * (1.0_real - std::cos(dphi3));
+        }
+
+        const real deDihedral = params.k1 * std::sin(dphi1) + 2.0_real * params.k2 * std::sin(dphi2)
+                                + 3.0_real * params.k3 * std::sin(dphi3);
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < DIM; j++)
+            {
+                fabcd[i][j] = deDihedral * dphidr[i][j];
+            }
+        }
+
+        real dbonddr[3][4][DIM] = { { { 0 } } };
+        dbonddr[0][0][XX] = vb1[XX] / r1;
+        dbonddr[0][0][YY] = vb1[YY] / r1;
+        dbonddr[0][0][ZZ] = vb1[ZZ] / r1;
+        dbonddr[0][1][XX] = -vb1[XX] / r1;
+        dbonddr[0][1][YY] = -vb1[YY] / r1;
+        dbonddr[0][1][ZZ] = -vb1[ZZ] / r1;
+
+        dbonddr[1][1][XX] = vb2[XX] / r2;
+        dbonddr[1][1][YY] = vb2[YY] / r2;
+        dbonddr[1][1][ZZ] = vb2[ZZ] / r2;
+        dbonddr[1][2][XX] = -vb2[XX] / r2;
+        dbonddr[1][2][YY] = -vb2[YY] / r2;
+        dbonddr[1][2][ZZ] = -vb2[ZZ] / r2;
+
+        dbonddr[2][2][XX] = vb3[XX] / r3;
+        dbonddr[2][2][YY] = vb3[YY] / r3;
+        dbonddr[2][2][ZZ] = vb3[ZZ] / r3;
+        dbonddr[2][3][XX] = -vb3[XX] / r3;
+        dbonddr[2][3][YY] = -vb3[YY] / r3;
+        dbonddr[2][3][ZZ] = -vb3[ZZ] / r3;
+
+        real dthetadr[2][4][DIM] = { { { 0 } } };
+        const real t1l = costh12 / r1mag2;
+        const real t2l = costh23 / r2mag2;
+        const real t3l = costh12 / r2mag2;
+        const real t4l = costh23 / r3mag2;
+
+        dthetadr[0][0][XX] = sc1 * (t1l * vb1[XX] - vb2[XX] * r12c1);
+        dthetadr[0][0][YY] = sc1 * (t1l * vb1[YY] - vb2[YY] * r12c1);
+        dthetadr[0][0][ZZ] = sc1 * (t1l * vb1[ZZ] - vb2[ZZ] * r12c1);
+        dthetadr[0][1][XX] = sc1 * ((-t1l * vb1[XX]) + (vb2[XX] * r12c1) + (-t3l * vb2[XX]) + (vb1[XX] * r12c1));
+        dthetadr[0][1][YY] = sc1 * ((-t1l * vb1[YY]) + (vb2[YY] * r12c1) + (-t3l * vb2[YY]) + (vb1[YY] * r12c1));
+        dthetadr[0][1][ZZ] = sc1 * ((-t1l * vb1[ZZ]) + (vb2[ZZ] * r12c1) + (-t3l * vb2[ZZ]) + (vb1[ZZ] * r12c1));
+        dthetadr[0][2][XX] = sc1 * (t3l * vb2[XX] - vb1[XX] * r12c1);
+        dthetadr[0][2][YY] = sc1 * (t3l * vb2[YY] - vb1[YY] * r12c1);
+        dthetadr[0][2][ZZ] = sc1 * (t3l * vb2[ZZ] - vb1[ZZ] * r12c1);
+
+        dthetadr[1][1][XX] = sc2 * (t2l * vb2[XX] + vb3[XX] * r12c2);
+        dthetadr[1][1][YY] = sc2 * (t2l * vb2[YY] + vb3[YY] * r12c2);
+        dthetadr[1][1][ZZ] = sc2 * (t2l * vb2[ZZ] + vb3[ZZ] * r12c2);
+        dthetadr[1][2][XX] =
+                sc2 * ((-t2l * vb2[XX]) - (vb3[XX] * r12c2) + (t4l * vb3[XX]) + (vb2[XX] * r12c2));
+        dthetadr[1][2][YY] =
+                sc2 * ((-t2l * vb2[YY]) - (vb3[YY] * r12c2) + (t4l * vb3[YY]) + (vb2[YY] * r12c2));
+        dthetadr[1][2][ZZ] =
+                sc2 * ((-t2l * vb2[ZZ]) - (vb3[ZZ] * r12c2) + (t4l * vb3[ZZ]) + (vb2[ZZ] * r12c2));
+        dthetadr[1][3][XX] = -sc2 * (t4l * vb3[XX] + vb2[XX] * r12c2);
+        dthetadr[1][3][YY] = -sc2 * (t4l * vb3[YY] + vb2[YY] * r12c2);
+        dthetadr[1][3][ZZ] = -sc2 * (t4l * vb3[ZZ] + vb2[ZZ] * r12c2);
+
+        const real cos2phi = std::cos(2.0_real * phi);
+        const real cos3phi = std::cos(3.0_real * phi);
+        real       bt1     = params.mbt_f1 * cosphi;
+        real       bt2     = params.mbt_f2 * cos2phi;
+        real       bt3     = params.mbt_f3 * cos3phi;
+        real       sumbte  = bt1 + bt2 + bt3;
+        real       db      = r2 - params.mbt_r0;
+        if (computeEnergy(flavor))
+        {
+            vtot += db * sumbte;
+        }
+
+        bt1 = -params.mbt_f1 * sinphi;
+        bt2 = -2.0_real * params.mbt_f2 * std::sin(2.0_real * phi);
+        bt3 = -3.0_real * params.mbt_f3 * std::sin(3.0_real * phi);
+        real sumbtf = bt1 + bt2 + bt3;
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < DIM; j++)
+            {
+                fabcd[i][j] += db * sumbtf * dphidr[i][j] + sumbte * dbonddr[1][i][j];
+            }
+        }
+
+        bt1    = params.ebt_f1_1 * cosphi;
+        bt2    = params.ebt_f2_1 * cos2phi;
+        bt3    = params.ebt_f3_1 * cos3phi;
+        sumbte = bt1 + bt2 + bt3;
+        db     = r1 - params.ebt_r0_1;
+        if (computeEnergy(flavor))
+        {
+            vtot += db * sumbte;
+        }
+
+        bt1 = params.ebt_f1_1 * sinphi;
+        bt2 = 2.0_real * params.ebt_f2_1 * std::sin(2.0_real * phi);
+        bt3 = 3.0_real * params.ebt_f3_1 * std::sin(3.0_real * phi);
+        sumbtf = bt1 + bt2 + bt3;
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < DIM; j++)
+            {
+                fabcd[i][j] -= db * sumbtf * dphidr[i][j] + sumbte * dbonddr[0][i][j];
+            }
+        }
+
+        bt1    = params.ebt_f1_2 * cosphi;
+        bt2    = params.ebt_f2_2 * cos2phi;
+        bt3    = params.ebt_f3_2 * cos3phi;
+        sumbte = bt1 + bt2 + bt3;
+        db     = r3 - params.ebt_r0_2;
+        if (computeEnergy(flavor))
+        {
+            vtot += db * sumbte;
+        }
+
+        bt1 = -params.ebt_f1_2 * sinphi;
+        bt2 = -2.0_real * params.ebt_f2_2 * std::sin(2.0_real * phi);
+        bt3 = -3.0_real * params.ebt_f3_2 * std::sin(3.0_real * phi);
+        sumbtf = bt1 + bt2 + bt3;
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < DIM; j++)
+            {
+                fabcd[i][j] += db * sumbtf * dphidr[i][j] + sumbte * dbonddr[2][i][j];
+            }
+        }
+
+        real at1 = params.at_f1_1 * cosphi;
+        real at2 = params.at_f2_1 * cos2phi;
+        real at3 = params.at_f3_1 * cos3phi;
+        sumbte   = at1 + at2 + at3;
+        real da  = std::acos(costh12) - params.at_theta0_1;
+        if (computeEnergy(flavor))
+        {
+            vtot += da * sumbte;
+        }
+
+        bt1 = params.at_f1_1 * sinphi;
+        bt2 = 2.0_real * params.at_f2_1 * std::sin(2.0_real * phi);
+        bt3 = 3.0_real * params.at_f3_1 * std::sin(3.0_real * phi);
+        sumbtf = bt1 + bt2 + bt3;
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < DIM; j++)
+            {
+                fabcd[i][j] -= da * sumbtf * dphidr[i][j] + sumbte * dthetadr[0][i][j];
+            }
+        }
+
+        at1    = params.at_f1_2 * cosphi;
+        at2    = params.at_f2_2 * cos2phi;
+        at3    = params.at_f3_2 * cos3phi;
+        sumbte = at1 + at2 + at3;
+        da     = std::acos(costh23) - params.at_theta0_2;
+        if (computeEnergy(flavor))
+        {
+            vtot += da * sumbte;
+        }
+
+        bt1 = -params.at_f1_2 * sinphi;
+        bt2 = -2.0_real * params.at_f2_2 * std::sin(2.0_real * phi);
+        bt3 = -3.0_real * params.at_f3_2 * std::sin(3.0_real * phi);
+        sumbtf = bt1 + bt2 + bt3;
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < DIM; j++)
+            {
+                fabcd[i][j] += da * sumbtf * dphidr[i][j] + sumbte * dthetadr[1][i][j];
+            }
+        }
+
+        const real da1 = std::acos(costh12) - params.aat_theta0_1;
+        const real da2 = std::acos(costh23) - params.aat_theta0_2;
+        if (computeEnergy(flavor))
+        {
+            vtot += params.aat_k * da1 * da2 * cosphi;
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < DIM; j++)
+            {
+                fabcd[i][j] -= params.aat_k
+                               * (cosphi * (da2 * dthetadr[0][i][j] - da1 * dthetadr[1][i][j])
+                                  + sinphi * da1 * da2 * dphidr[i][j]);
+            }
+        }
+
+        if (std::abs(params.bb13t_k) > c_small)
+        {
+            const real dr1 = r1 - params.bb13t_r10;
+            const real dr2 = r3 - params.bb13t_r30;
+            const real tk1 = -params.bb13t_k * dr1 / r3;
+            const real tk2 = -params.bb13t_k * dr2 / r1;
+
+            if (computeEnergy(flavor))
+            {
+                vtot += params.bb13t_k * dr1 * dr2;
+            }
+
+            fabcd[0][XX] += tk2 * vb1[XX];
+            fabcd[0][YY] += tk2 * vb1[YY];
+            fabcd[0][ZZ] += tk2 * vb1[ZZ];
+            fabcd[1][XX] -= tk2 * vb1[XX];
+            fabcd[1][YY] -= tk2 * vb1[YY];
+            fabcd[1][ZZ] -= tk2 * vb1[ZZ];
+            fabcd[2][XX] -= tk1 * vb3[XX];
+            fabcd[2][YY] -= tk1 * vb3[YY];
+            fabcd[2][ZZ] -= tk1 * vb3[ZZ];
+            fabcd[3][XX] += tk1 * vb3[XX];
+            fabcd[3][YY] += tk1 * vb3[YY];
+            fabcd[3][ZZ] += tk1 * vb3[ZZ];
+        }
+
+        for (int m = 0; m < DIM; m++)
+        {
+            f[ai][m] += fabcd[0][m];
+            f[aj][m] += fabcd[1][m];
+            f[ak][m] += fabcd[2][m];
+            f[al][m] += fabcd[3][m];
+        }
+
+        if (computeVirial(flavor))
+        {
+            rvec h;
+            const int t3 = pbc ? pbc_rvec_sub(pbc, x[al], x[aj], h) : c_centralShiftIndex;
+            rvec_inc(fshift[t1], fabcd[0]);
+            rvec_inc(fshift[c_centralShiftIndex], fabcd[1]);
+            rvec_inc(fshift[t2], fabcd[2]);
+            rvec_inc(fshift[t3], fabcd[3]);
+        }
+    }
+
+    return vtot;
+}
+
+template<BondedKernelFlavor flavor>
+real improper_class2(int             nbonds,
+                     const t_iatom   forceatoms[],
+                     const t_iparams forceparams[],
+                     const rvec      x[],
+                     rvec4           f[],
+                     rvec            fshift[],
+                     const t_pbc*    pbc,
+                     real gmx_unused lambda,
+                     real* /*dvdlambda*/,
+                     gmx::ArrayRef<const real> /*charge*/,
+                     t_fcdata gmx_unused*     fcd,
+                     t_disresdata gmx_unused* disresdata,
+                     t_oriresdata gmx_unused* oriresdata,
+                     int*                     global_atom_index)
+{
+    real vtot = 0;
+
+    for (int n = 0; n < nbonds;)
+    {
+        const int type = forceatoms[n++];
+        const int ai   = forceatoms[n++];
+        const int aj   = forceatoms[n++];
+        const int ak   = forceatoms[n++];
+        const int al   = forceatoms[n++];
+
+        const auto& params = forceparams[type].improper_class2;
+
+        rvec delr[3];
+        const int t1 = pbc_rvec_sub(pbc, x[ai], x[aj], delr[0]);
+        const int t2 = pbc_rvec_sub(pbc, x[ak], x[aj], delr[1]);
+        const int t3 = pbc_rvec_sub(pbc, x[al], x[aj], delr[2]);
+
+        real fabcd[4][DIM] = { { 0 } };
+
+        if (params.k0 != 0)
+        {
+            real rmag[3], rinvmag[3], rmag2[3];
+            real theta[3], costheta[3], sintheta[3], cossqtheta[3], sinsqtheta[3], invstheta[3];
+            real rABxrCB[DIM], rDBxrAB[DIM], rCBxrDB[DIM];
+            real ddelr[3][4]      = { { 0 } };
+            real dr[3][4][DIM]    = { { { 0 } } };
+            real dinvr[3][4][DIM] = { { { 0 } } };
+            real dthetadr[3][4][DIM] = { { { 0 } } };
+            real dinvsth[3][4][DIM]  = { { { 0 } } };
+            real dinv3r[4][DIM]      = { { 0 } };
+            real dinvs3r[3][4][DIM]  = { { { 0 } } };
+            real drCBxrDB[DIM], rCBxdrDB[DIM], drDBxrAB[DIM], rDBxdrAB[DIM];
+            real drABxrCB[DIM], rABxdrCB[DIM];
+            real dd[DIM];
+            real fdot[3][4][DIM] = { { { 0 } } };
+            real invs3r[3];
+            real dtotalchi[4][DIM] = { { 0 } };
+
+            for (int i = 0; i < 3; i++)
+            {
+                rmag2[i]   = pcffClass2Dot(delr[i], delr[i]);
+                rmag[i]    = std::sqrt(rmag2[i]);
+                rinvmag[i] = 1 / rmag[i];
+            }
+
+            costheta[0] = pcffClass2Dot(delr[0], delr[1]) / (rmag[0] * rmag[1]);
+            costheta[1] = pcffClass2Dot(delr[1], delr[2]) / (rmag[1] * rmag[2]);
+            costheta[2] = pcffClass2Dot(delr[0], delr[2]) / (rmag[0] * rmag[2]);
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (costheta[i] <= -1.0_real)
+                {
+                    gmx_fatal(FARGS,
+                              "Class2 improper undefined for linear geometry in atoms %d %d %d %d",
+                              glatnr(global_atom_index, ai),
+                              glatnr(global_atom_index, aj),
+                              glatnr(global_atom_index, ak),
+                              glatnr(global_atom_index, al));
+                }
+                costheta[i]   = std::clamp(costheta[i], -1.0_real, 1.0_real);
+                theta[i]      = std::acos(costheta[i]);
+                cossqtheta[i] = costheta[i] * costheta[i];
+                sintheta[i]   = std::sin(theta[i]);
+                invstheta[i]  = 1 / sintheta[i];
+                sinsqtheta[i] = sintheta[i] * sintheta[i];
+            }
+
+            pcffClass2Cross(delr[0], delr[1], rABxrCB);
+            pcffClass2Cross(delr[2], delr[0], rDBxrAB);
+            pcffClass2Cross(delr[1], delr[2], rCBxrDB);
+
+            const real dotCBDBAB = pcffClass2Dot(rCBxrDB, delr[0]);
+            const real dotDBABCB = pcffClass2Dot(rDBxrAB, delr[1]);
+            const real dotABCBDB = pcffClass2Dot(rABxrCB, delr[2]);
+
+            const real inv3r = 1 / (rmag[0] * rmag[1] * rmag[2]);
+            invs3r[0]        = invstheta[1] * inv3r;
+            invs3r[1]        = invstheta[2] * inv3r;
+            invs3r[2]        = invstheta[0] * inv3r;
+
+            const real chiABCD = std::asin(dotCBDBAB * invs3r[0]);
+            const real chiCBDA = std::asin(dotDBABCB * invs3r[1]);
+            const real chiDBAC = std::asin(dotABCBDB * invs3r[2]);
+            const real deltachi = (chiABCD + chiCBDA + chiDBAC) / 3 - params.chi0;
+
+            vtot += params.k0 * deltachi * deltachi;
+
+            ddelr[0][0] = 1;
+            ddelr[0][1] = -1;
+            ddelr[1][1] = -1;
+            ddelr[1][2] = 1;
+            ddelr[2][1] = -1;
+            ddelr[2][3] = 1;
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    for (int k = 0; k < DIM; k++)
+                    {
+                        dr[i][j][k]    = delr[i][k] * ddelr[i][j] / rmag[i];
+                        dinvr[i][j][k] = -dr[i][j][k] / rmag2[i];
+                    }
+                }
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < DIM; j++)
+                {
+                    dinv3r[i][j] = rinvmag[1] * (rinvmag[2] * dinvr[0][i][j] + rinvmag[0] * dinvr[2][i][j])
+                                   + rinvmag[2] * rinvmag[0] * dinvr[1][i][j];
+                }
+            }
+
+            real tt1 = costheta[0] / rmag2[0];
+            real tt3 = costheta[0] / rmag2[1];
+            real sc1 = 1 / std::sqrt(1 - cossqtheta[0]);
+
+            dthetadr[0][0][XX] = sc1 * (tt1 * delr[0][XX] - delr[1][XX] * rinvmag[0] * rinvmag[1]);
+            dthetadr[0][0][YY] = sc1 * (tt1 * delr[0][YY] - delr[1][YY] * rinvmag[0] * rinvmag[1]);
+            dthetadr[0][0][ZZ] = sc1 * (tt1 * delr[0][ZZ] - delr[1][ZZ] * rinvmag[0] * rinvmag[1]);
+            dthetadr[0][1][XX] = -sc1 * (tt1 * delr[0][XX] - delr[1][XX] * rinvmag[0] * rinvmag[1]
+                                         + tt3 * delr[1][XX] - delr[0][XX] * rinvmag[0] * rinvmag[1]);
+            dthetadr[0][1][YY] = -sc1 * (tt1 * delr[0][YY] - delr[1][YY] * rinvmag[0] * rinvmag[1]
+                                         + tt3 * delr[1][YY] - delr[0][YY] * rinvmag[0] * rinvmag[1]);
+            dthetadr[0][1][ZZ] = -sc1 * (tt1 * delr[0][ZZ] - delr[1][ZZ] * rinvmag[0] * rinvmag[1]
+                                         + tt3 * delr[1][ZZ] - delr[0][ZZ] * rinvmag[0] * rinvmag[1]);
+            dthetadr[0][2][XX] = sc1 * (tt3 * delr[1][XX] - delr[0][XX] * rinvmag[0] * rinvmag[1]);
+            dthetadr[0][2][YY] = sc1 * (tt3 * delr[1][YY] - delr[0][YY] * rinvmag[0] * rinvmag[1]);
+            dthetadr[0][2][ZZ] = sc1 * (tt3 * delr[1][ZZ] - delr[0][ZZ] * rinvmag[0] * rinvmag[1]);
+
+            tt1 = costheta[1] / rmag2[1];
+            tt3 = costheta[1] / rmag2[2];
+            sc1 = 1 / std::sqrt(1 - cossqtheta[1]);
+
+            dthetadr[1][2][XX] = sc1 * (tt1 * delr[1][XX] - delr[2][XX] * rinvmag[1] * rinvmag[2]);
+            dthetadr[1][2][YY] = sc1 * (tt1 * delr[1][YY] - delr[2][YY] * rinvmag[1] * rinvmag[2]);
+            dthetadr[1][2][ZZ] = sc1 * (tt1 * delr[1][ZZ] - delr[2][ZZ] * rinvmag[1] * rinvmag[2]);
+            dthetadr[1][1][XX] = -sc1 * (tt1 * delr[1][XX] - delr[2][XX] * rinvmag[1] * rinvmag[2]
+                                         + tt3 * delr[2][XX] - delr[1][XX] * rinvmag[2] * rinvmag[1]);
+            dthetadr[1][1][YY] = -sc1 * (tt1 * delr[1][YY] - delr[2][YY] * rinvmag[1] * rinvmag[2]
+                                         + tt3 * delr[2][YY] - delr[1][YY] * rinvmag[2] * rinvmag[1]);
+            dthetadr[1][1][ZZ] = -sc1 * (tt1 * delr[1][ZZ] - delr[2][ZZ] * rinvmag[1] * rinvmag[2]
+                                         + tt3 * delr[2][ZZ] - delr[1][ZZ] * rinvmag[2] * rinvmag[1]);
+            dthetadr[1][3][XX] = sc1 * (tt3 * delr[2][XX] - delr[1][XX] * rinvmag[2] * rinvmag[1]);
+            dthetadr[1][3][YY] = sc1 * (tt3 * delr[2][YY] - delr[1][YY] * rinvmag[2] * rinvmag[1]);
+            dthetadr[1][3][ZZ] = sc1 * (tt3 * delr[2][ZZ] - delr[1][ZZ] * rinvmag[2] * rinvmag[1]);
+
+            tt1 = costheta[2] / rmag2[0];
+            tt3 = costheta[2] / rmag2[2];
+            sc1 = 1 / std::sqrt(1 - cossqtheta[2]);
+
+            dthetadr[2][0][XX] = sc1 * (tt1 * delr[0][XX] - delr[2][XX] * rinvmag[0] * rinvmag[2]);
+            dthetadr[2][0][YY] = sc1 * (tt1 * delr[0][YY] - delr[2][YY] * rinvmag[0] * rinvmag[2]);
+            dthetadr[2][0][ZZ] = sc1 * (tt1 * delr[0][ZZ] - delr[2][ZZ] * rinvmag[0] * rinvmag[2]);
+            dthetadr[2][1][XX] = -sc1 * (tt1 * delr[0][XX] - delr[2][XX] * rinvmag[0] * rinvmag[2]
+                                         + tt3 * delr[2][XX] - delr[0][XX] * rinvmag[2] * rinvmag[0]);
+            dthetadr[2][1][YY] = -sc1 * (tt1 * delr[0][YY] - delr[2][YY] * rinvmag[0] * rinvmag[2]
+                                         + tt3 * delr[2][YY] - delr[0][YY] * rinvmag[2] * rinvmag[0]);
+            dthetadr[2][1][ZZ] = -sc1 * (tt1 * delr[0][ZZ] - delr[2][ZZ] * rinvmag[0] * rinvmag[2]
+                                         + tt3 * delr[2][ZZ] - delr[0][ZZ] * rinvmag[2] * rinvmag[0]);
+            dthetadr[2][3][XX] = sc1 * (tt3 * delr[2][XX] - delr[0][XX] * rinvmag[2] * rinvmag[0]);
+            dthetadr[2][3][YY] = sc1 * (tt3 * delr[2][YY] - delr[0][YY] * rinvmag[2] * rinvmag[0]);
+            dthetadr[2][3][ZZ] = sc1 * (tt3 * delr[2][ZZ] - delr[0][ZZ] * rinvmag[2] * rinvmag[0]);
+
+            for (int i = 0; i < 3; i++)
+            {
+                const real cossin2 = -costheta[i] / sinsqtheta[i];
+                for (int j = 0; j < 4; j++)
+                {
+                    for (int k = 0; k < DIM; k++)
+                    {
+                        dinvsth[i][j][k] = cossin2 * dthetadr[i][j][k];
+                    }
+                }
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < DIM; j++)
+                {
+                    dinvs3r[0][i][j] = invstheta[1] * dinv3r[i][j] + inv3r * dinvsth[1][i][j];
+                    dinvs3r[1][i][j] = invstheta[2] * dinv3r[i][j] + inv3r * dinvsth[2][i][j];
+                    dinvs3r[2][i][j] = invstheta[0] * dinv3r[i][j] + inv3r * dinvsth[0][i][j];
+                }
+            }
+
+            real drAB[DIM][4][DIM] = { { { 0 } } };
+            real drCB[DIM][4][DIM] = { { { 0 } } };
+            real drDB[DIM][4][DIM] = { { { 0 } } };
+            for (int i = 0; i < DIM; i++)
+            {
+                drCB[i][1][i] = -1;
+                drAB[i][1][i] = -1;
+                drDB[i][1][i] = -1;
+                drDB[i][3][i] = 1;
+                drCB[i][2][i] = 1;
+                drAB[i][0][i] = 1;
+            }
+
+            for (int i = 0; i < DIM; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    pcffClass2Cross(delr[1], drDB[i][j], rCBxdrDB);
+                    pcffClass2Cross(drCB[i][j], delr[2], drCBxrDB);
+                    for (int k = 0; k < DIM; k++)
+                    {
+                        dd[k] = rCBxdrDB[k] + drCBxrDB[k];
+                    }
+                    fdot[0][j][i] = pcffClass2Dot(dd, delr[0]) + pcffClass2Dot(rCBxrDB, drAB[i][j]);
+
+                    pcffClass2Cross(delr[2], drAB[i][j], rDBxdrAB);
+                    pcffClass2Cross(drDB[i][j], delr[0], drDBxrAB);
+                    for (int k = 0; k < DIM; k++)
+                    {
+                        dd[k] = rDBxdrAB[k] + drDBxrAB[k];
+                    }
+                    fdot[1][j][i] = pcffClass2Dot(dd, delr[1]) + pcffClass2Dot(rDBxrAB, drCB[i][j]);
+
+                    pcffClass2Cross(delr[0], drCB[i][j], rABxdrCB);
+                    pcffClass2Cross(drAB[i][j], delr[1], drABxrCB);
+                    for (int k = 0; k < DIM; k++)
+                    {
+                        dd[k] = rABxdrCB[k] + drABxrCB[k];
+                    }
+                    fdot[2][j][i] = pcffClass2Dot(dd, delr[2]) + pcffClass2Dot(rABxrCB, drDB[i][j]);
+                }
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < DIM; j++)
+                {
+                    const real f0 = (fdot[0][i][j] * invs3r[0] + dinvs3r[0][i][j] * dotCBDBAB) / std::cos(chiABCD);
+                    const real f1 = (fdot[1][i][j] * invs3r[1] + dinvs3r[1][i][j] * dotDBABCB) / std::cos(chiCBDA);
+                    const real f2 = (fdot[2][i][j] * invs3r[2] + dinvs3r[2][i][j] * dotABCBDB) / std::cos(chiDBAC);
+                    dtotalchi[i][j] = (f0 + f1 + f2) / 3;
+                    fabcd[i][j] += -2 * params.k0 * deltachi * dtotalchi[i][j];
+                }
+            }
+        }
+
+        if (params.aa_k1 != 0 || params.aa_k2 != 0 || params.aa_k3 != 0)
+        {
+            const real delxAB = delr[0][XX];
+            const real delyAB = delr[0][YY];
+            const real delzAB = delr[0][ZZ];
+            const real delxBC = delr[1][XX];
+            const real delyBC = delr[1][YY];
+            const real delzBC = delr[1][ZZ];
+            const real delxBD = delr[2][XX];
+            const real delyBD = delr[2][YY];
+            const real delzBD = delr[2][ZZ];
+
+            const real rABmag2 = delxAB * delxAB + delyAB * delyAB + delzAB * delzAB;
+            const real rBCmag2 = delxBC * delxBC + delyBC * delyBC + delzBC * delzBC;
+            const real rBDmag2 = delxBD * delxBD + delyBD * delyBD + delzBD * delzBD;
+            const real rAB     = std::sqrt(rABmag2);
+            const real rBC     = std::sqrt(rBCmag2);
+            const real rBD     = std::sqrt(rBDmag2);
+
+            real costhABC = std::clamp((delxAB * delxBC + delyAB * delyBC + delzAB * delzBC) / (rAB * rBC),
+                                       -1.0_real,
+                                       1.0_real);
+            real costhABD = std::clamp((delxAB * delxBD + delyAB * delyBD + delzAB * delzBD) / (rAB * rBD),
+                                       -1.0_real,
+                                       1.0_real);
+            real costhCBD = std::clamp((delxBC * delxBD + delyBC * delyBD + delzBC * delzBD) / (rBC * rBD),
+                                       -1.0_real,
+                                       1.0_real);
+
+            const real thetaABC = std::acos(costhABC);
+            const real thetaABD = std::acos(costhABD);
+            const real thetaCBD = std::acos(costhCBD);
+            const real dthABC   = thetaABC - params.aa_theta0_1;
+            const real dthABD   = thetaABD - params.aa_theta0_2;
+            const real dthCBD   = thetaCBD - params.aa_theta0_3;
+
+            vtot += params.aa_k2 * dthABC * dthABD + params.aa_k1 * dthABC * dthCBD
+                    + params.aa_k3 * dthABD * dthCBD;
+
+            real dthetadr[3][4][DIM] = { { { 0 } } };
+
+            real sc1 = std::sqrt(1 / (1 - costhABC * costhABC));
+            real t1l = costhABC / rABmag2;
+            real t3l = costhABC / rBCmag2;
+            real r12 = 1 / (rAB * rBC);
+
+            dthetadr[0][0][XX] = sc1 * (t1l * delxAB - delxBC * r12);
+            dthetadr[0][0][YY] = sc1 * (t1l * delyAB - delyBC * r12);
+            dthetadr[0][0][ZZ] = sc1 * (t1l * delzAB - delzBC * r12);
+            dthetadr[0][1][XX] = sc1 * (-t1l * delxAB + delxBC * r12 - t3l * delxBC + delxAB * r12);
+            dthetadr[0][1][YY] = sc1 * (-t1l * delyAB + delyBC * r12 - t3l * delyBC + delyAB * r12);
+            dthetadr[0][1][ZZ] = sc1 * (-t1l * delzAB + delzBC * r12 - t3l * delzBC + delzAB * r12);
+            dthetadr[0][2][XX] = sc1 * (t3l * delxBC - delxAB * r12);
+            dthetadr[0][2][YY] = sc1 * (t3l * delyBC - delyAB * r12);
+            dthetadr[0][2][ZZ] = sc1 * (t3l * delzBC - delzAB * r12);
+
+            sc1 = std::sqrt(1 / (1 - costhCBD * costhCBD));
+            t1l = costhCBD / rBCmag2;
+            t3l = costhCBD / rBDmag2;
+            r12 = 1 / (rBC * rBD);
+
+            dthetadr[1][2][XX] = sc1 * (t1l * delxBC - delxBD * r12);
+            dthetadr[1][2][YY] = sc1 * (t1l * delyBC - delyBD * r12);
+            dthetadr[1][2][ZZ] = sc1 * (t1l * delzBC - delzBD * r12);
+            dthetadr[1][1][XX] = sc1 * (-t1l * delxBC + delxBD * r12 - t3l * delxBD + delxBC * r12);
+            dthetadr[1][1][YY] = sc1 * (-t1l * delyBC + delyBD * r12 - t3l * delyBD + delyBC * r12);
+            dthetadr[1][1][ZZ] = sc1 * (-t1l * delzBC + delzBD * r12 - t3l * delzBD + delzBC * r12);
+            dthetadr[1][3][XX] = sc1 * (t3l * delxBD - delxBC * r12);
+            dthetadr[1][3][YY] = sc1 * (t3l * delyBD - delyBC * r12);
+            dthetadr[1][3][ZZ] = sc1 * (t3l * delzBD - delzBC * r12);
+
+            sc1 = std::sqrt(1 / (1 - costhABD * costhABD));
+            t1l = costhABD / rABmag2;
+            t3l = costhABD / rBDmag2;
+            r12 = 1 / (rAB * rBD);
+
+            dthetadr[2][0][XX] = sc1 * (t1l * delxAB - delxBD * r12);
+            dthetadr[2][0][YY] = sc1 * (t1l * delyAB - delyBD * r12);
+            dthetadr[2][0][ZZ] = sc1 * (t1l * delzAB - delzBD * r12);
+            dthetadr[2][1][XX] = sc1 * (-t1l * delxAB + delxBD * r12 - t3l * delxBD + delxAB * r12);
+            dthetadr[2][1][YY] = sc1 * (-t1l * delyAB + delyBD * r12 - t3l * delyBD + delyAB * r12);
+            dthetadr[2][1][ZZ] = sc1 * (-t1l * delzAB + delzBD * r12 - t3l * delzBD + delzAB * r12);
+            dthetadr[2][3][XX] = sc1 * (t3l * delxBD - delxAB * r12);
+            dthetadr[2][3][YY] = sc1 * (t3l * delyBD - delyAB * r12);
+            dthetadr[2][3][ZZ] = sc1 * (t3l * delzBD - delzAB * r12);
+
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < DIM; j++)
+                {
+                    fabcd[i][j] -= params.aa_k1 * (dthABC * dthetadr[1][i][j] + dthCBD * dthetadr[0][i][j])
+                                   + params.aa_k2 * (dthABC * dthetadr[2][i][j] + dthABD * dthetadr[0][i][j])
+                                   + params.aa_k3 * (dthABD * dthetadr[1][i][j] + dthCBD * dthetadr[2][i][j]);
+                }
+            }
+        }
+
+        for (int m = 0; m < DIM; m++)
+        {
+            f[ai][m] += fabcd[0][m];
+            f[aj][m] += fabcd[1][m];
+            f[ak][m] += fabcd[2][m];
+            f[al][m] += fabcd[3][m];
+        }
+
+        if (computeVirial(flavor))
+        {
+            rvec_inc(fshift[t1], fabcd[0]);
+            rvec_inc(fshift[c_centralShiftIndex], fabcd[1]);
+            rvec_inc(fshift[t2], fabcd[2]);
+            rvec_inc(fshift[t3], fabcd[3]);
+        }
+    }
+
+    return vtot;
+}
 
 template<BondedKernelFlavor flavor>
 real idihs(int             nbonds,
@@ -3993,6 +4976,7 @@ constexpr gmx::EnumerationArray<InteractionFunction, BondedInteractions> c_bonde
     BondedInteractions{ g96bonds<flavor>, eNR_BONDS },    // InteractionFunction::GROMOS96Bonds
     BondedInteractions{ morse_bonds<flavor>, eNR_MORSE }, // InteractionFunction::MorsePotential
     BondedInteractions{ cubic_bonds<flavor>, eNR_CUBICBONDS }, // InteractionFunction::CubicBonds
+    BondedInteractions{ bond_class2<flavor>, eNR_BONDS },       // InteractionFunction::BondClass2
     BondedInteractions{ unimplemented, -1 },                   // InteractionFunction::ConnectBonds
     BondedInteractions{ bonds<flavor>, eNR_BONDS }, // InteractionFunction::HarmonicPotential
     BondedInteractions{ FENE_bonds<flavor>, eNR_FENEBONDS }, // InteractionFunction::FENEBonds
@@ -4007,13 +4991,16 @@ constexpr gmx::EnumerationArray<InteractionFunction, BondedInteractions> c_bonde
     BondedInteractions{ cross_bond_angle<flavor>, eNR_CROSS_BOND_ANGLE }, // InteractionFunction::CrossBondAngles
     BondedInteractions{ urey_bradley<flavor>, eNR_UREY_BRADLEY }, // InteractionFunction::UreyBradleyPotential
     BondedInteractions{ quartic_angles<flavor>, eNR_QANGLES }, // InteractionFunction::QuarticAngles
+    BondedInteractions{ angle_class2<flavor>, eNR_ANGLES },    // InteractionFunction::AngleClass2
     BondedInteractions{ tab_angles<flavor>, eNR_TABANGLES }, // InteractionFunction::TabulatedAngles
     BondedInteractions{ pdihs<flavor>, eNR_PROPER },         // InteractionFunction::ProperDihedrals
     BondedInteractions{ rbdihs<flavor>, eNR_RB }, // InteractionFunction::RyckaertBellemansDihedrals
     BondedInteractions{ restrdihs<flavor>, eNR_PROPER }, // InteractionFunction::RestrictedTorsionPotential
     BondedInteractions{ cbtdihs<flavor>, eNR_RB }, // InteractionFunction::CombinedBendingTorsionPotential
     BondedInteractions{ rbdihs<flavor>, eNR_FOURDIH }, // InteractionFunction::FourierDihedrals
+    BondedInteractions{ dihedral_class2<flavor>, eNR_PROPER }, // InteractionFunction::DihedralClass2
     BondedInteractions{ idihs<flavor>, eNR_IMPROPER }, // InteractionFunction::ImproperDihedrals
+    BondedInteractions{ improper_class2<flavor>, eNR_IMPROPER }, // InteractionFunction::ImproperClass2
     BondedInteractions{ pdihs<flavor>, eNR_IMPROPER }, // InteractionFunction::PeriodicImproperDihedrals
     BondedInteractions{ tab_dihs<flavor>, eNR_TABDIHS }, // InteractionFunction::TabulatedDihedrals
     BondedInteractions{ unimplemented, eNR_CMAP }, // InteractionFunction::DihedralEnergyCorrectionMap

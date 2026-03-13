@@ -1,0 +1,43 @@
+{
+  "artifact_registry_status_counts": {
+    "derived_metrics_without_raw_artifacts": 2
+  },
+  "blocking_gaps": [
+    "no paired system currently passes the GROMACS PCFF provenance gate",
+    "screening cohort is prepared with ACPYPE/GAFF2 rather than PCFF",
+    "paired density provenance is unresolved",
+    "paired chain-size observables are unavailable on the GROMACS side",
+    "paired raw production artifacts are missing while run_results.csv still reports completed analysis",
+    "polymer diffusivity parity is unavailable",
+    "strict parity coverage is limited to two representative systems"
+  ],
+  "overall_status": "pcff_provenance_blocked",
+  "pcff_provenance_gate_status_counts": {
+    "acpype_gaff2_atomtyping_failed": 1,
+    "acpype_gaff2_topology": 1
+  },
+  "recommended_use": [
+    "use the current M10 artifacts only for provenance debugging and workflow scaffolding",
+    "do not interpret the current screening cohort as a PCFF-vs-LAMMPS validation set",
+    "rebuild M10 on GROMACS systems prepared with actual PCFF parameters before making any transport claim"
+  ],
+  "screening_usefulness_readiness": {
+    "basis": [
+      "screening cohort comes from a GROMACS ACPYPE/GAFF2 preparation pipeline rather than PCFF class2",
+      "conductivity screening rho=0.17609659327683028",
+      "Li diffusivity screening rho=0.27920008841355376",
+      "anion diffusivity screening rho=0.4627668042952399",
+      "density subset rho=0.7185757571479553"
+    ],
+    "status": "not_pcff_qualified"
+  },
+  "strict_parity_readiness": {
+    "basis": [
+      "PCFF-qualified paired systems available: 0",
+      "density strict parity is unavailable because production-density provenance is unresolved",
+      "chain-size parity is unavailable because matched GROMACS Rg artifacts were not found",
+      "paired raw-production provenance is incomplete even where derived GROMACS sampled metrics exist"
+    ],
+    "status": "blocked_by_provenance"
+  }
+}

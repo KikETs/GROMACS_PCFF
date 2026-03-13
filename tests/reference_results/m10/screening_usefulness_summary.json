@@ -1,0 +1,316 @@
+{
+  "completion": {
+    "n_completed": 107,
+    "n_failed": 13,
+    "n_total": 120,
+    "per_group_completed": {
+      "bottom": 9,
+      "middle_stratified": 88,
+      "top": 10
+    }
+  },
+  "limitations": [
+    "screening outputs are not PCFF-qualified because the local GROMACS preparation pipeline uses ACPYPE/GAFF2",
+    "conductivity usefulness mixes cNE and NE-derived GROMACS conductivity outputs depending on artifact availability",
+    "density usefulness is based on the local final_summary subset only",
+    "screening transference uses tplus_NE because cNE transference outputs are frequently unphysical"
+  ],
+  "metrics": {
+    "anion_diffusivity": {
+      "bottom10_overlap": {
+        "k": 10,
+        "overlap_count": 2,
+        "overlap_fraction": 0.2,
+        "predicted_only": [
+          "13578",
+          "14072",
+          "26854",
+          "27337",
+          "27443",
+          "29412",
+          "9465",
+          "9511"
+        ],
+        "reference_only": [
+          "26491",
+          "26636",
+          "27053",
+          "27601",
+          "27607",
+          "27650",
+          "27655",
+          "29300"
+        ],
+        "shared": [
+          "27622",
+          "27659"
+        ]
+      },
+      "max_abs_log10_error": 1.556150783655698,
+      "mean_abs_log10_error": 0.3676674608385791,
+      "median_abs_log10_error": 0.25763584902011794,
+      "n_compared": 107,
+      "spearman_rank_correlation": 0.4627668042952399,
+      "top10_overlap": {
+        "k": 10,
+        "overlap_count": 4,
+        "overlap_fraction": 0.4,
+        "predicted_only": [
+          "13414",
+          "14750",
+          "24419",
+          "26863",
+          "27340",
+          "29471"
+        ],
+        "reference_only": [
+          "14754",
+          "14764",
+          "14768",
+          "27670",
+          "27710",
+          "27723"
+        ],
+        "shared": [
+          "14748",
+          "14769",
+          "27624",
+          "27628"
+        ]
+      }
+    },
+    "conductivity": {
+      "bottom10_overlap": {
+        "k": 10,
+        "overlap_count": 2,
+        "overlap_fraction": 0.2,
+        "predicted_only": [
+          "13352",
+          "13578",
+          "14224",
+          "14268",
+          "14373",
+          "26636",
+          "28930",
+          "9511"
+        ],
+        "reference_only": [
+          "25052",
+          "26640",
+          "26854",
+          "27053",
+          "27622",
+          "27650",
+          "27655",
+          "27659"
+        ],
+        "shared": [
+          "27601",
+          "27607"
+        ]
+      },
+      "max_abs_log10_error": 5.6237186951060325,
+      "mean_abs_log10_error": 1.2896120525950778,
+      "median_abs_log10_error": 0.7770120369212411,
+      "n_compared": 107,
+      "prediction_source_counts": {
+        "NE_fallback": 58,
+        "cNE": 49
+      },
+      "spearman_rank_correlation": 0.17609659327683028,
+      "top10_overlap": {
+        "k": 10,
+        "overlap_count": 0,
+        "overlap_fraction": 0.0,
+        "predicted_only": [
+          "13773",
+          "13978",
+          "14056",
+          "14307",
+          "24419",
+          "26863",
+          "27340",
+          "29471",
+          "29600",
+          "9536"
+        ],
+        "reference_only": [
+          "14748",
+          "14754",
+          "14760",
+          "14764",
+          "14768",
+          "14769",
+          "27624",
+          "27628",
+          "27670",
+          "27710"
+        ],
+        "shared": []
+      }
+    },
+    "density": {
+      "availability_scope": "local final_summary subset only",
+      "max_abs_error": 0.14721540080844941,
+      "mean_abs_error": 0.026119872952206913,
+      "median_abs_error": 0.0008702974220433646,
+      "n_compared": 8,
+      "spearman_rank_correlation": 0.7185757571479553,
+      "top3_overlap": {
+        "k": 3,
+        "overlap_count": 3,
+        "overlap_fraction": 1.0,
+        "predicted_only": [],
+        "reference_only": [],
+        "shared": [
+          "27622",
+          "27650",
+          "9425"
+        ]
+      }
+    },
+    "li_diffusivity": {
+      "bottom10_overlap": {
+        "k": 10,
+        "overlap_count": 1,
+        "overlap_fraction": 0.1,
+        "predicted_only": [
+          "13578",
+          "14009",
+          "14072",
+          "24008",
+          "24426",
+          "26854",
+          "27217",
+          "29099",
+          "9511"
+        ],
+        "reference_only": [
+          "13857",
+          "25052",
+          "27053",
+          "27141",
+          "27607",
+          "27650",
+          "27655",
+          "27659",
+          "9612"
+        ],
+        "shared": [
+          "27622"
+        ]
+      },
+      "max_abs_log10_error": 1.6543850311460446,
+      "mean_abs_log10_error": 0.5506815113020456,
+      "median_abs_log10_error": 0.4648854951579768,
+      "n_compared": 107,
+      "spearman_rank_correlation": 0.27920008841355376,
+      "top10_overlap": {
+        "k": 10,
+        "overlap_count": 2,
+        "overlap_fraction": 0.2,
+        "predicted_only": [
+          "13414",
+          "14750",
+          "24419",
+          "26863",
+          "27141",
+          "27340",
+          "28736",
+          "29471"
+        ],
+        "reference_only": [
+          "14754",
+          "14764",
+          "14768",
+          "14769",
+          "27628",
+          "27670",
+          "27710",
+          "27723"
+        ],
+        "shared": [
+          "14748",
+          "27624"
+        ]
+      }
+    },
+    "transference_number": {
+      "bottom10_overlap": {
+        "k": 10,
+        "overlap_count": 0,
+        "overlap_fraction": 0.0,
+        "predicted_only": [
+          "14072",
+          "14672",
+          "14760",
+          "14764",
+          "14769",
+          "24008",
+          "24453",
+          "27622",
+          "27624",
+          "27628"
+        ],
+        "reference_only": [
+          "13414",
+          "14954",
+          "24419",
+          "25052",
+          "26556",
+          "26854",
+          "27053",
+          "27929",
+          "28620",
+          "29121"
+        ],
+        "shared": []
+      },
+      "max_abs_error": 2.1357110061103883,
+      "mean_abs_error": 0.47456686421469485,
+      "median_abs_error": 0.42068889190993863,
+      "n_compared": 107,
+      "spearman_rank_correlation": -0.18137466205135114,
+      "top10_overlap": {
+        "k": 10,
+        "overlap_count": 0,
+        "overlap_fraction": 0.0,
+        "predicted_only": [
+          "13857",
+          "14318",
+          "24372",
+          "26556",
+          "26662",
+          "27053",
+          "27443",
+          "27817",
+          "29412",
+          "9826"
+        ],
+        "reference_only": [
+          "14006",
+          "14764",
+          "14768",
+          "24426",
+          "24521",
+          "26636",
+          "27601",
+          "27655",
+          "28980",
+          "29300"
+        ],
+        "shared": []
+      }
+    }
+  },
+  "provenance_status": {
+    "gromacs_pipeline_preparation": "ACPYPE/GAFF2 with Li amber99sb-ildn fallback",
+    "pcff_qualified_for_current_m10_claim": false,
+    "reason": "the screening pipeline prepares GROMACS systems with ACPYPE/GAFF2 rather than PCFF class2 parameters"
+  },
+  "status": "not_pcff_qualified",
+  "strict_vs_screening_separation": {
+    "screening_usefulness_basis": "cohort-level ranking and error analysis on completed GROMACS screening runs",
+    "strict_parity_basis": "paired-system direct comparisons on representative systems"
+  }
+}

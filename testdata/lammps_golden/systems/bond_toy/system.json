@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "id": "bond_toy",
+  "display_name": "bond toy",
+  "description": "Two-atom Class2 bond fixture with zeroed nonbonded epsilon to isolate bond energy and force semantics.",
+  "category": "toy",
+  "reference_terms": [
+    "bond/class2"
+  ],
+  "topology_source": {
+    "kind": "repo_fixture",
+    "path": "lammps/system.data",
+    "description": "Two atoms in one molecule with a single bond."
+  },
+  "parameter_source": {
+    "kind": "repo_fixture",
+    "path": "lammps/system.in",
+    "description": "Synthetic Class2 bond coefficients stored explicitly in LAMMPS input."
+  },
+  "styles": {
+    "units": "real",
+    "atom_style": "full",
+    "pair_style": "lj/class2",
+    "bond_style": "class2",
+    "angle_style": "none",
+    "dihedral_style": "none",
+    "improper_style": "none",
+    "kspace_style": null,
+    "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "pair_coeff_source": "explicit_self_only",
+    "relies_on_mixing": false
+  },
+  "execution": {
+    "recommended_mpi_ranks": 1,
+    "double_precision_preferred": true
+  },
+  "expected_observables": {
+    "single_point": {
+      "enabled": true,
+      "normalized_output": "single_point.json",
+      "thermo_fields": [
+        "step",
+        "pe",
+        "ebond",
+        "eangle",
+        "edihed",
+        "eimp",
+        "evdwl",
+        "ecoul",
+        "elong",
+        "epair",
+        "emol"
+      ]
+    },
+    "forces": {
+      "enabled": true,
+      "normalized_output": "forces.json",
+      "dump_fields": [
+        "id",
+        "type",
+        "q",
+        "x",
+        "y",
+        "z",
+        "fx",
+        "fy",
+        "fz"
+      ],
+      "sort_by": "id"
+    },
+    "finite_difference": {
+      "enabled": true,
+      "normalized_output": "finite_difference.json",
+      "delta": 1e-06,
+      "atoms": [
+        1,
+        2
+      ],
+      "components": [
+        "x"
+      ],
+      "energy_field": "pe"
+    },
+    "nve_drift": {
+      "enabled": false,
+      "normalized_output": "nve_drift.json",
+      "reason": "Toy fixture is intended for static single-point and finite-difference validation only."
+    },
+    "nvt_snapshot": {
+      "enabled": false,
+      "normalized_output": "nvt_snapshot.json",
+      "reason": "Toy fixture is intended for static single-point and finite-difference validation only."
+    }
+  },
+  "unresolved_items": [],
+  "notes": [
+    "No Coulombic or nonbonded LJ contribution is expected because epsilon is zero.",
+    "The bond length is deliberately offset from r0 to produce non-zero forces."
+  ]
+}

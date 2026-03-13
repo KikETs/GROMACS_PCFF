@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "system_id": "small_salt_polymer_box",
+  "engine": "gromacs",
+  "mode": "lammps-respa",
+  "schedule": {
+    "outer_steps": 5,
+    "pair14_level": 1
+  },
+  "observables": {
+    "nve": {
+      "final_total_kcal_mol": 99.9854691398,
+      "initial_total_kcal_mol": 100.146911796,
+      "ion_distance_nm": 1.06880070081,
+      "polymer_end_to_end_nm": 0.976554321255,
+      "polymer_rg_nm": 0.319536352608,
+      "step0_potential_kcal_mol": 92.0987247737,
+      "step0_virial_pressure_xx_atm": -4307.80995413,
+      "step0_virial_pressure_xy_atm": 114.344246633,
+      "step0_virial_pressure_xz_atm": 140.295051105,
+      "step0_virial_pressure_yy_atm": -2822.49525447,
+      "step0_virial_pressure_yz_atm": -923.37809633,
+      "step0_virial_pressure_zz_atm": -426.242891433,
+      "total_energy_drift_abs_kcal_mol": 0.161442656362,
+      "total_energy_span_kcal_mol": 0.166417079947
+    }
+  },
+  "diagnostics": {
+    "exact_minus_single_time_step": {
+      "angle_kcal_mol": 0,
+      "bond_kcal_mol": 0,
+      "coul14_kcal_mol": 0,
+      "coul_recip_kcal_mol": 0,
+      "coulsr_kcal_mol": 1.4587752446e-05,
+      "dihedral_kcal_mol": 0,
+      "electro_total_kcal_mol": 1.4587752446e-05,
+      "lj14_kcal_mol": 0,
+      "ljsr_kcal_mol": 1.42458519981e-08,
+      "potential_total_kcal_mol": 1.45877524602e-05,
+      "vdw_total_kcal_mol": 1.42458519425e-08
+    },
+    "exact_step0_breakdown": {
+      "angle_kcal_mol": 7.40078348047,
+      "bond_kcal_mol": 125.702750387,
+      "coul14_kcal_mol": -15.3550390532,
+      "coul_recip_kcal_mol": 99.40842871,
+      "coulsr_kcal_mol": -142.079967842,
+      "dihedral_kcal_mol": 17.3596387612,
+      "electro_total_kcal_mol": -58.0265781848,
+      "lj14_kcal_mol": -0.182203763302,
+      "ljsr_kcal_mol": -0.15568318661,
+      "potential_total_kcal_mol": 92.0987247737,
+      "vdw_total_kcal_mol": -0.337886949912
+    },
+    "single_time_step_breakdown": {
+      "angle_kcal_mol": 7.40078348047,
+      "bond_kcal_mol": 125.702750387,
+      "coul14_kcal_mol": -15.3550390532,
+      "coul_recip_kcal_mol": 99.40842871,
+      "coulsr_kcal_mol": -142.079982429,
+      "dihedral_kcal_mol": 17.3596387612,
+      "electro_total_kcal_mol": -58.0265927725,
+      "lj14_kcal_mol": -0.182203763302,
+      "ljsr_kcal_mol": -0.155683200856,
+      "potential_total_kcal_mol": 92.0987101859,
+      "vdw_total_kcal_mol": -0.337886964158
+    }
+  },
+  "notes": [
+    "Exact r-RESPA observables are dumped as machine-readable JSON and also checked against the frozen LAMMPS M6 tolerance contract in this test.",
+    "The diagnostics block compares exact r-RESPA step-0 energy terms against the same GROMACS topology/state evaluated without MTS.",
+    "GROMACS exact r-RESPA now targets a dedicated integrator = md-vv path instead of reusing the leap-frog md update path.",
+    "The current pair14 level is pinned to level 1 for this harness, but LAMMPS special_bonds 1-4 terms are embedded in pair-style respa splitting rather than exposed as a separate schedule keyword."
+  ]
+}

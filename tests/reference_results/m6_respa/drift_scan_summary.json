@@ -1,0 +1,251 @@
+{
+  "best_by_outer_steps": [
+    {
+      "best_pair14_level": 1,
+      "drift_abs_delta_sum_kcal_mol": 0.032775040529203006,
+      "outer_steps": 1,
+      "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+    },
+    {
+      "best_pair14_level": 1,
+      "drift_abs_delta_sum_kcal_mol": 0.10119419026489329,
+      "outer_steps": 2,
+      "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+    },
+    {
+      "best_pair14_level": 1,
+      "drift_abs_delta_sum_kcal_mol": 0.21123144725610155,
+      "outer_steps": 5,
+      "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+    }
+  ],
+  "outer_steps": [
+    1,
+    2,
+    5
+  ],
+  "pair14_levels": [
+    1,
+    2,
+    3
+  ],
+  "runs": [
+    {
+      "aggregate": {
+        "drift_abs_delta_sum_kcal_mol": 0.032775040529203006,
+        "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+      },
+      "outer_steps": 1,
+      "pair14_level": 1,
+      "systems": [
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.004225481420107999,
+          "span_abs_delta_kcal_mol": 0.004225481420107999,
+          "step0_abs_delta_kcal_mol": 0.0028642264999980682,
+          "system_id": "small_oligomer"
+        },
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.028549559109095006,
+          "span_abs_delta_kcal_mol": 0.028549559109095006,
+          "step0_abs_delta_kcal_mol": 0.015395226300000786,
+          "system_id": "small_salt_polymer_box"
+        }
+      ]
+    },
+    {
+      "aggregate": {
+        "drift_abs_delta_sum_kcal_mol": 0.03327284758155301,
+        "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+      },
+      "outer_steps": 1,
+      "pair14_level": 2,
+      "systems": [
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.004256480394057999,
+          "span_abs_delta_kcal_mol": 0.004256480394057999,
+          "step0_abs_delta_kcal_mol": 0.0028642264999980682,
+          "system_id": "small_oligomer"
+        },
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.029016367187495007,
+          "span_abs_delta_kcal_mol": 0.029016367187495007,
+          "step0_abs_delta_kcal_mol": 0.015395226300000786,
+          "system_id": "small_salt_polymer_box"
+        }
+      ]
+    },
+    {
+      "aggregate": {
+        "drift_abs_delta_sum_kcal_mol": 0.033411431229803,
+        "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+      },
+      "outer_steps": 1,
+      "pair14_level": 3,
+      "systems": [
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.004475296680807999,
+          "span_abs_delta_kcal_mol": 0.004475296680807999,
+          "step0_abs_delta_kcal_mol": 0.0028642264999980682,
+          "system_id": "small_oligomer"
+        },
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.028936134548995004,
+          "span_abs_delta_kcal_mol": 0.028936134548995004,
+          "step0_abs_delta_kcal_mol": 0.015395226300000786,
+          "system_id": "small_salt_polymer_box"
+        }
+      ]
+    },
+    {
+      "aggregate": {
+        "drift_abs_delta_sum_kcal_mol": 0.10119419026489329,
+        "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+      },
+      "outer_steps": 2,
+      "pair14_level": 1,
+      "systems": [
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.012630541785899698,
+          "span_abs_delta_kcal_mol": 0.012630541785899698,
+          "step0_abs_delta_kcal_mol": 0.0028642264999980682,
+          "system_id": "small_oligomer"
+        },
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.08856364847899359,
+          "span_abs_delta_kcal_mol": 0.08856364847899359,
+          "step0_abs_delta_kcal_mol": 0.015395226300000786,
+          "system_id": "small_salt_polymer_box"
+        }
+      ]
+    },
+    {
+      "aggregate": {
+        "drift_abs_delta_sum_kcal_mol": 0.10251620532999328,
+        "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+      },
+      "outer_steps": 2,
+      "pair14_level": 2,
+      "systems": [
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.012763655026999696,
+          "span_abs_delta_kcal_mol": 0.012763655026999696,
+          "step0_abs_delta_kcal_mol": 0.0028642264999980682,
+          "system_id": "small_oligomer"
+        },
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.08975255030299359,
+          "span_abs_delta_kcal_mol": 0.08975255030299359,
+          "step0_abs_delta_kcal_mol": 0.015395226300000786,
+          "system_id": "small_salt_polymer_box"
+        }
+      ]
+    },
+    {
+      "aggregate": {
+        "drift_abs_delta_sum_kcal_mol": 0.1033258255915933,
+        "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+      },
+      "outer_steps": 2,
+      "pair14_level": 3,
+      "systems": [
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.013303401867599696,
+          "span_abs_delta_kcal_mol": 0.013303401867599696,
+          "step0_abs_delta_kcal_mol": 0.0028642264999980682,
+          "system_id": "small_oligomer"
+        },
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.0900224237239936,
+          "span_abs_delta_kcal_mol": 0.0900224237239936,
+          "step0_abs_delta_kcal_mol": 0.015395226300000786,
+          "system_id": "small_salt_polymer_box"
+        }
+      ]
+    },
+    {
+      "aggregate": {
+        "drift_abs_delta_sum_kcal_mol": 0.21123144725610155,
+        "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+      },
+      "outer_steps": 5,
+      "pair14_level": 1,
+      "systems": [
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.028176277648099726,
+          "span_abs_delta_kcal_mol": 0.028176277648099726,
+          "step0_abs_delta_kcal_mol": 0.0028642264999980682,
+          "system_id": "small_oligomer"
+        },
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.18305516960800183,
+          "span_abs_delta_kcal_mol": 0.18379257267300064,
+          "step0_abs_delta_kcal_mol": 0.015395226300000786,
+          "system_id": "small_salt_polymer_box"
+        }
+      ]
+    },
+    {
+      "aggregate": {
+        "drift_abs_delta_sum_kcal_mol": 0.2144753987072016,
+        "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+      },
+      "outer_steps": 5,
+      "pair14_level": 2,
+      "systems": [
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.02886007854419973,
+          "span_abs_delta_kcal_mol": 0.02886007854419973,
+          "step0_abs_delta_kcal_mol": 0.0028642264999980682,
+          "system_id": "small_oligomer"
+        },
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.18561532016300186,
+          "span_abs_delta_kcal_mol": 0.18581297638700062,
+          "step0_abs_delta_kcal_mol": 0.015395226300000786,
+          "system_id": "small_salt_polymer_box"
+        }
+      ]
+    },
+    {
+      "aggregate": {
+        "drift_abs_delta_sum_kcal_mol": 0.22103988730930157,
+        "step0_abs_delta_sum_kcal_mol": 0.018259452799998854
+      },
+      "outer_steps": 5,
+      "pair14_level": 3,
+      "systems": [
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.03136187808929973,
+          "span_abs_delta_kcal_mol": 0.03136187808929973,
+          "step0_abs_delta_kcal_mol": 0.0028642264999980682,
+          "system_id": "small_oligomer"
+        },
+        {
+          "dominant_gap": "drift",
+          "drift_abs_delta_kcal_mol": 0.18967800922000183,
+          "span_abs_delta_kcal_mol": 0.18859923710500065,
+          "step0_abs_delta_kcal_mol": 0.015395226300000786,
+          "system_id": "small_salt_polymer_box"
+        }
+      ]
+    }
+  ],
+  "schema_version": 1
+}

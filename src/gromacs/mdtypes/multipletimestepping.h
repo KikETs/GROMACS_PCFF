@@ -35,25 +35,76 @@
 #define GMX_MULTIPLETIMESTEPPING_H
 
 #include <bitset>
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include "gromacs/utility/arrayref.h"
 #include "gromacs/utility/enumerationhelpers.h"
 #include "gromacs/utility/gmxassert.h"
+#include "gromacs/utility/real.h"
 
 struct t_inputrec;
 
 namespace gmx
 {
 
+//! Selects the MTS semantics to apply.
+enum class MtsMode : int
+{
+    Legacy,      //!< The original GROMACS force-group MTS behavior
+    LammpsRespa, //!< Exact LAMMPS-style r-RESPA force-class behavior
+    Count
+};
+
+//! Names for the MTS execution modes
+static const gmx::EnumerationArray<MtsMode, std::string> mtsModeNames = { "legacy", "lammps-respa" };
+
+//! The real-space nonbonded contribution to compute for one kernel launch.
+enum class MtsNonbondedRespaContribution : int
+{
+    Full,
+    Inner,
+    Middle,
+    Outer,
+    Count
+};
+
+//! Exact LAMMPS-style r-RESPA settings stored in the inputrec.
+struct LammpsRespaParameters
+{
+    bool enabled = false;
+    int  bondLevel = 0;
+    int  angleLevel = 0;
+    int  dihedralLevel = 0;
+    int  improperLevel = 0;
+    int  pair14Level = 0;
+    int  pairLevel = 0;
+    int  kspaceLevel = 0;
+    int  innerLevel = -1;
+    int  middleLevel = -1;
+    int  outerLevel = -1;
+    real innerOff = 0;
+    real innerOn = 0;
+    real outerOn = 0;
+    real outerOff = 0;
+
+    bool hasPairSplitting() const { return innerLevel >= 0 || middleLevel >= 0 || outerLevel >= 0; }
+    bool hasMiddle() const { return middleLevel >= 0; }
+};
+
 //! Force group available for selection for multiple time step integration
 enum class MtsForceGroups : int
 {
     LongrangeNonbonded, //!< PME-mesh or Ewald for electrostatics and/or LJ
-    Nonbonded,          //!< Non-bonded pair interactions
-    Pair,               //!< Bonded pair interactions
-    Dihedral,           //!< Dihedrals, including cmap (not restraints)
+    Nonbonded,          //!< Unsplit real-space non-bonded pair interactions
+    NonbondedInner,     //!< Inner real-space r-RESPA contribution
+    NonbondedMiddle,    //!< Middle real-space r-RESPA contribution
+    NonbondedOuter,     //!< Outer real-space r-RESPA contribution
+    Pair,               //!< Listed 1-4 pair interactions
+    Bond,               //!< Bond interactions
+    Dihedral,           //!< Proper dihedrals, including cmap (not restraints)
+    Improper,           //!< Improper dihedrals
     Angle,              //!< Bonded angle potentials (not restraints)
     Pull,               //!< COM pulling
     Awh,                //!< Accelerated weight histogram method
@@ -62,7 +113,18 @@ enum class MtsForceGroups : int
 
 //! Names for the MTS force groups
 static const gmx::EnumerationArray<MtsForceGroups, std::string> mtsForceGroupNames = {
-    "longrange-nonbonded", "nonbonded", "pair", "dihedral", "angle", "pull", "awh"
+    "longrange-nonbonded",
+    "nonbonded",
+    "nonbonded-inner",
+    "nonbonded-middle",
+    "nonbonded-outer",
+    "pair",
+    "bond",
+    "dihedral",
+    "improper",
+    "angle",
+    "pull",
+    "awh"
 };
 
 //! Setting for a single level for multiple time step integration
@@ -74,17 +136,35 @@ struct MtsLevel
     int stepFactor;
 };
 
+//! Explicit base-step trace for mapping GROMACS base steps to LAMMPS recursive r-RESPA events
+struct LammpsRespaBaseStepTrace
+{
+    //! Levels that apply their initial half-kick before the base-step drift, ordered slow -> fast
+    std::vector<int> initialKickLevels;
+    //! Levels whose forces are refreshed after the drift to x(t + dt), ordered fast -> slow
+    std::vector<int> refreshedForceLevels;
+    //! Levels that apply their final half-kick after the force refresh, ordered fast -> slow
+    std::vector<int> finalKickLevels;
+};
+
+//! Maximum number of MTS levels supported by the CPU exact r-RESPA implementation
+constexpr int c_maxMtsLevels = 8;
+
 /*! \brief Returns the MTS level at which a force group is to be computed
  *
  * \param[in] mtsLevels  List of force groups for each MTS level, can be empty without MTS
  * \param[in] mtsForceGroup  The force group to query the MTS level for
  */
-static inline int forceGroupMtsLevel(ArrayRef<const MtsLevel> mtsLevels, const MtsForceGroups mtsForceGroup)
-{
-    GMX_ASSERT(mtsLevels.empty() || mtsLevels.size() == 2, "Only 0 or 2 MTS levels are supported");
+int forceGroupMtsLevel(ArrayRef<const MtsLevel> mtsLevels, MtsForceGroups mtsForceGroup);
 
-    return (mtsLevels.empty() || mtsLevels[0].forceGroups[static_cast<int>(mtsForceGroup)]) ? 0 : 1;
-};
+//! Returns the factor for the MTS level that owns \p mtsForceGroup or 1 without MTS
+int forceGroupMtsFactor(ArrayRef<const MtsLevel> mtsLevels, MtsForceGroups mtsForceGroup);
+
+//! Returns the highest active MTS level at \p step or 0 without MTS
+int highestActiveMtsLevel(ArrayRef<const MtsLevel> mtsLevels, int64_t step);
+
+//! Returns whether \p mtsLevel is active at \p step or always true without MTS
+bool mtsLevelIsActive(ArrayRef<const MtsLevel> mtsLevels, int mtsLevel, int64_t step);
 
 /*! \brief Returns the interval in steps at which the non-bonded pair forces are calculated
  *
@@ -92,15 +172,25 @@ static inline int forceGroupMtsLevel(ArrayRef<const MtsLevel> mtsLevels, const M
  */
 int nonbondedMtsFactor(const t_inputrec& ir);
 
+//! Returns the MTS level that owns a specific real-space nonbonded contribution
+int nonbondedRespaContributionMtsLevel(const t_inputrec& ir, MtsNonbondedRespaContribution contribution);
+
+//! Returns the base-step event ordering that corresponds to LAMMPS recursive r-RESPA
+LammpsRespaBaseStepTrace lammpsRespaBaseStepTrace(ArrayRef<const MtsLevel> mtsLevels, int64_t baseStep);
+
 //! Struct for passing the MTS mdp options to setupMtsLevels()
 struct GromppMtsOpts
 {
+    //! The MTS execution mode
+    MtsMode mode = MtsMode::Legacy;
     //! The number of MTS levels
     int numLevels = 0;
-    //! The names of the force groups assigned by the user to level 2, internal index 1
-    std::string level2Forces;
-    //! The step factor assigned by the user to level 2, internal index 1
-    int level2Factor = 0;
+    //! The names of the force groups assigned by the user to levels 2..N, internal indices 1..N-1
+    std::vector<std::string> levelForces;
+    //! The step factors assigned by the user to levels 2..N, internal indices 1..N-1
+    std::vector<int> levelFactors;
+    //! Exact LAMMPS-style r-RESPA settings
+    LammpsRespaParameters lammpsRespa;
 };
 
 /*! \brief Sets up and returns the MTS levels and checks requirements of MTS

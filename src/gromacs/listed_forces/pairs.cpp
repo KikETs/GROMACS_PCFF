@@ -178,6 +178,7 @@ static inline real sixthRoot(const real r)
 /*! \brief Compute the energy and force for a single pair interaction under FEP */
 template<KernelSoftcoreType softcoreType>
 static real free_energy_evaluate_single(real                                           r2,
+                                        real                                           repulsionPower,
                                         real                                           rCoulCutoff,
                                         const interaction_const_t::SoftCoreParameters& scParams,
                                         real                                           tabscale,
@@ -212,9 +213,10 @@ static real free_energy_evaluate_single(real                                    
     real       rQ, rLJ;
     real       scaleDvdlRCoul;
     int        i, ntab;
-    const real half = 0.5_real;
-    const real one  = 1.0_real;
-    const real two  = 2.0_real;
+    const real half        = 0.5_real;
+    const real one         = 1.0_real;
+    const real two         = 2.0_real;
+    const real sigma6Scale = 6.0_real / repulsionPower;
 
     qq[0]  = qqA;
     qq[1]  = qqB;
@@ -234,10 +236,10 @@ static real free_energy_evaluate_single(real                                    
         {
             if ((c6[i] > 0) && (c12[i] > 0))
             {
-                /* The c6 & c12 coefficients now contain the constants 6.0 and 12.0, respectively.
-                 * Correct for this by multiplying with (1/12.0)/(1/6.0)=6.0/12.0=0.5.
+                /* The c6 and repulsive coefficients contain the derivative prefactors 6.0 and
+                 * repulsionPower, respectively. Correct for this when recovering sigma^6.
                  */
-                sigma6[i] = half * c12[i] / c6[i];
+                sigma6[i] = sigma6Scale * c12[i] / c6[i];
                 if (sigma6[i] < scParams.sigma6Minimum) /* for disappearing coul and vdw with soft core at the same time */
                 {
                     sigma6[i] = scParams.sigma6Minimum;
@@ -253,10 +255,10 @@ static real free_energy_evaluate_single(real                                    
         {
             if ((c6[i] > 0) && (c12[i] > 0))
             {
-                /* The c6 & c12 coefficients now contain the constants 6.0 and 12.0, respectively.
-                 * Correct for this by multiplying with (1/12.0)/(1/6.0)=6.0/12.0=0.5.
+                /* The c6 and repulsive coefficients contain the derivative prefactors 6.0 and
+                 * repulsionPower, respectively. Correct for this when recovering sigma^6.
                  */
-                gapsysSigma6VdW[i] = half * c12[i] / c6[i];
+                gapsysSigma6VdW[i] = sigma6Scale * c12[i] / c6[i];
             }
             else
             {
@@ -409,7 +411,7 @@ static real free_energy_evaluate_single(real                                    
                 // scaled values for c6 and c12
                 real c6s, c12s;
                 c6s  = c6[i] / 6.0_real;
-                c12s = c12[i] / 12.0_real;
+                c12s = c12[i] / repulsionPower;
 
                 /* Temporary variables for inverted values */
                 real rInvLJ = one / rLJ;
@@ -651,13 +653,13 @@ static real do_pairs_general(InteractionFunction                 ftype,
                 break;
         }
 
-        /* To save flops in the optimized kernels, c6/c12 have 6.0/12.0 derivative prefactors
+        /* To save flops in the optimized kernels, c6/c12 have 6.0/repulsionPower derivative prefactors
          * included in the general nfbp array now. This means the tables are scaled down by the
          * same factor, so when we use the original c6/c12 parameters from iparams[] they must
          * be scaled up.
          */
         c6 *= 6.0;
-        c12 *= 12.0;
+        c12 *= fr->ic->vdw.repulsionPower;
 
         /* Do we need to apply full periodic boundary conditions? */
         if (fr->bMolPBC)
@@ -688,7 +690,7 @@ static real do_pairs_general(InteractionFunction                 ftype,
             /* Currently free energy is only supported for InteractionFunction::LennardJones14, so no need to check for that if we got here */
             qqB  = chargeB[ai] * chargeB[aj] * epsfac * fr->fudgeQQ;
             c6B  = iparams[itype].lj14.c6B * 6.0;
-            c12B = iparams[itype].lj14.c12B * 12.0;
+            c12B = iparams[itype].lj14.c12B * fr->ic->vdw.repulsionPower;
 
             const auto& scParams = *fr->ic->softCoreParameters;
             if (scParams.softcoreType == SoftcoreType::Beutler)
@@ -697,6 +699,7 @@ static real do_pairs_general(InteractionFunction                 ftype,
                 {
                     fscal = free_energy_evaluate_single<KernelSoftcoreType::None>(
                             r2,
+                            fr->ic->vdw.repulsionPower,
                             fr->ic->coulomb.cutoff,
                             *fr->ic->softCoreParameters,
                             fr->pairsTable->scale,
@@ -724,6 +727,7 @@ static real do_pairs_general(InteractionFunction                 ftype,
                 {
                     fscal = free_energy_evaluate_single<KernelSoftcoreType::Beutler>(
                             r2,
+                            fr->ic->vdw.repulsionPower,
                             fr->ic->coulomb.cutoff,
                             *fr->ic->softCoreParameters,
                             fr->pairsTable->scale,
@@ -754,6 +758,7 @@ static real do_pairs_general(InteractionFunction                 ftype,
                 {
                     fscal = free_energy_evaluate_single<KernelSoftcoreType::None>(
                             r2,
+                            fr->ic->vdw.repulsionPower,
                             fr->ic->coulomb.cutoff,
                             *fr->ic->softCoreParameters,
                             fr->pairsTable->scale,
@@ -781,6 +786,7 @@ static real do_pairs_general(InteractionFunction                 ftype,
                 {
                     fscal = free_energy_evaluate_single<KernelSoftcoreType::Gapsys>(
                             r2,
+                            fr->ic->vdw.repulsionPower,
                             fr->ic->coulomb.cutoff,
                             *fr->ic->softCoreParameters,
                             fr->pairsTable->scale,
@@ -971,6 +977,7 @@ void do_pairs(InteractionFunction                 ftype,
 {
     if (ftype == InteractionFunction::LennardJones14 && fr->ic->vdw.type != VanDerWaalsType::User
         && !usingUserTableElectrostatics(fr->ic->coulomb.type) && !havePerturbedInteractions
+        && std::abs(fr->ic->vdw.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS
         && (!stepWork.computeVirial && !stepWork.computeEnergy))
     {
         /* We use a fast code-path for plain LJ 1-4 without FEP.

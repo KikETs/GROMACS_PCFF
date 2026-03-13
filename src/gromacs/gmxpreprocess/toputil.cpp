@@ -100,16 +100,26 @@ static void print_bt(FILE*                                                      
         case InteractionFunction::GROMOS96Bonds: f = 1; break;
         case InteractionFunction::MorsePotential: f = 2; break;
         case InteractionFunction::CubicBonds: f = 3; break;
+        case InteractionFunction::BondClass2: f = 10; break;
         case InteractionFunction::ConnectBonds: f = 4; break;
         case InteractionFunction::HarmonicPotential: f = 5; break;
         case InteractionFunction::CrossBondAngles: f = 2; break;
         case InteractionFunction::CrossBondBonds: f = 3; break;
         case InteractionFunction::UreyBradleyPotential: f = 4; break;
+        case InteractionFunction::AngleClass2: f = 10; break;
         case InteractionFunction::ProperDihedrals:            // Intended to fall through
         case InteractionFunction::RyckaertBellemansDihedrals: // Intended to fall through
         case InteractionFunction::FourierDihedrals: bDih = TRUE; break;
+        case InteractionFunction::DihedralClass2:
+            f    = 12;
+            bDih = TRUE;
+            break;
         case InteractionFunction::ImproperDihedrals:
             f    = 1;
+            bDih = TRUE;
+            break;
+        case InteractionFunction::ImproperClass2:
+            f    = 11;
             bDih = TRUE;
             break;
         case InteractionFunction::ConstraintsNoCoupling: // Intended to fall through

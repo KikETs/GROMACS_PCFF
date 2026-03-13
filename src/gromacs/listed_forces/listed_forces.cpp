@@ -105,14 +105,59 @@ ListedForces::ListedForces(ListedForces&& o) noexcept = default;
 ListedForces::~ListedForces() = default;
 
 //! Copies the selection interactions from \p idefSrc to \p idef
+static bool isImproperInteraction(InteractionFunction ftype)
+{
+    return (ftype == InteractionFunction::ImproperDihedrals || ftype == InteractionFunction::ImproperClass2
+            || ftype == InteractionFunction::PeriodicImproperDihedrals);
+}
+
+static bool isProperDihedralInteraction(InteractionFunction ftype)
+{
+    return (ftype == InteractionFunction::ProperDihedrals
+            || ftype == InteractionFunction::RyckaertBellemansDihedrals
+            || ftype == InteractionFunction::RestrictedTorsionPotential
+            || ftype == InteractionFunction::CombinedBendingTorsionPotential
+            || ftype == InteractionFunction::FourierDihedrals
+            || ftype == InteractionFunction::DihedralClass2
+            || ftype == InteractionFunction::TabulatedDihedrals
+            || ftype == InteractionFunction::DihedralEnergyCorrectionMap);
+}
+
+static bool isAngleInteraction(InteractionFunction ftype)
+{
+    return (ftype == InteractionFunction::Angles || ftype == InteractionFunction::GROMOS96Angles
+            || ftype == InteractionFunction::RestrictedBendingPotential
+            || ftype == InteractionFunction::LinearAngles
+            || ftype == InteractionFunction::CrossBondBonds
+            || ftype == InteractionFunction::CrossBondAngles
+            || ftype == InteractionFunction::UreyBradleyPotential
+            || ftype == InteractionFunction::QuarticAngles
+            || ftype == InteractionFunction::AngleClass2
+            || ftype == InteractionFunction::TabulatedAngles);
+}
+
+static bool isBondInteraction(InteractionFunction ftype)
+{
+    return (ftype == InteractionFunction::Bonds || ftype == InteractionFunction::GROMOS96Bonds
+            || ftype == InteractionFunction::MorsePotential || ftype == InteractionFunction::CubicBonds
+            || ftype == InteractionFunction::BondClass2 || ftype == InteractionFunction::ConnectBonds
+            || ftype == InteractionFunction::HarmonicPotential || ftype == InteractionFunction::FENEBonds
+            || ftype == InteractionFunction::TabulatedBonds
+            || ftype == InteractionFunction::TabulatedBondsNoCoupling);
+}
+
 static void selectInteractions(InteractionDefinitions*                   idef,
                                const InteractionDefinitions&             idefSrc,
                                const ListedForces::InteractionSelection& interactionSelection)
 {
     const bool selectPairs =
             interactionSelection.test(static_cast<int>(ListedForces::InteractionGroup::Pairs));
+    const bool selectBonds =
+            interactionSelection.test(static_cast<int>(ListedForces::InteractionGroup::Bonds));
     const bool selectDihedrals =
             interactionSelection.test(static_cast<int>(ListedForces::InteractionGroup::Dihedrals));
+    const bool selectImpropers =
+            interactionSelection.test(static_cast<int>(ListedForces::InteractionGroup::Impropers));
     const bool selectAngles =
             interactionSelection.test(static_cast<int>(ListedForces::InteractionGroup::Angles));
     const bool selectRest =
@@ -128,13 +173,21 @@ static void selectInteractions(InteractionDefinitions*                   idef,
             {
                 assign = selectPairs;
             }
-            else if (ifunc.flags & IF_DIHEDRAL)
+            else if (isImproperInteraction(ftype))
+            {
+                assign = selectImpropers;
+            }
+            else if (isProperDihedralInteraction(ftype))
             {
                 assign = selectDihedrals;
             }
-            else if (ifunc.flags & IF_ATYPE)
+            else if (isAngleInteraction(ftype))
             {
                 assign = selectAngles;
+            }
+            else if (isBondInteraction(ftype))
+            {
+                assign = selectBonds;
             }
             else
             {

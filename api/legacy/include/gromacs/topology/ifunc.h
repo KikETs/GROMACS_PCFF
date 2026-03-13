@@ -124,6 +124,7 @@ enum class InteractionFunction : int
     GROMOS96Bonds,
     MorsePotential,
     CubicBonds,
+    BondClass2,
     ConnectBonds,
     HarmonicPotential,
     FENEBonds,
@@ -138,13 +139,16 @@ enum class InteractionFunction : int
     CrossBondAngles,
     UreyBradleyPotential,
     QuarticAngles,
+    AngleClass2,
     TabulatedAngles,
     ProperDihedrals,
     RyckaertBellemansDihedrals,
     RestrictedTorsionPotential,
     CombinedBendingTorsionPotential,
     FourierDihedrals,
+    DihedralClass2,
     ImproperDihedrals,
+    ImproperClass2,
     PeriodicImproperDihedrals,
     TabulatedDihedrals,
     DihedralEnergyCorrectionMap,
@@ -234,7 +238,7 @@ static inline bool IS_RESTRAINT_TYPE(InteractionFunction ifunc)
 //! Maximum allowed number of atoms
 constexpr int MAXATOMLIST = 6;
 //! Maximum allowed number of parameters
-constexpr int MAXFORCEPARAM = 12;
+constexpr int MAXFORCEPARAM = 32;
 //! Maximum terms in interaction_function. Check src/gromacs/gmxpreprocess/toppush.cpp when you change these numbers.
 constexpr int NR_RBDIHS   = 6;
 constexpr int NR_CBTDIHS  = 6;

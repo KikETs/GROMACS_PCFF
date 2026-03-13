@@ -107,10 +107,56 @@ static void set_ljparams(CombinationRule comb, double reppow, double v, double w
             *c12 = 4 * w * std::pow(-v, reppow);
         }
     }
+    else if (comb == CombinationRule::SixthPower)
+    {
+        if (!gmx_within_tol(reppow, 9.0, 10 * GMX_DOUBLE_EPS))
+        {
+            gmx_fatal(FARGS, "Combination rule SixthPower requires repulsion power 9, got %.16g", reppow);
+        }
+
+        if (v >= 0)
+        {
+            *c6  = 3 * w * gmx::power6(v);
+            *c12 = 2 * w * std::pow(v, reppow);
+        }
+        else
+        {
+            /* Interpret negative sigma as c6=0 and c_rep with -sigma */
+            *c6  = 0;
+            *c12 = 2 * w * std::pow(-v, reppow);
+        }
+    }
     else
     {
         *c6  = v;
         *c12 = w;
+    }
+}
+
+static void set_ljpairparams(CombinationRule comb, double reppow, double v, double w, real* c6, real* c12)
+{
+    if (comb == CombinationRule::SixthPower)
+    {
+        if (!gmx_within_tol(reppow, 9.0, 10 * GMX_DOUBLE_EPS))
+        {
+            gmx_fatal(FARGS, "Combination rule SixthPower requires repulsion power 9, got %.16g", reppow);
+        }
+
+        if (v >= 0)
+        {
+            *c6  = 3 * w * gmx::power6(v);
+            *c12 = 2 * w * std::pow(v, reppow);
+        }
+        else
+        {
+            /* Interpret negative sigma as c6=0 and c_rep with -sigma */
+            *c6  = 0;
+            *c12 = 2 * w * std::pow(-v, reppow);
+        }
+    }
+    else
+    {
+        set_ljparams(comb, reppow, v, w, c6, c12);
     }
 }
 
@@ -143,7 +189,9 @@ static int assign_param(InteractionFunction       ftype,
         // parameters so have all parameters zero at this point, but elsewhere we rely on the fact
         // that the parameter set is assigned even though it is all zero.
         if (IS_ANGLE(ftype) || IS_RESTRAINT_TYPE(ftype) || ftype == InteractionFunction::ImproperDihedrals
-            || ftype == InteractionFunction::ProperDihedrals || ftype == InteractionFunction::PeriodicImproperDihedrals
+            || ftype == InteractionFunction::ImproperClass2 || ftype == InteractionFunction::DihedralClass2
+            || ftype == InteractionFunction::ProperDihedrals
+            || ftype == InteractionFunction::PeriodicImproperDihedrals
             || ftype == InteractionFunction::RyckaertBellemansDihedrals
             || ftype == InteractionFunction::FourierDihedrals)
         {
@@ -200,6 +248,19 @@ static int assign_param(InteractionFunction       ftype,
             newparam->cross_ba.r3e = old[2];
             newparam->cross_ba.krt = old[3];
             break;
+        case InteractionFunction::AngleClass2:
+            newparam->angle_class2.theta0 = old[0] * gmx::c_deg2Rad;
+            newparam->angle_class2.k2     = old[1];
+            newparam->angle_class2.k3     = old[2];
+            newparam->angle_class2.k4     = old[3];
+            newparam->angle_class2.bb_k   = old[4];
+            newparam->angle_class2.bb_r1  = old[5];
+            newparam->angle_class2.bb_r2  = old[6];
+            newparam->angle_class2.ba_k1  = old[7];
+            newparam->angle_class2.ba_k2  = old[8];
+            newparam->angle_class2.ba_r1  = old[9];
+            newparam->angle_class2.ba_r2  = old[10];
+            break;
         case InteractionFunction::UreyBradleyPotential:
             newparam->u_b.thetaA  = old[0];
             newparam->u_b.kthetaA = old[1];
@@ -246,6 +307,12 @@ static int assign_param(InteractionFunction       ftype,
             newparam->cubic.kb   = old[1];
             newparam->cubic.kcub = old[2];
             break;
+        case InteractionFunction::BondClass2:
+            newparam->bond_class2.r0 = old[0];
+            newparam->bond_class2.k2 = old[1];
+            newparam->bond_class2.k3 = old[2];
+            newparam->bond_class2.k4 = old[3];
+            break;
         case InteractionFunction::ConnectBonds: break;
         case InteractionFunction::Polarization: newparam->polarize.alpha = old[0]; break;
         case InteractionFunction::AnharmonicPolarization:
@@ -272,19 +339,19 @@ static int assign_param(InteractionFunction       ftype,
             newparam->bham.c = old[2];
             break;
         case InteractionFunction::LennardJones14:
-            set_ljparams(comb, reppow, old[0], old[1], &newparam->lj14.c6A, &newparam->lj14.c12A);
-            set_ljparams(comb, reppow, old[2], old[3], &newparam->lj14.c6B, &newparam->lj14.c12B);
+            set_ljpairparams(comb, reppow, old[0], old[1], &newparam->lj14.c6A, &newparam->lj14.c12A);
+            set_ljpairparams(comb, reppow, old[2], old[3], &newparam->lj14.c6B, &newparam->lj14.c12B);
             break;
         case InteractionFunction::LennardJonesCoulomb14Q:
             newparam->ljc14.fqq = old[0];
             newparam->ljc14.qi  = old[1];
             newparam->ljc14.qj  = old[2];
-            set_ljparams(comb, reppow, old[3], old[4], &newparam->ljc14.c6, &newparam->ljc14.c12);
+            set_ljpairparams(comb, reppow, old[3], old[4], &newparam->ljc14.c6, &newparam->ljc14.c12);
             break;
         case InteractionFunction::LennardJonesCoulombNonBondedPairs:
             newparam->ljcnb.qi = old[0];
             newparam->ljcnb.qj = old[1];
-            set_ljparams(comb, reppow, old[2], old[3], &newparam->ljcnb.c6, &newparam->ljcnb.c12);
+            set_ljpairparams(comb, reppow, old[2], old[3], &newparam->ljcnb.c6, &newparam->ljcnb.c12);
             break;
         case InteractionFunction::LennardJonesShortRange:
             set_ljparams(comb, reppow, old[0], old[1], &newparam->lj.c6, &newparam->lj.c12);
@@ -312,11 +379,55 @@ static int assign_param(InteractionFunction       ftype,
             newparam->pdihs.mult = round_check(old[2], -99, ftype, "multiplicity");
 
             break;
+        case InteractionFunction::DihedralClass2:
+            newparam->dihedral_class2.k1          = old[0];
+            newparam->dihedral_class2.phi1        = old[1] * gmx::c_deg2Rad;
+            newparam->dihedral_class2.k2          = old[2];
+            newparam->dihedral_class2.phi2        = old[3] * gmx::c_deg2Rad;
+            newparam->dihedral_class2.k3          = old[4];
+            newparam->dihedral_class2.phi3        = old[5] * gmx::c_deg2Rad;
+            newparam->dihedral_class2.mbt_f1      = old[6];
+            newparam->dihedral_class2.mbt_f2      = old[7];
+            newparam->dihedral_class2.mbt_f3      = old[8];
+            newparam->dihedral_class2.mbt_r0      = old[9];
+            newparam->dihedral_class2.ebt_f1_1    = old[10];
+            newparam->dihedral_class2.ebt_f2_1    = old[11];
+            newparam->dihedral_class2.ebt_f3_1    = old[12];
+            newparam->dihedral_class2.ebt_f1_2    = old[13];
+            newparam->dihedral_class2.ebt_f2_2    = old[14];
+            newparam->dihedral_class2.ebt_f3_2    = old[15];
+            newparam->dihedral_class2.ebt_r0_1    = old[16];
+            newparam->dihedral_class2.ebt_r0_2    = old[17];
+            newparam->dihedral_class2.at_f1_1     = old[18];
+            newparam->dihedral_class2.at_f2_1     = old[19];
+            newparam->dihedral_class2.at_f3_1     = old[20];
+            newparam->dihedral_class2.at_f1_2     = old[21];
+            newparam->dihedral_class2.at_f2_2     = old[22];
+            newparam->dihedral_class2.at_f3_2     = old[23];
+            newparam->dihedral_class2.at_theta0_1 = old[24] * gmx::c_deg2Rad;
+            newparam->dihedral_class2.at_theta0_2 = old[25] * gmx::c_deg2Rad;
+            newparam->dihedral_class2.aat_k       = old[26];
+            newparam->dihedral_class2.aat_theta0_1 = old[27] * gmx::c_deg2Rad;
+            newparam->dihedral_class2.aat_theta0_2 = old[28] * gmx::c_deg2Rad;
+            newparam->dihedral_class2.bb13t_k     = old[29];
+            newparam->dihedral_class2.bb13t_r10   = old[30];
+            newparam->dihedral_class2.bb13t_r30   = old[31];
+            break;
         case InteractionFunction::RestrictedTorsionPotential:
             newparam->pdihs.phiA = old[0];
             newparam->pdihs.cpA  = old[1];
             newparam->pdihs.phiB = old[2];
             newparam->pdihs.cpB  = old[3];
+            break;
+        case InteractionFunction::ImproperClass2:
+            newparam->improper_class2.k0          = old[0];
+            newparam->improper_class2.chi0        = old[1] * gmx::c_deg2Rad;
+            newparam->improper_class2.aa_k1       = old[2];
+            newparam->improper_class2.aa_k2       = old[3];
+            newparam->improper_class2.aa_k3       = old[4];
+            newparam->improper_class2.aa_theta0_1 = old[5] * gmx::c_deg2Rad;
+            newparam->improper_class2.aa_theta0_2 = old[6] * gmx::c_deg2Rad;
+            newparam->improper_class2.aa_theta0_3 = old[7] * gmx::c_deg2Rad;
             break;
         case InteractionFunction::PositionRestraints:
             newparam->posres.fcA[XX]   = old[0];

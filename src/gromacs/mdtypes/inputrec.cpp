@@ -840,6 +840,7 @@ void pr_inputrec(FILE* fp, int indent, const char* title, const t_inputrec* ir, 
         PS("mts", EBOOL(ir->useMts));
         if (ir->useMts)
         {
+            PS("mts-mode", gmx::mtsModeNames[ir->mtsMode].c_str());
             for (int mtsIndex = 1; mtsIndex < static_cast<int>(ir->mtsLevels.size()); mtsIndex++)
             {
                 const auto&       mtsLevel = ir->mtsLevels[mtsIndex];
@@ -859,6 +860,23 @@ void pr_inputrec(FILE* fp, int indent, const char* title, const t_inputrec* ir, 
                 PS(forceKey.c_str(), forceGroups.c_str());
                 const std::string factorKey = gmx::formatString("mts-level%d-factor", mtsIndex + 1);
                 PI(factorKey.c_str(), mtsLevel.stepFactor);
+            }
+            if (ir->mtsMode == gmx::MtsMode::LammpsRespa)
+            {
+                PI("mts-respa-bond-level", ir->lammpsRespa.bondLevel + 1);
+                PI("mts-respa-angle-level", ir->lammpsRespa.angleLevel + 1);
+                PI("mts-respa-dihedral-level", ir->lammpsRespa.dihedralLevel + 1);
+                PI("mts-respa-improper-level", ir->lammpsRespa.improperLevel + 1);
+                PI("mts-respa-pair14-level", ir->lammpsRespa.pair14Level + 1);
+                PI("mts-respa-pair-level", ir->lammpsRespa.pairLevel + 1);
+                PI("mts-respa-kspace-level", ir->lammpsRespa.kspaceLevel + 1);
+                PI("mts-respa-inner-level", ir->lammpsRespa.innerLevel + 1);
+                PI("mts-respa-middle-level", ir->lammpsRespa.middleLevel + 1);
+                PI("mts-respa-outer-level", ir->lammpsRespa.outerLevel + 1);
+                PR("mts-respa-inner-off", ir->lammpsRespa.innerOff);
+                PR("mts-respa-inner-on", ir->lammpsRespa.innerOn);
+                PR("mts-respa-outer-on", ir->lammpsRespa.outerOn);
+                PR("mts-respa-outer-off", ir->lammpsRespa.outerOff);
             }
         }
         PR("mass-repartition-factor", ir->massRepartitionFactor);
@@ -1455,17 +1473,108 @@ void cmp_inputrec(FILE* fp, const t_inputrec* ir1, const t_inputrec* ir2, real f
     cmp_int(fp, "inputrec->mts", -1, static_cast<int>(ir1->useMts), static_cast<int>(ir2->useMts));
     if (ir1->useMts && ir2->useMts)
     {
+        cmp_int(fp, "inputrec->mts-mode", -1, static_cast<int>(ir1->mtsMode), static_cast<int>(ir2->mtsMode));
         cmp_int(fp, "inputrec->mts-levels", -1, ir1->mtsLevels.size(), ir2->mtsLevels.size());
-        cmp_int(fp,
-                "inputrec->mts-level2-forces",
-                -1,
-                ir1->mtsLevels[1].forceGroups.to_ulong(),
-                ir2->mtsLevels[1].forceGroups.to_ulong());
-        cmp_int(fp,
-                "inputrec->mts-level2-factor",
-                -1,
-                ir1->mtsLevels[1].stepFactor,
-                ir2->mtsLevels[1].stepFactor);
+        for (int mtsIndex = 1; mtsIndex < static_cast<int>(std::min(ir1->mtsLevels.size(), ir2->mtsLevels.size()));
+             mtsIndex++)
+        {
+            cmp_int(fp,
+                    gmx::formatString("inputrec->mts-level%d-forces", mtsIndex + 1).c_str(),
+                    -1,
+                    ir1->mtsLevels[mtsIndex].forceGroups.to_ulong(),
+                    ir2->mtsLevels[mtsIndex].forceGroups.to_ulong());
+            cmp_int(fp,
+                    gmx::formatString("inputrec->mts-level%d-factor", mtsIndex + 1).c_str(),
+                    -1,
+                    ir1->mtsLevels[mtsIndex].stepFactor,
+                    ir2->mtsLevels[mtsIndex].stepFactor);
+        }
+        if (ir1->mtsMode == gmx::MtsMode::LammpsRespa || ir2->mtsMode == gmx::MtsMode::LammpsRespa)
+        {
+            cmp_bool(fp,
+                     "inputrec->lammpsRespa.enabled",
+                     -1,
+                     ir1->lammpsRespa.enabled,
+                     ir2->lammpsRespa.enabled);
+            cmp_int(fp,
+                    "inputrec->lammpsRespa.bondLevel",
+                    -1,
+                    ir1->lammpsRespa.bondLevel,
+                    ir2->lammpsRespa.bondLevel);
+            cmp_int(fp,
+                    "inputrec->lammpsRespa.angleLevel",
+                    -1,
+                    ir1->lammpsRespa.angleLevel,
+                    ir2->lammpsRespa.angleLevel);
+            cmp_int(fp,
+                    "inputrec->lammpsRespa.dihedralLevel",
+                    -1,
+                    ir1->lammpsRespa.dihedralLevel,
+                    ir2->lammpsRespa.dihedralLevel);
+            cmp_int(fp,
+                    "inputrec->lammpsRespa.improperLevel",
+                    -1,
+                    ir1->lammpsRespa.improperLevel,
+                    ir2->lammpsRespa.improperLevel);
+            cmp_int(fp,
+                    "inputrec->lammpsRespa.pair14Level",
+                    -1,
+                    ir1->lammpsRespa.pair14Level,
+                    ir2->lammpsRespa.pair14Level);
+            cmp_int(fp,
+                    "inputrec->lammpsRespa.pairLevel",
+                    -1,
+                    ir1->lammpsRespa.pairLevel,
+                    ir2->lammpsRespa.pairLevel);
+            cmp_int(fp,
+                    "inputrec->lammpsRespa.kspaceLevel",
+                    -1,
+                    ir1->lammpsRespa.kspaceLevel,
+                    ir2->lammpsRespa.kspaceLevel);
+            cmp_int(fp,
+                    "inputrec->lammpsRespa.innerLevel",
+                    -1,
+                    ir1->lammpsRespa.innerLevel,
+                    ir2->lammpsRespa.innerLevel);
+            cmp_int(fp,
+                    "inputrec->lammpsRespa.middleLevel",
+                    -1,
+                    ir1->lammpsRespa.middleLevel,
+                    ir2->lammpsRespa.middleLevel);
+            cmp_int(fp,
+                    "inputrec->lammpsRespa.outerLevel",
+                    -1,
+                    ir1->lammpsRespa.outerLevel,
+                    ir2->lammpsRespa.outerLevel);
+            cmp_real(fp,
+                     "inputrec->lammpsRespa.innerOff",
+                     -1,
+                     ir1->lammpsRespa.innerOff,
+                     ir2->lammpsRespa.innerOff,
+                     ftol,
+                     abstol);
+            cmp_real(fp,
+                     "inputrec->lammpsRespa.innerOn",
+                     -1,
+                     ir1->lammpsRespa.innerOn,
+                     ir2->lammpsRespa.innerOn,
+                     ftol,
+                     abstol);
+            cmp_real(fp,
+                     "inputrec->lammpsRespa.outerOn",
+                     -1,
+                     ir1->lammpsRespa.outerOn,
+                     ir2->lammpsRespa.outerOn,
+                     ftol,
+                     abstol);
+            cmp_real(fp,
+                     "inputrec->lammpsRespa.outerOff",
+                     -1,
+                     ir1->lammpsRespa.outerOff,
+                     ir2->lammpsRespa.outerOff,
+                     ftol,
+                     abstol);
+        }
     }
     cmp_real(fp, "inputrec->massRepartitionFactor", -1, ir1->massRepartitionFactor, ir2->massRepartitionFactor, ftol, abstol);
     cmp_int(fp, "inputrec->pbcType", -1, static_cast<int>(ir1->pbcType), static_cast<int>(ir2->pbcType));

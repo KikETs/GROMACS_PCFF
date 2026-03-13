@@ -1,0 +1,9 @@
+# Frozen from /tmp/lammps_golden_m3/dihedral_toy raw LAMMPS outputs
+energy pe 27.626426
+energy ebond 13.697359
+energy eangle 12.503652
+energy edihed 1.4254148
+force 1 1.57699 20.4136 1.55479
+force 2 75.1704 7.52742 8.3573
+force 3 -14.3327 -11.2292 32.4421
+force 4 -62.4148 -16.7118 -42.3542

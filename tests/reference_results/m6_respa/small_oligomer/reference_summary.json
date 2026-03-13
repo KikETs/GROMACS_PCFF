@@ -1,0 +1,75 @@
+{
+  "mode": "lammps_run_style_respa",
+  "notes": [
+    "Reference schedule is run_style respa 3 2 2 with bonded terms all on level 1, kspace on level 3, and class2 inner-middle-outer pair splitting.",
+    "GROMACS comparison input reuses the already-frozen M5 topol.top and initial_nve.gro so that the respa harness isolates scheduler/runtime differences instead of re-opening topology conversion risk.",
+    "Step-0 virial pressure components come from LAMMPS compute pressure NULL virial and remain in real-units atmospheres."
+  ],
+  "reference": {
+    "nve": {
+      "final_total_kcal_mol": 29.76416,
+      "initial_total_kcal_mol": 29.791574,
+      "polymer_end_to_end_nm": 0.6562913528069817,
+      "polymer_rg_nm": 0.22709305395409557,
+      "step0_potential_kcal_mol": 25.320359,
+      "step0_virial_pressure_xx_atm": -3201.0147,
+      "step0_virial_pressure_xy_atm": 252.44113,
+      "step0_virial_pressure_xz_atm": -191.34299,
+      "step0_virial_pressure_yy_atm": -1073.6838,
+      "step0_virial_pressure_yz_atm": 488.98956,
+      "step0_virial_pressure_zz_atm": -234.77621,
+      "total_energy_drift_abs_kcal_mol": 0.02741400000000027,
+      "total_energy_span_kcal_mol": 0.02741400000000027
+    }
+  },
+  "schedule": {
+    "angle_level": 1,
+    "bond_level": 1,
+    "dihedral_level": 1,
+    "improper_level": 1,
+    "inner_level": 1,
+    "inner_off_angstrom": 3.0,
+    "inner_on_angstrom": 4.5,
+    "kspace_level": 3,
+    "levels": 3,
+    "loop_factors": [
+      2,
+      2
+    ],
+    "middle_level": 2,
+    "outer_level": 3,
+    "outer_off_angstrom": 8.0,
+    "outer_on_angstrom": 6.0,
+    "outer_steps": 5,
+    "outer_timestep_fs": 2.0
+  },
+  "schema_version": 1,
+  "sources": {
+    "gromacs_initial_state": "tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
+    "gromacs_topology": "tests/reference_results/m6_respa/small_oligomer/topol.top",
+    "lammps_input": "testdata/lammps_golden/systems/small_oligomer/lammps/system.in",
+    "lammps_topology": "testdata/lammps_golden/systems/small_oligomer/lammps/system.data"
+  },
+  "system_id": "small_oligomer",
+  "tolerance": {
+    "nve": {
+      "final_total_kcal_mol": 0.02,
+      "initial_total_kcal_mol": 0.02,
+      "polymer_end_to_end_nm": 0.0001,
+      "polymer_rg_nm": 0.0001,
+      "step0_potential_kcal_mol": 0.02,
+      "step0_virial_pressure_xx_atm": 5.0,
+      "step0_virial_pressure_xy_atm": 5.0,
+      "step0_virial_pressure_xz_atm": 5.0,
+      "step0_virial_pressure_yy_atm": 5.0,
+      "step0_virial_pressure_yz_atm": 5.0,
+      "step0_virial_pressure_zz_atm": 5.0,
+      "total_energy_drift_abs_kcal_mol": 0.005,
+      "total_energy_span_kcal_mol": 0.005
+    }
+  },
+  "unresolved_items": [
+    "LAMMPS special_bonds 1-4 terms are embedded in the pair style, while the GROMACS exact path maps them through listed pair14 interactions. This harness is intended to expose any residual mismatch.",
+    "GROMACS exact r-RESPA scheduler/integrator parity remains an open item. The current fork contains both a legacy md-based exact path and a dedicated md-vv prototype path, and the harness is intended to expose whichever one is active."
+  ]
+}

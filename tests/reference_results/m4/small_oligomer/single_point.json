@@ -1,0 +1,21 @@
+{
+  "fields": {
+    "eangle": 1.3875963,
+    "ebond": 24.871805,
+    "ecoul": 9.4886598,
+    "edihed": 9.7382969,
+    "eimp": 0.0,
+    "elong": -20.012769,
+    "emol": 35.997698,
+    "epair": -10.67734,
+    "evdwl": -0.15323047,
+    "pe": 25.320359,
+    "step": 0.0
+  },
+  "observable": "single_point",
+  "schema_version": 1,
+  "system_id": "small_oligomer",
+  "units": {
+    "energy": "kcal/mol"
+  }
+}

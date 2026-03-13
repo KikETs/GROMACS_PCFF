@@ -517,7 +517,7 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 #    endif
 
 #    ifndef LJ_COMB
-                                /* LJ 6*C6 and 12*C12 */
+                                /* LJ derivative prefactors: 6*C6 and n*C_rep */
                                 typei = atib[i * c_clusterSize + tidxi];
                                 fetch_nbfp_c6_c12(c6, c12, nbparam, ntypes * typei + typej);
 #    else
@@ -535,23 +535,28 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 #        endif /* LJ_COMB_GEOM */
 #    endif     /* LJ_COMB */
 
-                                // Ensure distance do not become so small that r^-12 overflows
+                                // Ensure distance does not become so small that r^-n overflows
                                 r2 = max(r2, c_nbnxnMinDistanceSquared);
 
                                 inv_r  = rsqrt(r2);
                                 inv_r2 = inv_r * inv_r;
 #    if !defined LJ_COMB_LB || defined CALC_ENERGIES
-                                inv_r6 = inv_r2 * inv_r2 * inv_r2;
+                                inv_r6          = inv_r2 * inv_r2 * inv_r2;
+                                float inv_r_rep = (nbparam.repulsionPower == 12.0F)
+                                                          ? inv_r6 * inv_r6
+                                                          : powf(inv_r, nbparam.repulsionPower);
 #        ifdef EXCLUSION_FORCES
                                 /* We could mask inv_r2, but with Ewald
-                                 * masking both inv_r6 and F_invr is faster */
+                                 * masking the inverse-power terms and F_invr is faster */
                                 inv_r6 *= int_bit;
+                                inv_r_rep *= int_bit;
 #        endif /* EXCLUSION_FORCES */
 
-                                F_invr = inv_r6 * (c12 * inv_r6 - c6) * inv_r2;
+                                F_invr = (c12 * inv_r_rep - c6 * inv_r6) * inv_r2;
 #        if defined CALC_ENERGIES || defined LJ_POT_SWITCH
                                 E_lj_p = int_bit
-                                         * (c12 * (inv_r6 * inv_r6 + nbparam.repulsion_shift.cpot) * c_oneTwelfth
+                                         * (c12 * (inv_r_rep + nbparam.repulsion_shift.cpot)
+                                                * nbparam.inverseRepulsionPower
                                             - c6 * (inv_r6 + nbparam.dispersion_shift.cpot) * c_oneSixth);
 #        endif
 #    else /* !LJ_COMB_LB || CALC_ENERGIES */

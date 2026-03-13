@@ -170,7 +170,7 @@ void checkOutput(TestReferenceChecker*     checker,
 class ForcerecHelper
 {
 public:
-    ForcerecHelper()
+    explicit ForcerecHelper(const double repulsionPower = 12.0)
     {
         fepVals_.sc_alpha                = 0.3;
         fepVals_.sc_power                = 1;
@@ -184,6 +184,7 @@ public:
         fepVals_.softcoreFunction        = SoftcoreType::Beutler;
 
         fr_.ic = std::make_unique<interaction_const_t>();
+        fr_.ic->vdw.repulsionPower = repulsionPower;
         // set data in ic
         fr_.ic->softCoreParameters = std::make_unique<interaction_const_t::SoftCoreParameters>(fepVals_);
 
@@ -299,6 +300,69 @@ public:
         return *this;
     }
 };
+
+OutputQuantities evaluateSinglePairInteraction(const ListInput&          input,
+                                               const PaddedVector<RVec>& coordinates,
+                                               const PbcType             pbcType,
+                                               const double              repulsionPower)
+{
+    matrix box;
+    clear_mat(box);
+    box[XX][XX] = box[YY][YY] = box[ZZ][ZZ] = 5.0;
+
+    t_pbc pbc;
+    set_pbc(&pbc, pbcType, box);
+
+    std::vector<t_iatom>        iatoms     = { 0, 0, 1 };
+    std::vector<int>            ddgatindex = { 0, 1 };
+    std::vector<real>           chargeA    = { 0.0, 0.0 };
+    std::vector<real>           chargeB    = { 0.0, 0.0 };
+    std::vector<BoolType>       perturbed  = { false, false };
+    std::vector<unsigned short> egrp       = { 0, 0 };
+    t_mdatoms                   mdatoms    = { 0 };
+
+    mdatoms.chargeA    = chargeA;
+    mdatoms.chargeB    = chargeB;
+    mdatoms.bPerturbed = perturbed;
+    mdatoms.cENER      = egrp;
+    mdatoms.nPerturbed = 0;
+
+    ForcerecHelper localFrHelper(repulsionPower);
+    t_forcerec*    fr = localFrHelper.get();
+    fr->efep            = input.fep ? FreeEnergyPerturbationType::Yes : FreeEnergyPerturbationType::No;
+    fr->use_simd_kernels = false;
+    fr->bMolPBC          = (pbcType != PbcType::No);
+
+    StepWorkload stepWork;
+    stepWork.computeEnergy = true;
+
+    const int numEnergyTerms = static_cast<int>(NonBondedEnergyTerms::Count);
+    OutputQuantities output(numEnergyTerms);
+    std::vector<real> lambdas(static_cast<int>(FreeEnergyPerturbationCouplingType::Count), 0.0_real);
+
+    do_pairs(input.fType.value(),
+             iatoms.size(),
+             iatoms.data(),
+             &input.iparams,
+             as_rvec_array(coordinates.data()),
+             output.f,
+             output.fShift,
+             (pbcType == PbcType::No ? nullptr : &pbc),
+             lambdas.data(),
+             output.dvdLambda.data(),
+             mdatoms.chargeA,
+             mdatoms.chargeB,
+             makeArrayRef(mdatoms.bPerturbed),
+             mdatoms.cENER,
+             mdatoms.nPerturbed,
+             fr,
+             false,
+             stepWork,
+             &output.energy,
+             ddgatindex.data());
+
+    return output;
+}
 
 class ListedForcesPairsTest :
     public ::testing::TestWithParam<std::tuple<ListInput, PaddedVector<RVec>, PbcType>>
@@ -477,6 +541,63 @@ INSTANTIATE_TEST_SUITE_P(14Interaction,
                          ::testing::Combine(::testing::ValuesIn(c_14Interaction),
                                             ::testing::ValuesIn(c_coordinatesFor14Interaction),
                                             ::testing::ValuesIn(c_pbcForTests)));
+
+TEST(PcffClass2PairCurveTest, LennardJones14NineSixCurveMatchesAnalyticExpression)
+{
+    constexpr real sigma   = 0.34_real;
+    constexpr real epsilon = 0.50208_real;
+
+    const real c6 = 3.0_real * epsilon * std::pow(sigma, 6);
+    const real c9 = 2.0_real * epsilon * std::pow(sigma, 9);
+
+    for (const real distance : { 0.38_real, 0.45_real, 0.60_real, 0.80_real })
+    {
+        SCOPED_TRACE(testing::Message() << "distance=" << distance);
+        PaddedVector<RVec> coordinates = { { 0.0_real, 0.0_real, 0.0_real }, { distance, 0.0_real, 0.0_real } };
+        const auto         output      = evaluateSinglePairInteraction(
+                ListInput(1e-4, 1e-6).setLj14Interaction(c6, c9, c6, c9), coordinates, PbcType::No, 9.0);
+
+        const real sigmaOverR     = sigma / distance;
+        const real expectedEnergy = epsilon * (2.0_real * std::pow(sigmaOverR, 9) - 3.0_real * std::pow(sigmaOverR, 6));
+        const real expectedForce  = 18.0_real * epsilon
+                                   * (std::pow(sigma, 6) / std::pow(distance, 7)
+                                      - std::pow(sigma, 9) / std::pow(distance, 10));
+
+        EXPECT_NEAR(output.energy.energyGroupPairTerms[NonBondedEnergyTerms::LJ14][0], expectedEnergy, 3e-4);
+        EXPECT_NEAR(output.f[0][XX], expectedForce, 5e-3);
+        EXPECT_NEAR(output.f[1][XX], -expectedForce, 5e-3);
+        EXPECT_NEAR(output.f[0][YY], 0.0_real, 1e-7);
+        EXPECT_NEAR(output.f[0][ZZ], 0.0_real, 1e-7);
+    }
+}
+
+TEST(PcffClass2PairCurveTest, LennardJonesCoulomb14NineSixKeepsCoulombContributionSeparate)
+{
+    constexpr real sigma    = 0.34_real;
+    constexpr real epsilon  = 0.50208_real;
+    constexpr real distance = 0.52_real;
+
+    const real c6 = 3.0_real * epsilon * std::pow(sigma, 6);
+    const real c9 = 2.0_real * epsilon * std::pow(sigma, 9);
+
+    PaddedVector<RVec> coordinates = { { 0.0_real, 0.0_real, 0.0_real }, { distance, 0.0_real, 0.0_real } };
+    const auto withVdw            = evaluateSinglePairInteraction(
+            ListInput(1e-4, 1e-6).setLjc14Interaction(0.25_real, -0.30_real, c6, c9, 1.0_real),
+            coordinates,
+            PbcType::No,
+            9.0);
+    const auto withoutVdw         = evaluateSinglePairInteraction(
+            ListInput(1e-4, 1e-6).setLjc14Interaction(0.25_real, -0.30_real, 0.0_real, 0.0_real, 1.0_real),
+            coordinates,
+            PbcType::No,
+            9.0);
+
+    EXPECT_NEAR(withVdw.energy.energyGroupPairTerms[NonBondedEnergyTerms::Coulomb14][0],
+                withoutVdw.energy.energyGroupPairTerms[NonBondedEnergyTerms::Coulomb14][0],
+                1e-7);
+    EXPECT_GT(std::abs(withVdw.energy.energyGroupPairTerms[NonBondedEnergyTerms::LJ14][0]), 1e-4);
+    EXPECT_NE(withVdw.f[0][XX], withoutVdw.f[0][XX]);
+}
 
 } // namespace
 

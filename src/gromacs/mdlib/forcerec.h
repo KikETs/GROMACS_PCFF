@@ -76,7 +76,8 @@ class SimulationWorkload;
 std::vector<real> makeNonBondedParameterLists(int                            numAtomTypes,
                                               bool                           addFillerAtomType,
                                               gmx::ArrayRef<const t_iparams> iparams,
-                                              bool useBuckinghamPotential);
+                                              bool                           useBuckinghamPotential,
+                                              double                         repulsionPower = 12.0);
 
 /*! \brief Calculate c6 parameters for grid correction
  *

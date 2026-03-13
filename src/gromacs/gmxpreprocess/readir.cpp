@@ -2368,14 +2368,74 @@ void get_ir(const char*     mdparin,
     if (ir->useMts)
     {
         gmx::GromppMtsOpts& mtsOpts = opts->mtsOpts;
+        mtsOpts.mode                = gmx::MtsMode::Legacy;
+        mtsOpts.lammpsRespa         = {};
         mtsOpts.numLevels           = get_eint(&inp, "mts-levels", 2, wi);
-        mtsOpts.level2Forces = setStringEntry(&inp, "mts-level2-forces", "longrange-nonbonded");
-        mtsOpts.level2Factor = get_eint(&inp, "mts-level2-factor", 2, wi);
+
+        const std::string mtsModeString =
+                setStringEntry(&inp, "mts-mode", gmx::mtsModeNames[gmx::MtsMode::Legacy].c_str());
+        if (gmx::equalCaseInsensitive(mtsModeString, gmx::mtsModeNames[gmx::MtsMode::Legacy]))
+        {
+            mtsOpts.mode = gmx::MtsMode::Legacy;
+        }
+        else if (gmx::equalCaseInsensitive(mtsModeString, gmx::mtsModeNames[gmx::MtsMode::LammpsRespa]))
+        {
+            mtsOpts.mode                = gmx::MtsMode::LammpsRespa;
+            mtsOpts.lammpsRespa.enabled = true;
+        }
+        else
+        {
+            wi->addError(gmx::formatString(
+                    "Unknown value '%s' for mts-mode; supported values are '%s' and '%s'",
+                    mtsModeString.c_str(),
+                    gmx::mtsModeNames[gmx::MtsMode::Legacy].c_str(),
+                    gmx::mtsModeNames[gmx::MtsMode::LammpsRespa].c_str()));
+        }
+
+        mtsOpts.levelForces.clear();
+        mtsOpts.levelFactors.clear();
+        for (int mtsLevel = 2; mtsLevel <= mtsOpts.numLevels; mtsLevel++)
+        {
+            const std::string forceKey  = gmx::formatString("mts-level%d-forces", mtsLevel);
+            const std::string factorKey = gmx::formatString("mts-level%d-factor", mtsLevel);
+            const char* defaultForces =
+                    (mtsOpts.mode == gmx::MtsMode::Legacy && mtsOpts.numLevels == 2 && mtsLevel == 2)
+                            ? "longrange-nonbonded"
+                            : "";
+            const int defaultFactor = (mtsOpts.numLevels == 2 && mtsLevel == 2) ? 2 : 0;
+            mtsOpts.levelForces.push_back(setStringEntry(&inp, forceKey.c_str(), defaultForces));
+            mtsOpts.levelFactors.push_back(get_eint(&inp, factorKey.c_str(), defaultFactor, wi));
+        }
+
+        if (mtsOpts.mode == gmx::MtsMode::LammpsRespa)
+        {
+            auto readMtsLevel = [&inp, wi](const char* key, const int defaultOneBased) -> int
+            { return get_eint(&inp, key, defaultOneBased, wi) - 1; };
+
+            auto& respa          = mtsOpts.lammpsRespa;
+            const int lastLevel1 = std::max(1, mtsOpts.numLevels);
+            respa.bondLevel      = readMtsLevel("mts-respa-bond-level", 1);
+            respa.angleLevel     = readMtsLevel("mts-respa-angle-level", 1);
+            respa.dihedralLevel  = readMtsLevel("mts-respa-dihedral-level", 1);
+            respa.improperLevel  = readMtsLevel("mts-respa-improper-level", 1);
+            respa.pair14Level    = readMtsLevel("mts-respa-pair14-level", 1);
+            respa.pairLevel      = readMtsLevel("mts-respa-pair-level", lastLevel1);
+            respa.kspaceLevel    = readMtsLevel("mts-respa-kspace-level", lastLevel1);
+            respa.innerLevel     = readMtsLevel("mts-respa-inner-level", 0);
+            respa.middleLevel    = readMtsLevel("mts-respa-middle-level", 0);
+            respa.outerLevel     = readMtsLevel("mts-respa-outer-level", 0);
+            respa.innerOff       = get_ereal(&inp, "mts-respa-inner-off", 0, wi);
+            respa.innerOn        = get_ereal(&inp, "mts-respa-inner-on", 0, wi);
+            respa.outerOn        = get_ereal(&inp, "mts-respa-outer-on", 0, wi);
+            respa.outerOff       = get_ereal(&inp, "mts-respa-outer-off", 0, wi);
+        }
 
         // We clear after reading without dynamics to not force the user to remove MTS mdp options
         if (!EI_DYNAMICS(ir->eI))
         {
             ir->useMts = false;
+            mtsOpts.mode = gmx::MtsMode::Legacy;
+            mtsOpts.lammpsRespa = {};
         }
     }
     printStringNoNewline(&inp, "factor by which to increase the mass of the lightest atoms");
@@ -3181,6 +3241,8 @@ void get_ir(const char*     mdparin,
     /* Set up MTS levels, this needs to happen before checking AWH parameters */
     if (ir->useMts)
     {
+        ir->mtsMode     = opts->mtsOpts.mode;
+        ir->lammpsRespa = opts->mtsOpts.lammpsRespa;
         std::vector<std::string> errorMessages;
         ir->mtsLevels = gmx::setupMtsLevels(opts->mtsOpts, &errorMessages);
 
@@ -3188,6 +3250,11 @@ void get_ir(const char*     mdparin,
         {
             wi->addError(errorMessage);
         }
+    }
+    else
+    {
+        ir->mtsMode     = gmx::MtsMode::Legacy;
+        ir->lammpsRespa = {};
     }
 
     if (ir->bDoAwh)

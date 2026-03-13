@@ -1,0 +1,60 @@
+{
+  "checks": [
+    {
+      "analytic_force": 14.4254,
+      "atom_id": 3,
+      "component": "x",
+      "delta": 1e-06,
+      "finite_difference_force": 14.000000000180535,
+      "residual": 0.4253999998194651
+    },
+    {
+      "analytic_force": 54.2353,
+      "atom_id": 3,
+      "component": "z",
+      "delta": 1e-06,
+      "finite_difference_force": 54.00000000577165,
+      "residual": 0.2352999942283489
+    },
+    {
+      "analytic_force": 0.721653,
+      "atom_id": 9,
+      "component": "x",
+      "delta": 1e-06,
+      "finite_difference_force": 0.9999999974752427,
+      "residual": -0.2783469974752427
+    },
+    {
+      "analytic_force": -3.09697,
+      "atom_id": 9,
+      "component": "z",
+      "delta": 1e-06,
+      "finite_difference_force": -3.000000006636583,
+      "residual": -0.09696999336341694
+    },
+    {
+      "analytic_force": -0.598991,
+      "atom_id": 10,
+      "component": "x",
+      "delta": 1e-06,
+      "finite_difference_force": -0.49999999873762135,
+      "residual": -0.0989910012623787
+    },
+    {
+      "analytic_force": 2.68871,
+      "atom_id": 10,
+      "component": "z",
+      "delta": 1e-06,
+      "finite_difference_force": 3.000000006636583,
+      "residual": -0.3112900066365829
+    }
+  ],
+  "observable": "finite_difference",
+  "schema_version": 1,
+  "system_id": "small_salt_polymer_box",
+  "units": {
+    "distance": "angstrom",
+    "energy": "kcal/mol",
+    "force": "kcal/mol/angstrom"
+  }
+}

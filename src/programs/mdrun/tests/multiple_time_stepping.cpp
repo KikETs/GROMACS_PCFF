@@ -41,6 +41,7 @@
  */
 #include "gmxpre.h"
 
+#include <cmath>
 #include <filesystem>
 #include <string>
 #include <tuple>
@@ -48,6 +49,7 @@
 #include <gtest/gtest.h>
 
 #include "gromacs/topology/ifunc.h"
+#include "gromacs/trajectory/energyframe.h"
 #include "gromacs/utility/real.h"
 #include "gromacs/utility/stringutil.h"
 
@@ -59,6 +61,7 @@
 
 #include "programs/mdrun/tests/comparison_helpers.h"
 #include "programs/mdrun/tests/energycomparison.h"
+#include "programs/mdrun/tests/energyreader.h"
 #include "programs/mdrun/tests/trajectorycomparison.h"
 
 #include "moduletest.h"
@@ -224,6 +227,265 @@ TEST_P(MtsComparisonTest, WithinTolerances)
                     simulator2EdrFileName.string(),
                     energyTermsToCompareAllSteps,
                     MaxNumFrames::compareAllFrames());
+}
+
+TEST_F(MtsComparisonTest, ThreeLevelPrototypeWithinTolerances)
+{
+    const std::string simulationName = "ala";
+    const int         numSteps       = 8;
+    const int         nstfout        = 2 * numSteps;
+
+    auto sharedMdpOptions = gmx::formatString(
+            "integrator   = md\n"
+            "dt           = 0.001\n"
+            "nsteps       = %d\n"
+            "verlet-buffer-tolerance = -1\n"
+            "nstlist      = 12\n"
+            "rlist        = 1.0\n"
+            "coulomb-type = PME\n"
+            "vdw-type     = cut-off\n"
+            "rcoulomb     = 0.9\n"
+            "rvdw         = 0.9\n"
+            "constraints  = h-bonds\n",
+            numSteps);
+
+    auto refMdpOptions = sharedMdpOptions
+                         + gmx::formatString(
+                                 "mts       = no\n"
+                                 "nstcalcenergy = %d\n"
+                                 "nstenergy = %d\n"
+                                 "nstxout   = 0\n"
+                                 "nstvout   = 0\n"
+                                 "nstfout   = %d\n",
+                                 numSteps,
+                                 numSteps,
+                                 nstfout);
+
+    auto mtsMdpOptions = sharedMdpOptions
+                         + gmx::formatString(
+                                 "mts        = yes\n"
+                                 "mts-levels = 3\n"
+                                 "mts-level2-forces = pair dihedral angle\n"
+                                 "mts-level2-factor = 2\n"
+                                 "mts-level3-forces = nonbonded longrange-nonbonded\n"
+                                 "mts-level3-factor = 4\n"
+                                 "nstcalcenergy = %d\n"
+                                 "nstenergy  = %d\n"
+                                 "nstxout    = 0\n"
+                                 "nstvout    = 0\n"
+                                 "nstfout    = %d\n",
+                                 numSteps,
+                                 numSteps,
+                                 nstfout);
+
+    const auto energyTermsToCompareStep0 = energyTermsToCompare(0.001, 0.01);
+    // The 3-level prototype is a scheduler validation, not a production-ready splitting.
+    // Virial drift is the most sensitive observable over 8 steps, so keep the tolerance
+    // slightly looser than the 2-level regression while preserving exact step-0 checks.
+    const auto energyTermsToCompareAllSteps = energyTermsToCompare(0.08, 0.4);
+
+    TrajectoryFrameMatchSettings trajectoryMatchSettings{ true,
+                                                          true,
+                                                          true,
+                                                          ComparisonConditions::NoComparison,
+                                                          ComparisonConditions::NoComparison,
+                                                          ComparisonConditions::MustCompare };
+    TrajectoryTolerances trajectoryTolerances = TrajectoryComparison::s_defaultTrajectoryTolerances;
+    trajectoryTolerances.forces = relativeToleranceAsFloatingPoint(1000.0, GMX_DOUBLE ? 1.0e-7 : 1.0e-4);
+    TrajectoryComparison trajectoryComparison{ trajectoryMatchSettings, trajectoryTolerances };
+
+    auto simulator1TrajectoryFileName = fileManager_.getTemporaryFilePath("respa3_sim1.trr");
+    auto simulator1EdrFileName        = fileManager_.getTemporaryFilePath("respa3_sim1.edr");
+    auto simulator2TrajectoryFileName = fileManager_.getTemporaryFilePath("respa3_sim2.trr");
+    auto simulator2EdrFileName        = fileManager_.getTemporaryFilePath("respa3_sim2.edr");
+
+    runner_.tprFileName_ = fileManager_.getTemporaryFilePath("respa3_sim.tpr").string();
+    runner_.useTopGroAndNdxFromDatabase(simulationName);
+    runner_.useStringAsMdpFile(refMdpOptions);
+    runGrompp(&runner_);
+
+    runner_.fullPrecisionTrajectoryFileName_ = simulator1TrajectoryFileName.string();
+    runner_.edrFileName_                     = simulator1EdrFileName.string();
+    runMdrun(&runner_);
+
+    runner_.useStringAsMdpFile(mtsMdpOptions);
+    runGrompp(&runner_);
+
+    runner_.fullPrecisionTrajectoryFileName_ = simulator2TrajectoryFileName.string();
+    runner_.edrFileName_                     = simulator2EdrFileName.string();
+    runMdrun(&runner_);
+
+    compareEnergies(simulator1EdrFileName.string(),
+                    simulator2EdrFileName.string(),
+                    energyTermsToCompareStep0,
+                    MaxNumFrames(1));
+    compareTrajectories(simulator1TrajectoryFileName.string(),
+                        simulator2TrajectoryFileName.string(),
+                        trajectoryComparison);
+    compareEnergies(simulator1EdrFileName.string(),
+                    simulator2EdrFileName.string(),
+                    energyTermsToCompareAllSteps,
+                    MaxNumFrames::compareAllFrames());
+}
+
+TEST_F(MtsComparisonTest, ExactLammpsRespaMatchesSingleTimeSteppingForcesAtStepZero)
+{
+    const std::string simulationName = "ala";
+    const int         numSteps       = 8;
+    const int         nstfout        = 2 * numSteps;
+
+    auto sharedMdpOptions = gmx::formatString(
+            "integrator   = md\n"
+            "dt           = 0.001\n"
+            "nsteps       = %d\n"
+            "verlet-buffer-tolerance = -1\n"
+            "nstlist      = 12\n"
+            "rlist        = 0.99\n"
+            "coulomb-type = PME\n"
+            "coulomb-modifier = none\n"
+            "vdw-type     = cut-off\n"
+            "vdw-modifier = none\n"
+            "rcoulomb     = 0.9\n"
+            "rvdw         = 0.9\n"
+            "constraints  = h-bonds\n",
+            numSteps);
+
+    auto refMdpOptions = sharedMdpOptions
+                         + gmx::formatString(
+                                 "mts       = no\n"
+                                 "nstcalcenergy = %d\n"
+                                 "nstenergy = %d\n"
+                                 "nstxout   = 0\n"
+                                 "nstvout   = 0\n"
+                                 "nstfout   = %d\n",
+                                 numSteps,
+                                 numSteps,
+                                 nstfout);
+
+    auto exactMdpOptions = sharedMdpOptions
+                           + gmx::formatString(
+                                   "mts       = yes\n"
+                                   "mts-mode  = lammps-respa\n"
+                                   "mts-levels = 3\n"
+                                   "mts-level2-factor = 2\n"
+                                   "mts-level3-factor = 4\n"
+                                   "mts-respa-bond-level = 1\n"
+                                   "mts-respa-angle-level = 2\n"
+                                   "mts-respa-dihedral-level = 2\n"
+                                   "mts-respa-improper-level = 2\n"
+                                   "mts-respa-pair14-level = 2\n"
+                                   "mts-respa-kspace-level = 3\n"
+                                   "mts-respa-inner-level = 1\n"
+                                   "mts-respa-middle-level = 2\n"
+                                   "mts-respa-outer-level = 3\n"
+                                   "mts-respa-inner-off = 0.30\n"
+                                   "mts-respa-inner-on = 0.45\n"
+                                   "mts-respa-outer-on = 0.60\n"
+                                   "mts-respa-outer-off = 0.80\n"
+                                   "nstcalcenergy = %d\n"
+                                   "nstenergy  = %d\n"
+                                   "nstxout    = 0\n"
+                                   "nstvout    = 0\n"
+                                   "nstfout    = %d\n",
+                                   numSteps,
+                                   numSteps,
+                                   nstfout);
+
+    TrajectoryFrameMatchSettings trajectoryMatchSettings{ true,
+                                                          true,
+                                                          true,
+                                                          ComparisonConditions::NoComparison,
+                                                          ComparisonConditions::NoComparison,
+                                                          ComparisonConditions::MustCompare };
+    TrajectoryTolerances trajectoryTolerances = TrajectoryComparison::s_defaultTrajectoryTolerances;
+    trajectoryTolerances.forces = relativeToleranceAsFloatingPoint(1000.0, GMX_DOUBLE ? 1.0e-7 : 1.0e-4);
+    TrajectoryComparison trajectoryComparison{ trajectoryMatchSettings, trajectoryTolerances };
+
+    auto simulator1TrajectoryFileName = fileManager_.getTemporaryFilePath("exact_respa_ref.trr");
+    auto simulator1EdrFileName        = fileManager_.getTemporaryFilePath("exact_respa_ref.edr");
+    auto simulator2TrajectoryFileName = fileManager_.getTemporaryFilePath("exact_respa_test.trr");
+    auto simulator2EdrFileName        = fileManager_.getTemporaryFilePath("exact_respa_test.edr");
+
+    runner_.tprFileName_ = fileManager_.getTemporaryFilePath("exact_respa.tpr").string();
+    runner_.useTopGroAndNdxFromDatabase(simulationName);
+    runner_.useStringAsMdpFile(refMdpOptions);
+    runGrompp(&runner_);
+
+    runner_.fullPrecisionTrajectoryFileName_ = simulator1TrajectoryFileName.string();
+    runner_.edrFileName_                     = simulator1EdrFileName.string();
+    runMdrun(&runner_);
+
+    runner_.useStringAsMdpFile(exactMdpOptions);
+    runGrompp(&runner_);
+
+    runner_.fullPrecisionTrajectoryFileName_ = simulator2TrajectoryFileName.string();
+    runner_.edrFileName_                     = simulator2EdrFileName.string();
+    runMdrun(&runner_);
+
+    compareTrajectories(simulator1TrajectoryFileName.string(),
+                        simulator2TrajectoryFileName.string(),
+                        trajectoryComparison);
+}
+
+TEST_F(MtsComparisonTest, ExactLammpsRespaShortRunProducesFiniteEnergies)
+{
+    const std::string simulationName = "ala";
+    const int         numSteps       = 16;
+
+    auto exactMdpOptions = gmx::formatString(
+            "integrator   = md\n"
+            "dt           = 0.001\n"
+            "nsteps       = %d\n"
+            "verlet-buffer-tolerance = -1\n"
+            "nstlist      = 12\n"
+            "rlist        = 0.99\n"
+            "coulomb-type = PME\n"
+            "coulomb-modifier = none\n"
+            "vdw-type     = cut-off\n"
+            "vdw-modifier = none\n"
+            "rcoulomb     = 0.9\n"
+            "rvdw         = 0.9\n"
+            "constraints  = h-bonds\n"
+            "mts       = yes\n"
+            "mts-mode  = lammps-respa\n"
+            "mts-levels = 3\n"
+            "mts-level2-factor = 2\n"
+            "mts-level3-factor = 4\n"
+            "mts-respa-bond-level = 1\n"
+            "mts-respa-angle-level = 2\n"
+            "mts-respa-dihedral-level = 2\n"
+            "mts-respa-improper-level = 2\n"
+            "mts-respa-pair14-level = 2\n"
+            "mts-respa-kspace-level = 3\n"
+            "mts-respa-inner-level = 1\n"
+            "mts-respa-middle-level = 2\n"
+            "mts-respa-outer-level = 3\n"
+            "mts-respa-inner-off = 0.30\n"
+            "mts-respa-inner-on = 0.45\n"
+            "mts-respa-outer-on = 0.60\n"
+            "mts-respa-outer-off = 0.80\n"
+            "nstcalcenergy = 4\n"
+            "nstenergy  = 4\n"
+            "nstxout    = 0\n"
+            "nstvout    = 0\n"
+            "nstfout    = 0\n",
+            numSteps);
+
+    runner_.tprFileName_ = fileManager_.getTemporaryFilePath("exact_respa_finite.tpr").string();
+    runner_.useTopGroAndNdxFromDatabase(simulationName);
+    runner_.useStringAsMdpFile(exactMdpOptions);
+    runGrompp(&runner_);
+
+    runner_.edrFileName_ = fileManager_.getTemporaryFilePath("exact_respa_finite.edr").string();
+    runMdrun(&runner_);
+
+    auto energyReader = openEnergyFileToReadTerms(runner_.edrFileName_, { "Total Energy", "Potential" });
+    while (energyReader->readNextFrame())
+    {
+        const EnergyFrame frame = energyReader->frame();
+        EXPECT_TRUE(std::isfinite(frame.at("Total Energy")));
+        EXPECT_TRUE(std::isfinite(frame.at("Potential")));
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(

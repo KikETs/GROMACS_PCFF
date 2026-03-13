@@ -183,6 +183,43 @@ void generate_nbparams(CombinationRule         comb,
                     }
 
                     break;
+                case CombinationRule::SixthPower:
+                    /* c0 and c1 are sigma and epsilon */
+                    for (int i = 0; (i < nr); i++)
+                    {
+                        for (int j = 0; (j < nr); j++)
+                        {
+                            ci0 = cPrefetch[i].first;
+                            cj0 = cPrefetch[j].first;
+                            ci1 = cPrefetch[i].second;
+                            cj1 = cPrefetch[j].second;
+
+                            const real sigmaI6 = gmx::power6(std::fabs(ci0));
+                            const real sigmaJ6 = gmx::power6(std::fabs(cj0));
+                            const real sigma6Average = 0.5_real * (sigmaI6 + sigmaJ6);
+                            const real sigma6Sum     = sigmaI6 + sigmaJ6;
+
+                            forceParam[0] = std::pow(sigma6Average, 1.0_real / 6.0_real);
+                            if (ci0 < 0 || cj0 < 0)
+                            {
+                                forceParam[0] *= -1;
+                            }
+
+                            if (sigma6Sum == 0 || ci1 == 0 || cj1 == 0)
+                            {
+                                forceParam[1] = 0;
+                            }
+                            else
+                            {
+                                forceParam[1] = 2.0_real * std::sqrt(ci1 * cj1) * std::sqrt(sigmaI6 * sigmaJ6)
+                                                / sigma6Sum;
+                            }
+                            interactions->interactionTypes.emplace_back(gmx::ArrayRef<const int>{},
+                                                                        forceParam);
+                        }
+                    }
+
+                    break;
                 default:
                     auto message =
                             gmx::formatString("No such combination rule %s", enumValueToString(comb));
@@ -948,31 +985,9 @@ void push_dihedraltype(Directive                                                
     const char* formal[MAXATOMLIST + 1] = {
         "%s", "%s%s", "%s%s%s", "%s%s%s%s", "%s%s%s%s%s", "%s%s%s%s%s%s", "%s%s%s%s%s%s%s"
     };
-    const char* formnl[MAXATOMLIST + 1] = { "%*s",
-                                            "%*s%*s",
-                                            "%*s%*s%*s",
-                                            "%*s%*s%*s%*s",
-                                            "%*s%*s%*s%*s%*s",
-                                            "%*s%*s%*s%*s%*s%*s",
-                                            "%*s%*s%*s%*s%*s%*s%*s" };
-    const char* formlf[MAXFORCEPARAM]   = {
-        "%lf",
-        "%lf%lf",
-        "%lf%lf%lf",
-        "%lf%lf%lf%lf",
-        "%lf%lf%lf%lf%lf",
-        "%lf%lf%lf%lf%lf%lf",
-        "%lf%lf%lf%lf%lf%lf%lf",
-        "%lf%lf%lf%lf%lf%lf%lf%lf",
-        "%lf%lf%lf%lf%lf%lf%lf%lf%lf",
-        "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
-        "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
-        "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
-    };
     int    ft, nn, nrfp, nrfpA, nral;
-    char   f1[STRLEN];
     char   alc[MAXATOMLIST + 1][20];
-    double c[MAXFORCEPARAM];
+    std::array<double, MAXFORCEPARAM> c = { 0 };
     bool   bAllowRepeat;
 
     /* This routine accepts dihedraltypes defined from either 2 or 4 atoms.
@@ -1043,18 +1058,33 @@ void push_dihedraltype(Directive                                                
     nrfp                      = NRFP(ftype);
     nrfpA                     = interaction_function[ftype].nrfpA;
 
-    std::strcpy(f1, formnl[nral]);
-    std::strcat(f1, formlf[nrfp - 1]);
+    std::istringstream input(line);
+    std::string        token;
+    for (int i = 0; i < nral + 1; ++i)
+    {
+        input >> token;
+    }
 
-    /* Check number of parameters given */
-    if ((nn = sscanf(
-                 line, f1, &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11]))
-        != nrfp)
+    nn = 0;
+    while (nn < nrfp && (input >> c[nn]))
+    {
+        nn++;
+    }
+    if (nn == nrfp)
+    {
+        double extraParameter;
+        if (input >> extraParameter)
+        {
+            nn = nrfp + 1;
+        }
+    }
+
+    if (nn != nrfp)
     {
         if (nn == nrfpA)
         {
             /* Copy the B-state from the A-state */
-            copy_B_from_A(ftype, c);
+            copy_B_from_A(ftype, c.data());
         }
         else
         {
@@ -2304,15 +2334,9 @@ void push_bond(Directive                                                       d
 {
     const char* aaformat[MAXATOMLIST] = { "%d%d",       "%d%d%d",       "%d%d%d%d",
                                           "%d%d%d%d%d", "%d%d%d%d%d%d", "%d%d%d%d%d%d%d" };
-    const char* asformat[MAXATOMLIST] = {
-        "%*s%*s",          "%*s%*s%*s",          "%*s%*s%*s%*s",
-        "%*s%*s%*s%*s%*s", "%*s%*s%*s%*s%*s%*s", "%*s%*s%*s%*s%*s%*s%*s"
-    };
-    const char* ccformat = "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf";
     int         nral, nral_fmt, nread;
-    char        format[STRLEN];
     /* One force parameter more, so we can check if we read too many */
-    double                           cc[MAXFORCEPARAM + 1];
+    std::array<double, MAXFORCEPARAM + 1> cc = { 0 };
     std::array<int, MAXATOMLIST + 1> aa;
     bool                             bFoundA = FALSE, bFoundB = FALSE, bDef, bSwapParity = FALSE;
     int                              nparam_defA, nparam_defB;
@@ -2527,25 +2551,18 @@ void push_bond(Directive                                                       d
     if (nread > nral_fmt)
     {
         /* Manually specified parameters - in this case we discard multiple torsion info! */
+        std::istringstream input(line);
+        std::string        token;
+        for (int i = 0; i < nral_fmt + 1; ++i)
+        {
+            input >> token;
+        }
 
-        std::strcpy(format, asformat[nral_fmt - 1]);
-        std::strcat(format, ccformat);
-
-        nread = sscanf(line,
-                       format,
-                       &cc[0],
-                       &cc[1],
-                       &cc[2],
-                       &cc[3],
-                       &cc[4],
-                       &cc[5],
-                       &cc[6],
-                       &cc[7],
-                       &cc[8],
-                       &cc[9],
-                       &cc[10],
-                       &cc[11],
-                       &cc[12]);
+        nread = 0;
+        while (nread < NRFP(ftype) + 1 && (input >> cc[nread]))
+        {
+            nread++;
+        }
 
         if ((nread == NRFPA(ftype)) && (NRFPB(ftype) != 0))
         {

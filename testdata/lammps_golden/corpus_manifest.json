@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "reference_engine": {
+    "name": "LAMMPS",
+    "scope": "Class2 bonded terms, lj/class2, lj/class2/coul/long, and run_style respa observable contract",
+    "unit_style": "real",
+    "primary_sources": [
+      "https://docs.lammps.org/bond_class2.html",
+      "https://docs.lammps.org/angle_class2.html",
+      "https://docs.lammps.org/dihedral_class2.html",
+      "https://docs.lammps.org/improper_class2.html",
+      "https://docs.lammps.org/pair_class2.html",
+      "https://docs.lammps.org/special_bonds.html",
+      "https://docs.lammps.org/run_style.html",
+      "https://docs.lammps.org/units.html",
+      "https://docs.lammps.org/kspace_style.html",
+      "https://docs.lammps.org/read_restart.html"
+    ]
+  },
+  "generator_contract": {
+    "stage_layout_version": 1,
+    "normalized_outputs": [
+      "single_point.json",
+      "forces.json",
+      "finite_difference.json",
+      "nve_drift.json",
+      "nvt_snapshot.json"
+    ]
+  },
+  "systems": [
+    {
+      "id": "bond_toy",
+      "path": "systems/bond_toy",
+      "category": "toy",
+      "enabled_observables": [
+        "single_point",
+        "forces",
+        "finite_difference"
+      ]
+    },
+    {
+      "id": "angle_toy",
+      "path": "systems/angle_toy",
+      "category": "toy",
+      "enabled_observables": [
+        "single_point",
+        "forces",
+        "finite_difference"
+      ]
+    },
+    {
+      "id": "improper_toy",
+      "path": "systems/improper_toy",
+      "category": "toy",
+      "enabled_observables": [
+        "single_point",
+        "forces",
+        "finite_difference"
+      ]
+    },
+    {
+      "id": "dihedral_toy",
+      "path": "systems/dihedral_toy",
+      "category": "toy",
+      "enabled_observables": [
+        "single_point",
+        "forces",
+        "finite_difference"
+      ]
+    },
+    {
+      "id": "small_oligomer",
+      "path": "systems/small_oligomer",
+      "category": "oligomer",
+      "enabled_observables": [
+        "single_point",
+        "forces",
+        "finite_difference",
+        "nve_drift",
+        "nvt_snapshot"
+      ]
+    },
+    {
+      "id": "small_salt_polymer_box",
+      "path": "systems/small_salt_polymer_box",
+      "category": "polymer_box",
+      "enabled_observables": [
+        "single_point",
+        "forces",
+        "finite_difference",
+        "nve_drift",
+        "nvt_snapshot"
+      ]
+    }
+  ]
+}

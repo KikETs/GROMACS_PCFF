@@ -1,0 +1,3 @@
+trajectory_id,status,global_gromacs_pipeline_uses_acpype,global_gromacs_pipeline_mentions_gaff2,global_gromacs_pipeline_li_fallback,gromacs_topol_exists,gromacs_preparation,lammps_reference,keep_for_pcff_strict_parity,exclusion_reason
+14748,acpype_gaff2_topology,True,False,True,True,acpype_gaff2_topology,pcff_class2,False,"GROMACS paired topology was generated with ACPYPE/GAFF2, not PCFF"
+27670,acpype_gaff2_atomtyping_failed,True,False,True,False,acpype_gaff2_atomtyping_failed,pcff_class2,False,GROMACS paired topology is missing and the preserved typing attempt is ACPYPE/GAFF2

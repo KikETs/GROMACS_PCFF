@@ -1,0 +1,60 @@
+{
+  "checks": [
+    {
+      "analytic_force": 29.0955,
+      "atom_id": 2,
+      "component": "x",
+      "delta": 1e-06,
+      "finite_difference_force": 29.000000001389026,
+      "residual": 0.09549999861097547
+    },
+    {
+      "analytic_force": 30.3954,
+      "atom_id": 2,
+      "component": "y",
+      "delta": 1e-06,
+      "finite_difference_force": 30.499999999378247,
+      "residual": -0.10459999937824804
+    },
+    {
+      "analytic_force": -22.8959,
+      "atom_id": 4,
+      "component": "x",
+      "delta": 1e-06,
+      "finite_difference_force": -22.999999998774,
+      "residual": 0.10409999877400011
+    },
+    {
+      "analytic_force": 83.7149,
+      "atom_id": 4,
+      "component": "y",
+      "delta": 1e-06,
+      "finite_difference_force": 84.00000000108321,
+      "residual": -0.2851000010832081
+    },
+    {
+      "analytic_force": -62.6262,
+      "atom_id": 6,
+      "component": "x",
+      "delta": 1e-06,
+      "finite_difference_force": -62.50000000029843,
+      "residual": -0.12619999970156925
+    },
+    {
+      "analytic_force": 34.7227,
+      "atom_id": 6,
+      "component": "y",
+      "delta": 1e-06,
+      "finite_difference_force": 35.00000000045134,
+      "residual": -0.2773000004513335
+    }
+  ],
+  "observable": "finite_difference",
+  "schema_version": 1,
+  "system_id": "small_oligomer",
+  "units": {
+    "distance": "angstrom",
+    "energy": "kcal/mol",
+    "force": "kcal/mol/angstrom"
+  }
+}

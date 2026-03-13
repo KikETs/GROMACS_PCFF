@@ -268,6 +268,7 @@ void nbnxmKernelSimd(const NbnxnPairlistCpu&    pairlist,
     /* LJ function constants, only actually needed with energies or potential switching */
     SimdReal sixth_S(1.0_real / 6.0_real);
     SimdReal twelveth_S(1.0_real / 12.0_real);
+    SimdReal repulsionFraction_S(1.0_real / ic.vdw.repulsionPower);
 
     static_assert(!(haveLJEwaldGeometric && vdwModifier != InteractionModifiers::PotShift),
                   "LJ-PME only supports potential-shift");

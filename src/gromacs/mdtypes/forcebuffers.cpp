@@ -52,15 +52,21 @@ namespace gmx
 {
 
 ForceBuffers::ForceBuffers() :
-    force_({}), forceMtsCombined_({}), view_({}, {}, false), useForceMtsCombined_(false)
+    force_({}), mtsLevelForces_({}), forceMtsCombined_({}), view_({}, {}, {}, false), useForceMtsCombined_(false)
+{
+}
+
+ForceBuffers::ForceBuffers(const int numMtsLevels, const PinningPolicy pinningPolicy) :
+    force_({}, { pinningPolicy }),
+    mtsLevelForces_(std::max(0, numMtsLevels - 1)),
+    forceMtsCombined_({}),
+    view_({}, {}, {}, numMtsLevels > 1),
+    useForceMtsCombined_(numMtsLevels > 1)
 {
 }
 
 ForceBuffers::ForceBuffers(const bool useForceMtsCombined, const PinningPolicy pinningPolicy) :
-    force_({}, { pinningPolicy }),
-    forceMtsCombined_({}),
-    view_({}, {}, useForceMtsCombined),
-    useForceMtsCombined_(useForceMtsCombined)
+    ForceBuffers(useForceMtsCombined ? 2 : 0, pinningPolicy)
 {
 }
 
@@ -83,12 +89,24 @@ PinningPolicy ForceBuffers::pinningPolicy() const
 void ForceBuffers::resize(int numAtoms)
 {
     force_.resizeWithPadding(numAtoms);
+    for (auto& mtsLevelForce : mtsLevelForces_)
+    {
+        mtsLevelForce.resizeWithPadding(numAtoms);
+    }
     if (useForceMtsCombined_)
     {
         forceMtsCombined_.resizeWithPadding(numAtoms);
     }
-    view_ = ForceBuffersView(
-            force_.arrayRefWithPadding(), forceMtsCombined_.arrayRefWithPadding(), useForceMtsCombined_);
+    std::vector<ArrayRefWithPadding<RVec>> mtsLevelForceViews;
+    mtsLevelForceViews.reserve(mtsLevelForces_.size());
+    for (auto& mtsLevelForce : mtsLevelForces_)
+    {
+        mtsLevelForceViews.emplace_back(mtsLevelForce.arrayRefWithPadding());
+    }
+    view_ = ForceBuffersView(force_.arrayRefWithPadding(),
+                             mtsLevelForceViews,
+                             forceMtsCombined_.arrayRefWithPadding(),
+                             useForceMtsCombined_);
 }
 
 } // namespace gmx

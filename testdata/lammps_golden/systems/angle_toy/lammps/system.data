@@ -1,0 +1,32 @@
+LAMMPS data file for angle_toy
+
+3 atoms
+2 bonds
+1 angles
+
+1 atom types
+1 bond types
+1 angle types
+
+-5.0 5.0 xlo xhi
+-5.0 5.0 ylo yhi
+-5.0 5.0 zlo zhi
+
+Masses
+
+1 12.011
+
+Atoms # full
+
+1 1 1 0.0 -1.500000 0.000000 0.000000
+2 1 1 0.0 0.000000 0.000000 0.000000
+3 1 1 0.0 0.750000 1.299038 0.000000
+
+Bonds
+
+1 1 1 2
+2 1 2 3
+
+Angles
+
+1 1 1 2 3

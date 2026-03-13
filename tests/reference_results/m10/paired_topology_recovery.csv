@@ -1,0 +1,3 @@
+trajectory_id,topol_exists,sample_manifest_smiles,sample_manifest_n_repeat,sample_manifest_density,sample_manifest_molality,donor_trajectory_id,donor_atom_signature_match,donor_topology_dry_run_status,donor_topology_dry_run_rc,donor_topology_dry_run_warning_count,donor_topology_dry_run_atom_mismatch_note
+14748,True,*CCOCCOCCOCCOCCOCC*,9.0,1.18,1.47,27710,True,ok,0,2,(more than 20 non-matching atom names)
+27670,False,*OCOCCOCC*,19.0,1.25,1.47,14768,True,ok,0,2,(more than 20 non-matching atom names)

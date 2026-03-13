@@ -255,6 +255,10 @@ struct NBParamGpu
     float rlistInner_sq;
     //! True if we use dynamic pair-list pruning
     bool useDynamicPruning;
+    //! Repulsive power used for the short-range LJ repulsive term.
+    float repulsionPower;
+    //! Cached inverse of repulsionPower to avoid divides in the inner loop.
+    float inverseRepulsionPower;
 
     //! VdW shift dispersion constants
     shift_consts_t dispersion_shift;

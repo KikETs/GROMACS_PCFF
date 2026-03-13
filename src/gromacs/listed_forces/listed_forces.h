@@ -114,7 +114,9 @@ public:
     enum class InteractionGroup : int
     {
         Pairs,     //!< Pair interactions
+        Bonds,     //!< Bond-style interactions only
         Dihedrals, //!< Dihedrals, including cmap
+        Impropers, //!< Improper dihedrals
         Angles,    //!< Angles
         Rest,      //!< All listed interactions that are not any of the above
         Count      //!< The number of items above

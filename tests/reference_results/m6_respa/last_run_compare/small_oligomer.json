@@ -1,0 +1,169 @@
+{
+  "comparisons": [
+    {
+      "abs_delta": 0.0025483824999987803,
+      "actual": 29.7616116175,
+      "delta": -0.0025483824999987803,
+      "name": "nve:final_total_kcal_mol",
+      "present_in_actual": true,
+      "reference": 29.76416,
+      "tolerance": 0.02,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 0.002865632300000698,
+      "actual": 29.7887083677,
+      "delta": -0.002865632300000698,
+      "name": "nve:initial_total_kcal_mol",
+      "present_in_actual": true,
+      "reference": 29.791574,
+      "tolerance": 0.02,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 1.1904098173864952e-07,
+      "actual": 0.656291233766,
+      "delta": -1.1904098173864952e-07,
+      "name": "nve:polymer_end_to_end_nm",
+      "present_in_actual": true,
+      "reference": 0.6562913528069817,
+      "tolerance": 0.0001,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 1.796095577821788e-09,
+      "actual": 0.227093052158,
+      "delta": -1.796095577821788e-09,
+      "name": "nve:polymer_rg_nm",
+      "present_in_actual": true,
+      "reference": 0.22709305395409557,
+      "tolerance": 0.0001,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 0.0028642264999980682,
+      "actual": 25.3174947735,
+      "delta": -0.0028642264999980682,
+      "name": "nve:step0_potential_kcal_mol",
+      "present_in_actual": true,
+      "reference": 25.320359,
+      "tolerance": 0.02,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 0.014530509999985952,
+      "actual": -3201.00016949,
+      "delta": 0.014530509999985952,
+      "name": "nve:step0_virial_pressure_xx_atm",
+      "present_in_actual": true,
+      "reference": -3201.0147,
+      "tolerance": 5.0,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 0.020341779999995424,
+      "actual": 252.42078822,
+      "delta": -0.020341779999995424,
+      "name": "nve:step0_virial_pressure_xy_atm",
+      "present_in_actual": true,
+      "reference": 252.44113,
+      "tolerance": 5.0,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 0.008022072999978036,
+      "actual": -191.334967927,
+      "delta": 0.008022072999978036,
+      "name": "nve:step0_virial_pressure_xz_atm",
+      "present_in_actual": true,
+      "reference": -191.34299,
+      "tolerance": 5.0,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 0.11737541000002238,
+      "actual": -1073.56642459,
+      "delta": 0.11737541000002238,
+      "name": "nve:step0_virial_pressure_yy_atm",
+      "present_in_actual": true,
+      "reference": -1073.6838,
+      "tolerance": 5.0,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 0.016673462999960975,
+      "actual": 488.972886537,
+      "delta": -0.016673462999960975,
+      "name": "nve:step0_virial_pressure_yz_atm",
+      "present_in_actual": true,
+      "reference": 488.98956,
+      "tolerance": 5.0,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 0.02703978099998494,
+      "actual": -234.749170219,
+      "delta": 0.02703978099998494,
+      "name": "nve:step0_virial_pressure_zz_atm",
+      "present_in_actual": true,
+      "reference": -234.77621,
+      "tolerance": 5.0,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 0.0003172498245002722,
+      "actual": 0.0270967501755,
+      "delta": -0.0003172498245002722,
+      "name": "nve:total_energy_drift_abs_kcal_mol",
+      "present_in_actual": true,
+      "reference": 0.02741400000000027,
+      "tolerance": 0.005,
+      "within_tolerance": true
+    },
+    {
+      "abs_delta": 0.0003172498245002722,
+      "actual": 0.0270967501755,
+      "delta": -0.0003172498245002722,
+      "name": "nve:total_energy_span_kcal_mol",
+      "present_in_actual": true,
+      "reference": 0.02741400000000027,
+      "tolerance": 0.005,
+      "within_tolerance": true
+    }
+  ],
+  "failed_metrics": [],
+  "missing_metrics": [],
+  "notes": [
+    "Frozen M6 3-level NVE tolerances are loaded from reference_summary.tsv and are intended to gate the exact CPU path before GPU work.",
+    "LAMMPS special_bonds 1-4 terms are embedded in the pair style, while the GROMACS exact path maps them through listed pair14 interactions. This harness is intended to expose any residual mismatch.",
+    "GROMACS exact r-RESPA scheduler/integrator parity remains an open item. The current fork contains both a legacy md-based exact path and a dedicated md-vv prototype path, and the harness is intended to expose whichever one is active.",
+    "Exact r-RESPA observables are dumped as machine-readable JSON and also checked against the frozen LAMMPS M6 tolerance contract in this test.",
+    "The diagnostics block compares exact r-RESPA step-0 energy terms against the same GROMACS topology/state evaluated without MTS.",
+    "GROMACS exact r-RESPA now targets a dedicated integrator = md-vv path instead of reusing the leap-frog md update path.",
+    "The current pair14 level is pinned to level 1 for this harness, but LAMMPS special_bonds 1-4 terms are embedded in pair-style respa splitting rather than exposed as a separate schedule keyword."
+  ],
+  "schedule": {
+    "angle_level": 1,
+    "bond_level": 1,
+    "dihedral_level": 1,
+    "improper_level": 1,
+    "inner_level": 1,
+    "inner_off_angstrom": 3.0,
+    "inner_on_angstrom": 4.5,
+    "kspace_level": 3,
+    "levels": 3,
+    "loop_factors": [
+      2,
+      2
+    ],
+    "middle_level": 2,
+    "outer_level": 3,
+    "outer_off_angstrom": 8.0,
+    "outer_on_angstrom": 6.0,
+    "outer_steps": 5,
+    "outer_timestep_fs": 2.0
+  },
+  "schema_version": 1,
+  "status": "pass",
+  "system_id": "small_oligomer"
+}

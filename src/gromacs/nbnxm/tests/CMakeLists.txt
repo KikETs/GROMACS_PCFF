@@ -38,6 +38,7 @@ gmx_add_unit_test(NbnxmTests nbnxm-test
         exclusions.cpp
         kernel_test.cpp
         kernelsetup.cpp
+        pcff_class2_nonbonded.cpp
         plainpairlist.cpp
         simd_energy_accumulator.cpp
         testsystem.cpp

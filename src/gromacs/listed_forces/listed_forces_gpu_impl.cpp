@@ -46,6 +46,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
@@ -141,6 +142,10 @@ bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, 
     errorReasons.appendIf(ir.useMts, "Cannot run with multiple time stepping");
     // There is one energy group for each wall and those are not used for 1-4 interactions
     errorReasons.appendIf((ir.opts.ngener - ir.nwall > 1), "Cannot run with multiple energy groups");
+    errorReasons.appendIf(std::abs(mtop.ffparams.reppow - 12.0) > 10 * GMX_DOUBLE_EPS,
+                          "The current bonded GPU path assumes 12-6 listed 1-4 Lennard-Jones "
+                          "semantics. PCFF/class2 uses 9-6 listed 1-4 interactions, so -bonded gpu "
+                          "is rejected until the GPU pairs path is generalized to repulsion power 9.");
     errorReasons.finishContext();
     if (error != nullptr)
     {

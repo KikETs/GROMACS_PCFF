@@ -1073,7 +1073,7 @@ void relax_shell_flexcon(FILE*                             fplog,
     {
         pr_rvecs(debug, 0, "x b4 do_force", as_rvec_array(x.data()), homenr);
     }
-    gmx::ForceBuffersView forceViewInit = gmx::ForceBuffersView(forceWithPadding[Min], {}, false);
+    gmx::ForceBuffersView forceViewInit = gmx::ForceBuffersView(forceWithPadding[Min], {}, {}, false);
 
     do_force(fplog,
              cr,
@@ -1231,7 +1231,7 @@ void relax_shell_flexcon(FILE*                             fplog,
             pr_rvecs(debug, 0, "RELAX: pos[Try]  ", as_rvec_array(pos[Try].data()), homenr);
         }
         /* Try the new positions */
-        gmx::ForceBuffersView forceViewTry = gmx::ForceBuffersView(forceWithPadding[Try], {}, false);
+        gmx::ForceBuffersView forceViewTry = gmx::ForceBuffersView(forceWithPadding[Try], {}, {}, false);
 
         do_force(fplog,
                  cr,

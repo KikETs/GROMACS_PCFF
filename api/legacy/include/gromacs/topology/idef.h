@@ -88,6 +88,10 @@ typedef union t_iparams
     } cubic;
     struct
     {
+        real r0, k2, k3, k4;
+    } bond_class2;
+    struct
+    {
         real bm, kb;
     } fene;
     struct
@@ -106,6 +110,12 @@ typedef union t_iparams
     {
         real theta, c[5];
     } qangle;
+    struct
+    {
+        real theta0, k2, k3, k4;
+        real bb_k, bb_r1, bb_r2;
+        real ba_k1, ba_k2, ba_r1, ba_r2;
+    } angle_class2;
     struct
     {
         real alpha;
@@ -150,6 +160,21 @@ typedef union t_iparams
         int  mult;
         real phiB, cpB;
     } pdihs;
+    struct
+    {
+        real k1, phi1, k2, phi2, k3, phi3;
+        real mbt_f1, mbt_f2, mbt_f3, mbt_r0;
+        real ebt_f1_1, ebt_f2_1, ebt_f3_1, ebt_f1_2, ebt_f2_2, ebt_f3_2, ebt_r0_1, ebt_r0_2;
+        real at_f1_1, at_f2_1, at_f3_1, at_f1_2, at_f2_2, at_f3_2, at_theta0_1, at_theta0_2;
+        real aat_k, aat_theta0_1, aat_theta0_2;
+        real bb13t_k, bb13t_r10, bb13t_r30;
+    } dihedral_class2;
+    struct
+    {
+        real k0, chi0;
+        real aa_k1, aa_k2, aa_k3;
+        real aa_theta0_1, aa_theta0_2, aa_theta0_3;
+    } improper_class2;
     struct
     {
         real dA, dB;

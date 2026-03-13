@@ -46,6 +46,7 @@
 
 #include "config.h"
 
+#include <cmath>
 #include <memory>
 #include <type_traits>
 
@@ -224,6 +225,8 @@ static inline void set_cutoff_parameters(NBParamGpu*                nbp,
     nbp->rlistOuter_sq     = listParams.rlistOuter * listParams.rlistOuter;
     nbp->rlistInner_sq     = listParams.rlistInner * listParams.rlistInner;
     nbp->useDynamicPruning = listParams.useDynamicPruning;
+    nbp->repulsionPower    = ic.vdw.repulsionPower;
+    nbp->inverseRepulsionPower = 1.0F / static_cast<float>(ic.vdw.repulsionPower);
 
     nbp->sh_lj_ewald   = ic.vdw.ewaldShift;
     nbp->ewaldcoeff_lj = ic.vdw.ewaldCoeff;
@@ -465,6 +468,14 @@ static inline void initNbparam(NBParamGpu*                     nbp,
     const int numTypes = nbatParams.numTypes;
 
     set_cutoff_parameters(nbp, ic, listParams);
+
+    if (std::abs(ic.vdw.repulsionPower - 12.0) >= 10 * GMX_DOUBLE_EPS
+        && ic.vdw.modifier == InteractionModifiers::ForceSwitch)
+    {
+        GMX_THROW(InconsistentInputError(
+                "GPU force-switch kernels currently support only repulsion power 12. "
+                "Use vdw-modifier = none/pot-shift or fall back to CPU for non-12 LJ."));
+    }
 
     nbp->vdwType  = nbnxmGpuPickVdwKernelType(ic, nbatParams.ljCombinationRule);
     nbp->elecType = nbnxmGpuPickElectrostaticsKernelType(ic, deviceContext.deviceInfo());

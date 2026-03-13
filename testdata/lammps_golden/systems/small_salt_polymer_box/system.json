@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "id": "small_salt_polymer_box",
+  "display_name": "small salt-containing polymer box",
+  "description": "Ten-atom charged polymer-plus-salt fixture exercising Class2 bonded terms, long-range Coulomb, and sixth-power LJ mixing in a periodic box.",
+  "category": "polymer_box",
+  "reference_terms": [
+    "bond/class2",
+    "angle/class2",
+    "dihedral/class2",
+    "lj/class2/coul/long",
+    "special_bonds",
+    "kspace/pppm"
+  ],
+  "topology_source": {
+    "kind": "repo_fixture",
+    "path": "lammps/system.data",
+    "description": "Eight-atom polymer chain plus one cation and one anion in a periodic box."
+  },
+  "parameter_source": {
+    "kind": "repo_fixture",
+    "path": "lammps/system.in",
+    "description": "Synthetic Class2 bonded coefficients plus self-only LJ parameters that require sixth-power mixing."
+  },
+  "styles": {
+    "units": "real",
+    "atom_style": "full",
+    "pair_style": "lj/class2/coul/long",
+    "bond_style": "class2",
+    "angle_style": "class2",
+    "dihedral_style": "class2",
+    "improper_style": "none",
+    "kspace_style": "pppm 1.0e-6",
+    "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "pair_coeff_source": "explicit_self_only",
+    "relies_on_mixing": true
+  },
+  "execution": {
+    "recommended_mpi_ranks": 1,
+    "double_precision_preferred": true
+  },
+  "expected_observables": {
+    "single_point": {
+      "enabled": true,
+      "normalized_output": "single_point.json",
+      "thermo_fields": [
+        "step",
+        "pe",
+        "ebond",
+        "eangle",
+        "edihed",
+        "eimp",
+        "evdwl",
+        "ecoul",
+        "elong",
+        "epair",
+        "emol"
+      ]
+    },
+    "forces": {
+      "enabled": true,
+      "normalized_output": "forces.json",
+      "dump_fields": [
+        "id",
+        "type",
+        "q",
+        "x",
+        "y",
+        "z",
+        "fx",
+        "fy",
+        "fz"
+      ],
+      "sort_by": "id"
+    },
+    "finite_difference": {
+      "enabled": true,
+      "normalized_output": "finite_difference.json",
+      "delta": 1e-06,
+      "atoms": [
+        3,
+        9,
+        10
+      ],
+      "components": [
+        "x",
+        "z"
+      ],
+      "energy_field": "pe"
+    },
+    "nve_drift": {
+      "enabled": true,
+      "normalized_output": "nve_drift.json",
+      "timestep_fs": 0.5,
+      "nsteps": 20,
+      "initial_temperature_K": 300.0,
+      "velocity_seed": 67890,
+      "thermo_fields": [
+        "step",
+        "time",
+        "pe",
+        "ke",
+        "etotal",
+        "temp"
+      ]
+    },
+    "nvt_snapshot": {
+      "enabled": true,
+      "normalized_output": "nvt_snapshot.json",
+      "timestep_fs": 0.5,
+      "nsteps": 20,
+      "temperature_start_K": 300.0,
+      "temperature_stop_K": 300.0,
+      "tdamp_fs": 50.0,
+      "thermo_fields": [
+        "step",
+        "time",
+        "pe",
+        "ke",
+        "etotal",
+        "temp",
+        "press"
+      ]
+    }
+  },
+  "unresolved_items": [
+    "This fixture freezes synthetic Class2 coefficients rather than a published PCFF parameter set."
+  ],
+  "notes": [
+    "Cross LJ parameters are intentionally omitted to force sixth-power mixing.",
+    "The whole system is charge neutral but contains explicit salt."
+  ]
+}

@@ -257,6 +257,271 @@ TEST_F(GetIrTest, MtsCheckSDNotSupported)
     runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::ErrorAndDoNotCompareOutput);
 }
 
+TEST_F(GetIrTest, MtsCheckThreeLevelMissingDefinitions)
+{
+    const char* inputMdpFile[] = {
+        "mts = yes", "mts-levels = 3", "mts-level2-forces = pair", "mts-level2-factor = 2"
+    };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::ErrorAndDoNotCompareOutput);
+}
+
+TEST_F(GetIrTest, MtsAcceptsThreeLevelDefinitions)
+{
+    const char* inputMdpFile[] = { "mts = yes",
+                                   "mts-levels = 3",
+                                   "mts-level2-forces = pair dihedral angle",
+                                   "mts-level2-factor = 2",
+                                   "mts-level3-forces = nonbonded longrange-nonbonded",
+                                   "mts-level3-factor = 4",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::NoErrorAndDoNotCompareOutput);
+}
+
+TEST_F(GetIrTest, MtsAcceptsExactLammpsRespaDefinitions)
+{
+    const char* inputMdpFile[] = { "mts = yes",
+                                   "mts-mode = lammps-respa",
+                                   "mts-levels = 3",
+                                   "mts-level2-factor = 2",
+                                   "mts-level3-factor = 4",
+                                   "mts-respa-bond-level = 1",
+                                   "mts-respa-angle-level = 2",
+                                   "mts-respa-dihedral-level = 2",
+                                   "mts-respa-improper-level = 2",
+                                   "mts-respa-pair14-level = 2",
+                                   "mts-respa-kspace-level = 3",
+                                   "mts-respa-inner-level = 1",
+                                   "mts-respa-middle-level = 2",
+                                   "mts-respa-outer-level = 3",
+                                   "mts-respa-inner-off = 0.30",
+                                   "mts-respa-inner-on = 0.45",
+                                   "mts-respa-outer-on = 0.60",
+                                   "mts-respa-outer-off = 0.80",
+                                   "coulomb-type = PME",
+                                   "coulomb-modifier = none",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = none",
+                                   "rlist = 0.99",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::NoErrorAndDoNotCompareOutput);
+}
+
+TEST_F(GetIrTest, MtsAcceptsExactLammpsRespaWithVelocityVerletIntegrator)
+{
+    const char* inputMdpFile[] = { "integrator = md-vv",
+                                   "mts = yes",
+                                   "mts-mode = lammps-respa",
+                                   "mts-levels = 3",
+                                   "mts-level2-factor = 2",
+                                   "mts-level3-factor = 4",
+                                   "mts-respa-bond-level = 1",
+                                   "mts-respa-angle-level = 2",
+                                   "mts-respa-dihedral-level = 2",
+                                   "mts-respa-improper-level = 2",
+                                   "mts-respa-pair14-level = 2",
+                                   "mts-respa-kspace-level = 3",
+                                   "mts-respa-inner-level = 1",
+                                   "mts-respa-middle-level = 2",
+                                   "mts-respa-outer-level = 3",
+                                   "mts-respa-inner-off = 0.30",
+                                   "mts-respa-inner-on = 0.45",
+                                   "mts-respa-outer-on = 0.60",
+                                   "mts-respa-outer-off = 0.80",
+                                   "coulomb-type = PME",
+                                   "coulomb-modifier = none",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = none",
+                                   "rlist = 0.99",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::NoErrorAndDoNotCompareOutput);
+}
+
+TEST_F(GetIrTest, MtsRejectsExactLammpsRespaWithTwoLevels)
+{
+    const char* inputMdpFile[] = { "mts = yes",
+                                   "mts-mode = lammps-respa",
+                                   "mts-levels = 2",
+                                   "mts-level2-factor = 2",
+                                   "mts-respa-bond-level = 1",
+                                   "mts-respa-angle-level = 1",
+                                   "mts-respa-dihedral-level = 1",
+                                   "mts-respa-improper-level = 1",
+                                   "mts-respa-pair14-level = 1",
+                                   "mts-respa-pair-level = 2",
+                                   "mts-respa-kspace-level = 2",
+                                   "coulomb-type = PME",
+                                   "coulomb-modifier = none",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = none",
+                                   "rlist = 0.99",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::ErrorAndDoNotCompareOutput);
+}
+
+TEST_F(GetIrTest, MtsRejectsLegacyForceListsInExactLammpsRespaMode)
+{
+    const char* inputMdpFile[] = { "mts = yes",
+                                   "mts-mode = lammps-respa",
+                                   "mts-levels = 3",
+                                   "mts-level2-forces = pair",
+                                   "mts-level2-factor = 2",
+                                   "mts-level3-forces = longrange-nonbonded",
+                                   "mts-level3-factor = 4",
+                                   "coulomb-type = PME",
+                                   "coulomb-modifier = none",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = none",
+                                   "rlist = 0.99",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::ErrorAndDoNotCompareOutput);
+}
+
+TEST_F(GetIrTest, MtsRejectsExactLammpsRespaWhenOuterCutoffExceedsPairCutoff)
+{
+    const char* inputMdpFile[] = { "mts = yes",
+                                   "mts-mode = lammps-respa",
+                                   "mts-levels = 3",
+                                   "mts-level2-factor = 2",
+                                   "mts-level3-factor = 4",
+                                   "mts-respa-kspace-level = 3",
+                                   "mts-respa-inner-level = 1",
+                                   "mts-respa-middle-level = 2",
+                                   "mts-respa-outer-level = 3",
+                                   "mts-respa-inner-off = 0.30",
+                                   "mts-respa-inner-on = 0.45",
+                                   "mts-respa-outer-on = 0.60",
+                                   "mts-respa-outer-off = 0.95",
+                                   "coulomb-type = PME",
+                                   "coulomb-modifier = none",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = none",
+                                   "rlist = 0.99",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::ErrorAndDoNotCompareOutput);
+}
+
+TEST_F(GetIrTest, MtsRejectsExactLammpsRespaWithReactionFieldCoulomb)
+{
+    const char* inputMdpFile[] = { "mts = yes",
+                                   "mts-mode = lammps-respa",
+                                   "mts-levels = 3",
+                                   "mts-level2-factor = 2",
+                                   "mts-level3-factor = 4",
+                                   "mts-respa-kspace-level = 3",
+                                   "mts-respa-inner-level = 1",
+                                   "mts-respa-middle-level = 2",
+                                   "mts-respa-outer-level = 3",
+                                   "mts-respa-inner-off = 0.30",
+                                   "mts-respa-inner-on = 0.45",
+                                   "mts-respa-outer-on = 0.60",
+                                   "mts-respa-outer-off = 0.80",
+                                   "coulomb-type = Reaction-Field",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = none",
+                                   "rlist = 0.99",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::ErrorAndDoNotCompareOutput);
+}
+
+TEST_F(GetIrTest, MtsRejectsExactLammpsRespaWithShiftedCoulombModifier)
+{
+    const char* inputMdpFile[] = { "mts = yes",
+                                   "mts-mode = lammps-respa",
+                                   "mts-levels = 3",
+                                   "mts-level2-factor = 2",
+                                   "mts-level3-factor = 4",
+                                   "mts-respa-kspace-level = 3",
+                                   "mts-respa-inner-level = 1",
+                                   "mts-respa-middle-level = 2",
+                                   "mts-respa-outer-level = 3",
+                                   "mts-respa-inner-off = 0.30",
+                                   "mts-respa-inner-on = 0.45",
+                                   "mts-respa-outer-on = 0.60",
+                                   "mts-respa-outer-off = 0.80",
+                                   "coulomb-type = PME",
+                                   "coulomb-modifier = Potential-shift",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = none",
+                                   "rlist = 0.99",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::ErrorAndDoNotCompareOutput);
+}
+
+TEST_F(GetIrTest, MtsRejectsExactLammpsRespaWithShiftedVdwModifier)
+{
+    const char* inputMdpFile[] = { "mts = yes",
+                                   "mts-mode = lammps-respa",
+                                   "mts-levels = 3",
+                                   "mts-level2-factor = 2",
+                                   "mts-level3-factor = 4",
+                                   "mts-respa-kspace-level = 3",
+                                   "mts-respa-inner-level = 1",
+                                   "mts-respa-middle-level = 2",
+                                   "mts-respa-outer-level = 3",
+                                   "mts-respa-inner-off = 0.30",
+                                   "mts-respa-inner-on = 0.45",
+                                   "mts-respa-outer-on = 0.60",
+                                   "mts-respa-outer-off = 0.80",
+                                   "coulomb-type = PME",
+                                   "coulomb-modifier = none",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = Potential-shift",
+                                   "rlist = 0.99",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::ErrorAndDoNotCompareOutput);
+}
+
+TEST_F(GetIrTest, MtsRejectsExactLammpsRespaWithoutPairlistBuffer)
+{
+    const char* inputMdpFile[] = { "mts = yes",
+                                   "mts-mode = lammps-respa",
+                                   "mts-levels = 3",
+                                   "mts-level2-factor = 2",
+                                   "mts-level3-factor = 4",
+                                   "mts-respa-kspace-level = 3",
+                                   "mts-respa-inner-level = 1",
+                                   "mts-respa-middle-level = 2",
+                                   "mts-respa-outer-level = 3",
+                                   "mts-respa-inner-off = 0.30",
+                                   "mts-respa-inner-on = 0.45",
+                                   "mts-respa-outer-on = 0.60",
+                                   "mts-respa-outer-off = 0.80",
+                                   "coulomb-type = PME",
+                                   "coulomb-modifier = none",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = none",
+                                   "rlist = 0.9",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::ErrorAndDoNotCompareOutput);
+}
+
 // These tests observe how the electric-field keys behave, since they
 // are currently the only ones using the new Options-style handling.
 TEST_F(GetIrTest, AcceptsElectricField)

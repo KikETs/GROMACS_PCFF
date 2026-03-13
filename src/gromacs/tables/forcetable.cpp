@@ -1331,7 +1331,7 @@ make_tables(FILE* fp, const interaction_const_t& ic, const char* fn, real rtab, 
         }
 
         /* Set scalefactor for c6/c12 tables. This is because we save flops in the non-table kernels
-         * by including the derivative constants (6.0 or 12.0) in the parameters, since
+         * by including the derivative constants (6.0 or repulsionPower) in the parameters, since
          * we no longer calculate force in most steps. This means the c6/c12 parameters
          * have been scaled up, so we need to scale down the table interactions too.
          * It comes here since we need to scale user tables too.
@@ -1342,7 +1342,7 @@ make_tables(FILE* fp, const interaction_const_t& ic, const char* fn, real rtab, 
         }
         else if (k == etiLJ12 && tabsel[k] != etabEXPMIN)
         {
-            scalefactor = 1.0 / 12.0;
+            scalefactor = 1.0 / ic.vdw.repulsionPower;
         }
         else
         {

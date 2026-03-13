@@ -59,6 +59,7 @@
 #endif
         {
             real FrLJ6 = 0, FrLJ12 = 0, frLJ = 0;
+            const real repulsionPower = static_cast<real>(ic.vdw.repulsionPower);
 
             /* A multiply mask used to zero an interaction
              * when either the distance cutoff is exceeded, or
@@ -126,11 +127,13 @@
 #if defined LJ_CUT || defined LJ_FORCE_SWITCH || defined LJ_POT_SWITCH
                 real rinvsix = interact * rinvsq * rinvsq * rinvsq;
                 FrLJ6        = c6 * rinvsix;
-                FrLJ12       = c12 * rinvsix * rinvsix;
+                FrLJ12       = c12
+                         * (repulsionPower == 12.0 ? rinvsix * rinvsix
+                                                   : interact * std::pow(rinv, repulsionPower));
                 frLJ         = FrLJ12 - FrLJ6;
                 /* 7 flops for r^-2 + LJ force */
 #    if defined CALC_ENERGIES || defined LJ_POT_SWITCH
-                VLJ = (FrLJ12 + c12 * ic.vdw.repulsionShift.cpot) / 12
+                VLJ = (FrLJ12 + c12 * ic.vdw.repulsionShift.cpot) / repulsionPower
                       - (FrLJ6 + c6 * ic.vdw.dispersionShift.cpot) / 6;
                 /* 7 flops for LJ energy */
 #    endif

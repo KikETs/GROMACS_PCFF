@@ -1,0 +1,165 @@
+{
+  "overall": {
+    "max_abs_component_delta_kj_mol_nm": 0.0009765625,
+    "max_atom_norm_delta_kj_mol_nm": 0.0010066175843793117,
+    "max_rms_component_delta_kj_mol_nm": 0.0001922203076950665
+  },
+  "systems": [
+    {
+      "frames": [
+        {
+          "atom_with_max_norm_delta": 4,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.000244140625,
+          "max_atom_norm_delta_kj_mol_nm": 0.0002729575167846423,
+          "num_atoms": 6,
+          "rms_component_delta_kj_mol_nm": 7.646462105312212e-05,
+          "step": 0,
+          "time_ps": 0.0,
+          "unsplit_dump_step": 0
+        },
+        {
+          "atom_with_max_norm_delta": 4,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.000244140625,
+          "max_atom_norm_delta_kj_mol_nm": 0.000244140625,
+          "num_atoms": 6,
+          "rms_component_delta_kj_mol_nm": 7.229567027945236e-05,
+          "step": 4,
+          "time_ps": 0.0020000000949949026,
+          "unsplit_dump_step": 0
+        },
+        {
+          "atom_with_max_norm_delta": 5,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.000244140625,
+          "max_atom_norm_delta_kj_mol_nm": 0.0002729575167846423,
+          "num_atoms": 6,
+          "rms_component_delta_kj_mol_nm": 9.652285540237684e-05,
+          "step": 8,
+          "time_ps": 0.004000000189989805,
+          "unsplit_dump_step": 0
+        },
+        {
+          "atom_with_max_norm_delta": 5,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.000244140625,
+          "max_atom_norm_delta_kj_mol_nm": 0.00024604058069758756,
+          "num_atoms": 6,
+          "rms_component_delta_kj_mol_nm": 6.834000547681315e-05,
+          "step": 12,
+          "time_ps": 0.006000000052154064,
+          "unsplit_dump_step": 0
+        },
+        {
+          "atom_with_max_norm_delta": 3,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.0001220703125,
+          "max_atom_norm_delta_kj_mol_nm": 0.00012209359334434275,
+          "num_atoms": 6,
+          "rms_component_delta_kj_mol_nm": 4.168516267320387e-05,
+          "step": 16,
+          "time_ps": 0.00800000037997961,
+          "unsplit_dump_step": 0
+        },
+        {
+          "atom_with_max_norm_delta": 2,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.0001220703125,
+          "max_atom_norm_delta_kj_mol_nm": 0.0001220703125,
+          "num_atoms": 6,
+          "rms_component_delta_kj_mol_nm": 2.935981722264307e-05,
+          "step": 20,
+          "time_ps": 0.009999999776482582,
+          "unsplit_dump_step": 0
+        }
+      ],
+      "outer_steps": 5,
+      "overall": {
+        "max_abs_component_delta_kj_mol_nm": 0.000244140625,
+        "max_atom_norm_delta_kj_mol_nm": 0.0002729575167846423,
+        "max_rms_component_delta_kj_mol_nm": 9.652285540237684e-05
+      },
+      "pair14_level": 1,
+      "system": "small_oligomer"
+    },
+    {
+      "frames": [
+        {
+          "atom_with_max_norm_delta": 2,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.00048828125,
+          "max_atom_norm_delta_kj_mol_nm": 0.0005459150335692846,
+          "num_atoms": 10,
+          "rms_component_delta_kj_mol_nm": 0.00017954591763512989,
+          "step": 0,
+          "time_ps": 0.0,
+          "unsplit_dump_step": 0
+        },
+        {
+          "atom_with_max_norm_delta": 1,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.0009765625,
+          "max_atom_norm_delta_kj_mol_nm": 0.0010066175843793117,
+          "num_atoms": 10,
+          "rms_component_delta_kj_mol_nm": 0.0001922203076950665,
+          "step": 4,
+          "time_ps": 0.0020000000949949026,
+          "unsplit_dump_step": 0
+        },
+        {
+          "atom_with_max_norm_delta": 5,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.00048828125,
+          "max_atom_norm_delta_kj_mol_nm": 0.0004892339948083923,
+          "num_atoms": 10,
+          "rms_component_delta_kj_mol_nm": 0.0001597063303330224,
+          "step": 8,
+          "time_ps": 0.004000000189989805,
+          "unsplit_dump_step": 0
+        },
+        {
+          "atom_with_max_norm_delta": 8,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.00048828125,
+          "max_atom_norm_delta_kj_mol_nm": 0.0004892339948083923,
+          "num_atoms": 10,
+          "rms_component_delta_kj_mol_nm": 0.00013050734811910687,
+          "step": 12,
+          "time_ps": 0.006000000052154064,
+          "unsplit_dump_step": 0
+        },
+        {
+          "atom_with_max_norm_delta": 6,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 0.000244140625,
+          "max_atom_norm_delta_kj_mol_nm": 0.00024521116149884333,
+          "num_atoms": 10,
+          "rms_component_delta_kj_mol_nm": 5.2838778553373814e-05,
+          "step": 16,
+          "time_ps": 0.00800000037997961,
+          "unsplit_dump_step": 0
+        },
+        {
+          "atom_with_max_norm_delta": 8,
+          "highest_active_level": 2,
+          "max_abs_component_delta_kj_mol_nm": 6.103515625e-05,
+          "max_atom_norm_delta_kj_mol_nm": 9.1552734375e-05,
+          "num_atoms": 10,
+          "rms_component_delta_kj_mol_nm": 2.373097383879973e-05,
+          "step": 20,
+          "time_ps": 0.009999999776482582,
+          "unsplit_dump_step": 0
+        }
+      ],
+      "outer_steps": 5,
+      "overall": {
+        "max_abs_component_delta_kj_mol_nm": 0.0009765625,
+        "max_atom_norm_delta_kj_mol_nm": 0.0010066175843793117,
+        "max_rms_component_delta_kj_mol_nm": 0.0001922203076950665
+      },
+      "pair14_level": 1,
+      "system": "small_salt_polymer_box"
+    }
+  ]
+}

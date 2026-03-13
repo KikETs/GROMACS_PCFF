@@ -1,0 +1,59 @@
+{
+  "reference": {
+    "nve": {
+      "final_total_kcal_mol": 29.764563,
+      "initial_total_kcal_mol": 29.791574,
+      "polymer_end_to_end_nm": 0.6562913467180626,
+      "polymer_rg_nm": 0.22709317382016694,
+      "step0_potential_kcal_mol": 25.320359,
+      "total_energy_drift_abs_kcal_mol": 0.027011000000001673,
+      "total_energy_span_kcal_mol": 0.027167999999999637
+    },
+    "nvt": {
+      "final_potential_kcal_mol": 6.1127751,
+      "final_pressure_atm": -297.2233,
+      "final_temperature_K": 1266.4739,
+      "final_total_kcal_mol": 24.988366,
+      "polymer_end_to_end_nm": 0.6693403955804654,
+      "polymer_rg_nm": 0.23026356565976722,
+      "step0_potential_kcal_mol": 25.320359
+    },
+    "single_point": {
+      "potential_kcal_mol": 25.320359
+    }
+  },
+  "schema_version": 1,
+  "sources": {
+    "lammps_observables": {
+      "nve_drift": "tests/reference_results/m4/small_oligomer/nve_drift.json",
+      "nvt_snapshot": "tests/reference_results/m4/small_oligomer/nvt_snapshot.json",
+      "single_point": "tests/reference_results/m4/small_oligomer/single_point.json"
+    },
+    "parameters": "testdata/lammps_golden/systems/small_oligomer/lammps/system.in",
+    "topology": "testdata/lammps_golden/systems/small_oligomer/lammps/system.data"
+  },
+  "system_id": "small_oligomer",
+  "tolerances": {
+    "nve": {
+      "final_total_kcal_mol": 0.06,
+      "initial_total_kcal_mol": 0.03,
+      "polymer_end_to_end_nm": 0.01,
+      "polymer_rg_nm": 0.01,
+      "step0_potential_kcal_mol": 0.02,
+      "total_energy_drift_abs_kcal_mol": 0.06,
+      "total_energy_span_kcal_mol": 0.08
+    },
+    "nvt": {
+      "final_potential_kcal_mol": 0.25,
+      "final_pressure_atm": 120.0,
+      "final_temperature_K": 25.0,
+      "final_total_kcal_mol": 0.25,
+      "polymer_end_to_end_nm": 0.015,
+      "polymer_rg_nm": 0.015,
+      "step0_potential_kcal_mol": 0.02
+    }
+  },
+  "unresolved_items": [
+    "NVT parity remains thermostat-algorithm-sensitive across engines; tolerances are defined on final observables rather than exact trajectory identity."
+  ]
+}

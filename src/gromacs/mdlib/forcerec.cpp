@@ -128,7 +128,8 @@ void ForceHelperBuffers::resize(int numAtoms)
 std::vector<real> makeNonBondedParameterLists(const int                      numMtopAtomTypes,
                                               const bool                     addFillerAtomType,
                                               gmx::ArrayRef<const t_iparams> iparams,
-                                              bool                           useBuckinghamPotential)
+                                              bool                           useBuckinghamPotential,
+                                              const double                   repulsionPower)
 {
     // We add an atom type with index numMtopAtomTypes for filler particles
     const int numMdrunAtomTypes = numMtopAtomTypes + (addFillerAtomType ? 1 : 0);
@@ -158,9 +159,9 @@ std::vector<real> makeNonBondedParameterLists(const int                      num
         {
             for (int j = 0; j < numMtopAtomTypes; j++, k++)
             {
-                /* nbfp now includes the 6.0/12.0 derivative prefactors */
+                /* nbfp stores the runtime derivative prefactors 6.0 and repulsionPower. */
                 C6(nbfp, numMdrunAtomTypes, i, j)  = iparams[k].lj.c6 * 6.0;
-                C12(nbfp, numMdrunAtomTypes, i, j) = iparams[k].lj.c12 * 12.0;
+                C12(nbfp, numMdrunAtomTypes, i, j) = iparams[k].lj.c12 * repulsionPower;
             }
         }
     }
@@ -890,7 +891,28 @@ void init_forcerec(FILE*                            fplog,
 
     if (!gmx_within_tol(interactionConst->vdw.repulsionPower, 12.0, 10 * GMX_DOUBLE_EPS))
     {
-        gmx_fatal(FARGS, "Only LJ repulsion power 12 is supported");
+        if (usingLJPme(interactionConst->vdw.type))
+        {
+            gmx_fatal(FARGS, "Only LJ repulsion power 12 is supported with LJ-PME");
+        }
+        if (inputrec.eDispCorr != DispersionCorrectionType::No)
+        {
+            gmx_fatal(FARGS, "Dispersion correction is not supported with LJ repulsion power %.0f",
+                      interactionConst->vdw.repulsionPower);
+        }
+        if (forcerec->efep != FreeEnergyPerturbationType::No)
+        {
+            gmx_fatal(FARGS, "Non-12 LJ repulsion power is not supported with free-energy perturbation");
+        }
+
+        forcerec->use_simd_kernels = FALSE;
+        if (fplog != nullptr)
+        {
+            fprintf(fplog,
+                    "\nDetected LJ repulsion power %.0f.\n"
+                    "Disabling SIMD non-bonded kernels and using plain-C reference kernels.\n\n",
+                    interactionConst->vdw.repulsionPower);
+        }
     }
     /* Older tpr files can contain Coulomb user tables with the Verlet cutoff-scheme,
      * while mdrun does not (and never did) support this.
@@ -915,14 +937,24 @@ void init_forcerec(FILE*                            fplog,
             forcerec->forceProviders->hasForceProvider()
             || gmx_mtop_ftype_count(mtop, InteractionFunction::PositionRestraints) > 0
             || gmx_mtop_ftype_count(mtop, InteractionFunction::FlatBottomedPositionRestraints) > 0
-            || inputrec.nwall > 0 || inputrec.bPull || inputrec.bRot || inputrec.bIMD;
+            || inputrec.nwall > 0 || inputrec.bRot || inputrec.bIMD;
+    const bool exactLammpsRespaWithSplitNonbonded =
+            inputrec.useMts && inputrec.mtsMode == gmx::MtsMode::LammpsRespa
+            && inputrec.lammpsRespa.hasPairSplitting();
     const bool haveDirectVirialContributionsSlow = usingFullElectrostatics(interactionConst->coulomb.type)
                                                    || usingLJPme(interactionConst->vdw.type);
-    for (int i = 0; i < (simulationWork.useMts ? 2 : 1); i++)
+    const int pullMtsLevel = inputrec.bPull ? gmx::forceGroupMtsLevel(inputrec.mtsLevels, gmx::MtsForceGroups::Pull) : 0;
+    const int longrangeMtsLevel =
+            gmx::forceGroupMtsLevel(inputrec.mtsLevels, gmx::MtsForceGroups::LongrangeNonbonded);
+    for (int i = 0; i < (simulationWork.useMts ? static_cast<int>(inputrec.mtsLevels.size()) : 1); i++)
     {
         bool haveDirectVirialContributions =
-                (((!simulationWork.useMts || i == 0) && haveDirectVirialContributionsFast)
-                 || ((!simulationWork.useMts || i == 1) && haveDirectVirialContributionsSlow));
+                ((!simulationWork.useMts || i == 0) && haveDirectVirialContributionsFast)
+                || (inputrec.bPull && pullMtsLevel == i)
+                || (haveDirectVirialContributionsSlow
+                    && ((simulationWork.useMts && longrangeMtsLevel == i)
+                        || (!simulationWork.useMts && i == 0)))
+                || (exactLammpsRespaWithSplitNonbonded && inputrec.lammpsRespa.outerLevel == i);
         forcerec->forceHelperBuffers.emplace_back(haveDirectVirialContributions);
     }
 
@@ -935,7 +967,7 @@ void init_forcerec(FILE*                            fplog,
     // We add one atom type at the end for filler particles
     forcerec->ntype = mtop.ffparams.atnr + 1;
     forcerec->nbfp  = makeNonBondedParameterLists(
-            mtop.ffparams.atnr, true, mtop.ffparams.iparams, forcerec->haveBuckingham);
+            mtop.ffparams.atnr, true, mtop.ffparams.iparams, forcerec->haveBuckingham, mtop.ffparams.reppow);
     if (usingLJPme(interactionConst->vdw.type))
     {
         forcerec->ljpme_c6grid = makeLJPmeC6GridCorrectionParameters(
@@ -1062,9 +1094,17 @@ void init_forcerec(FILE*                            fplog,
             {
                 interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Pairs));
             }
+            if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Bond)])
+            {
+                interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Bonds));
+            }
             if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Dihedral)])
             {
                 interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Dihedrals));
+            }
+            if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Improper)])
+            {
+                interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Impropers));
             }
             if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Angle)])
             {

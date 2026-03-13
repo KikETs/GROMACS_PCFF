@@ -34,6 +34,9 @@
 gmx_add_unit_test(ListedForcesTest listed_forces-test
     CPP_SOURCE_FILES
         bonded.cpp
+        listed_forces_gpu.cpp
+        pcff_class2.cpp
+        pcff_class2_dihedral.cpp
         pairs.cpp
         position_restraints.cpp
         )

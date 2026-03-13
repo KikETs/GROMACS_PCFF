@@ -212,7 +212,7 @@ const char* enumValueToString(VanDerWaalsPotential enumValue)
 const char* enumValueToString(CombinationRule enumValue)
 {
     static constexpr gmx::EnumerationArray<CombinationRule, const char*> combinationRuleNames = {
-        "None", "Geometric", "Arithmetic", "GeomSigEps"
+        "None", "Geometric", "Arithmetic", "GeomSigEps", "SixthPower"
     };
     return combinationRuleNames[enumValue];
 }

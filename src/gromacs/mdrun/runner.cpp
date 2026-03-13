@@ -1887,6 +1887,22 @@ int Mdrunner::mdrunner()
             }
         }
 
+        if (inputrec->useMts && inputrec->mtsMode == gmx::MtsMode::LammpsRespa
+            && inputrec->lammpsRespa.hasPairSplitting())
+        {
+            const real requiredPlainPairlistRange = std::max(fr->ic->coulomb.cutoff, fr->ic->vdw.cutoff);
+            fr->plainPairlistRange = std::max(fr->plainPairlistRange.value_or(0.0_real), requiredPlainPairlistRange);
+            if (fr->plainPairlistRange.value() > inputrec->rlist)
+            {
+                const std::string mesg = gmx::formatString(
+                        "Exact LAMMPS-style r-RESPA requires a plain pairlist range of %f nm, which is larger "
+                        "than the normal pairlist range of %f nm",
+                        fr->plainPairlistRange.value(),
+                        inputrec->rlist);
+                GMX_THROW(gmx::APIError(mesg));
+            }
+        }
+
         deform = buildBoxDeformation(
                 globalState != nullptr ? createMatrix3x3FromLegacyMatrix(globalState->box)
                                        : diagonalMatrix<real>(0.0),

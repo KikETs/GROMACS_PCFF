@@ -274,12 +274,15 @@ void nbnxn_kernel_gpu_ref(const NbnxnPairlistGpu*    nbl,
                                     const int tj = nti + 2 * type[ja];
 
                                     /* Vanilla Lennard-Jones cutoff */
-                                    const real c6  = vdwparam[tj];
-                                    const real c12 = vdwparam[tj + 1];
+                                    const real c6            = vdwparam[tj];
+                                    const real cRepulsive    = vdwparam[tj + 1];
+                                    const real repulsionPower = iconst.vdw.repulsionPower;
 
                                     const real rinvsix   = int_bit * rinvsq * rinvsq * rinvsq;
                                     const real Vvdw_disp = c6 * rinvsix;
-                                    const real Vvdw_rep  = c12 * rinvsix * rinvsix;
+                                    const real Vvdw_rep  = cRepulsive
+                                                          * (repulsionPower == 12 ? rinvsix * rinvsix
+                                                                                  : int_bit * std::pow(rinv, repulsionPower));
                                     fscal += (Vvdw_rep - Vvdw_disp) * rinvsq;
 
                                     if (stepWork.computeEnergy)
@@ -287,8 +290,8 @@ void nbnxn_kernel_gpu_ref(const NbnxnPairlistGpu*    nbl,
                                         vctot += vcoul;
 
                                         Vvdwtot += (Vvdw_rep
-                                                    + int_bit * c12 * iconst.vdw.repulsionShift.cpot)
-                                                           / 12
+                                                    + int_bit * cRepulsive * iconst.vdw.repulsionShift.cpot)
+                                                           / repulsionPower
                                                    - (Vvdw_disp
                                                       + int_bit * c6 * iconst.vdw.dispersionShift.cpot)
                                                              / 6;

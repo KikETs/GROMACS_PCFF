@@ -200,6 +200,7 @@ enum tpxv
     tpxv_InputHistogramCounts, /**< Provide input histogram counts for current expanded ensemble state */
     tpxv_NNPotIFuncType,       /**< Add interaction function type for neural network potential */
     tpxv_AwhHistogramTolerance, /**< Add AWH histogram tolerance */
+    tpxv_LammpsRespaExactMts,   /**< Add exact LAMMPS-style r-RESPA metadata */
     tpxv_Count                  /**< the total number of tpxv versions */
 };
 
@@ -1177,6 +1178,31 @@ static void do_inputrec(gmx::ISerializer* serializer, t_inputrec* ir, int file_v
         ir->mtsLevels.clear();
     }
 
+    if (file_version >= tpxv_LammpsRespaExactMts)
+    {
+        serializer->doEnumAsInt(&ir->mtsMode);
+        serializer->doBool(&ir->lammpsRespa.enabled);
+        serializer->doInt(&ir->lammpsRespa.bondLevel);
+        serializer->doInt(&ir->lammpsRespa.angleLevel);
+        serializer->doInt(&ir->lammpsRespa.dihedralLevel);
+        serializer->doInt(&ir->lammpsRespa.improperLevel);
+        serializer->doInt(&ir->lammpsRespa.pair14Level);
+        serializer->doInt(&ir->lammpsRespa.pairLevel);
+        serializer->doInt(&ir->lammpsRespa.kspaceLevel);
+        serializer->doInt(&ir->lammpsRespa.innerLevel);
+        serializer->doInt(&ir->lammpsRespa.middleLevel);
+        serializer->doInt(&ir->lammpsRespa.outerLevel);
+        serializer->doReal(&ir->lammpsRespa.innerOff);
+        serializer->doReal(&ir->lammpsRespa.innerOn);
+        serializer->doReal(&ir->lammpsRespa.outerOn);
+        serializer->doReal(&ir->lammpsRespa.outerOff);
+    }
+    else
+    {
+        ir->mtsMode     = gmx::MtsMode::Legacy;
+        ir->lammpsRespa = {};
+    }
+
     if (file_version >= tpxv_MassRepartitioning)
     {
         serializer->doReal(&ir->massRepartitionFactor);
@@ -2001,6 +2027,19 @@ static void do_iparams(gmx::ISerializer* serializer, InteractionFunction ftype, 
             serializer->doReal(&iparams->cross_ba.r3e);
             serializer->doReal(&iparams->cross_ba.krt);
             break;
+        case InteractionFunction::AngleClass2:
+            serializer->doReal(&iparams->angle_class2.theta0);
+            serializer->doReal(&iparams->angle_class2.k2);
+            serializer->doReal(&iparams->angle_class2.k3);
+            serializer->doReal(&iparams->angle_class2.k4);
+            serializer->doReal(&iparams->angle_class2.bb_k);
+            serializer->doReal(&iparams->angle_class2.bb_r1);
+            serializer->doReal(&iparams->angle_class2.bb_r2);
+            serializer->doReal(&iparams->angle_class2.ba_k1);
+            serializer->doReal(&iparams->angle_class2.ba_k2);
+            serializer->doReal(&iparams->angle_class2.ba_r1);
+            serializer->doReal(&iparams->angle_class2.ba_r2);
+            break;
         case InteractionFunction::UreyBradleyPotential:
             serializer->doReal(&iparams->u_b.thetaA);
             serializer->doReal(&iparams->u_b.kthetaA);
@@ -2051,6 +2090,12 @@ static void do_iparams(gmx::ISerializer* serializer, InteractionFunction ftype, 
             serializer->doReal(&iparams->cubic.b0);
             serializer->doReal(&iparams->cubic.kb);
             serializer->doReal(&iparams->cubic.kcub);
+            break;
+        case InteractionFunction::BondClass2:
+            serializer->doReal(&iparams->bond_class2.r0);
+            serializer->doReal(&iparams->bond_class2.k2);
+            serializer->doReal(&iparams->bond_class2.k3);
+            serializer->doReal(&iparams->bond_class2.k4);
             break;
         case InteractionFunction::ConnectBonds: break;
         case InteractionFunction::Polarization: serializer->doReal(&iparams->polarize.alpha); break;
@@ -2110,6 +2155,50 @@ static void do_iparams(gmx::ISerializer* serializer, InteractionFunction ftype, 
             serializer->doReal(&iparams->pdihs.phiB);
             serializer->doReal(&iparams->pdihs.cpB);
             serializer->doInt(&iparams->pdihs.mult);
+            break;
+        case InteractionFunction::DihedralClass2:
+            serializer->doReal(&iparams->dihedral_class2.k1);
+            serializer->doReal(&iparams->dihedral_class2.phi1);
+            serializer->doReal(&iparams->dihedral_class2.k2);
+            serializer->doReal(&iparams->dihedral_class2.phi2);
+            serializer->doReal(&iparams->dihedral_class2.k3);
+            serializer->doReal(&iparams->dihedral_class2.phi3);
+            serializer->doReal(&iparams->dihedral_class2.mbt_f1);
+            serializer->doReal(&iparams->dihedral_class2.mbt_f2);
+            serializer->doReal(&iparams->dihedral_class2.mbt_f3);
+            serializer->doReal(&iparams->dihedral_class2.mbt_r0);
+            serializer->doReal(&iparams->dihedral_class2.ebt_f1_1);
+            serializer->doReal(&iparams->dihedral_class2.ebt_f2_1);
+            serializer->doReal(&iparams->dihedral_class2.ebt_f3_1);
+            serializer->doReal(&iparams->dihedral_class2.ebt_f1_2);
+            serializer->doReal(&iparams->dihedral_class2.ebt_f2_2);
+            serializer->doReal(&iparams->dihedral_class2.ebt_f3_2);
+            serializer->doReal(&iparams->dihedral_class2.ebt_r0_1);
+            serializer->doReal(&iparams->dihedral_class2.ebt_r0_2);
+            serializer->doReal(&iparams->dihedral_class2.at_f1_1);
+            serializer->doReal(&iparams->dihedral_class2.at_f2_1);
+            serializer->doReal(&iparams->dihedral_class2.at_f3_1);
+            serializer->doReal(&iparams->dihedral_class2.at_f1_2);
+            serializer->doReal(&iparams->dihedral_class2.at_f2_2);
+            serializer->doReal(&iparams->dihedral_class2.at_f3_2);
+            serializer->doReal(&iparams->dihedral_class2.at_theta0_1);
+            serializer->doReal(&iparams->dihedral_class2.at_theta0_2);
+            serializer->doReal(&iparams->dihedral_class2.aat_k);
+            serializer->doReal(&iparams->dihedral_class2.aat_theta0_1);
+            serializer->doReal(&iparams->dihedral_class2.aat_theta0_2);
+            serializer->doReal(&iparams->dihedral_class2.bb13t_k);
+            serializer->doReal(&iparams->dihedral_class2.bb13t_r10);
+            serializer->doReal(&iparams->dihedral_class2.bb13t_r30);
+            break;
+        case InteractionFunction::ImproperClass2:
+            serializer->doReal(&iparams->improper_class2.k0);
+            serializer->doReal(&iparams->improper_class2.chi0);
+            serializer->doReal(&iparams->improper_class2.aa_k1);
+            serializer->doReal(&iparams->improper_class2.aa_k2);
+            serializer->doReal(&iparams->improper_class2.aa_k3);
+            serializer->doReal(&iparams->improper_class2.aa_theta0_1);
+            serializer->doReal(&iparams->improper_class2.aa_theta0_2);
+            serializer->doReal(&iparams->improper_class2.aa_theta0_3);
             break;
         case InteractionFunction::RestrictedTorsionPotential:
             serializer->doReal(&iparams->pdihs.phiA);

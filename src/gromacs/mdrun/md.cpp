@@ -48,6 +48,8 @@
 #include <algorithm>
 #include <array>
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <memory>
 #include <numeric>
 #include <optional>
@@ -183,6 +185,314 @@ struct gmx_shellfc_t;
 struct pme_load_balancing_t;
 
 using gmx::SimulationSignaller;
+
+namespace
+{
+
+bool useNestedExactLammpsRespa(const t_inputrec& inputRecord)
+{
+    return inputRecord.useMts && inputRecord.mtsMode == gmx::MtsMode::LammpsRespa;
+}
+
+bool useExactVelocityVerletLammpsRespa(const t_inputrec& inputRecord)
+{
+    return useNestedExactLammpsRespa(inputRecord) && inputRecord.eI == IntegrationAlgorithm::VV;
+}
+
+bool nestedExactLammpsRespaPrototypeEnabled()
+{
+    const char* value = std::getenv("GMX_EXACT_RESPA_NESTED_PROTOTYPE");
+    return value != nullptr && std::strcmp(value, "0") != 0;
+}
+
+const char* totalForceDumpFilePath()
+{
+    if (const char* value = std::getenv("GMX_TOTAL_FORCE_DUMP_FILE"))
+    {
+        return value;
+    }
+    return std::getenv("GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE");
+}
+
+enum class RespaKickPhase : int
+{
+    Initial,
+    Final
+};
+
+gmx::ArrayRef<const gmx::RVec> forceForExactRespaKickLevel(const t_inputrec&               inputRecord,
+                                                           const int64_t                   baseStep,
+                                                           const RespaKickPhase            phase,
+                                                           gmx::ForceBuffersView*         forceView,
+                                                           const int                       mtsLevel,
+                                                           std::vector<gmx::RVec>*         reconstructedLevel0Force)
+{
+    GMX_RELEASE_ASSERT(forceView != nullptr, "Need valid force buffers for exact r-RESPA");
+
+    if (mtsLevel != 0)
+    {
+        return gmx::makeConstArrayRef(forceView->forceForMtsLevel(mtsLevel));
+    }
+
+    const int forceEvaluationStep = baseStep + ((phase == RespaKickPhase::Final) ? 1 : 0);
+    const int highestActiveLevel  = gmx::highestActiveMtsLevel(inputRecord.mtsLevels, forceEvaluationStep);
+    if (highestActiveLevel <= 0)
+    {
+        return gmx::makeConstArrayRef(forceView->force());
+    }
+
+    GMX_RELEASE_ASSERT(reconstructedLevel0Force != nullptr, "Need scratch storage for exact level-0 forces");
+    GMX_RELEASE_ASSERT(highestActiveLevel <= forceView->numMtsLevelForceBuffers(),
+                       "Exact r-RESPA needs explicit per-level slow-force buffers");
+
+    const auto physicalForce = gmx::makeConstArrayRef(forceView->force());
+    reconstructedLevel0Force->assign(physicalForce.begin(), physicalForce.end());
+    for (int slowLevel = 1; slowLevel <= highestActiveLevel; slowLevel++)
+    {
+        const auto slowForce = gmx::makeConstArrayRef(forceView->forceForMtsLevel(slowLevel));
+        for (gmx::Index atom = 0; atom < gmx::ssize(*reconstructedLevel0Force); ++atom)
+        {
+            (*reconstructedLevel0Force)[atom] -= slowForce[atom];
+        }
+    }
+
+    return gmx::makeConstArrayRef(*reconstructedLevel0Force);
+}
+
+void appendExactRespaTotalForceRecord(const char*                        outputPath,
+                                      const int64_t                      step,
+                                      const real                         time,
+                                      const int                          highestActiveMtsLevel,
+                                      const gmx::ArrayRef<const gmx::RVec> totalForce)
+{
+    GMX_RELEASE_ASSERT(outputPath != nullptr && *outputPath != '\0', "Need a valid force dump path");
+    std::filesystem::path path(outputPath);
+    std::filesystem::create_directories(path.parent_path());
+
+    std::ofstream output(path, std::ios::app);
+    output << std::setprecision(17);
+    for (gmx::Index atom = 0; atom < gmx::ssize(totalForce); ++atom)
+    {
+        output << step << '\t' << time << '\t' << highestActiveMtsLevel << '\t' << atom;
+        for (int d = 0; d < DIM; ++d)
+        {
+            output << '\t' << totalForce[atom][d];
+        }
+        output << '\n';
+    }
+}
+
+void maybeDumpTotalForceForDiagnostics(const t_inputrec&                 inputRecord,
+                                       const int64_t                     step,
+                                       const real                        time,
+                                       gmx::ForceBuffersView*            forceView,
+                                       const gmx::MdrunScheduleWorkload& runScheduleWork)
+{
+    const char* outputPath = totalForceDumpFilePath();
+    if (outputPath == nullptr || *outputPath == '\0' || !do_per_step(step, inputRecord.nstenergy))
+    {
+        return;
+    }
+
+    if (inputRecord.useMts && inputRecord.mtsMode != gmx::MtsMode::LammpsRespa)
+    {
+        return;
+    }
+
+    if (inputRecord.useMts)
+    {
+        const int highestActiveLevel = runScheduleWork.stepWork.highestActiveMtsLevel;
+        if (highestActiveLevel <= 0)
+        {
+            return;
+        }
+        appendExactRespaTotalForceRecord(
+                outputPath, step, time, highestActiveLevel, gmx::makeConstArrayRef(forceView->force()));
+        return;
+    }
+
+    appendExactRespaTotalForceRecord(outputPath,
+                                     step,
+                                     time,
+                                     0,
+                                     gmx::makeConstArrayRef(forceView->force()));
+}
+
+void applyRespaVelocityHalfKick(const int                               homenr,
+                                gmx::ArrayRef<const ParticleType>       ptype,
+                                gmx::ArrayRef<const gmx::RVec>          invMassPerDim,
+                                const gmx::ArrayRef<const gmx::RVec>&   force,
+                                const real                              dt,
+                                gmx::ArrayRef<gmx::RVec>                velocity)
+{
+    const real halfDt = 0.5 * dt;
+    for (int atom = 0; atom < homenr; atom++)
+    {
+        if (ptype[atom] == ParticleType::Shell)
+        {
+            continue;
+        }
+        for (int d = 0; d < DIM; d++)
+        {
+            const real inverseMass = invMassPerDim[atom][d];
+            if (inverseMass != 0)
+            {
+                velocity[atom][d] += halfDt * inverseMass * force[atom][d];
+            }
+        }
+    }
+}
+
+void driftRespaPositions(const int                         homenr,
+                         gmx::ArrayRef<const ParticleType> ptype,
+                         gmx::ArrayRef<const gmx::RVec>    invMassPerDim,
+                         const real                        dt,
+                         gmx::ArrayRef<gmx::RVec>          position,
+                         gmx::ArrayRef<const gmx::RVec>    velocity)
+{
+    for (int atom = 0; atom < homenr; atom++)
+    {
+        if (ptype[atom] == ParticleType::Shell)
+        {
+            continue;
+        }
+        for (int d = 0; d < DIM; d++)
+        {
+            if (invMassPerDim[atom][d] != 0)
+            {
+                position[atom][d] += dt * velocity[atom][d];
+            }
+        }
+    }
+}
+
+void applyRespaHalfKicks(const t_inputrec&                 inputRecord,
+                         const int64_t                     baseStep,
+                         const RespaKickPhase             phase,
+                         const int                        homenr,
+                         gmx::ArrayRef<const ParticleType> ptype,
+                         gmx::ArrayRef<const gmx::RVec>   invMassPerDim,
+                         gmx::ForceBuffersView*           forceView,
+                         gmx::ArrayRef<gmx::RVec>         velocity)
+{
+    const gmx::LammpsRespaBaseStepTrace trace =
+            gmx::lammpsRespaBaseStepTrace(inputRecord.mtsLevels, baseStep);
+    const std::vector<int>& kickLevels =
+            (phase == RespaKickPhase::Initial) ? trace.initialKickLevels : trace.finalKickLevels;
+    std::vector<gmx::RVec> reconstructedLevel0Force;
+
+    for (const int mtsLevel : kickLevels)
+    {
+        applyRespaVelocityHalfKick(homenr,
+                                   ptype,
+                                   invMassPerDim,
+                                   forceForExactRespaKickLevel(
+                                           inputRecord, baseStep, phase, forceView, mtsLevel, &reconstructedLevel0Force),
+                                   inputRecord.delta_t * inputRecord.mtsLevels[mtsLevel].stepFactor,
+                                   velocity);
+    }
+}
+
+bool canUseNestedExactLammpsRespa(const t_inputrec&                  inputRecord,
+                                  const gmx::SimulationWorkload&     simulationWork,
+                                  const gmx::DomainLifetimeWorkload& domainWork,
+                                  const gmx_shellfc_t*               shellfc,
+                                  gmx::Constraints*                  constr,
+                                  const gmx::VirtualSitesHandler*    virtualSites,
+                                  const bool                         useReplicaExchange)
+{
+    return inputRecord.eI == IntegrationAlgorithm::MD && inputRecord.etc == TemperatureCoupling::No
+           && inputRecord.pressureCouplingOptions.epc == PressureCoupling::No
+           && inputRecord.comm_mode == ComRemovalAlgorithm::No
+           && (constr == nullptr || constr->numConstraintsTotal() == 0)
+           && !simulationWork.havePpDomainDecomposition && !simulationWork.useGpuUpdate
+           && !simulationWork.useGpuNonbonded && !simulationWork.useGpuPme && shellfc == nullptr
+           && virtualSites == nullptr && !domainWork.haveSpecialForces && !useReplicaExchange
+           && inputRecord.cos_accel == 0.0 && !inputRecord.useConstantAcceleration;
+}
+
+bool canUseExactLammpsRespaVelocityVerlet(const t_inputrec&                  inputRecord,
+                                          const gmx::SimulationWorkload&     simulationWork,
+                                          const gmx::DomainLifetimeWorkload& domainWork,
+                                          const gmx_shellfc_t*               shellfc,
+                                          gmx::Constraints*                  constr,
+                                          const gmx::VirtualSitesHandler*    virtualSites,
+                                          const bool                         useReplicaExchange)
+{
+    return inputRecord.eI == IntegrationAlgorithm::VV && inputRecord.etc == TemperatureCoupling::No
+           && inputRecord.pressureCouplingOptions.epc == PressureCoupling::No
+           && inputRecord.comm_mode == ComRemovalAlgorithm::No
+           && (constr == nullptr || constr->numConstraintsTotal() == 0)
+           && !simulationWork.havePpDomainDecomposition && !simulationWork.useGpuUpdate
+           && !simulationWork.useGpuNonbonded && !simulationWork.useGpuPme && shellfc == nullptr
+           && virtualSites == nullptr && !domainWork.haveSpecialForces && !useReplicaExchange
+           && inputRecord.cos_accel == 0.0 && !inputRecord.useConstantAcceleration;
+}
+
+void prepareExactLammpsRespaVelocityVerletObservables(const t_inputrec&          inputRecord,
+                                                      const int64_t              step,
+                                                      const gmx::MpiComm&        mpiComm,
+                                                      t_forcerec*                fr,
+                                                      t_state*                   state,
+                                                      const t_mdatoms*           mdatoms,
+                                                      t_nrnb*                    nrnb,
+                                                      t_vcm*                     vcm,
+                                                      gmx_wallcycle*             wcycle,
+                                                      gmx_enerdata_t*            enerd,
+                                                      gmx_ekindata_t*            ekind,
+                                                      gmx_global_stat*           gstat,
+                                                      tensor                     force_vir,
+                                                      tensor                     shake_vir,
+                                                      tensor                     total_vir,
+                                                      tensor                     pres,
+                                                      gmx::SimulationSignaller*  nullSignaller,
+                                                      gmx::ObservablesReducer*   observablesReducer,
+                                                      const bool                 bCalcEner,
+                                                      const bool                 bCalcVir,
+                                                      const bool                 bGStat,
+                                                      gmx_bool*                  bSumEkinhOld,
+                                                      real*                      savedConservedQuantity,
+                                                      real*                      lastEkin)
+{
+    int cgloFlags = (bGStat ? CGLO_GSTAT : 0) | CGLO_TEMPERATURE | CGLO_SCALEEKIN;
+    if (bCalcEner)
+    {
+        cgloFlags |= CGLO_ENERGY;
+    }
+    if (bCalcVir)
+    {
+        cgloFlags |= CGLO_PRESSURE;
+    }
+
+    compute_globals(gstat,
+                    mpiComm,
+                    &inputRecord,
+                    fr,
+                    ekind,
+                    makeConstArrayRef(state->x),
+                    makeConstArrayRef(state->v),
+                    state->box,
+                    mdatoms,
+                    nrnb,
+                    vcm,
+                    wcycle,
+                    enerd,
+                    force_vir,
+                    shake_vir,
+                    total_vir,
+                    pres,
+                    nullSignaller,
+                    state->box,
+                    bSumEkinhOld,
+                    cgloFlags,
+                    step,
+                    observablesReducer);
+
+    *savedConservedQuantity = 0;
+    *lastEkin               = enerd->term[InteractionFunction::KineticEnergy];
+}
+
+} // namespace
 
 void gmx::LegacySimulator::do_md()
 {
@@ -366,7 +676,7 @@ void gmx::LegacySimulator::do_md()
 
     ObservablesReducer observablesReducer = observablesReducerBuilder_->build();
 
-    ForceBuffers     f(simulationWork.useMts,
+    ForceBuffers     f(simulationWork.useMts ? static_cast<int>(ir->mtsLevels.size()) : 0,
                    (simulationWork.useGpuFBufferOpsWhenAllowed || useGpuForUpdate)
                                ? PinningPolicy::PinnedIfSupported
                                : PinningPolicy::CannotBePinned);
@@ -1143,6 +1453,41 @@ void gmx::LegacySimulator::do_md()
         runScheduleWork_->stepWork = setupStepWorkload(
                 legacyForceFlags, ir->mtsLevels, step, runScheduleWork_->domainWork, simulationWork);
 
+        const bool useExactVelocityVerletRespa =
+                useExactVelocityVerletLammpsRespa(*ir);
+        const bool useSupportedExactVelocityVerletRespa =
+                useExactVelocityVerletRespa
+                && canUseExactLammpsRespaVelocityVerlet(*ir,
+                                                        simulationWork,
+                                                        runScheduleWork_->domainWork,
+                                                        shellfc,
+                                                        constr_,
+                                                        virtualSites_,
+                                                        useReplicaExchange);
+        if (useExactVelocityVerletRespa && !useSupportedExactVelocityVerletRespa)
+        {
+            gmx_fatal(FARGS,
+                      "Exact LAMMPS-style r-RESPA with integrator = %s currently only supports "
+                      "CPU-only NVE runs without constraints, COM removal, domain decomposition, "
+                      "GPU offload, virtual sites, replica exchange, or other special-force modules.",
+                      enumValueToString(IntegrationAlgorithm::VV));
+        }
+        if (ir->mtsMode == MtsMode::LammpsRespa && bCalcVir)
+        {
+            const int outerLevel = forceGroupMtsLevel(ir->mtsLevels, MtsForceGroups::NonbondedOuter);
+            if (outerLevel > runScheduleWork_->stepWork.highestActiveMtsLevel)
+            {
+                const std::string message = formatString(
+                        "Exact LAMMPS-style r-RESPA currently requires virial-carrying steps "
+                        "(energy output, final step, or pressure-coupling steps) to land on "
+                        "an outer-force boundary. Step %lld activates only up to MTS level %d, "
+                        "but the outer nonbonded level is %d.",
+                        static_cast<long long>(step),
+                        runScheduleWork_->stepWork.highestActiveMtsLevel + 1,
+                        outerLevel + 1);
+                gmx_fatal(FARGS, "%s", message.c_str());
+            }
+        }
         const bool doTemperatureScaling = (ir->etc != TemperatureCoupling::No
                                            && do_per_step(step + ir->nsttcouple - 1, ir->nsttcouple));
 
@@ -1279,59 +1624,91 @@ void gmx::LegacySimulator::do_md()
                          ddBalanceRegionHandler);
             }
 
+            maybeDumpTotalForceForDiagnostics(*ir, step, t, &f.view(), *runScheduleWork_);
+
             // VV integrators do not need the following velocity half step
             // if it is the first step after starting from a checkpoint.
             // That is, the half step is needed on all other steps, and
             // also the first step when starting from a .tpr file.
             if (EI_VV(ir->eI))
             {
-                integrateVVFirstStep(step,
-                                     bFirstStep,
-                                     bInitStep,
-                                     startingBehavior_,
-                                     nstglobalcomm,
-                                     ir,
-                                     fr_,
-                                     cr_->commMyGroup,
-                                     cr_->dd,
-                                     state_,
-                                     mdAtoms_->mdatoms(),
-                                     &fcdata,
-                                     &MassQ,
-                                     &vcm,
-                                     enerd_,
-                                     &observablesReducer,
-                                     ekind_,
-                                     gstat,
-                                     &last_ekin,
-                                     bCalcVir,
-                                     total_vir,
-                                     shake_vir,
-                                     force_vir,
-                                     pres,
-                                     do_log,
-                                     do_ene,
-                                     bCalcEner,
-                                     bGStat,
-                                     bStopCM,
-                                     bTrotter,
-                                     bExchanged,
-                                     &bSumEkinhOld,
-                                     &saved_conserved_quantity,
-                                     &f,
-                                     &upd,
-                                     constr_,
-                                     &nullSignaller,
-                                     trotter_seq,
-                                     nrnb_,
-                                     fpLog_,
-                                     wallCycleCounters_);
-                if (virtualSites_ != nullptr && needVirtualVelocitiesThisStep)
+                if (useSupportedExactVelocityVerletRespa)
                 {
-                    // Positions were calculated earlier
-                    wallcycle_start(wallCycleCounters_, WallCycleCounter::VsiteConstr);
-                    virtualSites_->construct(state_->x, state_->v, state_->box, VSiteOperation::Velocities);
-                    wallcycle_stop(wallCycleCounters_, WallCycleCounter::VsiteConstr);
+                    prepareExactLammpsRespaVelocityVerletObservables(*ir,
+                                                                     step,
+                                                                     cr_->commMyGroup,
+                                                                     fr_,
+                                                                     state_,
+                                                                     mdAtoms_->mdatoms(),
+                                                                     nrnb_,
+                                                                     &vcm,
+                                                                     wallCycleCounters_,
+                                                                     enerd_,
+                                                                     ekind_,
+                                                                     gstat,
+                                                                     force_vir,
+                                                                     shake_vir,
+                                                                     total_vir,
+                                                                     pres,
+                                                                     &nullSignaller,
+                                                                     &observablesReducer,
+                                                                     bCalcEner,
+                                                                     bCalcVir,
+                                                                     bGStat,
+                                                                     &bSumEkinhOld,
+                                                                     &saved_conserved_quantity,
+                                                                     &last_ekin);
+                }
+                else
+                {
+                    integrateVVFirstStep(step,
+                                         bFirstStep,
+                                         bInitStep,
+                                         startingBehavior_,
+                                         nstglobalcomm,
+                                         ir,
+                                         fr_,
+                                         cr_->commMyGroup,
+                                         cr_->dd,
+                                         state_,
+                                         mdAtoms_->mdatoms(),
+                                         &fcdata,
+                                         &MassQ,
+                                         &vcm,
+                                         enerd_,
+                                         &observablesReducer,
+                                         ekind_,
+                                         gstat,
+                                         &last_ekin,
+                                         bCalcVir,
+                                         total_vir,
+                                         shake_vir,
+                                         force_vir,
+                                         pres,
+                                         do_log,
+                                         do_ene,
+                                         bCalcEner,
+                                         bGStat,
+                                         bStopCM,
+                                         bTrotter,
+                                         bExchanged,
+                                         &bSumEkinhOld,
+                                         &saved_conserved_quantity,
+                                         &f,
+                                         &upd,
+                                         constr_,
+                                         &nullSignaller,
+                                         trotter_seq,
+                                         nrnb_,
+                                         fpLog_,
+                                         wallCycleCounters_);
+                    if (virtualSites_ != nullptr && needVirtualVelocitiesThisStep)
+                    {
+                        // Positions were calculated earlier
+                        wallcycle_start(wallCycleCounters_, WallCycleCounter::VsiteConstr);
+                        virtualSites_->construct(state_->x, state_->v, state_->box, VSiteOperation::Velocities);
+                        wallcycle_stop(wallCycleCounters_, WallCycleCounter::VsiteConstr);
+                    }
                 }
             }
 
@@ -1513,41 +1890,131 @@ void gmx::LegacySimulator::do_md()
             if (EI_VV(ir->eI))
             {
                 GMX_ASSERT(!useGpuForUpdate, "GPU update is not supported with VVAK integrator.");
+                if (useSupportedExactVelocityVerletRespa)
+                {
+                    applyRespaHalfKicks(*ir,
+                                        step,
+                                        RespaKickPhase::Initial,
+                                        md->homenr,
+                                        md->ptype,
+                                        md->invMassPerDim,
+                                        &f.view(),
+                                        state_->v.arrayRefWithPadding().unpaddedArrayRef());
+                    driftRespaPositions(md->homenr,
+                                        md->ptype,
+                                        md->invMassPerDim,
+                                        ir->delta_t,
+                                        state_->x.arrayRefWithPadding().unpaddedArrayRef(),
+                                        state_->v.arrayRefWithPadding().unpaddedArrayRef());
 
-                integrateVVSecondStep(step,
-                                      ir,
-                                      fr_,
-                                      cr_->commMyGroup,
-                                      cr_->dd,
-                                      state_,
-                                      mdAtoms_->mdatoms(),
-                                      &fcdata,
-                                      &MassQ,
-                                      &vcm,
-                                      pullWork_,
-                                      enerd_,
-                                      &observablesReducer,
-                                      ekind_,
-                                      gstat,
-                                      &dvdl_constr,
-                                      bCalcVir,
-                                      total_vir,
-                                      shake_vir,
-                                      force_vir,
-                                      pres,
-                                      lastbox,
-                                      do_log,
-                                      do_ene,
-                                      bGStat,
-                                      &bSumEkinhOld,
-                                      &f,
-                                      &cbuf,
-                                      &upd,
-                                      constr_,
-                                      &nullSignaller,
-                                      trotter_seq,
-                                      nrnb_,
-                                      wallCycleCounters_);
+                    gmx_enerdata_t savedEnerd = *enerd_;
+                    tensor         savedForceVir;
+                    rvec           savedMuTot;
+                    copy_mat(force_vir, savedForceVir);
+                    copy_rvec(mu_tot, savedMuTot);
+
+                    const int64_t nextStep         = step + 1;
+                    const bool    nextStepIsNsStep = (ir->nstlist > 0 && nextStep % ir->nstlist == 0);
+                    const int nextLegacyForceFlags =
+                            GMX_FORCE_STATECHANGED | GMX_FORCE_ALLFORCES
+                            | (nextStepIsNsStep ? GMX_FORCE_NS : 0);
+
+                    gmx::MdrunScheduleWorkload nextRunSchedule = *runScheduleWork_;
+                    nextRunSchedule.stepWork = setupStepWorkload(
+                            nextLegacyForceFlags, ir->mtsLevels, nextStep, nextRunSchedule.domainWork, nextRunSchedule.simulationWork);
+
+                    tensor         nextForceVir = { { 0 } };
+                    gmx_enerdata_t nextEnerd    = *enerd_;
+                    clear_rvec(mu_tot);
+                    do_force(fpLog_,
+                             cr_,
+                             *ir,
+                             mdModulesNotifiers_,
+                             awh.get(),
+                             enforcedRotation_,
+                             imdSession_,
+                             pullWork_,
+                             nextStep,
+                             nrnb_,
+                             wallCycleCounters_,
+                             top_,
+                             state_->box,
+                             state_->x.arrayRefWithPadding(),
+                             state_->v.arrayRefWithPadding().unpaddedArrayRef(),
+                             &state_->hist,
+                             &f.view(),
+                             nextForceVir,
+                             md,
+                             &nextEnerd,
+                             state_->lambda,
+                             fr_,
+                             nextRunSchedule,
+                             virtualSites_,
+                             mu_tot,
+                             t + ir->delta_t,
+                             ed ? ed->getLegacyED() : nullptr,
+                             fr_->longRangeNonbondeds.get(),
+                             ddBalanceRegionHandler);
+
+                    *enerd_ = std::move(savedEnerd);
+                    copy_mat(savedForceVir, force_vir);
+                    copy_rvec(savedMuTot, mu_tot);
+
+                    const gmx::LammpsRespaBaseStepTrace trace =
+                            gmx::lammpsRespaBaseStepTrace(ir->mtsLevels, step);
+                    GMX_RELEASE_ASSERT(
+                            static_cast<int>(trace.refreshedForceLevels.size())
+                                            == nextRunSchedule.stepWork.highestActiveMtsLevel + 1,
+                            "Exact r-RESPA VV step workload should refresh the same levels as the LAMMPS base-step trace");
+
+                    applyRespaHalfKicks(*ir,
+                                        step,
+                                        RespaKickPhase::Final,
+                                        md->homenr,
+                                        md->ptype,
+                                        md->invMassPerDim,
+                                        &f.view(),
+                                        state_->v.arrayRefWithPadding().unpaddedArrayRef());
+
+                    wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
+                }
+                else
+                {
+                    integrateVVSecondStep(step,
+                                          ir,
+                                          fr_,
+                                          cr_->commMyGroup,
+                                          cr_->dd,
+                                          state_,
+                                          mdAtoms_->mdatoms(),
+                                          &fcdata,
+                                          &MassQ,
+                                          &vcm,
+                                          pullWork_,
+                                          enerd_,
+                                          &observablesReducer,
+                                          ekind_,
+                                          gstat,
+                                          &dvdl_constr,
+                                          bCalcVir,
+                                          total_vir,
+                                          shake_vir,
+                                          force_vir,
+                                          pres,
+                                          lastbox,
+                                          do_log,
+                                          do_ene,
+                                          bGStat,
+                                          &bSumEkinhOld,
+                                          &f,
+                                          &cbuf,
+                                          &upd,
+                                          constr_,
+                                          &nullSignaller,
+                                          trotter_seq,
+                                          nrnb_,
+                                          wallCycleCounters_);
+                }
             }
             else
             {
@@ -1608,92 +2075,193 @@ void gmx::LegacySimulator::do_md()
                 }
                 else
                 {
-                    /* With multiple time stepping we need to do an additional normal
-                     * update step to obtain the virial and dH/dl, as the actual MTS integration
-                     * using an acceleration where the slow forces are multiplied by mtsFactor.
-                     * Using that acceleration would result in a virial with the slow
-                     * force contribution would be a factor mtsFactor too large.
-                     */
-                    const bool separateVirialConstraining =
-                            (simulationWork.useMts && (bCalcVir || computeDHDL) && constr_ != nullptr);
-                    if (separateVirialConstraining)
+                    const bool useExactNestedRespa =
+                            useNestedExactLammpsRespa(*ir) && nestedExactLammpsRespaPrototypeEnabled();
+                    const bool useSupportedExactNestedRespa =
+                            useExactNestedRespa
+                            && canUseNestedExactLammpsRespa(*ir,
+                                                            simulationWork,
+                                                            runScheduleWork_->domainWork,
+                                                            shellfc,
+                                                            constr_,
+                                                            virtualSites_,
+                                                            useReplicaExchange);
+                    if (useSupportedExactNestedRespa)
                     {
-                        upd.update_for_constraint_virial(*ir,
-                                                         md->homenr,
-                                                         md->havePartiallyFrozenAtoms,
-                                                         md->invmass,
-                                                         md->invMassPerDim,
-                                                         *state_,
-                                                         f.view().forceWithPadding(),
-                                                         *ekind_);
+                        applyRespaHalfKicks(*ir,
+                                            step,
+                                            RespaKickPhase::Initial,
+                                            md->homenr,
+                                            md->ptype,
+                                            md->invMassPerDim,
+                                            &f.view(),
+                                            state_->v.arrayRefWithPadding().unpaddedArrayRef());
+                        driftRespaPositions(md->homenr,
+                                            md->ptype,
+                                            md->invMassPerDim,
+                                            ir->delta_t,
+                                            state_->x.arrayRefWithPadding().unpaddedArrayRef(),
+                                            state_->v.arrayRefWithPadding().unpaddedArrayRef());
 
-                        // Call apply() directly so we can avoid constraining the velocities
-                        constr_->apply(false,
-                                       step,
-                                       1,
-                                       1.0,
-                                       state_->x.arrayRefWithPadding(),
-                                       upd.xp()->arrayRefWithPadding(),
-                                       {},
-                                       state_->box,
-                                       state_->lambda[FreeEnergyPerturbationCouplingType::Bonded],
-                                       &dvdl_constr,
-                                       {},
-                                       bCalcVir,
-                                       shake_vir,
-                                       ConstraintVariable::Positions);
+                        gmx_enerdata_t savedEnerd = *enerd_;
+                        tensor         savedForceVir;
+                        rvec           savedMuTot;
+                        copy_mat(force_vir, savedForceVir);
+                        copy_rvec(mu_tot, savedMuTot);
+
+                        const int64_t nextStep         = step + 1;
+                        const bool    nextStepIsNsStep = (ir->nstlist > 0 && nextStep % ir->nstlist == 0);
+                        const int nextLegacyForceFlags =
+                                GMX_FORCE_STATECHANGED | GMX_FORCE_ALLFORCES
+                                | (nextStepIsNsStep ? GMX_FORCE_NS : 0);
+
+                        gmx::MdrunScheduleWorkload nextRunSchedule = *runScheduleWork_;
+                        nextRunSchedule.stepWork = setupStepWorkload(
+                                nextLegacyForceFlags, ir->mtsLevels, nextStep, nextRunSchedule.domainWork, nextRunSchedule.simulationWork);
+
+                        tensor         nextForceVir = { { 0 } };
+                        gmx_enerdata_t nextEnerd    = *enerd_;
+                        clear_rvec(mu_tot);
+                        do_force(fpLog_,
+                                 cr_,
+                                 *ir,
+                                 mdModulesNotifiers_,
+                                 awh.get(),
+                                 enforcedRotation_,
+                                 imdSession_,
+                                 pullWork_,
+                                 nextStep,
+                                 nrnb_,
+                                 wallCycleCounters_,
+                                 top_,
+                                 state_->box,
+                                 state_->x.arrayRefWithPadding(),
+                                 state_->v.arrayRefWithPadding().unpaddedArrayRef(),
+                                 &state_->hist,
+                                 &f.view(),
+                                 nextForceVir,
+                                 md,
+                                 &nextEnerd,
+                                 state_->lambda,
+                                 fr_,
+                                 nextRunSchedule,
+                                 virtualSites_,
+                                 mu_tot,
+                                 t + ir->delta_t,
+                                 ed ? ed->getLegacyED() : nullptr,
+                                 fr_->longRangeNonbondeds.get(),
+                                 ddBalanceRegionHandler);
+                        *enerd_ = std::move(savedEnerd);
+                        copy_mat(savedForceVir, force_vir);
+                        copy_rvec(savedMuTot, mu_tot);
+
+                        const gmx::LammpsRespaBaseStepTrace trace =
+                                gmx::lammpsRespaBaseStepTrace(ir->mtsLevels, step);
+                        GMX_RELEASE_ASSERT(
+                                static_cast<int>(trace.refreshedForceLevels.size())
+                                                == nextRunSchedule.stepWork.highestActiveMtsLevel + 1,
+                                "Exact r-RESPA step workload should refresh the same levels as the LAMMPS base-step trace");
+
+                        applyRespaHalfKicks(*ir,
+                                            step,
+                                            RespaKickPhase::Final,
+                                            md->homenr,
+                                            md->ptype,
+                                            md->invMassPerDim,
+                                            &f.view(),
+                                            state_->v.arrayRefWithPadding().unpaddedArrayRef());
+
+                        wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
                     }
+                    else
+                    {
+                        /* With multiple time stepping we need to do an additional normal
+                         * update step to obtain the virial and dH/dl, as the actual MTS integration
+                         * using an acceleration where the slow forces are multiplied by mtsFactor.
+                         * Using that acceleration would result in a virial with the slow
+                         * force contribution would be a factor mtsFactor too large.
+                         */
+                        const bool separateVirialConstraining =
+                                (simulationWork.useMts && (bCalcVir || computeDHDL) && constr_ != nullptr);
+                        if (separateVirialConstraining)
+                        {
+                            upd.update_for_constraint_virial(*ir,
+                                                             md->homenr,
+                                                             md->havePartiallyFrozenAtoms,
+                                                             md->invmass,
+                                                             md->invMassPerDim,
+                                                             *state_,
+                                                             f.view().forceWithPadding(),
+                                                             *ekind_);
 
-                    ArrayRefWithPadding<const RVec> forceCombined =
-                            (simulationWork.useMts && step % ir->mtsLevels[1].stepFactor == 0)
-                                    ? f.view().forceMtsCombinedWithPadding()
-                                    : f.view().forceWithPadding();
-                    upd.update_coords(*ir,
-                                      step,
-                                      md->homenr,
-                                      md->havePartiallyFrozenAtoms,
-                                      md->ptype,
-                                      md->invmass,
-                                      md->invMassPerDim,
-                                      state_,
-                                      forceCombined,
-                                      &fcdata,
-                                      ekind_,
-                                      parrinelloRahmanM,
-                                      etrtPOSITION,
-                                      cr_->dd,
-                                      constr_ != nullptr);
+                            // Call apply() directly so we can avoid constraining the velocities
+                            constr_->apply(false,
+                                           step,
+                                           1,
+                                           1.0,
+                                           state_->x.arrayRefWithPadding(),
+                                           upd.xp()->arrayRefWithPadding(),
+                                           {},
+                                           state_->box,
+                                           state_->lambda[FreeEnergyPerturbationCouplingType::Bonded],
+                                           &dvdl_constr,
+                                           {},
+                                           bCalcVir,
+                                           shake_vir,
+                                           ConstraintVariable::Positions);
+                        }
 
-                    wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
-
-                    constrain_coordinates(constr_,
-                                          do_log || do_ene,
+                        ArrayRefWithPadding<const RVec> forceCombined =
+                                (simulationWork.useMts && runScheduleWork_->stepWork.computeSlowForces)
+                                        ? f.view().forceMtsCombinedWithPadding()
+                                        : f.view().forceWithPadding();
+                        upd.update_coords(*ir,
                                           step,
+                                          md->homenr,
+                                          md->havePartiallyFrozenAtoms,
+                                          md->ptype,
+                                          md->invmass,
+                                          md->invMassPerDim,
                                           state_,
-                                          upd.xp()->arrayRefWithPadding(),
-                                          separateVirialConstraining ? nullptr : &dvdl_constr,
-                                          bCalcVir && !separateVirialConstraining,
-                                          shake_vir);
+                                          forceCombined,
+                                          &fcdata,
+                                          ekind_,
+                                          parrinelloRahmanM,
+                                          etrtPOSITION,
+                                          cr_->dd,
+                                          constr_ != nullptr);
 
-                    upd.update_sd_second_half(*ir,
+                        wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
+
+                        constrain_coordinates(constr_,
+                                              do_log || do_ene,
                                               step,
-                                              &dvdl_constr,
-                                              md->homenr,
-                                              md->ptype,
-                                              md->invmass,
                                               state_,
-                                              cr_->dd,
-                                              nrnb_,
-                                              wallCycleCounters_,
-                                              constr_,
-                                              do_log,
-                                              do_ene);
-                    upd.finish_update(*ir,
-                                      md->havePartiallyFrozenAtoms,
-                                      md->homenr,
-                                      state_,
-                                      wallCycleCounters_,
-                                      constr_ != nullptr);
+                                              upd.xp()->arrayRefWithPadding(),
+                                              separateVirialConstraining ? nullptr : &dvdl_constr,
+                                              bCalcVir && !separateVirialConstraining,
+                                              shake_vir);
+
+                        upd.update_sd_second_half(*ir,
+                                                  step,
+                                                  &dvdl_constr,
+                                                  md->homenr,
+                                                  md->ptype,
+                                                  md->invmass,
+                                                  state_,
+                                                  cr_->dd,
+                                                  nrnb_,
+                                                  wallCycleCounters_,
+                                                  constr_,
+                                                  do_log,
+                                                  do_ene);
+                        upd.finish_update(*ir,
+                                          md->havePartiallyFrozenAtoms,
+                                          md->homenr,
+                                          state_,
+                                          wallCycleCounters_,
+                                          constr_ != nullptr);
+                    }
                 }
 
                 if (ir->bPull && ir->pull->bSetPbcRefToPrevStepCOM)

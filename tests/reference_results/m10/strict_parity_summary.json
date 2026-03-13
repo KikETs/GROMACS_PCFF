@@ -1,0 +1,103 @@
+{
+  "aggregates": {
+    "coordination": {
+      "mean_abs_delta_frac_li_ge2": null,
+      "mean_abs_delta_mean_n_per_li": null,
+      "mean_abs_delta_mean_nn_nm": null
+    },
+    "li_oxygen_contacts": {
+      "mean_abs_delta_li_polyO_contacts": null,
+      "mean_abs_delta_li_tfsiO_contacts": null
+    },
+    "population_matrix": {
+      "max_bin_abs_diff_10x10": null,
+      "mean_total_abs_diff_10x10": null
+    },
+    "rdf_curve": {
+      "max_rmse": null,
+      "mean_peak_g_abs_delta": null,
+      "mean_peak_r_abs_delta_nm": null,
+      "mean_rmse": null,
+      "n_compared": 0
+    },
+    "transport": {
+      "anion_diffusivity": {
+        "max_abs_log10_error": null,
+        "mean_abs_log10_error": null,
+        "median_abs_log10_error": null,
+        "n_compared": 0
+      },
+      "conductivity": {
+        "max_abs_log10_error": null,
+        "mean_abs_log10_error": null,
+        "median_abs_log10_error": null,
+        "n_compared": 0
+      },
+      "li_diffusivity": {
+        "max_abs_log10_error": null,
+        "mean_abs_log10_error": null,
+        "median_abs_log10_error": null,
+        "n_compared": 0
+      },
+      "tplus_ne": {
+        "max_abs_error": null,
+        "mean_abs_error": null,
+        "median_abs_error": null,
+        "n_compared": 0
+      }
+    }
+  },
+  "candidate_paired_system_ids": [
+    "14748",
+    "27670"
+  ],
+  "missing_strict_metrics": [
+    {
+      "metric": "pcff_provenance_gate",
+      "reason": "no paired system passed the GROMACS PCFF provenance gate",
+      "status": "blocked"
+    },
+    {
+      "metric": "density",
+      "reason": "paired-system density provenance is unresolved because sampled structural CSV counts do not match the full GROMACS topol.top molecule counts",
+      "status": "unavailable"
+    },
+    {
+      "metric": "chain_size_observables",
+      "reason": "LAMMPS radgyr.txt exists for paired systems but no matched GROMACS production Rg artifact was found",
+      "status": "unavailable"
+    },
+    {
+      "metric": "polymer_diffusivity",
+      "reason": "no matched paired-system GROMACS-vs-LAMMPS polymer diffusivity artifact was found",
+      "status": "unavailable"
+    }
+  ],
+  "n_paired_systems": 0,
+  "paired_system_ids": [],
+  "rejected_candidate_systems": [
+    {
+      "gromacs_preparation": "acpype_gaff2_topology",
+      "lammps_reference": "pcff_class2",
+      "reason": "GROMACS paired topology was generated with ACPYPE/GAFF2, not PCFF",
+      "trajectory_id": "14748"
+    },
+    {
+      "gromacs_preparation": "acpype_gaff2_atomtyping_failed",
+      "lammps_reference": "pcff_class2",
+      "reason": "GROMACS paired topology is missing and the preserved typing attempt is ACPYPE/GAFF2",
+      "trajectory_id": "27670"
+    }
+  ],
+  "status": "blocked_by_pcff_provenance",
+  "strict_metric_scope": [
+    "rdf_li_n_curve",
+    "coordination_li_n",
+    "li_tfsiO_vs_li_polyO_contacts",
+    "population_matrix_bins",
+    "conductivity",
+    "li_diffusivity",
+    "anion_diffusivity",
+    "transference_number"
+  ]
+}

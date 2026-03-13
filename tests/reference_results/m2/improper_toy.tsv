@@ -1,0 +1,11 @@
+# system improper_toy
+# energy_unit kcal/mol
+# force_unit kcal/mol/angstrom
+energy pe 142.91463
+energy ebond 94.331904
+energy eangle 44.334577
+energy eimp 4.2481482
+force 1 -209.648 -209.227 -19.2096
+force 2 39.5559 274.234 49.4358
+force 3 164.322 -193.219 -77.6207
+force 4 5.77016 128.212 47.3945
