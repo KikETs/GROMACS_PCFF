@@ -1,0 +1,818 @@
+{
+  "description": "Deterministic repository-local Class2 bonded coefficients keyed by PT3 atom type families for the frozen PT0/PT3 supported systems.",
+  "interaction_rules": {
+    "angle": [
+      {
+        "canonical_signature": "angle(alkane_carbon_sp3|alkane_carbon_sp3|hydrogen_on_alkane_sp3)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 1.35,
+            "k2_kcal_mol_per_a": 1.35,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 4.6,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 34.5,
+            "k3_kcal_mol": -4.2,
+            "k4_kcal_mol": 0.9,
+            "theta0_deg": 110.7
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_alkane_cc_h"
+      },
+      {
+        "canonical_signature": "angle(hydrogen_on_alkane_sp3|alkane_carbon_sp3|hydrogen_on_alkane_sp3)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 1.1,
+            "k2_kcal_mol_per_a": 1.1,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 5.1,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 35.2,
+            "k3_kcal_mol": -4.5,
+            "k4_kcal_mol": 1.1,
+            "theta0_deg": 107.8
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_alkane_hc_h"
+      },
+      {
+        "canonical_signature": "angle(ether_alpha_carbon_sp3|ether_oxygen_sp3|ether_alpha_carbon_sp3)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 1.75,
+            "k2_kcal_mol_per_a": 1.75,
+            "r1_angstrom": 1.43,
+            "r2_angstrom": 1.43
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 5.8,
+            "r1_angstrom": 1.43,
+            "r2_angstrom": 1.43
+          },
+          "main": {
+            "k2_kcal_mol": 41.0,
+            "k3_kcal_mol": -5.3,
+            "k4_kcal_mol": 1.2,
+            "theta0_deg": 112.1
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_ether_coc"
+      },
+      {
+        "canonical_signature": "angle(ether_oxygen_sp3|ether_alpha_carbon_sp3|hydrogen_on_ether_alpha_carbon)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 1.42,
+            "k2_kcal_mol_per_a": 1.28,
+            "r1_angstrom": 1.43,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 4.9,
+            "r1_angstrom": 1.43,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 37.1,
+            "k3_kcal_mol": -4.1,
+            "k4_kcal_mol": 0.9,
+            "theta0_deg": 109.4
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_ether_och"
+      },
+      {
+        "canonical_signature": "angle(hydrogen_on_ether_alpha_carbon|ether_alpha_carbon_sp3|hydrogen_on_ether_alpha_carbon)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 1.08,
+            "k2_kcal_mol_per_a": 1.08,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 5.0,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 35.0,
+            "k3_kcal_mol": -4.4,
+            "k4_kcal_mol": 1.0,
+            "theta0_deg": 107.6
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_ether_hch"
+      },
+      {
+        "canonical_signature": "angle(fluorine_on_trifluoromethyl|trifluoromethyl_carbon|fluorine_on_trifluoromethyl)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 1.85,
+            "k2_kcal_mol_per_a": 1.85,
+            "r1_angstrom": 1.34,
+            "r2_angstrom": 1.34
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 6.3,
+            "r1_angstrom": 1.34,
+            "r2_angstrom": 1.34
+          },
+          "main": {
+            "k2_kcal_mol": 48.2,
+            "k3_kcal_mol": -5.9,
+            "k4_kcal_mol": 1.6,
+            "theta0_deg": 108.8
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_tfsi_fcf"
+      },
+      {
+        "canonical_signature": "angle(fluorine_on_trifluoromethyl|trifluoromethyl_carbon|sulfonyl_sulfur)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 1.62,
+            "k2_kcal_mol_per_a": 1.95,
+            "r1_angstrom": 1.34,
+            "r2_angstrom": 1.82
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 5.7,
+            "r1_angstrom": 1.34,
+            "r2_angstrom": 1.82
+          },
+          "main": {
+            "k2_kcal_mol": 44.6,
+            "k3_kcal_mol": -5.4,
+            "k4_kcal_mol": 1.3,
+            "theta0_deg": 111.9
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_tfsi_fcs"
+      },
+      {
+        "canonical_signature": "angle(sulfonimide_n_anion|sulfonyl_sulfur|sulfonyl_oxygen)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 2.2,
+            "k2_kcal_mol_per_a": 2.35,
+            "r1_angstrom": 1.57,
+            "r2_angstrom": 1.44
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 6.8,
+            "r1_angstrom": 1.57,
+            "r2_angstrom": 1.44
+          },
+          "main": {
+            "k2_kcal_mol": 72.0,
+            "k3_kcal_mol": -8.2,
+            "k4_kcal_mol": 2.1,
+            "theta0_deg": 106.2
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_tfsi_nso"
+      },
+      {
+        "canonical_signature": "angle(sulfonimide_n_anion|sulfonyl_sulfur|trifluoromethyl_carbon)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 2.05,
+            "k2_kcal_mol_per_a": 1.92,
+            "r1_angstrom": 1.57,
+            "r2_angstrom": 1.82
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 6.2,
+            "r1_angstrom": 1.57,
+            "r2_angstrom": 1.82
+          },
+          "main": {
+            "k2_kcal_mol": 55.4,
+            "k3_kcal_mol": -6.5,
+            "k4_kcal_mol": 1.7,
+            "theta0_deg": 101.4
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_tfsi_nsc"
+      },
+      {
+        "canonical_signature": "angle(sulfonyl_oxygen|sulfonyl_sulfur|sulfonyl_oxygen)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 2.48,
+            "k2_kcal_mol_per_a": 2.48,
+            "r1_angstrom": 1.44,
+            "r2_angstrom": 1.44
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 7.5,
+            "r1_angstrom": 1.44,
+            "r2_angstrom": 1.44
+          },
+          "main": {
+            "k2_kcal_mol": 79.8,
+            "k3_kcal_mol": -9.0,
+            "k4_kcal_mol": 2.3,
+            "theta0_deg": 118.6
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_tfsi_oso"
+      },
+      {
+        "canonical_signature": "angle(sulfonyl_oxygen|sulfonyl_sulfur|trifluoromethyl_carbon)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 2.26,
+            "k2_kcal_mol_per_a": 2.01,
+            "r1_angstrom": 1.44,
+            "r2_angstrom": 1.82
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 6.9,
+            "r1_angstrom": 1.44,
+            "r2_angstrom": 1.82
+          },
+          "main": {
+            "k2_kcal_mol": 61.2,
+            "k3_kcal_mol": -7.1,
+            "k4_kcal_mol": 1.8,
+            "theta0_deg": 107.1
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_tfsi_osc"
+      },
+      {
+        "canonical_signature": "angle(sulfonyl_sulfur|sulfonimide_n_anion|sulfonyl_sulfur)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 2.6,
+            "k2_kcal_mol_per_a": 2.6,
+            "r1_angstrom": 1.57,
+            "r2_angstrom": 1.57
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 7.2,
+            "r1_angstrom": 1.57,
+            "r2_angstrom": 1.57
+          },
+          "main": {
+            "k2_kcal_mol": 66.5,
+            "k3_kcal_mol": -7.7,
+            "k4_kcal_mol": 2.0,
+            "theta0_deg": 124.2
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "angle_tfsi_sns"
+      }
+    ],
+    "bond": [
+      {
+        "canonical_signature": "bond(alkane_carbon_sp3|alkane_carbon_sp3)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 250.0,
+            "k3_kcal_mol_per_a3": -35.0,
+            "k4_kcal_mol_per_a4": 8.0,
+            "r0_angstrom": 1.53
+          }
+        },
+        "provenance": {
+          "note": "Aligned with existing repository-local bond_toy Class2 coefficient shape.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "bond_alkane_cc"
+      },
+      {
+        "canonical_signature": "bond(alkane_carbon_sp3|hydrogen_on_alkane_sp3)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 340.0,
+            "k3_kcal_mol_per_a3": -45.0,
+            "k4_kcal_mol_per_a4": 6.5,
+            "r0_angstrom": 1.101
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "bond_alkane_ch"
+      },
+      {
+        "canonical_signature": "bond(ether_alpha_carbon_sp3|ether_oxygen_sp3)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 320.0,
+            "k3_kcal_mol_per_a3": -42.0,
+            "k4_kcal_mol_per_a4": 5.5,
+            "r0_angstrom": 1.43
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "bond_ether_co"
+      },
+      {
+        "canonical_signature": "bond(ether_alpha_carbon_sp3|hydrogen_on_ether_alpha_carbon)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 338.0,
+            "k3_kcal_mol_per_a3": -44.0,
+            "k4_kcal_mol_per_a4": 6.2,
+            "r0_angstrom": 1.101
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "bond_ether_ch"
+      },
+      {
+        "canonical_signature": "bond(fluorine_on_trifluoromethyl|trifluoromethyl_carbon)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 390.0,
+            "k3_kcal_mol_per_a3": -50.0,
+            "k4_kcal_mol_per_a4": 7.4,
+            "r0_angstrom": 1.34
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "bond_tfsi_cf"
+      },
+      {
+        "canonical_signature": "bond(sulfonimide_n_anion|sulfonyl_sulfur)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 310.0,
+            "k3_kcal_mol_per_a3": -28.0,
+            "k4_kcal_mol_per_a4": 6.0,
+            "r0_angstrom": 1.57
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "bond_tfsi_ns"
+      },
+      {
+        "canonical_signature": "bond(sulfonyl_oxygen|sulfonyl_sulfur)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 570.0,
+            "k3_kcal_mol_per_a3": -68.0,
+            "k4_kcal_mol_per_a4": 10.0,
+            "r0_angstrom": 1.44
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "bond_tfsi_so"
+      },
+      {
+        "canonical_signature": "bond(sulfonyl_sulfur|trifluoromethyl_carbon)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 260.0,
+            "k3_kcal_mol_per_a3": -36.0,
+            "k4_kcal_mol_per_a4": 7.0,
+            "r0_angstrom": 1.82
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "bond_tfsi_sc"
+      }
+    ],
+    "dihedral": [
+      {
+        "canonical_signature": "dihedral(ether_alpha_carbon_sp3|ether_oxygen_sp3|ether_alpha_carbon_sp3|hydrogen_on_ether_alpha_carbon)",
+        "parameters": {
+          "aat": {
+            "k_kcal_mol": 0.17,
+            "theta0_1_deg": 112.1,
+            "theta0_2_deg": 109.4
+          },
+          "at": {
+            "f1_1_kcal_mol": 0.04,
+            "f1_2_kcal_mol": 0.03,
+            "f2_1_kcal_mol": -0.02,
+            "f2_2_kcal_mol": -0.015,
+            "f3_1_kcal_mol": 0.01,
+            "f3_2_kcal_mol": 0.008,
+            "theta0_1_deg": 112.1,
+            "theta0_2_deg": 109.4
+          },
+          "bb13": {
+            "k_kcal_mol_per_a2": 0.11,
+            "r1_angstrom": 1.43,
+            "r3_angstrom": 1.101
+          },
+          "ebt": {
+            "f1_1_kcal_mol_per_a": 0.08,
+            "f1_2_kcal_mol_per_a": 0.07,
+            "f2_1_kcal_mol_per_a": -0.04,
+            "f2_2_kcal_mol_per_a": -0.03,
+            "f3_1_kcal_mol_per_a": 0.02,
+            "f3_2_kcal_mol_per_a": 0.015,
+            "r0_1_angstrom": 1.43,
+            "r0_2_angstrom": 1.101
+          },
+          "main": {
+            "k1_kcal_mol": 0.72,
+            "k2_kcal_mol": 0.45,
+            "k3_kcal_mol": 0.18,
+            "phi1_deg": 0.0,
+            "phi2_deg": 180.0,
+            "phi3_deg": 0.0
+          },
+          "mbt": {
+            "f1_kcal_mol_per_a": 0.1,
+            "f2_kcal_mol_per_a": -0.06,
+            "f3_kcal_mol_per_a": 0.03,
+            "r0_angstrom": 1.43
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "dihedral_ether_coch"
+      },
+      {
+        "canonical_signature": "dihedral(fluorine_on_trifluoromethyl|trifluoromethyl_carbon|sulfonyl_sulfur|sulfonimide_n_anion)",
+        "parameters": {
+          "aat": {
+            "k_kcal_mol": 0.28,
+            "theta0_1_deg": 111.9,
+            "theta0_2_deg": 101.4
+          },
+          "at": {
+            "f1_1_kcal_mol": 0.06,
+            "f1_2_kcal_mol": 0.05,
+            "f2_1_kcal_mol": -0.03,
+            "f2_2_kcal_mol": -0.02,
+            "f3_1_kcal_mol": 0.015,
+            "f3_2_kcal_mol": 0.01,
+            "theta0_1_deg": 111.9,
+            "theta0_2_deg": 101.4
+          },
+          "bb13": {
+            "k_kcal_mol_per_a2": 0.16,
+            "r1_angstrom": 1.34,
+            "r3_angstrom": 1.57
+          },
+          "ebt": {
+            "f1_1_kcal_mol_per_a": 0.12,
+            "f1_2_kcal_mol_per_a": 0.1,
+            "f2_1_kcal_mol_per_a": -0.06,
+            "f2_2_kcal_mol_per_a": -0.04,
+            "f3_1_kcal_mol_per_a": 0.03,
+            "f3_2_kcal_mol_per_a": 0.02,
+            "r0_1_angstrom": 1.34,
+            "r0_2_angstrom": 1.57
+          },
+          "main": {
+            "k1_kcal_mol": 0.95,
+            "k2_kcal_mol": 0.52,
+            "k3_kcal_mol": 0.24,
+            "phi1_deg": 0.0,
+            "phi2_deg": 180.0,
+            "phi3_deg": 0.0
+          },
+          "mbt": {
+            "f1_kcal_mol_per_a": 0.14,
+            "f2_kcal_mol_per_a": -0.08,
+            "f3_kcal_mol_per_a": 0.04,
+            "r0_angstrom": 1.82
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "dihedral_tfsi_fcsn"
+      },
+      {
+        "canonical_signature": "dihedral(fluorine_on_trifluoromethyl|trifluoromethyl_carbon|sulfonyl_sulfur|sulfonyl_oxygen)",
+        "parameters": {
+          "aat": {
+            "k_kcal_mol": 0.31,
+            "theta0_1_deg": 111.9,
+            "theta0_2_deg": 107.1
+          },
+          "at": {
+            "f1_1_kcal_mol": 0.07,
+            "f1_2_kcal_mol": 0.06,
+            "f2_1_kcal_mol": -0.035,
+            "f2_2_kcal_mol": -0.025,
+            "f3_1_kcal_mol": 0.018,
+            "f3_2_kcal_mol": 0.013,
+            "theta0_1_deg": 111.9,
+            "theta0_2_deg": 107.1
+          },
+          "bb13": {
+            "k_kcal_mol_per_a2": 0.18,
+            "r1_angstrom": 1.34,
+            "r3_angstrom": 1.44
+          },
+          "ebt": {
+            "f1_1_kcal_mol_per_a": 0.13,
+            "f1_2_kcal_mol_per_a": 0.11,
+            "f2_1_kcal_mol_per_a": -0.065,
+            "f2_2_kcal_mol_per_a": -0.045,
+            "f3_1_kcal_mol_per_a": 0.032,
+            "f3_2_kcal_mol_per_a": 0.022,
+            "r0_1_angstrom": 1.34,
+            "r0_2_angstrom": 1.44
+          },
+          "main": {
+            "k1_kcal_mol": 1.05,
+            "k2_kcal_mol": 0.58,
+            "k3_kcal_mol": 0.26,
+            "phi1_deg": 0.0,
+            "phi2_deg": 180.0,
+            "phi3_deg": 0.0
+          },
+          "mbt": {
+            "f1_kcal_mol_per_a": 0.15,
+            "f2_kcal_mol_per_a": -0.09,
+            "f3_kcal_mol_per_a": 0.045,
+            "r0_angstrom": 1.82
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "dihedral_tfsi_fcso"
+      },
+      {
+        "canonical_signature": "dihedral(hydrogen_on_alkane_sp3|alkane_carbon_sp3|alkane_carbon_sp3|hydrogen_on_alkane_sp3)",
+        "parameters": {
+          "aat": {
+            "k_kcal_mol": 0.2,
+            "theta0_1_deg": 110.7,
+            "theta0_2_deg": 110.7
+          },
+          "at": {
+            "f1_1_kcal_mol": 0.05,
+            "f1_2_kcal_mol": 0.05,
+            "f2_1_kcal_mol": -0.025,
+            "f2_2_kcal_mol": -0.025,
+            "f3_1_kcal_mol": 0.012,
+            "f3_2_kcal_mol": 0.012,
+            "theta0_1_deg": 110.7,
+            "theta0_2_deg": 110.7
+          },
+          "bb13": {
+            "k_kcal_mol_per_a2": 0.12,
+            "r1_angstrom": 1.101,
+            "r3_angstrom": 1.101
+          },
+          "ebt": {
+            "f1_1_kcal_mol_per_a": 0.09,
+            "f1_2_kcal_mol_per_a": 0.09,
+            "f2_1_kcal_mol_per_a": -0.045,
+            "f2_2_kcal_mol_per_a": -0.045,
+            "f3_1_kcal_mol_per_a": 0.02,
+            "f3_2_kcal_mol_per_a": 0.02,
+            "r0_1_angstrom": 1.101,
+            "r0_2_angstrom": 1.101
+          },
+          "main": {
+            "k1_kcal_mol": 0.85,
+            "k2_kcal_mol": 0.6,
+            "k3_kcal_mol": 0.35,
+            "phi1_deg": 0.0,
+            "phi2_deg": 180.0,
+            "phi3_deg": 0.0
+          },
+          "mbt": {
+            "f1_kcal_mol_per_a": 0.11,
+            "f2_kcal_mol_per_a": -0.07,
+            "f3_kcal_mol_per_a": 0.03,
+            "r0_angstrom": 1.53
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "dihedral_alkane_hcch"
+      },
+      {
+        "canonical_signature": "dihedral(sulfonyl_oxygen|sulfonyl_sulfur|sulfonimide_n_anion|sulfonyl_sulfur)",
+        "parameters": {
+          "aat": {
+            "k_kcal_mol": 0.34,
+            "theta0_1_deg": 106.2,
+            "theta0_2_deg": 124.2
+          },
+          "at": {
+            "f1_1_kcal_mol": 0.08,
+            "f1_2_kcal_mol": 0.07,
+            "f2_1_kcal_mol": -0.04,
+            "f2_2_kcal_mol": -0.03,
+            "f3_1_kcal_mol": 0.02,
+            "f3_2_kcal_mol": 0.015,
+            "theta0_1_deg": 106.2,
+            "theta0_2_deg": 124.2
+          },
+          "bb13": {
+            "k_kcal_mol_per_a2": 0.21,
+            "r1_angstrom": 1.44,
+            "r3_angstrom": 1.57
+          },
+          "ebt": {
+            "f1_1_kcal_mol_per_a": 0.15,
+            "f1_2_kcal_mol_per_a": 0.12,
+            "f2_1_kcal_mol_per_a": -0.07,
+            "f2_2_kcal_mol_per_a": -0.05,
+            "f3_1_kcal_mol_per_a": 0.035,
+            "f3_2_kcal_mol_per_a": 0.025,
+            "r0_1_angstrom": 1.44,
+            "r0_2_angstrom": 1.57
+          },
+          "main": {
+            "k1_kcal_mol": 1.12,
+            "k2_kcal_mol": 0.64,
+            "k3_kcal_mol": 0.29,
+            "phi1_deg": 0.0,
+            "phi2_deg": 180.0,
+            "phi3_deg": 0.0
+          },
+          "mbt": {
+            "f1_kcal_mol_per_a": 0.17,
+            "f2_kcal_mol_per_a": -0.1,
+            "f3_kcal_mol_per_a": 0.05,
+            "r0_angstrom": 1.44
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "dihedral_tfsi_osns"
+      },
+      {
+        "canonical_signature": "dihedral(sulfonyl_sulfur|sulfonimide_n_anion|sulfonyl_sulfur|trifluoromethyl_carbon)",
+        "parameters": {
+          "aat": {
+            "k_kcal_mol": 0.29,
+            "theta0_1_deg": 124.2,
+            "theta0_2_deg": 101.4
+          },
+          "at": {
+            "f1_1_kcal_mol": 0.07,
+            "f1_2_kcal_mol": 0.06,
+            "f2_1_kcal_mol": -0.035,
+            "f2_2_kcal_mol": -0.025,
+            "f3_1_kcal_mol": 0.017,
+            "f3_2_kcal_mol": 0.012,
+            "theta0_1_deg": 124.2,
+            "theta0_2_deg": 101.4
+          },
+          "bb13": {
+            "k_kcal_mol_per_a2": 0.19,
+            "r1_angstrom": 1.57,
+            "r3_angstrom": 1.82
+          },
+          "ebt": {
+            "f1_1_kcal_mol_per_a": 0.14,
+            "f1_2_kcal_mol_per_a": 0.12,
+            "f2_1_kcal_mol_per_a": -0.065,
+            "f2_2_kcal_mol_per_a": -0.045,
+            "f3_1_kcal_mol_per_a": 0.032,
+            "f3_2_kcal_mol_per_a": 0.022,
+            "r0_1_angstrom": 1.57,
+            "r0_2_angstrom": 1.82
+          },
+          "main": {
+            "k1_kcal_mol": 1.0,
+            "k2_kcal_mol": 0.57,
+            "k3_kcal_mol": 0.25,
+            "phi1_deg": 0.0,
+            "phi2_deg": 180.0,
+            "phi3_deg": 0.0
+          },
+          "mbt": {
+            "f1_kcal_mol_per_a": 0.16,
+            "f2_kcal_mol_per_a": -0.09,
+            "f3_kcal_mol_per_a": 0.045,
+            "r0_angstrom": 1.57
+          }
+        },
+        "provenance": {
+          "note": "Frozen repository-local PT4 regression coefficient.",
+          "source_file": "rules/pcff_parameters.json",
+          "source_kind": "repository_local_frozen_rule"
+        },
+        "rule_id": "dihedral_tfsi_snsc"
+      }
+    ],
+    "improper": []
+  },
+  "ruleset_id": "pcff_parameters_pt4_v1",
+  "schema_name": "pcff_bonded_parameter_rules",
+  "schema_version": 1,
+  "term_model": "class2_repository_local_v1"
+}
