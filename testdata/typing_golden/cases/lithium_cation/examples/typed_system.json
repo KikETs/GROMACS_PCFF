@@ -1,0 +1,56 @@
+{
+  "canonicalization": {
+    "algorithm": "graph_refine_distance_v1",
+    "atom_index_base": 1
+  },
+  "components": [
+    {
+      "atom_count": 1,
+      "atoms": [
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 1,
+          "coordinates": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "element": "Li",
+          "formal_charge": 1,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              5
+            ]
+          },
+          "source_atom_id": "1",
+          "source_index": 1
+        }
+      ],
+      "bond_code_histogram": {},
+      "bond_count": 0,
+      "bond_order_histogram": {},
+      "bonds": [],
+      "component_id": "component_1",
+      "element_counts": {
+        "Li": 1
+      },
+      "name": "lithium_cation",
+      "net_formal_charge": 1,
+      "partial_charge_sum": null
+    }
+  ],
+  "ir_stage": "parsed_only",
+  "schema_name": "typed_system",
+  "schema_version": 1,
+  "source": {
+    "input_format": "mol_v2000",
+    "sha256": "f5b50b612f66dabbb152b11cb13dacc4851323d913a51a17abeb9521d3ae4ad3",
+    "source_id": "testdata/typing_golden/cases/lithium_cation/inputs/structure.mol"
+  },
+  "typing": {
+    "ruleset_id": null,
+    "status": "not_run"
+  }
+}

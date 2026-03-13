@@ -24,9 +24,17 @@ This corpus does **not** include a runtime typing engine.
   - Molfile V2000 input
 - `cases/<id>/expected/outcome.json`
   - expected support/failure outcome for a future deterministic engine
+- `cases/<id>/examples/typed_system.json`
+  - PT1 parse-only IR example for the checked-in input
 
 Use:
 
 - [tools/build_typing_golden/generate.py](/home/kiket/바탕화면/test/GROMACS_PCFF/tools/build_typing_golden/generate.py)
 
 to regenerate or validate the manifest.
+
+Use:
+
+- `PYTHONPATH=src python3 -m typing_ir export-typing-golden`
+
+to regenerate the parse-only IR examples.

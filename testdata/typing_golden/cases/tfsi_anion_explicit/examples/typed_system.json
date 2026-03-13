@@ -1,0 +1,641 @@
+{
+  "canonicalization": {
+    "algorithm": "graph_refine_distance_v1",
+    "atom_index_base": 1
+  },
+  "components": [
+    {
+      "atom_count": 15,
+      "atoms": [
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 1,
+          "coordinates": [
+            -1.9,
+            0.0,
+            1.45
+          ],
+          "element": "C",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              16
+            ]
+          },
+          "source_atom_id": "12",
+          "source_index": 12
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 2,
+          "coordinates": [
+            1.9,
+            0.0,
+            -1.45
+          ],
+          "element": "C",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              9
+            ]
+          },
+          "source_atom_id": "5",
+          "source_index": 5
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 3,
+          "coordinates": [
+            -0.9,
+            0.0,
+            2.25
+          ],
+          "element": "F",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              19
+            ]
+          },
+          "source_atom_id": "15",
+          "source_index": 15
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 4,
+          "coordinates": [
+            0.9,
+            0.0,
+            -2.25
+          ],
+          "element": "F",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              12
+            ]
+          },
+          "source_atom_id": "8",
+          "source_index": 8
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 5,
+          "coordinates": [
+            -2.9,
+            -0.8,
+            2.05
+          ],
+          "element": "F",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              18
+            ]
+          },
+          "source_atom_id": "14",
+          "source_index": 14
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 6,
+          "coordinates": [
+            -2.9,
+            0.8,
+            2.05
+          ],
+          "element": "F",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              17
+            ]
+          },
+          "source_atom_id": "13",
+          "source_index": 13
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 7,
+          "coordinates": [
+            2.9,
+            -0.8,
+            -2.05
+          ],
+          "element": "F",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              11
+            ]
+          },
+          "source_atom_id": "7",
+          "source_index": 7
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 8,
+          "coordinates": [
+            2.9,
+            0.8,
+            -2.05
+          ],
+          "element": "F",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              10
+            ]
+          },
+          "source_atom_id": "6",
+          "source_index": 6
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 9,
+          "coordinates": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "element": "N",
+          "formal_charge": -1,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              5
+            ]
+          },
+          "source_atom_id": "1",
+          "source_index": 1
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 10,
+          "coordinates": [
+            -2.05,
+            -1.05,
+            0.0
+          ],
+          "element": "O",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              15
+            ]
+          },
+          "source_atom_id": "11",
+          "source_index": 11
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 11,
+          "coordinates": [
+            -2.05,
+            1.05,
+            0.0
+          ],
+          "element": "O",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              14
+            ]
+          },
+          "source_atom_id": "10",
+          "source_index": 10
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 12,
+          "coordinates": [
+            2.05,
+            -1.05,
+            0.0
+          ],
+          "element": "O",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              8
+            ]
+          },
+          "source_atom_id": "4",
+          "source_index": 4
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 13,
+          "coordinates": [
+            2.05,
+            1.05,
+            0.0
+          ],
+          "element": "O",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              7
+            ]
+          },
+          "source_atom_id": "3",
+          "source_index": 3
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 14,
+          "coordinates": [
+            -1.35,
+            0.0,
+            0.0
+          ],
+          "element": "S",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              13
+            ]
+          },
+          "source_atom_id": "9",
+          "source_index": 9
+        },
+        {
+          "annotations": {},
+          "atom_name": null,
+          "canonical_index": 15,
+          "coordinates": [
+            1.35,
+            0.0,
+            0.0
+          ],
+          "element": "S",
+          "formal_charge": 0,
+          "partial_charge": null,
+          "provenance": {
+            "lines": [
+              6
+            ]
+          },
+          "source_atom_id": "2",
+          "source_index": 2
+        }
+      ],
+      "bond_code_histogram": {
+        "1": 10,
+        "2": 4
+      },
+      "bond_count": 14,
+      "bond_order_histogram": {
+        "1": 10,
+        "2": 4
+      },
+      "bonds": [
+        {
+          "annotations": {},
+          "atom_indices": [
+            1,
+            3
+          ],
+          "bond_code": "1",
+          "canonical_index": 1,
+          "order": 1,
+          "provenance": {
+            "lines": [
+              33
+            ]
+          },
+          "source_atom_indices": [
+            12,
+            15
+          ],
+          "source_bond_id": "14",
+          "source_index": 14
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            1,
+            5
+          ],
+          "bond_code": "1",
+          "canonical_index": 2,
+          "order": 1,
+          "provenance": {
+            "lines": [
+              32
+            ]
+          },
+          "source_atom_indices": [
+            12,
+            14
+          ],
+          "source_bond_id": "13",
+          "source_index": 13
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            1,
+            6
+          ],
+          "bond_code": "1",
+          "canonical_index": 3,
+          "order": 1,
+          "provenance": {
+            "lines": [
+              31
+            ]
+          },
+          "source_atom_indices": [
+            12,
+            13
+          ],
+          "source_bond_id": "12",
+          "source_index": 12
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            1,
+            14
+          ],
+          "bond_code": "1",
+          "canonical_index": 4,
+          "order": 1,
+          "provenance": {
+            "lines": [
+              30
+            ]
+          },
+          "source_atom_indices": [
+            9,
+            12
+          ],
+          "source_bond_id": "11",
+          "source_index": 11
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            2,
+            4
+          ],
+          "bond_code": "1",
+          "canonical_index": 5,
+          "order": 1,
+          "provenance": {
+            "lines": [
+              26
+            ]
+          },
+          "source_atom_indices": [
+            5,
+            8
+          ],
+          "source_bond_id": "7",
+          "source_index": 7
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            2,
+            7
+          ],
+          "bond_code": "1",
+          "canonical_index": 6,
+          "order": 1,
+          "provenance": {
+            "lines": [
+              25
+            ]
+          },
+          "source_atom_indices": [
+            5,
+            7
+          ],
+          "source_bond_id": "6",
+          "source_index": 6
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            2,
+            8
+          ],
+          "bond_code": "1",
+          "canonical_index": 7,
+          "order": 1,
+          "provenance": {
+            "lines": [
+              24
+            ]
+          },
+          "source_atom_indices": [
+            5,
+            6
+          ],
+          "source_bond_id": "5",
+          "source_index": 5
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            2,
+            15
+          ],
+          "bond_code": "1",
+          "canonical_index": 8,
+          "order": 1,
+          "provenance": {
+            "lines": [
+              23
+            ]
+          },
+          "source_atom_indices": [
+            2,
+            5
+          ],
+          "source_bond_id": "4",
+          "source_index": 4
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            9,
+            14
+          ],
+          "bond_code": "1",
+          "canonical_index": 9,
+          "order": 1,
+          "provenance": {
+            "lines": [
+              27
+            ]
+          },
+          "source_atom_indices": [
+            1,
+            9
+          ],
+          "source_bond_id": "8",
+          "source_index": 8
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            9,
+            15
+          ],
+          "bond_code": "1",
+          "canonical_index": 10,
+          "order": 1,
+          "provenance": {
+            "lines": [
+              20
+            ]
+          },
+          "source_atom_indices": [
+            1,
+            2
+          ],
+          "source_bond_id": "1",
+          "source_index": 1
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            10,
+            14
+          ],
+          "bond_code": "2",
+          "canonical_index": 11,
+          "order": 2,
+          "provenance": {
+            "lines": [
+              29
+            ]
+          },
+          "source_atom_indices": [
+            9,
+            11
+          ],
+          "source_bond_id": "10",
+          "source_index": 10
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            11,
+            14
+          ],
+          "bond_code": "2",
+          "canonical_index": 12,
+          "order": 2,
+          "provenance": {
+            "lines": [
+              28
+            ]
+          },
+          "source_atom_indices": [
+            9,
+            10
+          ],
+          "source_bond_id": "9",
+          "source_index": 9
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            12,
+            15
+          ],
+          "bond_code": "2",
+          "canonical_index": 13,
+          "order": 2,
+          "provenance": {
+            "lines": [
+              22
+            ]
+          },
+          "source_atom_indices": [
+            2,
+            4
+          ],
+          "source_bond_id": "3",
+          "source_index": 3
+        },
+        {
+          "annotations": {},
+          "atom_indices": [
+            13,
+            15
+          ],
+          "bond_code": "2",
+          "canonical_index": 14,
+          "order": 2,
+          "provenance": {
+            "lines": [
+              21
+            ]
+          },
+          "source_atom_indices": [
+            2,
+            3
+          ],
+          "source_bond_id": "2",
+          "source_index": 2
+        }
+      ],
+      "component_id": "component_1",
+      "element_counts": {
+        "C": 2,
+        "F": 6,
+        "N": 1,
+        "O": 4,
+        "S": 2
+      },
+      "name": "tfsi_anion_explicit",
+      "net_formal_charge": -1,
+      "partial_charge_sum": null
+    }
+  ],
+  "ir_stage": "parsed_only",
+  "schema_name": "typed_system",
+  "schema_version": 1,
+  "source": {
+    "input_format": "mol_v2000",
+    "sha256": "8eb32820f383429ce94a1b97611a13b4ee9d2baf32a2e783722327e0b6dbfb21",
+    "source_id": "testdata/typing_golden/cases/tfsi_anion_explicit/inputs/structure.mol"
+  },
+  "typing": {
+    "ruleset_id": null,
+    "status": "not_run"
+  }
+}
