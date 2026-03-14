@@ -1,0 +1,50 @@
+{
+  "schema_name": "pcff_polymer_workflow_spec",
+  "schema_version": 1,
+  "system_id": "diglyme_litfsi_1to1",
+  "description": "PT7 diglyme SPE fragment with one LiTFSI pair.",
+  "components": [
+    {
+      "component_id": "EO_TMPL",
+      "role": "polymer_template",
+      "workflow_kind": "repeat_unit_template",
+      "path": "../../components/repeat_unit_du/structure.mol",
+      "input_format": "mol_v2000",
+      "source_id": "repeat_unit_du",
+      "count": 1
+    },
+    {
+      "component_id": "DIGLYME",
+      "role": "polymer_fragment",
+      "workflow_kind": "capped_oligomer",
+      "path": "../../components/diglyme_capped/structure.mol",
+      "input_format": "mol_v2000",
+      "source_id": "diglyme_capped",
+      "count": 1,
+      "molecule_name": "DIGLYME",
+      "residue_name": "DGLY"
+    },
+    {
+      "component_id": "LI",
+      "role": "salt_cation",
+      "workflow_kind": "salt_species",
+      "path": "../../../typing_golden/cases/lithium_cation/inputs/structure.mol",
+      "input_format": "mol_v2000",
+      "source_id": "lithium_cation",
+      "count": 1,
+      "molecule_name": "LI",
+      "residue_name": "LI"
+    },
+    {
+      "component_id": "TFSI",
+      "role": "salt_anion",
+      "workflow_kind": "salt_species",
+      "path": "../../../typing_golden/cases/tfsi_anion_explicit/inputs/structure.mol",
+      "input_format": "mol_v2000",
+      "source_id": "tfsi_anion_explicit",
+      "count": 1,
+      "molecule_name": "TFSI",
+      "residue_name": "TFSI"
+    }
+  ]
+}

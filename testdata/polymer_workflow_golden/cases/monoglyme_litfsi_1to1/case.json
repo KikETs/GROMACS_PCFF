@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "monoglyme_litfsi_1to1",
+  "display_name": "monoglyme + LiTFSI 1:1",
+  "description": "Minimal SPE-style capped glyme fragment with one lithium cation and one explicit TFSI-like anion.",
+  "spec": {
+    "path": "spec.json"
+  },
+  "notes": [
+    "Includes a repeat-unit template alongside the capped exportable fragment.",
+    "Assembly is charge neutral and exercises salt plus polymer-fragment export together."
+  ]
+}

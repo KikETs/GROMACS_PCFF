@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "diglyme_litfsi_1to1",
+  "display_name": "diglyme + LiTFSI 1:1",
+  "description": "Two-repeat capped glyme fragment with one lithium cation and one explicit TFSI-like anion.",
+  "spec": {
+    "path": "spec.json"
+  },
+  "notes": [
+    "Exercises longer capped oligomer handling and chain-end metadata.",
+    "Assembly is charge neutral."
+  ]
+}

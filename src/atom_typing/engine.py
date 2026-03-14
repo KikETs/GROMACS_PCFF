@@ -634,6 +634,47 @@ def _component_is_acyclic_ether(component_view: dict, *, supported_elements: lis
     }
 
 
+def _component_is_acyclic_polyether_oligomer(component_view: dict, *, supported_elements: list[str]) -> tuple[bool, dict]:
+    if component_view["rings"]:
+        return False, {}
+    if set(component_view["element_counts"]) - {"C", "H", "O"}:
+        return False, {}
+    if any(bond["order"] != 1 for bond in component_view["bonds"]):
+        return False, {}
+
+    oxygens = [atom for atom in component_view["atoms"] if atom["element"] == "O"]
+    carbons = [atom for atom in component_view["atoms"] if atom["element"] == "C"]
+    if len(oxygens) < 2 or len(carbons) < 4:
+        return False, {}
+    for oxygen in oxygens:
+        if oxygen["coordination"]["coordination_number"] != 2:
+            return False, {}
+        if oxygen["neighbor_element_counts"] != {"C": 2}:
+            return False, {}
+    for carbon in carbons:
+        if carbon["valence"]["inferred_valence"] != 4 or carbon["coordination"]["coordination_number"] != 4:
+            return False, {}
+
+    end_carbons = [atom for atom in carbons if atom["neighbor_element_counts"] == {"H": 3, "O": 1}]
+    backbone_carbons = [atom for atom in carbons if atom["neighbor_element_counts"] == {"C": 1, "H": 2, "O": 1}]
+    if len(end_carbons) != 2 or not backbone_carbons:
+        return False, {}
+    if len(end_carbons) + len(backbone_carbons) != len(carbons):
+        return False, {}
+    if len(backbone_carbons) % 2 != 0:
+        return False, {}
+    if len(oxygens) != (len(backbone_carbons) // 2) + 1:
+        return False, {}
+
+    return True, {
+        "summary": "linear methoxy-capped polyether oligomer with explicit repeat-unit backbone methylenes",
+        "repeat_unit_count": len(backbone_carbons) // 2,
+        "end_carbon_source_indices": [atom["source_index"] for atom in end_carbons],
+        "backbone_carbon_source_indices": [atom["source_index"] for atom in backbone_carbons],
+        "oxygen_source_indices": [atom["source_index"] for atom in oxygens],
+    }
+
+
 def _component_is_tfsi_like_sulfonimide(component_view: dict, *, supported_elements: list[str]) -> tuple[bool, dict]:
     atoms = component_view["atoms"]
     if set(component_view["element_counts"]) != {"C", "F", "N", "O", "S"}:
@@ -682,6 +723,7 @@ COMPONENT_PREDICATES = {
     "component_has_unsupported_element": _component_has_unsupported_element,
     "component_is_acyclic_alkane": _component_is_acyclic_alkane,
     "component_is_acyclic_ether": _component_is_acyclic_ether,
+    "component_is_acyclic_polyether_oligomer": _component_is_acyclic_polyether_oligomer,
     "component_is_lithium_cation": _component_is_lithium_cation,
     "component_is_tfsi_like_sulfonimide": _component_is_tfsi_like_sulfonimide,
 }

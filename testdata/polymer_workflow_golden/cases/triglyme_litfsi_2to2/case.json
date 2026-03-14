@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "triglyme_litfsi_2to2",
+  "display_name": "triglyme + LiTFSI 2:2",
+  "description": "Three-repeat capped glyme fragment with two lithium cations and two explicit TFSI-like anions.",
+  "spec": {
+    "path": "spec.json"
+  },
+  "notes": [
+    "Exercises higher repeat count and molecule multiplicity in one mixed system.",
+    "Assembly remains charge neutral with balanced salt counts."
+  ]
+}
