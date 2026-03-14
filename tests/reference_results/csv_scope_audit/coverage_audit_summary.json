@@ -1,0 +1,64 @@
+{
+  "coverage_target": "100_percent_typing_export_coverage_required_for_csv_snapshot",
+  "current_pipeline_contract": {
+    "csv_smiles_adapter_status": "unsupported",
+    "polymer_workflow_supported_input_formats": [
+      "mol_v2000"
+    ],
+    "typing_ir_supported_input_formats": [
+      "mol2",
+      "mol_v2000",
+      "pdb",
+      "sdf"
+    ]
+  },
+  "failure_class_counts": {
+    "rows": {
+      "atom_typing_failure": 0,
+      "chemical_perception_failure": 0,
+      "emitter_export_failure": 0,
+      "nonbonded_assignment_failure": 0,
+      "parameter_assignment_failure": 0,
+      "parse_failure": 6270
+    },
+    "unique_smiles": {
+      "atom_typing_failure": 0,
+      "chemical_perception_failure": 0,
+      "emitter_export_failure": 0,
+      "nonbonded_assignment_failure": 0,
+      "parameter_assignment_failure": 0,
+      "parse_failure": 6042
+    }
+  },
+  "observed_failure_codes": {
+    "atom_typing_failure": {},
+    "chemical_perception_failure": {},
+    "emitter_export_failure": {},
+    "nonbonded_assignment_failure": {},
+    "parameter_assignment_failure": {},
+    "parse_failure": {
+      "unsupported_csv_smiles_input": 6042
+    }
+  },
+  "release_readiness": {
+    "reason": "The current pipeline has no deterministic SMILES input path for the CSV snapshot scope.",
+    "status": "not_ready"
+  },
+  "schema_name": "csv_scope_coverage_summary",
+  "schema_version": 1,
+  "scope_boundary": {
+    "row_map_path": "data_manifests/simulation_trajectory_aggregate_row_map.json",
+    "snapshot_manifest_path": "data_manifests/simulation_trajectory_aggregate_snapshot.json",
+    "unique_manifest_path": "data_manifests/simulation_trajectory_aggregate_unique_smiles.json"
+  },
+  "scope_id": "simulation_trajectory_aggregate_csv_snapshot_release_target",
+  "snapshot_sha256": "a67a8f86f1842cd9d35ffe6cce2de8a3cf3577635aed19564b910242dd226fcf",
+  "totals": {
+    "row_count": 6270,
+    "row_coverage_fraction": 0.0,
+    "supported_row_count": 0,
+    "supported_unique_smiles_count": 0,
+    "unique_coverage_fraction": 0.0,
+    "unique_smiles_count": 6042
+  }
+}

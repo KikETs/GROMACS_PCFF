@@ -1,0 +1,51 @@
+{
+  "column_names": [
+    "Trajectory ID",
+    "SMILES",
+    "Molality",
+    "Monomer Molecular Weight",
+    "Degree of Polymerization",
+    "Density",
+    "CONDUCTIVITY",
+    "TFSI Diffusivity",
+    "Li Diffusivity",
+    "Poly Diffusivity",
+    "Transference Number"
+  ],
+  "deterministic_id_policy": {
+    "id_format": "csv_scope_smiles_%06d",
+    "sort_order": "lexicographic exact SMILES string"
+  },
+  "duplicate_row_count": 228,
+  "manifests": {
+    "row_map_path": "data_manifests/simulation_trajectory_aggregate_row_map.json",
+    "unique_smiles_path": "data_manifests/simulation_trajectory_aggregate_unique_smiles.json"
+  },
+  "row_count": 6270,
+  "row_identifier_column": "Trajectory ID",
+  "schema_name": "csv_scope_snapshot_manifest",
+  "schema_version": 1,
+  "scope_id": "simulation_trajectory_aggregate_csv_snapshot_release_target",
+  "smiles_column": "SMILES",
+  "snapshot_filename": "simulation-trajectory-aggregate.csv",
+  "source_csv": {
+    "canonical_path": "MY_PAPER_RELATED/LAMMPS_BATCH/data/simulation-trajectory-aggregate.csv",
+    "matching_paths": [
+      "MY_PAPER_RELATED/Decoder_Only/data/simulation-trajectory-aggregate.csv",
+      "MY_PAPER_RELATED/Decoder_Only_PSMILES/data/simulation-trajectory-aggregate.csv",
+      "MY_PAPER_RELATED/LAMMPS_BATCH/data/simulation-trajectory-aggregate.csv",
+      "MY_PAPER_RELATED/LSTM_CVAE/data/simulation-trajectory-aggregate.csv",
+      "MY_PAPER_RELATED/LSTM_CVAE_PSMILES/data/simulation-trajectory-aggregate.csv",
+      "MY_PAPER_RELATED/TransCVAE_02_21/data/simulation-trajectory-aggregate.csv",
+      "MY_PAPER_RELATED/Trans_CVAE_02_25_PSMILES/data/simulation-trajectory-aggregate.csv",
+      "MY_PAPER_RELATED/polybert_con/simulation-trajectory-aggregate.csv",
+      "torch/Decoder_Only_Old/data/simulation-trajectory-aggregate.csv",
+      "torch/TransCVAE/data/simulation-trajectory-aggregate.csv",
+      "torch/TransCVAE_02_25/data/simulation-trajectory-aggregate.csv"
+    ],
+    "provided_path": "MY_PAPER_RELATED/LAMMPS_BATCH/data/simulation-trajectory-aggregate.csv",
+    "sha256": "a67a8f86f1842cd9d35ffe6cce2de8a3cf3577635aed19564b910242dd226fcf",
+    "workspace_root": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test"
+  },
+  "unique_smiles_count": 6042
+}
