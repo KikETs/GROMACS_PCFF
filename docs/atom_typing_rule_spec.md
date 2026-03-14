@@ -180,12 +180,24 @@ This is strict on purpose. PT3 does not silently use file order to hide overlapp
 
 ## Supported PT3 Component Families
 
-The current ruleset supports exactly the PT0 positive chemistry families:
+The current ruleset supports the original PT0 positive chemistry families plus one CSV-scoped adapter family:
 
 - `acyclic_alkane`
 - `acyclic_ether`
 - `lithium_cation`
 - `tfsi_like_sulfonimide`
+- `csv_scope_pysoftk_aldehyde_polyester`
+
+The CSV-scoped family is intentionally narrow.
+
+It means:
+
+- acyclic `C/H/O` only
+- no bond orders other than `1` and carbonyl `2`
+- pysoftk-adapter style end groups equivalent to one acyl-bromide end and one alkoxy-bromide end before placeholder removal
+- local atom families limited to `c1`, `c2`, `c3`, `c=`, `c_1`, `hc`, `ho2`, `o_1`, `o_2`, `oh`
+
+It does **not** mean general carbonyl chemistry support.
 
 The current ruleset explicitly rejects at least:
 

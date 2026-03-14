@@ -153,9 +153,149 @@
         "epsilon_kcal_mol": 0.05,
         "sigma_angstrom": 2.85
       }
+    },
+    {
+      "family": "c1",
+      "nonbonded_type": "nb_csv_c1",
+      "provenance": {
+        "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+        "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+        "source_kind": "csv_scope_reference_extract"
+      },
+      "rule_id": "nb_csv_c1",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.054,
+        "sigma_angstrom": 4.01
+      }
+    },
+    {
+      "family": "c2",
+      "nonbonded_type": "nb_csv_c2",
+      "provenance": {
+        "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+        "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+        "source_kind": "csv_scope_reference_extract"
+      },
+      "rule_id": "nb_csv_c2",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.054,
+        "sigma_angstrom": 4.01
+      }
+    },
+    {
+      "family": "c3",
+      "nonbonded_type": "nb_csv_c3",
+      "provenance": {
+        "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+        "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+        "source_kind": "csv_scope_reference_extract"
+      },
+      "rule_id": "nb_csv_c3",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.054,
+        "sigma_angstrom": 4.01
+      }
+    },
+    {
+      "family": "c=",
+      "nonbonded_type": "nb_csv_ceq",
+      "provenance": {
+        "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+        "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+        "source_kind": "csv_scope_reference_extract"
+      },
+      "rule_id": "nb_csv_ceq",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.064,
+        "sigma_angstrom": 3.9
+      }
+    },
+    {
+      "family": "c_1",
+      "nonbonded_type": "nb_csv_c_1",
+      "provenance": {
+        "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+        "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+        "source_kind": "csv_scope_reference_extract"
+      },
+      "rule_id": "nb_csv_c_1",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.12,
+        "sigma_angstrom": 3.81
+      }
+    },
+    {
+      "family": "hc",
+      "nonbonded_type": "nb_csv_hc",
+      "provenance": {
+        "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+        "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+        "source_kind": "csv_scope_reference_extract"
+      },
+      "rule_id": "nb_csv_hc",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.02,
+        "sigma_angstrom": 2.995
+      }
+    },
+    {
+      "family": "ho2",
+      "nonbonded_type": "nb_csv_ho2",
+      "provenance": {
+        "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+        "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+        "source_kind": "csv_scope_reference_extract"
+      },
+      "rule_id": "nb_csv_ho2",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.013,
+        "sigma_angstrom": 1.11
+      }
+    },
+    {
+      "family": "o_1",
+      "nonbonded_type": "nb_csv_o_1",
+      "provenance": {
+        "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+        "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+        "source_kind": "csv_scope_reference_extract"
+      },
+      "rule_id": "nb_csv_o_1",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.267,
+        "sigma_angstrom": 3.3
+      }
+    },
+    {
+      "family": "o_2",
+      "nonbonded_type": "nb_csv_o_2",
+      "provenance": {
+        "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+        "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+        "source_kind": "csv_scope_reference_extract"
+      },
+      "rule_id": "nb_csv_o_2",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.24,
+        "sigma_angstrom": 3.42
+      }
+    },
+    {
+      "family": "oh",
+      "nonbonded_type": "nb_csv_oh",
+      "provenance": {
+        "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+        "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+        "source_kind": "csv_scope_reference_extract"
+      },
+      "rule_id": "nb_csv_oh",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.24,
+        "sigma_angstrom": 3.535
+      }
     }
   ],
-  "description": "Deterministic repository-local Class2 nonbonded coefficients and special-pair semantics keyed by PT3 atom type families.",
+  "description": "Deterministic repository-local Class2 nonbonded coefficients and special-pair semantics keyed by PT3 atom type families, including the CSV-scoped pysoftk aldehyde polyester subset.",
   "pair_model": {
     "charge_source_policy": "prefer_partial_charge_else_formal_charge",
     "charged_pair_style": "lj/class2/coul/long",
@@ -181,7 +321,7 @@
     }
   },
   "pair_overrides": [],
-  "ruleset_id": "pcff_nonbonded_pt5_v1",
+  "ruleset_id": "pcff_nonbonded_pt5_v2",
   "schema_name": "pcff_nonbonded_rules",
   "schema_version": 1
 }

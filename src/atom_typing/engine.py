@@ -572,6 +572,104 @@ def _component_has_carbonyl_bond(component_view: dict, *, supported_elements: li
     }
 
 
+def _csv_scope_pysoftk_polyester_local_family(component_view: dict, atom: dict) -> str | None:
+    bond_orders = []
+    double_bonded_oxygen_count = 0
+    single_bonded_oxygen_count = 0
+    for bond in component_view["bonds"]:
+        left, right = bond["atom_indices"]
+        if atom["canonical_index"] not in {left, right}:
+            continue
+        neighbor_index = right if left == atom["canonical_index"] else left
+        neighbor = component_view["atoms"][neighbor_index - 1]
+        order = bond["order"]
+        bond_orders.append(order)
+        if neighbor["element"] == "O":
+            if order == 2:
+                double_bonded_oxygen_count += 1
+            elif order == 1:
+                single_bonded_oxygen_count += 1
+
+    element = atom["element"]
+    coordination_number = atom["coordination"]["coordination_number"]
+    neighbor_counts = atom["neighbor_element_counts"]
+
+    if element == "C" and coordination_number == 3 and neighbor_counts == {"C": 1, "H": 1, "O": 1}:
+        if double_bonded_oxygen_count == 1:
+            return "c="
+        return None
+    if element == "C" and coordination_number == 3 and neighbor_counts == {"C": 1, "O": 2}:
+        if double_bonded_oxygen_count == 1 and single_bonded_oxygen_count == 1:
+            return "c_1"
+        return None
+    if element == "C" and coordination_number == 4 and neighbor_counts == {"C": 2, "H": 1, "O": 1}:
+        return "c1"
+    if element == "C" and coordination_number == 4 and neighbor_counts in ({"C": 2, "H": 2}, {"C": 1, "H": 2, "O": 1}):
+        return "c2"
+    if element == "C" and coordination_number == 4 and neighbor_counts == {"C": 1, "H": 3}:
+        return "c3"
+    if element == "O" and coordination_number == 1 and neighbor_counts == {"C": 1}:
+        if atom["attached_bond"] is not None and atom["attached_bond"]["order"] == 2:
+            return "o_1"
+        return None
+    if element == "O" and coordination_number == 2 and neighbor_counts == {"C": 2}:
+        if all(order == 1 for order in bond_orders):
+            return "o_2"
+        return None
+    if element == "O" and coordination_number == 2 and neighbor_counts == {"C": 1, "H": 1}:
+        if all(order == 1 for order in bond_orders):
+            return "oh"
+        return None
+    if element == "H" and coordination_number == 1 and neighbor_counts == {"C": 1}:
+        return "hc"
+    if element == "H" and coordination_number == 1 and neighbor_counts == {"O": 1}:
+        return "ho2"
+    return None
+
+
+def _component_is_csv_scope_pysoftk_aldehyde_polyester(
+    component_view: dict,
+    *,
+    supported_elements: list[str],
+) -> tuple[bool, dict]:
+    if component_view["rings"]:
+        return False, {}
+    if set(component_view["element_counts"]) - {"C", "H", "O"}:
+        return False, {}
+
+    families = []
+    for bond in component_view["bonds"]:
+        if bond["order"] not in {1, 2}:
+            return False, {}
+        if bond["order"] == 2:
+            left, right = bond["atom_indices"]
+            pair = {
+                component_view["atoms"][left - 1]["element"],
+                component_view["atoms"][right - 1]["element"],
+            }
+            if pair != {"C", "O"}:
+                return False, {}
+
+    for atom in component_view["atoms"]:
+        family = _csv_scope_pysoftk_polyester_local_family(component_view, atom)
+        if family is None:
+            return False, {}
+        families.append(family)
+
+    counts = {}
+    for family in families:
+        counts[family] = counts.get(family, 0) + 1
+
+    required_families = {"c=", "c_1", "o_1", "o_2", "oh", "ho2"}
+    if not required_families.issubset(counts):
+        return False, {}
+
+    return True, {
+        "summary": "csv-scope pysoftk aldehyde polyester oligomer with ester backbone and terminal alcohol",
+        "family_counts": dict(sorted(counts.items())),
+    }
+
+
 def _component_is_lithium_cation(component_view: dict, *, supported_elements: list[str]) -> tuple[bool, dict]:
     if component_view["atom_count"] != 1:
         return False, {}
@@ -724,6 +822,7 @@ COMPONENT_PREDICATES = {
     "component_is_acyclic_alkane": _component_is_acyclic_alkane,
     "component_is_acyclic_ether": _component_is_acyclic_ether,
     "component_is_acyclic_polyether_oligomer": _component_is_acyclic_polyether_oligomer,
+    "component_is_csv_scope_pysoftk_aldehyde_polyester": _component_is_csv_scope_pysoftk_aldehyde_polyester,
     "component_is_lithium_cation": _component_is_lithium_cation,
     "component_is_tfsi_like_sulfonimide": _component_is_tfsi_like_sulfonimide,
 }

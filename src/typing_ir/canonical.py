@@ -22,6 +22,12 @@ def _distance_signature(atom: dict, atoms: list[dict]) -> tuple[float, ...]:
     return tuple(sorted(distances))
 
 
+def _sortable_formal_charge(charge: int | None) -> tuple[int, int]:
+    if charge is None:
+        return (1, 0)
+    return (0, charge)
+
+
 def refine_atom_order(atoms: list[dict], bonds: list[dict]) -> list[dict]:
     adjacency: dict[int, list[tuple[int, tuple[str, str]]]] = {
         atom["source_index"]: [] for atom in atoms
@@ -38,7 +44,7 @@ def refine_atom_order(atoms: list[dict], bonds: list[dict]) -> list[dict]:
         source_index = atom["source_index"]
         labels[source_index] = (
             atom["element"],
-            atom["formal_charge"],
+            _sortable_formal_charge(atom["formal_charge"]),
             len(adjacency[source_index]),
             tuple(sorted(label for _, label in adjacency[source_index])),
         )

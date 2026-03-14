@@ -132,6 +132,43 @@ def test_pt0_golden_examples_match_parser_output() -> None:
         assert actual == expected
 
 
+def test_mol2_with_mixed_exact_and_partial_charges_parses_deterministically(tmp_path: Path) -> None:
+    path = tmp_path / "mixed_charges.mol2"
+    path.write_text(
+        "\n".join(
+            [
+                "@<TRIPOS>MOLECULE",
+                "mixed_charges",
+                " 3 2 0 0 0",
+                "SMALL",
+                "USER_CHARGES",
+                "@<TRIPOS>ATOM",
+                "1 C1 0.0000 0.0000 0.0000 C.3 1 RES 0.0000",
+                "2 O1 1.2000 0.0000 0.0000 O.2 1 RES -0.2451",
+                "3 H1 -0.6000 0.9000 0.0000 H 1 RES 0.0000",
+                "@<TRIPOS>BOND",
+                "1 1 2 1",
+                "2 1 3 1",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    first = parse_file(path, input_format="mol2", source_id="mixed_charges")
+    second = parse_file(path, input_format="mol2", source_id="mixed_charges")
+    component = first["components"][0]
+    oxygen = next(atom for atom in component["atoms"] if atom["element"] == "O")
+    carbons = [atom for atom in component["atoms"] if atom["element"] == "C"]
+
+    assert first == second
+    assert len(carbons) == 1
+    assert carbons[0]["formal_charge"] == 0
+    assert carbons[0]["partial_charge"] == 0.0
+    assert oxygen["formal_charge"] is None
+    assert oxygen["partial_charge"] == -0.2451
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "expected_code", "expected_message"),
     [

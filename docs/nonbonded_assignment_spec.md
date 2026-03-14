@@ -53,6 +53,12 @@ PT5는 다음을 구현하지 않습니다.
 
 - [rules/pcff_nonbonded.json](/home/kiket/바탕화면/test/GROMACS_PCFF/rules/pcff_nonbonded.json)
 
+중요한 제약:
+
+- CSV-scoped carbonyl subset용 self nonbonded rule은 추가됐습니다.
+- 하지만 PT5는 여전히 `parameter_assignment.status = assigned`를 요구합니다.
+- 따라서 PT4에서 dihedral / angle gap이 남아 있으면 PT5까지 도달하지 못합니다.
+
 ## Input Contract
 
 PT5는 다음 source chain을 검증합니다.

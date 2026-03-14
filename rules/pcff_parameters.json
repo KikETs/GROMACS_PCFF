@@ -1,5 +1,5 @@
 {
-  "description": "Deterministic repository-local Class2 bonded coefficients keyed by PT3 atom type families for the frozen PT0/PT3 supported systems.",
+  "description": "Deterministic repository-local Class2 bonded coefficients keyed by PT3 atom type families for the frozen PT0/PT3 supported systems and the CSV-scoped pysoftk aldehyde polyester subset. Missing dihedral cross-terms remain explicit.",
   "interaction_rules": {
     "angle": [
       {
@@ -337,6 +337,734 @@
           "source_kind": "repository_local_frozen_rule"
         },
         "rule_id": "angle_tfsi_sns"
+      },
+      {
+        "canonical_signature": "angle(c1|c2|hc)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 20.754,
+            "k2_kcal_mol_per_a": 11.421,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 3.3872,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 41.453,
+            "k3_kcal_mol": -10.604,
+            "k4_kcal_mol": 5.129,
+            "theta0_deg": 110.77
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c1_c2_hc"
+      },
+      {
+        "canonical_signature": "angle(c1|c2|o_2)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 23.392,
+            "k2_kcal_mol_per_a": 47.9487,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.43
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 23.2647,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.43
+          },
+          "main": {
+            "k2_kcal_mol": 63.3907,
+            "k3_kcal_mol": -13.4513,
+            "k4_kcal_mol": 1.665,
+            "theta0_deg": 107.41
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c1_c2_o_2"
+      },
+      {
+        "canonical_signature": "angle(c1|c2|oh)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 2.6868,
+            "k2_kcal_mol_per_a": 20.4033,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.42
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 11.4318,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.42
+          },
+          "main": {
+            "k2_kcal_mol": 54.5381,
+            "k3_kcal_mol": -8.3642,
+            "k4_kcal_mol": -13.0838,
+            "theta0_deg": 111.27
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c1_c2_oh"
+      },
+      {
+        "canonical_signature": "angle(c1|c3|hc)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 20.754,
+            "k2_kcal_mol_per_a": 11.421,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 3.3872,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 41.453,
+            "k3_kcal_mol": -10.604,
+            "k4_kcal_mol": 5.129,
+            "theta0_deg": 110.77
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c1_c3_hc"
+      },
+      {
+        "canonical_signature": "angle(c1|o_2|c_1)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 41.9116,
+            "k2_kcal_mol_per_a": 46.4608,
+            "r1_angstrom": 1.43,
+            "r2_angstrom": 1.3683
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 45.4503,
+            "r1_angstrom": 1.43,
+            "r2_angstrom": 1.3683
+          },
+          "main": {
+            "k2_kcal_mol": 61.2868,
+            "k3_kcal_mol": -28.9786,
+            "k4_kcal_mol": 7.9929,
+            "theta0_deg": 113.288
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c1_o_2_c_1"
+      },
+      {
+        "canonical_signature": "angle(c2|c1|c3)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 8.016,
+            "k2_kcal_mol_per_a": 8.016,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.53
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 0.0,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.53
+          },
+          "main": {
+            "k2_kcal_mol": 39.516,
+            "k3_kcal_mol": -7.443,
+            "k4_kcal_mol": -9.5583,
+            "theta0_deg": 112.67
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_c1_c3"
+      },
+      {
+        "canonical_signature": "angle(c2|c1|hc)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 20.754,
+            "k2_kcal_mol_per_a": 11.421,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 3.3872,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 41.453,
+            "k3_kcal_mol": -10.604,
+            "k4_kcal_mol": 5.129,
+            "theta0_deg": 110.77
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_c1_hc"
+      },
+      {
+        "canonical_signature": "angle(c2|c1|o_2)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 23.392,
+            "k2_kcal_mol_per_a": 47.9487,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.43
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 23.2647,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.43
+          },
+          "main": {
+            "k2_kcal_mol": 63.3907,
+            "k3_kcal_mol": -13.4513,
+            "k4_kcal_mol": 1.665,
+            "theta0_deg": 107.41
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_c1_o_2"
+      },
+      {
+        "canonical_signature": "angle(c2|c2|c2)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 8.016,
+            "k2_kcal_mol_per_a": 8.016,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.53
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 0.0,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.53
+          },
+          "main": {
+            "k2_kcal_mol": 39.516,
+            "k3_kcal_mol": -7.443,
+            "k4_kcal_mol": -9.5583,
+            "theta0_deg": 112.67
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_c2_c2"
+      },
+      {
+        "canonical_signature": "angle(c2|c2|c=)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 15.9818,
+            "k2_kcal_mol_per_a": 18.9779,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.506
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 7.7827,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.506
+          },
+          "main": {
+            "k2_kcal_mol": 45.7026,
+            "k3_kcal_mol": -10.6396,
+            "k4_kcal_mol": -9.9121,
+            "theta0_deg": 111.76
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_c2_ceq"
+      },
+      {
+        "canonical_signature": "angle(c2|c2|c_1)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 18.1678,
+            "k2_kcal_mol_per_a": 15.8758,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.5202
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 5.4199,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.5202
+          },
+          "main": {
+            "k2_kcal_mol": 51.9747,
+            "k3_kcal_mol": -9.4851,
+            "k4_kcal_mol": -10.9985,
+            "theta0_deg": 108.5295
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_c2_c_1"
+      },
+      {
+        "canonical_signature": "angle(c2|c2|hc)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 20.754,
+            "k2_kcal_mol_per_a": 11.421,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 3.3872,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 41.453,
+            "k3_kcal_mol": -10.604,
+            "k4_kcal_mol": 5.129,
+            "theta0_deg": 110.77
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_c2_hc"
+      },
+      {
+        "canonical_signature": "angle(c2|c=|hc)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 17.6452,
+            "k2_kcal_mol_per_a": 15.3492,
+            "r1_angstrom": 1.506,
+            "r2_angstrom": 1.0883
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 3.4394,
+            "r1_angstrom": 1.506,
+            "r2_angstrom": 1.0883
+          },
+          "main": {
+            "k2_kcal_mol": 30.0944,
+            "k3_kcal_mol": -8.0826,
+            "k4_kcal_mol": -8.6781,
+            "theta0_deg": 117.27
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_ceq_hc"
+      },
+      {
+        "canonical_signature": "angle(c2|c_1|o_1)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 34.9982,
+            "k2_kcal_mol_per_a": 37.1298,
+            "r1_angstrom": 1.5202,
+            "r2_angstrom": 1.202
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 46.0685,
+            "r1_angstrom": 1.5202,
+            "r2_angstrom": 1.202
+          },
+          "main": {
+            "k2_kcal_mol": 55.5431,
+            "k3_kcal_mol": -17.2123,
+            "k4_kcal_mol": 0.1348,
+            "theta0_deg": 123.1451
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_c_1_o_1"
+      },
+      {
+        "canonical_signature": "angle(c2|c_1|o_2)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 1.3435,
+            "k2_kcal_mol_per_a": 4.6978,
+            "r1_angstrom": 1.5202,
+            "r2_angstrom": 1.3683
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 19.1069,
+            "r1_angstrom": 1.5202,
+            "r2_angstrom": 1.3683
+          },
+          "main": {
+            "k2_kcal_mol": 38.8631,
+            "k3_kcal_mol": -3.8323,
+            "k4_kcal_mol": -7.9802,
+            "theta0_deg": 100.3182
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_c_1_o_2"
+      },
+      {
+        "canonical_signature": "angle(c2|o_2|c_1)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 41.9116,
+            "k2_kcal_mol_per_a": 46.4608,
+            "r1_angstrom": 1.43,
+            "r2_angstrom": 1.3683
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 45.4503,
+            "r1_angstrom": 1.43,
+            "r2_angstrom": 1.3683
+          },
+          "main": {
+            "k2_kcal_mol": 61.2868,
+            "k3_kcal_mol": -28.9786,
+            "k4_kcal_mol": 7.9929,
+            "theta0_deg": 113.288
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c2_o_2_c_1"
+      },
+      {
+        "canonical_signature": "angle(c3|c1|hc)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 20.754,
+            "k2_kcal_mol_per_a": 11.421,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 3.3872,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 41.453,
+            "k3_kcal_mol": -10.604,
+            "k4_kcal_mol": 5.129,
+            "theta0_deg": 110.77
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c3_c1_hc"
+      },
+      {
+        "canonical_signature": "angle(c3|c1|o_2)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 23.392,
+            "k2_kcal_mol_per_a": 47.9487,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.43
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 23.2647,
+            "r1_angstrom": 1.53,
+            "r2_angstrom": 1.43
+          },
+          "main": {
+            "k2_kcal_mol": 63.3907,
+            "k3_kcal_mol": -13.4513,
+            "k4_kcal_mol": 1.665,
+            "theta0_deg": 107.41
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c3_c1_o_2"
+      },
+      {
+        "canonical_signature": "angle(c=|c2|hc)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 20.8767,
+            "k2_kcal_mol_per_a": 14.2741,
+            "r1_angstrom": 1.506,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 9.9922,
+            "r1_angstrom": 1.506,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 41.2784,
+            "k3_kcal_mol": -14.2963,
+            "k4_kcal_mol": 5.2229,
+            "theta0_deg": 110.06
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_ceq_c2_hc"
+      },
+      {
+        "canonical_signature": "angle(c_1|c2|hc)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 12.4632,
+            "k2_kcal_mol_per_a": 9.1765,
+            "r1_angstrom": 1.5202,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 0.7115,
+            "r1_angstrom": 1.5202,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 40.6099,
+            "k3_kcal_mol": -28.8121,
+            "k4_kcal_mol": 0.0,
+            "theta0_deg": 107.7336
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_c_1_c2_hc"
+      },
+      {
+        "canonical_signature": "angle(hc|c1|o_2)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 8.6864,
+            "k2_kcal_mol_per_a": 57.4975,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.43
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 5.6454,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.43
+          },
+          "main": {
+            "k2_kcal_mol": 65.4801,
+            "k3_kcal_mol": -10.3498,
+            "k4_kcal_mol": 5.8866,
+            "theta0_deg": 107.688
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_hc_c1_o_2"
+      },
+      {
+        "canonical_signature": "angle(hc|c2|hc)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 18.103,
+            "k2_kcal_mol_per_a": 18.103,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 5.3316,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 39.641,
+            "k3_kcal_mol": -12.921,
+            "k4_kcal_mol": -2.4318,
+            "theta0_deg": 107.66
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_hc_c2_hc"
+      },
+      {
+        "canonical_signature": "angle(hc|c2|o_2)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 8.6864,
+            "k2_kcal_mol_per_a": 57.4975,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.43
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 5.6454,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.43
+          },
+          "main": {
+            "k2_kcal_mol": 65.4801,
+            "k3_kcal_mol": -10.3498,
+            "k4_kcal_mol": 5.8866,
+            "theta0_deg": 107.688
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_hc_c2_o_2"
+      },
+      {
+        "canonical_signature": "angle(hc|c2|oh)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 4.6189,
+            "k2_kcal_mol_per_a": 55.327,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.42
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 23.1979,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.42
+          },
+          "main": {
+            "k2_kcal_mol": 58.5446,
+            "k3_kcal_mol": -10.8088,
+            "k4_kcal_mol": -12.4006,
+            "theta0_deg": 108.728
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_hc_c2_oh"
+      },
+      {
+        "canonical_signature": "angle(hc|c3|hc)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 18.103,
+            "k2_kcal_mol_per_a": 18.103,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.101
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 5.3316,
+            "r1_angstrom": 1.101,
+            "r2_angstrom": 1.101
+          },
+          "main": {
+            "k2_kcal_mol": 39.641,
+            "k3_kcal_mol": -12.921,
+            "k4_kcal_mol": -2.4318,
+            "theta0_deg": 107.66
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_hc_c3_hc"
+      },
+      {
+        "canonical_signature": "angle(o_1|c_1|o_2)",
+        "parameters": {
+          "ba": {
+            "k1_kcal_mol_per_a": 76.2614,
+            "k2_kcal_mol_per_a": 71.8761,
+            "r1_angstrom": 1.202,
+            "r2_angstrom": 1.3683
+          },
+          "bb": {
+            "k_kcal_mol_per_a2": 121.488,
+            "r1_angstrom": 1.202,
+            "r2_angstrom": 1.3683
+          },
+          "main": {
+            "k2_kcal_mol": 95.3446,
+            "k3_kcal_mol": -32.2869,
+            "k4_kcal_mol": 6.3778,
+            "theta0_deg": 120.797
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_angle_o_1_c_1_o_2"
       }
     ],
     "bond": [
@@ -475,6 +1203,278 @@
           "source_kind": "repository_local_frozen_rule"
         },
         "rule_id": "bond_tfsi_sc"
+      },
+      {
+        "canonical_signature": "bond(c1|c2)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 299.67,
+            "k3_kcal_mol_per_a3": -501.77,
+            "k4_kcal_mol_per_a4": 679.81,
+            "r0_angstrom": 1.53
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c1_c2"
+      },
+      {
+        "canonical_signature": "bond(c1|c3)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 299.67,
+            "k3_kcal_mol_per_a3": -501.77,
+            "k4_kcal_mol_per_a4": 679.81,
+            "r0_angstrom": 1.53
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c1_c3"
+      },
+      {
+        "canonical_signature": "bond(c1|hc)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 345.0,
+            "k3_kcal_mol_per_a3": -691.89,
+            "k4_kcal_mol_per_a4": 844.6,
+            "r0_angstrom": 1.101
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c1_hc"
+      },
+      {
+        "canonical_signature": "bond(c1|o_2)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 326.7273,
+            "k3_kcal_mol_per_a3": -608.5306,
+            "k4_kcal_mol_per_a4": 689.0333,
+            "r0_angstrom": 1.43
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c1_o_2"
+      },
+      {
+        "canonical_signature": "bond(c2|c2)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 299.67,
+            "k3_kcal_mol_per_a3": -501.77,
+            "k4_kcal_mol_per_a4": 679.81,
+            "r0_angstrom": 1.53
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c2_c2"
+      },
+      {
+        "canonical_signature": "bond(c2|c=)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 312.3517,
+            "k3_kcal_mol_per_a3": -582.1861,
+            "k4_kcal_mol_per_a4": 339.8971,
+            "r0_angstrom": 1.506
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c2_ceq"
+      },
+      {
+        "canonical_signature": "bond(c2|c_1)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 253.7067,
+            "k3_kcal_mol_per_a3": -423.037,
+            "k4_kcal_mol_per_a4": 396.9,
+            "r0_angstrom": 1.5202
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c2_c_1"
+      },
+      {
+        "canonical_signature": "bond(c2|hc)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 345.0,
+            "k3_kcal_mol_per_a3": -691.89,
+            "k4_kcal_mol_per_a4": 844.6,
+            "r0_angstrom": 1.101
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c2_hc"
+      },
+      {
+        "canonical_signature": "bond(c2|o_2)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 326.7273,
+            "k3_kcal_mol_per_a3": -608.5306,
+            "k4_kcal_mol_per_a4": 689.0333,
+            "r0_angstrom": 1.43
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c2_o_2"
+      },
+      {
+        "canonical_signature": "bond(c2|oh)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 400.3954,
+            "k3_kcal_mol_per_a3": -835.1951,
+            "k4_kcal_mol_per_a4": 1313.0142,
+            "r0_angstrom": 1.42
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c2_oh"
+      },
+      {
+        "canonical_signature": "bond(c3|hc)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 345.0,
+            "k3_kcal_mol_per_a3": -691.89,
+            "k4_kcal_mol_per_a4": 844.6,
+            "r0_angstrom": 1.101
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c3_hc"
+      },
+      {
+        "canonical_signature": "bond(c=|hc)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 365.7679,
+            "k3_kcal_mol_per_a3": -725.5404,
+            "k4_kcal_mol_per_a4": 781.6621,
+            "r0_angstrom": 1.0883
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_ceq_hc"
+      },
+      {
+        "canonical_signature": "bond(c=|o_1)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 312.9116,
+            "k3_kcal_mol_per_a3": 0.0,
+            "k4_kcal_mol_per_a4": 0.0,
+            "r0_angstrom": 1.355
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_ceq_o_1"
+      },
+      {
+        "canonical_signature": "bond(c_1|o_1)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 851.1403,
+            "k3_kcal_mol_per_a3": -1918.4882,
+            "k4_kcal_mol_per_a4": 2160.7659,
+            "r0_angstrom": 1.202
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c_1_o_1"
+      },
+      {
+        "canonical_signature": "bond(c_1|o_2)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 367.1481,
+            "k3_kcal_mol_per_a3": -794.7908,
+            "k4_kcal_mol_per_a4": 1055.2319,
+            "r0_angstrom": 1.3683
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_c_1_o_2"
+      },
+      {
+        "canonical_signature": "bond(ho2|oh)",
+        "parameters": {
+          "main": {
+            "k2_kcal_mol_per_a2": 493.848,
+            "k3_kcal_mol_per_a3": 0.0,
+            "k4_kcal_mol_per_a4": 0.0,
+            "r0_angstrom": 0.96
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_bond_ho2_oh"
       }
     ],
     "dihedral": [
@@ -809,9 +1809,56 @@
         "rule_id": "dihedral_tfsi_snsc"
       }
     ],
-    "improper": []
+    "improper": [
+      {
+        "canonical_signature": "improper(c=|c2|hc|o_1)",
+        "parameters": {
+          "aa": {
+            "k1_kcal_mol": 0.0,
+            "k2_kcal_mol": 0.0,
+            "k3_kcal_mol": 0.0,
+            "theta0_1_deg": 117.27,
+            "theta0_2_deg": 120.0,
+            "theta0_3_deg": 120.0
+          },
+          "main": {
+            "chi0_deg": 0.0,
+            "k0_kcal_mol": 2.0568
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_improper_ceq_c2_hc_o_1"
+      },
+      {
+        "canonical_signature": "improper(c_1|c2|o_1|o_2)",
+        "parameters": {
+          "aa": {
+            "k1_kcal_mol": 0.0,
+            "k2_kcal_mol": 0.0,
+            "k3_kcal_mol": 0.0,
+            "theta0_1_deg": 123.1451,
+            "theta0_2_deg": 120.797,
+            "theta0_3_deg": 100.3182
+          },
+          "main": {
+            "chi0_deg": 0.0,
+            "k0_kcal_mol": 46.9264
+          }
+        },
+        "provenance": {
+          "note": "Frozen CSV-scope reference coefficient extracted from LUNAR all2lmp + pcff.frc for representative CSV snapshot chemistry. Missing Class2 cross terms remain explicit and are not backfilled.",
+          "source_file": "MY_PAPER_RELATED/LAMMPS_BATCH/extern/LUNAR/csv_polyester_all2lmp/csv_polyester_dp3_typed_pcff.txt",
+          "source_kind": "csv_scope_reference_extract"
+        },
+        "rule_id": "csv_improper_c_1_c2_o_1_o_2"
+      }
+    ]
   },
-  "ruleset_id": "pcff_parameters_pt4_v1",
+  "ruleset_id": "pcff_parameters_pt4_v2",
   "schema_name": "pcff_bonded_parameter_rules",
   "schema_version": 1,
   "term_model": "class2_repository_local_v1"

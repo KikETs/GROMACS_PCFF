@@ -169,6 +169,260 @@
       "rule_id": "atom_hydrogen_on_ether_alpha_carbon"
     },
     {
+      "component_family": "csv_scope_pysoftk_aldehyde_polyester",
+      "family": "c=",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1,
+              "O": 1
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 100,
+      "rule_id": "atom_csv_scope_c_equals"
+    },
+    {
+      "component_family": "csv_scope_pysoftk_aldehyde_polyester",
+      "family": "c_1",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "O": 2
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 110,
+      "rule_id": "atom_csv_scope_c_1"
+    },
+    {
+      "component_family": "csv_scope_pysoftk_aldehyde_polyester",
+      "family": "c1",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "O": 1
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 120,
+      "rule_id": "atom_csv_scope_c1"
+    },
+    {
+      "component_family": "csv_scope_pysoftk_aldehyde_polyester",
+      "family": "c2",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "in": [
+              {
+                "C": 2,
+                "H": 2
+              },
+              {
+                "C": 1,
+                "H": 2,
+                "O": 1
+              }
+            ],
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 130,
+      "rule_id": "atom_csv_scope_c2"
+    },
+    {
+      "component_family": "csv_scope_pysoftk_aldehyde_polyester",
+      "family": "c3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 3
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 140,
+      "rule_id": "atom_csv_scope_c3"
+    },
+    {
+      "component_family": "csv_scope_pysoftk_aldehyde_polyester",
+      "family": "o_1",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": {
+              "C": 1
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 1,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 2,
+            "path": "attached_bond.order"
+          }
+        ]
+      },
+      "precedence": 150,
+      "rule_id": "atom_csv_scope_o_1"
+    },
+    {
+      "component_family": "csv_scope_pysoftk_aldehyde_polyester",
+      "family": "o_2",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": {
+              "C": 2
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 160,
+      "rule_id": "atom_csv_scope_o_2"
+    },
+    {
+      "component_family": "csv_scope_pysoftk_aldehyde_polyester",
+      "family": "oh",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 170,
+      "rule_id": "atom_csv_scope_oh"
+    },
+    {
+      "component_family": "csv_scope_pysoftk_aldehyde_polyester",
+      "family": "ho2",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "O",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 180,
+      "rule_id": "atom_csv_scope_ho2"
+    },
+    {
+      "component_family": "csv_scope_pysoftk_aldehyde_polyester",
+      "family": "hc",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          }
+        ]
+      },
+      "precedence": 190,
+      "rule_id": "atom_csv_scope_hc"
+    },
+    {
       "component_family": "lithium_cation",
       "family": "lithium_monoatomic_cation",
       "match": {
@@ -373,6 +627,15 @@
       "rule_id": "reject_indeterminate_ring_aromaticity"
     },
     {
+      "family": "csv_scope_pysoftk_aldehyde_polyester",
+      "kind": "support",
+      "precedence": 35,
+      "predicate": {
+        "builtin": "component_is_csv_scope_pysoftk_aldehyde_polyester"
+      },
+      "rule_id": "classify_csv_scope_pysoftk_aldehyde_polyester"
+    },
+    {
       "failure_code": "unsupported_carbonyl_chemistry",
       "kind": "reject",
       "precedence": 40,
@@ -427,8 +690,8 @@
       "rule_id": "reject_unsupported_component_family"
     }
   ],
-  "description": "Deterministic PT3 PCFF atom type-family rules for the frozen PT0 golden corpus and supported chemistry subset.",
-  "ruleset_id": "pcff_atom_types_pt3_v1",
+  "description": "Deterministic PT3 PCFF atom type-family rules for the frozen PT0 golden corpus, PT7 polymer subset, and the CSV-scoped pysoftk aldehyde polyester subset.",
+  "ruleset_id": "pcff_atom_types_pt3_v2",
   "schema_name": "pcff_atom_type_rules",
   "schema_version": 1,
   "supported_elements": [

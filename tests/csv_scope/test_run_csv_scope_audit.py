@@ -56,6 +56,50 @@ def build_subset_manifests(tmp_path: Path, *, count: int = 2) -> Path:
     return out_root
 
 
+def build_subset_manifests_for_ids(tmp_path: Path, unique_smiles_ids: list[str]) -> Path:
+    snapshot = load_json(MANIFEST_ROOT / "simulation_trajectory_aggregate_snapshot.json")
+    unique_manifest = load_json(MANIFEST_ROOT / "simulation_trajectory_aggregate_unique_smiles.json")
+    row_map = load_json(MANIFEST_ROOT / "simulation_trajectory_aggregate_row_map.json")
+
+    subset_entries = [
+        entry
+        for entry in unique_manifest["entries"]
+        if entry["unique_smiles_id"] in set(unique_smiles_ids)
+    ]
+    if [entry["unique_smiles_id"] for entry in subset_entries] != unique_smiles_ids:
+        raise AssertionError("requested unique_smiles_ids were not preserved in deterministic manifest order")
+
+    subset_ids = set(unique_smiles_ids)
+    subset_rows = [row for row in row_map["rows"] if row["unique_smiles_id"] in subset_ids]
+
+    subset_snapshot = dict(snapshot)
+    subset_snapshot["row_count"] = len(subset_rows)
+    subset_snapshot["unique_smiles_count"] = len(subset_entries)
+    subset_snapshot["duplicate_row_count"] = len(subset_rows) - len(subset_entries)
+
+    subset_unique_manifest = dict(unique_manifest)
+    subset_unique_manifest["unique_smiles_count"] = len(subset_entries)
+    subset_unique_manifest["entries"] = subset_entries
+
+    subset_row_map = dict(row_map)
+    subset_row_map["row_count"] = len(subset_rows)
+    subset_row_map["rows"] = [
+        {
+            "row_number": index,
+            "trajectory_id": row["trajectory_id"],
+            "unique_smiles_id": row["unique_smiles_id"],
+        }
+        for index, row in enumerate(subset_rows, start=1)
+    ]
+
+    out_root = tmp_path / "subset_manifests"
+    out_root.mkdir(parents=True, exist_ok=True)
+    write_json(out_root / "simulation_trajectory_aggregate_snapshot.json", subset_snapshot)
+    write_json(out_root / "simulation_trajectory_aggregate_unique_smiles.json", subset_unique_manifest)
+    write_json(out_root / "simulation_trajectory_aggregate_row_map.json", subset_row_map)
+    return out_root
+
+
 def run_generate(*args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     merged_env = dict(os.environ)
     merged_env["PYTHONPATH"] = "src"
@@ -144,3 +188,24 @@ def test_audit_validate_command_matches_reference_for_checked_in_subset(tmp_path
     payload = json.loads(completed.stdout)
     assert payload["status"] == "ok"
     assert payload["mismatches"] == []
+
+
+def test_csv_scope_polyester_representative_advances_to_parameter_assignment_failure(tmp_path: Path) -> None:
+    manifest_root = build_subset_manifests_for_ids(tmp_path, ["csv_scope_smiles_000001"])
+    out_root = tmp_path / "audit_polyester"
+
+    run_generate("audit", "--manifest-root", str(manifest_root), "--out", str(out_root))
+
+    results = load_json(out_root / "coverage_audit_results.json")
+    summary = load_json(out_root / "coverage_audit_summary.json")
+    assert results["entry_count"] == 1
+    entry = results["entries"][0]
+    assert entry["unique_smiles_id"] == "csv_scope_smiles_000001"
+    assert entry["status"] == "failure"
+    assert entry["failure_class"] == "parameter_assignment_failure"
+    assert entry["stopping_stage"] == "parameter_assignment"
+    assert entry["failure_code"] == "missing_parameter"
+    assert "angle(c2|c=|o_1)" in entry["failure_message"]
+    assert summary["failure_class_counts"]["unique_smiles"]["parameter_assignment_failure"] == 1
+    assert summary["failure_class_counts"]["unique_smiles"]["parse_failure"] == 0
+    assert summary["failure_class_counts"]["unique_smiles"]["atom_typing_failure"] == 0

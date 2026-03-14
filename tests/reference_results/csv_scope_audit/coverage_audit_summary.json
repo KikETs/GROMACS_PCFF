@@ -1,6 +1,10 @@
 {
   "coverage_target": "100_percent_typing_export_coverage_required_for_csv_snapshot",
   "current_pipeline_contract": {
+    "csv_smiles_adapter_output_format": "mol2",
+    "csv_smiles_adapter_placeholder": "Br",
+    "csv_smiles_adapter_pysoftk_root": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/torch/pysoftk",
+    "csv_smiles_adapter_python": "/home/kiket/anaconda3/envs/MD/bin/python",
     "csv_smiles_adapter_status": "pysoftk_proto_polymer_active",
     "polymer_workflow_supported_input_formats": [
       "mol_v2000"
@@ -14,26 +18,26 @@
   },
   "failure_class_counts": {
     "rows": {
-      "atom_typing_failure": 6210,
+      "atom_typing_failure": 6206,
       "chemical_perception_failure": 0,
       "emitter_export_failure": 0,
       "nonbonded_assignment_failure": 0,
-      "parameter_assignment_failure": 0,
+      "parameter_assignment_failure": 4,
       "parse_failure": 60
     },
     "unique_smiles": {
-      "atom_typing_failure": 5986,
+      "atom_typing_failure": 5984,
       "chemical_perception_failure": 0,
       "emitter_export_failure": 0,
       "nonbonded_assignment_failure": 0,
-      "parameter_assignment_failure": 0,
+      "parameter_assignment_failure": 2,
       "parse_failure": 56
     }
   },
   "observed_failure_codes": {
     "atom_typing_failure": {
       "unsupported_aromatic_sp2_ring": 2,
-      "unsupported_carbonyl_chemistry": 5917,
+      "unsupported_carbonyl_chemistry": 5915,
       "unsupported_component_family": 11,
       "unsupported_element": 55,
       "unsupported_resonance_encoding": 1
@@ -41,7 +45,9 @@
     "chemical_perception_failure": {},
     "emitter_export_failure": {},
     "nonbonded_assignment_failure": {},
-    "parameter_assignment_failure": {},
+    "parameter_assignment_failure": {
+      "missing_parameter": 2
+    },
     "parse_failure": {
       "csv_smiles_adapter_failure": 56
     }

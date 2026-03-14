@@ -8,9 +8,9 @@
         "output_format": "mol2",
         "placeholder": "Br"
       },
-      "failure_class": "atom_typing_failure",
-      "failure_code": "unsupported_carbonyl_chemistry",
-      "failure_message": "unsupported PT0 carbonyl chemistry: carbonyl-like C=O bonds detected: 3, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 53, 56, 59, 62, 65, 68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101",
+      "failure_class": "parameter_assignment_failure",
+      "failure_code": "missing_parameter",
+      "failure_message": "No angle parameter rule matched angle(c2|c=|o_1)",
       "first_row_number": 1663,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -25,7 +25,7 @@
       "smiles": "*C(=O)CCCC(=O)OC(C)CO*",
       "smiles_sha256": "2ab20357eb161fce6291b0d5e4955b6bd20fa02ad11aed720a88b8f6a835cb67",
       "status": "failure",
-      "stopping_stage": "atom_typing",
+      "stopping_stage": "parameter_assignment",
       "unique_smiles_id": "csv_scope_smiles_000001"
     },
     {
@@ -36,9 +36,9 @@
         "output_format": "mol2",
         "placeholder": "Br"
       },
-      "failure_class": "atom_typing_failure",
-      "failure_code": "unsupported_carbonyl_chemistry",
-      "failure_message": "unsupported PT0 carbonyl chemistry: carbonyl-like C=O bonds detected: 3, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 53, 56, 59, 62, 65, 68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101",
+      "failure_class": "parameter_assignment_failure",
+      "failure_code": "missing_parameter",
+      "failure_message": "No angle parameter rule matched angle(c=|c2|o_2)",
       "first_row_number": 1668,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -53,7 +53,7 @@
       "smiles": "*C(=O)COCC(=O)OC(C)CO*",
       "smiles_sha256": "4cef069a6a787a8aea49f82ffe81951d6b62a35d63effca2934671e0d32ccd53",
       "status": "failure",
-      "stopping_stage": "atom_typing",
+      "stopping_stage": "parameter_assignment",
       "unique_smiles_id": "csv_scope_smiles_000002"
     },
     {
@@ -3846,7 +3846,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 6248,
       "representative_row": {
         "degree_of_polymerization": 19,
@@ -3874,7 +3874,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 5603,
       "representative_row": {
         "degree_of_polymerization": 19,
@@ -7318,7 +7318,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 5736,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -15914,7 +15914,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1097,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -28066,7 +28066,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2249,
       "representative_row": {
         "degree_of_polymerization": 19,
@@ -39070,7 +39070,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2840,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -42738,7 +42738,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2185,
       "representative_row": {
         "degree_of_polymerization": 26,
@@ -53658,7 +53658,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 3177,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -53742,7 +53742,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 134,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -53826,7 +53826,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 3681,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -53882,7 +53882,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 5903,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -58110,7 +58110,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1431,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -62198,7 +62198,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 5463,
       "representative_row": {
         "degree_of_polymerization": 19,
@@ -63514,7 +63514,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1037,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -63542,7 +63542,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 5367,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -71102,7 +71102,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 310,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -77738,7 +77738,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 5862,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -90814,7 +90814,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2030,
       "representative_row": {
         "degree_of_polymerization": 26,
@@ -90842,7 +90842,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2257,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -90870,7 +90870,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2253,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -90898,7 +90898,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 3426,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -90926,7 +90926,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 720,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -90954,7 +90954,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 674,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -90982,7 +90982,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1100,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -91010,7 +91010,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 452,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -91038,7 +91038,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2034,
       "representative_row": {
         "degree_of_polymerization": 14,
@@ -91066,7 +91066,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1443,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -91094,7 +91094,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 3715,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -91122,7 +91122,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 3010,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -91150,7 +91150,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 3741,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -91458,7 +91458,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 3697,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -91682,7 +91682,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2027,
       "representative_row": {
         "degree_of_polymerization": 26,
@@ -105710,7 +105710,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 5441,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -105738,7 +105738,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2895,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -105766,7 +105766,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 5512,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -105794,7 +105794,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1358,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -105822,7 +105822,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 3680,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -105850,7 +105850,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1000,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -106018,7 +106018,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2867,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -106130,7 +106130,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 4840,
       "representative_row": {
         "degree_of_polymerization": 26,
@@ -131302,7 +131302,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 424,
       "representative_row": {
         "degree_of_polymerization": 12,
@@ -131358,7 +131358,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1087,
       "representative_row": {
         "degree_of_polymerization": 12,
@@ -131834,7 +131834,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 459,
       "representative_row": {
         "degree_of_polymerization": 14,
@@ -132002,7 +132002,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1198,
       "representative_row": {
         "degree_of_polymerization": 14,
@@ -132422,7 +132422,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1643,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -132450,7 +132450,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1391,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -132702,7 +132702,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2893,
       "representative_row": {
         "degree_of_polymerization": 16,
@@ -136986,7 +136986,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 3696,
       "representative_row": {
         "degree_of_polymerization": 19,
@@ -138862,7 +138862,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 2684,
       "representative_row": {
         "degree_of_polymerization": 17,
@@ -154094,7 +154094,7 @@
       },
       "failure_class": "parse_failure",
       "failure_code": "csv_smiles_adapter_failure",
-      "failure_message": "TypeError(\"'<' not supported between instances of 'int' and 'NoneType'\")",
+      "failure_message": "TypeError(\"'<' not supported between instances of 'NoneType' and 'int'\")",
       "first_row_number": 1169,
       "representative_row": {
         "degree_of_polymerization": 19,
