@@ -1,0 +1,10 @@
+; deterministic PT6 GROMACS emitter output
+#include "forcefield_pcff.itp"
+#include "molecule.itp"
+
+[ system ]
+tfsi_anion_explicit
+
+[ molecules ]
+; Name number
+TFSI 1

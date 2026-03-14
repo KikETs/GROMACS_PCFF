@@ -1,0 +1,17 @@
+; deterministic PT6 GROMACS emitter output
+; component_family=tfsi_like_sulfonimide
+; typed_ir_sha256=96bfbb7db1829bd21bcd55798d52b0cca3b43d7db3f06ac00423752fe64e6789
+; typing_report_sha256=5dabd670561d434618649a74e66d966233e814320be2ffae2831601e7efc3284
+; bonded_assignment_sha256=13cf7ad057031fdadbdd5fab9e2a83e2543ed71ce463424eade4460eac748369
+
+[ defaults ]
+; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow
+1 4 yes 1.0 1.0 9.0
+
+[ atomtypes ]
+; name mass charge ptype sigma epsilon
+nb_cf3_c                 12.011 0.0 A 0.34500000 0.37656000
+nb_cf3_f                 18.998 0.0 A 0.28500000 0.20920000
+nb_sulfonimide_n         14.007 0.0 A 0.33000000 0.33472000
+nb_sulfonyl_o            15.999 0.0 A 0.29500000 0.25104000
+nb_sulfonyl_s            32.065 0.0 A 0.41000000 0.41840000

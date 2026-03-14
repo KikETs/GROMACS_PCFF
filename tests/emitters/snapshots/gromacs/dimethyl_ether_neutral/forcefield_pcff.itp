@@ -1,0 +1,15 @@
+; deterministic PT6 GROMACS emitter output
+; component_family=acyclic_ether
+; typed_ir_sha256=9a4538a4642626e6ac09de5a950c85eaa33f3a71c935df9088a28eb45d248ae2
+; typing_report_sha256=b46bf7f1f2da37ad680729464b18f7409a00b9fd8f5ca0eb71ba03c3d58e164e
+; bonded_assignment_sha256=5aace7055b79afe1f923d53de456d7a5323fb27eb5d7888ec218b17ec3ebded3
+
+[ defaults ]
+; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow
+1 4 yes 1.0 1.0 9.0
+
+[ atomtypes ]
+; name mass charge ptype sigma epsilon
+nb_ether_c_alpha         12.011 0.0 A 0.34000000 0.33472000
+nb_ether_o_sp3           15.999 0.0 A 0.30000000 0.29288000
+nb_h_ether_alpha          1.008 0.0 A 0.24500000 0.07531200

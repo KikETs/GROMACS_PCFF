@@ -1,0 +1,10 @@
+; deterministic PT6 GROMACS emitter output
+#include "forcefield_pcff.itp"
+#include "molecule.itp"
+
+[ system ]
+dimethyl_ether_neutral
+
+[ molecules ]
+; Name number
+ETH 1

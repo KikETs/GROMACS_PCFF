@@ -1,0 +1,14 @@
+; deterministic PT6 GROMACS emitter output
+; component_family=acyclic_alkane
+; typed_ir_sha256=3607fffae4e02959fed94b4ceddb2eda2e9ff872ee67c7a28de6a7a4431dd2c0
+; typing_report_sha256=76766b774f61efa2c7ea06dd044b0181f866b1ce52edb4b26d8998f318f19ffc
+; bonded_assignment_sha256=c6a148aa69929583bf354f6d50ecdf84cee539298c54e8897663e2d6f69be710
+
+[ defaults ]
+; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow
+1 4 yes 1.0 1.0 9.0
+
+[ atomtypes ]
+; name mass charge ptype sigma epsilon
+nb_alkane_c_sp3          12.011 0.0 A 0.35000000 0.41840000
+nb_h_alkane               1.008 0.0 A 0.25000000 0.08368000

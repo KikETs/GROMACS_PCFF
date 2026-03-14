@@ -1,0 +1,10 @@
+; deterministic PT6 GROMACS emitter output
+#include "forcefield_pcff.itp"
+#include "molecule.itp"
+
+[ system ]
+ethane_neutral
+
+[ molecules ]
+; Name number
+ALK 1

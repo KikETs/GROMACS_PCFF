@@ -1,0 +1,13 @@
+; deterministic PT6 GROMACS emitter output
+; component_family=lithium_cation
+; typed_ir_sha256=4948b5e4bdc8942e84223be7b697073e288431584595bf020e47663355195300
+; typing_report_sha256=3a006cead3dfc7f268bafb049ad7f2ae0759ba063412f06285d4f7c1cf07297d
+; bonded_assignment_sha256=ee1b46374e32be0df28f3eb3e24585abee0dc8f04d7c7e2b3327500b38825dce
+
+[ defaults ]
+; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow
+1 4 yes 1.0 1.0 9.0
+
+[ atomtypes ]
+; name mass charge ptype sigma epsilon
+nb_lithium_cation         6.941 0.0 A 0.22000000 0.08368000
