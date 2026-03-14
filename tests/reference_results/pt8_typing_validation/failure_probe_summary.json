@@ -1,0 +1,53 @@
+{
+  "classes_observed": [
+    "emitter_failure",
+    "parameter_failure",
+    "typing_failure"
+  ],
+  "milestone": "PT8",
+  "probe_count": 4,
+  "probes": [
+    {
+      "component_id": "MONOGLY",
+      "failure_class": "typing_failure",
+      "failure_code": "unresolved_atom_type",
+      "message": "No atom typing rule matched atom 1 (C) in component family acyclic_ether",
+      "probe_id": "typing_missing_polyether_atom_rules",
+      "report_status": "unresolved",
+      "stage": "typing",
+      "status": "observed_expected_failure"
+    },
+    {
+      "component_id": "MONOGLY",
+      "failure_class": "parameter_failure",
+      "failure_code": "missing_parameter",
+      "message": "No bond parameter rule matched bond(ether_oxygen_sp3|polyether_backbone_methylene_sp3)",
+      "probe_id": "bonded_missing_polyether_backbone_c_o_rule",
+      "report_status": "missing_parameters",
+      "stage": "bonded_parameter_assignment",
+      "status": "observed_expected_failure"
+    },
+    {
+      "component_id": "MONOGLY",
+      "failure_class": "parameter_failure",
+      "failure_code": "missing_nonbonded_atom_type",
+      "message": "No nonbonded rule matched atom family 'polyether_backbone_methylene_sp3'",
+      "probe_id": "nonbonded_missing_polyether_backbone_rule",
+      "report_status": "missing_parameters",
+      "stage": "nonbonded_parameter_assignment",
+      "status": "observed_expected_failure"
+    },
+    {
+      "component_id": "MONOGLY",
+      "failure_class": "emitter_failure",
+      "failure_code": "unsupported_pair14_scaling",
+      "message": "GROMACS emitter requires full-strength 1-4 scaling because [defaults] is fixed to 1.0/1.0",
+      "probe_id": "emitter_pair14_scaling_rejection",
+      "report_status": "exception",
+      "stage": "gromacs_emitter",
+      "status": "observed_expected_failure"
+    }
+  ],
+  "schema_name": "pcff_typing_validation_failure_probe_summary",
+  "schema_version": 1
+}

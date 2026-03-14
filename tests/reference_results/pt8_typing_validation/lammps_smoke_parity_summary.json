@@ -1,0 +1,109 @@
+{
+  "case_count": 3,
+  "checks": [
+    {
+      "case_id": "diglyme_litfsi_1to1",
+      "checks": {
+        "charge_neutrality_passes": true,
+        "charged_pair_style_matches_reference": true,
+        "pair_coeff_policy_matches_self_only_contract": true,
+        "pair_modify_uses_sixthpower": true,
+        "requires_kspace_for_salt_system": true,
+        "salt_balance_passes": true,
+        "special_bonds_matches_reference": true
+      },
+      "observed_contract": {
+        "charged_pair_styles": [
+          "lj/class2/coul/long"
+        ],
+        "pair_coeff_policies": [
+          "explicit_self_only_with_optional_cross_overrides"
+        ],
+        "pair_modify_values": [
+          "mix sixthpower"
+        ],
+        "requires_kspace": true,
+        "special_bonds_values": [
+          "lj/coul 0.0 0.0 1.0 angle no dihedral no"
+        ]
+      },
+      "parity_level": "contract_only",
+      "reference_system_id": "small_salt_polymer_box",
+      "reference_system_path": "testdata/lammps_golden/systems/small_salt_polymer_box/system.json",
+      "status": "pass"
+    },
+    {
+      "case_id": "monoglyme_litfsi_1to1",
+      "checks": {
+        "charge_neutrality_passes": true,
+        "charged_pair_style_matches_reference": true,
+        "pair_coeff_policy_matches_self_only_contract": true,
+        "pair_modify_uses_sixthpower": true,
+        "requires_kspace_for_salt_system": true,
+        "salt_balance_passes": true,
+        "special_bonds_matches_reference": true
+      },
+      "observed_contract": {
+        "charged_pair_styles": [
+          "lj/class2/coul/long"
+        ],
+        "pair_coeff_policies": [
+          "explicit_self_only_with_optional_cross_overrides"
+        ],
+        "pair_modify_values": [
+          "mix sixthpower"
+        ],
+        "requires_kspace": true,
+        "special_bonds_values": [
+          "lj/coul 0.0 0.0 1.0 angle no dihedral no"
+        ]
+      },
+      "parity_level": "contract_only",
+      "reference_system_id": "small_salt_polymer_box",
+      "reference_system_path": "testdata/lammps_golden/systems/small_salt_polymer_box/system.json",
+      "status": "pass"
+    },
+    {
+      "case_id": "triglyme_litfsi_2to2",
+      "checks": {
+        "charge_neutrality_passes": true,
+        "charged_pair_style_matches_reference": true,
+        "pair_coeff_policy_matches_self_only_contract": true,
+        "pair_modify_uses_sixthpower": true,
+        "requires_kspace_for_salt_system": true,
+        "salt_balance_passes": true,
+        "special_bonds_matches_reference": true
+      },
+      "observed_contract": {
+        "charged_pair_styles": [
+          "lj/class2/coul/long"
+        ],
+        "pair_coeff_policies": [
+          "explicit_self_only_with_optional_cross_overrides"
+        ],
+        "pair_modify_values": [
+          "mix sixthpower"
+        ],
+        "requires_kspace": true,
+        "special_bonds_values": [
+          "lj/coul 0.0 0.0 1.0 angle no dihedral no"
+        ]
+      },
+      "parity_level": "contract_only",
+      "reference_system_id": "small_salt_polymer_box",
+      "reference_system_path": "testdata/lammps_golden/systems/small_salt_polymer_box/system.json",
+      "status": "pass"
+    }
+  ],
+  "milestone": "PT8",
+  "parity_level": "contract_only",
+  "reference_system": {
+    "pair_coeff_source": "explicit_self_only",
+    "pair_style": "lj/class2/coul/long",
+    "path": "testdata/lammps_golden/systems/small_salt_polymer_box/system.json",
+    "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "system_id": "small_salt_polymer_box"
+  },
+  "schema_name": "pcff_typing_validation_lammps_smoke_parity_summary",
+  "schema_version": 1
+}

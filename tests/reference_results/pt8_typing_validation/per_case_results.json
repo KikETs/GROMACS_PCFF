@@ -1,0 +1,609 @@
+{
+  "case_count": 3,
+  "cases": [
+    {
+      "assembly_checks": {
+        "charge_neutrality": {
+          "status": "pass",
+          "total_charge": 0.0
+        },
+        "fragment_consistency": {
+          "polymer_component_ids": [
+            "DIGLYME"
+          ],
+          "status": "pass"
+        },
+        "salt_balance": {
+          "anion_count": 1,
+          "cation_count": 1,
+          "status": "pass"
+        }
+      },
+      "case_id": "diglyme_litfsi_1to1",
+      "components": [
+        {
+          "component_id": "EO_TMPL",
+          "count": 1,
+          "exportable": false,
+          "role": "polymer_template",
+          "template_metadata": {
+            "chem_perception_sha256": "0769caba2d19e440b8cf1b05452cdb17a2136415a395330a6423e34fb851ecd3",
+            "connection_point_count": 2,
+            "connection_points": [
+              {
+                "placeholder_atom_index": 3,
+                "tag": "Du",
+                "tag_source": "placeholder_atom",
+                "target_atom_index": 1
+              },
+              {
+                "placeholder_atom_index": 4,
+                "tag": "Du",
+                "tag_source": "placeholder_atom",
+                "target_atom_index": 2
+              }
+            ],
+            "placeholder_count": 2,
+            "placeholder_indices": [
+              3,
+              4
+            ],
+            "status": "valid",
+            "typed_ir_sha256": "4f512475edb60e1b1f26dbc946909b1e606348db764d6fd2c8a97aeb674de473"
+          },
+          "workflow_kind": "repeat_unit_template"
+        },
+        {
+          "classification_family": "acyclic_polyether_oligomer",
+          "component_id": "DIGLYME",
+          "count": 1,
+          "exportable": true,
+          "net_charge_per_molecule": 0.0,
+          "output_filename": "molecule_diglyme.itp",
+          "polymer_fragment_metadata": {
+            "backbone_methylene_count": 4,
+            "end_group_model": "methyl_ether_caps",
+            "fragment_model": "linear_methoxy_capped_polyether",
+            "oxygen_count": 3,
+            "repeat_unit_count": 2,
+            "status": "valid",
+            "terminal_cap_atom_indices": [
+              5,
+              6
+            ],
+            "terminal_cap_source_indices": [
+              9,
+              1
+            ],
+            "typed_ir_sha256": "1e8d5d52139b4a2fe6cd97d7cc40da42da91b5766998d34377f2cd3069cdba69",
+            "typing_report_sha256": "b97c5060d2236a7aefa2baf17a78456be170e9b194556b1dd19c6456bc96008c"
+          },
+          "role": "polymer_fragment",
+          "source_chain": {
+            "bonded_assignment_sha256": "608e11a1ed5456e2f8d8e8cc92db861bfb16edadc012562ea7211bf998751bf3",
+            "chem_perception_sha256": "0a388172e23a19ba9f4c354a4120d437f35c1d7b7a68e414799bf05831808576",
+            "nonbonded_assignment_sha256": "4fda34e6c829272008dd23f9c4d649f46d8e45d025ca10bd4181e5350f11ab6b",
+            "typed_ir_sha256": "1e8d5d52139b4a2fe6cd97d7cc40da42da91b5766998d34377f2cd3069cdba69",
+            "typing_report_sha256": "b97c5060d2236a7aefa2baf17a78456be170e9b194556b1dd19c6456bc96008c"
+          },
+          "total_charge": 0.0,
+          "workflow_kind": "capped_oligomer"
+        },
+        {
+          "classification_family": "lithium_cation",
+          "component_id": "LI",
+          "count": 1,
+          "exportable": true,
+          "net_charge_per_molecule": 1.0,
+          "output_filename": "molecule_li.itp",
+          "role": "salt_cation",
+          "source_chain": {
+            "bonded_assignment_sha256": "2bd4c7fe86bf4a99f9e8b6b89201ef925d30e43e0ecf3beaede2b84942c5abad",
+            "chem_perception_sha256": "ac40b5f91a65b40126153fd4f1e16bb8c3ea8c295febebff5386ecc71708d93b",
+            "nonbonded_assignment_sha256": "6428ffc971ac170ad2b56fc2dd3e3081507f0651ed00250b3a5cf4bec40c8270",
+            "typed_ir_sha256": "4948b5e4bdc8942e84223be7b697073e288431584595bf020e47663355195300",
+            "typing_report_sha256": "0d60ccc67691d28242dab8379cfd7ad68a8bf30b56c6593d16a468f9b2b60d69"
+          },
+          "total_charge": 1.0,
+          "workflow_kind": "salt_species"
+        },
+        {
+          "classification_family": "tfsi_like_sulfonimide",
+          "component_id": "TFSI",
+          "count": 1,
+          "exportable": true,
+          "net_charge_per_molecule": -1.0,
+          "output_filename": "molecule_tfsi.itp",
+          "role": "salt_anion",
+          "source_chain": {
+            "bonded_assignment_sha256": "7cf44243931d653565453f1a201735594e381357ed223048ef10cb0da6b78583",
+            "chem_perception_sha256": "102767c29d6fe73e3afa5a188b0fa89179ee7e1582eb64f86c7714390afb584e",
+            "nonbonded_assignment_sha256": "1cf71c4607ce550be728a9288413f78295bcb92aa2b8e4c0b568b46e84aac299",
+            "typed_ir_sha256": "96bfbb7db1829bd21bcd55798d52b0cca3b43d7db3f06ac00423752fe64e6789",
+            "typing_report_sha256": "4809639b3e967fa9d0593fe1e1679803f2b6248b8419a8306e058b8000aa1d46"
+          },
+          "total_charge": -1.0,
+          "workflow_kind": "salt_species"
+        }
+      ],
+      "description": "Two-repeat capped glyme fragment with one lithium cation and one explicit TFSI-like anion.",
+      "display_name": "diglyme + LiTFSI 1:1",
+      "molecule_counts": {
+        "DIGLYME": 1,
+        "LI": 1,
+        "TFSI": 1
+      },
+      "outputs": {
+        "forcefield_pcff.itp": {
+          "bytes": 1137,
+          "line_count": 22,
+          "sha256": "869ad1224595ca44f30bb4b87c5fca82887e15d837fc52ad352660a709cfe8f9"
+        },
+        "molecule_diglyme.itp": {
+          "bytes": 23500,
+          "line_count": 178,
+          "sha256": "ca08d1577f04358403787c9422d7fa1f1ebefcc88ce8c380db875307eff3efe9"
+        },
+        "molecule_li.itp": {
+          "bytes": 242,
+          "line_count": 11,
+          "sha256": "45d9b721f99e60bbb59ec76ee339c528cb4e7d3d03d2ea1a4838c618cefc4f9c"
+        },
+        "molecule_tfsi.itp": {
+          "bytes": 15560,
+          "line_count": 124,
+          "sha256": "ccd4ec91b61f04187b4878fd2690b49a38accef782202f88d55432b1870bed19"
+        },
+        "topol.top": {
+          "bytes": 249,
+          "line_count": 14,
+          "sha256": "de954179f5eaad739213dea33a358dbc1917ffd213d3f7cca5978402233741f3"
+        }
+      },
+      "polymer_fragment": {
+        "backbone_methylene_count": 4,
+        "classification_family": "acyclic_polyether_oligomer",
+        "component_id": "DIGLYME",
+        "end_group_model": "methyl_ether_caps",
+        "oxygen_count": 3,
+        "repeat_unit_count": 2,
+        "terminal_cap_atom_indices": [
+          5,
+          6
+        ]
+      },
+      "salt_species": [
+        {
+          "classification_family": "lithium_cation",
+          "component_id": "LI",
+          "count": 1,
+          "total_charge": 1.0
+        },
+        {
+          "classification_family": "tfsi_like_sulfonimide",
+          "component_id": "TFSI",
+          "count": 1,
+          "total_charge": -1.0
+        }
+      ],
+      "source": {
+        "case_path": "testdata/polymer_workflow_golden/cases/diglyme_litfsi_1to1/case.json",
+        "spec_path": "testdata/polymer_workflow_golden/cases/diglyme_litfsi_1to1/spec.json",
+        "spec_sha256": "984c5d7cd2cc1902262c542b79c4d8245b0aa8174031dec4f84c2b49da9c8fc6",
+        "system_id": "diglyme_litfsi_1to1"
+      },
+      "status": "pass",
+      "workflow_validation": {
+        "dry_run_status": "dry_run",
+        "existing_output_matches_rendered": true,
+        "validate_existing_status": "dry_run",
+        "written_outputs_match_report_hashes": true,
+        "written_status": "written"
+      }
+    },
+    {
+      "assembly_checks": {
+        "charge_neutrality": {
+          "status": "pass",
+          "total_charge": 0.0
+        },
+        "fragment_consistency": {
+          "polymer_component_ids": [
+            "MONOGLY"
+          ],
+          "status": "pass"
+        },
+        "salt_balance": {
+          "anion_count": 1,
+          "cation_count": 1,
+          "status": "pass"
+        }
+      },
+      "case_id": "monoglyme_litfsi_1to1",
+      "components": [
+        {
+          "component_id": "EO_TMPL",
+          "count": 1,
+          "exportable": false,
+          "role": "polymer_template",
+          "template_metadata": {
+            "chem_perception_sha256": "0769caba2d19e440b8cf1b05452cdb17a2136415a395330a6423e34fb851ecd3",
+            "connection_point_count": 2,
+            "connection_points": [
+              {
+                "placeholder_atom_index": 3,
+                "tag": "Du",
+                "tag_source": "placeholder_atom",
+                "target_atom_index": 1
+              },
+              {
+                "placeholder_atom_index": 4,
+                "tag": "Du",
+                "tag_source": "placeholder_atom",
+                "target_atom_index": 2
+              }
+            ],
+            "placeholder_count": 2,
+            "placeholder_indices": [
+              3,
+              4
+            ],
+            "status": "valid",
+            "typed_ir_sha256": "4f512475edb60e1b1f26dbc946909b1e606348db764d6fd2c8a97aeb674de473"
+          },
+          "workflow_kind": "repeat_unit_template"
+        },
+        {
+          "classification_family": "acyclic_polyether_oligomer",
+          "component_id": "MONOGLY",
+          "count": 1,
+          "exportable": true,
+          "net_charge_per_molecule": 0.0,
+          "output_filename": "molecule_monogly.itp",
+          "polymer_fragment_metadata": {
+            "backbone_methylene_count": 2,
+            "end_group_model": "methyl_ether_caps",
+            "fragment_model": "linear_methoxy_capped_polyether",
+            "oxygen_count": 2,
+            "repeat_unit_count": 1,
+            "status": "valid",
+            "terminal_cap_atom_indices": [
+              3,
+              4
+            ],
+            "terminal_cap_source_indices": [
+              6,
+              1
+            ],
+            "typed_ir_sha256": "9988bde8b1a381ca2c3d0672fd59d88d4c7112119a95925aea850521625a05a8",
+            "typing_report_sha256": "b28f946c91cc0eafc8d5e87ef643c89c1db657b14a495544cb2d3749244b31d8"
+          },
+          "role": "polymer_fragment",
+          "source_chain": {
+            "bonded_assignment_sha256": "e5774f7af188dac749b4baee8479592f6173f157611a5cfb207b2849c27a1d76",
+            "chem_perception_sha256": "76f2306867fba08f57f7fc16c21fc4125f6af9cee818d66fd332260780940dba",
+            "nonbonded_assignment_sha256": "724ea9754809f808b5a1c1d6d9e384016340a0c836c1d8f8b5f56012663e119f",
+            "typed_ir_sha256": "9988bde8b1a381ca2c3d0672fd59d88d4c7112119a95925aea850521625a05a8",
+            "typing_report_sha256": "b28f946c91cc0eafc8d5e87ef643c89c1db657b14a495544cb2d3749244b31d8"
+          },
+          "total_charge": 0.0,
+          "workflow_kind": "capped_oligomer"
+        },
+        {
+          "classification_family": "lithium_cation",
+          "component_id": "LI",
+          "count": 1,
+          "exportable": true,
+          "net_charge_per_molecule": 1.0,
+          "output_filename": "molecule_li.itp",
+          "role": "salt_cation",
+          "source_chain": {
+            "bonded_assignment_sha256": "2bd4c7fe86bf4a99f9e8b6b89201ef925d30e43e0ecf3beaede2b84942c5abad",
+            "chem_perception_sha256": "ac40b5f91a65b40126153fd4f1e16bb8c3ea8c295febebff5386ecc71708d93b",
+            "nonbonded_assignment_sha256": "6428ffc971ac170ad2b56fc2dd3e3081507f0651ed00250b3a5cf4bec40c8270",
+            "typed_ir_sha256": "4948b5e4bdc8942e84223be7b697073e288431584595bf020e47663355195300",
+            "typing_report_sha256": "0d60ccc67691d28242dab8379cfd7ad68a8bf30b56c6593d16a468f9b2b60d69"
+          },
+          "total_charge": 1.0,
+          "workflow_kind": "salt_species"
+        },
+        {
+          "classification_family": "tfsi_like_sulfonimide",
+          "component_id": "TFSI",
+          "count": 1,
+          "exportable": true,
+          "net_charge_per_molecule": -1.0,
+          "output_filename": "molecule_tfsi.itp",
+          "role": "salt_anion",
+          "source_chain": {
+            "bonded_assignment_sha256": "7cf44243931d653565453f1a201735594e381357ed223048ef10cb0da6b78583",
+            "chem_perception_sha256": "102767c29d6fe73e3afa5a188b0fa89179ee7e1582eb64f86c7714390afb584e",
+            "nonbonded_assignment_sha256": "1cf71c4607ce550be728a9288413f78295bcb92aa2b8e4c0b568b46e84aac299",
+            "typed_ir_sha256": "96bfbb7db1829bd21bcd55798d52b0cca3b43d7db3f06ac00423752fe64e6789",
+            "typing_report_sha256": "4809639b3e967fa9d0593fe1e1679803f2b6248b8419a8306e058b8000aa1d46"
+          },
+          "total_charge": -1.0,
+          "workflow_kind": "salt_species"
+        }
+      ],
+      "description": "Minimal SPE-style capped glyme fragment with one lithium cation and one explicit TFSI-like anion.",
+      "display_name": "monoglyme + LiTFSI 1:1",
+      "molecule_counts": {
+        "LI": 1,
+        "MONOGLY": 1,
+        "TFSI": 1
+      },
+      "outputs": {
+        "forcefield_pcff.itp": {
+          "bytes": 1139,
+          "line_count": 22,
+          "sha256": "443b2cc342a3b702f5dc2e65b038c7aebeb67169c684990d086265374d3e0f4e"
+        },
+        "molecule_li.itp": {
+          "bytes": 242,
+          "line_count": 11,
+          "sha256": "45d9b721f99e60bbb59ec76ee339c528cb4e7d3d03d2ea1a4838c618cefc4f9c"
+        },
+        "molecule_monogly.itp": {
+          "bytes": 14652,
+          "line_count": 121,
+          "sha256": "83d8666124e408b828f49b38638237c1fe2ade9ded0e00e826ad71142d17d14f"
+        },
+        "molecule_tfsi.itp": {
+          "bytes": 15560,
+          "line_count": 124,
+          "sha256": "ccd4ec91b61f04187b4878fd2690b49a38accef782202f88d55432b1870bed19"
+        },
+        "topol.top": {
+          "bytes": 251,
+          "line_count": 14,
+          "sha256": "56cf1061be0e26751fdab92a58ed2fb54d0caf82bcdb7d04a1bfcea238930145"
+        }
+      },
+      "polymer_fragment": {
+        "backbone_methylene_count": 2,
+        "classification_family": "acyclic_polyether_oligomer",
+        "component_id": "MONOGLY",
+        "end_group_model": "methyl_ether_caps",
+        "oxygen_count": 2,
+        "repeat_unit_count": 1,
+        "terminal_cap_atom_indices": [
+          3,
+          4
+        ]
+      },
+      "salt_species": [
+        {
+          "classification_family": "lithium_cation",
+          "component_id": "LI",
+          "count": 1,
+          "total_charge": 1.0
+        },
+        {
+          "classification_family": "tfsi_like_sulfonimide",
+          "component_id": "TFSI",
+          "count": 1,
+          "total_charge": -1.0
+        }
+      ],
+      "source": {
+        "case_path": "testdata/polymer_workflow_golden/cases/monoglyme_litfsi_1to1/case.json",
+        "spec_path": "testdata/polymer_workflow_golden/cases/monoglyme_litfsi_1to1/spec.json",
+        "spec_sha256": "fa634146aa5562f541683a5e7df56208210bc183be3e2c3c55d58c9b3e79076c",
+        "system_id": "monoglyme_litfsi_1to1"
+      },
+      "status": "pass",
+      "workflow_validation": {
+        "dry_run_status": "dry_run",
+        "existing_output_matches_rendered": true,
+        "validate_existing_status": "dry_run",
+        "written_outputs_match_report_hashes": true,
+        "written_status": "written"
+      }
+    },
+    {
+      "assembly_checks": {
+        "charge_neutrality": {
+          "status": "pass",
+          "total_charge": 0.0
+        },
+        "fragment_consistency": {
+          "polymer_component_ids": [
+            "TRIGLYME"
+          ],
+          "status": "pass"
+        },
+        "salt_balance": {
+          "anion_count": 2,
+          "cation_count": 2,
+          "status": "pass"
+        }
+      },
+      "case_id": "triglyme_litfsi_2to2",
+      "components": [
+        {
+          "component_id": "EO_TMPL",
+          "count": 1,
+          "exportable": false,
+          "role": "polymer_template",
+          "template_metadata": {
+            "chem_perception_sha256": "0769caba2d19e440b8cf1b05452cdb17a2136415a395330a6423e34fb851ecd3",
+            "connection_point_count": 2,
+            "connection_points": [
+              {
+                "placeholder_atom_index": 3,
+                "tag": "Du",
+                "tag_source": "placeholder_atom",
+                "target_atom_index": 1
+              },
+              {
+                "placeholder_atom_index": 4,
+                "tag": "Du",
+                "tag_source": "placeholder_atom",
+                "target_atom_index": 2
+              }
+            ],
+            "placeholder_count": 2,
+            "placeholder_indices": [
+              3,
+              4
+            ],
+            "status": "valid",
+            "typed_ir_sha256": "4f512475edb60e1b1f26dbc946909b1e606348db764d6fd2c8a97aeb674de473"
+          },
+          "workflow_kind": "repeat_unit_template"
+        },
+        {
+          "classification_family": "acyclic_polyether_oligomer",
+          "component_id": "TRIGLYME",
+          "count": 1,
+          "exportable": true,
+          "net_charge_per_molecule": 0.0,
+          "output_filename": "molecule_triglyme.itp",
+          "polymer_fragment_metadata": {
+            "backbone_methylene_count": 6,
+            "end_group_model": "methyl_ether_caps",
+            "fragment_model": "linear_methoxy_capped_polyether",
+            "oxygen_count": 4,
+            "repeat_unit_count": 3,
+            "status": "valid",
+            "terminal_cap_atom_indices": [
+              7,
+              8
+            ],
+            "terminal_cap_source_indices": [
+              12,
+              1
+            ],
+            "typed_ir_sha256": "2df39084d1f519a6d9a10c5fcff55f4d9b7b0ed51cf5ab5c8b4879b8cc650134",
+            "typing_report_sha256": "a4254fddc63a74a59bfaa7d35f43bef321da1b080dedb8424df8f17eeb932120"
+          },
+          "role": "polymer_fragment",
+          "source_chain": {
+            "bonded_assignment_sha256": "c99e90c5e0a57ca8246cf556379396c86f962c447353d4dde32ba0e6780858a5",
+            "chem_perception_sha256": "b7bbe98e889bfd14d746f46c7cb7d8d1e3bba0a175a7579e436673210ef21b28",
+            "nonbonded_assignment_sha256": "a250542c29809a3494752d626ddbb960010eac1b677e48f03c5daa73eb53dbe8",
+            "typed_ir_sha256": "2df39084d1f519a6d9a10c5fcff55f4d9b7b0ed51cf5ab5c8b4879b8cc650134",
+            "typing_report_sha256": "a4254fddc63a74a59bfaa7d35f43bef321da1b080dedb8424df8f17eeb932120"
+          },
+          "total_charge": 0.0,
+          "workflow_kind": "capped_oligomer"
+        },
+        {
+          "classification_family": "lithium_cation",
+          "component_id": "LI",
+          "count": 2,
+          "exportable": true,
+          "net_charge_per_molecule": 1.0,
+          "output_filename": "molecule_li.itp",
+          "role": "salt_cation",
+          "source_chain": {
+            "bonded_assignment_sha256": "2bd4c7fe86bf4a99f9e8b6b89201ef925d30e43e0ecf3beaede2b84942c5abad",
+            "chem_perception_sha256": "ac40b5f91a65b40126153fd4f1e16bb8c3ea8c295febebff5386ecc71708d93b",
+            "nonbonded_assignment_sha256": "6428ffc971ac170ad2b56fc2dd3e3081507f0651ed00250b3a5cf4bec40c8270",
+            "typed_ir_sha256": "4948b5e4bdc8942e84223be7b697073e288431584595bf020e47663355195300",
+            "typing_report_sha256": "0d60ccc67691d28242dab8379cfd7ad68a8bf30b56c6593d16a468f9b2b60d69"
+          },
+          "total_charge": 2.0,
+          "workflow_kind": "salt_species"
+        },
+        {
+          "classification_family": "tfsi_like_sulfonimide",
+          "component_id": "TFSI",
+          "count": 2,
+          "exportable": true,
+          "net_charge_per_molecule": -1.0,
+          "output_filename": "molecule_tfsi.itp",
+          "role": "salt_anion",
+          "source_chain": {
+            "bonded_assignment_sha256": "7cf44243931d653565453f1a201735594e381357ed223048ef10cb0da6b78583",
+            "chem_perception_sha256": "102767c29d6fe73e3afa5a188b0fa89179ee7e1582eb64f86c7714390afb584e",
+            "nonbonded_assignment_sha256": "1cf71c4607ce550be728a9288413f78295bcb92aa2b8e4c0b568b46e84aac299",
+            "typed_ir_sha256": "96bfbb7db1829bd21bcd55798d52b0cca3b43d7db3f06ac00423752fe64e6789",
+            "typing_report_sha256": "4809639b3e967fa9d0593fe1e1679803f2b6248b8419a8306e058b8000aa1d46"
+          },
+          "total_charge": -2.0,
+          "workflow_kind": "salt_species"
+        }
+      ],
+      "description": "Three-repeat capped glyme fragment with two lithium cations and two explicit TFSI-like anions.",
+      "display_name": "triglyme + LiTFSI 2:2",
+      "molecule_counts": {
+        "LI": 2,
+        "TFSI": 2,
+        "TRIGLYME": 1
+      },
+      "outputs": {
+        "forcefield_pcff.itp": {
+          "bytes": 1138,
+          "line_count": 22,
+          "sha256": "5d8c719e4b6ed4f9e8a4440a90b464bf6ffd9932093254ed0aa4b171535de36d"
+        },
+        "molecule_li.itp": {
+          "bytes": 242,
+          "line_count": 11,
+          "sha256": "45d9b721f99e60bbb59ec76ee339c528cb4e7d3d03d2ea1a4838c618cefc4f9c"
+        },
+        "molecule_tfsi.itp": {
+          "bytes": 15560,
+          "line_count": 124,
+          "sha256": "ccd4ec91b61f04187b4878fd2690b49a38accef782202f88d55432b1870bed19"
+        },
+        "molecule_triglyme.itp": {
+          "bytes": 32350,
+          "line_count": 235,
+          "sha256": "89ce3c8d0c5fd391066b87f1af4f7052e905c2b32921817f26bc40cda54e281c"
+        },
+        "topol.top": {
+          "bytes": 252,
+          "line_count": 14,
+          "sha256": "03d1edf1233f9ad402c33a7748651cf8792d45f47ed309a3b741bce5d3d7c0cb"
+        }
+      },
+      "polymer_fragment": {
+        "backbone_methylene_count": 6,
+        "classification_family": "acyclic_polyether_oligomer",
+        "component_id": "TRIGLYME",
+        "end_group_model": "methyl_ether_caps",
+        "oxygen_count": 4,
+        "repeat_unit_count": 3,
+        "terminal_cap_atom_indices": [
+          7,
+          8
+        ]
+      },
+      "salt_species": [
+        {
+          "classification_family": "lithium_cation",
+          "component_id": "LI",
+          "count": 2,
+          "total_charge": 2.0
+        },
+        {
+          "classification_family": "tfsi_like_sulfonimide",
+          "component_id": "TFSI",
+          "count": 2,
+          "total_charge": -2.0
+        }
+      ],
+      "source": {
+        "case_path": "testdata/polymer_workflow_golden/cases/triglyme_litfsi_2to2/case.json",
+        "spec_path": "testdata/polymer_workflow_golden/cases/triglyme_litfsi_2to2/spec.json",
+        "spec_sha256": "f5ae1933f3f07cb07eda2707fae480873566041466a4b416c104fb193ea80bb7",
+        "system_id": "triglyme_litfsi_2to2"
+      },
+      "status": "pass",
+      "workflow_validation": {
+        "dry_run_status": "dry_run",
+        "existing_output_matches_rendered": true,
+        "validate_existing_status": "dry_run",
+        "written_outputs_match_report_hashes": true,
+        "written_status": "written"
+      }
+    }
+  ],
+  "milestone": "PT8",
+  "schema_name": "pcff_typing_validation_per_case_results",
+  "schema_version": 1,
+  "scope": "supported_spe_systems_only"
+}

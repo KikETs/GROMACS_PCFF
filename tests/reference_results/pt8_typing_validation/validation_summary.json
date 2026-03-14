@@ -1,0 +1,66 @@
+{
+  "failure_classification": {
+    "all_required_classes_observed": true,
+    "observed_counts": {
+      "emitter_failure": 1,
+      "parameter_failure": 2,
+      "typing_failure": 1
+    },
+    "required_classes": [
+      "typing_failure",
+      "parameter_failure",
+      "emitter_failure"
+    ]
+  },
+  "golden_reference_contract": {
+    "reference_files": [
+      "per_case_results.json",
+      "failure_probe_summary.json",
+      "lammps_smoke_parity_summary.json",
+      "validation_summary.json"
+    ],
+    "reference_root": "tests/reference_results/pt8_typing_validation",
+    "validation_mode": "generate.py validate compares regenerated JSON byte-for-byte against checked-in reference summaries"
+  },
+  "lammps_smoke_parity": {
+    "failed_case_ids": [],
+    "parity_level": "contract_only",
+    "passed_case_ids": [
+      "diglyme_litfsi_1to1",
+      "monoglyme_litfsi_1to1",
+      "triglyme_litfsi_2to2"
+    ],
+    "reference_system_id": "small_salt_polymer_box"
+  },
+  "limits": [
+    "Validation scope is limited to the PT7 supported SPE set: monoglyme/diglyme/triglyme with explicit Li/TFSI.",
+    "LAMMPS comparison is contract-only because the repository does not contain trajectory-matched LAMMPS references for these PT7 SPE systems."
+  ],
+  "m10_handoff": {
+    "document_path": "docs/m10_handoff_typing.md",
+    "downstream_target": "GROMACS PCFF + r-RESPA M10 workflow",
+    "machine_readable_failure_channels": [
+      "typing_failure",
+      "parameter_failure",
+      "emitter_failure"
+    ]
+  },
+  "milestone": "PT8",
+  "overall_status": "supported_spe_scope_validated_for_m10_dependency_handoff",
+  "schema_name": "pcff_typing_validation_summary",
+  "schema_version": 1,
+  "supported_scope": {
+    "case_count": 3,
+    "chemistry": [
+      "linear methoxy-capped polyether oligomer",
+      "explicit Li+",
+      "explicit TFSI-like sulfonimide"
+    ],
+    "failed_case_ids": [],
+    "passed_case_ids": [
+      "diglyme_litfsi_1to1",
+      "monoglyme_litfsi_1to1",
+      "triglyme_litfsi_2to2"
+    ]
+  }
+}
