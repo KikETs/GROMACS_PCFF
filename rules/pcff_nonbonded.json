@@ -1,0 +1,187 @@
+{
+  "atom_type_rules": [
+    {
+      "family": "alkane_carbon_sp3",
+      "nonbonded_type": "nb_alkane_c_sp3",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_alkane_carbon_sp3",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.1,
+        "sigma_angstrom": 3.5
+      }
+    },
+    {
+      "family": "hydrogen_on_alkane_sp3",
+      "nonbonded_type": "nb_h_alkane",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_hydrogen_on_alkane_sp3",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.02,
+        "sigma_angstrom": 2.5
+      }
+    },
+    {
+      "family": "ether_alpha_carbon_sp3",
+      "nonbonded_type": "nb_ether_c_alpha",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_ether_alpha_carbon_sp3",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.08,
+        "sigma_angstrom": 3.4
+      }
+    },
+    {
+      "family": "ether_oxygen_sp3",
+      "nonbonded_type": "nb_ether_o_sp3",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_ether_oxygen_sp3",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.07,
+        "sigma_angstrom": 3.0
+      }
+    },
+    {
+      "family": "hydrogen_on_ether_alpha_carbon",
+      "nonbonded_type": "nb_h_ether_alpha",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_hydrogen_on_ether_alpha_carbon",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.018,
+        "sigma_angstrom": 2.45
+      }
+    },
+    {
+      "family": "lithium_monoatomic_cation",
+      "nonbonded_type": "nb_lithium_cation",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_lithium_monoatomic_cation",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.02,
+        "sigma_angstrom": 2.2
+      }
+    },
+    {
+      "family": "sulfonimide_n_anion",
+      "nonbonded_type": "nb_sulfonimide_n",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_sulfonimide_n_anion",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.08,
+        "sigma_angstrom": 3.3
+      }
+    },
+    {
+      "family": "sulfonyl_sulfur",
+      "nonbonded_type": "nb_sulfonyl_s",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_sulfonyl_sulfur",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.1,
+        "sigma_angstrom": 4.1
+      }
+    },
+    {
+      "family": "sulfonyl_oxygen",
+      "nonbonded_type": "nb_sulfonyl_o",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_sulfonyl_oxygen",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.06,
+        "sigma_angstrom": 2.95
+      }
+    },
+    {
+      "family": "trifluoromethyl_carbon",
+      "nonbonded_type": "nb_cf3_c",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_trifluoromethyl_carbon",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.09,
+        "sigma_angstrom": 3.45
+      }
+    },
+    {
+      "family": "fluorine_on_trifluoromethyl",
+      "nonbonded_type": "nb_cf3_f",
+      "provenance": {
+        "note": "Frozen repository-local PT5 regression coefficient.",
+        "source_file": "rules/pcff_nonbonded.json",
+        "source_kind": "repository_local_frozen_rule"
+      },
+      "rule_id": "nb_fluorine_on_trifluoromethyl",
+      "self_parameters": {
+        "epsilon_kcal_mol": 0.05,
+        "sigma_angstrom": 2.85
+      }
+    }
+  ],
+  "description": "Deterministic repository-local Class2 nonbonded coefficients and special-pair semantics keyed by PT3 atom type families.",
+  "pair_model": {
+    "charge_source_policy": "prefer_partial_charge_else_formal_charge",
+    "charged_pair_style": "lj/class2/coul/long",
+    "dispersion_power": 6,
+    "mixing_rule": "sixthpower",
+    "neutral_pair_style": "lj/class2",
+    "repulsion_power": 9,
+    "special_bonds_profile": {
+      "angle": "no",
+      "coul_weights": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "dihedral": "no",
+      "lj_weights": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "profile_id": "pcff_export_profile_v1",
+      "value": "lj/coul 0.0 0.0 1.0 angle no dihedral no"
+    }
+  },
+  "pair_overrides": [],
+  "ruleset_id": "pcff_nonbonded_pt5_v1",
+  "schema_name": "pcff_nonbonded_rules",
+  "schema_version": 1
+}
