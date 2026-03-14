@@ -52,6 +52,11 @@ Row-to-unique map:
 
 - [simulation_trajectory_aggregate_row_map.json](/home/kiket/바탕화면/test/GROMACS_PCFF/data_manifests/simulation_trajectory_aggregate_row_map.json)
 
+Coverage audit outputs:
+
+- [coverage_audit_results.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/csv_scope_audit/coverage_audit_results.json)
+- [coverage_audit_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/csv_scope_audit/coverage_audit_summary.json)
+
 ## Deterministic ID Policy
 
 Unique SMILES ID는 다음 규칙으로 고정한다.
@@ -74,6 +79,30 @@ Unique SMILES ID는 다음 규칙으로 고정한다.
 - 현재 pipeline이 이 CSV snapshot의 unique SMILES `6042`개를 얼마나 처리하는가?
 
 즉, 기존 PT7/PT8 supported subset만 보는 것으로는 충분하지 않다. 이번 scope baseline 이후에는 이 CSV snapshot 전체가 현재 release target이다.
+
+## Audit Execution Contract
+
+CSV scope audit는 기존 `GROMACS_PCFF` 파이프라인을 유지한 채, 입력 어댑터만 별도로 둔다.
+
+- source-of-truth pipeline:
+  - PT1 parse
+  - PT2 perception
+  - PT3 atom typing
+  - PT4 bonded assignment
+  - PT5 nonbonded assignment
+  - PT6 GROMACS dry-run emitter
+- CSV input adapter:
+  - `conda` 환경 `MD`
+  - RDKit fixed-seed embed
+  - local `pysoftk` `proto_polymer`
+  - placeholder `Br`
+  - deterministic `mol2` 출력
+
+중요:
+
+- `pysoftk`는 구조 입력 어댑터일 뿐이다.
+- `LUNAR atom_typing.py`나 외부 `pcff.frc` 기반 결과는 이 audit에 쓰지 않는다.
+- adapter failure와 downstream pipeline failure는 분리해서 기록한다.
 
 ## Explicit Non-Goals Of This Task
 

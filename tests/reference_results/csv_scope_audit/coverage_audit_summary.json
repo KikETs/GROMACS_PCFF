@@ -1,7 +1,7 @@
 {
   "coverage_target": "100_percent_typing_export_coverage_required_for_csv_snapshot",
   "current_pipeline_contract": {
-    "csv_smiles_adapter_status": "unsupported",
+    "csv_smiles_adapter_status": "pysoftk_proto_polymer_active",
     "polymer_workflow_supported_input_formats": [
       "mol_v2000"
     ],
@@ -14,34 +14,40 @@
   },
   "failure_class_counts": {
     "rows": {
-      "atom_typing_failure": 0,
+      "atom_typing_failure": 6210,
       "chemical_perception_failure": 0,
       "emitter_export_failure": 0,
       "nonbonded_assignment_failure": 0,
       "parameter_assignment_failure": 0,
-      "parse_failure": 6270
+      "parse_failure": 60
     },
     "unique_smiles": {
-      "atom_typing_failure": 0,
+      "atom_typing_failure": 5986,
       "chemical_perception_failure": 0,
       "emitter_export_failure": 0,
       "nonbonded_assignment_failure": 0,
       "parameter_assignment_failure": 0,
-      "parse_failure": 6042
+      "parse_failure": 56
     }
   },
   "observed_failure_codes": {
-    "atom_typing_failure": {},
+    "atom_typing_failure": {
+      "unsupported_aromatic_sp2_ring": 2,
+      "unsupported_carbonyl_chemistry": 5917,
+      "unsupported_component_family": 11,
+      "unsupported_element": 55,
+      "unsupported_resonance_encoding": 1
+    },
     "chemical_perception_failure": {},
     "emitter_export_failure": {},
     "nonbonded_assignment_failure": {},
     "parameter_assignment_failure": {},
     "parse_failure": {
-      "unsupported_csv_smiles_input": 6042
+      "csv_smiles_adapter_failure": 56
     }
   },
   "release_readiness": {
-    "reason": "The current pipeline has no deterministic SMILES input path for the CSV snapshot scope.",
+    "reason": "CSV snapshot is release-ready only when every unique SMILES reaches emitter_export successfully.",
     "status": "not_ready"
   },
   "schema_name": "csv_scope_coverage_summary",

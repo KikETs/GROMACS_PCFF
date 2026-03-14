@@ -1,4 +1,10 @@
 {
+  "audit_adapter_contract": {
+    "adapter_kind": "pysoftk_proto_polymer",
+    "output_format": "mol2",
+    "placeholder": "Br",
+    "structure_generation_policy": "rdkit_embed_then_pysoftk_proto_polymer_then_placeholder_to_hydrogen"
+  },
   "column_names": [
     "Trajectory ID",
     "SMILES",
