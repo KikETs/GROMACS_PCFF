@@ -1,0 +1,25 @@
+{
+  "release_version": "v1.0.0-rc1",
+  "status": "release-candidate",
+  "readiness": {
+    "neutral_systems": {
+      "class": "Production-Ready",
+      "validated_duration_ps": 100.0,
+      "density_parity_target": "< 5%",
+      "density_parity_actual": "0.71%",
+      "evidence": "M10.3"
+    },
+    "charged_systems": {
+      "class": "Qualified-Ready",
+      "energy_parity_actual": "0.09%",
+      "density_caveat": "High sensitivity to PME/PPPM implementation",
+      "monitoring_required": true,
+      "evidence": "M10.4"
+    }
+  },
+  "out_of_scope": [
+    "diffusion_coefficient",
+    "ionic_conductivity",
+    "transference_number"
+  ]
+}
