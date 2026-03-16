@@ -1,0 +1,6 @@
+integrator=steep
+emtol=500.0
+nsteps=200
+cutoff-scheme=Verlet
+rcoulomb=0.9
+rvdw=0.9

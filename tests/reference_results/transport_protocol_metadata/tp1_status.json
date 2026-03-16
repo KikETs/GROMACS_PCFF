@@ -1,0 +1,19 @@
+{
+  "milestone": "TP1",
+  "status": "FAIL (Physical Failure)",
+  "last_audit_date": "2026-03-15",
+  "audit_reason": "TP1.2 rerun completed but failed at 3ns due to thermal runaway (T > 500K).",
+  "required_remediation": "Investigate PCFF 9-6 stability in GROMACS or reduce timestep. System remains blocked.",
+  "withdrawn_claims": [
+    "PASS status",
+    "Ready for Transport Production Entry",
+    "LiTFSI/PEO 2500-atom system identity"
+  ],
+  "verified_artifacts": [
+    "tools/run_tp1_2_charged_recovery/run_tp1.py",
+    "tests/reference_results/tp1_charged_recovery/dense_salt_polymer/tp1_equil.log",
+    "tests/reference_results/tp1_charged_recovery/dense_salt_polymer/recovery_summary.json",
+    "tests/reference_results/tp1_charged_recovery/dense_salt_polymer/energy_raw.xvg",
+    "tests/reference_results/tp1_charged_recovery/dense_salt_polymer/system_manifest.json"
+  ]
+}

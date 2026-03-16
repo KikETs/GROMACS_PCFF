@@ -1,0 +1,35 @@
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2/coul/long 9.0 9.0
+pair_modify mix sixthpower
+bond_style class2
+angle_style class2
+dihedral_style class2
+improper_style none
+kspace_style pppm 1.0e-6
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+neighbor 2.0 bin
+neigh_modify every 1 delay 0 check no
+
+read_data system.data
+
+pair_coeff 1 1 0.12 3.40
+pair_coeff 2 2 0.08 3.00
+bond_coeff 1 1.48 230.0 -32.0 7.0
+angle_coeff 1 111.0 32.0 -3.6 1.0
+angle_coeff 1 bb 5.0 1.48 1.48
+angle_coeff 1 ba 1.7 1.4 1.48 1.48
+dihedral_coeff 1 0.9 0.0 0.5 180.0 0.3 0.0
+dihedral_coeff 1 mbt 0.14 -0.09 0.05 1.48
+dihedral_coeff 1 ebt 0.12 -0.06 0.03 0.10 -0.04 0.02 1.48 1.48
+dihedral_coeff 1 at 0.05 -0.03 0.02 0.04 -0.02 0.01 111.0 111.0
+dihedral_coeff 1 aat 0.22 111.0 111.0
+dihedral_coeff 1 bb13 0.16 1.48 1.48
+
+timestep 1.0
+fix 1 all nvt temp 300.0 300.0 100.0
+thermo 10
+thermo_style custom step temp pe ke etotal press vol
+run 100

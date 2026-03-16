@@ -1,0 +1,16 @@
+
+integrator  = md
+dt          = 0.0001
+nsteps      = 100
+cutoff-scheme = Verlet
+vdw-type     = Cut-off
+rvdw         = 0.9
+coulombtype  = PME
+rcoulomb     = 0.9
+pbc          = xyz
+nstxout      = 10
+nstvout      = 0
+nstfout      = 0
+nstenergy    = 10
+tcoupl = no
+pcoupl = no

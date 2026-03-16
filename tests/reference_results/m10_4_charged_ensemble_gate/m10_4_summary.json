@@ -1,0 +1,53 @@
+[
+  {
+    "system_id": "dense_salt_polymer",
+    "duration_ps": 100.0,
+    "gmx": {
+      "potential_energy": {
+        "mean": -26604.99205677624,
+        "sem": 58.99021667615432,
+        "status": "failed / unstable"
+      },
+      "temperature": {
+        "mean": 298.99712710689306,
+        "sem": 0.6646376938660981,
+        "status": "converged enough"
+      },
+      "volume": {
+        "mean": 7.312274885114873,
+        "sem": 0.5101356540504708,
+        "status": "failed / unstable"
+      },
+      "density": {
+        "mean": 1026.368045457542,
+        "sem": 79.49831497105563,
+        "status": "failed / unstable"
+      }
+    },
+    "lmp": {
+      "potential_energy": {
+        "mean": -26580.004936985195,
+        "sem": 36.96295633803626,
+        "status": "trending but not converged"
+      },
+      "temperature": {
+        "mean": 299.5165710678642,
+        "sem": 0.4187655978219012,
+        "status": "converged enough"
+      },
+      "volume": {
+        "mean": 4.570955738123754,
+        "sem": 0.018923524573228368,
+        "status": "converged enough"
+      },
+      "density": {
+        "mean": 1594.566488822355,
+        "sem": 6.594640133307839,
+        "status": "converged enough"
+      }
+    },
+    "density_parity_rel_diff": 0.5536010653093915,
+    "volume_parity_rel_diff": 0.3748927919232695,
+    "parity_status": "partial"
+  }
+]

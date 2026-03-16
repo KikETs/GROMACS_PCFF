@@ -1,8 +1,8 @@
 ; deterministic PT6 GROMACS emitter output
 ; component_family=lithium_cation
 ; typed_ir_sha256=4948b5e4bdc8942e84223be7b697073e288431584595bf020e47663355195300
-; typing_report_sha256=3a006cead3dfc7f268bafb049ad7f2ae0759ba063412f06285d4f7c1cf07297d
-; bonded_assignment_sha256=ee1b46374e32be0df28f3eb3e24585abee0dc8f04d7c7e2b3327500b38825dce
+; typing_report_sha256=9be07197f02aae70ac6464ae9c42bc1d2771fb1925e083b909503aacc052a4dd
+; bonded_assignment_sha256=6add43737a79172583fee09c97b457c27d22a5e8901287bec6a480f040b39973
 
 [ defaults ]
 ; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow

@@ -1,0 +1,26 @@
+[
+  {
+    "system_id": "angle_toy",
+    "lammps_pe_kcal": 3.8189007,
+    "lammps_pe_kj": 15.978280528800001,
+    "gromacs_pe_kj": 16.0754,
+    "difference_kj": 0.09711947119999742,
+    "status": "pass"
+  },
+  {
+    "system_id": "dihedral_toy",
+    "lammps_pe_kcal": 27.626426,
+    "lammps_pe_kj": 115.588966384,
+    "gromacs_pe_kj": 115.589,
+    "difference_kj": 3.361599999607279e-05,
+    "status": "pass"
+  },
+  {
+    "system_id": "improper_toy",
+    "lammps_pe_kcal": 142.91463,
+    "lammps_pe_kj": 597.95481192,
+    "gromacs_pe_kj": 597.951,
+    "difference_kj": 0.0038119199999755438,
+    "status": "pass"
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "milestone": "TP1.4",
+  "status": "FAIL",
+  "suspicion_level": "CONFIRMED",
+  "key_findings": [
+    "PME split for dispersion is mathematically inconsistent in this build.",
+    "9-6 repulsion mixing rule is hijacked by Geometric rule when PME is enabled.",
+    "Hard-coded block in mdrun prevents usage of legitimate PCFF 9-6 PME path."
+  ],
+  "link_to_tp1_3": "STRONG. Systematic force errors of this magnitude (170% drift) are sufficient to cause thermal runaway in dense systems.",
+  "recommended_action": "Mathematically reconcile PME prefactors and remove 9-6 block in mdrun."
+}

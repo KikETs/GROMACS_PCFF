@@ -1,0 +1,36 @@
+# This file was created Sun Mar 15 23:09:54 2026
+# Created by:
+#   :-) GROMACS - gmx energy, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+# 
+# Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+# Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+# Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/tp1_charged_recovery/dense_salt_polymer
+# Command line:
+#   gmx energy -f tp1_equil.edr -o energy.xvg
+# gmx energy is part of G R O M A C S:
+#
+# Green Red Orange Magenta Azure Cyan Skyblue
+#
+@    title "GROMACS Energies"
+@    xaxis  label "Time (ps)"
+@    yaxis  label "(kJ/mol), (K)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "Potential"
+@ s1 legend "Temperature"
+    0.000000  -25155.302734  298.570831
+    1.000000  -25535.005859  412.127686
+    2.000000  -25557.806641  418.592896
+    3.000000  -25616.755859  436.360931
+    4.000000  -25497.589844  400.849060
+    5.000000  -25690.146484  458.269836
+    6.000000  -25620.166016  437.453247
+    7.000000  -25622.882812  438.337799
+    8.000000  -25769.107422  481.835297
+    9.000000  -25755.406250  477.937531
+   10.000000  -25756.189453  478.227875

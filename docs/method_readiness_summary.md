@@ -35,6 +35,18 @@ Direct evidence:
 - chain-size parity claims
 - final candidate selection based on the current screening outputs
 
+## Transport Protocol (TP) Status
+
+The TP milestone set is currently blocked by the audit failure of TP1.
+
+### TP1 — Charged Long-Equilibration Recovery
+- **Status:** **FAIL / NOT VERIFIED** (Milestone TP1.1 in progress for record repair).
+- **Audit Findings:**
+  - Raw logs and energy files are missing for the reported 5 ns run.
+  - System identity mismatch: claimed 2,500-atom LiTFSI system, but actual system is 270-atom Na/Cl polymer.
+  - No runner script found in the repository.
+- **Requirement:** A full TP1.2 rerun is mandatory to restore the integrity of the transport-validation thread.
+
 ## Remaining Blocking Gaps
 
 - no paired system currently passes the GROMACS PCFF provenance gate

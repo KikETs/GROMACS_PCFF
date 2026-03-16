@@ -1,0 +1,98 @@
+LAMMPS (10 Sep 2025 - Development - patch_10Sep2025-660-g792d014343)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2 9.0
+pair_modify mix sixthpower
+bond_style class2
+angle_style class2
+dihedral_style none
+improper_style none
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+neighbor 2.0 bin
+neigh_modify every 1 delay 0 check no
+
+read_data system.data
+Reading data file ...
+  orthogonal box = (-5 -5 -5) to (5 5 5)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  3 atoms
+  scanning bonds ...
+  1 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  orthogonal box = (-5 -5 -5) to (5 5 5)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  2 bonds
+  reading angles ...
+  1 angles
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     2 = max # of 1-2 neighbors
+     1 = max # of 1-3 neighbors
+     2 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.001 seconds
+
+pair_coeff 1 1 0.0 3.50
+bond_coeff 1 1.42 200.0 -25.0 6.0
+angle_coeff 1 109.5 35.0 -4.0 1.2
+angle_coeff 1 bb 8.0 1.42 1.42
+angle_coeff 1 ba 3.0 2.5 1.42 1.42
+
+thermo_style custom step pe
+dump 1 all custom 1 forces.lammps id fx fy fz
+dump_modify 1 sort id
+run 0
+WARNING: No fixes with time integration, atoms won't move
+For more information see https://docs.lammps.org/err0028 (src/lammps/src/verlet.cpp:60)
+Generated 0 of 0 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = no
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 11
+  ghost atom cutoff = 11
+  binsize = 5.5, bins = 2 2 2
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/class2, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 5.835 | 5.835 | 5.835 Mbytes
+   Step         PotEng    
+         0   3.8189007    
+Loop time of 4.1e-07 on 1 procs for 0 steps with 3 atoms
+
+0.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Bond    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 4.1e-07    |            |       |100.00
+
+Nlocal:              3 ave           3 max           3 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:             78 ave          78 max          78 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:             23 ave          23 max          23 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 23
+Ave neighs/atom = 7.6666667
+Ave special neighs/atom = 2
+Neighbor list builds = 0
+Dangerous builds not checked
+Total wall time: 0:00:00

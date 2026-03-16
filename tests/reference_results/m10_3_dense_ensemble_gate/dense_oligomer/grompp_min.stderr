@@ -1,0 +1,72 @@
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_3_dense_ensemble_gate/dense_oligomer
+Command line:
+  gmx grompp -f min.mdp -c system.gro -p system.top -o min.tpr -maxwarn 10
+
+
+NOTE 1 [file min.mdp]:
+  You have set rlist larger than the interaction cut-off, but you also have
+  verlet-buffer-tolerance > 0. Will set rlist using
+  verlet-buffer-tolerance.
+
+Generating 1-4 interactions: fudge = 1
+atom name 7 in system.top and system.gro does not match (A1 - A7)
+
+atom name 8 in system.top and system.gro does not match (A2 - A8)
+
+atom name 9 in system.top and system.gro does not match (A3 - A9)
+
+atom name 10 in system.top and system.gro does not match (A4 - A10)
+
+atom name 11 in system.top and system.gro does not match (A5 - A11)
+
+atom name 12 in system.top and system.gro does not match (A6 - A12)
+
+atom name 13 in system.top and system.gro does not match (A1 - A13)
+
+atom name 14 in system.top and system.gro does not match (A2 - A14)
+
+atom name 15 in system.top and system.gro does not match (A3 - A15)
+
+atom name 16 in system.top and system.gro does not match (A4 - A16)
+
+atom name 17 in system.top and system.gro does not match (A5 - A17)
+
+atom name 18 in system.top and system.gro does not match (A6 - A18)
+
+atom name 19 in system.top and system.gro does not match (A1 - A19)
+
+atom name 20 in system.top and system.gro does not match (A2 - A20)
+
+atom name 21 in system.top and system.gro does not match (A3 - A21)
+
+atom name 22 in system.top and system.gro does not match (A4 - A22)
+
+atom name 23 in system.top and system.gro does not match (A5 - A23)
+
+atom name 24 in system.top and system.gro does not match (A6 - A24)
+
+atom name 25 in system.top and system.gro does not match (A1 - A25)
+
+atom name 26 in system.top and system.gro does not match (A2 - A26)
+
+(more than 20 non-matching atom names)
+
+WARNING 1 [file system.top, line 55]:
+  378 non-matching atom names
+  atom names from system.top will be used
+  atom names from system.gro will be ignored
+
+
+Number of degrees of freedom in T-Coupling group rest is 1149.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+There was 1 NOTE
+
+There was 1 WARNING
+
+GROMACS reminds you: "Why is it that programmers always confuse Halloween with Christmas? Because 31 OCT = 25 DEC." (Anonymous)
+

@@ -1,0 +1,8 @@
+{
+  "system_id": "dihedral_toy",
+  "energy_diff_kj": 3.361599999607279e-05,
+  "max_force_diff": 0.005231999999978143,
+  "rms_force_diff": 0.00204445590479809,
+  "relative_force_diff": 1.6185780463703688e-06,
+  "status": "pass"
+}

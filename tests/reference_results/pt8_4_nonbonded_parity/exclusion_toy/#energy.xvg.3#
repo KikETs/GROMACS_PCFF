@@ -1,0 +1,25 @@
+# This file was created Sat Mar 14 19:16:46 2026
+# Created by:
+#   :-) GROMACS - gmx energy, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+# 
+# Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+# Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+# Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_4_nonbonded_parity/exclusion_toy
+# Command line:
+#   gmx energy -f ener.edr -o energy.xvg
+# gmx energy is part of G R O M A C S:
+#
+# Giant Rising Ordinary Mutants for A Clerical Setup
+#
+@    title "GROMACS Energies"
+@    xaxis  label "Time (ps)"
+@    yaxis  label "(kJ/mol)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "Potential"
+    0.000000   -0.095356

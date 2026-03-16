@@ -1,0 +1,28 @@
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_0_short_workflow/small_oligomer
+Command line:
+  gmx grompp -f equil.mdp -c min.gro -p system.top -o equil.tpr -maxwarn 10
+
+
+NOTE 1 [file equil.mdp]:
+  You have set rlist larger than the interaction cut-off, but you also have
+  verlet-buffer-tolerance > 0. Will set rlist using
+  verlet-buffer-tolerance.
+
+Generating 1-4 interactions: fudge = 1
+Number of degrees of freedom in T-Coupling group System is 15.00
+
+NOTE 2 [file equil.mdp]:
+  The optimal PME mesh load for parallel simulations is below 0.5
+  and for highly parallel simulations between 0.25 and 0.33,
+  for higher performance, increase the cut-off and the PME grid spacing.
+
+
+
+There were 2 NOTEs
+
+GROMACS reminds you: "The most likely way for the world to be destroyed, most experts agree, is by accident. That's where we come in; we're computer professionals. We cause accidents." (Nathaniel Borenstein)
+

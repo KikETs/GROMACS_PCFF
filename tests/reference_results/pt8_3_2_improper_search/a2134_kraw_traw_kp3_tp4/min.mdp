@@ -1,0 +1,4 @@
+integrator=md
+nsteps=0
+cutoff-scheme=Verlet
+nstfout=1

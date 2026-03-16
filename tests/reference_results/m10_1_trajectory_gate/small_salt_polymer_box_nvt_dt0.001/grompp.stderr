@@ -1,0 +1,44 @@
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_1_trajectory_gate/small_salt_polymer_box_nvt_dt0.001
+Command line:
+  gmx grompp -f run.mdp -c system.gro -p system.top -o run.tpr -maxwarn 10
+
+
+NOTE 1 [file run.mdp]:
+  You have set rlist larger than the interaction cut-off, but you also have
+  verlet-buffer-tolerance > 0. Will set rlist using
+  verlet-buffer-tolerance.
+
+
+NOTE 2 [file run.mdp]:
+  Setting nstcalcenergy (100) equal to nstenergy (10)
+
+Generating 1-4 interactions: fudge = 1
+atom name 9 in system.top and system.gro does not match (A1 - A9)
+
+atom name 10 in system.top and system.gro does not match (A1 - A10)
+
+WARNING 1 [file system.top, line 85]:
+  2 non-matching atom names
+  atom names from system.top will be used
+  atom names from system.gro will be ignored
+
+
+Number of degrees of freedom in T-Coupling group System is 27.00
+
+NOTE 3 [file run.mdp]:
+  The optimal PME mesh load for parallel simulations is below 0.5
+  and for highly parallel simulations between 0.25 and 0.33,
+  for higher performance, increase the cut-off and the PME grid spacing.
+
+
+
+There were 3 NOTEs
+
+There was 1 WARNING
+
+GROMACS reminds you: "I have no responsibility to live up to what others expect of me. That's their mistake, not my failing." (Richard Feynman)
+

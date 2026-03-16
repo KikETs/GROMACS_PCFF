@@ -1,8 +1,8 @@
 ; deterministic PT6 GROMACS emitter output
 ; component_family=tfsi_like_sulfonimide
 ; typed_ir_sha256=96bfbb7db1829bd21bcd55798d52b0cca3b43d7db3f06ac00423752fe64e6789
-; typing_report_sha256=5dabd670561d434618649a74e66d966233e814320be2ffae2831601e7efc3284
-; bonded_assignment_sha256=13cf7ad057031fdadbdd5fab9e2a83e2543ed71ce463424eade4460eac748369
+; typing_report_sha256=222c6dfb1dd5e7f3039762d2d6d276eb87f9679884984e74d404fe0b9b60a37f
+; bonded_assignment_sha256=d80e2d2a25eeb243d5570ace1a4701b010081cbe68aeca7cf3e67355ada0fd49
 
 [ defaults ]
 ; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow

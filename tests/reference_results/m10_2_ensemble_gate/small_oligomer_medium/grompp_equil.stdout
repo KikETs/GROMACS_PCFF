@@ -1,0 +1,72 @@
+Setting the LD random seed to 1278960779
+
+Generated 3 of the 3 non-bonded parameter combinations
+
+Generated 3 of the 3 1-4 parameter combinations
+
+Excluding 3 bonded neighbours molecule type 'OLI'
+
+atom name 7 in system.top and system.gro does not match (A1 - A7)
+
+atom name 8 in system.top and system.gro does not match (A2 - A8)
+
+atom name 9 in system.top and system.gro does not match (A3 - A9)
+
+atom name 10 in system.top and system.gro does not match (A4 - A10)
+
+atom name 11 in system.top and system.gro does not match (A5 - A11)
+
+atom name 12 in system.top and system.gro does not match (A6 - A12)
+
+atom name 13 in system.top and system.gro does not match (A1 - A13)
+
+atom name 14 in system.top and system.gro does not match (A2 - A14)
+
+atom name 15 in system.top and system.gro does not match (A3 - A15)
+
+atom name 16 in system.top and system.gro does not match (A4 - A16)
+
+atom name 17 in system.top and system.gro does not match (A5 - A17)
+
+atom name 18 in system.top and system.gro does not match (A6 - A18)
+
+atom name 19 in system.top and system.gro does not match (A1 - A19)
+
+atom name 20 in system.top and system.gro does not match (A2 - A20)
+
+atom name 21 in system.top and system.gro does not match (A3 - A21)
+
+atom name 22 in system.top and system.gro does not match (A4 - A22)
+
+atom name 23 in system.top and system.gro does not match (A5 - A23)
+
+atom name 24 in system.top and system.gro does not match (A6 - A24)
+
+atom name 25 in system.top and system.gro does not match (A1 - A25)
+
+atom name 26 in system.top and system.gro does not match (A2 - A26)
+
+(more than 20 non-matching atom names)
+
+Setting gen_seed to 756404681
+
+Velocities were taken from a Maxwell distribution at 300 K
+Analysing residue names:
+There are:    64      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.418 nm between atom 51 and 54
+
+Determining Verlet buffer for a tolerance of 0.005 kJ/mol/ps at 300 K
+
+Calculated rlist for 1x1 atom pair-list as 1.200 nm, buffer size 0.000 nm
+
+Set rlist, assuming 4x4 atom pair-list, to 1.200 nm, buffer size 0.000 nm
+
+Note that mdrun will redetermine rlist based on the actual pair-list setup
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 72x72x72, spacing 0.111 0.111 0.111
+
+Estimate for the relative computational load of the PME mesh part: 0.98
+
+This run will generate roughly 0 Mb of data

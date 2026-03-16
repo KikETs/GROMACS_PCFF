@@ -1,0 +1,25 @@
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2 10.0
+pair_modify mix sixthpower
+bond_style class2
+angle_style class2
+dihedral_style class2
+improper_style none
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+
+read_data system.data
+
+pair_coeff 1 1 0.05 3.5
+bond_coeff 1 1.5 0.0 0.0 0.0
+angle_coeff 1 180.0 0.0 0.0 0.0
+angle_coeff 1 bb 0.0 1.5 1.5
+angle_coeff 1 ba 0.0 0.0 1.5 1.5
+dihedral_coeff 1 0.0 0.0 0.0 0.0 0.0 0.0
+dihedral_coeff 1 mbt 0.0 0.0 0.0 1.5
+dihedral_coeff 1 ebt 0.0 0.0 0.0 0.0 0.0 0.0 1.5 1.5
+dihedral_coeff 1 at 0.0 0.0 0.0 0.0 0.0 0.0 180.0 180.0
+dihedral_coeff 1 aat 0.0 180.0 180.0
+dihedral_coeff 1 bb13 0.0 1.5 1.5

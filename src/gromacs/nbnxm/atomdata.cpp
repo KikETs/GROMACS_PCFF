@@ -398,6 +398,17 @@ static void set_lj_parameter_data(nbnxn_atomdata_t::Params* params, gmx_bool bSI
             }
             break;
         case LJCombinationRule::None:
+            if (usingLJPme)
+            {
+                for (int i = 0; i < nt; i++)
+                {
+                    /* PCFF 9-6: dispersion follows geometric rules, repulsion does not.
+                     * For PME we only need the dispersion grid parameters (sqrt(6*C6)).
+                     */
+                    params->nbfp_comb[i * 2]     = std::sqrt(params->nbfp[(i * nt + i) * 2]);
+                    params->nbfp_comb[i * 2 + 1] = 0;
+                }
+            }
             /* We always store the full matrix (see code above) */
             break;
         default: gmx_incons("Unknown combination rule");
@@ -635,6 +646,13 @@ static void nbnxn_atomdata_params_init(const MDLogger&                         m
     if (usingLJPme || ljCombinationRule)
     {
         params->ljCombinationRule = (usingLJPme ? pmeLJCombinationRule : ljCombinationRule.value());
+        /* If using PME, we might still have a mismatch for the overall potential (e.g. PCFF 9-6).
+         * In that case we must use the full matrix (LJCombinationRule::None) for pairs.
+         */
+        if (usingLJPme && !bCombGeom && params->ljCombinationRule == LJCombinationRule::Geometric)
+        {
+            params->ljCombinationRule = LJCombinationRule::None;
+        }
     }
     else
     {

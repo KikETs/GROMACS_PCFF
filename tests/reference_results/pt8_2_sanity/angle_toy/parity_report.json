@@ -1,0 +1,8 @@
+{
+  "system_id": "angle_toy",
+  "lammps_pe_kcal": 3.8189007,
+  "lammps_pe_kj": 15.978280528800001,
+  "gromacs_pe_kj": 16.0754,
+  "difference_kj": 0.09711947119999742,
+  "status": "pass"
+}

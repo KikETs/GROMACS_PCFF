@@ -1,0 +1,8 @@
+{
+  "system_id": "dihedral_toy",
+  "lammps_pe_kcal": 27.626426,
+  "lammps_pe_kj": 115.588966384,
+  "gromacs_pe_kj": 115.589,
+  "difference_kj": 3.361599999607279e-05,
+  "status": "pass"
+}

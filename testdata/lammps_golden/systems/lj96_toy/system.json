@@ -1,0 +1,21 @@
+{
+  "id": "lj96_toy",
+  "display_name": "LJ 9-6 Toy",
+  "category": "toy",
+  "description": "Two atoms interacting via LJ 9-6 potential",
+  "reference_terms": [
+    "pair_style lj/class2"
+  ],
+  "styles": {
+    "units": "real",
+    "atom_style": "full",
+    "bond_style": "none",
+    "angle_style": "none",
+    "dihedral_style": "none",
+    "improper_style": "none",
+    "pair_style": "lj/class2",
+    "pair_modify": "mix sixthpower",
+    "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "kspace_style": null
+  }
+}

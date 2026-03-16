@@ -1,0 +1,25 @@
+
+integrator              = md
+dt                      = 0.001
+nsteps                  = 500000
+cutoff-scheme           = Verlet
+rcoulomb                = 0.9
+rvdw                    = 0.9
+coulombtype             = PME
+pme_order               = 4
+fourierspacing          = 0.12
+ewald_rtol              = 1e-5
+vdw-type                = Cut-off
+DispCorr                = no
+tcouple                 = v-rescale
+tc-grps                 = System
+tau_t                   = 0.5
+ref_t                   = 300
+pcouple                 = no
+pcoupletype             = isotropic
+tau_p                   = 5.0
+compressibility         = 4.5e-5
+ref_p                   = 1.0
+gen_vel                 = yes
+gen_temp                = 300
+gen_seed                = -1

@@ -1,0 +1,26 @@
+[
+  {
+    "file": "src/gromacs/listed_forces/bonded.cpp",
+    "function": "dihedral_class2",
+    "role": "Evaluates Bond-Torsion, Angle-Torsion, Angle-Angle-Torsion cross terms.",
+    "suspicion": "Extremely complex logic;容易出错 in derivatives or virial."
+  },
+  {
+    "file": "src/gromacs/listed_forces/bonded.cpp",
+    "function": "improper_class2",
+    "role": "Evaluates improper torsion and Angle-Angle cross terms.",
+    "suspicion": "Uses average of 3 Wilson angles; complexity in derivatives."
+  },
+  {
+    "file": "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
+    "function": "Plain-C LJ loop",
+    "role": "Evaluates nonbonded interactions for repulsionPower != 12.",
+    "suspicion": "Used for 9-6 repulsion; might have exclusion mask bugs."
+  },
+  {
+    "file": "src/gromacs/tables/forcetable.cpp",
+    "function": "fill_table",
+    "role": "Generates tables for nonbonded pairs.",
+    "suspicion": "Accuracy of tabulated 9-6 repulsion."
+  }
+]

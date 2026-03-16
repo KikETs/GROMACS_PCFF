@@ -1,0 +1,34 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_2_1_convergence_gate/small_oligomer_medium_100ps
+Command line:
+  gmx mdrun -s run.tpr -c out.gro -e run.edr -g run.log -nt 12
+
+Reading file run.tpr, VERSION 2027.0-dev-20260314-dc4101b27b-dirty-unknown (single precision)
+Changing nstlist from 10 to 100, rlist from 1.2 to 1.2
+
+Using 1 MPI thread
+Using 12 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: The number of threads is not equal to the number of (logical) cpus
+      and the -pin option is set to auto: will not pin threads to cpus.
+      This can lead to significant performance degradation.
+      Consider using -pin on (and -pinoffset in case you run multiple jobs).
+starting mdrun 'small_oligomer'
+50000 steps,    100.0 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:      300.928       25.077     1200.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      344.540        0.070        0.502            0.766 
+
+GROMACS reminds you: "God is a DJ" (Faithless)
+

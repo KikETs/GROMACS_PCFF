@@ -1,0 +1,32 @@
+[ defaults ]
+; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow
+1 4 yes 1.0 1.0 9.0
+
+[ atomtypes ]
+; name mass charge ptype sigma epsilon
+T1       12.011 0.0 A 0.35000000 0.20920000
+T2       1.008 0.0 A 0.40000000 0.41840000
+
+[ moleculetype ]
+; Name nrexcl
+TOY1 1
+
+[ atoms ]
+; nr type resnr residue atom cgnr charge mass
+  1 T1         1 TOY1   A1       1  0.00000000  12.011000
+
+[ moleculetype ]
+; Name nrexcl
+TOY2 1
+
+[ atoms ]
+; nr type resnr residue atom cgnr charge mass
+  1 T2         1 TOY2   A1       1  0.00000000  1.008000
+
+[ system ]
+mixing_toy
+
+[ molecules ]
+; Name number
+TOY1 1
+TOY2 1

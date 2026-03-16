@@ -133,8 +133,8 @@
                 frLJ         = FrLJ12 - FrLJ6;
                 /* 7 flops for r^-2 + LJ force */
 #    if defined CALC_ENERGIES || defined LJ_POT_SWITCH
-                VLJ = (FrLJ12 + c12 * ic.vdw.repulsionShift.cpot) / repulsionPower
-                      - (FrLJ6 + c6 * ic.vdw.dispersionShift.cpot) / 6;
+                VLJ = (FrLJ12 + interact * c12 * ic.vdw.repulsionShift.cpot) / repulsionPower
+                      - (FrLJ6 + interact * c6 * ic.vdw.dispersionShift.cpot) / 6;
                 /* 7 flops for LJ energy */
 #    endif
 #endif
@@ -258,10 +258,10 @@
             const real qq = skipmask * qi[i] * q[aj];
 
 #    ifdef CALC_COUL_RF
-            real fcoul = qq * (interact * rinv * rinvsq - k_rf2);
+            real fcoul = qq * (interact * (rinv * rinvsq - k_rf2));
             /* 4 flops for RF force */
 #        ifdef CALC_ENERGIES
-            real vcoul = qq * (interact * rinv + reactionFieldCoefficient * rsq - reactionFieldShift);
+            real vcoul = qq * interact * (rinv + reactionFieldCoefficient * rsq - reactionFieldShift);
             /* 4 flops for RF energy */
 #        endif
 #    endif
@@ -277,18 +277,18 @@
             /* fexcl = (1-frac) * F_i + frac * F_(i+1) */
             const real fexcl = (1 - frac) * tab_coul_F[ri] + frac * tab_coul_F[ri + 1];
 #        endif
-            real fcoul = interact * rinvsq - fexcl;
+            real fcoul = interact * (rinvsq - fexcl);
             /* 7 flops for float 1/r-table force */
 #        ifdef CALC_ENERGIES
 #            if !GMX_DOUBLE
             real vcoul =
-                    qq
-                    * (interact * (rinv - ic.coulomb.ewaldShift)
+                    qq * interact
+                    * (rinv - ic.coulomb.ewaldShift
                        - (tab_coul_FDV0[ri * 4 + 2] - halfsp * frac * (tab_coul_FDV0[ri * 4] + fexcl)));
             /* 7 flops for float 1/r-table energy (8 with excls) */
 #            else
-            real vcoul = qq
-                         * (interact * (rinv - ic.coulomb.ewaldShift)
+            real vcoul = qq * interact
+                         * (rinv - ic.coulomb.ewaldShift
                             - (tab_coul_V[ri] - halfsp * frac * (tab_coul_F[ri] + fexcl)));
 #            endif
 #        endif

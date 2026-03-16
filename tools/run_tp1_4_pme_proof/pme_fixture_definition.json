@@ -1,0 +1,35 @@
+{
+  "system_id": "tp1_4_pme_proof",
+  "display_name": "TP1.4 PME/SixthPower Proof Fixture",
+  "atom_types": [
+    {
+      "label": "T1",
+      "mass_amu": 12.011,
+      "sigma_nm": 0.35,
+      "epsilon_kj_mol": 0.3
+    }
+  ],
+  "atoms": [
+    {
+      "type": "T1",
+      "charge": 0.0,
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    {
+      "type": "T1",
+      "charge": 0.0,
+      "x": 0.5,
+      "y": 0.0,
+      "z": 0.0
+    }
+  ],
+  "box_nm": [3.0, 3.0, 3.0],
+  "pme_params": {
+    "vdwtype": "PME",
+    "ljpme_combination_rule": "Geom",
+    "rvdw": 1.0,
+    "ewald_rtol_lj": 1e-5
+  }
+}

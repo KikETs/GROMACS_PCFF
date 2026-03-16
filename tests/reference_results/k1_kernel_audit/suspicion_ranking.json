@@ -1,0 +1,22 @@
+[
+  {
+    "mode": "PME / SixthPower Grid Inconsistency",
+    "probability": "High",
+    "rationale": "LongRangeVdW enum lacks SixthPower entry. PME grid part likely defaults to Lorentz-Berthelot, which assumes 12-6 parameters and mixing. This causes a mismatch between real-space and reciprocal-space at the cutoff, leading to energy injection."
+  },
+  {
+    "mode": "Exclusion Mask Handling in Plain-C Kernels",
+    "probability": "Medium",
+    "rationale": "9-6 repulsion disables SIMD and falls back to plain-C kernels. These kernels might have a bug in handling exclusion masks for large systems that was not captured by the 4-atom fixture."
+  },
+  {
+    "mode": "Missing fshift in Reference Non-bonded Kernel",
+    "probability": "Medium (High for NPT)",
+    "rationale": "kernel_ref_inner.h used for n!=12 does not update fshift vectors. This leads to an incorrect virial tensor for grid-based non-bonded interactions in periodic systems, causing massive pressure instability."
+  },
+  {
+    "mode": "Hardcoded HIP Kernel for Non-12 Repulsion",
+    "probability": "High (AMD only)",
+    "rationale": "nbnxm_hip_kernel_body.h has hardcoded 1/12 factors and r^-12 forces. This is fundamentally wrong for 9-6 systems and will cause severe force/energy errors on AMD hardware."
+  }
+]

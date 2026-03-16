@@ -1,0 +1,18 @@
+{
+  "milestone": "TP1.1",
+  "goal": "Evidence Recovery & Documentation Repair",
+  "completion_date": "2026-03-15",
+  "status": "PASS",
+  "actions_taken": [
+    "Audit and repair documentation (validation_report_tp1.md, tp1_charged_long_equilibration_recovery.md, method_readiness_summary.md)",
+    "Corrected system identity (dense_salt_polymer, 270-atom Na/Cl polymer)",
+    "Downgraded unsupported success claims (recovery_summary.json status changed to FAIL/UNTRUSTED)",
+    "Created artifact contract for future rerun (tp1_2_artifact_contract.md)",
+    "Added rerun scaffold (tools/run_tp1_2_charged_recovery/)"
+  ],
+  "unresolved_missing_evidence": [
+    "Raw logs and energy files for the original 5 ns run are permanently lost."
+  ],
+  "tp1_current_status": "FAIL / NOT VERIFIED",
+  "rerun_requirement": "TP1.2 mandatory"
+}

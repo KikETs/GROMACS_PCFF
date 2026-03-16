@@ -1,0 +1,33 @@
+[ defaults ]
+; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow
+1 4 yes 1.0 1.0 9.0
+
+[ atomtypes ]
+; name mass charge ptype sigma epsilon
+T1       12.011 0.0 A 0.35000000 0.00000000
+
+[ moleculetype ]
+; Name nrexcl
+ANGL 3
+
+[ atoms ]
+; nr type resnr residue atom cgnr charge mass
+  1 T1         1 ANGL   A1       1  0.00000000  12.011000
+  2 T1         1 ANGL   A2       2  0.00000000  12.011000
+  3 T1         1 ANGL   A3       3  0.00000000  12.011000
+
+[ bonds ]
+; ai aj funct c0 c1 c2 c3
+  1   2 11 0.14200000 83680.00000000 -104600.00000000 251040.00000000
+  2   3 11 0.14200000 83680.00000000 -104600.00000000 251040.00000000
+
+[ angles ]
+; ai aj ak funct c0..c10
+  1   2   3 11 109.50000000 146.44000000 -16.73600000 5.02080000 3347.20000000 0.14200000 0.14200000 125.52000000 104.60000000 0.14200000 0.14200000
+
+[ system ]
+angle_toy
+
+[ molecules ]
+; Name number
+ANGL 1

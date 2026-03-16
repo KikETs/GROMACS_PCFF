@@ -1,0 +1,36 @@
+[
+  {
+    "system_id": "small_oligomer",
+    "stages": {
+      "min": {
+        "status": "pass",
+        "stability": "Stable"
+      },
+      "equil": {
+        "status": "pass",
+        "stability": "Stable"
+      },
+      "prod": {
+        "status": "pass",
+        "stability": "Stable"
+      }
+    }
+  },
+  {
+    "system_id": "small_salt_polymer_box",
+    "stages": {
+      "min": {
+        "status": "pass",
+        "stability": "Stable"
+      },
+      "equil": {
+        "status": "pass",
+        "stability": "Stable"
+      },
+      "prod": {
+        "status": "pass",
+        "stability": "Stable"
+      }
+    }
+  }
+]

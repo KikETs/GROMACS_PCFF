@@ -891,9 +891,9 @@ void init_forcerec(FILE*                            fplog,
 
     if (!gmx_within_tol(interactionConst->vdw.repulsionPower, 12.0, 10 * GMX_DOUBLE_EPS))
     {
-        if (usingLJPme(interactionConst->vdw.type))
+        if (usingLJPme(interactionConst->vdw.type) && !gmx_within_tol(interactionConst->vdw.repulsionPower, 9.0, 10 * GMX_DOUBLE_EPS))
         {
-            gmx_fatal(FARGS, "Only LJ repulsion power 12 is supported with LJ-PME");
+            gmx_fatal(FARGS, "Only LJ repulsion power 12 or 9 is supported with LJ-PME in this build");
         }
         if (inputrec.eDispCorr != DispersionCorrectionType::No)
         {

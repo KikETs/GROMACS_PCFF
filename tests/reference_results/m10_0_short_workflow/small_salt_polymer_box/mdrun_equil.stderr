@@ -1,0 +1,34 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_0_short_workflow/small_salt_polymer_box
+Command line:
+  gmx mdrun -s equil.tpr -c equil.gro -e equil.edr -g equil.log -o equil.trr
+
+Reading file equil.tpr, VERSION 2027.0-dev-20260314-dc4101b27b-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Changing nstlist from 10 to 100, rlist from 0.9 to 0.9
+
+Using 1 MPI thread
+Using 16 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'small_salt_polymer_box'
+100 steps,      0.1 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.240        0.015     1593.3
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      579.765        0.041        0.149            0.067 
+
+GROMACS reminds you: "Ich Bin Ein Berliner" (J.F. Kennedy)
+

@@ -1,0 +1,18 @@
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2 10.0
+pair_modify mix sixthpower
+bond_style none
+angle_style none
+dihedral_style none
+improper_style none
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+
+read_data system.data
+
+pair_coeff 1 1 0.05 3.5
+
+thermo_style custom step pe
+run 0

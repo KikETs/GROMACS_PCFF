@@ -1,0 +1,11 @@
+{
+  "summary": "The cut-off-only path regresses more severely than PME because it triggers a 'Ghost Energy' defect in the plain-C reference kernels.",
+  "defect_mechanism": {
+    "subsystem": "Non-bonded Reference Kernels (CPU)",
+    "file": "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
+    "mechanism": "The energy shift term (reactionFieldShift) is applied based on the neighbor list inclusion (skipmask) rather than the exclusion mask (interact).",
+    "result": "Excluded pairs (bonds, angles, 1-2, 1-3) contribute a massive constant energy offset that fluctuates as the neighbor list is updated."
+  },
+  "impact_assessment": "In a dense 270-atom system, there are hundreds of excluded pairs. A -277 kJ/mol error per pair leads to an unphysical energy well of ~50,000 kJ/mol. Fluctuation of this ghost energy causes the observed thermal runaway.",
+  "comparison_to_pme": "PME kernels (SIMD) typically handle exclusions correctly by zeroing the entire interaction or using a separate correction. The reference plain-C kernel fallback (triggered by 9-6 repulsion) lacks this robustness."
+}

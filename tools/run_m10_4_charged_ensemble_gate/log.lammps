@@ -1,0 +1,159 @@
+LAMMPS (10 Sep 2025 - Development - patch_10Sep2025-660-g792d014343)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2/coul/long 9.0 9.0
+pair_modify mix sixthpower
+bond_style class2
+angle_style class2
+dihedral_style class2
+improper_style none
+kspace_style pppm 1.0e-4
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+
+read_data ../../testdata/lammps_golden/systems/small_salt_polymer_box/lammps/system.data
+Reading data file ...
+  orthogonal box = (-12 -12 -12) to (12 12 12)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  10 atoms
+  scanning bonds ...
+  1 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  scanning dihedrals ...
+  1 = max dihedrals/atom
+  orthogonal box = (-12 -12 -12) to (12 12 12)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  7 bonds
+  reading angles ...
+  6 angles
+  reading dihedrals ...
+  5 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     2 = max # of 1-2 neighbors
+     2 = max # of 1-3 neighbors
+     4 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.001 seconds
+
+pair_coeff 1 1 0.10 3.50
+pair_coeff 2 2 0.08 3.10
+pair_coeff 3 3 0.05 2.40
+pair_coeff 4 4 0.06 4.10
+bond_coeff 1 1.49 235.0 -33.0 7.5
+angle_coeff 1 111.5 31.0 -3.4 1.0
+angle_coeff 1 bb 5.2 1.49 1.49
+angle_coeff 1 ba 1.8 1.5 1.49 1.49
+dihedral_coeff 1 0.95 0.0 0.55 180.0 0.35 0.0
+dihedral_coeff 1 mbt 0.15 -0.09 0.05 1.49
+dihedral_coeff 1 ebt 0.13 -0.06 0.03 0.11 -0.04 0.02 1.49 1.49
+dihedral_coeff 1 at 0.05 -0.03 0.02 0.04 -0.02 0.01 111.5 111.5
+dihedral_coeff 1 aat 0.24 111.5 111.5
+dihedral_coeff 1 bb13 0.17 1.49 1.49
+
+replicate 3 3 3
+Replication is creating a 3x3x3 = 27 times larger system...
+  orthogonal box = (-12 -12 -12) to (60 60 60)
+  1 by 1 by 1 MPI processor grid
+  270 atoms
+  189 bonds
+  162 angles
+  135 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     2 = max # of 1-2 neighbors
+     2 = max # of 1-3 neighbors
+     4 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  replicate CPU = 0.001 seconds
+# Squash to 22A box (-11 to 11)
+change_box all x final -11 11 y final -11 11 z final -11 11 remap
+Changing box ...
+  orthogonal box = (-11 -12 -12) to (11 60 60)
+  orthogonal box = (-11 -11 -12) to (11 11 60)
+  orthogonal box = (-11 -11 -11) to (11 11 11)
+minimize 1.0e-4 1.0e-6 100 1000
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.28818131
+  grid = 12 12 12
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.013854549
+  estimated relative force accuracy = 4.1722564e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 6859 1728
+Generated 6 of 6 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 11
+  ghost atom cutoff = 11
+  binsize = 5.5, bins = 4 4 4
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/class2/coul/long, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 8.943 | 8.943 | 8.943 Mbytes
+   Step          Temp          E_pair         E_mol          TotEng         Press     
+         0   0              115390.27      48827.236      164217.51      2538993.6    
+        70   0             -5577.8538      204.27873     -5373.5751     -622.23347    
+Loop time of 0.0262858 on 1 procs for 70 steps with 270 atoms
+
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+      164217.510643615  -5373.33656392607  -5373.57512437742
+  Force two-norm initial, final = 73830.885 12.106424
+  Force max component initial, final = 6121.3889 1.0382084
+  Final line search alpha, max atom move = 0.045405429 0.047140297
+  Iterations, force evaluations = 70 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.014392   | 0.014392   | 0.014392   |   0.0 | 54.75
+Bond    | 0.003151   | 0.003151   | 0.003151   |   0.0 | 11.99
+Kspace  | 0.0072228  | 0.0072228  | 0.0072228  |   0.0 | 27.48
+Neigh   | 0.00089447 | 0.00089447 | 0.00089447 |   0.0 |  3.40
+Comm    | 0.00035579 | 0.00035579 | 0.00035579 |   0.0 |  1.35
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.0002702  |            |       |  1.03
+
+Nlocal:            270 ave         270 max         270 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           1890 ave        1890 max        1890 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          20385 ave       20385 max       20385 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 20385
+Ave neighs/atom = 75.5
+Ave special neighs/atom = 2.6
+Neighbor list builds = 3
+Dangerous builds = 0
+write_data ../../testdata/lammps_golden/systems/dense_salt_polymer/lammps/system.data nocoeff
+System init for write_data ...
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.28818131
+  grid = 12 12 12
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.013854549
+  estimated relative force accuracy = 4.1722564e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 6859 1728
+Generated 6 of 6 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Total wall time: 0:00:00

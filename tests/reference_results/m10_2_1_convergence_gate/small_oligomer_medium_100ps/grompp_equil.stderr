@@ -1,0 +1,78 @@
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_2_1_convergence_gate/small_oligomer_medium_100ps
+Command line:
+  gmx grompp -f equil.mdp -c system.gro -p system.top -o equil.tpr -maxwarn 10
+
+
+WARNING 1 [file equil.mdp]:
+  The Berendsen barostat does not generate any strictly correct ensemble,
+  and should not be used for new production simulations (in our opinion).
+  We recommend using the C-rescale barostat instead.
+
+Generating 1-4 interactions: fudge = 1
+atom name 7 in system.top and system.gro does not match (A1 - A7)
+
+atom name 8 in system.top and system.gro does not match (A2 - A8)
+
+atom name 9 in system.top and system.gro does not match (A3 - A9)
+
+atom name 10 in system.top and system.gro does not match (A4 - A10)
+
+atom name 11 in system.top and system.gro does not match (A5 - A11)
+
+atom name 12 in system.top and system.gro does not match (A6 - A12)
+
+atom name 13 in system.top and system.gro does not match (A1 - A13)
+
+atom name 14 in system.top and system.gro does not match (A2 - A14)
+
+atom name 15 in system.top and system.gro does not match (A3 - A15)
+
+atom name 16 in system.top and system.gro does not match (A4 - A16)
+
+atom name 17 in system.top and system.gro does not match (A5 - A17)
+
+atom name 18 in system.top and system.gro does not match (A6 - A18)
+
+atom name 19 in system.top and system.gro does not match (A1 - A19)
+
+atom name 20 in system.top and system.gro does not match (A2 - A20)
+
+atom name 21 in system.top and system.gro does not match (A3 - A21)
+
+atom name 22 in system.top and system.gro does not match (A4 - A22)
+
+atom name 23 in system.top and system.gro does not match (A5 - A23)
+
+atom name 24 in system.top and system.gro does not match (A6 - A24)
+
+atom name 25 in system.top and system.gro does not match (A1 - A25)
+
+atom name 26 in system.top and system.gro does not match (A2 - A26)
+
+(more than 20 non-matching atom names)
+
+WARNING 2 [file system.top, line 55]:
+  378 non-matching atom names
+  atom names from system.top will be used
+  atom names from system.gro will be ignored
+
+
+Number of degrees of freedom in T-Coupling group System is 1149.00
+
+NOTE 1 [file equil.mdp]:
+  The optimal PME mesh load for parallel simulations is below 0.5
+  and for highly parallel simulations between 0.25 and 0.33,
+  for higher performance, increase the cut-off and the PME grid spacing.
+
+
+
+There was 1 NOTE
+
+There were 2 WARNINGs
+
+GROMACS reminds you: "The three principal virtues of a programmer are Laziness, Impatience, and Hubris" (Larry Wall)
+

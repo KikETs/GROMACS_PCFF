@@ -1,0 +1,34 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_0_short_workflow/small_oligomer
+Command line:
+  gmx mdrun -s prod.tpr -c prod.gro -e prod.edr -g prod.log -o prod.trr
+
+Reading file prod.tpr, VERSION 2027.0-dev-20260314-dc4101b27b-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Changing nstlist from 10 to 100, rlist from 0.9 to 0.9
+
+Using 1 MPI thread
+Using 16 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'small_oligomer'
+100 steps,      0.1 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.170        0.011     1594.1
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      820.231        0.029        0.105            0.057 
+
+GROMACS reminds you: "The most likely way for the world to be destroyed, most experts agree, is by accident. That's where we come in; we're computer professionals. We cause accidents." (Nathaniel Borenstein)
+

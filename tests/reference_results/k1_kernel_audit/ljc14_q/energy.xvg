@@ -1,0 +1,29 @@
+# This file was created Mon Mar 16 09:19:48 2026
+# Created by:
+#   :-) GROMACS - gmx energy, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+# 
+# Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+# Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+# Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/k1_kernel_audit/ljc14_q
+# Command line:
+#   gmx energy -f test.edr -o energy.xvg
+# gmx energy is part of G R O M A C S:
+#
+# GROup of MAchos and Cynical Suckers
+#
+@    title "GROMACS Energies"
+@    xaxis  label "Time (ps)"
+@    yaxis  label "(kJ/mol)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "Potential"
+@ s1 legend "Vir-XX"
+@ s2 legend "Vir-YY"
+@ s3 legend "Vir-ZZ"
+    0.000000  -314.825684  138.027481   12.228137   10.236501
+    0.001000  -314.912598  138.057495   12.231188   10.237082

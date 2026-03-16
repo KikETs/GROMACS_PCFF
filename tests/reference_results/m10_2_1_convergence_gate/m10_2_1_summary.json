@@ -1,0 +1,41 @@
+[
+  {
+    "system_id": "small_oligomer_medium_100ps",
+    "duration_ps": 100.0,
+    "gmx": {
+      "potential_energy": {
+        "mean": -2326.9382565269466,
+        "sem": 14.21710419222679,
+        "status": "trending but not converged"
+      },
+      "temperature": {
+        "mean": 298.48625114371276,
+        "sem": 0.5911668499997286,
+        "status": "converged enough"
+      },
+      "density": {
+        "mean": 16.29288896207586,
+        "sem": 0.028039115659533213,
+        "status": "failed / unstable"
+      }
+    },
+    "lmp": {
+      "potential_energy": {
+        "mean": -2225.24073803944,
+        "sem": 85.4328106364519,
+        "status": "converged enough"
+      },
+      "temperature": {
+        "mean": 300.921156287425,
+        "sem": 1.820814450025261,
+        "status": "converged enough"
+      },
+      "density": {
+        "mean": 42.50630283053892,
+        "sem": 18.020764395861836,
+        "status": "trending but not converged"
+      }
+    },
+    "parity_status": "partial"
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "milestone": "TP1.2",
+  "system_id": "dense_salt_polymer",
+  "equilibration_duration_ns": 3.017,
+  "status": "FAIL / UNSTABLE",
+  "failure_reason": "Thermal Runaway (T > 500K)",
+  "settings": {
+    "dt": 1.0,
+    "ensemble": "NPT",
+    "thermostat": "V-rescale",
+    "barostat": "Berendsen"
+  }
+}

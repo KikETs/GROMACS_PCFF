@@ -1,0 +1,22 @@
+{
+  "id": "exclusion_toy",
+  "display_name": "Exclusion Toy",
+  "category": "toy",
+  "description": "4 atoms in a chain to test exclusions and 1-4 interactions",
+  "reference_terms": [
+    "pair_style lj/class2",
+    "special_bonds lj/coul 0.0 0.0 1.0"
+  ],
+  "styles": {
+    "units": "real",
+    "atom_style": "full",
+    "bond_style": "class2",
+    "angle_style": "class2",
+    "dihedral_style": "class2",
+    "improper_style": "none",
+    "pair_style": "lj/class2",
+    "pair_modify": "mix sixthpower",
+    "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "kspace_style": null
+  }
+}

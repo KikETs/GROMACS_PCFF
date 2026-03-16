@@ -1,0 +1,51 @@
+{
+  "system_id": "dense_oligomer",
+  "duration_ps": 100.0,
+  "gmx": {
+    "potential_energy": {
+      "mean": -3507.858388680322,
+      "sem": 13.164439810234475,
+      "status": "trending but not converged"
+    },
+    "temperature": {
+      "mean": 299.3260263946055,
+      "sem": 0.8989255083218508,
+      "status": "converged enough"
+    },
+    "volume": {
+      "mean": 7.629862309690309,
+      "sem": 0.09450608513367242,
+      "status": "trending but not converged"
+    },
+    "density": {
+      "mean": 1088.5361253846147,
+      "sem": 12.62779373851339,
+      "status": "trending but not converged"
+    }
+  },
+  "lmp": {
+    "potential_energy": {
+      "mean": -3581.989019635607,
+      "sem": 2.347236652906714,
+      "status": "converged enough"
+    },
+    "temperature": {
+      "mean": 299.78138865269455,
+      "sem": 0.29765553098628184,
+      "status": "converged enough"
+    },
+    "volume": {
+      "mean": 7.578421200399197,
+      "sem": 0.02836126378642275,
+      "status": "converged enough"
+    },
+    "density": {
+      "mean": 1096.23340760479,
+      "sem": 4.020036722602029,
+      "status": "converged enough"
+    }
+  },
+  "density_parity_rel_diff": 0.007071223490589844,
+  "volume_parity_rel_diff": 0.006742075702438167,
+  "parity_status": "pass"
+}

@@ -1,0 +1,8 @@
+{
+  "system_id": "angle_toy",
+  "energy_diff_kj": 0.0001194711999996656,
+  "max_force_diff": 0.017336000000113927,
+  "rms_force_diff": 0.007714265508673329,
+  "relative_force_diff": 1.2246829963134885e-05,
+  "status": "pass"
+}

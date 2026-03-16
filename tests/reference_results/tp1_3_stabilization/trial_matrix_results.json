@@ -1,0 +1,100 @@
+[
+  {
+    "mean_temp": 738.020122257485,
+    "max_temp": 829.866333,
+    "final_temp": 737.177429,
+    "status": "RUNAWAY",
+    "duration": 500.0,
+    "trial_id": "TRL-0",
+    "config": {
+      "dt": 1.0,
+      "ens": "NPT",
+      "dur": 500.0,
+      "note": "Baseline"
+    }
+  },
+  {
+    "mean_temp": 732.3108157932069,
+    "max_temp": 814.400269,
+    "final_temp": 767.776001,
+    "status": "RUNAWAY",
+    "duration": 500.0,
+    "trial_id": "TRL-1",
+    "config": {
+      "dt": 0.5,
+      "ens": "NPT",
+      "dur": 500.0,
+      "note": "dt=0.5fs"
+    }
+  },
+  {
+    "mean_temp": 718.3595548403193,
+    "max_temp": 805.273804,
+    "final_temp": 750.472351,
+    "status": "RUNAWAY",
+    "duration": 500.0,
+    "trial_id": "TRL-2",
+    "config": {
+      "dt": 1.0,
+      "ens": "NVT",
+      "dur": 500.0,
+      "note": "NVT only"
+    }
+  },
+  {
+    "mean_temp": 717.279143945055,
+    "max_temp": 802.578064,
+    "final_temp": 716.842102,
+    "status": "RUNAWAY",
+    "duration": 500.0,
+    "trial_id": "TRL-3",
+    "config": {
+      "dt": 0.5,
+      "ens": "NVT",
+      "dur": 500.0,
+      "note": "NVT + dt=0.5"
+    }
+  },
+  {
+    "mean_temp": 715.2574809840319,
+    "max_temp": 788.693726,
+    "final_temp": 700.827698,
+    "status": "RUNAWAY",
+    "duration": 500.0,
+    "trial_id": "TRL-4",
+    "config": {
+      "dt": 1.0,
+      "ens": "NPT",
+      "dur": 500.0,
+      "note": "Relaxed start"
+    }
+  },
+  {
+    "mean_temp": 826.8082039700599,
+    "max_temp": 1070.383301,
+    "final_temp": 1021.742188,
+    "status": "RUNAWAY",
+    "duration": 500.0,
+    "trial_id": "TRL-5",
+    "config": {
+      "dt": 1.0,
+      "ens": "NPT",
+      "dur": 500.0,
+      "note": "Cut-off (No PME)"
+    }
+  },
+  {
+    "mean_temp": 705.6561507265469,
+    "max_temp": 795.965454,
+    "final_temp": 715.118286,
+    "status": "RUNAWAY",
+    "duration": 500.0,
+    "trial_id": "TRL-6",
+    "config": {
+      "dt": 1.0,
+      "ens": "NPT",
+      "dur": 500.0,
+      "note": "Strong Thermostat (tau=0.01)"
+    }
+  }
+]

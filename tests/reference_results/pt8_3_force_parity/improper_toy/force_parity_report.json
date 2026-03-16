@@ -1,0 +1,8 @@
+{
+  "system_id": "improper_toy",
+  "energy_diff_kj": 0.116188080000029,
+  "max_force_diff": 3.3835056000000066,
+  "rms_force_diff": 1.6650388058084304,
+  "relative_force_diff": 0.0002724545698633299,
+  "status": "pass"
+}

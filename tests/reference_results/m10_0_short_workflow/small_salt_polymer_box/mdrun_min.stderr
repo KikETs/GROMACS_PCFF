@@ -1,0 +1,37 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_0_short_workflow/small_salt_polymer_box
+Command line:
+  gmx mdrun -s min.tpr -c min.gro -e min.edr -g min.log -o min.trr
+
+Reading file min.tpr, VERSION 2027.0-dev-20260314-dc4101b27b-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Using 1 MPI thread
+Using 16 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+Steepest Descents:
+   Tolerance (Fmax)   =  1.00000e+01
+   Number of steps    =          100
+
+Energy minimization reached the maximum number of steps before the forces
+reached the requested precision Fmax < 10.
+
+writing lowest energy coordinates.
+
+Steepest Descents did not converge to Fmax < 10 in 101 steps.
+Potential Energy  = -2.0882025e+02
+Maximum force     =  2.6914963e+02 on atom 4
+Norm of force     =  1.9531579e+02
+
+GROMACS reminds you: "Ich Bin Ein Berliner" (J.F. Kennedy)
+

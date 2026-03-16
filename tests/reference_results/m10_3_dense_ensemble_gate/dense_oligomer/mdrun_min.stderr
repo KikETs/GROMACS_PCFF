@@ -1,0 +1,34 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_3_dense_ensemble_gate/dense_oligomer
+Command line:
+  gmx mdrun -s min.tpr -c min.gro -e min.edr -g min.log -nt 12
+
+Reading file min.tpr, VERSION 2027.0-dev-20260314-dc4101b27b-dirty-unknown (single precision)
+Using 1 MPI thread
+Using 12 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: The number of threads is not equal to the number of (logical) cpus
+      and the -pin option is set to auto: will not pin threads to cpus.
+      This can lead to significant performance degradation.
+      Consider using -pin on (and -pinoffset in case you run multiple jobs).
+
+Steepest Descents:
+   Tolerance (Fmax)   =  1.00000e+02
+   Number of steps    =          500
+
+writing lowest energy coordinates.
+
+Steepest Descents converged to Fmax < 100 in 8 steps
+Potential Energy  = -3.9439583e+03
+Maximum force     =  6.4913628e+01 on atom 316
+Norm of force     =  4.1717934e+01
+
+GROMACS reminds you: "Stop Drinking My Beer !" (The Amps)
+

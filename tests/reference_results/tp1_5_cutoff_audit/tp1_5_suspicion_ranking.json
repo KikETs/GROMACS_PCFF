@@ -1,0 +1,27 @@
+{
+  "milestone": "TP1.5",
+  "ranked_suspicions": [
+    {
+      "rank": 1,
+      "cause": "Reference Kernel Ghost Energy",
+      "status": "CONFIRMED",
+      "evidence": "repro_excl.py measured -277 kJ/mol for an excluded pair that should be 0.",
+      "impact": "CRITICAL. Systematic energy bias in MD."
+    },
+    {
+      "rank": 2,
+      "cause": "Reference Kernel Ghost Force (RF path)",
+      "status": "PLAUSIBLE",
+      "evidence": "Code inspection shows k_rf2 is applied via skipmask, not interact.",
+      "impact": "HIGH. Random forces on bonded atoms."
+    },
+    {
+      "rank": 3,
+      "cause": "PME Split Mismatch",
+      "status": "CONFIRMED (TP1.4)",
+      "evidence": "170% force drift across rcut.",
+      "impact": "HIGH. Long-range inaccuracies."
+    }
+  ],
+  "pme_vs_cutoff_conclusion": "The PME-only explanation is STRENGTHENED but broadened. Both paths are broken, but the cut-off path is broken in a way that creates a much larger numerical sink due to the fallback reference kernel defect."
+}

@@ -1,0 +1,14 @@
+{
+  "mean_temp": 717.279143945055,
+  "max_temp": 802.578064,
+  "final_temp": 716.842102,
+  "status": "RUNAWAY",
+  "duration": 500.0,
+  "trial_id": "TRL-3",
+  "config": {
+    "dt": 0.5,
+    "ens": "NVT",
+    "dur": 500.0,
+    "note": "NVT + dt=0.5"
+  }
+}

@@ -1,0 +1,29 @@
+
+[ defaults ]
+; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow
+1 2 yes 1.0 1.0 12.0
+
+[ atomtypes ]
+; name mass charge ptype sigma epsilon
+C 12.011 0.0 A 0.0 0.0
+
+[ moleculetype ]
+; name nrexcl
+MOL 3
+
+[ atoms ]
+; nr type resnr residue atom cgnr charge mass
+1 C 1 MOL C1 1 1.0 12.011
+2 C 1 MOL C2 1 -1.0 12.011
+3 C 1 MOL C3 1 1.0 12.011
+4 C 1 MOL C4 1 -1.0 12.011
+
+[ dihedrals ]
+; ai aj ak al funct params
+1 2 3 4 13 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.95 1.95 10.0 0.0 0.0 0.0 0.0 0.0
+
+[ system ]
+Audit System
+
+[ molecules ]
+MOL 1

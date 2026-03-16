@@ -1,0 +1,10 @@
+{
+  "system_id": "small_oligomer",
+  "energy_diff_kj": 0.018382056000007196,
+  "max_force_diff": 0.17141599999968093,
+  "rms_force_diff": 0.08902746947628905,
+  "relative_force_diff": 4.211353524454779e-05,
+  "status": "pass",
+  "e_status": "pass",
+  "f_status": "pass"
+}

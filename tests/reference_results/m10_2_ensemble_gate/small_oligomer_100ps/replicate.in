@@ -1,0 +1,5 @@
+units real
+atom_style full
+read_data orig.data
+replicate 4 4 4
+write_data system.data nocoeff

@@ -1,0 +1,38 @@
+# This file was created Sat Mar 14 21:08:38 2026
+# Created by:
+#   :-) GROMACS - gmx energy, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+# 
+# Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+# Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+# Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_1_trajectory_gate/small_salt_polymer_box_nvt_dt0.001
+# Command line:
+#   gmx energy -f run.edr -o energy.xvg
+# gmx energy is part of G R O M A C S:
+#
+# Gallium Rubidium Oxygen Manganese Argon Carbon Silicon
+#
+@    title "GROMACS Energies"
+@    xaxis  label "Time (ps)"
+@    yaxis  label "(kJ/mol), (K), (bar)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "Potential"
+@ s1 legend "Kinetic En."
+@ s2 legend "Temperature"
+@ s3 legend "Pressure"
+    0.000000  385.059845   39.918861  355.639679  -2519.598389
+    0.010000  -65.559998  472.820435  4212.387207  -98.109795
+    0.020000  314.753204   96.341751  858.314758  673.654236
+    0.030000  -95.329590  507.629761  4522.505859  275.379974
+    0.040000  287.556305  129.912949  1157.402710  -2197.676758
+    0.050000  -143.289795  547.339539  4876.283203   80.245003
+    0.060000  205.388550  202.303818  1802.337524  1370.742798
+    0.070000  -84.216278  458.821472  4087.669678  725.699768
+    0.080000  156.513947  221.096649  1969.764038  -1749.817383
+    0.090000  -87.145294  430.629883  3836.508789  -294.825165
+    0.100000   97.660614  248.084335  2210.198975  1315.013306

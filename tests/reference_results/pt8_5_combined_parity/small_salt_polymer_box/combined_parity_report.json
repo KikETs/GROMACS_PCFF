@@ -1,0 +1,10 @@
+{
+  "system_id": "small_salt_polymer_box",
+  "energy_diff_kj": 0.3454780800000208,
+  "max_force_diff": 3.687473600000004,
+  "rms_force_diff": 0.9630857676231611,
+  "relative_force_diff": 0.00036841964578978865,
+  "status": "pass",
+  "e_status": "pass",
+  "f_status": "pass"
+}

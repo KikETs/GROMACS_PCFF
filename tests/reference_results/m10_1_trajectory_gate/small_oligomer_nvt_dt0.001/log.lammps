@@ -1,0 +1,130 @@
+LAMMPS (10 Sep 2025 - Development - patch_10Sep2025-660-g792d014343)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2/coul/long 9.0 9.0
+pair_modify mix sixthpower
+bond_style class2
+angle_style class2
+dihedral_style class2
+improper_style none
+kspace_style pppm 1.0e-6
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+neighbor 2.0 bin
+neigh_modify every 1 delay 0 check no
+
+read_data system.data
+Reading data file ...
+  orthogonal box = (-10 -10 -10) to (10 10 10)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  6 atoms
+  scanning bonds ...
+  1 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  scanning dihedrals ...
+  1 = max dihedrals/atom
+  orthogonal box = (-10 -10 -10) to (10 10 10)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  5 bonds
+  reading angles ...
+  4 angles
+  reading dihedrals ...
+  3 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     2 = max # of 1-2 neighbors
+     2 = max # of 1-3 neighbors
+     4 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.001 seconds
+
+pair_coeff 1 1 0.12 3.40
+pair_coeff 2 2 0.08 3.00
+bond_coeff 1 1.48 230.0 -32.0 7.0
+angle_coeff 1 111.0 32.0 -3.6 1.0
+angle_coeff 1 bb 5.0 1.48 1.48
+angle_coeff 1 ba 1.7 1.4 1.48 1.48
+dihedral_coeff 1 0.9 0.0 0.5 180.0 0.3 0.0
+dihedral_coeff 1 mbt 0.14 -0.09 0.05 1.48
+dihedral_coeff 1 ebt 0.12 -0.06 0.03 0.10 -0.04 0.02 1.48 1.48
+dihedral_coeff 1 at 0.05 -0.03 0.02 0.04 -0.02 0.01 111.0 111.0
+dihedral_coeff 1 aat 0.22 111.0 111.0
+dihedral_coeff 1 bb13 0.16 1.48 1.48
+
+timestep 1.0
+fix 1 all nvt temp 300.0 300.0 100.0
+thermo 10
+thermo_style custom step temp pe ke etotal press vol
+run 100
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.31666035
+  grid = 15 15 15
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.00015478737
+  estimated relative force accuracy = 4.6613757e-07
+  using double precision FFTW3
+  3d grid and FFT values/proc = 10648 3375
+Generated 1 of 1 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = no
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 11
+  ghost atom cutoff = 11
+  binsize = 5.5, bins = 4 4 4
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/class2/coul/long, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 7.474 | 7.474 | 7.474 Mbytes
+   Step          Temp          PotEng         KinEng         TotEng         Press          Volume    
+         0   0              25.320359      0              25.320359     -1503.1582      8000         
+        10   1275.8392      6.115891       19.015171      25.131062     -294.76802      8000         
+        20   361.74538      19.356592      5.3914714      24.748063      550.07192      8000         
+        30   1584.8559     -0.095944743    23.620772      23.524827      11.349129      8000         
+        40   508.07689      14.06852       7.5724035      21.640924     -937.89597      8000         
+        50   1240.8247      0.65522691     18.493314      19.148541      429.0206       8000         
+        60   265.29562      13.660774      3.9539793      17.614753      990.20428      8000         
+        70   804.89265      3.9458581      11.996161      15.942019     -56.746713      8000         
+        80   386.58665      9.5737551      5.7617068      15.335462     -430.6569       8000         
+        90   692.27342      3.7792281      10.317678      14.096906      744.25513      8000         
+       100   831.09977      0.92926066     12.386753      13.316013      580.68251      8000         
+Loop time of 0.00716142 on 1 procs for 100 steps with 6 atoms
+
+Performance: 1206.465 ns/day, 0.020 hours/ns, 13963.719 timesteps/s, 83.782 katom-step/s
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 2.0381e-05 | 2.0381e-05 | 2.0381e-05 |   0.0 |  0.28
+Bond    | 9.475e-05  | 9.475e-05  | 9.475e-05  |   0.0 |  1.32
+Kspace  | 0.0067265  | 0.0067265  | 0.0067265  |   0.0 | 93.93
+Neigh   | 0.00018246 | 0.00018246 | 0.00018246 |   0.0 |  2.55
+Comm    | 7.8041e-05 | 7.8041e-05 | 7.8041e-05 |   0.0 |  1.09
+Output  | 1.691e-05  | 1.691e-05  | 1.691e-05  |   0.0 |  0.24
+Modify  | 2.853e-05  | 2.853e-05  | 2.853e-05  |   0.0 |  0.40
+Other   |            | 1.383e-05  |            |       |  0.19
+
+Nlocal:              6 ave           6 max           6 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:            120 ave         120 max         120 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:             15 ave          15 max          15 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 15
+Ave neighs/atom = 2.5
+Ave special neighs/atom = 3
+Neighbor list builds = 100
+Dangerous builds not checked
+Total wall time: 0:00:00

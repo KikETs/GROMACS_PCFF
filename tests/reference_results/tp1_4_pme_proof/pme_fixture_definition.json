@@ -1,0 +1,11 @@
+{
+  "fixture_name": "pme_pcff_proof_2atom",
+  "atoms": [
+    {"type": "C1", "sigma": 0.4, "epsilon": 0.1},
+    {"type": "C1", "sigma": 0.4, "epsilon": 0.1}
+  ],
+  "potential": "9-6",
+  "mixing_rule": "Geometric (via comb-rule 2 override)",
+  "box": [5.0, 5.0, 5.0],
+  "distance": 0.5
+}

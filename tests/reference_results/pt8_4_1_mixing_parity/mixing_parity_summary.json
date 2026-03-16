@@ -1,0 +1,10 @@
+[
+  {
+    "system_id": "mixing_toy",
+    "lammps_pe_kcal": -0.061476132,
+    "lammps_pe_kj": -0.257216136288,
+    "gromacs_pe_kj": -0.257178,
+    "difference_kj": 3.8136287999979146e-05,
+    "status": "pass"
+  }
+]

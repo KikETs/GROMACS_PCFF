@@ -1,0 +1,7 @@
+integrator=md
+nsteps=1
+nstxout=1
+nstfout=1
+cutoff-scheme=Verlet
+rcoulomb=1.0
+rvdw=1.0

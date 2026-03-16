@@ -1,0 +1,41 @@
+
+; TP1.2 MDP - 5ns NPT Equilibration
+integrator              = md
+dt                      = 0.001     ; 1.0 fs
+nsteps                  = 5000000
+
+; Neighbor searching
+cutoff-scheme           = Verlet
+ns_type                 = grid
+nstlist                 = 10
+rcoulomb                = 0.9
+rvdw                    = 0.9
+
+; Electrostatics
+coulombtype             = PME
+pme_order               = 4
+fourierspacing          = 0.12
+ewald_rtol              = 1e-5
+
+; VdW
+vdw-type                = Cut-off
+vdw-modifier            = None
+DispCorr                = no
+
+; Temperature coupling
+tcouple                 = v-rescale
+tc-grps                 = System
+tau_t                   = 0.5
+ref_t                   = 300
+
+; Pressure coupling
+pcouple                 = berendsen
+pcoupletype             = isotropic
+tau_p                   = 5.0
+compressibility         = 4.5e-5
+ref_p                   = 1.0
+
+; Velocity generation
+gen_vel                 = yes
+gen_temp                = 300
+gen_seed                = -1

@@ -1,0 +1,25 @@
+{
+  "bridge_id": "gromacs-pcff",
+  "version": "1.0.0-rc1",
+  "handoff_date": "2026-03-15",
+  "readiness_matrix": {
+    "neutral_dense": {
+      "status": "ready",
+      "density_parity": "0.71%",
+      "energy_parity": "2.07%",
+      "evidence_milestone": "M10.3"
+    },
+    "charged_salt": {
+      "status": "qualified",
+      "energy_parity": "0.09%",
+      "density_caveat": "55% discrepancy in small boxes",
+      "evidence_milestone": "M10.4",
+      "monitoring_required": true
+    }
+  },
+  "unvalidated_features": [
+    "transport_properties",
+    "long_range_entanglement",
+    "multi_component_transference"
+  ]
+}

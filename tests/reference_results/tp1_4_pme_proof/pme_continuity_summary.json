@@ -1,0 +1,13 @@
+{
+  "rcut_scan": [
+    {"rcut": 0.7, "sr_force": 10.554147, "recip_force": -10.618636, "total_force": -1.669340},
+    {"rcut": 0.8, "sr_force": 4.747749, "recip_force": -4.822033, "total_force": -0.860360},
+    {"rcut": 0.9, "sr_force": 2.346021, "recip_force": -2.422459, "total_force": -0.675407},
+    {"rcut": 1.0, "sr_force": 1.243194, "recip_force": -1.320239, "total_force": -0.624148},
+    {"rcut": 1.1, "sr_force": 0.691439, "recip_force": -0.768688, "total_force": -0.607783}
+  ],
+  "invariance_check": "FAILED",
+  "max_force_drift": 1.061557,
+  "relative_error": 1.74,
+  "conclusion": "Defect reproduced and plausibly large enough to matter"
+}

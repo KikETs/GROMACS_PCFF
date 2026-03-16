@@ -1,0 +1,21 @@
+{
+  "id": "coulomb_toy",
+  "display_name": "Coulomb Toy",
+  "category": "toy",
+  "description": "Two atoms interacting via Coulomb potential",
+  "reference_terms": [
+    "pair_style lj/class2/coul/long"
+  ],
+  "styles": {
+    "units": "real",
+    "atom_style": "full",
+    "bond_style": "none",
+    "angle_style": "none",
+    "dihedral_style": "none",
+    "improper_style": "none",
+    "pair_style": "lj/class2/coul/long",
+    "pair_modify": "mix sixthpower",
+    "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "kspace_style": "pppm 1.0e-6"
+  }
+}

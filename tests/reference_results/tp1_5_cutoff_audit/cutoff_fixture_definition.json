@@ -1,0 +1,21 @@
+{
+  "fixture_name": "tp1_5_ghost_energy_check",
+  "system": "2-atom test (repro_excl.py)",
+  "observations": [
+    {
+      "case": "Excluded pair, dist < rcut",
+      "expected_energy": 0.0,
+      "measured_energy": -277.87,
+      "status": "FAIL"
+    },
+    {
+      "case": "Non-excluded pair, dist > rcut",
+      "expected_energy": 0.0,
+      "measured_energy": -138.93,
+      "status": "FAIL"
+    }
+  ],
+  "kernel_path": "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
+  "defect_line": "vcoul = qq * (interact * rinv + reactionFieldCoefficient * rsq - reactionFieldShift);",
+  "explanation": "When interact=0, vcoul becomes qq * (0 + coeff*rsq - shift). Even though qq=skipmask*qi*qj, if the pair is within the list buffer, skipmask=1 and qi*qj is non-zero, leading to spurious energy."
+}

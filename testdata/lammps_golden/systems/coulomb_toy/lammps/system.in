@@ -1,0 +1,16 @@
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2/coul/long 10.0 10.0
+pair_modify mix sixthpower
+bond_style none
+angle_style none
+dihedral_style none
+improper_style none
+kspace_style pppm 1.0e-6
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+
+read_data system.data
+
+pair_coeff 1 1 0.0 3.5

@@ -1,0 +1,8 @@
+{
+  "system_id": "bond_toy",
+  "lammps_pe_kcal": 1.2131871,
+  "lammps_pe_kj": 5.0759748264,
+  "gromacs_pe_kj": 5.0761,
+  "difference_kj": 0.00012517359999986155,
+  "status": "pass"
+}

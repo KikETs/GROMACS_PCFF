@@ -1,0 +1,60 @@
+Setting the LD random seed to 1144371368
+
+Generated 3 of the 3 non-bonded parameter combinations
+
+Generated 3 of the 3 1-4 parameter combinations
+
+Excluding 3 bonded neighbours molecule type 'MOL1'
+
+atom name 7 in system.top and system.gro does not match (A1 - A7)
+
+atom name 8 in system.top and system.gro does not match (A2 - A8)
+
+atom name 9 in system.top and system.gro does not match (A3 - A9)
+
+atom name 10 in system.top and system.gro does not match (A4 - A10)
+
+atom name 11 in system.top and system.gro does not match (A5 - A11)
+
+atom name 12 in system.top and system.gro does not match (A6 - A12)
+
+atom name 13 in system.top and system.gro does not match (A1 - A13)
+
+atom name 14 in system.top and system.gro does not match (A2 - A14)
+
+atom name 15 in system.top and system.gro does not match (A3 - A15)
+
+atom name 16 in system.top and system.gro does not match (A4 - A16)
+
+atom name 17 in system.top and system.gro does not match (A5 - A17)
+
+atom name 18 in system.top and system.gro does not match (A6 - A18)
+
+atom name 19 in system.top and system.gro does not match (A1 - A19)
+
+atom name 20 in system.top and system.gro does not match (A2 - A20)
+
+atom name 21 in system.top and system.gro does not match (A3 - A21)
+
+atom name 22 in system.top and system.gro does not match (A4 - A22)
+
+atom name 23 in system.top and system.gro does not match (A5 - A23)
+
+atom name 24 in system.top and system.gro does not match (A6 - A24)
+
+atom name 25 in system.top and system.gro does not match (A1 - A25)
+
+atom name 26 in system.top and system.gro does not match (A2 - A26)
+
+(more than 20 non-matching atom names)
+Analysing residue names:
+There are:    64      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.324 nm between atom 2 and 5
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 20x20x20, spacing 0.110 0.110 0.110
+
+Estimate for the relative computational load of the PME mesh part: 0.46
+
+This run will generate roughly 0 Mb of data

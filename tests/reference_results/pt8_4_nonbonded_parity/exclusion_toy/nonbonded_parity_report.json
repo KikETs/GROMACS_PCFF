@@ -1,0 +1,8 @@
+{
+  "system_id": "exclusion_toy",
+  "lammps_pe_kcal": -0.022790631,
+  "lammps_pe_kj": -0.095356000104,
+  "gromacs_pe_kj": -0.095356,
+  "difference_kj": 1.0400000305388346e-10,
+  "status": "pass"
+}

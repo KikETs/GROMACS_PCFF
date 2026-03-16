@@ -1,0 +1,8 @@
+{
+  "system_id": "improper_toy",
+  "lammps_pe_kcal": 142.91463,
+  "lammps_pe_kj": 597.95481192,
+  "gromacs_pe_kj": 597.951,
+  "difference_kj": 0.0038119199999755438,
+  "status": "pass"
+}

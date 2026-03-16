@@ -1,0 +1,24 @@
+{
+  "id": "dense_oligomer",
+  "display_name": "dense oligomer",
+  "category": "polymer",
+  "description": "48-atom neutral oligomer fixture with liquid-like density (~1g/cm3)",
+  "reference_terms": [
+    "pair_style lj/class2/coul/long",
+    "bond_style class2",
+    "angle_style class2",
+    "dihedral_style class2"
+  ],
+  "styles": {
+    "units": "real",
+    "atom_style": "full",
+    "bond_style": "class2",
+    "angle_style": "class2",
+    "dihedral_style": "class2",
+    "improper_style": "none",
+    "pair_style": "lj/class2/coul/long",
+    "pair_modify": "mix sixthpower",
+    "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "kspace_style": "pppm 1.0e-4"
+  }
+}

@@ -1,0 +1,28 @@
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2 9.0
+pair_modify mix sixthpower
+bond_style class2
+angle_style class2
+dihedral_style none
+improper_style class2
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+neighbor 2.0 bin
+neigh_modify every 1 delay 0 check no
+
+read_data system.data
+
+pair_coeff 1 1 0.0 3.50
+bond_coeff 1 1.45 210.0 -28.0 6.0
+angle_coeff 1 109.0 28.0 -3.0 0.8
+angle_coeff 1 bb 4.5 1.45 1.45
+angle_coeff 1 ba 1.3 1.1 1.45 1.45
+improper_coeff 1 25.0 0.0
+improper_coeff 1 aa 1.20 1.00 0.90 110.0 109.0 108.0
+
+thermo_style custom step pe
+dump 1 all custom 1 forces.lammps id fx fy fz
+dump_modify 1 sort id
+run 0

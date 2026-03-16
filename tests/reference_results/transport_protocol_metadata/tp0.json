@@ -1,0 +1,51 @@
+{
+  "milestone": "TP0",
+  "name": "Transport Property Protocol Freeze",
+  "version": "1.0",
+  "date": "2026-03-15",
+  "protocol": {
+    "workflow": {
+      "timestep_ps": 0.001,
+      "ensemble": "NVT",
+      "thermostat": "v-rescale",
+      "tau_t_ps": 0.5,
+      "production_min_ns": {
+        "neutral": 10.0,
+        "charged": 20.0
+      },
+      "equilibration_min_ns": {
+        "neutral": 2.0,
+        "charged": 5.0
+      }
+    },
+    "electrostatics": {
+      "method": "PME",
+      "rcoulomb_nm": 0.9,
+      "rvdw_nm": 0.9,
+      "ewald_rtol": 1e-5,
+      "fourierspacing_nm": 0.12
+    },
+    "analysis": {
+      "unwrapping": true,
+      "com_drift_removal": true,
+      "fitting_window_ratio": [0.2, 0.8],
+      "block_averaging_count": 5
+    },
+    "estimators": {
+      "diffusion": "einstein_msd",
+      "conductivity": "nernst_einstein_cNE",
+      "transference_number": "nernst_einstein_ratio"
+    }
+  },
+  "acceptance_criteria": {
+    "neutral_diffusion_rel_err_max": 0.15,
+    "charged_diffusion_rel_err_max": 0.20,
+    "charged_conductivity_rel_err_max": 0.25,
+    "charged_transference_abs_err_max": 0.05
+  },
+  "scope": {
+    "supported": ["neutral_dense", "charged_salt_polymer"],
+    "deferred": ["viscosity", "green_kubo", "nemd"],
+    "out_of_scope": ["net_charged_box"]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "mean_temp": 826.8082039700599,
+  "max_temp": 1070.383301,
+  "final_temp": 1021.742188,
+  "status": "RUNAWAY",
+  "duration": 500.0,
+  "trial_id": "TRL-5",
+  "config": {
+    "dt": 1.0,
+    "ens": "NPT",
+    "dur": 500.0,
+    "note": "Cut-off (No PME)"
+  }
+}

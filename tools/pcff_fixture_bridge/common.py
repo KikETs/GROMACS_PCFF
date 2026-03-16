@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from collections import OrderedDict
 from pathlib import Path
 from typing import Iterable
@@ -11,6 +12,7 @@ CORPUS_ROOT = REPO_ROOT / "testdata" / "lammps_golden"
 
 KCAL_TO_KJ = 4.184
 ANGSTROM_TO_NM = 0.1
+DEG_TO_RAD = math.pi / 180.0
 
 
 class BridgeError(ValueError):
@@ -142,7 +144,7 @@ def molecule_label(system_meta: dict, molecule: dict, template_index: int) -> tu
 def parse_lammps_data(path: Path) -> dict:
     count_keywords = {"atoms", "bonds", "angles", "dihedrals", "impropers"}
     type_keywords = {"atom types", "bond types", "angle types", "dihedral types", "improper types"}
-    section_names = {"Masses", "Atoms", "Bonds", "Angles", "Dihedrals", "Impropers"}
+    section_names = {"Masses", "Atoms", "Bonds", "Angles", "Dihedrals", "Impropers", "Velocities"}
     header_counts = {key: 0 for key in count_keywords}
     type_counts = {key: 0 for key in type_keywords}
     box = {}
@@ -858,12 +860,12 @@ def gromacs_improper_params(coeff: dict) -> list[float]:
     return [
         kcal_to_kj(coeff["main"]["k0_kcal_mol"]),
         coeff["main"]["chi0_deg"],
-        kcal_to_kj(coeff["aa"]["k1_kcal_mol"]),
-        kcal_to_kj(coeff["aa"]["k2_kcal_mol"]),
-        kcal_to_kj(coeff["aa"]["k3_kcal_mol"]),
-        coeff["aa"]["theta0_1_deg"],
-        coeff["aa"]["theta0_2_deg"],
-        coeff["aa"]["theta0_3_deg"],
+        kcal_to_kj(coeff["aa"]["k1_kcal_mol"]),  # aa_k1 = K1
+        kcal_to_kj(coeff["aa"]["k3_kcal_mol"]),  # aa_k2 = K3
+        kcal_to_kj(coeff["aa"]["k2_kcal_mol"]),  # aa_k3 = K2
+        coeff["aa"]["theta0_2_deg"],             # aa_theta0_1 = theta2
+        coeff["aa"]["theta0_1_deg"],             # aa_theta0_2 = theta1
+        coeff["aa"]["theta0_3_deg"],             # aa_theta0_3 = theta3
     ]
 
 
@@ -944,9 +946,14 @@ def render_gromacs_topology(typed_ir: dict) -> str:
                 }
             )
         for improper in template["impropers"]:
+            # LAMMPS toy fixtures have (a, central, b, c)
+            # GROMACS improper_class2 expects (a, central, b, c) where B is central
+            # based on delr[0]=AB, delr[1]=BC, delr[2]=BD
+            orig_atoms = improper["atoms"]
+            rotated_atoms = [orig_atoms[0], orig_atoms[1], orig_atoms[2], orig_atoms[3]]
             dihedral_records.append(
                 {
-                    "atoms": improper["atoms"],
+                    "atoms": rotated_atoms,
                     "funct": 12,
                     "params": gromacs_improper_params(improper_types[improper["type_id"]]),
                 }

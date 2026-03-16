@@ -1,0 +1,47 @@
+{
+  "milestone": "TP1.2",
+  "system_id": "dense_salt_polymer",
+  "equilibration_duration_ns": 3.017,
+  "recovery_status": {
+    "overall": "unresolved / unstable (Thermal Runaway)",
+    "note": "Rerun failed at 3ns due to thermal runaway (T > 500K). System is NOT ready for production."
+  },
+  "block_analysis": {
+    "units": {
+      "potential_energy": "kJ/mol",
+      "temperature": "K"
+    },
+    "blocks": [
+      {
+        "index": 0,
+        "window_ns": [
+          0.0,
+          1.0
+        ],
+        "potential_energy_mean": -25966.757998048997,
+        "potential_energy_drift_per_100ps": -13.513484519827488,
+        "temperature_mean": 528.011369727
+      },
+      {
+        "index": 1,
+        "window_ns": [
+          1.0,
+          2.0
+        ],
+        "potential_energy_mean": -26028.088779291,
+        "potential_energy_drift_per_100ps": -4.800762732322108,
+        "temperature_mean": 515.979157106
+      },
+      {
+        "index": 2,
+        "window_ns": [
+          2.0,
+          3.0
+        ],
+        "potential_energy_mean": -26072.372681644,
+        "potential_energy_drift_per_100ps": -4.469265833987709,
+        "temperature_mean": 500.174101652
+      }
+    ]
+  }
+}

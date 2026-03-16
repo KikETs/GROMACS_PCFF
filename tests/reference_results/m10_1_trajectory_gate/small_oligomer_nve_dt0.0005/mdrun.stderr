@@ -1,0 +1,33 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_1_trajectory_gate/small_oligomer_nve_dt0.0005
+Command line:
+  gmx mdrun -s run.tpr -c out.gro -e run.edr -g run.log -o run.trr
+
+Reading file run.tpr, VERSION 2027.0-dev-20260314-dc4101b27b-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Can not increase nstlist because an NVE ensemble is used
+Using 1 MPI thread
+Using 16 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'small_oligomer'
+100 steps,      0.1 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.188        0.012     1595.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      369.926        0.065        0.117            0.051 
+
+GROMACS reminds you: "Don't Grumble, Give a Whistle !" (Monty Python)
+

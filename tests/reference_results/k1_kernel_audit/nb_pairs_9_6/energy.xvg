@@ -1,0 +1,29 @@
+# This file was created Mon Mar 16 09:22:21 2026
+# Created by:
+#   :-) GROMACS - gmx energy, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
+# 
+# Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+# Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+# Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/k1_kernel_audit/nb_pairs_9_6
+# Command line:
+#   gmx energy -f test.edr -o energy.xvg
+# gmx energy is part of G R O M A C S:
+#
+# God Rules Over Mankind, Animals, Cosmos and Such
+#
+@    title "GROMACS Energies"
+@    xaxis  label "Time (ps)"
+@    yaxis  label "(kJ/mol)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "Potential"
+@ s1 legend "Vir-XX"
+@ s2 legend "Vir-YY"
+@ s3 legend "Vir-ZZ"
+    0.000000  4459.155762  -17064.773438  -1557.905884  -1888.499512
+    0.001000  2585.981689  -8247.088867  -2300.350342  -1409.234985
