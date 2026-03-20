@@ -261,7 +261,7 @@
             real fcoul = qq * (interact * (rinv * rinvsq - k_rf2));
             /* 4 flops for RF force */
 #        ifdef CALC_ENERGIES
-            real vcoul = qq * interact * (rinv + reactionFieldCoefficient * rsq - reactionFieldShift);
+            real vcoul = qq * (interact * rinv + reactionFieldCoefficient * rsq - reactionFieldShift);
             /* 4 flops for RF energy */
 #        endif
 #    endif
