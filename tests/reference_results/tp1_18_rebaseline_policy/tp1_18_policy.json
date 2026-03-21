@@ -1,0 +1,40 @@
+{
+  "milestone": "TP1.18",
+  "status": "REBASELINE POLICY VALIDATED",
+  "new_experiments_required": false,
+  "closed_items": [
+    "vcoul_accounting_bug"
+  ],
+  "primary_comparator": {
+    "name": "intended_positive_vbt_nstlist_1",
+    "role": "tighter_comparator_for_future_authoritative_trl5_cutoff_validation",
+    "basis": [
+      "/home/kiket/바탕화면/test/ab_runs/tp1_15b_intended_regime_dynamic_reuse_probe/20260321_trl5_fullsystem_auto_vbt/comparison_summary.json",
+      "/home/kiket/바탕화면/test/ab_runs/tp1_16_intended_regime_cadence_vs_margin_separation/20260321_trl5_fullsystem_auto_vbt_sep/tp1_16_three_way_summary.json"
+    ]
+  },
+  "secondary_production_like_path": {
+    "name": "intended_positive_vbt_nstlist_10",
+    "role": "accuracy_limited_production_like_path",
+    "basis": [
+      "/home/kiket/바탕화면/test/ab_runs/tp1_14_archived_auto_buffered_trl5_rebaseline/20260321_trl5_archived_auto/comparison_summary.json",
+      "/home/kiket/바탕화면/test/ab_runs/tp1_15b_intended_regime_dynamic_reuse_probe/20260321_trl5_fullsystem_auto_vbt/comparison_summary.json"
+    ]
+  },
+  "allowed_interpretations": [
+    "Use intended positive-VBT nstlist=1 as the tighter comparator for future authoritative TRL-5 Cut-off validation",
+    "Use intended positive-VBT nstlist=10 to assess production-like sensitivity or degradation relative to the tighter comparator",
+    "State that the blocker still persists even under the tighter comparator"
+  ],
+  "forbidden_overclaims": [
+    "Do not treat intended positive-VBT nstlist=10 as a proof-quality physics reference",
+    "Do not treat intended positive-VBT nstlist=1 as absolute ground truth",
+    "Do not infer source-level scheduler-bug proof from TP1.17 or TP1.18 alone",
+    "Do not claim the blocker is solved",
+    "Do not claim remaining blocker causation is resolved"
+  ],
+  "remaining_blocker_state": {
+    "solved": false,
+    "causation_resolved": false
+  }
+}
