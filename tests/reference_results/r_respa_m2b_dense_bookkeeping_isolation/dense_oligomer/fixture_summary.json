@@ -1,0 +1,623 @@
+{
+  "bookkeeping_ok": false,
+  "coarse": {
+    "dt_ps": 0.0005,
+    "exact_vs_plain": {
+      "final_coord_diff": {
+        "l2_norm": 0.0004846627693552677,
+        "max_abs": 2.0000000000131024e-05,
+        "rms": 1.4279513783323393e-05
+      },
+      "final_force_diff": {
+        "l2_norm": 687.0291562211164,
+        "max_abs": 34.7325,
+        "rms": 20.24179063486764
+      },
+      "final_potential_abs_diff_kj_per_mol": 8583.863281,
+      "step0_force_diff": {
+        "l2_norm": 742.3481842394348,
+        "max_abs": 35.9212,
+        "rms": 21.871643128217706
+      },
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088
+    },
+    "exact_vs_side_reference": {
+      "final_coord_diff": {
+        "l2_norm": 0.0005402517931475912,
+        "max_abs": 2.4000000000024002e-05,
+        "rms": 1.591732110345224e-05
+      },
+      "final_force_diff": {
+        "l2_norm": 680.0297692432139,
+        "max_abs": 35.1535,
+        "rms": 20.03556921835832
+      },
+      "final_potential_abs_diff_kj_per_mol": 8583.952148999999,
+      "step0_force_diff": {
+        "l2_norm": 742.3481711536402,
+        "max_abs": 35.9212,
+        "rms": 21.87164274267378
+      },
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088
+    },
+    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p0005/exact_three_level",
+    "nsteps": 8,
+    "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p0005/plain_verlet",
+    "side_reference_vs_plain": {
+      "final_coord_diff": {
+        "l2_norm": 0.0001465127980758503,
+        "max_abs": 1.0000000000065512e-05,
+        "rms": 4.316674710418712e-06
+      },
+      "final_force_diff": {
+        "l2_norm": 28.830681312666684,
+        "max_abs": 1.638300000000001,
+        "rms": 0.8494320942672869
+      },
+      "final_potential_abs_diff_kj_per_mol": 0.08886799999891082,
+      "step0_force_diff": {
+        "l2_norm": 0.0003173326330550173,
+        "max_abs": 0.00010000000000331966,
+        "rms": 9.349502363541045e-06
+      },
+      "step0_potential_abs_diff_kj_per_mol": 0.0
+    },
+    "side_reference_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p0005/pme_legacy_side_reference"
+  },
+  "comparison_notes": [
+    "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
+    "The simpler split here is a PME-side legacy side-reference on the same harness; it is not direct archived-M1 continuity because archived M1 used md + Cut-off settings."
+  ],
+  "convergence_ok": false,
+  "dense_exact_bookkeeping_isolation": {
+    "coarse_dt_ps": 0.0005,
+    "debug_stats": {
+      "excluded_pairs": [
+        {
+          "coulomb_kj_per_mol": 8583.447727203,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.448154449,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.448154449,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.454904556,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.454904556,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.454792023,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.454792023,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.460468292,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.460468292,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.468109131,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.468109131,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.480693817,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.480693817,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.487222672,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.487222672,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.499296188,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.499296188,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 8583.513280869,
+          "count": 768,
+          "lj_kj_per_mol": 0.0,
+          "qq_sum": -2222.967285156,
+          "self_kj_per_mol": 0.0
+        }
+      ],
+      "first_overlap": {
+        "duplicate_excluded_pairs": 0,
+        "duplicate_pairs": 0,
+        "excluded_pairs": 192,
+        "pairs": 0
+      },
+      "pairs": [
+        {
+          "coulomb_kj_per_mol": 69.309983932,
+          "count": 20352,
+          "lj_kj_per_mol": -664.86809517,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": -7230.132568359
+        },
+        {
+          "coulomb_kj_per_mol": 69.30853926,
+          "count": 20352,
+          "lj_kj_per_mol": -664.868382961,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.30853926,
+          "count": 20352,
+          "lj_kj_per_mol": -664.868382961,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.303288472,
+          "count": 20352,
+          "lj_kj_per_mol": -664.869615353,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.303288472,
+          "count": 20352,
+          "lj_kj_per_mol": -664.869615353,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.300937922,
+          "count": 20352,
+          "lj_kj_per_mol": -664.871342665,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.300937922,
+          "count": 20352,
+          "lj_kj_per_mol": -664.871342665,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.295606883,
+          "count": 20352,
+          "lj_kj_per_mol": -664.873963934,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.295606883,
+          "count": 20352,
+          "lj_kj_per_mol": -664.873963934,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": -7230.132568359
+        },
+        {
+          "coulomb_kj_per_mol": 69.287351887,
+          "count": 20352,
+          "lj_kj_per_mol": -664.877191177,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.287351887,
+          "count": 20352,
+          "lj_kj_per_mol": -664.877191177,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.274687019,
+          "count": 20352,
+          "lj_kj_per_mol": -664.881306177,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.274687019,
+          "count": 20352,
+          "lj_kj_per_mol": -664.881306177,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.266208071,
+          "count": 20352,
+          "lj_kj_per_mol": -664.88588636,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.266208071,
+          "count": 20352,
+          "lj_kj_per_mol": -664.88588636,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.25427526,
+          "count": 20352,
+          "lj_kj_per_mol": -664.891341849,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        },
+        {
+          "coulomb_kj_per_mol": 69.25427526,
+          "count": 20352,
+          "lj_kj_per_mol": -664.891341849,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": -7230.132568359
+        },
+        {
+          "coulomb_kj_per_mol": 69.240288402,
+          "count": 20352,
+          "lj_kj_per_mol": -664.897352138,
+          "qq_sum": -3334.450927734,
+          "self_kj_per_mol": 0.0
+        }
+      ],
+      "step0_excluded_pairs": {
+        "coulomb_kj_per_mol": 8583.447727203,
+        "count": 768,
+        "lj_kj_per_mol": 0.0,
+        "qq_sum": -2222.967285156,
+        "self_kj_per_mol": 0.0
+      },
+      "step0_pairs": {
+        "coulomb_kj_per_mol": 69.309983932,
+        "count": 20352,
+        "lj_kj_per_mol": -664.86809517,
+        "qq_sum": -3334.450927734,
+        "self_kj_per_mol": -7230.132568359
+      }
+    },
+    "exact_terms_step0": {
+      "Class2-Angle": 91.760353,
+      "Class2-Bond": 945.803223,
+      "Class2-Dih": -5919.4375,
+      "Coul.-recip.": -664.862122,
+      "Coulomb-(SR)": 1422.623291,
+      "Coulomb-14": 4.321452,
+      "LJ-(SR)": 122.76384,
+      "LJ-14": 1.239189,
+      "Potential": -3995.788818,
+      "time_ps": 0.0
+    },
+    "localization": {
+      "classification": "mis-owned excluded-pair Coulomb correction contribution",
+      "coulomb_sr_exact_minus_plain_kj_per_mol": 8583.45874,
+      "exact_coulomb_sr_reconstructed_from_debug_kj_per_mol": 1422.6251427759998,
+      "excluded_pairs_coulomb_debug_kj_per_mol": 8583.447727203,
+      "step0_force_diff_l2_norm": 742.3481842394348,
+      "step0_force_diff_max_abs": 35.9212,
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088,
+      "supports_duplicated_term": false,
+      "supports_missing_term": false,
+      "supports_wrong_level_ownership": true,
+      "supports_wrong_reference_side_accounting": false,
+      "why_not_fully_closed": "The step-0 energy defect localizes cleanly to excluded-pair Coulomb correction accounting, but this artifact alone does not prove whether the large step-0 force mismatch comes from the same ownership bug or from a separate force-buffer issue."
+    },
+    "plain_terms_step0": {
+      "Class2-Angle": 91.760353,
+      "Class2-Bond": 945.803223,
+      "Class2-Dih": -5919.4375,
+      "Coul.-recip.": -664.868225,
+      "Coulomb-(SR)": -7160.835449,
+      "Coulomb-14": 4.321452,
+      "LJ-(SR)": 122.76384,
+      "LJ-14": 1.239189,
+      "Potential": -12579.253906,
+      "time_ps": 0.0
+    },
+    "side_reference_terms_step0": {
+      "Class2-Angle": 91.760353,
+      "Class2-Bond": 945.803223,
+      "Class2-Dih": -5919.4375,
+      "Coul.-recip.": -664.868225,
+      "Coulomb-(SR)": -7160.835449,
+      "Coulomb-14": 4.321452,
+      "LJ-(SR)": 122.76384,
+      "LJ-14": 1.239189,
+      "Potential": -12579.253906,
+      "time_ps": 0.0
+    },
+    "term_deltas_step0": {
+      "Class2-Angle": {
+        "exact_kj_per_mol": 91.760353,
+        "exact_minus_plain_kj_per_mol": 0.0,
+        "plain_kj_per_mol": 91.760353,
+        "side_reference_kj_per_mol": 91.760353,
+        "side_reference_minus_plain_kj_per_mol": 0.0
+      },
+      "Class2-Bond": {
+        "exact_kj_per_mol": 945.803223,
+        "exact_minus_plain_kj_per_mol": 0.0,
+        "plain_kj_per_mol": 945.803223,
+        "side_reference_kj_per_mol": 945.803223,
+        "side_reference_minus_plain_kj_per_mol": 0.0
+      },
+      "Class2-Dih": {
+        "exact_kj_per_mol": -5919.4375,
+        "exact_minus_plain_kj_per_mol": 0.0,
+        "plain_kj_per_mol": -5919.4375,
+        "side_reference_kj_per_mol": -5919.4375,
+        "side_reference_minus_plain_kj_per_mol": 0.0
+      },
+      "Coul.-recip.": {
+        "exact_kj_per_mol": -664.862122,
+        "exact_minus_plain_kj_per_mol": 0.006103000000052816,
+        "plain_kj_per_mol": -664.868225,
+        "side_reference_kj_per_mol": -664.868225,
+        "side_reference_minus_plain_kj_per_mol": 0.0
+      },
+      "Coulomb-(SR)": {
+        "exact_kj_per_mol": 1422.623291,
+        "exact_minus_plain_kj_per_mol": 8583.45874,
+        "plain_kj_per_mol": -7160.835449,
+        "side_reference_kj_per_mol": -7160.835449,
+        "side_reference_minus_plain_kj_per_mol": 0.0
+      },
+      "Coulomb-14": {
+        "exact_kj_per_mol": 4.321452,
+        "exact_minus_plain_kj_per_mol": 0.0,
+        "plain_kj_per_mol": 4.321452,
+        "side_reference_kj_per_mol": 4.321452,
+        "side_reference_minus_plain_kj_per_mol": 0.0
+      },
+      "LJ-(SR)": {
+        "exact_kj_per_mol": 122.76384,
+        "exact_minus_plain_kj_per_mol": 0.0,
+        "plain_kj_per_mol": 122.76384,
+        "side_reference_kj_per_mol": 122.76384,
+        "side_reference_minus_plain_kj_per_mol": 0.0
+      },
+      "LJ-14": {
+        "exact_kj_per_mol": 1.239189,
+        "exact_minus_plain_kj_per_mol": 0.0,
+        "plain_kj_per_mol": 1.239189,
+        "side_reference_kj_per_mol": 1.239189,
+        "side_reference_minus_plain_kj_per_mol": 0.0
+      },
+      "Potential": {
+        "exact_kj_per_mol": -3995.788818,
+        "exact_minus_plain_kj_per_mol": 8583.465088,
+        "plain_kj_per_mol": -12579.253906,
+        "side_reference_kj_per_mol": -12579.253906,
+        "side_reference_minus_plain_kj_per_mol": 0.0
+      }
+    }
+  },
+  "exact_schedule_active": true,
+  "exact_schedule_dump": {
+    "mts": "true",
+    "mts-level2-factor": "2",
+    "mts-level2-forces": "nonbonded-middle",
+    "mts-level3-factor": "4",
+    "mts-level3-forces": "longrange-nonbonded nonbonded-outer",
+    "mts-mode": "lammps-respa",
+    "mts-respa-angle-level": "1",
+    "mts-respa-bond-level": "1",
+    "mts-respa-dihedral-level": "1",
+    "mts-respa-improper-level": "1",
+    "mts-respa-inner-level": "1",
+    "mts-respa-inner-off": "0.3",
+    "mts-respa-inner-on": "0.45",
+    "mts-respa-kspace-level": "3",
+    "mts-respa-middle-level": "2",
+    "mts-respa-outer-level": "3",
+    "mts-respa-outer-off": "0.8",
+    "mts-respa-outer-on": "0.6",
+    "mts-respa-pair-level": "3",
+    "mts-respa-pair14-level": "1"
+  },
+  "exact_split": {
+    "inner_terms": [
+      "pair14",
+      "bond",
+      "angle",
+      "dihedral",
+      "nonbonded_inner"
+    ],
+    "middle_terms": [
+      "nonbonded_middle"
+    ],
+    "outer_terms": [
+      "pair",
+      "nonbonded_outer",
+      "kspace"
+    ]
+  },
+  "fine": {
+    "dt_ps": 0.00025,
+    "exact_vs_plain": {
+      "final_coord_diff": {
+        "l2_norm": 0.00048358660030972455,
+        "max_abs": 2.1000000000048757e-05,
+        "rms": 1.4247806848748117e-05
+      },
+      "final_force_diff": {
+        "l2_norm": 687.0506577598279,
+        "max_abs": 34.751599999999996,
+        "rms": 20.242424130027175
+      },
+      "final_potential_abs_diff_kj_per_mol": 8583.873779000001,
+      "step0_force_diff": {
+        "l2_norm": 742.3481842394348,
+        "max_abs": 35.9212,
+        "rms": 21.871643128217706
+      },
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088
+    },
+    "exact_vs_side_reference": {
+      "final_coord_diff": {
+        "l2_norm": 0.0004940931086334931,
+        "max_abs": 2.1000000000048757e-05,
+        "rms": 1.4557357818845185e-05
+      },
+      "final_force_diff": {
+        "l2_norm": 683.342108184378,
+        "max_abs": 34.9684,
+        "rms": 20.13315994031188
+      },
+      "final_potential_abs_diff_kj_per_mol": 8583.927490000002,
+      "step0_force_diff": {
+        "l2_norm": 742.3481711536402,
+        "max_abs": 35.9212,
+        "rms": 21.87164274267378
+      },
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088
+    },
+    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p00025/exact_three_level",
+    "nsteps": 16,
+    "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p00025/plain_verlet",
+    "side_reference_vs_plain": {
+      "final_coord_diff": {
+        "l2_norm": 7.756287771857844e-05,
+        "max_abs": 1.0000000000065512e-05,
+        "rms": 2.2852182001312415e-06
+      },
+      "final_force_diff": {
+        "l2_norm": 14.979953622776938,
+        "max_abs": 0.8689999999999998,
+        "rms": 0.4413511161885651
+      },
+      "final_potential_abs_diff_kj_per_mol": 0.053711000000475906,
+      "step0_force_diff": {
+        "l2_norm": 0.0003173326330550173,
+        "max_abs": 0.00010000000000331966,
+        "rms": 9.349502363541045e-06
+      },
+      "step0_potential_abs_diff_kj_per_mol": 0.0
+    },
+    "side_reference_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p00025/pme_legacy_side_reference"
+  },
+  "fine_exact_no_worse_than_pme_side_reference": false,
+  "fixture_id": "dense_oligomer",
+  "fixture_sources": {
+    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+  },
+  "gro_metadata": {
+    "box_nm": [
+      2.2,
+      2.2,
+      2.2
+    ],
+    "num_atoms": 384
+  },
+  "listed_terms_present": [
+    "pair14",
+    "bond",
+    "angle",
+    "dihedral"
+  ],
+  "m1_continuity": {
+    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_settings": {
+      "coulombtype": "Cut-off",
+      "integrator": "md",
+      "mts_level2_forces": "nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "current_side_reference_settings": {
+      "coulombtype": "PME",
+      "integrator": "md",
+      "label": "pme_legacy_side_reference",
+      "mts_level2_forces": "nonbonded longrange-nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "direct_archived_m1_comparison_done": false,
+    "direct_archived_m1_comparison_feasible": false,
+    "why_not_feasible": "Archived M1 uses integrator = md with coulombtype = Cut-off and mts-level2-forces = nonbonded; the current exact-3-level harness requires PME-side md-vv settings, so the current simpler split can only be a PME-side legacy side-reference.",
+    "wording_requirement": "The current simpler split must be reported as a PME-side legacy side-reference, not as direct archived-M1 continuity."
+  },
+  "pme_side_reference_active": true,
+  "pme_side_reference_dump": {
+    "mts": "true",
+    "mts-level2-factor": "2",
+    "mts-level2-forces": "longrange-nonbonded nonbonded",
+    "mts-mode": "legacy"
+  }
+}

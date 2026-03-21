@@ -1,0 +1,96 @@
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/plain_verlet/plain.mdp' -c system.gro -p system.top -o plain.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s plain.tpr -deffnm plain -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s plain.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f plain.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f plain.edr -o plain_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/legacy_two_level/legacy.mdp' -c system.gro -p system.top -o legacy.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s legacy.tpr -deffnm legacy -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s legacy.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f legacy.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f legacy.edr -o legacy_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/exact_three_level/exact.mdp' -c system.gro -p system.top -o exact.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s exact.tpr -deffnm exact -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s exact.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f exact.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f exact.edr -o exact_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/plain_verlet/plain.mdp' -c system.gro -p system.top -o plain.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s plain.tpr -deffnm plain -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s plain.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f plain.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f plain.edr -o plain_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level/legacy.mdp' -c system.gro -p system.top -o legacy.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s legacy.tpr -deffnm legacy -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s legacy.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f legacy.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f legacy.edr -o legacy_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level/exact.mdp' -c system.gro -p system.top -o exact.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s exact.tpr -deffnm exact -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s exact.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f exact.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f exact.edr -o exact_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet/plain.mdp' -c system.gro -p system.top -o plain.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s plain.tpr -deffnm plain -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s plain.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f plain.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f plain.edr -o plain_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level/legacy.mdp' -c system.gro -p system.top -o legacy.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s legacy.tpr -deffnm legacy -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s legacy.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f legacy.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f legacy.edr -o legacy_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level/exact.mdp' -c system.gro -p system.top -o exact.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s exact.tpr -deffnm exact -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s exact.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f exact.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f exact.edr -o exact_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/plain_verlet/plain.mdp' -c system.gro -p system.top -o plain.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s plain.tpr -deffnm plain -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s plain.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f plain.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/plain_verlet' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f plain.edr -o plain_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/legacy_two_level/legacy.mdp' -c system.gro -p system.top -o legacy.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s legacy.tpr -deffnm legacy -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s legacy.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f legacy.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/legacy_two_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f legacy.edr -o legacy_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' grompp -f '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/exact_three_level/exact.mdp' -c system.gro -p system.top -o exact.tpr -maxwarn 10)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' mdrun -s exact.tpr -deffnm exact -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -s exact.tpr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' dump -f exact.trr)
+(cd '/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/exact_three_level' && '/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx' energy -f exact.edr -o exact_potential.xvg -xvg none <<'EOF'
+Potential
+0
+EOF)

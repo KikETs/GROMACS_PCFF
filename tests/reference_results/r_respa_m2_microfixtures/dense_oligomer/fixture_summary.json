@@ -1,0 +1,203 @@
+{
+  "bookkeeping_ok": false,
+  "coarse": {
+    "dt_ps": 0.0005,
+    "exact_vs_legacy": {
+      "final_coord_diff": {
+        "l2_norm": 0.0005402517931475912,
+        "max_abs": 2.4000000000024002e-05,
+        "rms": 1.591732110345224e-05
+      },
+      "final_force_diff": {
+        "l2_norm": 680.0297692432139,
+        "max_abs": 35.1535,
+        "rms": 20.03556921835832
+      },
+      "final_potential_abs_diff_kj_per_mol": 8583.952148999999,
+      "step0_force_diff": {
+        "l2_norm": 742.3481711536402,
+        "max_abs": 35.9212,
+        "rms": 21.87164274267378
+      },
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088
+    },
+    "exact_vs_plain": {
+      "final_coord_diff": {
+        "l2_norm": 0.0004846627693552677,
+        "max_abs": 2.0000000000131024e-05,
+        "rms": 1.4279513783323393e-05
+      },
+      "final_force_diff": {
+        "l2_norm": 687.0291562211164,
+        "max_abs": 34.7325,
+        "rms": 20.24179063486764
+      },
+      "final_potential_abs_diff_kj_per_mol": 8583.863281,
+      "step0_force_diff": {
+        "l2_norm": 742.3481842394348,
+        "max_abs": 35.9212,
+        "rms": 21.871643128217706
+      },
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088
+    },
+    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level",
+    "legacy_vs_plain": {
+      "final_coord_diff": {
+        "l2_norm": 0.0001465127980758503,
+        "max_abs": 1.0000000000065512e-05,
+        "rms": 4.316674710418712e-06
+      },
+      "final_force_diff": {
+        "l2_norm": 28.830681312666684,
+        "max_abs": 1.638300000000001,
+        "rms": 0.8494320942672869
+      },
+      "final_potential_abs_diff_kj_per_mol": 0.08886799999891082,
+      "step0_force_diff": {
+        "l2_norm": 0.0003173326330550173,
+        "max_abs": 0.00010000000000331966,
+        "rms": 9.349502363541045e-06
+      },
+      "step0_potential_abs_diff_kj_per_mol": 0.0
+    },
+    "legacy_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level",
+    "nsteps": 8,
+    "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet"
+  },
+  "comparison_notes": [
+    "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
+    "The M1-style comparator here is the already-working legacy 2-level architecture reused on the same PME microfixture harness; it is not a re-claim of M1 Cut-off authority."
+  ],
+  "convergence_ok": false,
+  "exact_schedule_active": true,
+  "exact_schedule_dump": {
+    "mts": "true",
+    "mts-level2-factor": "2",
+    "mts-level2-forces": "nonbonded-middle",
+    "mts-level3-factor": "4",
+    "mts-level3-forces": "longrange-nonbonded nonbonded-outer",
+    "mts-mode": "lammps-respa",
+    "mts-respa-angle-level": "1",
+    "mts-respa-bond-level": "1",
+    "mts-respa-dihedral-level": "1",
+    "mts-respa-improper-level": "1",
+    "mts-respa-inner-level": "1",
+    "mts-respa-inner-off": "0.3",
+    "mts-respa-inner-on": "0.45",
+    "mts-respa-kspace-level": "3",
+    "mts-respa-middle-level": "2",
+    "mts-respa-outer-level": "3",
+    "mts-respa-outer-off": "0.8",
+    "mts-respa-outer-on": "0.6",
+    "mts-respa-pair-level": "3",
+    "mts-respa-pair14-level": "1"
+  },
+  "exact_split": {
+    "inner_terms": [
+      "pair14",
+      "bond",
+      "angle",
+      "dihedral",
+      "nonbonded_inner"
+    ],
+    "middle_terms": [
+      "nonbonded_middle"
+    ],
+    "outer_terms": [
+      "nonbonded_outer",
+      "kspace"
+    ]
+  },
+  "fine": {
+    "dt_ps": 0.00025,
+    "exact_vs_legacy": {
+      "final_coord_diff": {
+        "l2_norm": 0.0004940931086334931,
+        "max_abs": 2.1000000000048757e-05,
+        "rms": 1.4557357818845185e-05
+      },
+      "final_force_diff": {
+        "l2_norm": 683.342108184378,
+        "max_abs": 34.9684,
+        "rms": 20.13315994031188
+      },
+      "final_potential_abs_diff_kj_per_mol": 8583.927490000002,
+      "step0_force_diff": {
+        "l2_norm": 742.3481711536402,
+        "max_abs": 35.9212,
+        "rms": 21.87164274267378
+      },
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088
+    },
+    "exact_vs_plain": {
+      "final_coord_diff": {
+        "l2_norm": 0.00048358660030972455,
+        "max_abs": 2.1000000000048757e-05,
+        "rms": 1.4247806848748117e-05
+      },
+      "final_force_diff": {
+        "l2_norm": 687.0506577598279,
+        "max_abs": 34.751599999999996,
+        "rms": 20.242424130027175
+      },
+      "final_potential_abs_diff_kj_per_mol": 8583.873779000001,
+      "step0_force_diff": {
+        "l2_norm": 742.3481842394348,
+        "max_abs": 35.9212,
+        "rms": 21.871643128217706
+      },
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088
+    },
+    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/exact_three_level",
+    "legacy_vs_plain": {
+      "final_coord_diff": {
+        "l2_norm": 7.756287771857844e-05,
+        "max_abs": 1.0000000000065512e-05,
+        "rms": 2.2852182001312415e-06
+      },
+      "final_force_diff": {
+        "l2_norm": 14.979953622776938,
+        "max_abs": 0.8689999999999998,
+        "rms": 0.4413511161885651
+      },
+      "final_potential_abs_diff_kj_per_mol": 0.053711000000475906,
+      "step0_force_diff": {
+        "l2_norm": 0.0003173326330550173,
+        "max_abs": 0.00010000000000331966,
+        "rms": 9.349502363541045e-06
+      },
+      "step0_potential_abs_diff_kj_per_mol": 0.0
+    },
+    "legacy_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/legacy_two_level",
+    "nsteps": 16,
+    "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/plain_verlet"
+  },
+  "fine_exact_no_worse_than_legacy": false,
+  "fixture_id": "dense_oligomer",
+  "fixture_sources": {
+    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+  },
+  "gro_metadata": {
+    "box_nm": [
+      2.2,
+      2.2,
+      2.2
+    ],
+    "num_atoms": 384
+  },
+  "legacy_schedule_active": true,
+  "legacy_schedule_dump": {
+    "mts": "true",
+    "mts-level2-factor": "2",
+    "mts-level2-forces": "longrange-nonbonded nonbonded",
+    "mts-mode": "legacy"
+  },
+  "listed_terms_present": [
+    "pair14",
+    "bond",
+    "angle",
+    "dihedral"
+  ]
+}

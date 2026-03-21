@@ -1,0 +1,35 @@
+      :-) GROMACS - gmx mdrun, 2027.0-dev-20260321-c02f3b86ca-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
+Working dir:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level
+Command line:
+  gmx mdrun -s exact.tpr -deffnm exact -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod
+
+
+Back Off! I just backed up exact.log to ./#exact.log.1#
+Reading file exact.tpr, VERSION 2027.0-dev-20260321-c02f3b86ca-unknown (single precision)
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+Back Off! I just backed up exact.trr to ./#exact.trr.1#
+
+Back Off! I just backed up exact.edr to ./#exact.edr.1#
+starting mdrun 'coulomb_toy'
+16 steps,      0.0 ps.
+
+Writing final coordinates.
+
+Back Off! I just backed up exact.gro to ./#exact.gro.1#
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.004        0.004       99.3
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:       89.217        0.269        0.242            0.008 
+
+GROMACS reminds you: "It's just the way this stuff is done" (Built to Spill)
+
