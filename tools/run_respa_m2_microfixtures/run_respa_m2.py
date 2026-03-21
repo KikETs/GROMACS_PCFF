@@ -95,6 +95,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Collect dense_oligomer step-0 force-buffer ownership diagnostics for M2c-style isolation.",
     )
+    parser.add_argument(
+        "--dense-merge-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 merge-stage diagnostics for M2d-style localization.",
+    )
     return parser.parse_args()
 
 
@@ -334,7 +339,7 @@ def parse_force_dump(path: Path) -> dict[int, dict[str, Any]]:
     return frames
 
 
-def parse_excluded_force_dump(path: Path) -> dict[str, Any]:
+def parse_vector_dump(path: Path) -> dict[str, Any]:
     metadata: dict[str, str] = {}
     forces: dict[int, tuple[float, float, float]] = {}
     for raw_line in path.read_text(encoding="utf-8").splitlines():
@@ -350,6 +355,10 @@ def parse_excluded_force_dump(path: Path) -> dict[str, Any]:
         atom, fx, fy, fz = stripped.split("\t")
         forces[int(atom)] = (float(fx), float(fy), float(fz))
     return {"metadata": metadata, "forces": forces}
+
+
+def parse_excluded_force_dump(path: Path) -> dict[str, Any]:
+    return parse_vector_dump(path)
 
 
 def maybe_minimum_image(diff: float, box_length: float | None) -> float:
@@ -398,6 +407,14 @@ def add_vectors(
     return {
         atom_index: tuple(left_value + right_value for left_value, right_value in zip(left[atom_index], right[atom_index]))
         for atom_index in sorted(left)
+    }
+
+
+def sum_vectors(*vectors: dict[int, tuple[float, float, float]]) -> dict[int, tuple[float, float, float]]:
+    atom_indices = sorted(vectors[0])
+    return {
+        atom_index: tuple(sum(vector[atom_index][dim] for vector in vectors) for dim in range(3))
+        for atom_index in atom_indices
     }
 
 
@@ -730,6 +747,154 @@ def dense_force_ownership_isolation(dense_fixture_summary: dict[str, Any]) -> di
     }
 
 
+def dense_merge_trace_localization(dense_fixture_summary: dict[str, Any]) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    exact_dir = Path(coarse["exact_work_dir"])
+
+    plain_force_frames = parse_force_dump(plain_dir / "plain_total_force.tsv")
+    exact_force_frames = parse_force_dump(exact_dir / "exact_total_force.tsv")
+    excluded_force_dump = parse_vector_dump(exact_dir / "exact_excluded_pairs_correction_force.tsv")
+    level0_post = parse_vector_dump(exact_dir / "step0_level0_post_postprocess_shift.tsv")
+    level1_post = parse_vector_dump(exact_dir / "step0_level1_post_postprocess_shift.tsv")
+    level2_pre_virial = parse_vector_dump(exact_dir / "step0_level2_pre_postprocess_virial.tsv")
+    level2_post_shift = parse_vector_dump(exact_dir / "step0_level2_post_postprocess_shift.tsv")
+    physical_postcombine = parse_vector_dump(exact_dir / "step0_physical_postcombine.tsv")
+    impulse_postcombine = parse_vector_dump(exact_dir / "step0_impulse_postcombine.tsv")
+
+    step0 = min(set(plain_force_frames) & set(exact_force_frames))
+    plain_force = plain_force_frames[step0]["forces"]
+    exact_force = exact_force_frames[step0]["forces"]
+    excluded_force = excluded_force_dump["forces"]
+    level0_post_force = level0_post["forces"]
+    level1_post_force = level1_post["forces"]
+    level2_pre_virial_force = level2_pre_virial["forces"]
+    level2_post_shift_force = level2_post_shift["forces"]
+    physical_postcombine_force = physical_postcombine["forces"]
+    impulse_postcombine_force = impulse_postcombine["forces"]
+
+    reconstructed_physical = sum_vectors(level0_post_force, level1_post_force, level2_post_shift_force)
+    reconstructed_without_excluded = sum_vectors(
+        level0_post_force, level1_post_force, subtract_vectors(level2_post_shift_force, excluded_force)
+    )
+    postprocess_delta = subtract_vectors(level2_post_shift_force, level2_pre_virial_force)
+    combine_delta = subtract_vectors(physical_postcombine_force, reconstructed_physical)
+
+    outer_post_vs_pre = vector_metrics(level2_post_shift_force, level2_pre_virial_force)
+    combine_reconstruction = vector_metrics(physical_postcombine_force, reconstructed_physical)
+    corrected_reconstruction_vs_plain = vector_metrics(reconstructed_without_excluded, plain_force)
+    postprocess_delta_vs_excluded = vector_metrics(postprocess_delta, excluded_force)
+    combine_delta_vs_excluded = vector_metrics(combine_delta, excluded_force)
+    physical_postcombine_vs_exact = vector_metrics(physical_postcombine_force, exact_force)
+    impulse_postcombine_vs_exact = vector_metrics(impulse_postcombine_force, exact_force)
+
+    supports_before_postprocess = (
+        outer_post_vs_pre["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and combine_reconstruction["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and corrected_reconstruction_vs_plain["max_abs"] <= FORCE_BOOKKEEPING_TOL
+    )
+    supports_postprocess = (
+        postprocess_delta_vs_excluded["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and combine_reconstruction["max_abs"] <= FORCE_BOOKKEEPING_TOL
+    )
+    supports_combine = combine_delta_vs_excluded["max_abs"] <= FORCE_BOOKKEEPING_TOL
+
+    localization = {
+        "classification": (
+            "duplicated correction already present before postProcessForces"
+            if supports_before_postprocess
+            else (
+                "duplication first appears during postProcessForces"
+                if supports_postprocess
+                else (
+                    "duplication first appears during combineMtsForces"
+                    if supports_combine
+                    else "still unresolved"
+                )
+            )
+        ),
+        "step0": step0,
+        "exact_vs_plain_step0_force_diff": vector_metrics(exact_force, plain_force),
+        "outer_post_vs_pre_postprocess_diff": outer_post_vs_pre,
+        "combine_reconstruction_diff": combine_reconstruction,
+        "corrected_reconstruction_vs_plain_diff": corrected_reconstruction_vs_plain,
+        "postprocess_delta_vs_excluded_diff": postprocess_delta_vs_excluded,
+        "combine_delta_vs_excluded_diff": combine_delta_vs_excluded,
+        "physical_postcombine_vs_exact_diff": physical_postcombine_vs_exact,
+        "impulse_postcombine_vs_exact_diff": impulse_postcombine_vs_exact,
+        "alignment_postprocess_delta_with_excluded": vector_alignment(postprocess_delta, excluded_force),
+        "alignment_combine_delta_with_excluded": vector_alignment(combine_delta, excluded_force),
+        "supports_before_postprocess": supports_before_postprocess,
+        "supports_postprocess": supports_postprocess,
+        "supports_combine": supports_combine,
+        "excluded_force_dump_metadata": excluded_force_dump["metadata"],
+        "level2_pre_postprocess_virial_metadata": level2_pre_virial["metadata"],
+        "level2_post_postprocess_shift_metadata": level2_post_shift["metadata"],
+        "physical_postcombine_metadata": physical_postcombine["metadata"],
+        "impulse_postcombine_metadata": impulse_postcombine["metadata"],
+        "level0_post_postprocess_shift_path": str(exact_dir / "step0_level0_post_postprocess_shift.tsv"),
+        "level1_post_postprocess_shift_path": str(exact_dir / "step0_level1_post_postprocess_shift.tsv"),
+        "level2_pre_postprocess_virial_path": str(exact_dir / "step0_level2_pre_postprocess_virial.tsv"),
+        "level2_post_postprocess_shift_path": str(exact_dir / "step0_level2_post_postprocess_shift.tsv"),
+        "physical_postcombine_path": str(exact_dir / "step0_physical_postcombine.tsv"),
+        "impulse_postcombine_path": str(exact_dir / "step0_impulse_postcombine.tsv"),
+        "why_not_fully_closed": (
+            "This localization only closes the merge stage on dense_oligomer coarse step 0. "
+            "It does not yet patch the defect or generalize beyond this harness."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "localization": localization,
+    }
+
+
+def summarize_dense_trace_fixture(
+    fixture_id: str,
+    topology_terms: list[str],
+    box_nm: tuple[float, float, float],
+    coarse_plain: dict[str, Any],
+    coarse_side_reference: dict[str, Any],
+    coarse_exact: dict[str, Any],
+) -> dict[str, Any]:
+    coarse_exact_vs_plain = compare_series(coarse_exact, coarse_plain, box_nm)
+    coarse_side_reference_vs_plain = compare_series(coarse_side_reference, coarse_plain, box_nm)
+    coarse_exact_vs_side_reference = compare_series(coarse_exact, coarse_side_reference, box_nm)
+
+    return {
+        "fixture_id": fixture_id,
+        "listed_terms_present": topology_terms,
+        "exact_split": {
+            "inner_terms": topology_terms + ["nonbonded_inner"],
+            "middle_terms": ["nonbonded_middle"],
+            "outer_terms": ["pair", "nonbonded_outer", "kspace"],
+        },
+        "exact_schedule_active": exact_scheduler_active(coarse_exact["schedule"]),
+        "pme_side_reference_active": legacy_scheduler_active(coarse_side_reference["schedule"]),
+        "bookkeeping_ok": (
+            coarse_exact_vs_plain["step0_force_diff"]["max_abs"] <= FORCE_BOOKKEEPING_TOL
+            and coarse_exact_vs_plain["step0_potential_abs_diff_kj_per_mol"] <= POTENTIAL_BOOKKEEPING_TOL
+        ),
+        "coarse": {
+            "dt_ps": coarse_exact["dt_ps"],
+            "nsteps": coarse_exact["nsteps"],
+            "plain_work_dir": coarse_plain["work_dir"],
+            "side_reference_work_dir": coarse_side_reference["work_dir"],
+            "exact_work_dir": coarse_exact["work_dir"],
+            "exact_vs_plain": coarse_exact_vs_plain,
+            "side_reference_vs_plain": coarse_side_reference_vs_plain,
+            "exact_vs_side_reference": coarse_exact_vs_side_reference,
+        },
+        "exact_schedule_dump": coarse_exact["schedule"],
+        "pme_side_reference_dump": coarse_side_reference["schedule"],
+        "comparison_notes": [
+            "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
+            "The simpler split here is a PME-side legacy side-reference on the same harness; it is not direct archived-M1 continuity because archived M1 used md + Cut-off settings.",
+        ],
+    }
+
+
 def load_build_provenance(gmx_bin: str) -> dict[str, Any]:
     version_output = subprocess.run(
         [gmx_bin, "--version"], capture_output=True, text=True, check=True, errors="replace"
@@ -1042,16 +1207,10 @@ def main() -> int:
         coarse_plain_env = None
         coarse_side_reference_env = None
         coarse_exact_env = None
-        if args.dense_force_ownership_isolation and fixture_id == "dense_oligomer":
+        if (args.dense_force_ownership_isolation or args.dense_merge_trace) and fixture_id == "dense_oligomer":
             coarse_plain_env = {
                 "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
                 "GMX_TOTAL_FORCE_DUMP_FILE": str(system_root / "dt_0p0005" / "plain_verlet" / "plain_total_force.tsv"),
-            }
-            coarse_side_reference_env = {
-                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
-                "GMX_TOTAL_FORCE_DUMP_FILE": str(
-                    system_root / "dt_0p0005" / PME_LEGACY_SIDE_REFERENCE_MODE / "legacy_total_force.tsv"
-                ),
             }
             coarse_exact_env = {
                 "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
@@ -1065,6 +1224,9 @@ def main() -> int:
                     / "exact_excluded_pairs_correction_force.tsv"
                 ),
             }
+        if args.dense_merge_trace and fixture_id == "dense_oligomer":
+            coarse_exact_env = dict(coarse_exact_env or {})
+            coarse_exact_env["GMX_PCFF_RESPA_MERGE_TRACE_DIR"] = str(system_root / "dt_0p0005" / "exact_three_level")
         if args.dense_bookkeeping_isolation and fixture_id == "dense_oligomer":
             coarse_exact_env = dict(coarse_exact_env or {})
             coarse_exact_env["GMX_PCFF_RESPA_DEBUG"] = "1"
@@ -1099,45 +1261,55 @@ def main() -> int:
             commands_log,
             extra_env=coarse_exact_env,
         )
-        fine_plain = run_case(
-            gmx_bin,
-            system_root,
-            system_root / "dt_0p00025" / "plain_verlet",
-            "plain_verlet",
-            DEFAULT_DT_VALUES[1],
-            args.total_time_ps,
-            commands_log,
-        )
-        fine_side_reference = run_case(
-            gmx_bin,
-            system_root,
-            system_root / "dt_0p00025" / PME_LEGACY_SIDE_REFERENCE_MODE,
-            PME_LEGACY_SIDE_REFERENCE_MODE,
-            DEFAULT_DT_VALUES[1],
-            args.total_time_ps,
-            commands_log,
-        )
-        fine_exact = run_case(
-            gmx_bin,
-            system_root,
-            system_root / "dt_0p00025" / "exact_three_level",
-            "exact_three_level",
-            DEFAULT_DT_VALUES[1],
-            args.total_time_ps,
-            commands_log,
-        )
+        if args.dense_merge_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_trace_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_side_reference,
+                coarse_exact,
+            )
+        else:
+            fine_plain = run_case(
+                gmx_bin,
+                system_root,
+                system_root / "dt_0p00025" / "plain_verlet",
+                "plain_verlet",
+                DEFAULT_DT_VALUES[1],
+                args.total_time_ps,
+                commands_log,
+            )
+            fine_side_reference = run_case(
+                gmx_bin,
+                system_root,
+                system_root / "dt_0p00025" / PME_LEGACY_SIDE_REFERENCE_MODE,
+                PME_LEGACY_SIDE_REFERENCE_MODE,
+                DEFAULT_DT_VALUES[1],
+                args.total_time_ps,
+                commands_log,
+            )
+            fine_exact = run_case(
+                gmx_bin,
+                system_root,
+                system_root / "dt_0p00025" / "exact_three_level",
+                "exact_three_level",
+                DEFAULT_DT_VALUES[1],
+                args.total_time_ps,
+                commands_log,
+            )
 
-        fixture_summary = summarize_fixture(
-            fixture_id,
-            inner_terms_from_topology(topology_text),
-            tuple(gro_meta["box_nm"]),
-            coarse_plain,
-            coarse_side_reference,
-            coarse_exact,
-            fine_plain,
-            fine_side_reference,
-            fine_exact,
-        )
+            fixture_summary = summarize_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_side_reference,
+                coarse_exact,
+                fine_plain,
+                fine_side_reference,
+                fine_exact,
+            )
         fixture_summary["fixture_sources"] = fixture_source_record(fixture_id)
         fixture_summary["gro_metadata"] = gro_meta
         fixture_summary["m1_continuity"] = archived_m1_continuity_record()
@@ -1149,10 +1321,29 @@ def main() -> int:
             fixture_summary["dense_exact_force_ownership_isolation"] = dense_force_ownership_isolation(
                 fixture_summary
             )
+        if args.dense_merge_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_exact_merge_trace_localization"] = dense_merge_trace_localization(
+                fixture_summary
+            )
         fixture_results.append(fixture_summary)
         write_json(system_root / "fixture_summary.json", fixture_summary)
 
-    if args.dense_force_ownership_isolation:
+    if args.dense_merge_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_exact_merge_trace_localization", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_before_postprocess"):
+            verdict = "DUPLICATION LOCALIZED BEFORE POSTPROCESS"
+        elif dense_localization and dense_localization.get("supports_postprocess"):
+            verdict = "DUPLICATION LOCALIZED TO POSTPROCESSFORCES"
+        elif dense_localization and dense_localization.get("supports_combine"):
+            verdict = "DUPLICATION LOCALIZED TO COMBINEMTSFORCES"
+        else:
+            verdict = "DUPLICATION NARROWED BUT STILL PARTIAL"
+    elif args.dense_force_ownership_isolation:
         dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
         dense_localization = (
             None

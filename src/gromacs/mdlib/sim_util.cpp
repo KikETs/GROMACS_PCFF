@@ -602,6 +602,36 @@ static real computePmeSelfEnergy(const interaction_const_t& ic)
             ;
 }
 
+static void dumpRespaMergeTraceVector(const char*               traceDirPath,
+                                      const char*               fileName,
+                                      const std::string&        header,
+                                      ArrayRef<const gmx::RVec> forceBuffer)
+{
+    GMX_RELEASE_ASSERT(traceDirPath != nullptr && *traceDirPath != '\0', "Need a valid merge trace directory");
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::filesystem::path outputPath = traceDir / fileName;
+
+    FILE* dumpFile = std::fopen(outputPath.string().c_str(), "w");
+    if (dumpFile == nullptr)
+    {
+        gmx_fatal(FARGS, "Could not open merge trace output '%s' for writing", outputPath.string().c_str());
+    }
+
+    std::fprintf(dumpFile, "# %s\n", header.c_str());
+    for (int atom = 0; atom < forceBuffer.ssize(); ++atom)
+    {
+        std::fprintf(dumpFile,
+                     "%d\t%.17g\t%.17g\t%.17g\n",
+                     atom,
+                     forceBuffer[atom][XX],
+                     forceBuffer[atom][YY],
+                     forceBuffer[atom][ZZ]);
+    }
+    std::fclose(dumpFile);
+}
+
 static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inputrec,
                                            const InteractionDefinitions&    idef,
                                            t_forcerec*                      fr,
@@ -3258,6 +3288,32 @@ void do_force(FILE*                         fplog,
 
     const bool haveCombinedMtsForces = (stepWork.computeForces && simulationWork.useMts && stepWork.computeSlowForces
                                         && stepWork.combineMtsForcesBeforeHaloExchange);
+    const char* mergeTraceDirPath = std::getenv("GMX_PCFF_RESPA_MERGE_TRACE_DIR");
+    const bool  dumpMergeTrace    = (mergeTraceDirPath != nullptr && *mergeTraceDirPath != '\0' && step == 0);
+    const auto dumpForceOutputsStage = [&](const char* stageLabel, int mtsLevelIndex, ForceOutputs* outputs)
+    {
+        if (!dumpMergeTrace || outputs == nullptr)
+        {
+            return;
+        }
+
+        const std::string commonHeader = "stage=" + std::string(stageLabel) + " mts_index="
+                                         + std::to_string(mtsLevelIndex) + " mts_user="
+                                         + std::to_string(mtsLevelIndex + 1);
+        const std::string levelLabel   = "step0_level" + std::to_string(mtsLevelIndex) + "_" + stageLabel;
+
+        dumpRespaMergeTraceVector(mergeTraceDirPath,
+                                  (levelLabel + "_shift.tsv").c_str(),
+                                  commonHeader + " buffer=forceWithShiftForces",
+                                  outputs->forceWithShiftForces().force());
+        if (outputs->haveForceWithVirial())
+        {
+            dumpRespaMergeTraceVector(mergeTraceDirPath,
+                                      (levelLabel + "_virial.tsv").c_str(),
+                                      commonHeader + " buffer=forceWithVirial",
+                                      outputs->forceWithVirial().force_);
+        }
+    };
     if (stepWork.computeForces)
     {
         postProcessForceWithShiftForces(
@@ -3305,8 +3361,10 @@ void do_force(FILE*                         fplog,
          * otherwise we have to post-process two outputs and then combine them.
          */
         ForceOutputs& forceOutCombined = (haveCombinedMtsForces ? forceOutSingleSlowLevel.value() : forceOutMtsLevel0);
+        dumpForceOutputsStage("pre_postprocess", 0, &forceOutCombined);
         postProcessForces(
                 cr->dd, step, nrnb, wcycle, box, x.unpaddedArrayRef(), &forceOutCombined, vir_force, mdatoms, fr, vsite, stepWork);
+        dumpForceOutputsStage("post_postprocess", 0, &forceOutCombined);
 
         if (simulationWork.useMts && stepWork.computeSlowForces && !haveCombinedMtsForces)
         {
@@ -3314,6 +3372,7 @@ void do_force(FILE*                         fplog,
             std::vector<int>                  slowLevelFactors;
             for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; mtsLevel++)
             {
+                dumpForceOutputsStage("pre_postprocess", mtsLevel, forceOutByMtsLevel[mtsLevel]);
                 postProcessForces(cr->dd,
                                   step,
                                   nrnb,
@@ -3326,6 +3385,7 @@ void do_force(FILE*                         fplog,
                                   fr,
                                   vsite,
                                   stepWork);
+                dumpForceOutputsStage("post_postprocess", mtsLevel, forceOutByMtsLevel[mtsLevel]);
                 slowLevelForces.push_back(forceOutByMtsLevel[mtsLevel]->forceWithShiftForces().force());
                 slowLevelFactors.push_back(inputrec.mtsLevels[mtsLevel].stepFactor);
             }
@@ -3335,6 +3395,17 @@ void do_force(FILE*                         fplog,
                              forceView->forceMtsCombined(),
                              slowLevelForces,
                              slowLevelFactors);
+            if (dumpMergeTrace)
+            {
+                dumpRespaMergeTraceVector(mergeTraceDirPath,
+                                          "step0_physical_postcombine.tsv",
+                                          "stage=post_combine buffer=physical_total",
+                                          force.unpaddedArrayRef());
+                dumpRespaMergeTraceVector(mergeTraceDirPath,
+                                          "step0_impulse_postcombine.tsv",
+                                          "stage=post_combine buffer=impulse_total",
+                                          forceView->forceMtsCombined());
+            }
         }
     }
 
