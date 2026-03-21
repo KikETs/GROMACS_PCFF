@@ -90,6 +90,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Collect extra dense_oligomer step-0 bookkeeping diagnostics for M2b-style isolation.",
     )
+    parser.add_argument(
+        "--dense-force-ownership-isolation",
+        action="store_true",
+        help="Collect dense_oligomer step-0 force-buffer ownership diagnostics for M2c-style isolation.",
+    )
     return parser.parse_args()
 
 
@@ -100,7 +105,10 @@ def run_command(
     commands_log: list[str],
     extra_env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    commands_log.append(f"(cd {shlex.quote(str(cwd))} && {' '.join(shlex.quote(part) for part in cmd)})")
+    env_prefix = ""
+    if extra_env:
+        env_prefix = " ".join(f"{key}={shlex.quote(value)}" for key, value in sorted(extra_env.items())) + " "
+    commands_log.append(f"(cd {shlex.quote(str(cwd))} && {env_prefix}{' '.join(shlex.quote(part) for part in cmd)})")
     env = None
     if extra_env:
         env = dict(os.environ)
@@ -301,6 +309,49 @@ def parse_trr_dump(dump_text: str) -> dict[int, dict[str, dict[int, tuple[float,
     return frames
 
 
+def parse_force_dump(path: Path) -> dict[int, dict[str, Any]]:
+    frames: dict[int, dict[str, Any]] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        stripped = raw_line.strip()
+        if not stripped:
+            continue
+        columns = stripped.split("\t")
+        if len(columns) != 7:
+            raise ValueError(f"Unexpected force dump line in {path}: {stripped}")
+        step = int(columns[0])
+        time_ps = float(columns[1])
+        highest_active_level = int(columns[2])
+        atom = int(columns[3])
+        frame = frames.setdefault(
+            step,
+            {
+                "time_ps": time_ps,
+                "highest_active_level": highest_active_level,
+                "forces": {},
+            },
+        )
+        frame["forces"][atom] = (float(columns[4]), float(columns[5]), float(columns[6]))
+    return frames
+
+
+def parse_excluded_force_dump(path: Path) -> dict[str, Any]:
+    metadata: dict[str, str] = {}
+    forces: dict[int, tuple[float, float, float]] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        stripped = raw_line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("#"):
+            for token in stripped[1:].split():
+                if "=" in token:
+                    key, value = token.split("=", 1)
+                    metadata[key] = value
+            continue
+        atom, fx, fy, fz = stripped.split("\t")
+        forces[int(atom)] = (float(fx), float(fy), float(fz))
+    return {"metadata": metadata, "forces": forces}
+
+
 def maybe_minimum_image(diff: float, box_length: float | None) -> float:
     if box_length is None or box_length <= 0:
         return diff
@@ -328,6 +379,43 @@ def vector_metrics(
         "rms": rms,
         "max_abs": max_abs,
     }
+
+
+def subtract_vectors(
+    left: dict[int, tuple[float, float, float]],
+    right: dict[int, tuple[float, float, float]],
+) -> dict[int, tuple[float, float, float]]:
+    return {
+        atom_index: tuple(left_value - right_value for left_value, right_value in zip(left[atom_index], right[atom_index]))
+        for atom_index in sorted(left)
+    }
+
+
+def add_vectors(
+    left: dict[int, tuple[float, float, float]],
+    right: dict[int, tuple[float, float, float]],
+) -> dict[int, tuple[float, float, float]]:
+    return {
+        atom_index: tuple(left_value + right_value for left_value, right_value in zip(left[atom_index], right[atom_index]))
+        for atom_index in sorted(left)
+    }
+
+
+def vector_alignment(
+    left: dict[int, tuple[float, float, float]],
+    right: dict[int, tuple[float, float, float]],
+) -> float | None:
+    dot = 0.0
+    left_sq = 0.0
+    right_sq = 0.0
+    for atom_index in sorted(left):
+        for left_value, right_value in zip(left[atom_index], right[atom_index]):
+            dot += left_value * right_value
+            left_sq += left_value * left_value
+            right_sq += right_value * right_value
+    if left_sq == 0.0 or right_sq == 0.0:
+        return None
+    return dot / math.sqrt(left_sq * right_sq)
 
 
 def extract_potential_series(
@@ -548,6 +636,96 @@ def dense_bookkeeping_isolation(
         "exact_terms_step0": exact_terms,
         "term_deltas_step0": term_deltas,
         "debug_stats": debug_stats,
+        "localization": localization,
+    }
+
+
+def dense_force_ownership_isolation(dense_fixture_summary: dict[str, Any]) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    exact_dir = Path(coarse["exact_work_dir"])
+    side_ref_dir = Path(coarse["side_reference_work_dir"])
+
+    plain_force_frames = parse_force_dump(plain_dir / "plain_total_force.tsv")
+    exact_force_frames = parse_force_dump(exact_dir / "exact_total_force.tsv")
+    side_reference_force_frames = parse_trr_dump(
+        (side_ref_dir / "legacy_trr_dump.stdout.txt").read_text(encoding="utf-8")
+    )
+    excluded_force_dump = parse_excluded_force_dump(exact_dir / "exact_excluded_pairs_correction_force.tsv")
+
+    step0 = min(set(plain_force_frames) & set(exact_force_frames) & set(side_reference_force_frames))
+    plain_force = plain_force_frames[step0]["forces"]
+    exact_force = exact_force_frames[step0]["forces"]
+    side_reference_force = side_reference_force_frames[step0]["f"]
+    excluded_force = excluded_force_dump["forces"]
+
+    exact_minus_plain = subtract_vectors(exact_force, plain_force)
+    plain_minus_exact = subtract_vectors(plain_force, exact_force)
+    exact_minus_excluded = subtract_vectors(exact_force, excluded_force)
+    exact_plus_excluded = add_vectors(exact_force, excluded_force)
+
+    exact_vs_plain = vector_metrics(exact_force, plain_force)
+    side_reference_vs_plain = vector_metrics(side_reference_force, plain_force)
+    excluded_vs_exact_minus_plain = vector_metrics(excluded_force, exact_minus_plain)
+    excluded_vs_plain_minus_exact = vector_metrics(excluded_force, plain_minus_exact)
+    exact_minus_excluded_vs_plain = vector_metrics(exact_minus_excluded, plain_force)
+    exact_plus_excluded_vs_plain = vector_metrics(exact_plus_excluded, plain_force)
+
+    baseline_l2 = max(exact_vs_plain["l2_norm"], 1.0)
+    subtract_ratio = exact_minus_excluded_vs_plain["l2_norm"] / baseline_l2
+    add_ratio = exact_plus_excluded_vs_plain["l2_norm"] / baseline_l2
+    alignment_with_exact_minus_plain = vector_alignment(excluded_force, exact_minus_plain)
+    alignment_with_plain_minus_exact = vector_alignment(excluded_force, plain_minus_exact)
+
+    supports_duplicated = (
+        subtract_ratio <= 1.0e-4
+        and exact_minus_excluded_vs_plain["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and alignment_with_exact_minus_plain is not None
+        and alignment_with_exact_minus_plain >= 0.9999
+    )
+    supports_missing = (
+        add_ratio <= 1.0e-4
+        and exact_plus_excluded_vs_plain["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and alignment_with_plain_minus_exact is not None
+        and alignment_with_plain_minus_exact >= 0.9999
+    )
+
+    localization = {
+        "classification": (
+            "duplicated excluded-pair Coulomb correction force contribution"
+            if supports_duplicated
+            else (
+                "missing excluded-pair Coulomb correction force contribution"
+                if supports_missing
+                else "still unresolved"
+            )
+        ),
+        "supports_missing_term": supports_missing,
+        "supports_duplicated_term": supports_duplicated,
+        "supports_wrong_buffer_level_ownership": False,
+        "exact_step0_total_force_path": str(exact_dir / "exact_total_force.tsv"),
+        "plain_step0_total_force_path": str(plain_dir / "plain_total_force.tsv"),
+        "side_reference_step0_total_force_path": str(side_ref_dir / "legacy_total_force.tsv"),
+        "excluded_correction_force_path": str(exact_dir / "exact_excluded_pairs_correction_force.tsv"),
+        "step0": step0,
+        "exact_vs_plain_step0_force_diff": exact_vs_plain,
+        "side_reference_vs_plain_step0_force_diff": side_reference_vs_plain,
+        "excluded_vs_exact_minus_plain_step0_force_diff": excluded_vs_exact_minus_plain,
+        "excluded_vs_plain_minus_exact_step0_force_diff": excluded_vs_plain_minus_exact,
+        "exact_minus_excluded_vs_plain_step0_force_diff": exact_minus_excluded_vs_plain,
+        "exact_plus_excluded_vs_plain_step0_force_diff": exact_plus_excluded_vs_plain,
+        "alignment_with_exact_minus_plain": alignment_with_exact_minus_plain,
+        "alignment_with_plain_minus_exact": alignment_with_plain_minus_exact,
+        "excluded_force_dump_metadata": excluded_force_dump["metadata"],
+        "why_not_fully_closed": (
+            "The excluded-pair Coulomb correction force dump localizes the correction vector directly, "
+            "but buffer ownership should only be called closed if subtracting or adding that vector collapses "
+            "the dense step-0 exact-vs-plain force mismatch."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
         "localization": localization,
     }
 
@@ -861,6 +1039,36 @@ def main() -> int:
             system_root / "system.gro",
         )
 
+        coarse_plain_env = None
+        coarse_side_reference_env = None
+        coarse_exact_env = None
+        if args.dense_force_ownership_isolation and fixture_id == "dense_oligomer":
+            coarse_plain_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_TOTAL_FORCE_DUMP_FILE": str(system_root / "dt_0p0005" / "plain_verlet" / "plain_total_force.tsv"),
+            }
+            coarse_side_reference_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_TOTAL_FORCE_DUMP_FILE": str(
+                    system_root / "dt_0p0005" / PME_LEGACY_SIDE_REFERENCE_MODE / "legacy_total_force.tsv"
+                ),
+            }
+            coarse_exact_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_TOTAL_FORCE_DUMP_FILE": str(
+                    system_root / "dt_0p0005" / "exact_three_level" / "exact_total_force.tsv"
+                ),
+                "GMX_PCFF_RESPA_EXCLUDED_FORCE_DUMP_FILE": str(
+                    system_root
+                    / "dt_0p0005"
+                    / "exact_three_level"
+                    / "exact_excluded_pairs_correction_force.tsv"
+                ),
+            }
+        if args.dense_bookkeeping_isolation and fixture_id == "dense_oligomer":
+            coarse_exact_env = dict(coarse_exact_env or {})
+            coarse_exact_env["GMX_PCFF_RESPA_DEBUG"] = "1"
+
         coarse_plain = run_case(
             gmx_bin,
             system_root,
@@ -869,6 +1077,7 @@ def main() -> int:
             DEFAULT_DT_VALUES[0],
             args.total_time_ps,
             commands_log,
+            extra_env=coarse_plain_env,
         )
         coarse_side_reference = run_case(
             gmx_bin,
@@ -878,6 +1087,7 @@ def main() -> int:
             DEFAULT_DT_VALUES[0],
             args.total_time_ps,
             commands_log,
+            extra_env=coarse_side_reference_env,
         )
         coarse_exact = run_case(
             gmx_bin,
@@ -887,7 +1097,7 @@ def main() -> int:
             DEFAULT_DT_VALUES[0],
             args.total_time_ps,
             commands_log,
-            extra_env={"GMX_PCFF_RESPA_DEBUG": "1"} if args.dense_bookkeeping_isolation and fixture_id == "dense_oligomer" else None,
+            extra_env=coarse_exact_env,
         )
         fine_plain = run_case(
             gmx_bin,
@@ -935,10 +1145,27 @@ def main() -> int:
             fixture_summary["dense_exact_bookkeeping_isolation"] = dense_bookkeeping_isolation(
                 gmx_bin, fixture_summary, commands_log
             )
+        if args.dense_force_ownership_isolation and fixture_id == "dense_oligomer":
+            fixture_summary["dense_exact_force_ownership_isolation"] = dense_force_ownership_isolation(
+                fixture_summary
+            )
         fixture_results.append(fixture_summary)
         write_json(system_root / "fixture_summary.json", fixture_summary)
 
-    if args.dense_bookkeeping_isolation:
+    if args.dense_force_ownership_isolation:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_exact_force_ownership_isolation", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_duplicated_term"):
+            verdict = "FORCE DEFECT LOCALIZED TO DUPLICATED EXCLUDED-PAIR COULOMB FORCE OWNERSHIP"
+        elif dense_localization and dense_localization.get("supports_missing_term"):
+            verdict = "FORCE DEFECT LOCALIZED TO MISSING EXCLUDED-PAIR COULOMB FORCE OWNERSHIP"
+        else:
+            verdict = "FORCE-SIDE DEFECT NARROWED BUT STILL PARTIAL"
+    elif args.dense_bookkeeping_isolation:
         dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
         dense_localization = (
             None

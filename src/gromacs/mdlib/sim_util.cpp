@@ -701,7 +701,20 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
     auto&      vdwEnergyTerms   = enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::LJSR];
     auto&      coulEnergyTerms  = enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR];
     const bool debugExactRespa  = (std::getenv("GMX_PCFF_RESPA_DEBUG") != nullptr);
+    const char* excludedCorrectionForceDumpPath =
+            std::getenv("GMX_PCFF_RESPA_EXCLUDED_FORCE_DUMP_FILE");
+    const bool dumpExcludedCorrectionForce =
+            (excludedCorrectionForceDumpPath != nullptr && *excludedCorrectionForceDumpPath != '\0');
     const real pmeSelfEnergy    = computePmeSelfEnergy(*fr->ic);
+    std::vector<RVec> excludedCorrectionForce;
+    if (dumpExcludedCorrectionForce)
+    {
+        excludedCorrectionForce.resize(coordinates.size());
+        for (auto& force : excludedCorrectionForce)
+        {
+            clear_rvec(force);
+        }
+    }
     const auto pairKey = [](const int ai, const int aj)
     {
         const uint32_t first  = static_cast<uint32_t>(std::min(ai, aj));
@@ -809,6 +822,15 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                 debugStats->ljEnergy += rawLjEnergy * factorLj;
                 debugStats->coulEnergy += fullCoulombEnergy;
                 debugStats->qqSum += qq;
+            }
+
+            if (dumpExcludedCorrectionForce && factorCoulomb == 0.0_real && factorLj == 0.0_real
+                && correctionScalar != 0.0_real)
+            {
+                RVec correctionForce;
+                svmul(correctionScalar * rinvsq, dx, correctionForce);
+                rvec_inc(excludedCorrectionForce[ai], correctionForce);
+                rvec_dec(excludedCorrectionForce[aj], correctionForce);
             }
 
             for (auto& accumulator : activeContributions)
@@ -948,6 +970,40 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                      excludedStats.coulEnergy,
                      excludedStats.qqSum,
                      excludedStats.selfEnergy);
+    }
+
+    if (dumpExcludedCorrectionForce)
+    {
+        static bool dumpedExcludedCorrectionForce = false;
+        if (!dumpedExcludedCorrectionForce)
+        {
+            const int outerMtsLevel =
+                    nonbondedRespaContributionMtsLevel(inputrec, MtsNonbondedRespaContribution::Outer);
+            FILE* dumpFile = std::fopen(excludedCorrectionForceDumpPath, "w");
+            if (dumpFile == nullptr)
+            {
+                gmx_fatal(FARGS,
+                          "Could not open GMX_PCFF_RESPA_EXCLUDED_FORCE_DUMP_FILE '%s' for writing",
+                          excludedCorrectionForceDumpPath);
+            }
+            std::fprintf(
+                    dumpFile,
+                    "# contribution=excluded_pairs_coulomb_correction level_user=%d level_index=%d initial_buffer=%s postprocess=postProcessForces final_merge=combineMtsForces\n",
+                    outerMtsLevel + 1,
+                    outerMtsLevel,
+                    stepWork.computeVirial ? "forceWithVirial" : "forceWithShiftForces");
+            for (int atom = 0; atom < static_cast<int>(excludedCorrectionForce.size()); ++atom)
+            {
+                std::fprintf(dumpFile,
+                             "%d\t%.17g\t%.17g\t%.17g\n",
+                             atom,
+                             excludedCorrectionForce[atom][XX],
+                             excludedCorrectionForce[atom][YY],
+                             excludedCorrectionForce[atom][ZZ]);
+            }
+            std::fclose(dumpFile);
+            dumpedExcludedCorrectionForce = true;
+        }
     }
 
     for (auto& accumulator : activeContributions)
