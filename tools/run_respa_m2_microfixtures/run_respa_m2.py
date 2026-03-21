@@ -100,6 +100,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Collect dense_oligomer coarse step-0 merge-stage diagnostics for M2d-style localization.",
     )
+    parser.add_argument(
+        "--dense-early-accumulation-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 early outer-accumulation diagnostics for M2e-style localization.",
+    )
     return parser.parse_args()
 
 
@@ -850,6 +855,134 @@ def dense_merge_trace_localization(dense_fixture_summary: dict[str, Any]) -> dic
     }
 
 
+def dense_early_accumulation_localization(dense_fixture_summary: dict[str, Any]) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    exact_dir = Path(coarse["exact_work_dir"])
+
+    plain_force_frames = parse_force_dump(plain_dir / "plain_total_force.tsv")
+    exact_force_frames = parse_force_dump(exact_dir / "exact_total_force.tsv")
+    excluded_force_dump = parse_vector_dump(exact_dir / "exact_excluded_pairs_correction_force.tsv")
+    initial_outer = parse_vector_dump(exact_dir / "step0_level2_initial_outer_virial.tsv")
+    after_pairs = parse_vector_dump(exact_dir / "step0_level2_after_pairs_virial.tsv")
+    after_excluded = parse_vector_dump(exact_dir / "step0_level2_after_excluded_pairs_virial.tsv")
+    before_longrange = parse_vector_dump(exact_dir / "step0_level2_before_longrange_virial.tsv")
+    after_longrange = parse_vector_dump(exact_dir / "step0_level2_after_longrange_virial.tsv")
+    first_excluded_write = parse_vector_dump(exact_dir / "step0_outer_first_excluded_write.tsv")
+    pre_postprocess_outer = parse_vector_dump(exact_dir / "step0_level2_pre_postprocess_virial.tsv")
+    level0_post = parse_vector_dump(exact_dir / "step0_level0_post_postprocess_shift.tsv")
+    level1_post = parse_vector_dump(exact_dir / "step0_level1_post_postprocess_shift.tsv")
+
+    step0 = min(set(plain_force_frames) & set(exact_force_frames))
+    plain_force = plain_force_frames[step0]["forces"]
+    exact_force = exact_force_frames[step0]["forces"]
+    excluded_force = excluded_force_dump["forces"]
+    initial_outer_force = initial_outer["forces"]
+    after_pairs_force = after_pairs["forces"]
+    after_excluded_force = after_excluded["forces"]
+    before_longrange_force = before_longrange["forces"]
+    after_longrange_force = after_longrange["forces"]
+    pre_postprocess_outer_force = pre_postprocess_outer["forces"]
+    level0_post_force = level0_post["forces"]
+    level1_post_force = level1_post["forces"]
+
+    zero_outer_force = {atom_index: (0.0, 0.0, 0.0) for atom_index in sorted(initial_outer_force)}
+    after_pairs_delta = subtract_vectors(after_pairs_force, initial_outer_force)
+    after_excluded_delta = subtract_vectors(after_excluded_force, after_pairs_force)
+    longrange_delta = subtract_vectors(after_longrange_force, before_longrange_force)
+    reconstructed_without_excluded = sum_vectors(
+        level0_post_force, level1_post_force, subtract_vectors(after_longrange_force, excluded_force)
+    )
+
+    initial_outer_vs_zero = vector_metrics(initial_outer_force, zero_outer_force)
+    after_excluded_delta_vs_excluded = vector_metrics(after_excluded_delta, excluded_force)
+    before_longrange_vs_after_excluded = vector_metrics(before_longrange_force, after_excluded_force)
+    after_longrange_vs_pre_postprocess = vector_metrics(after_longrange_force, pre_postprocess_outer_force)
+    reconstructed_without_excluded_vs_plain = vector_metrics(reconstructed_without_excluded, plain_force)
+    exact_vs_plain_step0_force_diff = vector_metrics(exact_force, plain_force)
+
+    supports_first_illegal_site = (
+        initial_outer_vs_zero["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and after_excluded_delta_vs_excluded["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and before_longrange_vs_after_excluded["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and after_longrange_vs_pre_postprocess["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and reconstructed_without_excluded_vs_plain["max_abs"] <= FORCE_BOOKKEEPING_TOL
+    )
+    alias_with_shift = first_excluded_write["metadata"].get("alias_with_shift")
+
+    localization = {
+        "classification": (
+            "first illegal accumulation occurs in excludedPairs outer dispatch"
+            if supports_first_illegal_site
+            else "still unresolved"
+        ),
+        "step0": step0,
+        "initial_outer_vs_zero_diff": initial_outer_vs_zero,
+        "after_excluded_delta_vs_excluded_diff": after_excluded_delta_vs_excluded,
+        "after_excluded_delta_alignment_with_excluded": vector_alignment(after_excluded_delta, excluded_force),
+        "before_longrange_vs_after_excluded_diff": before_longrange_vs_after_excluded,
+        "after_longrange_vs_pre_postprocess_diff": after_longrange_vs_pre_postprocess,
+        "reconstructed_without_excluded_vs_plain_diff": reconstructed_without_excluded_vs_plain,
+        "longrange_delta_norm": vector_metrics(longrange_delta, zero_outer_force),
+        "exact_vs_plain_step0_force_diff": exact_vs_plain_step0_force_diff,
+        "first_excluded_write_metadata": first_excluded_write["metadata"],
+        "excluded_force_dump_metadata": excluded_force_dump["metadata"],
+        "supports_first_illegal_site": supports_first_illegal_site,
+        "supports_aliasing": alias_with_shift == "true",
+        "supports_refolding_before_postprocess": False,
+        "ordered_outer_accumulation_trace": [
+            {
+                "order": 0,
+                "source": "initial_outer_zero",
+                "path": str(exact_dir / "step0_level2_initial_outer_virial.tsv"),
+                "diff_vs_zero": initial_outer_vs_zero,
+            },
+            {
+                "order": 1,
+                "source": "after_plain_pairs_dispatch",
+                "path": str(exact_dir / "step0_level2_after_pairs_virial.tsv"),
+                "delta_from_previous": vector_metrics(after_pairs_delta, zero_outer_force),
+            },
+            {
+                "order": 2,
+                "source": "after_excluded_pairs_dispatch",
+                "path": str(exact_dir / "step0_level2_after_excluded_pairs_virial.tsv"),
+                "delta_from_previous": vector_metrics(after_excluded_delta, zero_outer_force),
+                "delta_vs_excluded_correction": after_excluded_delta_vs_excluded,
+            },
+            {
+                "order": 3,
+                "source": "before_longrange_nonbonded_reconciliation",
+                "path": str(exact_dir / "step0_level2_before_longrange_virial.tsv"),
+                "diff_vs_previous": before_longrange_vs_after_excluded,
+            },
+            {
+                "order": 4,
+                "source": "after_longrange_nonbonded_dispatch",
+                "path": str(exact_dir / "step0_level2_after_longrange_virial.tsv"),
+                "delta_from_previous": vector_metrics(longrange_delta, zero_outer_force),
+                "reconstructed_total_vs_plain_if_excluded_removed_here": reconstructed_without_excluded_vs_plain,
+            },
+            {
+                "order": 5,
+                "source": "pre_postprocess_outer_reconciliation",
+                "path": str(exact_dir / "step0_level2_pre_postprocess_virial.tsv"),
+                "diff_vs_previous": after_longrange_vs_pre_postprocess,
+            },
+        ],
+        "why_not_fully_closed": (
+            "This closes the first illegal outer-force accumulation site on dense_oligomer coarse step 0, "
+            "but it does not yet identify the earlier conceptual ownership rule that should have prevented "
+            "the excludedPairs outer correction write."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "localization": localization,
+    }
+
+
 def summarize_dense_trace_fixture(
     fixture_id: str,
     topology_terms: list[str],
@@ -1207,7 +1340,11 @@ def main() -> int:
         coarse_plain_env = None
         coarse_side_reference_env = None
         coarse_exact_env = None
-        if (args.dense_force_ownership_isolation or args.dense_merge_trace) and fixture_id == "dense_oligomer":
+        if (
+            args.dense_force_ownership_isolation
+            or args.dense_merge_trace
+            or args.dense_early_accumulation_trace
+        ) and fixture_id == "dense_oligomer":
             coarse_plain_env = {
                 "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
                 "GMX_TOTAL_FORCE_DUMP_FILE": str(system_root / "dt_0p0005" / "plain_verlet" / "plain_total_force.tsv"),
@@ -1224,9 +1361,14 @@ def main() -> int:
                     / "exact_excluded_pairs_correction_force.tsv"
                 ),
             }
-        if args.dense_merge_trace and fixture_id == "dense_oligomer":
+        if (args.dense_merge_trace or args.dense_early_accumulation_trace) and fixture_id == "dense_oligomer":
             coarse_exact_env = dict(coarse_exact_env or {})
             coarse_exact_env["GMX_PCFF_RESPA_MERGE_TRACE_DIR"] = str(system_root / "dt_0p0005" / "exact_three_level")
+        if args.dense_early_accumulation_trace and fixture_id == "dense_oligomer":
+            coarse_exact_env = dict(coarse_exact_env or {})
+            coarse_exact_env["GMX_PCFF_RESPA_EARLY_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
         if args.dense_bookkeeping_isolation and fixture_id == "dense_oligomer":
             coarse_exact_env = dict(coarse_exact_env or {})
             coarse_exact_env["GMX_PCFF_RESPA_DEBUG"] = "1"
@@ -1261,7 +1403,7 @@ def main() -> int:
             commands_log,
             extra_env=coarse_exact_env,
         )
-        if args.dense_merge_trace and fixture_id == "dense_oligomer":
+        if (args.dense_merge_trace or args.dense_early_accumulation_trace) and fixture_id == "dense_oligomer":
             fixture_summary = summarize_dense_trace_fixture(
                 fixture_id,
                 inner_terms_from_topology(topology_text),
@@ -1325,10 +1467,25 @@ def main() -> int:
             fixture_summary["dense_exact_merge_trace_localization"] = dense_merge_trace_localization(
                 fixture_summary
             )
+        if args.dense_early_accumulation_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_exact_early_accumulation_localization"] = dense_early_accumulation_localization(
+                fixture_summary
+            )
         fixture_results.append(fixture_summary)
         write_json(system_root / "fixture_summary.json", fixture_summary)
 
-    if args.dense_merge_trace:
+    if args.dense_early_accumulation_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_exact_early_accumulation_localization", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_first_illegal_site"):
+            verdict = "EARLY ACCUMULATION SITE LOCALIZED"
+        else:
+            verdict = "EARLY ACCUMULATION TRACE STILL PARTIAL"
+    elif args.dense_merge_trace:
         dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
         dense_localization = (
             None

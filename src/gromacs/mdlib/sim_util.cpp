@@ -632,6 +632,32 @@ static void dumpRespaMergeTraceVector(const char*               traceDirPath,
     std::fclose(dumpFile);
 }
 
+static void dumpRespaTraceEvent(const char*        traceDirPath,
+                                const char*        fileName,
+                                const std::string& header,
+                                const int          atomI,
+                                const gmx::RVec&   forceI,
+                                const int          atomJ,
+                                const gmx::RVec&   forceJ)
+{
+    GMX_RELEASE_ASSERT(traceDirPath != nullptr && *traceDirPath != '\0', "Need a valid trace directory");
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::filesystem::path outputPath = traceDir / fileName;
+
+    FILE* dumpFile = std::fopen(outputPath.string().c_str(), "w");
+    if (dumpFile == nullptr)
+    {
+        gmx_fatal(FARGS, "Could not open trace event output '%s' for writing", outputPath.string().c_str());
+    }
+
+    std::fprintf(dumpFile, "# %s\n", header.c_str());
+    std::fprintf(dumpFile, "%d\t%.17g\t%.17g\t%.17g\n", atomI, forceI[XX], forceI[YY], forceI[ZZ]);
+    std::fprintf(dumpFile, "%d\t%.17g\t%.17g\t%.17g\n", atomJ, forceJ[XX], forceJ[YY], forceJ[ZZ]);
+    std::fclose(dumpFile);
+}
+
 static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inputrec,
                                            const InteractionDefinitions&    idef,
                                            t_forcerec*                      fr,
@@ -712,6 +738,16 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
     appendContribution(MtsNonbondedRespaContribution::Middle);
     appendContribution(MtsNonbondedRespaContribution::Outer);
 
+    ContributionAccumulator* outerAccumulator = nullptr;
+    for (auto& accumulator : activeContributions)
+    {
+        if (accumulator.contribution == MtsNonbondedRespaContribution::Outer)
+        {
+            outerAccumulator = &accumulator;
+            break;
+        }
+    }
+
     GMX_RELEASE_ASSERT(!stepWork.computeVirial
                                || std::any_of(activeContributions.begin(),
                                               activeContributions.end(),
@@ -735,6 +771,14 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
             std::getenv("GMX_PCFF_RESPA_EXCLUDED_FORCE_DUMP_FILE");
     const bool dumpExcludedCorrectionForce =
             (excludedCorrectionForceDumpPath != nullptr && *excludedCorrectionForceDumpPath != '\0');
+    const char* earlyAccumTraceDirPath = std::getenv("GMX_PCFF_RESPA_EARLY_TRACE_DIR");
+    static bool dumpedEarlyAccumTrace  = false;
+    const bool dumpEarlyAccumTrace =
+            (earlyAccumTraceDirPath != nullptr && *earlyAccumTraceDirPath != '\0' && !dumpedEarlyAccumTrace);
+    const bool outerAliasesShift =
+            (outerAccumulator != nullptr && outerAccumulator->outputs != nullptr
+             && outerAccumulator->force.data()
+                        == outerAccumulator->outputs->forceWithShiftForces().force().data());
     const real pmeSelfEnergy    = computePmeSelfEnergy(*fr->ic);
     std::vector<RVec> excludedCorrectionForce;
     if (dumpExcludedCorrectionForce)
@@ -744,6 +788,14 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
         {
             clear_rvec(force);
         }
+    }
+    if (dumpEarlyAccumTrace && outerAccumulator != nullptr && outerAccumulator->forceWithVirial != nullptr)
+    {
+        dumpRespaMergeTraceVector(earlyAccumTraceDirPath,
+                                  "step0_level2_initial_outer_virial.tsv",
+                                  "stage=initial_outer mts_index=2 mts_user=3 buffer=forceWithVirial alias_with_shift="
+                                          + std::string(outerAliasesShift ? "true" : "false"),
+                                  outerAccumulator->forceWithVirial->force_);
     }
     const auto pairKey = [](const int ai, const int aj)
     {
@@ -784,6 +836,7 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                                      const auto& includePair,
                                      PairDebugStats* debugStats = nullptr)
     {
+        bool dumpedFirstExcludedWrite = false;
         for (const auto& entry : pairEntries)
         {
             const int ai         = entry.first.first;
@@ -893,6 +946,24 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
 
                 RVec force;
                 svmul(scalar * rinvsq, dx, force);
+                if (dumpEarlyAccumTrace && factorCoulomb == 0.0_real && factorLj == 0.0_real
+                    && accumulator.contribution == MtsNonbondedRespaContribution::Outer && !dumpedFirstExcludedWrite)
+                {
+                    dumpRespaTraceEvent(
+                            earlyAccumTraceDirPath,
+                            "step0_outer_first_excluded_write.tsv",
+                            "stage=first_excluded_outer_write pair_list=excludedPairs contribution=outer buffer=forceWithVirial alias_with_shift="
+                                    + std::string(outerAliasesShift ? "true" : "false") + " ai="
+                                    + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
+                                    + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
+                                    + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
+                                    + gmx::toString(qq) + " r=" + gmx::toString(r),
+                            ai,
+                            force,
+                            aj,
+                            RVec(-force[XX], -force[YY], -force[ZZ]));
+                    dumpedFirstExcludedWrite = true;
+                }
                 rvec_inc(accumulator.force[ai], force);
                 rvec_dec(accumulator.force[aj], force);
 
@@ -945,6 +1016,14 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                     1.0_real,
                     [](const int, const int) { return true; },
                     debugExactRespa ? &pairStats : nullptr);
+    if (dumpEarlyAccumTrace && outerAccumulator != nullptr && outerAccumulator->forceWithVirial != nullptr)
+    {
+        dumpRespaMergeTraceVector(earlyAccumTraceDirPath,
+                                  "step0_level2_after_pairs_virial.tsv",
+                                  "stage=after_pairs_dispatch mts_index=2 mts_user=3 buffer=forceWithVirial alias_with_shift="
+                                          + std::string(outerAliasesShift ? "true" : "false"),
+                                  outerAccumulator->forceWithVirial->force_);
+    }
     /* PME real-space bookkeeping for exact PME parity requires all excluded pairs,
      * not only the listed 1-4 subset. */
     processPairlist(plainPairlist.excludedPairs,
@@ -952,6 +1031,15 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                     0.0_real,
                     [](const int, const int) { return true; },
                     debugExactRespa ? &excludedStats : nullptr);
+    if (dumpEarlyAccumTrace && outerAccumulator != nullptr && outerAccumulator->forceWithVirial != nullptr)
+    {
+        dumpRespaMergeTraceVector(earlyAccumTraceDirPath,
+                                  "step0_level2_after_excluded_pairs_virial.tsv",
+                                  "stage=after_excluded_pairs_dispatch mts_index=2 mts_user=3 buffer=forceWithVirial alias_with_shift="
+                                          + std::string(outerAliasesShift ? "true" : "false"),
+                                  outerAccumulator->forceWithVirial->force_);
+        dumpedEarlyAccumTrace = true;
+    }
 
     for (auto& accumulator : activeContributions)
     {
@@ -2862,6 +2950,22 @@ void do_force(FILE*                         fplog,
 
     if (stepWork.computeLongRangeNonbondedForces)
     {
+        const char* earlyAccumTraceDirPath = std::getenv("GMX_PCFF_RESPA_EARLY_TRACE_DIR");
+        const bool dumpEarlyAccumTrace =
+                (earlyAccumTraceDirPath != nullptr && *earlyAccumTraceDirPath != '\0' && step == 0);
+        const bool outerAliasesShift =
+                (forceOutMtsLevel1 != nullptr && forceOutMtsLevel1->haveForceWithVirial()
+                 && forceOutMtsLevel1->forceWithVirial().force_.data()
+                            == forceOutMtsLevel1->forceWithShiftForces().force().data());
+        if (dumpEarlyAccumTrace && forceOutMtsLevel1 != nullptr)
+        {
+            dumpRespaMergeTraceVector(
+                    earlyAccumTraceDirPath,
+                    "step0_level2_before_longrange_virial.tsv",
+                    "stage=before_longrange_nonbonded mts_index=2 mts_user=3 buffer=forceWithVirial alias_with_shift="
+                            + std::string(outerAliasesShift ? "true" : "false"),
+                    forceOutMtsLevel1->forceWithVirial().force_);
+        }
         longRangeNonbondeds->calculate(fr->pmedata,
                                        cr,
                                        x.unpaddedConstArrayRef(),
@@ -2872,6 +2976,15 @@ void do_force(FILE*                         fplog,
                                        dipoleData.muStateAB,
                                        stepWork,
                                        ddBalanceRegionHandler);
+        if (dumpEarlyAccumTrace && forceOutMtsLevel1 != nullptr)
+        {
+            dumpRespaMergeTraceVector(
+                    earlyAccumTraceDirPath,
+                    "step0_level2_after_longrange_virial.tsv",
+                    "stage=after_longrange_nonbonded mts_index=2 mts_user=3 buffer=forceWithVirial alias_with_shift="
+                            + std::string(outerAliasesShift ? "true" : "false"),
+                    forceOutMtsLevel1->forceWithVirial().force_);
+        }
     }
 
     wallcycle_stop(wcycle, WallCycleCounter::Force);
