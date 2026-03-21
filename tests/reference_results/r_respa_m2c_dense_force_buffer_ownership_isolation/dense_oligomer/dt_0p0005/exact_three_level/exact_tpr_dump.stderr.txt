@@ -1,0 +1,13 @@
+    :-) GROMACS - gmx dump, 2027.0-dev-20260321-47a2c48202-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
+Working dir:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/exact_three_level
+Command line:
+  gmx dump -s exact.tpr
+
+Reading file exact.tpr, VERSION 2027.0-dev-20260321-47a2c48202-dirty-unknown (single precision)
+Reading file exact.tpr, VERSION 2027.0-dev-20260321-47a2c48202-dirty-unknown (single precision)
+
+GROMACS reminds you: "Every Sperm is Sacred" (Monty Python)
+
