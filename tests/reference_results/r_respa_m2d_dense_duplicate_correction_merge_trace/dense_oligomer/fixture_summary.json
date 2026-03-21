@@ -1,0 +1,248 @@
+{
+  "bookkeeping_ok": false,
+  "coarse": {
+    "dt_ps": 0.0005,
+    "exact_vs_plain": {
+      "final_coord_diff": {
+        "l2_norm": 0.0004846627693552677,
+        "max_abs": 2.0000000000131024e-05,
+        "rms": 1.4279513783323393e-05
+      },
+      "final_force_diff": {
+        "l2_norm": 687.0291562211164,
+        "max_abs": 34.7325,
+        "rms": 20.24179063486764
+      },
+      "final_potential_abs_diff_kj_per_mol": 8583.863281,
+      "step0_force_diff": {
+        "l2_norm": 742.3481842394348,
+        "max_abs": 35.9212,
+        "rms": 21.871643128217706
+      },
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088
+    },
+    "exact_vs_side_reference": {
+      "final_coord_diff": {
+        "l2_norm": 0.0005402517931475912,
+        "max_abs": 2.4000000000024002e-05,
+        "rms": 1.591732110345224e-05
+      },
+      "final_force_diff": {
+        "l2_norm": 680.0297692432139,
+        "max_abs": 35.1535,
+        "rms": 20.03556921835832
+      },
+      "final_potential_abs_diff_kj_per_mol": 8583.952148999999,
+      "step0_force_diff": {
+        "l2_norm": 742.3481711536402,
+        "max_abs": 35.9212,
+        "rms": 21.87164274267378
+      },
+      "step0_potential_abs_diff_kj_per_mol": 8583.465088
+    },
+    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level",
+    "nsteps": 8,
+    "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/plain_verlet",
+    "side_reference_vs_plain": {
+      "final_coord_diff": {
+        "l2_norm": 0.0001465127980758503,
+        "max_abs": 1.0000000000065512e-05,
+        "rms": 4.316674710418712e-06
+      },
+      "final_force_diff": {
+        "l2_norm": 28.830681312666684,
+        "max_abs": 1.638300000000001,
+        "rms": 0.8494320942672869
+      },
+      "final_potential_abs_diff_kj_per_mol": 0.08886799999891082,
+      "step0_force_diff": {
+        "l2_norm": 0.0003173326330550173,
+        "max_abs": 0.00010000000000331966,
+        "rms": 9.349502363541045e-06
+      },
+      "step0_potential_abs_diff_kj_per_mol": 0.0
+    },
+    "side_reference_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference"
+  },
+  "comparison_notes": [
+    "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
+    "The simpler split here is a PME-side legacy side-reference on the same harness; it is not direct archived-M1 continuity because archived M1 used md + Cut-off settings."
+  ],
+  "dense_exact_merge_trace_localization": {
+    "coarse_dt_ps": 0.0005,
+    "localization": {
+      "alignment_combine_delta_with_excluded": -0.0082518388726914,
+      "alignment_postprocess_delta_with_excluded": null,
+      "classification": "duplicated correction already present before postProcessForces",
+      "combine_delta_vs_excluded_diff": {
+        "l2_norm": 742.3481454145809,
+        "max_abs": 35.9212007522583,
+        "rms": 21.871641984329475
+      },
+      "combine_reconstruction_diff": {
+        "l2_norm": 2.758485476721565e-05,
+        "max_abs": 3.814697265625e-06,
+        "rms": 8.127265776643436e-07
+      },
+      "corrected_reconstruction_vs_plain_diff": {
+        "l2_norm": 0.0006322382118554644,
+        "max_abs": 6.771087646484375e-05,
+        "rms": 1.8627496955344e-05
+      },
+      "exact_vs_plain_step0_force_diff": {
+        "l2_norm": 742.3482152950181,
+        "max_abs": 35.921241760253906,
+        "rms": 21.871644043201602
+      },
+      "excluded_force_dump_metadata": {
+        "contribution": "excluded_pairs_coulomb_correction",
+        "final_merge": "combineMtsForces",
+        "initial_buffer": "forceWithVirial",
+        "level_index": "2",
+        "level_user": "3",
+        "postprocess": "postProcessForces"
+      },
+      "impulse_postcombine_metadata": {
+        "buffer": "impulse_total",
+        "stage": "post_combine"
+      },
+      "impulse_postcombine_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_impulse_postcombine.tsv",
+      "impulse_postcombine_vs_exact_diff": {
+        "l2_norm": 1001.5734611335781,
+        "max_abs": 63.82786178588867,
+        "rms": 29.509141092668084
+      },
+      "level0_post_postprocess_shift_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level0_post_postprocess_shift.tsv",
+      "level1_post_postprocess_shift_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level1_post_postprocess_shift.tsv",
+      "level2_post_postprocess_shift_metadata": {
+        "buffer": "forceWithShiftForces",
+        "mts_index": "2",
+        "mts_user": "3",
+        "stage": "post_postprocess"
+      },
+      "level2_post_postprocess_shift_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level2_post_postprocess_shift.tsv",
+      "level2_pre_postprocess_virial_metadata": {
+        "buffer": "forceWithVirial",
+        "mts_index": "2",
+        "mts_user": "3",
+        "stage": "pre_postprocess"
+      },
+      "level2_pre_postprocess_virial_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level2_pre_postprocess_virial.tsv",
+      "outer_post_vs_pre_postprocess_diff": {
+        "l2_norm": 0.0,
+        "max_abs": 0.0,
+        "rms": 0.0
+      },
+      "physical_postcombine_metadata": {
+        "buffer": "physical_total",
+        "stage": "post_combine"
+      },
+      "physical_postcombine_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_physical_postcombine.tsv",
+      "physical_postcombine_vs_exact_diff": {
+        "l2_norm": 0.0,
+        "max_abs": 0.0,
+        "rms": 0.0
+      },
+      "postprocess_delta_vs_excluded_diff": {
+        "l2_norm": 742.3481451869536,
+        "max_abs": 35.921199798583984,
+        "rms": 21.871641977622943
+      },
+      "step0": 0,
+      "supports_before_postprocess": true,
+      "supports_combine": false,
+      "supports_postprocess": false,
+      "why_not_fully_closed": "This localization only closes the merge stage on dense_oligomer coarse step 0. It does not yet patch the defect or generalize beyond this harness."
+    }
+  },
+  "exact_schedule_active": true,
+  "exact_schedule_dump": {
+    "mts": "true",
+    "mts-level2-factor": "2",
+    "mts-level2-forces": "nonbonded-middle",
+    "mts-level3-factor": "4",
+    "mts-level3-forces": "longrange-nonbonded nonbonded-outer",
+    "mts-mode": "lammps-respa",
+    "mts-respa-angle-level": "1",
+    "mts-respa-bond-level": "1",
+    "mts-respa-dihedral-level": "1",
+    "mts-respa-improper-level": "1",
+    "mts-respa-inner-level": "1",
+    "mts-respa-inner-off": "0.3",
+    "mts-respa-inner-on": "0.45",
+    "mts-respa-kspace-level": "3",
+    "mts-respa-middle-level": "2",
+    "mts-respa-outer-level": "3",
+    "mts-respa-outer-off": "0.8",
+    "mts-respa-outer-on": "0.6",
+    "mts-respa-pair-level": "3",
+    "mts-respa-pair14-level": "1"
+  },
+  "exact_split": {
+    "inner_terms": [
+      "pair14",
+      "bond",
+      "angle",
+      "dihedral",
+      "nonbonded_inner"
+    ],
+    "middle_terms": [
+      "nonbonded_middle"
+    ],
+    "outer_terms": [
+      "pair",
+      "nonbonded_outer",
+      "kspace"
+    ]
+  },
+  "fixture_id": "dense_oligomer",
+  "fixture_sources": {
+    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+  },
+  "gro_metadata": {
+    "box_nm": [
+      2.2,
+      2.2,
+      2.2
+    ],
+    "num_atoms": 384
+  },
+  "listed_terms_present": [
+    "pair14",
+    "bond",
+    "angle",
+    "dihedral"
+  ],
+  "m1_continuity": {
+    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_settings": {
+      "coulombtype": "Cut-off",
+      "integrator": "md",
+      "mts_level2_forces": "nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "current_side_reference_settings": {
+      "coulombtype": "PME",
+      "integrator": "md",
+      "label": "pme_legacy_side_reference",
+      "mts_level2_forces": "nonbonded longrange-nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "direct_archived_m1_comparison_done": false,
+    "direct_archived_m1_comparison_feasible": false,
+    "why_not_feasible": "Archived M1 uses integrator = md with coulombtype = Cut-off and mts-level2-forces = nonbonded; the current exact-3-level harness requires PME-side md-vv settings, so the current simpler split can only be a PME-side legacy side-reference.",
+    "wording_requirement": "The current simpler split must be reported as a PME-side legacy side-reference, not as direct archived-M1 continuity."
+  },
+  "pme_side_reference_active": true,
+  "pme_side_reference_dump": {
+    "mts": "true",
+    "mts-level2-factor": "2",
+    "mts-level2-forces": "longrange-nonbonded nonbonded",
+    "mts-mode": "legacy"
+  }
+}
