@@ -115,6 +115,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Collect dense_oligomer coarse step-0 upstream ownership/spec handoff diagnostics for M2g-style tracing.",
     )
+    parser.add_argument(
+        "--pair-rule-derivation-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 pair-specific generate_excl rule-derivation diagnostics for M2h-style tracing.",
+    )
     return parser.parse_args()
 
 
@@ -1600,6 +1605,268 @@ def dense_upstream_ownership_handoff_trace(dense_fixture_summary: dict[str, Any]
     }
 
 
+def dense_pair_rule_derivation_trace(dense_fixture_summary: dict[str, Any]) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    exact_dir = Path(coarse["exact_work_dir"])
+
+    topology_path = exact_dir / "system.top"
+    topology_sources = parse_topology_pair_sources(topology_path)
+    topology_nrexcl = parse_topology_nrexcl(topology_path)
+
+    internal_rows = parse_key_value_text(exact_dir / "step0_generate_excl_internal_trace.txt")
+    generate_rows = parse_key_value_text(exact_dir / "step0_grompp_generate_excl_trace.txt")
+    runtime_rows = parse_key_value_text(exact_dir / "step0_runtime_exclusions_input.txt")
+
+    target_pair = (0, 1)
+    control_pair = (0, 4)
+    target_sources = topology_sources.get(target_pair, [])
+    control_sources = topology_sources.get(control_pair, [])
+
+    gen_nnb_row = next((row for row in internal_rows if row.get("stage") == "gen_nnb_bond_membership"), None)
+    direct_rule_row = next(
+        (
+            row
+            for row in internal_rows
+            if row.get("stage") == "do_gen_direct_bond_rule_fire"
+            and row.get("ai") == "0"
+            and row.get("aj") == "1"
+        ),
+        None,
+    )
+    summary_row = next((row for row in internal_rows if row.get("stage") == "do_gen_summary"), None)
+    sort_row = next(
+        (
+            row
+            for row in internal_rows
+            if row.get("stage") == "sort_and_purge_output" and row.get("atom") == "0"
+        ),
+        None,
+    )
+    flattened_row = next(
+        (
+            row
+            for row in internal_rows
+            if row.get("stage") == "nnb2excl_flattened" and row.get("atom") == "0"
+        ),
+        None,
+    )
+    control_check_row = next(
+        (
+            row
+            for row in internal_rows
+            if row.get("stage") == "nnb2excl_control_check" and row.get("atom") == "0"
+        ),
+        None,
+    )
+    emit_row = next(
+        (
+            row
+            for row in internal_rows
+            if row.get("stage") == "nnb2excl_emit" and row.get("atom") == "0"
+        ),
+        None,
+    )
+
+    generate_row = next((row for row in generate_rows if row.get("stage") == "generate_excl_output"), None)
+    runtime_row = next((row for row in runtime_rows if row.get("stage") == "runtime_exclusions_input"), None)
+
+    direct_rule_fire_proven = (
+        direct_rule_row is not None
+        and direct_rule_row.get("source") == "exclude_all_bonded_atoms"
+        and direct_rule_row.get("condition_nrex_positive") == "true"
+        and direct_rule_row.get("nre_bucket") == "1"
+        and direct_rule_row.get("add_nnb_called") == "true"
+    )
+    target_higher_order_rule_fired = parse_bool_text(
+        None if summary_row is None else summary_row.get("target_higher_order_rule_fired")
+    )
+    control_higher_order_rule_fired = parse_bool_text(
+        None if summary_row is None else summary_row.get("control_higher_order_rule_fired")
+    )
+    target_direct_count = 0 if gen_nnb_row is None else int(gen_nnb_row.get("target_count", "0"))
+    control_direct_count = 0 if gen_nnb_row is None else int(gen_nnb_row.get("control_count", "0"))
+
+    sort_level1 = [] if sort_row is None else parse_index_csv(sort_row.get("level1"))
+    sort_level2 = [] if sort_row is None else parse_index_csv(sort_row.get("level2"))
+    sort_level3 = [] if sort_row is None else parse_index_csv(sort_row.get("level3"))
+    emitted_indices = [] if emit_row is None else parse_index_csv(emit_row.get("emitted"))
+    generated_indices = [] if generate_row is None else parse_index_csv(generate_row.get("exclusions"))
+    runtime_indices = [] if runtime_row is None else parse_index_csv(runtime_row.get("exclusions"))
+
+    target_in_sort_level1 = sort_row is not None and sort_row.get("target_in_level1") == "true"
+    control_in_sort_any = sort_row is not None and sort_row.get("control_in_any_level") == "true"
+    target_in_emit = emit_row is not None and emit_row.get("target_present") == "true"
+    control_in_emit = emit_row is not None and emit_row.get("control_present") == "true"
+    target_in_generate = generate_row is not None and generate_row.get("contains_target") == "true"
+    control_in_generate = generate_row is not None and generate_row.get("contains_control") == "true"
+    target_in_runtime = runtime_row is not None and runtime_row.get("contains_target") == "true"
+    control_in_runtime = runtime_row is not None and runtime_row.get("contains_control") == "true"
+
+    continuity_ok = (
+        target_in_emit
+        and target_in_generate
+        and target_in_runtime
+        and set(emitted_indices) == set(generated_indices)
+        and set(generated_indices) == set(runtime_indices)
+    )
+    control_clean = (
+        not control_sources
+        and control_direct_count == 0
+        and not control_higher_order_rule_fired
+        and not control_in_sort_any
+        and not control_in_emit
+        and not control_in_generate
+        and not control_in_runtime
+    )
+
+    baseline_intended = (
+        "bond" in target_sources
+        and topology_nrexcl == 3
+        and direct_rule_fire_proven
+        and target_direct_count > 0
+        and not target_higher_order_rule_fired
+        and target_in_sort_level1
+        and target_pair[1] in sort_level1
+        and target_pair[1] not in sort_level2
+        and target_pair[1] not in sort_level3
+        and continuity_ok
+        and not control_in_generate
+        and control_clean
+    )
+    semantically_inconsistent = (
+        direct_rule_fire_proven
+        and (
+            "bond" not in target_sources
+            or topology_nrexcl is None
+            or topology_nrexcl <= 0
+        )
+    ) or (
+        not direct_rule_fire_proven
+        and target_in_emit
+        and target_in_generate
+    )
+
+    policy_interpretation_verdict = (
+        "BASELINE-INTENDED"
+        if baseline_intended
+        else ("SEMANTICALLY-INCONSISTENT" if semantically_inconsistent else "PARTIAL")
+    )
+    earliest_bad_handoff_verdict = (
+        "NOT-HERE"
+        if baseline_intended
+        else ("PASS-CANDIDATE" if semantically_inconsistent else "PARTIAL")
+    )
+
+    localization = {
+        "policy_interpretation_verdict": policy_interpretation_verdict,
+        "earliest_bad_handoff_verdict": earliest_bad_handoff_verdict,
+        "target_pair": list(target_pair),
+        "control_pair": list(control_pair),
+        "topology": {
+            "nrexcl": topology_nrexcl,
+            "target_topology_sources": target_sources,
+            "control_topology_sources": control_sources,
+            "topology_path": str(topology_path),
+        },
+        "internal_rule_trace": [
+            {
+                "order": 0,
+                "stage": "gen_nnb_bond_membership",
+                "state": gen_nnb_row,
+            },
+            {
+                "order": 1,
+                "stage": "do_gen_direct_bond_rule_fire",
+                "state": direct_rule_row,
+            },
+            {
+                "order": 2,
+                "stage": "do_gen_summary",
+                "state": summary_row,
+            },
+            {
+                "order": 3,
+                "stage": "sort_and_purge_output",
+                "state": sort_row,
+            },
+            {
+                "order": 4,
+                "stage": "nnb2excl_flattened",
+                "state": flattened_row,
+            },
+            {
+                "order": 5,
+                "stage": "nnb2excl_control_check",
+                "state": control_check_row,
+            },
+            {
+                "order": 6,
+                "stage": "nnb2excl_emit",
+                "state": emit_row,
+            },
+        ],
+        "exact_rule_fire_proof": {
+            "gen_nnb_bond_membership_row": gen_nnb_row,
+            "direct_bond_rule_row": direct_rule_row,
+            "sort_and_purge_row": sort_row,
+            "nnb2excl_emit_row": emit_row,
+            "direct_bond_rule_fire_proven": direct_rule_fire_proven,
+            "target_higher_order_rule_fired": target_higher_order_rule_fired,
+            "target_becomes_level1_neighbor": target_in_sort_level1,
+            "target_emitted_into_exclusions": target_in_emit,
+        },
+        "policy_interpretation": {
+            "target_is_bonded_in_topology": "bond" in target_sources,
+            "nrexcl": topology_nrexcl,
+            "rule_source": None if direct_rule_row is None else direct_rule_row.get("source"),
+            "condition_nrex_positive": None
+            if direct_rule_row is None
+            else direct_rule_row.get("condition_nrex_positive"),
+            "interpretation": (
+                "Bonded-neighbor exclusion generation is baseline-intended here because the traced rule is "
+                "'exclude_all_bonded_atoms' under nrexcl > 0, the target appears as a direct bond, and it is "
+                "carried through level-1 exclusions without requiring a higher-order propagation rule."
+                if baseline_intended
+                else (
+                    "The traced rule firing is semantically inconsistent for this exact path."
+                    if semantically_inconsistent
+                    else "The generate_excl rule meaning is still not exact."
+                )
+            ),
+        },
+        "continuity_with_m2g": {
+            "generate_excl_output_row": generate_row,
+            "runtime_exclusions_input_row": runtime_row,
+            "continuity_proven": continuity_ok,
+            "generated_indices": generated_indices,
+            "runtime_indices": runtime_indices,
+            "emitted_indices": emitted_indices,
+        },
+        "known_good_control": {
+            "pair": list(control_pair),
+            "gen_nnb_bond_membership_row": gen_nnb_row,
+            "do_gen_summary_row": summary_row,
+            "nnb2excl_control_check_row": control_check_row,
+            "generate_excl_output_row": generate_row,
+            "runtime_exclusions_input_row": runtime_row,
+            "control_clean": control_clean,
+        },
+        "supports_exact_rule_fire_point": direct_rule_fire_proven and target_in_emit,
+        "supports_generate_excl_not_earliest_bad_handoff": baseline_intended,
+        "supports_generate_excl_earliest_bad_handoff": semantically_inconsistent,
+        "why_not_fully_closed": (
+            "This closes only the pair-specific rule meaning inside generate_excl for dense_oligomer step 0."
+            if baseline_intended or semantically_inconsistent
+            else "The pair-specific rule derivation is still not exact enough to decide whether generate_excl is the first bad handoff."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "localization": localization,
+    }
+
+
 def summarize_dense_trace_fixture(
     fixture_id: str,
     topology_terms: list[str],
@@ -1964,7 +2231,7 @@ def main() -> int:
     args = parse_args()
     gmx_bin = str(Path(args.gmx_bin).resolve())
     output_root = Path(args.out).resolve()
-    if args.upstream_ownership_handoff_trace and not args.fixtures:
+    if (args.upstream_ownership_handoff_trace or args.pair_rule_derivation_trace) and not args.fixtures:
         fixtures = ["dense_oligomer"]
     else:
         fixtures = args.fixtures or list(DEFAULT_FIXTURES)
@@ -1996,6 +2263,7 @@ def main() -> int:
             or args.dense_early_accumulation_trace
             or args.exact_pair_write_ownership_proof
             or args.upstream_ownership_handoff_trace
+            or args.pair_rule_derivation_trace
         ) and fixture_id == "dense_oligomer":
             coarse_plain_env = {
                 "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
@@ -2026,13 +2294,10 @@ def main() -> int:
             coarse_exact_env["GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR"] = str(
                 system_root / "dt_0p0005" / "exact_three_level"
             )
-        if args.upstream_ownership_handoff_trace and fixture_id == "dense_oligomer":
+        if (args.upstream_ownership_handoff_trace or args.pair_rule_derivation_trace) and fixture_id == "dense_oligomer":
             coarse_exact_env = dict(coarse_exact_env or {})
             coarse_exact_env["GMX_DISABLE_MODULAR_SIMULATOR"] = "ON"
             coarse_exact_env["GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR"] = str(
-                system_root / "dt_0p0005" / "exact_three_level"
-            )
-            coarse_exact_env["GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR"] = str(
                 system_root / "dt_0p0005" / "exact_three_level"
             )
             coarse_exact_grompp_env = {
@@ -2056,7 +2321,7 @@ def main() -> int:
             grompp_env=coarse_exact_grompp_env,
         )
         coarse_exact_trace_off = None
-        if args.upstream_ownership_handoff_trace and fixture_id == "dense_oligomer":
+        if (args.upstream_ownership_handoff_trace or args.pair_rule_derivation_trace) and fixture_id == "dense_oligomer":
             fixture_summary = summarize_exact_only_trace_fixture(
                 fixture_id,
                 inner_terms_from_topology(topology_text),
@@ -2181,10 +2446,25 @@ def main() -> int:
             fixture_summary["dense_upstream_ownership_handoff_trace"] = dense_upstream_ownership_handoff_trace(
                 fixture_summary
             )
+        if args.pair_rule_derivation_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_pair_rule_derivation_trace"] = dense_pair_rule_derivation_trace(fixture_summary)
         fixture_results.append(fixture_summary)
         write_json(system_root / "fixture_summary.json", fixture_summary)
 
-    if args.upstream_ownership_handoff_trace:
+    if args.pair_rule_derivation_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_pair_rule_derivation_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_generate_excl_not_earliest_bad_handoff"):
+            verdict = "BASELINE-INTENDED GENERATE_EXCL RULE FIRE PROVEN; EARLIEST BAD HANDOFF NOT HERE"
+        elif dense_localization and dense_localization.get("supports_generate_excl_earliest_bad_handoff"):
+            verdict = "GENERATE_EXCL RULE DERIVATION IS THE EARLIEST BAD HANDOFF"
+        else:
+            verdict = "PAIR-RULE DERIVATION NARROWED BUT STILL PARTIAL"
+    elif args.upstream_ownership_handoff_trace:
         dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
         dense_localization = (
             None
