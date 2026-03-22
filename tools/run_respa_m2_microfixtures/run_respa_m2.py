@@ -78,6 +78,20 @@ M2J_PROBE_SPECS = (
         "work_dir_name": "probe_correction_outer_suppressed",
     },
 )
+M2K_PATCH_SPECS = (
+    {
+        "candidate": "Patch-shape A",
+        "key": "patch_shape_a",
+        "patch_mode": "patch_shape_a",
+        "work_dir_name": "patch_shape_a",
+    },
+    {
+        "candidate": "Patch-shape B",
+        "key": "patch_shape_b",
+        "patch_mode": "patch_shape_b",
+        "work_dir_name": "patch_shape_b",
+    },
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -155,6 +169,11 @@ def parse_args() -> argparse.Namespace:
         "--dispatch-minimal-fix-isolation",
         action="store_true",
         help="Collect dense_oligomer coarse step-0 exact excludedPairs dispatch-internal diagnostics for M2j-style minimal-fix isolation.",
+    )
+    parser.add_argument(
+        "--narrow-patch-proof",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 narrow patch-proof diagnostics for M2k-style excluded-correction outer-promotion validation.",
     )
     return parser.parse_args()
 
@@ -2437,6 +2456,284 @@ def dense_dispatch_minimal_fix_isolation(dense_fixture_summary: dict[str, Any]) 
     }
 
 
+def dense_narrow_patch_proof(dense_fixture_summary: dict[str, Any]) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    exact_dir = Path(coarse["exact_work_dir"])
+    patch_work_dirs = coarse.get("patch_work_dirs", {})
+
+    plain_force_frames = parse_force_dump(plain_dir / "plain_total_force.tsv")
+    baseline_force_frames = parse_force_dump(exact_dir / "exact_total_force.tsv")
+    step0 = min(set(plain_force_frames) & set(baseline_force_frames))
+    plain_force = plain_force_frames[step0]["forces"]
+
+    def trace_signature(state: dict[str, Any]) -> dict[str, Any]:
+        include_row = state["include_row"]
+        active_row = state["active_row"]
+        routing_row = state["routing_row"]
+        return {
+            "include_pair_effective": None
+            if include_row is None
+            else parse_bool_text(include_row.get("include_pair_effective")),
+            "effective_outer_active": None
+            if active_row is None
+            else parse_bool_text(active_row.get("effective_outer_active")),
+            "outer_scalar_baseline": None
+            if active_row is None
+            else float(active_row.get("outer_scalar_baseline", "0")),
+            "outer_scalar_effective": None
+            if active_row is None
+            else float(active_row.get("outer_scalar_effective", "0")),
+            "actual_outer_write_executed": None
+            if routing_row is None
+            else parse_bool_text(routing_row.get("actual_outer_write_executed")),
+        }
+
+    def same_signature(left: dict[str, Any], right: dict[str, Any]) -> bool:
+        keys = (
+            "include_pair_effective",
+            "effective_outer_active",
+            "actual_outer_write_executed",
+        )
+        if any(left[key] != right[key] for key in keys):
+            return False
+        scalar_keys = ("outer_scalar_baseline", "outer_scalar_effective")
+        return all(
+            left[key] is not None
+            and right[key] is not None
+            and abs(float(left[key]) - float(right[key])) <= NUMERIC_FIELD_TOL
+            for key in scalar_keys
+        )
+
+    def load_patch_record(work_dir: Path) -> dict[str, Any]:
+        force_frames = parse_force_dump(work_dir / "exact_total_force.tsv")
+        exact_force = force_frames[step0]["forces"]
+        exact_vs_plain = vector_metrics(exact_force, plain_force)
+        target_state = load_dispatch_probe_state(work_dir, "target_pair_0_1")
+        control_state = load_dispatch_probe_state(work_dir, "control_pair_0_4")
+        target_signature = trace_signature(target_state)
+        control_signature = trace_signature(control_state)
+        return {
+            "work_dir": str(work_dir),
+            "step0_force_diff": exact_vs_plain,
+            "target_state": target_state,
+            "control_state": control_state,
+            "target_signature": target_signature,
+            "control_signature": control_signature,
+        }
+
+    baseline_record = load_patch_record(exact_dir)
+    patch_records = {
+        spec["key"]: load_patch_record(Path(patch_work_dirs[spec["key"]]))
+        for spec in M2K_PATCH_SPECS
+        if spec["key"] in patch_work_dirs
+    }
+
+    baseline_control_signature = baseline_record["control_signature"]
+
+    proof_rows = [
+        {
+            "variant": "baseline",
+            "pair": [0, 1],
+            "include_pair_effective": baseline_record["target_signature"]["include_pair_effective"],
+            "effective_outer_active": baseline_record["target_signature"]["effective_outer_active"],
+            "outer_scalar_effective": baseline_record["target_signature"]["outer_scalar_effective"],
+            "actual_outer_write_executed": baseline_record["target_signature"]["actual_outer_write_executed"],
+            "first_bad_semantics_occurs": baseline_record["target_state"]["first_bad_semantics_occurs"],
+            "exact_total_vs_plain_verdict": (
+                "CLOSED"
+                if baseline_record["step0_force_diff"]["max_abs"] <= FORCE_BOOKKEEPING_TOL
+                else "NOT-CLOSED"
+            ),
+            "control_unchanged_verdict": "BASELINE",
+        },
+        {
+            "variant": "baseline",
+            "pair": [0, 4],
+            "include_pair_effective": baseline_record["control_signature"]["include_pair_effective"],
+            "effective_outer_active": baseline_record["control_signature"]["effective_outer_active"],
+            "outer_scalar_effective": baseline_record["control_signature"]["outer_scalar_effective"],
+            "actual_outer_write_executed": baseline_record["control_signature"]["actual_outer_write_executed"],
+            "first_bad_semantics_occurs": baseline_record["control_state"]["first_bad_semantics_occurs"],
+            "exact_total_vs_plain_verdict": "BASELINE",
+            "control_unchanged_verdict": "BASELINE",
+        },
+    ]
+
+    patch_dossiers = {}
+    target_closure_verdicts = {}
+    control_preservation_verdicts = {}
+    for spec in M2K_PATCH_SPECS:
+        record = patch_records.get(spec["key"])
+        if record is None:
+            continue
+        target_closed = (
+            not record["target_state"]["first_bad_semantics_occurs"]
+            and record["step0_force_diff"]["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        )
+        control_preserved = same_signature(record["control_signature"], baseline_control_signature)
+        target_closure_verdicts[spec["candidate"]] = (
+            "TARGET-CLOSED" if target_closed else "TARGET-NOT-CLOSED"
+        )
+        control_preservation_verdicts[spec["candidate"]] = (
+            "CONTROL-PRESERVED" if control_preserved else "CONTROL-REGRESSED"
+        )
+        patch_dossiers[spec["candidate"]] = {
+            "semantic_intent": (
+                "Cut excluded-pair correction at raw outerScalar formation inside the excludedPairs outer path."
+                if spec["key"] == "patch_shape_a"
+                else "Preserve raw outerScalar formation but block excluded-pair correction from becoming effective outer physical contribution."
+            ),
+            "touched_region": str(REPO_ROOT / "src" / "gromacs" / "mdlib" / "sim_util.cpp"),
+            "why_narrow": (
+                "Touches only the excludedPairs outer-scalar formation site."
+                if spec["key"] == "patch_shape_a"
+                else "Touches only the effectiveOuterScalar selection guard for excludedPairs outer routing."
+            ),
+            "target_state": record["target_state"],
+            "control_state": record["control_state"],
+            "step0_force_diff": record["step0_force_diff"],
+        }
+        proof_rows.extend(
+            [
+                {
+                    "variant": spec["candidate"],
+                    "pair": [0, 1],
+                    "include_pair_effective": record["target_signature"]["include_pair_effective"],
+                    "effective_outer_active": record["target_signature"]["effective_outer_active"],
+                    "outer_scalar_effective": record["target_signature"]["outer_scalar_effective"],
+                    "actual_outer_write_executed": record["target_signature"]["actual_outer_write_executed"],
+                    "first_bad_semantics_occurs": record["target_state"]["first_bad_semantics_occurs"],
+                    "exact_total_vs_plain_verdict": "CLOSED" if target_closed else "NOT-CLOSED",
+                    "control_unchanged_verdict": (
+                        "CONTROL-PRESERVED" if control_preserved else "CONTROL-REGRESSED"
+                    ),
+                },
+                {
+                    "variant": spec["candidate"],
+                    "pair": [0, 4],
+                    "include_pair_effective": record["control_signature"]["include_pair_effective"],
+                    "effective_outer_active": record["control_signature"]["effective_outer_active"],
+                    "outer_scalar_effective": record["control_signature"]["outer_scalar_effective"],
+                    "actual_outer_write_executed": record["control_signature"]["actual_outer_write_executed"],
+                    "first_bad_semantics_occurs": record["control_state"]["first_bad_semantics_occurs"],
+                    "exact_total_vs_plain_verdict": "N/A",
+                    "control_unchanged_verdict": (
+                        "CONTROL-PRESERVED" if control_preserved else "CONTROL-REGRESSED"
+                    ),
+                },
+            ]
+        )
+
+    patch_a = patch_records.get("patch_shape_a")
+    patch_b = patch_records.get("patch_shape_b")
+    patch_a_closed = target_closure_verdicts.get("Patch-shape A") == "TARGET-CLOSED"
+    patch_b_closed = target_closure_verdicts.get("Patch-shape B") == "TARGET-CLOSED"
+    patch_a_control = control_preservation_verdicts.get("Patch-shape A") == "CONTROL-PRESERVED"
+    patch_b_control = control_preservation_verdicts.get("Patch-shape B") == "CONTROL-PRESERVED"
+    patch_a_changes_raw_outer = (
+        patch_a is not None
+        and abs(
+            patch_a["target_signature"]["outer_scalar_baseline"]
+            - baseline_record["target_signature"]["outer_scalar_baseline"]
+        )
+        > NUMERIC_FIELD_TOL
+    )
+    patch_b_changes_raw_outer = (
+        patch_b is not None
+        and abs(
+            patch_b["target_signature"]["outer_scalar_baseline"]
+            - baseline_record["target_signature"]["outer_scalar_baseline"]
+        )
+        > NUMERIC_FIELD_TOL
+    )
+
+    if patch_a_closed and patch_a_control and patch_b_closed and patch_b_control:
+        preferred_patch = "PATCH-SHAPE-B preferred"
+        narrow_patch_verdict = "PASS"
+        minimality_reason = (
+            "Patch-shape B preserves raw outerScalar formation and only guards effectiveOuterScalar promotion, "
+            "whereas Patch-shape A cuts the raw outerScalar earlier."
+        )
+    elif patch_b_closed and patch_b_control:
+        preferred_patch = "PATCH-SHAPE-B preferred"
+        narrow_patch_verdict = "PASS"
+        minimality_reason = "Patch-shape B is the only candidate that closes the target while preserving control."
+    elif patch_a_closed and patch_a_control:
+        preferred_patch = "PATCH-SHAPE-A preferred"
+        narrow_patch_verdict = "PASS"
+        minimality_reason = "Patch-shape A is the only candidate that closes the target while preserving control."
+    elif (patch_a_closed and not patch_a_control) or (patch_b_closed and not patch_b_control):
+        preferred_patch = "neither proven yet"
+        narrow_patch_verdict = "PARTIAL"
+        minimality_reason = "At least one target-closing patch changes control semantics."
+    else:
+        preferred_patch = "neither proven yet"
+        narrow_patch_verdict = "FAIL"
+        minimality_reason = "Neither narrow patch closes the target within the locked-scope force tolerance."
+
+    localization = {
+        "patch_dossier": patch_dossiers,
+        "before_after_proof_table": proof_rows,
+        "target_closure_verdict": target_closure_verdicts,
+        "control_preservation_verdict": control_preservation_verdicts,
+        "minimality_comparison": {
+            "Patch-shape A": {
+                "target_closed": patch_a_closed,
+                "control_preserved": patch_a_control,
+                "changes_raw_outer_scalar": patch_a_changes_raw_outer,
+                "step0_force_diff": None if patch_a is None else patch_a["step0_force_diff"],
+                "blast_radius_note": (
+                    "Cuts raw outerScalar formation earlier than the physical-promotion boundary."
+                    if patch_a is not None
+                    else "Patch not run."
+                ),
+            },
+            "Patch-shape B": {
+                "target_closed": patch_b_closed,
+                "control_preserved": patch_b_control,
+                "changes_raw_outer_scalar": patch_b_changes_raw_outer,
+                "step0_force_diff": None if patch_b is None else patch_b["step0_force_diff"],
+                "blast_radius_note": (
+                    "Preserves raw outerScalar formation and only removes excluded correction from effective outer physical promotion."
+                    if patch_b is not None
+                    else "Patch not run."
+                ),
+            },
+            "preferred_patch": preferred_patch,
+            "why": minimality_reason,
+        },
+        "reference_reconciliation": {
+            "target_pair": [0, 1],
+            "reference_semantics": (
+                "A valid exclusion bookkeeping pair should not produce a live non-zero outer physical contribution and the exact step-0 total force should re-close to plain."
+            ),
+            "baseline_exact": baseline_record["target_state"],
+            "patch_shape_a": None if patch_a is None else patch_a["target_state"],
+            "patch_shape_b": None if patch_b is None else patch_b["target_state"],
+        },
+        "control_result": {
+            "pair": [0, 4],
+            "baseline": baseline_record["control_state"],
+            "patch_shape_a": None if patch_a is None else patch_a["control_state"],
+            "patch_shape_b": None if patch_b is None else patch_b["control_state"],
+            "control_preserved": patch_a_control and patch_b_control,
+        },
+        "supports_narrow_patch_proof": narrow_patch_verdict == "PASS",
+        "narrow_patch_verdict": narrow_patch_verdict,
+        "final_recommendation": preferred_patch,
+        "why_not_fully_closed": (
+            "This proves only the locked-scope patch behavior for dense_oligomer coarse step 0; it does not establish full-system correctness."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": step0,
+        "localization": localization,
+    }
+
+
 def summarize_dense_trace_fixture(
     fixture_id: str,
     topology_terms: list[str],
@@ -2478,6 +2775,49 @@ def summarize_dense_trace_fixture(
         "comparison_notes": [
             "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
             "The simpler split here is a PME-side legacy side-reference on the same harness; it is not direct archived-M1 continuity because archived M1 used md + Cut-off settings.",
+        ],
+    }
+
+
+def summarize_dense_patch_fixture(
+    fixture_id: str,
+    topology_terms: list[str],
+    box_nm: tuple[float, float, float],
+    coarse_plain: dict[str, Any],
+    coarse_exact: dict[str, Any],
+    patch_runs: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    coarse_exact_vs_plain = compare_series(coarse_exact, coarse_plain, box_nm)
+    patch_vs_plain = {
+        key: compare_series(patch_run, coarse_plain, box_nm) for key, patch_run in patch_runs.items()
+    }
+
+    return {
+        "fixture_id": fixture_id,
+        "listed_terms_present": topology_terms,
+        "exact_split": {
+            "inner_terms": topology_terms + ["nonbonded_inner"],
+            "middle_terms": ["nonbonded_middle"],
+            "outer_terms": ["pair", "nonbonded_outer", "kspace"],
+        },
+        "exact_schedule_active": exact_scheduler_active(coarse_exact["schedule"]),
+        "bookkeeping_ok": (
+            coarse_exact_vs_plain["step0_force_diff"]["max_abs"] <= FORCE_BOOKKEEPING_TOL
+            and coarse_exact_vs_plain["step0_potential_abs_diff_kj_per_mol"] <= POTENTIAL_BOOKKEEPING_TOL
+        ),
+        "coarse": {
+            "dt_ps": coarse_exact["dt_ps"],
+            "nsteps": coarse_exact["nsteps"],
+            "plain_work_dir": coarse_plain["work_dir"],
+            "exact_work_dir": coarse_exact["work_dir"],
+            "patch_work_dirs": {key: value["work_dir"] for key, value in patch_runs.items()},
+            "exact_vs_plain": coarse_exact_vs_plain,
+            "patch_vs_plain": patch_vs_plain,
+        },
+        "exact_schedule_dump": coarse_exact["schedule"],
+        "comparison_notes": [
+            "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
+            "This milestone tests only two narrow patch shapes inside the already-isolated excluded-correction outer-promotion path.",
         ],
     }
 
@@ -2808,6 +3148,7 @@ def main() -> int:
         or args.pair_rule_derivation_trace
         or args.downstream_misconsumption_trace
         or args.dispatch_minimal_fix_isolation
+        or args.narrow_patch_proof
     ) and not args.fixtures:
         fixtures = ["dense_oligomer"]
     else:
@@ -2830,6 +3171,8 @@ def main() -> int:
             system_root / "system.gro",
         )
 
+        coarse_plain = None
+        coarse_side_reference = None
         coarse_plain_env = None
         coarse_side_reference_env = None
         coarse_exact_env = None
@@ -2843,6 +3186,7 @@ def main() -> int:
             or args.pair_rule_derivation_trace
             or args.downstream_misconsumption_trace
             or args.dispatch_minimal_fix_isolation
+            or args.narrow_patch_proof
         ) and fixture_id == "dense_oligomer":
             coarse_plain_env = {
                 "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
@@ -2904,6 +3248,12 @@ def main() -> int:
                 system_root / "dt_0p0005" / "exact_three_level"
             )
             coarse_exact_env["GMX_PCFF_RESPA_M2J_PROBE_MODE"] = "baseline"
+        if args.narrow_patch_proof and fixture_id == "dense_oligomer":
+            coarse_exact_env = dict(coarse_exact_env or {})
+            coarse_exact_env["GMX_PCFF_RESPA_M2K_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
+            coarse_exact_env["GMX_PCFF_RESPA_M2K_PATCH_MODE"] = "baseline"
         if (args.upstream_ownership_handoff_trace or args.pair_rule_derivation_trace) and fixture_id == "dense_oligomer":
             coarse_exact_grompp_env = {
                 "GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR": str(
@@ -2913,6 +3263,18 @@ def main() -> int:
         if args.dense_bookkeeping_isolation and fixture_id == "dense_oligomer":
             coarse_exact_env = dict(coarse_exact_env or {})
             coarse_exact_env["GMX_PCFF_RESPA_DEBUG"] = "1"
+
+        if args.narrow_patch_proof and fixture_id == "dense_oligomer":
+            coarse_plain = run_case(
+                gmx_bin,
+                system_root,
+                system_root / "dt_0p0005" / "plain_verlet",
+                "plain_verlet",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=coarse_plain_env,
+            )
 
         coarse_exact = run_case(
             gmx_bin,
@@ -2944,8 +3306,37 @@ def main() -> int:
                     commands_log,
                     extra_env=probe_env,
                 )
+        patch_runs: dict[str, dict[str, Any]] = {}
+        if args.narrow_patch_proof and fixture_id == "dense_oligomer":
+            for patch_spec in M2K_PATCH_SPECS:
+                patch_work_dir = system_root / "dt_0p0005" / patch_spec["work_dir_name"]
+                patch_env = {
+                    "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                    "GMX_TOTAL_FORCE_DUMP_FILE": str(patch_work_dir / "exact_total_force.tsv"),
+                    "GMX_PCFF_RESPA_M2K_TRACE_DIR": str(patch_work_dir),
+                    "GMX_PCFF_RESPA_M2K_PATCH_MODE": patch_spec["patch_mode"],
+                }
+                patch_runs[patch_spec["key"]] = run_case(
+                    gmx_bin,
+                    system_root,
+                    patch_work_dir,
+                    "exact_three_level",
+                    DEFAULT_DT_VALUES[0],
+                    args.total_time_ps,
+                    commands_log,
+                    extra_env=patch_env,
+                )
         coarse_exact_trace_off = None
-        if (
+        if args.narrow_patch_proof and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_runs,
+            )
+        elif (
             args.upstream_ownership_handoff_trace
             or args.pair_rule_derivation_trace
             or args.downstream_misconsumption_trace
@@ -3097,10 +3488,21 @@ def main() -> int:
             fixture_summary["dense_dispatch_minimal_fix_isolation"] = dense_dispatch_minimal_fix_isolation(
                 fixture_summary
             )
+        if args.narrow_patch_proof and fixture_id == "dense_oligomer":
+            fixture_summary["dense_narrow_patch_proof"] = dense_narrow_patch_proof(fixture_summary)
         fixture_results.append(fixture_summary)
         write_json(system_root / "fixture_summary.json", fixture_summary)
 
-    if args.dispatch_minimal_fix_isolation:
+    if args.narrow_patch_proof:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None if dense_fixture is None else dense_fixture.get("dense_narrow_patch_proof", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_narrow_patch_proof"):
+            verdict = "NARROW PATCH PROOF COMPLETE"
+        else:
+            verdict = "NARROW PATCH PROOF STILL PARTIAL"
+    elif args.dispatch_minimal_fix_isolation:
         dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
         dense_localization = (
             None

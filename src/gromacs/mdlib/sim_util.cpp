@@ -829,12 +829,20 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
     const bool dumpDownstreamContract =
             (downstreamContractTraceDirPath != nullptr && *downstreamContractTraceDirPath != '\0'
              && !dumpedDownstreamContractTrace);
-    const char* dispatchInternalTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2J_TRACE_DIR");
+    const char* dispatchInternalTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2K_TRACE_DIR");
+    if (dispatchInternalTraceDirPath == nullptr || *dispatchInternalTraceDirPath == '\0')
+    {
+        dispatchInternalTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2J_TRACE_DIR");
+    }
     static bool dumpedDispatchInternalTrace  = false;
     const bool dumpDispatchInternalTrace =
             (dispatchInternalTraceDirPath != nullptr && *dispatchInternalTraceDirPath != '\0'
              && !dumpedDispatchInternalTrace);
-    const char* dispatchProbeModeEnv = std::getenv("GMX_PCFF_RESPA_M2J_PROBE_MODE");
+    const char* dispatchProbeModeEnv = std::getenv("GMX_PCFF_RESPA_M2K_PATCH_MODE");
+    if (dispatchProbeModeEnv == nullptr || *dispatchProbeModeEnv == '\0')
+    {
+        dispatchProbeModeEnv = std::getenv("GMX_PCFF_RESPA_M2J_PROBE_MODE");
+    }
     const std::string dispatchProbeMode =
             (dispatchProbeModeEnv != nullptr && *dispatchProbeModeEnv != '\0') ? dispatchProbeModeEnv : "baseline";
     const bool outerAliasesShift =
@@ -1146,6 +1154,8 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                     (dispatchProbeMode == "outer_routing_suppressed" && isExcludedPairlist && isTargetPair);
             const bool probeCorrectionOuterSuppressed =
                     (dispatchProbeMode == "correction_outer_suppressed" && isExcludedPairlist && isTargetPair);
+            const bool patchShapeA = (dispatchProbeMode == "patch_shape_a" && isExcludedPairlist);
+            const bool patchShapeB = (dispatchProbeMode == "patch_shape_b" && isExcludedPairlist);
             const bool includePairBase      = includePair(ai, aj);
             const bool includePairEffective = includePairBase && !probeIncludePairRestricted;
 
@@ -1233,13 +1243,14 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                     bareCoulombScalar * splitWeights.inner + factorLj * rawLjScalar * splitWeights.inner;
             const real middleScalar =
                     bareCoulombScalar * splitWeights.middle + factorLj * rawLjScalar * splitWeights.middle;
+            const real bareOuterScalar =
+                    bareCoulombScalar * splitWeights.outer + factorLj * rawLjScalar * splitWeights.outer;
             const real outerScalar =
-                    correctionScalar + bareCoulombScalar * splitWeights.outer + factorLj * rawLjScalar * splitWeights.outer;
+                    (patchShapeA ? bareOuterScalar : correctionScalar + bareOuterScalar);
             const real fullScalar = correctionScalar + bareCoulombScalar + factorLj * rawLjScalar;
             const real effectiveOuterScalar =
-                    probeCorrectionOuterSuppressed
-                            ? (bareCoulombScalar * splitWeights.outer
-                               + factorLj * rawLjScalar * splitWeights.outer)
+                    (probeCorrectionOuterSuppressed || patchShapeB)
+                            ? bareOuterScalar
                             : outerScalar;
             const bool baselineOuterActive =
                     std::any_of(activeContributions.begin(),
