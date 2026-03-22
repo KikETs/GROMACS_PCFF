@@ -110,6 +110,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Collect dense_oligomer coarse step-0 exact pair-write ownership diagnostics for M2f-style proof.",
     )
+    parser.add_argument(
+        "--upstream-ownership-handoff-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 upstream ownership/spec handoff diagnostics for M2g-style tracing.",
+    )
     return parser.parse_args()
 
 
@@ -425,6 +430,32 @@ def parse_topology_pair_sources(topology_path: Path) -> dict[tuple[int, int], li
         elif current_section == "dihedrals" and len(fields) >= 4:
             add_pair_source(pair_sources, int(fields[0]), int(fields[3]), "dihedral_endpoint")
     return pair_sources
+
+
+def parse_topology_nrexcl(topology_path: Path) -> int | None:
+    current_section = None
+    for raw_line in topology_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(";"):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            current_section = line.strip("[]").strip().lower()
+            continue
+        if current_section == "moleculetype":
+            fields = line.split()
+            if len(fields) >= 2:
+                return int(fields[1])
+    return None
+
+
+def parse_bool_text(value: str | None) -> bool:
+    return value == "true"
+
+
+def parse_index_csv(value: str | None) -> list[int]:
+    if value is None or value == "none":
+        return []
+    return [int(token) for token in value.split(",") if token]
 
 
 def parse_excluded_force_dump(path: Path) -> dict[str, Any]:
@@ -1294,6 +1325,281 @@ def dense_pair_write_ownership_proof(dense_fixture_summary: dict[str, Any]) -> d
     }
 
 
+def dense_upstream_ownership_handoff_trace(dense_fixture_summary: dict[str, Any]) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    exact_dir = Path(coarse["exact_work_dir"])
+
+    topology_path = exact_dir / "system.top"
+    topology_sources = parse_topology_pair_sources(topology_path)
+    topology_nrexcl = parse_topology_nrexcl(topology_path)
+
+    generate_rows = parse_key_value_text(exact_dir / "step0_grompp_generate_excl_trace.txt")
+    runtime_rows = parse_key_value_text(exact_dir / "step0_runtime_exclusions_input.txt")
+    bit_clear_rows = parse_key_value_text(exact_dir / "step0_exclusion_bit_clear_trace.txt")
+    append_rows = parse_key_value_text(exact_dir / "step0_append_branch_trace.txt")
+    builder_rows = parse_key_value_text(exact_dir / "step0_pairlist_builder_append_trace.txt")
+    preview_rows = parse_key_value_text(exact_dir / "step0_plain_pairlist_preview.txt")
+    membership_rows = parse_key_value_text(exact_dir / "step0_pair_key_membership_scan.txt")
+
+    target_pair = (0, 1)
+    control_pair = (0, 4)
+    target_sources = topology_sources.get(target_pair, [])
+    control_sources = topology_sources.get(control_pair, [])
+
+    generate_row = next((row for row in generate_rows if row.get("stage") == "generate_excl_output"), None)
+    runtime_row = next((row for row in runtime_rows if row.get("stage") == "runtime_exclusions_input"), None)
+    bit_clear_row = next(
+        (
+            row
+            for row in bit_clear_rows
+            if row.get("stage") == "runtime_clear_exclusion_bit"
+            and row.get("atom_i") == "0"
+            and row.get("atom_j") == "1"
+        ),
+        None,
+    )
+    target_append_row = next((row for row in append_rows if row.get("role") == "target_pair_0_1"), None)
+    control_append_row = next((row for row in append_rows if row.get("role") == "control_pair_0_4"), None)
+    target_builder_row = next(
+        (row for row in builder_rows if row.get("kind") == "excludedPairs" and row.get("ordinal") == "0"),
+        None,
+    )
+    control_builder_row = next(
+        (row for row in builder_rows if row.get("kind") == "pairs" and row.get("ordinal") == "0"),
+        None,
+    )
+    target_preview_row = next(
+        (row for row in preview_rows if row.get("kind") == "excludedPairs" and row.get("ordinal") == "0"),
+        None,
+    )
+    control_preview_row = next(
+        (row for row in preview_rows if row.get("kind") == "pairs" and row.get("ordinal") == "0"),
+        None,
+    )
+    target_membership_row = next(
+        (row for row in membership_rows if row.get("kind") == "excluded" and row.get("ordinal") == "0"),
+        None,
+    )
+    control_membership_row = next(
+        (row for row in membership_rows if row.get("kind") == "pairs" and row.get("ordinal") == "0"),
+        None,
+    )
+
+    generate_contains_target = parse_bool_text(None if generate_row is None else generate_row.get("contains_target"))
+    generate_contains_control = parse_bool_text(None if generate_row is None else generate_row.get("contains_control"))
+    runtime_contains_target = parse_bool_text(None if runtime_row is None else runtime_row.get("contains_target"))
+    runtime_contains_control = parse_bool_text(None if runtime_row is None else runtime_row.get("contains_control"))
+
+    bit_clear_ok = (
+        bit_clear_row is not None
+        and bit_clear_row.get("rule") == "jAtom_in_topology_exclusions"
+        and int(bit_clear_row.get("masked_before", "0")) != 0
+        and int(bit_clear_row.get("masked_after", "0")) == 0
+    )
+    target_append_ok = (
+        target_append_row is not None
+        and target_append_row.get("branch") == "excludedPairs"
+        and target_append_row.get("predicate_mask_nonzero") == "false"
+        and target_append_row.get("predicate_excluded_branch") == "true"
+        and target_append_row.get("masked_value") == "0"
+    )
+    control_append_ok = (
+        control_append_row is not None
+        and control_append_row.get("branch") == "pairs"
+        and control_append_row.get("predicate_mask_nonzero") == "true"
+        and control_append_row.get("predicate_excluded_branch") == "false"
+        and control_append_row.get("masked_value") != "0"
+    )
+    target_builder_ok = (
+        target_builder_row is not None
+        and target_builder_row.get("ai") == "0"
+        and target_builder_row.get("aj") == "1"
+        and target_builder_row.get("excl_bit") == "0"
+    )
+    control_builder_ok = (
+        control_builder_row is not None
+        and control_builder_row.get("ai") == "0"
+        and control_builder_row.get("aj") == "4"
+        and control_builder_row.get("excl_bit") == "1"
+    )
+    target_membership_ok = (
+        target_membership_row is not None
+        and target_membership_row.get("in_plain_pairs") == "0"
+        and target_membership_row.get("in_plain_excluded") == "1"
+    )
+    control_membership_ok = (
+        control_membership_row is not None
+        and control_membership_row.get("in_plain_pairs") == "1"
+        and control_membership_row.get("in_plain_excluded") == "0"
+        and control_membership_row.get("in_debug_listed_pair_keys") == "false"
+    )
+    target_preview_ok = (
+        target_preview_row is not None
+        and target_preview_row.get("ai") == "0"
+        and target_preview_row.get("aj") == "1"
+    )
+    control_preview_ok = (
+        control_preview_row is not None
+        and control_preview_row.get("ai") == "0"
+        and control_preview_row.get("aj") == "4"
+    )
+
+    dual_membership_at_generate = bool(target_sources) and generate_contains_target
+    runtime_copy_matches_generate = (
+        generate_row is not None
+        and runtime_row is not None
+        and set(parse_index_csv(runtime_row.get("exclusions"))) == set(parse_index_csv(generate_row.get("exclusions")))
+    )
+    earliest_bad_handoff_identified = (
+        "bond" in target_sources
+        and topology_nrexcl == 3
+        and dual_membership_at_generate
+        and not generate_contains_control
+        and runtime_contains_target
+        and not runtime_contains_control
+        and runtime_copy_matches_generate
+        and bit_clear_ok
+        and target_append_ok
+        and control_append_ok
+        and target_builder_ok
+        and control_builder_ok
+        and target_preview_ok
+        and control_preview_ok
+        and target_membership_ok
+        and control_membership_ok
+        and not control_sources
+    )
+
+    localization = {
+        "classification": (
+            "earliest bad handoff identified at generate_excl output from bonded topology + nrexcl overlap policy"
+            if earliest_bad_handoff_identified
+            else "still unresolved"
+        ),
+        "target_pair": list(target_pair),
+        "control_pair": list(control_pair),
+        "topology": {
+            "nrexcl": topology_nrexcl,
+            "target_topology_sources": target_sources,
+            "control_topology_sources": control_sources,
+            "topology_path": str(topology_path),
+        },
+        "lineage_trace": [
+            {
+                "order": 0,
+                "stage": "topology_inputs",
+                "state": {
+                    "target_pair_0_1_sources": target_sources,
+                    "control_pair_0_4_sources": control_sources,
+                    "nrexcl": topology_nrexcl,
+                },
+            },
+            {
+                "order": 1,
+                "stage": "generate_excl_output",
+                "state": generate_row,
+            },
+            {
+                "order": 2,
+                "stage": "runtime_exclusions_input",
+                "state": runtime_row,
+            },
+            {
+                "order": 3,
+                "stage": "runtime_clear_exclusion_bit",
+                "state": bit_clear_row,
+            },
+            {
+                "order": 4,
+                "stage": "append_plain_pairlist_branch_target",
+                "state": target_append_row,
+            },
+            {
+                "order": 5,
+                "stage": "append_plain_pairlist_branch_control",
+                "state": control_append_row,
+            },
+            {
+                "order": 6,
+                "stage": "plain_pairlist_append_target",
+                "state": target_builder_row,
+            },
+            {
+                "order": 7,
+                "stage": "plain_pairlist_membership_target",
+                "state": target_membership_row,
+            },
+        ],
+        "earliest_divergence": {
+            "stage": "generate_excl_output" if dual_membership_at_generate else None,
+            "fault_class": (
+                "upstream_spec_overlap_policy_defect"
+                if earliest_bad_handoff_identified
+                else None
+            ),
+            "why": (
+                "Pair (0,1) is already bonded in topology, and generate_excl materializes it into the atom-0 exclusion list under nrexcl=3 before any runtime bit clearing or excludedPairs packing happens."
+                if dual_membership_at_generate
+                else "Target pair did not prove dual-membership at generate_excl output."
+            ),
+        },
+        "append_branch_proof": {
+            "target_row": target_append_row,
+            "control_row": control_append_row,
+            "target_branch_provenance": {
+                "mask_bit_cleared_by_runtime_exclusions": bit_clear_ok,
+                "upstream_runtime_exclusions_contains_target": runtime_contains_target,
+                "predicate_mask_nonzero": None if target_append_row is None else target_append_row.get("predicate_mask_nonzero"),
+                "predicate_excluded_branch": None if target_append_row is None else target_append_row.get("predicate_excluded_branch"),
+            },
+        },
+        "dual_membership": {
+            "target_pair_has_bonded_topology_source": bool(target_sources),
+            "target_pair_in_generate_excl_output": generate_contains_target,
+            "dual_membership_first_materialized_at_generate_excl": dual_membership_at_generate,
+            "target_membership_row": target_membership_row,
+        },
+        "known_good_control": {
+            "pair": list(control_pair),
+            "generate_contains_control": generate_contains_control,
+            "runtime_contains_control": runtime_contains_control,
+            "append_branch_row": control_append_row,
+            "builder_row": control_builder_row,
+            "preview_row": control_preview_row,
+            "membership_row": control_membership_row,
+            "clean_lineage": (
+                not control_sources
+                and not generate_contains_control
+                and not runtime_contains_control
+                and control_append_ok
+                and control_builder_ok
+                and control_preview_ok
+                and control_membership_ok
+            ),
+        },
+        "artifact_paths": {
+            "generate_excl_trace": str(exact_dir / "step0_grompp_generate_excl_trace.txt"),
+            "runtime_exclusions_input": str(exact_dir / "step0_runtime_exclusions_input.txt"),
+            "exclusion_bit_clear_trace": str(exact_dir / "step0_exclusion_bit_clear_trace.txt"),
+            "append_branch_trace": str(exact_dir / "step0_append_branch_trace.txt"),
+            "pairlist_builder_trace": str(exact_dir / "step0_pairlist_builder_append_trace.txt"),
+            "plain_pairlist_preview": str(exact_dir / "step0_plain_pairlist_preview.txt"),
+            "pair_key_membership_scan": str(exact_dir / "step0_pair_key_membership_scan.txt"),
+        },
+        "supports_exact_earliest_handoff": earliest_bad_handoff_identified,
+        "why_not_fully_closed": (
+            "This closes the earliest bad handoff only for dense_oligomer, exact 3-level, coarse dt=0.0005, step 0."
+            if earliest_bad_handoff_identified
+            else "The lineage does not yet prove an exact earliest upstream handoff."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "localization": localization,
+    }
+
+
 def summarize_dense_trace_fixture(
     fixture_id: str,
     topology_terms: list[str],
@@ -1376,6 +1682,7 @@ def run_case(
     total_time_ps: float,
     commands_log: list[str],
     extra_env: dict[str, str] | None = None,
+    grompp_env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     work_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1415,6 +1722,7 @@ def run_case(
         work_dir,
         f"{deffnm}_grompp",
         commands_log,
+        extra_env=grompp_env,
     )
 
     run_command(
@@ -1620,6 +1928,33 @@ def summarize_fixture(
     }
 
 
+def summarize_exact_only_trace_fixture(
+    fixture_id: str,
+    topology_terms: list[str],
+    coarse_exact: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "fixture_id": fixture_id,
+        "listed_terms_present": topology_terms,
+        "exact_split": {
+            "inner_terms": topology_terms + ["nonbonded_inner"],
+            "middle_terms": ["nonbonded_middle"],
+            "outer_terms": ["pair", "nonbonded_outer", "kspace"],
+        },
+        "exact_schedule_active": exact_scheduler_active(coarse_exact["schedule"]),
+        "coarse": {
+            "dt_ps": coarse_exact["dt_ps"],
+            "nsteps": coarse_exact["nsteps"],
+            "exact_work_dir": coarse_exact["work_dir"],
+        },
+        "exact_schedule_dump": coarse_exact["schedule"],
+        "comparison_notes": [
+            "This milestone traces only the upstream ownership/spec lineage that leads into excludedPairs.",
+            "No plain-Verlet or PME-side legacy side-reference comparison is needed for this exact handoff proof.",
+        ],
+    }
+
+
 def write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -1629,7 +1964,10 @@ def main() -> int:
     args = parse_args()
     gmx_bin = str(Path(args.gmx_bin).resolve())
     output_root = Path(args.out).resolve()
-    fixtures = args.fixtures or list(DEFAULT_FIXTURES)
+    if args.upstream_ownership_handoff_trace and not args.fixtures:
+        fixtures = ["dense_oligomer"]
+    else:
+        fixtures = args.fixtures or list(DEFAULT_FIXTURES)
     corpus_root = REPO_ROOT / "testdata" / "lammps_golden"
     output_root.mkdir(parents=True, exist_ok=True)
 
@@ -1651,11 +1989,13 @@ def main() -> int:
         coarse_plain_env = None
         coarse_side_reference_env = None
         coarse_exact_env = None
+        coarse_exact_grompp_env = None
         if (
             args.dense_force_ownership_isolation
             or args.dense_merge_trace
             or args.dense_early_accumulation_trace
             or args.exact_pair_write_ownership_proof
+            or args.upstream_ownership_handoff_trace
         ) and fixture_id == "dense_oligomer":
             coarse_plain_env = {
                 "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
@@ -1686,30 +2026,24 @@ def main() -> int:
             coarse_exact_env["GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR"] = str(
                 system_root / "dt_0p0005" / "exact_three_level"
             )
+        if args.upstream_ownership_handoff_trace and fixture_id == "dense_oligomer":
+            coarse_exact_env = dict(coarse_exact_env or {})
+            coarse_exact_env["GMX_DISABLE_MODULAR_SIMULATOR"] = "ON"
+            coarse_exact_env["GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
+            coarse_exact_env["GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
+            coarse_exact_grompp_env = {
+                "GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR": str(
+                    system_root / "dt_0p0005" / "exact_three_level"
+                )
+            }
         if args.dense_bookkeeping_isolation and fixture_id == "dense_oligomer":
             coarse_exact_env = dict(coarse_exact_env or {})
             coarse_exact_env["GMX_PCFF_RESPA_DEBUG"] = "1"
 
-        coarse_plain = run_case(
-            gmx_bin,
-            system_root,
-            system_root / "dt_0p0005" / "plain_verlet",
-            "plain_verlet",
-            DEFAULT_DT_VALUES[0],
-            args.total_time_ps,
-            commands_log,
-            extra_env=coarse_plain_env,
-        )
-        coarse_side_reference = run_case(
-            gmx_bin,
-            system_root,
-            system_root / "dt_0p0005" / PME_LEGACY_SIDE_REFERENCE_MODE,
-            PME_LEGACY_SIDE_REFERENCE_MODE,
-            DEFAULT_DT_VALUES[0],
-            args.total_time_ps,
-            commands_log,
-            extra_env=coarse_side_reference_env,
-        )
         coarse_exact = run_case(
             gmx_bin,
             system_root,
@@ -1719,79 +2053,107 @@ def main() -> int:
             args.total_time_ps,
             commands_log,
             extra_env=coarse_exact_env,
+            grompp_env=coarse_exact_grompp_env,
         )
         coarse_exact_trace_off = None
-        if args.exact_pair_write_ownership_proof and fixture_id == "dense_oligomer":
-            coarse_exact_trace_off = run_case(
+        if args.upstream_ownership_handoff_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_exact_only_trace_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                coarse_exact,
+            )
+        else:
+            coarse_plain = run_case(
                 gmx_bin,
                 system_root,
-                system_root / "dt_0p0005" / "exact_three_level_trace_off",
-                "exact_three_level_trace_off",
+                system_root / "dt_0p0005" / "plain_verlet",
+                "plain_verlet",
                 DEFAULT_DT_VALUES[0],
                 args.total_time_ps,
                 commands_log,
-                extra_env={
-                    "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
-                    "GMX_TOTAL_FORCE_DUMP_FILE": str(
-                        system_root / "dt_0p0005" / "exact_three_level_trace_off" / "exact_total_force.tsv"
-                    ),
-                },
+                extra_env=coarse_plain_env,
             )
-        if (
-            args.dense_merge_trace
-            or args.dense_early_accumulation_trace
-            or args.exact_pair_write_ownership_proof
-        ) and fixture_id == "dense_oligomer":
-            fixture_summary = summarize_dense_trace_fixture(
-                fixture_id,
-                inner_terms_from_topology(topology_text),
-                tuple(gro_meta["box_nm"]),
-                coarse_plain,
-                coarse_side_reference,
-                coarse_exact,
-            )
-            if coarse_exact_trace_off is not None:
-                fixture_summary["coarse"]["exact_trace_off_work_dir"] = coarse_exact_trace_off["work_dir"]
-        else:
-            fine_plain = run_case(
+            coarse_side_reference = run_case(
                 gmx_bin,
                 system_root,
-                system_root / "dt_0p00025" / "plain_verlet",
-                "plain_verlet",
-                DEFAULT_DT_VALUES[1],
-                args.total_time_ps,
-                commands_log,
-            )
-            fine_side_reference = run_case(
-                gmx_bin,
-                system_root,
-                system_root / "dt_0p00025" / PME_LEGACY_SIDE_REFERENCE_MODE,
+                system_root / "dt_0p0005" / PME_LEGACY_SIDE_REFERENCE_MODE,
                 PME_LEGACY_SIDE_REFERENCE_MODE,
-                DEFAULT_DT_VALUES[1],
+                DEFAULT_DT_VALUES[0],
                 args.total_time_ps,
                 commands_log,
+                extra_env=coarse_side_reference_env,
             )
-            fine_exact = run_case(
-                gmx_bin,
-                system_root,
-                system_root / "dt_0p00025" / "exact_three_level",
-                "exact_three_level",
-                DEFAULT_DT_VALUES[1],
-                args.total_time_ps,
-                commands_log,
-            )
+            if args.exact_pair_write_ownership_proof and fixture_id == "dense_oligomer":
+                coarse_exact_trace_off = run_case(
+                    gmx_bin,
+                    system_root,
+                    system_root / "dt_0p0005" / "exact_three_level_trace_off",
+                    "exact_three_level_trace_off",
+                    DEFAULT_DT_VALUES[0],
+                    args.total_time_ps,
+                    commands_log,
+                    extra_env={
+                        "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                        "GMX_TOTAL_FORCE_DUMP_FILE": str(
+                            system_root / "dt_0p0005" / "exact_three_level_trace_off" / "exact_total_force.tsv"
+                        ),
+                    },
+                )
+            if (
+                args.dense_merge_trace
+                or args.dense_early_accumulation_trace
+                or args.exact_pair_write_ownership_proof
+            ) and fixture_id == "dense_oligomer":
+                fixture_summary = summarize_dense_trace_fixture(
+                    fixture_id,
+                    inner_terms_from_topology(topology_text),
+                    tuple(gro_meta["box_nm"]),
+                    coarse_plain,
+                    coarse_side_reference,
+                    coarse_exact,
+                )
+                if coarse_exact_trace_off is not None:
+                    fixture_summary["coarse"]["exact_trace_off_work_dir"] = coarse_exact_trace_off["work_dir"]
+            else:
+                fine_plain = run_case(
+                    gmx_bin,
+                    system_root,
+                    system_root / "dt_0p00025" / "plain_verlet",
+                    "plain_verlet",
+                    DEFAULT_DT_VALUES[1],
+                    args.total_time_ps,
+                    commands_log,
+                )
+                fine_side_reference = run_case(
+                    gmx_bin,
+                    system_root,
+                    system_root / "dt_0p00025" / PME_LEGACY_SIDE_REFERENCE_MODE,
+                    PME_LEGACY_SIDE_REFERENCE_MODE,
+                    DEFAULT_DT_VALUES[1],
+                    args.total_time_ps,
+                    commands_log,
+                )
+                fine_exact = run_case(
+                    gmx_bin,
+                    system_root,
+                    system_root / "dt_0p00025" / "exact_three_level",
+                    "exact_three_level",
+                    DEFAULT_DT_VALUES[1],
+                    args.total_time_ps,
+                    commands_log,
+                )
 
-            fixture_summary = summarize_fixture(
-                fixture_id,
-                inner_terms_from_topology(topology_text),
-                tuple(gro_meta["box_nm"]),
-                coarse_plain,
-                coarse_side_reference,
-                coarse_exact,
-                fine_plain,
-                fine_side_reference,
-                fine_exact,
-            )
+                fixture_summary = summarize_fixture(
+                    fixture_id,
+                    inner_terms_from_topology(topology_text),
+                    tuple(gro_meta["box_nm"]),
+                    coarse_plain,
+                    coarse_side_reference,
+                    coarse_exact,
+                    fine_plain,
+                    fine_side_reference,
+                    fine_exact,
+                )
         fixture_summary["fixture_sources"] = fixture_source_record(fixture_id)
         fixture_summary["gro_metadata"] = gro_meta
         fixture_summary["m1_continuity"] = archived_m1_continuity_record()
@@ -1815,10 +2177,27 @@ def main() -> int:
             fixture_summary["dense_exact_pair_write_ownership_proof"] = dense_pair_write_ownership_proof(
                 fixture_summary
             )
+        if args.upstream_ownership_handoff_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_upstream_ownership_handoff_trace"] = dense_upstream_ownership_handoff_trace(
+                fixture_summary
+            )
         fixture_results.append(fixture_summary)
         write_json(system_root / "fixture_summary.json", fixture_summary)
 
-    if args.exact_pair_write_ownership_proof:
+    if args.upstream_ownership_handoff_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_upstream_ownership_handoff_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_exact_earliest_handoff"):
+            verdict = "EARLIEST OWNERSHIP/SPEC HANDOFF DEFECT IDENTIFIED"
+        elif dense_localization:
+            verdict = "OWNERSHIP/SPEC HANDOFF NARROWED BUT STILL PARTIAL"
+        else:
+            verdict = "UPSTREAM OWNERSHIP HANDOFF STILL UNRESOLVED"
+    elif args.exact_pair_write_ownership_proof:
         dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
         dense_localization = (
             None

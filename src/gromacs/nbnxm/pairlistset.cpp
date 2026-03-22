@@ -68,13 +68,13 @@ PairlistSet::~PairlistSet() = default;
 namespace
 {
 
-void appendPairlistTraceLine(const char* traceDirPath, const std::string& line)
+void appendTraceLine(const char* traceDirPath, const std::string& filename, const std::string& line)
 {
     GMX_RELEASE_ASSERT(traceDirPath != nullptr && *traceDirPath != '\0', "Need a valid pairlist trace directory");
 
     std::filesystem::path traceDir(traceDirPath);
     std::filesystem::create_directories(traceDir);
-    std::filesystem::path outputPath = traceDir / "step0_pairlist_builder_append_trace.txt";
+    std::filesystem::path outputPath = traceDir / filename;
 
     FILE* dumpFile = std::fopen(outputPath.string().c_str(), "a");
     if (dumpFile == nullptr)
@@ -83,6 +83,11 @@ void appendPairlistTraceLine(const char* traceDirPath, const std::string& line)
     }
     std::fprintf(dumpFile, "%s\n", line.c_str());
     std::fclose(dumpFile);
+}
+
+void appendPairlistTraceLine(const char* traceDirPath, const std::string& line)
+{
+    appendTraceLine(traceDirPath, "step0_pairlist_builder_append_trace.txt", line);
 }
 
 void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
@@ -97,8 +102,11 @@ void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
     std::array<int, c_maxClusterSize>  atomI;
     std::array<RVec, c_maxClusterSize> xI;
     const char*                        pairWriteProofDirPath = std::getenv("GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR");
+    const char* ownershipTraceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
     static int                         tracedPairsAppended   = 0;
     static int                         tracedExcludedAppended = 0;
+    static bool                        dumpedTargetBranchTrace = false;
+    static bool                        dumpedControlBranchTrace = false;
 
     ArrayRef<const nbnxn_ci_t> ciList;
     ArrayRef<const nbnxn_cj_t> cjList;
@@ -152,7 +160,49 @@ void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
 
                     if (atomJ >= 0 && norm2(xI[i] - getCoordinate(nbat, jAtomIndex)) < rangeSquared)
                     {
-                        if (jEntry.excl & (1 << (i * pairlist.na_cj + j)))
+                        const unsigned int pairBit = (1U << (i * pairlist.na_cj + j));
+                        const unsigned int maskedValue = jEntry.excl & pairBit;
+                        const bool         branchToPairs = maskedValue != 0;
+                        const bool         branchToExcluded =
+                                !branchToPairs && (shiftIndex != gmx::c_centralShiftIndex || jAtomIndex > iAtomIndex);
+                        const bool isTargetPair = (atomI[i] == 0 && atomJ == 1);
+                        const bool isControlPair = (atomI[i] == 0 && atomJ == 4);
+                        if (ownershipTraceDirPath != nullptr && *ownershipTraceDirPath != '\0'
+                            && ((isTargetPair && !dumpedTargetBranchTrace)
+                                || (isControlPair && !dumpedControlBranchTrace)))
+                        {
+                            appendTraceLine(
+                                    ownershipTraceDirPath,
+                                    "step0_append_branch_trace.txt",
+                                    "stage=append_plain_pairlist_branch ai=" + std::to_string(atomI[i]) + " aj="
+                                            + std::to_string(atomJ) + " shift_index=" + std::to_string(shiftIndex)
+                                            + " i_atom_index=" + std::to_string(iAtomIndex) + " j_atom_index="
+                                            + std::to_string(jAtomIndex) + " mask_word="
+                                            + std::to_string(jEntry.excl) + " pair_bit="
+                                            + std::to_string(pairBit) + " masked_value="
+                                            + std::to_string(maskedValue) + " branch="
+                                            + std::string(branchToPairs ? "pairs"
+                                                                       : (branchToExcluded ? "excludedPairs"
+                                                                                           : "skip"))
+                                            + " predicate_mask_nonzero="
+                                            + std::string(branchToPairs ? "true" : "false")
+                                            + " predicate_excluded_branch="
+                                            + std::string(branchToExcluded ? "true" : "false")
+                                            + " central_shift_index="
+                                            + std::to_string(gmx::c_centralShiftIndex) + " j_gt_i="
+                                            + std::string(jAtomIndex > iAtomIndex ? "true" : "false")
+                                            + " role="
+                                            + std::string(isTargetPair ? "target_pair_0_1" : "control_pair_0_4"));
+                            if (isTargetPair)
+                            {
+                                dumpedTargetBranchTrace = true;
+                            }
+                            if (isControlPair)
+                            {
+                                dumpedControlBranchTrace = true;
+                            }
+                        }
+                        if (branchToPairs)
                         {
                             if (pairWriteProofDirPath != nullptr && *pairWriteProofDirPath != '\0'
                                 && tracedPairsAppended < c_maxTracedPairs)
@@ -169,7 +219,7 @@ void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
                             }
                             plainPairlist->pairs.push_back({ { atomI[i], atomJ }, shiftIndex });
                         }
-                        else if (shiftIndex != gmx::c_centralShiftIndex || jAtomIndex > iAtomIndex)
+                        else if (branchToExcluded)
                         {
                             GMX_ASSERT(atomJ != atomI[i], "We should not add self-pairs");
 

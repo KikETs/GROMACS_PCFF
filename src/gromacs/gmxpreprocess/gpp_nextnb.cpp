@@ -38,6 +38,7 @@
 
 #include <cstdlib>
 
+#include <algorithm>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -78,6 +79,48 @@ static int compare_int(const void* a, const void* b)
 {
     return (*reinterpret_cast<const int*>(a) - *reinterpret_cast<const int*>(b));
 }
+
+namespace
+{
+
+void appendOwnershipHandoffTraceLine(const char* traceDirPath, const std::string& line)
+{
+    GMX_RELEASE_ASSERT(traceDirPath != nullptr && *traceDirPath != '\0',
+                       "Need a valid ownership handoff trace directory");
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::filesystem::path outputPath = traceDir / "step0_grompp_generate_excl_trace.txt";
+
+    FILE* dumpFile = std::fopen(outputPath.string().c_str(), "a");
+    if (dumpFile == nullptr)
+    {
+        gmx_fatal(FARGS, "Could not open ownership handoff trace output '%s'", outputPath.string().c_str());
+    }
+    std::fprintf(dumpFile, "%s\n", line.c_str());
+    std::fclose(dumpFile);
+}
+
+std::string joinExclusionList(const gmx::ArrayRef<const int> exclusionsForAtom)
+{
+    std::string result;
+    for (gmx::Index index = 0; index < exclusionsForAtom.ssize(); ++index)
+    {
+        if (!result.empty())
+        {
+            result += ",";
+        }
+        result += std::to_string(exclusionsForAtom[index]);
+    }
+    return result.empty() ? std::string("none") : result;
+}
+
+bool listContains(const gmx::ArrayRef<const int> values, const int target)
+{
+    return std::find(values.begin(), values.end(), target) != values.end();
+}
+
+} // namespace
 
 
 #ifdef DEBUG
@@ -447,5 +490,23 @@ void generate_excl(int                                                          
     gen_nnb(&nnb, plist);
     sort_and_purge_nnb(&nnb);
     nnb2excl(&nnb, excls);
+    const char* ownershipTraceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+    static bool dumpedOwnershipTrace  = false;
+    if (!dumpedOwnershipTrace && ownershipTraceDirPath != nullptr && *ownershipTraceDirPath != '\0'
+        && excls->ssize() > 0)
+    {
+        constexpr int targetAtomI  = 0;
+        constexpr int targetAtomJ  = 1;
+        constexpr int controlAtomJ = 4;
+        const auto    exclusionsForAtom0 = (*excls)[targetAtomI];
+        appendOwnershipHandoffTraceLine(
+                ownershipTraceDirPath,
+                "stage=generate_excl_output atom=0 nrexcl=" + std::to_string(nrexcl) + " exclusions="
+                        + joinExclusionList(exclusionsForAtom0) + " contains_target="
+                        + std::string(listContains(exclusionsForAtom0, targetAtomJ) ? "true" : "false")
+                        + " contains_control="
+                        + std::string(listContains(exclusionsForAtom0, controlAtomJ) ? "true" : "false"));
+        dumpedOwnershipTrace = true;
+    }
     done_nnb(&nnb);
 }
