@@ -120,6 +120,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Collect dense_oligomer coarse step-0 pair-specific generate_excl rule-derivation diagnostics for M2h-style tracing.",
     )
+    parser.add_argument(
+        "--downstream-misconsumption-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 downstream runtime contract diagnostics for M2i-style tracing.",
+    )
     return parser.parse_args()
 
 
@@ -1867,6 +1872,274 @@ def dense_pair_rule_derivation_trace(dense_fixture_summary: dict[str, Any]) -> d
     }
 
 
+def dense_downstream_misconsumption_trace(dense_fixture_summary: dict[str, Any]) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    exact_dir = Path(coarse["exact_work_dir"])
+
+    topology_path = exact_dir / "system.top"
+    topology_sources = parse_topology_pair_sources(topology_path)
+
+    runtime_rows = parse_key_value_text(exact_dir / "step0_runtime_exclusions_input.txt")
+    append_rows = parse_key_value_text(exact_dir / "step0_append_branch_trace.txt")
+    membership_rows = parse_key_value_text(exact_dir / "step0_pair_key_membership_scan.txt")
+    downstream_rows = parse_key_value_text(exact_dir / "step0_downstream_contract_trace.txt")
+
+    target_pair = (0, 1)
+    control_pair = (0, 4)
+    target_sources = topology_sources.get(target_pair, [])
+    control_sources = topology_sources.get(control_pair, [])
+
+    runtime_row = next((row for row in runtime_rows if row.get("stage") == "runtime_exclusions_input"), None)
+    target_append_row = next((row for row in append_rows if row.get("role") == "target_pair_0_1"), None)
+    control_append_row = next((row for row in append_rows if row.get("role") == "control_pair_0_4"), None)
+    target_membership_row = next(
+        (row for row in membership_rows if row.get("kind") == "excluded" and row.get("ordinal") == "0"),
+        None,
+    )
+    control_membership_row = next(
+        (row for row in membership_rows if row.get("kind") == "pairs" and row.get("ordinal") == "0"),
+        None,
+    )
+    excluded_dispatch_row = next(
+        (row for row in downstream_rows if row.get("stage") == "excluded_pairs_dispatch_contract"),
+        None,
+    )
+    pairs_dispatch_row = next(
+        (row for row in downstream_rows if row.get("stage") == "pairs_dispatch_contract"),
+        None,
+    )
+    target_consumer_eval_row = next(
+        (
+            row
+            for row in downstream_rows
+            if row.get("stage") == "consumer_pair_eval"
+            and row.get("pair_list") == "excludedPairs"
+            and row.get("ai") == "0"
+            and row.get("aj") == "1"
+        ),
+        None,
+    )
+    control_consumer_eval_row = next(
+        (
+            row
+            for row in downstream_rows
+            if row.get("stage") == "consumer_pair_eval"
+            and row.get("pair_list") == "pairs"
+            and row.get("ai") == "0"
+            and row.get("aj") == "4"
+        ),
+        None,
+    )
+
+    target_runtime_excluded = runtime_row is not None and runtime_row.get("contains_target") == "true"
+    target_reference_consumer_eligible = (
+        target_append_row is not None
+        and target_append_row.get("predicate_mask_nonzero") == "true"
+        and target_append_row.get("branch") == "pairs"
+    )
+    target_membership_legal = (
+        target_append_row is not None
+        and target_append_row.get("branch") == "excludedPairs"
+        and target_append_row.get("masked_value") == "0"
+        and target_membership_row is not None
+        and target_membership_row.get("in_plain_excluded") == "1"
+        and target_membership_row.get("in_plain_pairs") == "0"
+    )
+    target_excluded_dispatch_admits = (
+        excluded_dispatch_row is not None
+        and excluded_dispatch_row.get("target_in_list") == "true"
+        and excluded_dispatch_row.get("target_ordinal") == "0"
+        and excluded_dispatch_row.get("include_rule") == "always_true"
+    )
+    target_outer_write_eligible = (
+        target_consumer_eval_row is not None
+        and target_consumer_eval_row.get("include_pair") == "true"
+        and target_consumer_eval_row.get("outer_force_write_eligible") == "true"
+        and abs(float(target_consumer_eval_row.get("outer_scalar", "0"))) > 0.0
+        and abs(float(target_consumer_eval_row.get("correction_scalar", "0"))) > 0.0
+    )
+
+    control_reference_consumer_eligible = (
+        control_append_row is not None
+        and control_append_row.get("predicate_mask_nonzero") == "true"
+        and control_append_row.get("branch") == "pairs"
+    )
+    control_pairs_dispatch_admits = (
+        pairs_dispatch_row is not None
+        and pairs_dispatch_row.get("control_in_list") == "true"
+        and pairs_dispatch_row.get("control_ordinal") == "0"
+        and pairs_dispatch_row.get("include_rule") == "always_true"
+    )
+    control_outer_write_eligible = (
+        control_consumer_eval_row is not None
+        and control_consumer_eval_row.get("include_pair") == "true"
+        and control_consumer_eval_row.get("outer_force_write_eligible") == "true"
+        and control_consumer_eval_row.get("pair_list") == "pairs"
+    )
+    control_clean = (
+        not control_sources
+        and control_reference_consumer_eligible
+        and control_pairs_dispatch_admits
+        and control_outer_write_eligible
+        and control_membership_row is not None
+        and control_membership_row.get("in_plain_pairs") == "1"
+        and control_membership_row.get("in_plain_excluded") == "0"
+    )
+
+    first_bad_site_found = (
+        target_runtime_excluded
+        and not target_reference_consumer_eligible
+        and target_membership_legal
+        and target_excluded_dispatch_admits
+        and target_outer_write_eligible
+        and control_clean
+    )
+
+    contract_trace = [
+        {
+            "order": 0,
+            "stage": "runtime_exclusions_input",
+            "exclusion_membership_state": "target_in_runtime_exclusions=true",
+            "bonded_listed_ownership_state": f"topology_sources={','.join(target_sources) if target_sources else 'none'}; listed_pair_key=false",
+            "physical_force_consumer_eligibility": {
+                "reference_semantics": False,
+                "exact_semantics": False,
+            },
+            "verdict": "still_legal",
+            "evidence": runtime_row,
+        },
+        {
+            "order": 1,
+            "stage": "append_plain_pairlist_branch",
+            "exclusion_membership_state": "branch=excludedPairs; masked_value=0",
+            "bonded_listed_ownership_state": f"topology_sources={','.join(target_sources) if target_sources else 'none'}; listed_pair_key=false",
+            "physical_force_consumer_eligibility": {
+                "reference_semantics": False,
+                "exact_semantics": False,
+            },
+            "verdict": "still_legal",
+            "evidence": target_append_row,
+        },
+        {
+            "order": 2,
+            "stage": "plain_pairlist_membership",
+            "exclusion_membership_state": "in_plain_excluded=1; in_plain_pairs=0",
+            "bonded_listed_ownership_state": f"topology_sources={','.join(target_sources) if target_sources else 'none'}; listed_pair_key="
+            + ("true" if target_membership_row is not None and target_membership_row.get("in_debug_listed_pair_keys") == "true" else "false"),
+            "physical_force_consumer_eligibility": {
+                "reference_semantics": False,
+                "exact_semantics": False,
+            },
+            "verdict": "still_legal",
+            "evidence": target_membership_row,
+        },
+        {
+            "order": 3,
+            "stage": "exact_excludedPairs_dispatch_contract",
+            "exclusion_membership_state": "excludedPairs consumer dispatch target_in_list=true include_rule=always_true",
+            "bonded_listed_ownership_state": f"topology_sources={','.join(target_sources) if target_sources else 'none'}; listed_pair_key=false",
+            "physical_force_consumer_eligibility": {
+                "reference_semantics": False,
+                "exact_semantics": True,
+            },
+            "verdict": "first_bad_interpretation" if first_bad_site_found else "still_suspect",
+            "evidence": excluded_dispatch_row,
+        },
+        {
+            "order": 4,
+            "stage": "excludedPairs_outer_consumer_eval",
+            "exclusion_membership_state": "excludedPairs pair-specific evaluation",
+            "bonded_listed_ownership_state": f"topology_sources={','.join(target_sources) if target_sources else 'none'}; listed_pair_key=false",
+            "physical_force_consumer_eligibility": {
+                "reference_semantics": False,
+                "exact_semantics": target_outer_write_eligible,
+            },
+            "verdict": "confirms_first_bad_site" if first_bad_site_found else "still_suspect",
+            "evidence": target_consumer_eval_row,
+        },
+    ]
+
+    reference_reconciliation = {
+        "target_pair": list(target_pair),
+        "reference_semantics": {
+            "source": "runtime exclusion mask + append branch contract on the same run",
+            "masked_value": None if target_append_row is None else target_append_row.get("masked_value"),
+            "branch": None if target_append_row is None else target_append_row.get("branch"),
+            "physical_nonbonded_consumer_eligible": target_reference_consumer_eligible,
+        },
+        "exact_semantics": {
+            "dispatch_stage": None if excluded_dispatch_row is None else excluded_dispatch_row.get("stage"),
+            "dispatch_include_rule": None if excluded_dispatch_row is None else excluded_dispatch_row.get("include_rule"),
+            "dispatch_semantic_role": None if excluded_dispatch_row is None else excluded_dispatch_row.get("semantic_role"),
+            "pair_eval_stage": None if target_consumer_eval_row is None else target_consumer_eval_row.get("stage"),
+            "outer_force_write_eligible": None
+            if target_consumer_eval_row is None
+            else target_consumer_eval_row.get("outer_force_write_eligible"),
+            "outer_scalar": None if target_consumer_eval_row is None else target_consumer_eval_row.get("outer_scalar"),
+            "correction_scalar": None
+            if target_consumer_eval_row is None
+            else target_consumer_eval_row.get("correction_scalar"),
+        },
+        "divergence": (
+            "Reference semantics keeps pair (0,1) out of the standard physical nonbonded consumer because the exclusion mask clears the interaction bit, "
+            "but the exact 3-level path re-admits the same pair via excludedPairs with include_rule=always_true and a non-zero outer correction force."
+            if first_bad_site_found
+            else "The exact downstream divergence is still not exact."
+        ),
+    }
+
+    localization = {
+        "earliest_semantic_misuse_verdict": "FIRST-BAD-SITE-FOUND" if first_bad_site_found else "NOT-YET",
+        "first_bad_site": None
+        if not first_bad_site_found
+        else {
+            "stage": "exact_excludedPairs_dispatch_contract",
+            "code_path": str(REPO_ROOT / "src" / "gromacs" / "mdlib" / "sim_util.cpp"),
+            "why": (
+                "This is the first downstream stage where a valid exclusion-membership container is admitted into the exact nonbonded consumer path with include_rule=always_true, "
+                "before the pair-specific outer correction write makes the physical misuse concrete."
+            ),
+        },
+        "exact_bad_handoff_proof": {
+            "dispatch_row": excluded_dispatch_row,
+            "pair_eval_row": target_consumer_eval_row,
+            "target_membership_row": target_membership_row,
+            "target_append_row": target_append_row,
+        },
+        "pair_contract_trace": contract_trace,
+        "reference_reconciliation": reference_reconciliation,
+        "control_result": {
+            "pair": list(control_pair),
+            "append_row": control_append_row,
+            "membership_row": control_membership_row,
+            "dispatch_row": pairs_dispatch_row,
+            "pair_eval_row": control_consumer_eval_row,
+            "control_clean": control_clean,
+            "why_clean": (
+                "Control pair (0,4) remains in the standard pairs consumer path with mask-preserved eligibility and does not cross from exclusion bookkeeping into a separate correction consumer."
+            ),
+        },
+        "artifact_paths": {
+            "runtime_exclusions_input": str(exact_dir / "step0_runtime_exclusions_input.txt"),
+            "append_branch_trace": str(exact_dir / "step0_append_branch_trace.txt"),
+            "pair_key_membership_scan": str(exact_dir / "step0_pair_key_membership_scan.txt"),
+            "downstream_contract_trace": str(exact_dir / "step0_downstream_contract_trace.txt"),
+            "topology_path": str(topology_path),
+        },
+        "supports_first_bad_site": first_bad_site_found,
+        "why_not_fully_closed": (
+            "This identifies only the first downstream semantic misuse site for pair (0,1) on dense_oligomer coarse step 0."
+            if first_bad_site_found
+            else "The downstream runtime stages are narrowed, but the first semantic misuse site is still not exact."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "localization": localization,
+    }
+
+
 def summarize_dense_trace_fixture(
     fixture_id: str,
     topology_terms: list[str],
@@ -2231,7 +2504,11 @@ def main() -> int:
     args = parse_args()
     gmx_bin = str(Path(args.gmx_bin).resolve())
     output_root = Path(args.out).resolve()
-    if (args.upstream_ownership_handoff_trace or args.pair_rule_derivation_trace) and not args.fixtures:
+    if (
+        args.upstream_ownership_handoff_trace
+        or args.pair_rule_derivation_trace
+        or args.downstream_misconsumption_trace
+    ) and not args.fixtures:
         fixtures = ["dense_oligomer"]
     else:
         fixtures = args.fixtures or list(DEFAULT_FIXTURES)
@@ -2264,6 +2541,7 @@ def main() -> int:
             or args.exact_pair_write_ownership_proof
             or args.upstream_ownership_handoff_trace
             or args.pair_rule_derivation_trace
+            or args.downstream_misconsumption_trace
         ) and fixture_id == "dense_oligomer":
             coarse_plain_env = {
                 "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
@@ -2294,12 +2572,25 @@ def main() -> int:
             coarse_exact_env["GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR"] = str(
                 system_root / "dt_0p0005" / "exact_three_level"
             )
-        if (args.upstream_ownership_handoff_trace or args.pair_rule_derivation_trace) and fixture_id == "dense_oligomer":
+        if (
+            args.upstream_ownership_handoff_trace
+            or args.pair_rule_derivation_trace
+            or args.downstream_misconsumption_trace
+        ) and fixture_id == "dense_oligomer":
             coarse_exact_env = dict(coarse_exact_env or {})
             coarse_exact_env["GMX_DISABLE_MODULAR_SIMULATOR"] = "ON"
             coarse_exact_env["GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR"] = str(
                 system_root / "dt_0p0005" / "exact_three_level"
             )
+        if args.downstream_misconsumption_trace and fixture_id == "dense_oligomer":
+            coarse_exact_env = dict(coarse_exact_env or {})
+            coarse_exact_env["GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
+            coarse_exact_env["GMX_PCFF_RESPA_DOWNSTREAM_CONTRACT_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
+        if (args.upstream_ownership_handoff_trace or args.pair_rule_derivation_trace) and fixture_id == "dense_oligomer":
             coarse_exact_grompp_env = {
                 "GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR": str(
                     system_root / "dt_0p0005" / "exact_three_level"
@@ -2321,7 +2612,11 @@ def main() -> int:
             grompp_env=coarse_exact_grompp_env,
         )
         coarse_exact_trace_off = None
-        if (args.upstream_ownership_handoff_trace or args.pair_rule_derivation_trace) and fixture_id == "dense_oligomer":
+        if (
+            args.upstream_ownership_handoff_trace
+            or args.pair_rule_derivation_trace
+            or args.downstream_misconsumption_trace
+        ) and fixture_id == "dense_oligomer":
             fixture_summary = summarize_exact_only_trace_fixture(
                 fixture_id,
                 inner_terms_from_topology(topology_text),
@@ -2448,10 +2743,25 @@ def main() -> int:
             )
         if args.pair_rule_derivation_trace and fixture_id == "dense_oligomer":
             fixture_summary["dense_pair_rule_derivation_trace"] = dense_pair_rule_derivation_trace(fixture_summary)
+        if args.downstream_misconsumption_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_downstream_misconsumption_trace"] = dense_downstream_misconsumption_trace(
+                fixture_summary
+            )
         fixture_results.append(fixture_summary)
         write_json(system_root / "fixture_summary.json", fixture_summary)
 
-    if args.pair_rule_derivation_trace:
+    if args.downstream_misconsumption_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_downstream_misconsumption_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_first_bad_site"):
+            verdict = "FIRST DOWNSTREAM MIS-CONSUMPTION SITE IDENTIFIED"
+        else:
+            verdict = "DOWNSTREAM MIS-CONSUMPTION TRACE STILL PARTIAL"
+    elif args.pair_rule_derivation_trace:
         dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
         dense_localization = (
             None

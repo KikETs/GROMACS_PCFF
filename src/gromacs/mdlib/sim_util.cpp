@@ -684,6 +684,25 @@ static void writeRespaTraceTextFile(const char* traceDirPath, const char* fileNa
     std::fclose(dumpFile);
 }
 
+static void appendRespaTraceTextLine(const char* traceDirPath, const char* fileName, const std::string& line)
+{
+    GMX_RELEASE_ASSERT(traceDirPath != nullptr && *traceDirPath != '\0',
+                       "Need a valid r-RESPA trace directory");
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::filesystem::path outputPath = traceDir / fileName;
+
+    FILE* dumpFile = std::fopen(outputPath.string().c_str(), "a");
+    if (dumpFile == nullptr)
+    {
+        gmx_fatal(FARGS, "Could not open trace text output '%s' for appending", outputPath.string().c_str());
+    }
+
+    std::fprintf(dumpFile, "%s\n", line.c_str());
+    std::fclose(dumpFile);
+}
+
 static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inputrec,
                                            const InteractionDefinitions&    idef,
                                            t_forcerec*                      fr,
@@ -805,6 +824,11 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
     static bool dumpedPairWriteProof  = false;
     const bool dumpPairWriteProof =
             (pairWriteProofDirPath != nullptr && *pairWriteProofDirPath != '\0' && !dumpedPairWriteProof);
+    const char* downstreamContractTraceDirPath = std::getenv("GMX_PCFF_RESPA_DOWNSTREAM_CONTRACT_TRACE_DIR");
+    static bool dumpedDownstreamContractTrace  = false;
+    const bool dumpDownstreamContract =
+            (downstreamContractTraceDirPath != nullptr && *downstreamContractTraceDirPath != '\0'
+             && !dumpedDownstreamContractTrace);
     const bool outerAliasesShift =
             (outerAccumulator != nullptr && outerAccumulator->outputs != nullptr
              && outerAccumulator->force.data()
@@ -885,6 +909,8 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
         const uint32_t second = static_cast<uint32_t>(std::max(ai, aj));
         return (static_cast<uint64_t>(first) << 32) | second;
     };
+    const uint64_t targetPairKey  = pairKey(0, 1);
+    const uint64_t controlPairKey = pairKey(0, 4);
     struct PairEntryInfo
     {
         int      ordinal    = -1;
@@ -986,6 +1012,63 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
         writeRespaTraceTextFile(pairWriteProofDirPath, "step0_pair_key_membership_scan.txt", contents);
     }
 
+    const auto countPairKeyOccurrences = [&pairKey](const auto& entries, const uint64_t keyToCount) -> int
+    {
+        return static_cast<int>(std::count_if(entries.begin(),
+                                              entries.end(),
+                                              [&pairKey, keyToCount](const auto& entry)
+                                              { return pairKey(entry.first.first, entry.first.second) == keyToCount; }));
+    };
+    const auto firstOrdinalForKey = [&pairKey](const auto& entries, const uint64_t keyToFind) -> int
+    {
+        for (int ordinal = 0; ordinal < static_cast<int>(entries.size()); ++ordinal)
+        {
+            if (pairKey(entries[ordinal].first.first, entries[ordinal].first.second) == keyToFind)
+            {
+                return ordinal;
+            }
+        }
+        return -1;
+    };
+
+    if (dumpDownstreamContract)
+    {
+        appendRespaTraceTextLine(
+                downstreamContractTraceDirPath,
+                "step0_downstream_contract_trace.txt",
+                "stage=excluded_pairs_dispatch_contract list=excludedPairs factor_coulomb=0 factor_lj=0 include_rule=always_true "
+                        "target_in_list="
+                        + std::string(countPairKeyOccurrences(plainPairlist.excludedPairs, targetPairKey) > 0 ? "true"
+                                                                                                              : "false")
+                        + " target_ordinal="
+                        + std::to_string(firstOrdinalForKey(plainPairlist.excludedPairs, targetPairKey))
+                        + " target_occurrences="
+                        + std::to_string(countPairKeyOccurrences(plainPairlist.excludedPairs, targetPairKey))
+                        + " control_in_list="
+                        + std::string(countPairKeyOccurrences(plainPairlist.excludedPairs, controlPairKey) > 0 ? "true"
+                                                                                                                : "false")
+                        + " control_ordinal="
+                        + std::to_string(firstOrdinalForKey(plainPairlist.excludedPairs, controlPairKey))
+                        + " control_occurrences="
+                        + std::to_string(countPairKeyOccurrences(plainPairlist.excludedPairs, controlPairKey))
+                        + " semantic_role=excluded_membership_reintroduced_into_exact_nonbonded_consumer");
+        appendRespaTraceTextLine(
+                downstreamContractTraceDirPath,
+                "step0_downstream_contract_trace.txt",
+                "stage=pairs_dispatch_contract list=pairs factor_coulomb=1 factor_lj=1 include_rule=always_true "
+                        "target_in_list="
+                        + std::string(countPairKeyOccurrences(plainPairlist.pairs, targetPairKey) > 0 ? "true" : "false")
+                        + " target_ordinal=" + std::to_string(firstOrdinalForKey(plainPairlist.pairs, targetPairKey))
+                        + " target_occurrences="
+                        + std::to_string(countPairKeyOccurrences(plainPairlist.pairs, targetPairKey))
+                        + " control_in_list="
+                        + std::string(countPairKeyOccurrences(plainPairlist.pairs, controlPairKey) > 0 ? "true" : "false")
+                        + " control_ordinal=" + std::to_string(firstOrdinalForKey(plainPairlist.pairs, controlPairKey))
+                        + " control_occurrences="
+                        + std::to_string(countPairKeyOccurrences(plainPairlist.pairs, controlPairKey))
+                        + " semantic_role=standard_physical_nonbonded_consumer");
+    }
+
     struct PairDebugStats
     {
         const char* label        = nullptr;
@@ -1004,6 +1087,8 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
     {
         bool dumpedFirstExcludedWrite = false;
         int  pairOrdinal             = 0;
+        bool dumpedDownstreamTargetEval = false;
+        bool dumpedDownstreamControlEval = false;
         for (const auto& entry : pairEntries)
         {
             const int ai         = entry.first.first;
@@ -1076,6 +1161,55 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                 debugStats->qqSum += qq;
             }
 
+            const real innerScalar =
+                    bareCoulombScalar * splitWeights.inner + factorLj * rawLjScalar * splitWeights.inner;
+            const real middleScalar =
+                    bareCoulombScalar * splitWeights.middle + factorLj * rawLjScalar * splitWeights.middle;
+            const real outerScalar =
+                    correctionScalar + bareCoulombScalar * splitWeights.outer + factorLj * rawLjScalar * splitWeights.outer;
+            const real fullScalar = correctionScalar + bareCoulombScalar + factorLj * rawLjScalar;
+
+            const bool isTargetPair = (ai == 0 && aj == 1);
+            const bool isControlPair = (ai == 0 && aj == 4);
+            if (dumpDownstreamContract
+                && ((isTargetPair && !dumpedDownstreamTargetEval) || (isControlPair && !dumpedDownstreamControlEval)))
+            {
+                appendRespaTraceTextLine(
+                        downstreamContractTraceDirPath,
+                        "step0_downstream_contract_trace.txt",
+                        "stage=consumer_pair_eval pair_list="
+                                + std::string(factorCoulomb == 0.0_real && factorLj == 0.0_real ? "excludedPairs"
+                                                                                                 : "pairs")
+                                + " ordinal=" + std::to_string(pairOrdinal) + " ai=" + std::to_string(ai) + " aj="
+                                + std::to_string(aj) + " shift_index=" + std::to_string(shiftIndex)
+                                + " include_pair=true factor_coulomb=" + gmx::toString(factorCoulomb)
+                                + " factor_lj=" + gmx::toString(factorLj) + " correction_scalar="
+                                + gmx::toString(correctionScalar) + " bare_coulomb_scalar="
+                                + gmx::toString(bareCoulombScalar) + " raw_lj_scalar="
+                                + gmx::toString(rawLjScalar) + " inner_scalar=" + gmx::toString(innerScalar)
+                                + " middle_scalar=" + gmx::toString(middleScalar) + " outer_scalar="
+                                + gmx::toString(outerScalar) + " full_scalar=" + gmx::toString(fullScalar)
+                                + " outer_force_write_eligible="
+                                + std::string(outerScalar != 0.0_real && outerAccumulator != nullptr ? "true"
+                                                                                                      : "false")
+                                + " outer_force_buffer="
+                                + std::string((outerAccumulator != nullptr && outerAccumulator->forceWithVirial != nullptr)
+                                                      ? "forceWithVirial"
+                                                      : "none")
+                                + " semantic_role="
+                                + std::string(factorCoulomb == 0.0_real && factorLj == 0.0_real
+                                                      ? "excluded_membership_promoted_to_physical_outer_consumer"
+                                                      : "standard_physical_nonbonded_consumer"));
+                if (isTargetPair)
+                {
+                    dumpedDownstreamTargetEval = true;
+                }
+                if (isControlPair)
+                {
+                    dumpedDownstreamControlEval = true;
+                }
+            }
+
             if (dumpExcludedCorrectionForce && factorCoulomb == 0.0_real && factorLj == 0.0_real
                 && correctionScalar != 0.0_real)
             {
@@ -1091,19 +1225,16 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                 switch (accumulator.contribution)
                 {
                     case MtsNonbondedRespaContribution::Inner:
-                        scalar = bareCoulombScalar * splitWeights.inner
-                                 + factorLj * rawLjScalar * splitWeights.inner;
+                        scalar = innerScalar;
                         break;
                     case MtsNonbondedRespaContribution::Middle:
-                        scalar = bareCoulombScalar * splitWeights.middle
-                                 + factorLj * rawLjScalar * splitWeights.middle;
+                        scalar = middleScalar;
                         break;
                     case MtsNonbondedRespaContribution::Outer:
-                        scalar = correctionScalar + bareCoulombScalar * splitWeights.outer
-                                 + factorLj * rawLjScalar * splitWeights.outer;
+                        scalar = outerScalar;
                         break;
                     case MtsNonbondedRespaContribution::Full:
-                        scalar = correctionScalar + bareCoulombScalar + factorLj * rawLjScalar;
+                        scalar = fullScalar;
                         break;
                     default: GMX_RELEASE_ASSERT(false, "Unexpected nonbonded r-RESPA contribution");
                 }
@@ -1266,6 +1397,10 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                     0.0_real,
                     [](const int, const int) { return true; },
                     debugExactRespa ? &excludedStats : nullptr);
+    if (dumpDownstreamContract)
+    {
+        dumpedDownstreamContractTrace = true;
+    }
     if (dumpEarlyAccumTrace && outerAccumulator != nullptr && outerAccumulator->forceWithVirial != nullptr)
     {
         dumpRespaMergeTraceVector(earlyAccumTraceDirPath,
