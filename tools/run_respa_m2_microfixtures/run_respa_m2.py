@@ -52,6 +52,32 @@ DIAGNOSTIC_ENERGY_TERMS = (
     "LJ-(SR)",
     "Potential",
 )
+M2J_PROBE_SPECS = (
+    {
+        "candidate": "includePair policy",
+        "key": "includepair_policy",
+        "probe_mode": "includepair_restricted",
+        "work_dir_name": "probe_includepair_restricted",
+    },
+    {
+        "candidate": "activeContributions configuration",
+        "key": "active_contributions",
+        "probe_mode": "active_outer_narrowed",
+        "work_dir_name": "probe_active_outer_narrowed",
+    },
+    {
+        "candidate": "outer routing / forceWithVirial selection",
+        "key": "outer_routing",
+        "probe_mode": "outer_routing_suppressed",
+        "work_dir_name": "probe_outer_routing_suppressed",
+    },
+    {
+        "candidate": "excluded correction -> outer contribution selection",
+        "key": "correction_outer_selection",
+        "probe_mode": "correction_outer_suppressed",
+        "work_dir_name": "probe_correction_outer_suppressed",
+    },
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -124,6 +150,11 @@ def parse_args() -> argparse.Namespace:
         "--downstream-misconsumption-trace",
         action="store_true",
         help="Collect dense_oligomer coarse step-0 downstream runtime contract diagnostics for M2i-style tracing.",
+    )
+    parser.add_argument(
+        "--dispatch-minimal-fix-isolation",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 exact excludedPairs dispatch-internal diagnostics for M2j-style minimal-fix isolation.",
     )
     return parser.parse_args()
 
@@ -2140,6 +2171,272 @@ def dense_downstream_misconsumption_trace(dense_fixture_summary: dict[str, Any])
     }
 
 
+def load_dispatch_probe_state(work_dir: Path, role: str) -> dict[str, Any]:
+    rows = parse_key_value_text(work_dir / "step0_dispatch_internal_trace.txt")
+    include_row = next(
+        (row for row in rows if row.get("stage") == "dispatch_internal_include_pair" and row.get("role") == role),
+        None,
+    )
+    active_row = next(
+        (
+            row
+            for row in rows
+            if row.get("stage") == "dispatch_internal_active_contributions" and row.get("role") == role
+        ),
+        None,
+    )
+    routing_row = next(
+        (
+            row
+            for row in rows
+            if row.get("stage") == "dispatch_internal_outer_routing" and row.get("role") == role
+        ),
+        None,
+    )
+    admitted = include_row is not None and include_row.get("include_pair_effective") == "true"
+    effective_outer_active = active_row is not None and active_row.get("effective_outer_active") == "true"
+    effective_outer_scalar = 0.0 if active_row is None else float(active_row.get("outer_scalar_effective", "0"))
+    first_bad_semantics_occurs = admitted and effective_outer_active and abs(effective_outer_scalar) > 0.0
+    physical_outer_realization = (
+        routing_row is not None and routing_row.get("actual_outer_write_executed") == "true"
+    )
+    return {
+        "work_dir": str(work_dir),
+        "include_row": include_row,
+        "active_row": active_row,
+        "routing_row": routing_row,
+        "admitted": admitted,
+        "effective_outer_active": effective_outer_active,
+        "effective_outer_scalar": effective_outer_scalar,
+        "first_bad_semantics_occurs": first_bad_semantics_occurs,
+        "physical_outer_realization": physical_outer_realization,
+    }
+
+
+def dense_dispatch_minimal_fix_isolation(dense_fixture_summary: dict[str, Any]) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    exact_dir = Path(coarse["exact_work_dir"])
+    probe_work_dirs = coarse.get("dispatch_probe_work_dirs", {})
+
+    runtime_rows = parse_key_value_text(exact_dir / "step0_runtime_exclusions_input.txt")
+    append_rows = parse_key_value_text(exact_dir / "step0_append_branch_trace.txt")
+    membership_rows = parse_key_value_text(exact_dir / "step0_pair_key_membership_scan.txt")
+    downstream_rows = parse_key_value_text(exact_dir / "step0_downstream_contract_trace.txt")
+
+    target_runtime_row = next((row for row in runtime_rows if row.get("stage") == "runtime_exclusions_input"), None)
+    target_append_row = next((row for row in append_rows if row.get("role") == "target_pair_0_1"), None)
+    target_membership_row = next(
+        (row for row in membership_rows if row.get("kind") == "excluded" and row.get("ordinal") == "0"),
+        None,
+    )
+    target_dispatch_row = next(
+        (row for row in downstream_rows if row.get("stage") == "excluded_pairs_dispatch_contract"),
+        None,
+    )
+
+    baseline_target = load_dispatch_probe_state(exact_dir, "target_pair_0_1")
+    baseline_control = load_dispatch_probe_state(exact_dir, "control_pair_0_4")
+
+    probe_states = {
+        spec["key"]: load_dispatch_probe_state(Path(probe_work_dirs[spec["key"]]), "target_pair_0_1")
+        for spec in M2J_PROBE_SPECS
+        if spec["key"] in probe_work_dirs
+    }
+    control_probe_states = {
+        spec["key"]: load_dispatch_probe_state(Path(probe_work_dirs[spec["key"]]), "control_pair_0_4")
+        for spec in M2J_PROBE_SPECS
+        if spec["key"] in probe_work_dirs
+    }
+
+    include_probe = probe_states.get("includepair_policy")
+    active_probe = probe_states.get("active_contributions")
+    routing_probe = probe_states.get("outer_routing")
+    correction_probe = probe_states.get("correction_outer_selection")
+
+    include_verdict = (
+        "SUFFICIENT-BUT-NOT-MINIMAL"
+        if include_probe is not None
+        and not include_probe["first_bad_semantics_occurs"]
+        and baseline_target["first_bad_semantics_occurs"]
+        else "NOT-CAUSAL"
+    )
+    active_verdict = (
+        "SUFFICIENT-BUT-NOT-MINIMAL"
+        if active_probe is not None
+        and not active_probe["first_bad_semantics_occurs"]
+        and baseline_target["first_bad_semantics_occurs"]
+        else "NOT-CAUSAL"
+    )
+    routing_verdict = (
+        "NOT-CAUSAL"
+        if routing_probe is not None
+        and routing_probe["first_bad_semantics_occurs"]
+        and not routing_probe["physical_outer_realization"]
+        else "NECESSARY-BUT-NOT-SUFFICIENT"
+        if routing_probe is not None and not routing_probe["first_bad_semantics_occurs"]
+        else "NOT-CAUSAL"
+    )
+
+    minimal_fix_candidate_isolated = (
+        correction_probe is not None
+        and baseline_target["first_bad_semantics_occurs"]
+        and baseline_target["physical_outer_realization"]
+        and correction_probe["admitted"]
+        and correction_probe["effective_outer_active"]
+        and not correction_probe["first_bad_semantics_occurs"]
+        and not correction_probe["physical_outer_realization"]
+    )
+
+    control_clean = (
+        baseline_control["admitted"]
+        and baseline_control["first_bad_semantics_occurs"]
+        and baseline_control["physical_outer_realization"]
+        and all(
+            state["admitted"] and state["first_bad_semantics_occurs"] and state["physical_outer_realization"]
+            for state in control_probe_states.values()
+        )
+    )
+
+    minimal_causality_table = [
+        {
+            "candidate": "includePair policy",
+            "baseline_exact_behavior": (
+                "includePair admits target into excludedPairs dispatch; downstream bad semantics persists."
+            ),
+            "diagnostic_perturbation": "Restrict includePair for target (0,1) inside excludedPairs dispatch only.",
+            "semantic_result": (
+                "Target is blocked before consumer evaluation; first-bad semantics disappears."
+                if include_probe is not None and not include_probe["first_bad_semantics_occurs"]
+                else "Target still reaches bad semantics."
+            ),
+            "first_bad_semantics_still_occurs": None
+            if include_probe is None
+            else include_probe["first_bad_semantics_occurs"],
+            "verdict": include_verdict,
+            "probe_state": include_probe,
+        },
+        {
+            "candidate": "activeContributions configuration",
+            "baseline_exact_behavior": "Target is admitted with outer contribution active and non-zero outer scalar.",
+            "diagnostic_perturbation": "Keep admission, but narrow effective active contributions by removing outer.",
+            "semantic_result": (
+                "Target remains admitted, but no non-zero outer contribution remains; first-bad semantics disappears."
+                if active_probe is not None and not active_probe["first_bad_semantics_occurs"]
+                else "Target still has non-zero outer contribution."
+            ),
+            "first_bad_semantics_still_occurs": None
+            if active_probe is None
+            else active_probe["first_bad_semantics_occurs"],
+            "verdict": active_verdict,
+            "probe_state": active_probe,
+        },
+        {
+            "candidate": "outer routing / forceWithVirial selection",
+            "baseline_exact_behavior": "Non-zero outer contribution is routed into forceWithVirial and physically written.",
+            "diagnostic_perturbation": "Keep admission and outer contribution live, but suppress outer physical write.",
+            "semantic_result": (
+                "Bad semantics still exists before routing, but physical outer realization is suppressed."
+                if routing_probe is not None
+                and routing_probe["first_bad_semantics_occurs"]
+                and not routing_probe["physical_outer_realization"]
+                else "Routing change removes the earlier bad semantics."
+            ),
+            "first_bad_semantics_still_occurs": None
+            if routing_probe is None
+            else routing_probe["first_bad_semantics_occurs"],
+            "verdict": routing_verdict,
+            "probe_state": routing_probe,
+        },
+        {
+            "candidate": "excluded correction -> outer contribution selection",
+            "baseline_exact_behavior": "Admitted target promotes correction_scalar into a non-zero outer contribution.",
+            "diagnostic_perturbation": (
+                "Keep admission, active contributions, and routing, but suppress correction promotion into effective outer scalar."
+            ),
+            "semantic_result": (
+                "Target remains admitted with outer contribution active, but effective_outer_scalar becomes zero; first-bad semantics disappears."
+                if correction_probe is not None and not correction_probe["first_bad_semantics_occurs"]
+                else "Target still reaches bad semantics."
+            ),
+            "first_bad_semantics_still_occurs": None
+            if correction_probe is None
+            else correction_probe["first_bad_semantics_occurs"],
+            "verdict": "MINIMAL-FIX-CANDIDATE" if minimal_fix_candidate_isolated else "NOT-CAUSAL",
+            "probe_state": correction_probe,
+        },
+    ]
+
+    localization = {
+        "pair_dispatch_internal_trace": {
+            "runtime_exclusions_input": target_runtime_row,
+            "append_branch": target_append_row,
+            "plain_pairlist_membership": target_membership_row,
+            "excluded_dispatch_contract": target_dispatch_row,
+            "baseline_dispatch_internal_state": baseline_target,
+        },
+        "candidate_causality_table": minimal_causality_table,
+        "candidate_verdicts": {
+            "includePair policy": include_verdict,
+            "activeContributions configuration": active_verdict,
+            "outer routing / forceWithVirial selection": routing_verdict,
+            "excluded correction -> outer contribution selection": (
+                "MINIMAL-FIX-CANDIDATE" if minimal_fix_candidate_isolated else "NOT-CAUSAL"
+            ),
+        },
+        "minimal_fix_candidate": None
+        if not minimal_fix_candidate_isolated
+        else {
+            "classification": "excluded correction -> outer contribution selection",
+            "code_path": str(REPO_ROOT / "src" / "gromacs" / "mdlib" / "sim_util.cpp"),
+            "why": (
+                "Blocking only correction promotion into the effective outer scalar removes the bad semantics while preserving admission, "
+                "baseline activeContributions, and baseline outer routing."
+            ),
+        },
+        "reference_reconciliation": {
+            "target_pair": [0, 1],
+            "includePair_layer": {
+                "reference_semantics": "The cleared exclusion contract should keep the pair out of the physical nonbonded consumer.",
+                "baseline_exact": baseline_target["include_row"],
+                "restricted_probe": None if include_probe is None else include_probe["include_row"],
+            },
+            "activeContributions_layer": {
+                "reference_semantics": "A valid exclusion pair should not have a live non-zero outer physical contribution.",
+                "baseline_exact": baseline_target["active_row"],
+                "narrowed_probe": None if active_probe is None else active_probe["active_row"],
+                "minimal_probe": None if correction_probe is None else correction_probe["active_row"],
+            },
+            "outerRouting_layer": {
+                "reference_semantics": "No physical outer forceWithVirial write should occur for the excluded bookkeeping pair.",
+                "baseline_exact": baseline_target["routing_row"],
+                "suppressed_probe": None if routing_probe is None else routing_probe["routing_row"],
+            },
+            "divergence": (
+                "The exact path diverges from reference semantics only after it admits the excluded bookkeeping pair into dispatch-internal evaluation and then promotes correction_scalar into a live outer contribution."
+                if minimal_fix_candidate_isolated
+                else "The sub-decision divergence is still not exact."
+            ),
+        },
+        "control_result": {
+            "pair": [0, 4],
+            "baseline_state": baseline_control,
+            "probe_states": control_probe_states,
+            "control_clean": control_clean,
+            "why_clean": (
+                "The clean control remains admitted through the standard pairs path and keeps the same active contribution and routing semantics across all dispatch probes."
+            ),
+        },
+        "supports_minimal_fix_candidate": minimal_fix_candidate_isolated,
+        "why_not_fully_closed": (
+            "This isolates only the narrowest sub-decision for pair (0,1) on dense_oligomer coarse step 0 inside the excludedPairs dispatch site."
+        ),
+    }
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "localization": localization,
+    }
+
+
 def summarize_dense_trace_fixture(
     fixture_id: str,
     topology_terms: list[str],
@@ -2472,6 +2769,7 @@ def summarize_exact_only_trace_fixture(
     fixture_id: str,
     topology_terms: list[str],
     coarse_exact: dict[str, Any],
+    comparison_notes: list[str] | None = None,
 ) -> dict[str, Any]:
     return {
         "fixture_id": fixture_id,
@@ -2488,7 +2786,8 @@ def summarize_exact_only_trace_fixture(
             "exact_work_dir": coarse_exact["work_dir"],
         },
         "exact_schedule_dump": coarse_exact["schedule"],
-        "comparison_notes": [
+        "comparison_notes": comparison_notes
+        or [
             "This milestone traces only the upstream ownership/spec lineage that leads into excludedPairs.",
             "No plain-Verlet or PME-side legacy side-reference comparison is needed for this exact handoff proof.",
         ],
@@ -2508,6 +2807,7 @@ def main() -> int:
         args.upstream_ownership_handoff_trace
         or args.pair_rule_derivation_trace
         or args.downstream_misconsumption_trace
+        or args.dispatch_minimal_fix_isolation
     ) and not args.fixtures:
         fixtures = ["dense_oligomer"]
     else:
@@ -2542,6 +2842,7 @@ def main() -> int:
             or args.upstream_ownership_handoff_trace
             or args.pair_rule_derivation_trace
             or args.downstream_misconsumption_trace
+            or args.dispatch_minimal_fix_isolation
         ) and fixture_id == "dense_oligomer":
             coarse_plain_env = {
                 "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
@@ -2576,6 +2877,7 @@ def main() -> int:
             args.upstream_ownership_handoff_trace
             or args.pair_rule_derivation_trace
             or args.downstream_misconsumption_trace
+            or args.dispatch_minimal_fix_isolation
         ) and fixture_id == "dense_oligomer":
             coarse_exact_env = dict(coarse_exact_env or {})
             coarse_exact_env["GMX_DISABLE_MODULAR_SIMULATOR"] = "ON"
@@ -2590,6 +2892,18 @@ def main() -> int:
             coarse_exact_env["GMX_PCFF_RESPA_DOWNSTREAM_CONTRACT_TRACE_DIR"] = str(
                 system_root / "dt_0p0005" / "exact_three_level"
             )
+        if args.dispatch_minimal_fix_isolation and fixture_id == "dense_oligomer":
+            coarse_exact_env = dict(coarse_exact_env or {})
+            coarse_exact_env["GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
+            coarse_exact_env["GMX_PCFF_RESPA_DOWNSTREAM_CONTRACT_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
+            coarse_exact_env["GMX_PCFF_RESPA_M2J_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
+            coarse_exact_env["GMX_PCFF_RESPA_M2J_PROBE_MODE"] = "baseline"
         if (args.upstream_ownership_handoff_trace or args.pair_rule_derivation_trace) and fixture_id == "dense_oligomer":
             coarse_exact_grompp_env = {
                 "GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR": str(
@@ -2611,17 +2925,49 @@ def main() -> int:
             extra_env=coarse_exact_env,
             grompp_env=coarse_exact_grompp_env,
         )
+        dispatch_probe_runs: dict[str, dict[str, Any]] = {}
+        if args.dispatch_minimal_fix_isolation and fixture_id == "dense_oligomer":
+            for probe_spec in M2J_PROBE_SPECS:
+                probe_work_dir = system_root / "dt_0p0005" / probe_spec["work_dir_name"]
+                probe_env = {
+                    "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                    "GMX_PCFF_RESPA_M2J_TRACE_DIR": str(probe_work_dir),
+                    "GMX_PCFF_RESPA_M2J_PROBE_MODE": probe_spec["probe_mode"],
+                }
+                dispatch_probe_runs[probe_spec["key"]] = run_case(
+                    gmx_bin,
+                    system_root,
+                    probe_work_dir,
+                    "exact_three_level",
+                    DEFAULT_DT_VALUES[0],
+                    args.total_time_ps,
+                    commands_log,
+                    extra_env=probe_env,
+                )
         coarse_exact_trace_off = None
         if (
             args.upstream_ownership_handoff_trace
             or args.pair_rule_derivation_trace
             or args.downstream_misconsumption_trace
+            or args.dispatch_minimal_fix_isolation
         ) and fixture_id == "dense_oligomer":
             fixture_summary = summarize_exact_only_trace_fixture(
                 fixture_id,
                 inner_terms_from_topology(topology_text),
                 coarse_exact,
+                comparison_notes=(
+                    [
+                        "This milestone traces only the dispatch-internal sub-decisions inside exact_excludedPairs_dispatch_contract.",
+                        "No plain-Verlet or PME-side legacy side-reference trajectory comparison is needed; the reference contract is the same-run cleared exclusion bookkeeping path."
+                    ]
+                    if args.dispatch_minimal_fix_isolation
+                    else None
+                ),
             )
+            if dispatch_probe_runs:
+                fixture_summary["coarse"]["dispatch_probe_work_dirs"] = {
+                    key: value["work_dir"] for key, value in dispatch_probe_runs.items()
+                }
         else:
             coarse_plain = run_case(
                 gmx_bin,
@@ -2747,10 +3093,25 @@ def main() -> int:
             fixture_summary["dense_downstream_misconsumption_trace"] = dense_downstream_misconsumption_trace(
                 fixture_summary
             )
+        if args.dispatch_minimal_fix_isolation and fixture_id == "dense_oligomer":
+            fixture_summary["dense_dispatch_minimal_fix_isolation"] = dense_dispatch_minimal_fix_isolation(
+                fixture_summary
+            )
         fixture_results.append(fixture_summary)
         write_json(system_root / "fixture_summary.json", fixture_summary)
 
-    if args.downstream_misconsumption_trace:
+    if args.dispatch_minimal_fix_isolation:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_dispatch_minimal_fix_isolation", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_minimal_fix_candidate"):
+            verdict = "DISPATCH-INTERNAL MINIMAL FIX CANDIDATE ISOLATED"
+        else:
+            verdict = "DISPATCH-INTERNAL MINIMAL FIX ISOLATION STILL PARTIAL"
+    elif args.downstream_misconsumption_trace:
         dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
         dense_localization = (
             None

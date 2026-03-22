@@ -829,10 +829,48 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
     const bool dumpDownstreamContract =
             (downstreamContractTraceDirPath != nullptr && *downstreamContractTraceDirPath != '\0'
              && !dumpedDownstreamContractTrace);
+    const char* dispatchInternalTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2J_TRACE_DIR");
+    static bool dumpedDispatchInternalTrace  = false;
+    const bool dumpDispatchInternalTrace =
+            (dispatchInternalTraceDirPath != nullptr && *dispatchInternalTraceDirPath != '\0'
+             && !dumpedDispatchInternalTrace);
+    const char* dispatchProbeModeEnv = std::getenv("GMX_PCFF_RESPA_M2J_PROBE_MODE");
+    const std::string dispatchProbeMode =
+            (dispatchProbeModeEnv != nullptr && *dispatchProbeModeEnv != '\0') ? dispatchProbeModeEnv : "baseline";
     const bool outerAliasesShift =
             (outerAccumulator != nullptr && outerAccumulator->outputs != nullptr
              && outerAccumulator->force.data()
                         == outerAccumulator->outputs->forceWithShiftForces().force().data());
+    const auto contributionLabel = [](const MtsNonbondedRespaContribution contribution) -> const char*
+    {
+        switch (contribution)
+        {
+            case MtsNonbondedRespaContribution::Inner: return "inner";
+            case MtsNonbondedRespaContribution::Middle: return "middle";
+            case MtsNonbondedRespaContribution::Outer: return "outer";
+            case MtsNonbondedRespaContribution::Full: return "full";
+            default: return "unknown";
+        }
+    };
+    const auto joinActiveContributionLabels =
+            [&contributionLabel](const auto& accumulators, const bool excludeOuterForProbe) -> std::string
+    {
+        std::string labels;
+        for (const auto& accumulator : accumulators)
+        {
+            if (excludeOuterForProbe
+                && accumulator.contribution == MtsNonbondedRespaContribution::Outer)
+            {
+                continue;
+            }
+            if (!labels.empty())
+            {
+                labels += ",";
+            }
+            labels += contributionLabel(accumulator.contribution);
+        }
+        return labels.empty() ? "none" : labels;
+    };
     const real pmeSelfEnergy    = computePmeSelfEnergy(*fr->ic);
     std::vector<RVec> excludedCorrectionForce;
     if (dumpExcludedCorrectionForce)
@@ -1094,13 +1132,43 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
             const int ai         = entry.first.first;
             const int aj         = entry.first.second;
             const int shiftIndex = entry.second;
+            const bool isExcludedPairlist = (factorCoulomb == 0.0_real && factorLj == 0.0_real);
+            const bool isTargetPair       = (ai == 0 && aj == 1);
+            const bool isControlPair      = (ai == 0 && aj == 4);
+            const bool isDispatchTracePair =
+                    dumpDispatchInternalTrace
+                    && ((isExcludedPairlist && isTargetPair) || (!isExcludedPairlist && isControlPair));
+            const bool probeIncludePairRestricted =
+                    (dispatchProbeMode == "includepair_restricted" && isExcludedPairlist && isTargetPair);
+            const bool probeActiveOuterNarrowed =
+                    (dispatchProbeMode == "active_outer_narrowed" && isExcludedPairlist && isTargetPair);
+            const bool probeOuterRoutingSuppressed =
+                    (dispatchProbeMode == "outer_routing_suppressed" && isExcludedPairlist && isTargetPair);
+            const bool probeCorrectionOuterSuppressed =
+                    (dispatchProbeMode == "correction_outer_suppressed" && isExcludedPairlist && isTargetPair);
+            const bool includePairBase      = includePair(ai, aj);
+            const bool includePairEffective = includePairBase && !probeIncludePairRestricted;
 
-            if (!includePair(ai, aj))
+            if (isDispatchTracePair)
+            {
+                appendRespaTraceTextLine(
+                        dispatchInternalTraceDirPath,
+                        "step0_dispatch_internal_trace.txt",
+                        "stage=dispatch_internal_include_pair probe_mode=" + dispatchProbeMode + " pair_list="
+                                + std::string(isExcludedPairlist ? "excludedPairs" : "pairs") + " role="
+                                + std::string(isTargetPair ? "target_pair_0_1" : "control_pair_0_4") + " ai="
+                                + std::to_string(ai) + " aj=" + std::to_string(aj) + " include_pair_base="
+                                + std::string(includePairBase ? "true" : "false") + " include_pair_effective="
+                                + std::string(includePairEffective ? "true" : "false") + " factor_coulomb="
+                                + gmx::toString(factorCoulomb) + " factor_lj=" + gmx::toString(factorLj)
+                                + " semantic_result="
+                                + std::string(includePairEffective ? "admitted_into_dispatch" : "blocked_before_consumer"));
+            }
+
+            if (!includePairEffective)
             {
                 continue;
             }
-
-            const bool isExcludedPairlist = (factorCoulomb == 0.0_real && factorLj == 0.0_real);
 
             RVec dx;
             for (int dim = 0; dim < DIM; dim++)
@@ -1168,9 +1236,46 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
             const real outerScalar =
                     correctionScalar + bareCoulombScalar * splitWeights.outer + factorLj * rawLjScalar * splitWeights.outer;
             const real fullScalar = correctionScalar + bareCoulombScalar + factorLj * rawLjScalar;
+            const real effectiveOuterScalar =
+                    probeCorrectionOuterSuppressed
+                            ? (bareCoulombScalar * splitWeights.outer
+                               + factorLj * rawLjScalar * splitWeights.outer)
+                            : outerScalar;
+            const bool baselineOuterActive =
+                    std::any_of(activeContributions.begin(),
+                                activeContributions.end(),
+                                [](const ContributionAccumulator& accumulator)
+                                {
+                                    return accumulator.contribution
+                                           == MtsNonbondedRespaContribution::Outer;
+                                });
+            const bool effectiveOuterActive = baselineOuterActive && !probeActiveOuterNarrowed;
 
-            const bool isTargetPair = (ai == 0 && aj == 1);
-            const bool isControlPair = (ai == 0 && aj == 4);
+            if (isDispatchTracePair)
+            {
+                appendRespaTraceTextLine(
+                        dispatchInternalTraceDirPath,
+                        "step0_dispatch_internal_trace.txt",
+                        "stage=dispatch_internal_active_contributions probe_mode=" + dispatchProbeMode
+                                + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
+                                + " role=" + std::string(isTargetPair ? "target_pair_0_1" : "control_pair_0_4")
+                                + " ai=" + std::to_string(ai) + " aj=" + std::to_string(aj)
+                                + " baseline_active=" + joinActiveContributionLabels(activeContributions, false)
+                                + " effective_active="
+                                + joinActiveContributionLabels(activeContributions, probeActiveOuterNarrowed)
+                                + " baseline_outer_active="
+                                + std::string(baselineOuterActive ? "true" : "false")
+                                + " effective_outer_active="
+                                + std::string(effectiveOuterActive ? "true" : "false") + " inner_scalar="
+                                + gmx::toString(innerScalar) + " middle_scalar=" + gmx::toString(middleScalar)
+                                + " outer_scalar_baseline=" + gmx::toString(outerScalar)
+                                + " outer_scalar_effective=" + gmx::toString(effectiveOuterScalar)
+                                + " correction_scalar=" + gmx::toString(correctionScalar)
+                                + " semantic_result="
+                                + std::string((effectiveOuterActive && effectiveOuterScalar != 0.0_real)
+                                                      ? "nonzero_outer_contribution_live"
+                                                      : "admitted_but_semantically_harmless"));
+            }
             if (dumpDownstreamContract
                 && ((isTargetPair && !dumpedDownstreamTargetEval) || (isControlPair && !dumpedDownstreamControlEval)))
             {
@@ -1188,10 +1293,12 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                                 + gmx::toString(bareCoulombScalar) + " raw_lj_scalar="
                                 + gmx::toString(rawLjScalar) + " inner_scalar=" + gmx::toString(innerScalar)
                                 + " middle_scalar=" + gmx::toString(middleScalar) + " outer_scalar="
-                                + gmx::toString(outerScalar) + " full_scalar=" + gmx::toString(fullScalar)
+                                + gmx::toString(effectiveOuterScalar) + " full_scalar=" + gmx::toString(fullScalar)
                                 + " outer_force_write_eligible="
-                                + std::string(outerScalar != 0.0_real && outerAccumulator != nullptr ? "true"
-                                                                                                      : "false")
+                                + std::string(effectiveOuterActive && effectiveOuterScalar != 0.0_real
+                                                      && outerAccumulator != nullptr
+                                                      ? "true"
+                                                      : "false")
                                 + " outer_force_buffer="
                                 + std::string((outerAccumulator != nullptr && outerAccumulator->forceWithVirial != nullptr)
                                                       ? "forceWithVirial"
@@ -1219,8 +1326,15 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                 rvec_dec(excludedCorrectionForce[aj], correctionForce);
             }
 
+            bool        outerWriteExecuted = false;
+            std::string outerRoutingTarget = "none";
             for (auto& accumulator : activeContributions)
             {
+                if (probeActiveOuterNarrowed
+                    && accumulator.contribution == MtsNonbondedRespaContribution::Outer)
+                {
+                    continue;
+                }
                 real scalar = 0;
                 switch (accumulator.contribution)
                 {
@@ -1231,7 +1345,7 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                         scalar = middleScalar;
                         break;
                     case MtsNonbondedRespaContribution::Outer:
-                        scalar = outerScalar;
+                        scalar = effectiveOuterScalar;
                         break;
                     case MtsNonbondedRespaContribution::Full:
                         scalar = fullScalar;
@@ -1246,6 +1360,16 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
 
                 RVec force;
                 svmul(scalar * rinvsq, dx, force);
+                const bool suppressOuterWrite =
+                        probeOuterRoutingSuppressed
+                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer;
+                if (accumulator.contribution == MtsNonbondedRespaContribution::Outer)
+                {
+                    outerRoutingTarget = suppressOuterWrite
+                                                 ? "suppressed"
+                                                 : (accumulator.forceWithVirial != nullptr ? "forceWithVirial"
+                                                                                          : "none");
+                }
                 const bool shouldDumpExcludedPairWrite =
                         dumpPairWriteProof && isExcludedPairlist
                         && accumulator.contribution == MtsNonbondedRespaContribution::Outer && pairOrdinal == 0;
@@ -1303,8 +1427,15 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                             RVec(-force[XX], -force[YY], -force[ZZ]));
                     dumpedFirstExcludedWrite = true;
                 }
-                rvec_inc(accumulator.force[ai], force);
-                rvec_dec(accumulator.force[aj], force);
+                if (!suppressOuterWrite)
+                {
+                    rvec_inc(accumulator.force[ai], force);
+                    rvec_dec(accumulator.force[aj], force);
+                    if (accumulator.contribution == MtsNonbondedRespaContribution::Outer)
+                    {
+                        outerWriteExecuted = true;
+                    }
+                }
                 if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
                     && accumulator.forceWithVirial != nullptr)
                 {
@@ -1331,7 +1462,7 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                                               accumulator.force);
                 }
 
-                if (!accumulator.shift.empty() && shiftIndex != c_centralShiftIndex)
+                if (!suppressOuterWrite && !accumulator.shift.empty() && shiftIndex != c_centralShiftIndex)
                 {
                     rvec_inc(accumulator.shift[shiftIndex], force);
                     rvec_dec(accumulator.shift[c_centralShiftIndex], force);
@@ -1344,10 +1475,32 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                     coulEnergyTerms[energyIndex] += fullCoulombEnergy;
                 }
 
-                if (stepWork.computeVirial && accumulator.forceWithVirial != nullptr)
+                if (!suppressOuterWrite && stepWork.computeVirial && accumulator.forceWithVirial != nullptr)
                 {
                     accumulatePairVirial(dx, force, accumulator.virial);
                 }
+            }
+
+            if (isDispatchTracePair)
+            {
+                appendRespaTraceTextLine(
+                        dispatchInternalTraceDirPath,
+                        "step0_dispatch_internal_trace.txt",
+                        "stage=dispatch_internal_outer_routing probe_mode=" + dispatchProbeMode + " pair_list="
+                                + std::string(isExcludedPairlist ? "excludedPairs" : "pairs") + " role="
+                                + std::string(isTargetPair ? "target_pair_0_1" : "control_pair_0_4") + " ai="
+                                + std::to_string(ai) + " aj=" + std::to_string(aj) + " effective_outer_active="
+                                + std::string(effectiveOuterActive ? "true" : "false")
+                                + " effective_outer_scalar=" + gmx::toString(effectiveOuterScalar)
+                                + " outer_force_write_eligible="
+                                + std::string(effectiveOuterActive && effectiveOuterScalar != 0.0_real
+                                                      && outerAccumulator != nullptr
+                                                      ? "true"
+                                                      : "false")
+                                + " outer_routing_target=" + outerRoutingTarget + " actual_outer_write_executed="
+                                + std::string(outerWriteExecuted ? "true" : "false") + " semantic_result="
+                                + std::string(outerWriteExecuted ? "physical_outer_behavior_realized"
+                                                                 : "no_physical_outer_realization"));
             }
 
             pairOrdinal++;
@@ -1397,6 +1550,10 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                     0.0_real,
                     [](const int, const int) { return true; },
                     debugExactRespa ? &excludedStats : nullptr);
+    if (dumpDispatchInternalTrace)
+    {
+        dumpedDispatchInternalTrace = true;
+    }
     if (dumpDownstreamContract)
     {
         dumpedDownstreamContractTrace = true;
