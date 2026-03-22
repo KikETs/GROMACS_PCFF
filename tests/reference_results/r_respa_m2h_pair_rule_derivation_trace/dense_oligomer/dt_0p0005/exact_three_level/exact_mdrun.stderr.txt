@@ -1,0 +1,27 @@
+      :-) GROMACS - gmx mdrun, 2027.0-dev-20260322-1d28ea1527-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
+Working dir:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2h_pair_rule_derivation_trace/dense_oligomer/dt_0p0005/exact_three_level
+Command line:
+  gmx mdrun -s exact.tpr -deffnm exact -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod
+
+Reading file exact.tpr, VERSION 2027.0-dev-20260322-1d28ea1527-unknown (single precision)
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'dense_oligomer'
+8 steps,      0.0 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.022        0.022       99.9
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:       17.775        1.350        2.430            0.158 
+
+GROMACS reminds you: "There are three types of people: Those who see, those who see when they are shown, and those who do not see." (Leonardo da Vinci)
+
