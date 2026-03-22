@@ -1,0 +1,397 @@
+{
+  "coarse": {
+    "dt_ps": 0.0005,
+    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2i_downstream_misconsumption_trace/dense_oligomer/dt_0p0005/exact_three_level",
+    "nsteps": 8
+  },
+  "comparison_notes": [
+    "This milestone traces only the upstream ownership/spec lineage that leads into excludedPairs.",
+    "No plain-Verlet or PME-side legacy side-reference comparison is needed for this exact handoff proof."
+  ],
+  "dense_downstream_misconsumption_trace": {
+    "coarse_dt_ps": 0.0005,
+    "localization": {
+      "artifact_paths": {
+        "append_branch_trace": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2i_downstream_misconsumption_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_append_branch_trace.txt",
+        "downstream_contract_trace": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2i_downstream_misconsumption_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_downstream_contract_trace.txt",
+        "pair_key_membership_scan": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2i_downstream_misconsumption_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_pair_key_membership_scan.txt",
+        "runtime_exclusions_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2i_downstream_misconsumption_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_runtime_exclusions_input.txt",
+        "topology_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2i_downstream_misconsumption_trace/dense_oligomer/dt_0p0005/exact_three_level/system.top"
+      },
+      "control_result": {
+        "append_row": {
+          "ai": "0",
+          "aj": "4",
+          "branch": "pairs",
+          "central_shift_index": "22",
+          "i_atom_index": "0",
+          "j_atom_index": "4",
+          "j_gt_i": "true",
+          "mask_word": "4294954703",
+          "masked_value": "1",
+          "pair_bit": "1",
+          "predicate_excluded_branch": "false",
+          "predicate_mask_nonzero": "true",
+          "role": "control_pair_0_4",
+          "shift_index": "22",
+          "stage": "append_plain_pairlist_branch"
+        },
+        "control_clean": true,
+        "dispatch_row": {
+          "control_in_list": "true",
+          "control_occurrences": "1",
+          "control_ordinal": "0",
+          "factor_coulomb": "1",
+          "factor_lj": "1",
+          "include_rule": "always_true",
+          "list": "pairs",
+          "semantic_role": "standard_physical_nonbonded_consumer",
+          "stage": "pairs_dispatch_contract",
+          "target_in_list": "false",
+          "target_occurrences": "0",
+          "target_ordinal": "-1"
+        },
+        "membership_row": {
+          "ai": "0",
+          "aj": "4",
+          "in_debug_listed_pair_keys": "false",
+          "in_plain_excluded": "0",
+          "in_plain_pairs": "1",
+          "kind": "pairs",
+          "ordinal": "0",
+          "shift_index": "22"
+        },
+        "pair": [
+          0,
+          4
+        ],
+        "pair_eval_row": {
+          "ai": "0",
+          "aj": "4",
+          "bare_coulomb_scalar": "23.1639",
+          "correction_scalar": "-17.4753",
+          "factor_coulomb": "1",
+          "factor_lj": "1",
+          "full_scalar": "4.91708",
+          "include_pair": "true",
+          "inner_scalar": "11.2251",
+          "middle_scalar": "11.1673",
+          "ordinal": "0",
+          "outer_force_buffer": "forceWithVirial",
+          "outer_force_write_eligible": "true",
+          "outer_scalar": "-17.4753",
+          "pair_list": "pairs",
+          "raw_lj_scalar": "-0.771507",
+          "semantic_role": "standard_physical_nonbonded_consumer",
+          "shift_index": "22",
+          "stage": "consumer_pair_eval"
+        },
+        "why_clean": "Control pair (0,4) remains in the standard pairs consumer path with mask-preserved eligibility and does not cross from exclusion bookkeeping into a separate correction consumer."
+      },
+      "earliest_semantic_misuse_verdict": "FIRST-BAD-SITE-FOUND",
+      "exact_bad_handoff_proof": {
+        "dispatch_row": {
+          "control_in_list": "false",
+          "control_occurrences": "0",
+          "control_ordinal": "-1",
+          "factor_coulomb": "0",
+          "factor_lj": "0",
+          "include_rule": "always_true",
+          "list": "excludedPairs",
+          "semantic_role": "excluded_membership_reintroduced_into_exact_nonbonded_consumer",
+          "stage": "excluded_pairs_dispatch_contract",
+          "target_in_list": "true",
+          "target_occurrences": "1",
+          "target_ordinal": "0"
+        },
+        "pair_eval_row": {
+          "ai": "0",
+          "aj": "1",
+          "bare_coulomb_scalar": "0",
+          "correction_scalar": "-13.3029",
+          "factor_coulomb": "0",
+          "factor_lj": "0",
+          "full_scalar": "-13.3029",
+          "include_pair": "true",
+          "inner_scalar": "0",
+          "middle_scalar": "0",
+          "ordinal": "0",
+          "outer_force_buffer": "forceWithVirial",
+          "outer_force_write_eligible": "true",
+          "outer_scalar": "-13.3029",
+          "pair_list": "excludedPairs",
+          "raw_lj_scalar": "0",
+          "semantic_role": "excluded_membership_promoted_to_physical_outer_consumer",
+          "shift_index": "22",
+          "stage": "consumer_pair_eval"
+        },
+        "target_append_row": {
+          "ai": "0",
+          "aj": "1",
+          "branch": "excludedPairs",
+          "central_shift_index": "22",
+          "i_atom_index": "0",
+          "j_atom_index": "1",
+          "j_gt_i": "true",
+          "mask_word": "0",
+          "masked_value": "0",
+          "pair_bit": "2",
+          "predicate_excluded_branch": "true",
+          "predicate_mask_nonzero": "false",
+          "role": "target_pair_0_1",
+          "shift_index": "22",
+          "stage": "append_plain_pairlist_branch"
+        },
+        "target_membership_row": {
+          "ai": "0",
+          "aj": "1",
+          "in_debug_listed_pair_keys": "false",
+          "in_plain_excluded": "1",
+          "in_plain_pairs": "0",
+          "kind": "excluded",
+          "ordinal": "0",
+          "shift_index": "22"
+        }
+      },
+      "first_bad_site": {
+        "code_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/src/gromacs/mdlib/sim_util.cpp",
+        "stage": "exact_excludedPairs_dispatch_contract",
+        "why": "This is the first downstream stage where a valid exclusion-membership container is admitted into the exact nonbonded consumer path with include_rule=always_true, before the pair-specific outer correction write makes the physical misuse concrete."
+      },
+      "pair_contract_trace": [
+        {
+          "bonded_listed_ownership_state": "topology_sources=bond; listed_pair_key=false",
+          "evidence": {
+            "atom": "0",
+            "contains_control": "false",
+            "contains_target": "true",
+            "exclusions": "3,1,2,0",
+            "source": "top.excls_via_constructPairlist",
+            "stage": "runtime_exclusions_input"
+          },
+          "exclusion_membership_state": "target_in_runtime_exclusions=true",
+          "order": 0,
+          "physical_force_consumer_eligibility": {
+            "exact_semantics": false,
+            "reference_semantics": false
+          },
+          "stage": "runtime_exclusions_input",
+          "verdict": "still_legal"
+        },
+        {
+          "bonded_listed_ownership_state": "topology_sources=bond; listed_pair_key=false",
+          "evidence": {
+            "ai": "0",
+            "aj": "1",
+            "branch": "excludedPairs",
+            "central_shift_index": "22",
+            "i_atom_index": "0",
+            "j_atom_index": "1",
+            "j_gt_i": "true",
+            "mask_word": "0",
+            "masked_value": "0",
+            "pair_bit": "2",
+            "predicate_excluded_branch": "true",
+            "predicate_mask_nonzero": "false",
+            "role": "target_pair_0_1",
+            "shift_index": "22",
+            "stage": "append_plain_pairlist_branch"
+          },
+          "exclusion_membership_state": "branch=excludedPairs; masked_value=0",
+          "order": 1,
+          "physical_force_consumer_eligibility": {
+            "exact_semantics": false,
+            "reference_semantics": false
+          },
+          "stage": "append_plain_pairlist_branch",
+          "verdict": "still_legal"
+        },
+        {
+          "bonded_listed_ownership_state": "topology_sources=bond; listed_pair_key=false",
+          "evidence": {
+            "ai": "0",
+            "aj": "1",
+            "in_debug_listed_pair_keys": "false",
+            "in_plain_excluded": "1",
+            "in_plain_pairs": "0",
+            "kind": "excluded",
+            "ordinal": "0",
+            "shift_index": "22"
+          },
+          "exclusion_membership_state": "in_plain_excluded=1; in_plain_pairs=0",
+          "order": 2,
+          "physical_force_consumer_eligibility": {
+            "exact_semantics": false,
+            "reference_semantics": false
+          },
+          "stage": "plain_pairlist_membership",
+          "verdict": "still_legal"
+        },
+        {
+          "bonded_listed_ownership_state": "topology_sources=bond; listed_pair_key=false",
+          "evidence": {
+            "control_in_list": "false",
+            "control_occurrences": "0",
+            "control_ordinal": "-1",
+            "factor_coulomb": "0",
+            "factor_lj": "0",
+            "include_rule": "always_true",
+            "list": "excludedPairs",
+            "semantic_role": "excluded_membership_reintroduced_into_exact_nonbonded_consumer",
+            "stage": "excluded_pairs_dispatch_contract",
+            "target_in_list": "true",
+            "target_occurrences": "1",
+            "target_ordinal": "0"
+          },
+          "exclusion_membership_state": "excludedPairs consumer dispatch target_in_list=true include_rule=always_true",
+          "order": 3,
+          "physical_force_consumer_eligibility": {
+            "exact_semantics": true,
+            "reference_semantics": false
+          },
+          "stage": "exact_excludedPairs_dispatch_contract",
+          "verdict": "first_bad_interpretation"
+        },
+        {
+          "bonded_listed_ownership_state": "topology_sources=bond; listed_pair_key=false",
+          "evidence": {
+            "ai": "0",
+            "aj": "1",
+            "bare_coulomb_scalar": "0",
+            "correction_scalar": "-13.3029",
+            "factor_coulomb": "0",
+            "factor_lj": "0",
+            "full_scalar": "-13.3029",
+            "include_pair": "true",
+            "inner_scalar": "0",
+            "middle_scalar": "0",
+            "ordinal": "0",
+            "outer_force_buffer": "forceWithVirial",
+            "outer_force_write_eligible": "true",
+            "outer_scalar": "-13.3029",
+            "pair_list": "excludedPairs",
+            "raw_lj_scalar": "0",
+            "semantic_role": "excluded_membership_promoted_to_physical_outer_consumer",
+            "shift_index": "22",
+            "stage": "consumer_pair_eval"
+          },
+          "exclusion_membership_state": "excludedPairs pair-specific evaluation",
+          "order": 4,
+          "physical_force_consumer_eligibility": {
+            "exact_semantics": true,
+            "reference_semantics": false
+          },
+          "stage": "excludedPairs_outer_consumer_eval",
+          "verdict": "confirms_first_bad_site"
+        }
+      ],
+      "reference_reconciliation": {
+        "divergence": "Reference semantics keeps pair (0,1) out of the standard physical nonbonded consumer because the exclusion mask clears the interaction bit, but the exact 3-level path re-admits the same pair via excludedPairs with include_rule=always_true and a non-zero outer correction force.",
+        "exact_semantics": {
+          "correction_scalar": "-13.3029",
+          "dispatch_include_rule": "always_true",
+          "dispatch_semantic_role": "excluded_membership_reintroduced_into_exact_nonbonded_consumer",
+          "dispatch_stage": "excluded_pairs_dispatch_contract",
+          "outer_force_write_eligible": "true",
+          "outer_scalar": "-13.3029",
+          "pair_eval_stage": "consumer_pair_eval"
+        },
+        "reference_semantics": {
+          "branch": "excludedPairs",
+          "masked_value": "0",
+          "physical_nonbonded_consumer_eligible": false,
+          "source": "runtime exclusion mask + append branch contract on the same run"
+        },
+        "target_pair": [
+          0,
+          1
+        ]
+      },
+      "supports_first_bad_site": true,
+      "why_not_fully_closed": "This identifies only the first downstream semantic misuse site for pair (0,1) on dense_oligomer coarse step 0."
+    }
+  },
+  "exact_schedule_active": true,
+  "exact_schedule_dump": {
+    "mts": "true",
+    "mts-level2-factor": "2",
+    "mts-level2-forces": "nonbonded-middle",
+    "mts-level3-factor": "4",
+    "mts-level3-forces": "longrange-nonbonded nonbonded-outer",
+    "mts-mode": "lammps-respa",
+    "mts-respa-angle-level": "1",
+    "mts-respa-bond-level": "1",
+    "mts-respa-dihedral-level": "1",
+    "mts-respa-improper-level": "1",
+    "mts-respa-inner-level": "1",
+    "mts-respa-inner-off": "0.3",
+    "mts-respa-inner-on": "0.45",
+    "mts-respa-kspace-level": "3",
+    "mts-respa-middle-level": "2",
+    "mts-respa-outer-level": "3",
+    "mts-respa-outer-off": "0.8",
+    "mts-respa-outer-on": "0.6",
+    "mts-respa-pair-level": "3",
+    "mts-respa-pair14-level": "1"
+  },
+  "exact_split": {
+    "inner_terms": [
+      "pair14",
+      "bond",
+      "angle",
+      "dihedral",
+      "nonbonded_inner"
+    ],
+    "middle_terms": [
+      "nonbonded_middle"
+    ],
+    "outer_terms": [
+      "pair",
+      "nonbonded_outer",
+      "kspace"
+    ]
+  },
+  "fixture_id": "dense_oligomer",
+  "fixture_sources": {
+    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+  },
+  "gro_metadata": {
+    "box_nm": [
+      2.2,
+      2.2,
+      2.2
+    ],
+    "num_atoms": 384
+  },
+  "listed_terms_present": [
+    "pair14",
+    "bond",
+    "angle",
+    "dihedral"
+  ],
+  "m1_continuity": {
+    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_settings": {
+      "coulombtype": "Cut-off",
+      "integrator": "md",
+      "mts_level2_forces": "nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "current_side_reference_settings": {
+      "coulombtype": "PME",
+      "integrator": "md",
+      "label": "pme_legacy_side_reference",
+      "mts_level2_forces": "nonbonded longrange-nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "direct_archived_m1_comparison_done": false,
+    "direct_archived_m1_comparison_feasible": false,
+    "why_not_feasible": "Archived M1 uses integrator = md with coulombtype = Cut-off and mts-level2-forces = nonbonded; the current exact-3-level harness requires PME-side md-vv settings, so the current simpler split can only be a PME-side legacy side-reference.",
+    "wording_requirement": "The current simpler split must be reported as a PME-side legacy side-reference, not as direct archived-M1 continuity."
+  }
+}
