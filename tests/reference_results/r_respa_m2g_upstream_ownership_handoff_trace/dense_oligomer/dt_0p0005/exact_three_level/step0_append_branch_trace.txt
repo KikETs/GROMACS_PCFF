@@ -1,0 +1,2 @@
+stage=append_plain_pairlist_branch ai=0 aj=1 shift_index=22 i_atom_index=0 j_atom_index=1 mask_word=0 pair_bit=2 masked_value=0 branch=excludedPairs predicate_mask_nonzero=false predicate_excluded_branch=true central_shift_index=22 j_gt_i=true role=target_pair_0_1
+stage=append_plain_pairlist_branch ai=0 aj=4 shift_index=22 i_atom_index=0 j_atom_index=4 mask_word=4294954703 pair_bit=1 masked_value=1 branch=pairs predicate_mask_nonzero=true predicate_excluded_branch=false central_shift_index=22 j_gt_i=true role=control_pair_0_4

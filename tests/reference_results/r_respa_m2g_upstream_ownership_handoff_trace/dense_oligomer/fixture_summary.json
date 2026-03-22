@@ -1,0 +1,372 @@
+{
+  "coarse": {
+    "dt_ps": 0.0005,
+    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace/dense_oligomer/dt_0p0005/exact_three_level",
+    "nsteps": 8
+  },
+  "comparison_notes": [
+    "This milestone traces only the upstream ownership/spec lineage that leads into excludedPairs.",
+    "No plain-Verlet or PME-side legacy side-reference comparison is needed for this exact handoff proof."
+  ],
+  "dense_upstream_ownership_handoff_trace": {
+    "coarse_dt_ps": 0.0005,
+    "localization": {
+      "append_branch_proof": {
+        "control_row": {
+          "ai": "0",
+          "aj": "4",
+          "branch": "pairs",
+          "central_shift_index": "22",
+          "i_atom_index": "0",
+          "j_atom_index": "4",
+          "j_gt_i": "true",
+          "mask_word": "4294954703",
+          "masked_value": "1",
+          "pair_bit": "1",
+          "predicate_excluded_branch": "false",
+          "predicate_mask_nonzero": "true",
+          "role": "control_pair_0_4",
+          "shift_index": "22",
+          "stage": "append_plain_pairlist_branch"
+        },
+        "target_branch_provenance": {
+          "mask_bit_cleared_by_runtime_exclusions": true,
+          "predicate_excluded_branch": "true",
+          "predicate_mask_nonzero": "false",
+          "upstream_runtime_exclusions_contains_target": true
+        },
+        "target_row": {
+          "ai": "0",
+          "aj": "1",
+          "branch": "excludedPairs",
+          "central_shift_index": "22",
+          "i_atom_index": "0",
+          "j_atom_index": "1",
+          "j_gt_i": "true",
+          "mask_word": "0",
+          "masked_value": "0",
+          "pair_bit": "2",
+          "predicate_excluded_branch": "true",
+          "predicate_mask_nonzero": "false",
+          "role": "target_pair_0_1",
+          "shift_index": "22",
+          "stage": "append_plain_pairlist_branch"
+        }
+      },
+      "artifact_paths": {
+        "append_branch_trace": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_append_branch_trace.txt",
+        "exclusion_bit_clear_trace": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_exclusion_bit_clear_trace.txt",
+        "generate_excl_trace": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_grompp_generate_excl_trace.txt",
+        "pair_key_membership_scan": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_pair_key_membership_scan.txt",
+        "pairlist_builder_trace": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_pairlist_builder_append_trace.txt",
+        "plain_pairlist_preview": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_plain_pairlist_preview.txt",
+        "runtime_exclusions_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_runtime_exclusions_input.txt"
+      },
+      "classification": "earliest bad handoff identified at generate_excl output from bonded topology + nrexcl overlap policy",
+      "control_pair": [
+        0,
+        4
+      ],
+      "dual_membership": {
+        "dual_membership_first_materialized_at_generate_excl": true,
+        "target_membership_row": {
+          "ai": "0",
+          "aj": "1",
+          "in_debug_listed_pair_keys": "false",
+          "in_plain_excluded": "1",
+          "in_plain_pairs": "0",
+          "kind": "excluded",
+          "ordinal": "0",
+          "shift_index": "22"
+        },
+        "target_pair_has_bonded_topology_source": true,
+        "target_pair_in_generate_excl_output": true
+      },
+      "earliest_divergence": {
+        "fault_class": "upstream_spec_overlap_policy_defect",
+        "stage": "generate_excl_output",
+        "why": "Pair (0,1) is already bonded in topology, and generate_excl materializes it into the atom-0 exclusion list under nrexcl=3 before any runtime bit clearing or excludedPairs packing happens."
+      },
+      "known_good_control": {
+        "append_branch_row": {
+          "ai": "0",
+          "aj": "4",
+          "branch": "pairs",
+          "central_shift_index": "22",
+          "i_atom_index": "0",
+          "j_atom_index": "4",
+          "j_gt_i": "true",
+          "mask_word": "4294954703",
+          "masked_value": "1",
+          "pair_bit": "1",
+          "predicate_excluded_branch": "false",
+          "predicate_mask_nonzero": "true",
+          "role": "control_pair_0_4",
+          "shift_index": "22",
+          "stage": "append_plain_pairlist_branch"
+        },
+        "builder_row": {
+          "ai": "0",
+          "aj": "4",
+          "excl_bit": "1",
+          "i_atom_index": "0",
+          "j_atom_index": "4",
+          "kind": "pairs",
+          "ordinal": "0",
+          "shift_index": "22",
+          "source": "appendPlainPairlistCpu"
+        },
+        "clean_lineage": true,
+        "generate_contains_control": false,
+        "membership_row": {
+          "ai": "0",
+          "aj": "4",
+          "in_debug_listed_pair_keys": "false",
+          "in_plain_excluded": "0",
+          "in_plain_pairs": "1",
+          "kind": "pairs",
+          "ordinal": "0",
+          "shift_index": "22"
+        },
+        "pair": [
+          0,
+          4
+        ],
+        "preview_row": {
+          "ai": "0",
+          "aj": "4",
+          "kind": "pairs",
+          "ordinal": "0",
+          "shift_index": "22"
+        },
+        "runtime_contains_control": false
+      },
+      "lineage_trace": [
+        {
+          "order": 0,
+          "stage": "topology_inputs",
+          "state": {
+            "control_pair_0_4_sources": [],
+            "nrexcl": 3,
+            "target_pair_0_1_sources": [
+              "bond"
+            ]
+          }
+        },
+        {
+          "order": 1,
+          "stage": "generate_excl_output",
+          "state": {
+            "atom": "0",
+            "contains_control": "false",
+            "contains_target": "true",
+            "exclusions": "0,1,2,3",
+            "nrexcl": "3",
+            "stage": "generate_excl_output"
+          }
+        },
+        {
+          "order": 2,
+          "stage": "runtime_exclusions_input",
+          "state": {
+            "atom": "0",
+            "contains_control": "false",
+            "contains_target": "true",
+            "exclusions": "3,1,2,0",
+            "source": "top.excls_via_constructPairlist",
+            "stage": "runtime_exclusions_input"
+          }
+        },
+        {
+          "order": 3,
+          "stage": "runtime_clear_exclusion_bit",
+          "state": {
+            "atom_i": "0",
+            "atom_j": "1",
+            "bit_mask": "2",
+            "i_index": "0",
+            "inner_j": "1",
+            "j_cluster": "0",
+            "j_index": "1",
+            "list_index": "0",
+            "mask_after": "2244",
+            "mask_before": "2246",
+            "masked_after": "0",
+            "masked_before": "2",
+            "rule": "jAtom_in_topology_exclusions",
+            "source": "top.excls",
+            "stage": "runtime_clear_exclusion_bit"
+          }
+        },
+        {
+          "order": 4,
+          "stage": "append_plain_pairlist_branch_target",
+          "state": {
+            "ai": "0",
+            "aj": "1",
+            "branch": "excludedPairs",
+            "central_shift_index": "22",
+            "i_atom_index": "0",
+            "j_atom_index": "1",
+            "j_gt_i": "true",
+            "mask_word": "0",
+            "masked_value": "0",
+            "pair_bit": "2",
+            "predicate_excluded_branch": "true",
+            "predicate_mask_nonzero": "false",
+            "role": "target_pair_0_1",
+            "shift_index": "22",
+            "stage": "append_plain_pairlist_branch"
+          }
+        },
+        {
+          "order": 5,
+          "stage": "append_plain_pairlist_branch_control",
+          "state": {
+            "ai": "0",
+            "aj": "4",
+            "branch": "pairs",
+            "central_shift_index": "22",
+            "i_atom_index": "0",
+            "j_atom_index": "4",
+            "j_gt_i": "true",
+            "mask_word": "4294954703",
+            "masked_value": "1",
+            "pair_bit": "1",
+            "predicate_excluded_branch": "false",
+            "predicate_mask_nonzero": "true",
+            "role": "control_pair_0_4",
+            "shift_index": "22",
+            "stage": "append_plain_pairlist_branch"
+          }
+        },
+        {
+          "order": 6,
+          "stage": "plain_pairlist_append_target",
+          "state": {
+            "ai": "0",
+            "aj": "1",
+            "excl_bit": "0",
+            "i_atom_index": "0",
+            "j_atom_index": "1",
+            "kind": "excludedPairs",
+            "ordinal": "0",
+            "shift_index": "22",
+            "source": "appendPlainPairlistCpu"
+          }
+        },
+        {
+          "order": 7,
+          "stage": "plain_pairlist_membership_target",
+          "state": {
+            "ai": "0",
+            "aj": "1",
+            "in_debug_listed_pair_keys": "false",
+            "in_plain_excluded": "1",
+            "in_plain_pairs": "0",
+            "kind": "excluded",
+            "ordinal": "0",
+            "shift_index": "22"
+          }
+        }
+      ],
+      "supports_exact_earliest_handoff": true,
+      "target_pair": [
+        0,
+        1
+      ],
+      "topology": {
+        "control_topology_sources": [],
+        "nrexcl": 3,
+        "target_topology_sources": [
+          "bond"
+        ],
+        "topology_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace/dense_oligomer/dt_0p0005/exact_three_level/system.top"
+      },
+      "why_not_fully_closed": "This closes the earliest bad handoff only for dense_oligomer, exact 3-level, coarse dt=0.0005, step 0."
+    }
+  },
+  "exact_schedule_active": true,
+  "exact_schedule_dump": {
+    "mts": "true",
+    "mts-level2-factor": "2",
+    "mts-level2-forces": "nonbonded-middle",
+    "mts-level3-factor": "4",
+    "mts-level3-forces": "longrange-nonbonded nonbonded-outer",
+    "mts-mode": "lammps-respa",
+    "mts-respa-angle-level": "1",
+    "mts-respa-bond-level": "1",
+    "mts-respa-dihedral-level": "1",
+    "mts-respa-improper-level": "1",
+    "mts-respa-inner-level": "1",
+    "mts-respa-inner-off": "0.3",
+    "mts-respa-inner-on": "0.45",
+    "mts-respa-kspace-level": "3",
+    "mts-respa-middle-level": "2",
+    "mts-respa-outer-level": "3",
+    "mts-respa-outer-off": "0.8",
+    "mts-respa-outer-on": "0.6",
+    "mts-respa-pair-level": "3",
+    "mts-respa-pair14-level": "1"
+  },
+  "exact_split": {
+    "inner_terms": [
+      "pair14",
+      "bond",
+      "angle",
+      "dihedral",
+      "nonbonded_inner"
+    ],
+    "middle_terms": [
+      "nonbonded_middle"
+    ],
+    "outer_terms": [
+      "pair",
+      "nonbonded_outer",
+      "kspace"
+    ]
+  },
+  "fixture_id": "dense_oligomer",
+  "fixture_sources": {
+    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+  },
+  "gro_metadata": {
+    "box_nm": [
+      2.2,
+      2.2,
+      2.2
+    ],
+    "num_atoms": 384
+  },
+  "listed_terms_present": [
+    "pair14",
+    "bond",
+    "angle",
+    "dihedral"
+  ],
+  "m1_continuity": {
+    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_settings": {
+      "coulombtype": "Cut-off",
+      "integrator": "md",
+      "mts_level2_forces": "nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "current_side_reference_settings": {
+      "coulombtype": "PME",
+      "integrator": "md",
+      "label": "pme_legacy_side_reference",
+      "mts_level2_forces": "nonbonded longrange-nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "direct_archived_m1_comparison_done": false,
+    "direct_archived_m1_comparison_feasible": false,
+    "why_not_feasible": "Archived M1 uses integrator = md with coulombtype = Cut-off and mts-level2-forces = nonbonded; the current exact-3-level harness requires PME-side md-vv settings, so the current simpler split can only be a PME-side legacy side-reference.",
+    "wording_requirement": "The current simpler split must be reported as a PME-side legacy side-reference, not as direct archived-M1 continuity."
+  }
+}
