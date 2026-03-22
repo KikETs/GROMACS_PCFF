@@ -35,6 +35,7 @@
 
 #include "config.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <cmath>
 #include <cstdint>
@@ -658,6 +659,31 @@ static void dumpRespaTraceEvent(const char*        traceDirPath,
     std::fclose(dumpFile);
 }
 
+static std::string formatPointerValue(const void* ptr)
+{
+    char buffer[32];
+    std::snprintf(buffer, sizeof(buffer), "0x%" PRIxPTR, reinterpret_cast<std::uintptr_t>(ptr));
+    return std::string(buffer);
+}
+
+static void writeRespaTraceTextFile(const char* traceDirPath, const char* fileName, const std::string& contents)
+{
+    GMX_RELEASE_ASSERT(traceDirPath != nullptr && *traceDirPath != '\0', "Need a valid trace directory");
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::filesystem::path outputPath = traceDir / fileName;
+
+    FILE* dumpFile = std::fopen(outputPath.string().c_str(), "w");
+    if (dumpFile == nullptr)
+    {
+        gmx_fatal(FARGS, "Could not open trace text output '%s' for writing", outputPath.string().c_str());
+    }
+
+    std::fputs(contents.c_str(), dumpFile);
+    std::fclose(dumpFile);
+}
+
 static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inputrec,
                                            const InteractionDefinitions&    idef,
                                            t_forcerec*                      fr,
@@ -775,6 +801,10 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
     static bool dumpedEarlyAccumTrace  = false;
     const bool dumpEarlyAccumTrace =
             (earlyAccumTraceDirPath != nullptr && *earlyAccumTraceDirPath != '\0' && !dumpedEarlyAccumTrace);
+    const char* pairWriteProofDirPath = std::getenv("GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR");
+    static bool dumpedPairWriteProof  = false;
+    const bool dumpPairWriteProof =
+            (pairWriteProofDirPath != nullptr && *pairWriteProofDirPath != '\0' && !dumpedPairWriteProof);
     const bool outerAliasesShift =
             (outerAccumulator != nullptr && outerAccumulator->outputs != nullptr
              && outerAccumulator->force.data()
@@ -797,12 +827,111 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                                           + std::string(outerAliasesShift ? "true" : "false"),
                                   outerAccumulator->forceWithVirial->force_);
     }
+    if (dumpPairWriteProof)
+    {
+        std::string contents;
+        const auto  appendLine = [&contents](const std::string& line) { contents += line + "\n"; };
+        for (int mtsLevel = 0; mtsLevel < forceOutByMtsLevel.ssize(); ++mtsLevel)
+        {
+            const ForceOutputs* outputs = forceOutByMtsLevel[mtsLevel];
+            if (outputs == nullptr)
+            {
+                appendLine("level=" + std::to_string(mtsLevel) + " active=false");
+                continue;
+            }
+            ForceOutputs* mutableOutputs = const_cast<ForceOutputs*>(outputs);
+            appendLine("level=" + std::to_string(mtsLevel) + " active=true");
+            appendLine("level=" + std::to_string(mtsLevel) + " shift_force_ptr="
+                       + formatPointerValue(mutableOutputs->forceWithShiftForces().force().data()));
+            appendLine("level=" + std::to_string(mtsLevel) + " shift_shift_ptr="
+                       + formatPointerValue(mutableOutputs->forceWithShiftForces().shiftForces().data()));
+            appendLine("level=" + std::to_string(mtsLevel) + " have_virial="
+                       + std::string(outputs->haveForceWithVirial() ? "true" : "false"));
+            if (outputs->haveForceWithVirial())
+            {
+                appendLine("level=" + std::to_string(mtsLevel) + " virial_force_ptr="
+                           + formatPointerValue(mutableOutputs->forceWithVirial().force_.data()));
+            }
+        }
+        appendLine("outer_accumulator_present=" + std::string(outerAccumulator != nullptr ? "true" : "false"));
+        if (outerAccumulator != nullptr)
+        {
+            appendLine("outer_accumulator_force_ptr=" + formatPointerValue(outerAccumulator->force.data()));
+            appendLine("outer_accumulator_shift_ptr=" + formatPointerValue(outerAccumulator->shift.data()));
+            appendLine("outer_accumulator_has_virial="
+                       + std::string(outerAccumulator->forceWithVirial != nullptr ? "true" : "false"));
+            if (outerAccumulator->forceWithVirial != nullptr)
+            {
+                appendLine("outer_accumulator_virial_ptr="
+                           + formatPointerValue(outerAccumulator->forceWithVirial->force_.data()));
+            }
+            if (outerAccumulator->outputs != nullptr)
+            {
+                appendLine("outer_outputs_shift_force_ptr="
+                           + formatPointerValue(outerAccumulator->outputs->forceWithShiftForces().force().data()));
+                appendLine("outer_outputs_shift_shift_ptr="
+                           + formatPointerValue(outerAccumulator->outputs->forceWithShiftForces().shiftForces().data()));
+            }
+            appendLine("outer_aliases_shift=" + std::string(outerAliasesShift ? "true" : "false"));
+        }
+        appendLine("excluded_correction_force_dump_enabled="
+                   + std::string(dumpExcludedCorrectionForce ? "true" : "false"));
+        appendLine("excluded_correction_force_dump_ptr=" + formatPointerValue(excludedCorrectionForce.data()));
+        writeRespaTraceTextFile(pairWriteProofDirPath, "step0_force_storage_identity.txt", contents);
+    }
     const auto pairKey = [](const int ai, const int aj)
     {
         const uint32_t first  = static_cast<uint32_t>(std::min(ai, aj));
         const uint32_t second = static_cast<uint32_t>(std::max(ai, aj));
         return (static_cast<uint64_t>(first) << 32) | second;
     };
+    struct PairEntryInfo
+    {
+        int      ordinal    = -1;
+        int      ai         = -1;
+        int      aj         = -1;
+        int      shiftIndex = -1;
+        uint64_t key        = 0;
+    };
+    constexpr int c_maxControlPairWriteProofs = 8;
+    std::vector<PairEntryInfo> firstPairEntries;
+    firstPairEntries.reserve(c_maxControlPairWriteProofs);
+    for (int ordinal = 0; ordinal < static_cast<int>(plainPairlist.pairs.size())
+                          && ordinal < c_maxControlPairWriteProofs;
+         ++ordinal)
+    {
+        const auto& entry = plainPairlist.pairs[ordinal];
+        firstPairEntries.push_back(
+                PairEntryInfo{ ordinal, entry.first.first, entry.first.second, entry.second, pairKey(entry.first.first, entry.first.second) });
+    }
+    std::optional<PairEntryInfo> firstExcludedEntry;
+    if (!plainPairlist.excludedPairs.empty())
+    {
+        const auto& entry = plainPairlist.excludedPairs.front();
+        firstExcludedEntry.emplace(
+                PairEntryInfo{ 0, entry.first.first, entry.first.second, entry.second, pairKey(entry.first.first, entry.first.second) });
+    }
+    if (dumpPairWriteProof)
+    {
+        std::string contents;
+        const auto  appendLine = [&contents](const std::string& line) { contents += line + "\n"; };
+        appendLine("kind=pairlist_preview list=pairs count=" + std::to_string(plainPairlist.pairs.size()));
+        for (const auto& pairEntry : firstPairEntries)
+        {
+            appendLine("kind=pairs ordinal=" + std::to_string(pairEntry.ordinal) + " ai="
+                       + std::to_string(pairEntry.ai) + " aj=" + std::to_string(pairEntry.aj) + " shift_index="
+                       + std::to_string(pairEntry.shiftIndex));
+        }
+        appendLine("kind=pairlist_preview list=excludedPairs count="
+                   + std::to_string(plainPairlist.excludedPairs.size()));
+        if (firstExcludedEntry.has_value())
+        {
+            appendLine("kind=excludedPairs ordinal=0 ai=" + std::to_string(firstExcludedEntry->ai) + " aj="
+                       + std::to_string(firstExcludedEntry->aj) + " shift_index="
+                       + std::to_string(firstExcludedEntry->shiftIndex));
+        }
+        writeRespaTraceTextFile(pairWriteProofDirPath, "step0_plain_pairlist_preview.txt", contents);
+    }
     std::unordered_set<uint64_t> listedPairKeys;
     if (debugExactRespa)
     {
@@ -818,6 +947,43 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
         appendInteractionList(InteractionFunction::LennardJones14);
         appendInteractionList(InteractionFunction::LennardJonesCoulomb14Q);
         appendInteractionList(InteractionFunction::LennardJonesCoulombNonBondedPairs);
+    }
+    if (dumpPairWriteProof)
+    {
+        const auto countOccurrences =
+                [&pairKey](const auto& entries, const uint64_t keyToCount) -> int
+        {
+            return static_cast<int>(std::count_if(entries.begin(),
+                                                 entries.end(),
+                                                 [&pairKey, keyToCount](const auto& entry)
+                                                 { return pairKey(entry.first.first, entry.first.second) == keyToCount; }));
+        };
+
+        std::string contents;
+        const auto  appendLine = [&contents](const std::string& line) { contents += line + "\n"; };
+        if (firstExcludedEntry.has_value())
+        {
+            appendLine("kind=excluded ordinal=0 ai=" + std::to_string(firstExcludedEntry->ai) + " aj="
+                       + std::to_string(firstExcludedEntry->aj) + " shift_index="
+                       + std::to_string(firstExcludedEntry->shiftIndex) + " in_plain_pairs="
+                       + std::to_string(countOccurrences(plainPairlist.pairs, firstExcludedEntry->key))
+                       + " in_plain_excluded="
+                       + std::to_string(countOccurrences(plainPairlist.excludedPairs, firstExcludedEntry->key))
+                       + " in_debug_listed_pair_keys="
+                       + std::string(listedPairKeys.count(firstExcludedEntry->key) != 0 ? "true" : "false"));
+        }
+        for (const auto& pairEntry : firstPairEntries)
+        {
+            appendLine("kind=pairs ordinal=" + std::to_string(pairEntry.ordinal) + " ai="
+                       + std::to_string(pairEntry.ai) + " aj=" + std::to_string(pairEntry.aj)
+                       + " shift_index=" + std::to_string(pairEntry.shiftIndex) + " in_plain_pairs="
+                       + std::to_string(countOccurrences(plainPairlist.pairs, pairEntry.key))
+                       + " in_plain_excluded="
+                       + std::to_string(countOccurrences(plainPairlist.excludedPairs, pairEntry.key))
+                       + " in_debug_listed_pair_keys="
+                       + std::string(listedPairKeys.count(pairEntry.key) != 0 ? "true" : "false"));
+        }
+        writeRespaTraceTextFile(pairWriteProofDirPath, "step0_pair_key_membership_scan.txt", contents);
     }
 
     struct PairDebugStats
@@ -837,6 +1003,7 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                                      PairDebugStats* debugStats = nullptr)
     {
         bool dumpedFirstExcludedWrite = false;
+        int  pairOrdinal             = 0;
         for (const auto& entry : pairEntries)
         {
             const int ai         = entry.first.first;
@@ -847,6 +1014,8 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
             {
                 continue;
             }
+
+            const bool isExcludedPairlist = (factorCoulomb == 0.0_real && factorLj == 0.0_real);
 
             RVec dx;
             for (int dim = 0; dim < DIM; dim++)
@@ -946,6 +1115,45 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
 
                 RVec force;
                 svmul(scalar * rinvsq, dx, force);
+                const bool shouldDumpExcludedPairWrite =
+                        dumpPairWriteProof && isExcludedPairlist
+                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer && pairOrdinal == 0;
+                const bool shouldDumpControlPairWrite =
+                        dumpPairWriteProof && !isExcludedPairlist
+                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer
+                        && pairOrdinal < c_maxControlPairWriteProofs;
+                if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
+                    && accumulator.forceWithVirial != nullptr)
+                {
+                    const std::string prefix = shouldDumpExcludedPairWrite
+                                                       ? "step0_outer_excluded_write_ord000"
+                                                       : "step0_outer_pairs_write_ord"
+                                                                 + std::to_string(pairOrdinal);
+                    const std::string header =
+                            "stage="
+                            + std::string(shouldDumpExcludedPairWrite ? "first_excluded_outer_write_boundary"
+                                                                      : "control_pairs_outer_write_boundary")
+                            + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
+                            + " ordinal=" + std::to_string(pairOrdinal) + " contribution=outer buffer=forceWithVirial"
+                            + " accumulator_ptr=" + formatPointerValue(accumulator.force.data())
+                            + " virial_ptr="
+                            + formatPointerValue(accumulator.forceWithVirial->force_.data()) + " ai="
+                            + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
+                            + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
+                            + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
+                            + gmx::toString(qq) + " r=" + gmx::toString(r);
+                    dumpRespaMergeTraceVector(pairWriteProofDirPath,
+                                              (prefix + "_before.tsv").c_str(),
+                                              header + " snapshot=before",
+                                              accumulator.force);
+                    dumpRespaTraceEvent(pairWriteProofDirPath,
+                                        (prefix + "_event.tsv").c_str(),
+                                        header + " snapshot=event",
+                                        ai,
+                                        force,
+                                        aj,
+                                        RVec(-force[XX], -force[YY], -force[ZZ]));
+                }
                 if (dumpEarlyAccumTrace && factorCoulomb == 0.0_real && factorLj == 0.0_real
                     && accumulator.contribution == MtsNonbondedRespaContribution::Outer && !dumpedFirstExcludedWrite)
                 {
@@ -966,6 +1174,31 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                 }
                 rvec_inc(accumulator.force[ai], force);
                 rvec_dec(accumulator.force[aj], force);
+                if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
+                    && accumulator.forceWithVirial != nullptr)
+                {
+                    const std::string prefix = shouldDumpExcludedPairWrite
+                                                       ? "step0_outer_excluded_write_ord000"
+                                                       : "step0_outer_pairs_write_ord"
+                                                                 + std::to_string(pairOrdinal);
+                    const std::string header =
+                            "stage="
+                            + std::string(shouldDumpExcludedPairWrite ? "first_excluded_outer_write_boundary"
+                                                                      : "control_pairs_outer_write_boundary")
+                            + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
+                            + " ordinal=" + std::to_string(pairOrdinal) + " contribution=outer buffer=forceWithVirial"
+                            + " accumulator_ptr=" + formatPointerValue(accumulator.force.data())
+                            + " virial_ptr="
+                            + formatPointerValue(accumulator.forceWithVirial->force_.data()) + " ai="
+                            + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
+                            + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
+                            + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
+                            + gmx::toString(qq) + " r=" + gmx::toString(r);
+                    dumpRespaMergeTraceVector(pairWriteProofDirPath,
+                                              (prefix + "_after.tsv").c_str(),
+                                              header + " snapshot=after",
+                                              accumulator.force);
+                }
 
                 if (!accumulator.shift.empty() && shiftIndex != c_centralShiftIndex)
                 {
@@ -985,6 +1218,8 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                     accumulatePairVirial(dx, force, accumulator.virial);
                 }
             }
+
+            pairOrdinal++;
         }
     };
 
@@ -1039,6 +1274,10 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                                           + std::string(outerAliasesShift ? "true" : "false"),
                                   outerAccumulator->forceWithVirial->force_);
         dumpedEarlyAccumTrace = true;
+    }
+    if (dumpPairWriteProof)
+    {
+        dumpedPairWriteProof = true;
     }
 
     for (auto& accumulator : activeContributions)

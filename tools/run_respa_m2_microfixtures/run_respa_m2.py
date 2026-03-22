@@ -105,6 +105,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Collect dense_oligomer coarse step-0 early outer-accumulation diagnostics for M2e-style localization.",
     )
+    parser.add_argument(
+        "--exact-pair-write-ownership-proof",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 exact pair-write ownership diagnostics for M2f-style proof.",
+    )
     return parser.parse_args()
 
 
@@ -362,8 +367,79 @@ def parse_vector_dump(path: Path) -> dict[str, Any]:
     return {"metadata": metadata, "forces": forces}
 
 
+def parse_key_value_text(path: Path) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        stripped = raw_line.strip()
+        if not stripped:
+            continue
+        row: dict[str, str] = {}
+        for token in stripped.split():
+            if "=" in token:
+                key, value = token.split("=", 1)
+                row[key] = value
+        if row:
+            rows.append(row)
+    return rows
+
+
+def expand_sparse_vector(
+    sparse: dict[int, tuple[float, float, float]],
+    template: dict[int, tuple[float, float, float]],
+) -> dict[int, tuple[float, float, float]]:
+    expanded = {atom_index: (0.0, 0.0, 0.0) for atom_index in sorted(template)}
+    for atom_index, vector in sparse.items():
+        expanded[atom_index] = vector
+    return expanded
+
+
+def add_pair_source(
+    mapping: dict[tuple[int, int], list[str]],
+    atom_i_1based: int,
+    atom_j_1based: int,
+    label: str,
+) -> None:
+    key = tuple(sorted((atom_i_1based - 1, atom_j_1based - 1)))
+    mapping.setdefault(key, [])
+    if label not in mapping[key]:
+        mapping[key].append(label)
+
+
+def parse_topology_pair_sources(topology_path: Path) -> dict[tuple[int, int], list[str]]:
+    pair_sources: dict[tuple[int, int], list[str]] = {}
+    current_section = None
+    for raw_line in topology_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(";"):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            current_section = line.strip("[]").strip().lower()
+            continue
+        fields = line.split()
+        if current_section == "bonds" and len(fields) >= 2:
+            add_pair_source(pair_sources, int(fields[0]), int(fields[1]), "bond")
+        elif current_section == "pairs" and len(fields) >= 2:
+            add_pair_source(pair_sources, int(fields[0]), int(fields[1]), "pair14")
+        elif current_section == "angles" and len(fields) >= 3:
+            add_pair_source(pair_sources, int(fields[0]), int(fields[2]), "angle_endpoint")
+        elif current_section == "dihedrals" and len(fields) >= 4:
+            add_pair_source(pair_sources, int(fields[0]), int(fields[3]), "dihedral_endpoint")
+    return pair_sources
+
+
 def parse_excluded_force_dump(path: Path) -> dict[str, Any]:
     return parse_vector_dump(path)
+
+
+def read_potential_xvg(path: Path) -> list[dict[str, float]]:
+    series = []
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith(("#", "@")):
+            continue
+        time_value, potential_value = stripped.split()[:2]
+        series.append({"time_ps": float(time_value), "potential_kj_per_mol": float(potential_value)})
+    return series
 
 
 def maybe_minimum_image(diff: float, box_length: float | None) -> float:
@@ -983,6 +1059,241 @@ def dense_early_accumulation_localization(dense_fixture_summary: dict[str, Any])
     }
 
 
+def dense_pair_write_ownership_proof(dense_fixture_summary: dict[str, Any]) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    exact_dir = Path(coarse["exact_work_dir"])
+    trace_off_dir = Path(coarse["exact_trace_off_work_dir"])
+
+    plain_force_frames = parse_force_dump(plain_dir / "plain_total_force.tsv")
+    exact_force_frames = parse_force_dump(exact_dir / "exact_total_force.tsv")
+    trace_off_force_frames = parse_force_dump(trace_off_dir / "exact_total_force.tsv")
+    topology_sources = parse_topology_pair_sources(exact_dir / "system.top")
+
+    step0 = min(set(plain_force_frames) & set(exact_force_frames) & set(trace_off_force_frames))
+    plain_force = plain_force_frames[step0]["forces"]
+    exact_force = exact_force_frames[step0]["forces"]
+    trace_off_force = trace_off_force_frames[step0]["forces"]
+
+    excluded_before = parse_vector_dump(exact_dir / "step0_outer_excluded_write_ord000_before.tsv")
+    excluded_event = parse_vector_dump(exact_dir / "step0_outer_excluded_write_ord000_event.tsv")
+    excluded_after = parse_vector_dump(exact_dir / "step0_outer_excluded_write_ord000_after.tsv")
+    excluded_delta = subtract_vectors(excluded_after["forces"], excluded_before["forces"])
+    excluded_event_expanded = expand_sparse_vector(excluded_event["forces"], excluded_before["forces"])
+    excluded_delta_vs_event = vector_metrics(excluded_delta, excluded_event_expanded)
+
+    storage_rows = parse_key_value_text(exact_dir / "step0_force_storage_identity.txt")
+    builder_rows = parse_key_value_text(exact_dir / "step0_pairlist_builder_append_trace.txt")
+    preview_rows = parse_key_value_text(exact_dir / "step0_plain_pairlist_preview.txt")
+    membership_rows = parse_key_value_text(exact_dir / "step0_pair_key_membership_scan.txt")
+
+    top_level_storage: dict[str, str] = {}
+    level_storage: dict[str, dict[str, str]] = {}
+    for row in storage_rows:
+        if "level" in row:
+            level_storage.setdefault(row["level"], {}).update(row)
+        else:
+            top_level_storage.update(row)
+
+    excluded_builder = next(
+        (row for row in builder_rows if row.get("kind") == "excludedPairs" and row.get("ordinal") == "0"),
+        None,
+    )
+    excluded_preview = next(
+        (row for row in preview_rows if row.get("kind") == "excludedPairs" and row.get("ordinal") == "0"),
+        None,
+    )
+    excluded_membership = next(
+        (row for row in membership_rows if row.get("kind") == "excluded" and row.get("ordinal") == "0"),
+        None,
+    )
+
+    excluded_metadata = excluded_event["metadata"]
+    excluded_pair = (int(excluded_metadata["ai"]), int(excluded_metadata["aj"]))
+    excluded_key = tuple(sorted(excluded_pair))
+    excluded_topology_sources = topology_sources.get(excluded_key, [])
+
+    excluded_builder_matches_event = (
+        excluded_builder is not None
+        and excluded_builder.get("ai") == excluded_metadata.get("ai")
+        and excluded_builder.get("aj") == excluded_metadata.get("aj")
+        and excluded_builder.get("shift_index") == excluded_metadata.get("shift_index")
+    )
+    excluded_preview_matches_event = (
+        excluded_preview is not None
+        and excluded_preview.get("ai") == excluded_metadata.get("ai")
+        and excluded_preview.get("aj") == excluded_metadata.get("aj")
+        and excluded_preview.get("shift_index") == excluded_metadata.get("shift_index")
+    )
+
+    def choose_control() -> dict[str, Any] | None:
+        for ordinal in range(8):
+            event_path = exact_dir / f"step0_outer_pairs_write_ord{ordinal}_event.tsv"
+            before_path = exact_dir / f"step0_outer_pairs_write_ord{ordinal}_before.tsv"
+            after_path = exact_dir / f"step0_outer_pairs_write_ord{ordinal}_after.tsv"
+            if not event_path.exists() or not before_path.exists() or not after_path.exists():
+                continue
+            event_dump = parse_vector_dump(event_path)
+            event_meta = event_dump["metadata"]
+            pair = (int(event_meta["ai"]), int(event_meta["aj"]))
+            pair_key = tuple(sorted(pair))
+            topology_labels = topology_sources.get(pair_key, [])
+            membership_row = next(
+                (
+                    row
+                    for row in membership_rows
+                    if row.get("kind") == "pairs" and row.get("ordinal") == str(ordinal)
+                ),
+                None,
+            )
+            builder_row = next(
+                (
+                    row
+                    for row in builder_rows
+                    if row.get("kind") == "pairs" and row.get("ordinal") == str(ordinal)
+                ),
+                None,
+            )
+            if membership_row is None or builder_row is None:
+                continue
+            is_clean = (
+                not topology_labels
+                and membership_row.get("in_plain_excluded") == "0"
+                and membership_row.get("in_debug_listed_pair_keys") == "false"
+            )
+            if not is_clean:
+                continue
+            before_dump = parse_vector_dump(before_path)
+            after_dump = parse_vector_dump(after_path)
+            control_delta = subtract_vectors(after_dump["forces"], before_dump["forces"])
+            control_event_expanded = expand_sparse_vector(event_dump["forces"], before_dump["forces"])
+            control_minus_plain = vector_metrics(subtract_vectors(exact_force, control_event_expanded), plain_force)
+            return {
+                "ordinal": ordinal,
+                "pair": pair,
+                "topology_sources": topology_labels,
+                "builder_row": builder_row,
+                "membership_row": membership_row,
+                "before_dump": before_dump,
+                "event_dump": event_dump,
+                "after_dump": after_dump,
+                "delta_vs_event": vector_metrics(control_delta, control_event_expanded),
+                "alignment_with_exact_minus_plain": vector_alignment(
+                    control_event_expanded, subtract_vectors(exact_force, plain_force)
+                ),
+                "exact_minus_control_vs_plain": control_minus_plain,
+            }
+        return None
+
+    control = choose_control()
+    trace_off_vs_trace_on_force = vector_metrics(exact_force, trace_off_force)
+    trace_on_potential = read_potential_xvg(exact_dir / "exact_potential.xvg")
+    trace_off_potential = read_potential_xvg(trace_off_dir / "exact_potential.xvg")
+    trace_off_vs_trace_on_potential = abs(
+        trace_on_potential[0]["potential_kj_per_mol"] - trace_off_potential[0]["potential_kj_per_mol"]
+    )
+
+    exact_minus_excluded_vs_plain = vector_metrics(
+        subtract_vectors(exact_force, excluded_event_expanded), plain_force
+    )
+
+    storage_disjointness = {
+        "outer_vs_shift_disjoint": top_level_storage.get("outer_accumulator_force_ptr")
+        != top_level_storage.get("outer_outputs_shift_force_ptr"),
+        "outer_vs_level0_shift_disjoint": top_level_storage.get("outer_accumulator_force_ptr")
+        != level_storage.get("0", {}).get("shift_force_ptr"),
+        "outer_vs_level1_shift_disjoint": top_level_storage.get("outer_accumulator_force_ptr")
+        != level_storage.get("1", {}).get("shift_force_ptr"),
+        "outer_vs_level2_shift_disjoint": top_level_storage.get("outer_accumulator_force_ptr")
+        != level_storage.get("2", {}).get("shift_force_ptr"),
+        "outer_force_equals_virial_buffer": top_level_storage.get("outer_accumulator_force_ptr")
+        == top_level_storage.get("outer_accumulator_virial_ptr"),
+        "outer_aliases_shift": top_level_storage.get("outer_aliases_shift") == "true",
+    }
+
+    earlier_ownership_fault_alive = bool(excluded_topology_sources)
+    control_clean = control is not None
+    trace_semantics_unchanged = (
+        trace_off_vs_trace_on_force["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and trace_off_vs_trace_on_potential <= POTENTIAL_BOOKKEEPING_TOL
+    )
+    supports_exact_first_illegal_write = (
+        excluded_delta_vs_event["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and excluded_builder_matches_event
+        and excluded_preview_matches_event
+        and not earlier_ownership_fault_alive
+        and control_clean
+        and control["delta_vs_event"]["max_abs"] <= FORCE_BOOKKEEPING_TOL
+        and storage_disjointness["outer_vs_shift_disjoint"]
+        and storage_disjointness["outer_vs_level0_shift_disjoint"]
+        and storage_disjointness["outer_vs_level1_shift_disjoint"]
+        and storage_disjointness["outer_force_equals_virial_buffer"]
+        and not storage_disjointness["outer_aliases_shift"]
+        and trace_semantics_unchanged
+    )
+
+    localization = {
+        "classification": (
+            "exact first illegal pair-write ownership proven"
+            if supports_exact_first_illegal_write
+            else "first visible consumer proven; earlier ownership/spec fault still alive"
+            if earlier_ownership_fault_alive
+            else "still unresolved"
+        ),
+        "step0": step0,
+        "excluded_pair_write": {
+            "metadata": excluded_metadata,
+            "delta_vs_event": excluded_delta_vs_event,
+            "builder_matches_event": excluded_builder_matches_event,
+            "preview_matches_event": excluded_preview_matches_event,
+            "builder_row": excluded_builder,
+            "preview_row": excluded_preview,
+            "membership_row": excluded_membership,
+            "topology_sources": excluded_topology_sources,
+            "exact_minus_excluded_vs_plain": exact_minus_excluded_vs_plain,
+        },
+        "storage_identity": {
+            "top_level": top_level_storage,
+            "levels": level_storage,
+            "disjointness": storage_disjointness,
+        },
+        "ownership_lineage": {
+            "builder_trace_path": str(exact_dir / "step0_pairlist_builder_append_trace.txt"),
+            "pairlist_preview_path": str(exact_dir / "step0_plain_pairlist_preview.txt"),
+            "membership_scan_path": str(exact_dir / "step0_pair_key_membership_scan.txt"),
+        },
+        "known_good_control": None
+        if control is None
+        else {
+            "ordinal": control["ordinal"],
+            "pair": control["pair"],
+            "builder_row": control["builder_row"],
+            "membership_row": control["membership_row"],
+            "topology_sources": control["topology_sources"],
+            "delta_vs_event": control["delta_vs_event"],
+            "alignment_with_exact_minus_plain": control["alignment_with_exact_minus_plain"],
+            "exact_minus_control_vs_plain": control["exact_minus_control_vs_plain"],
+        },
+        "trace_on_vs_trace_off": {
+            "step0_force_diff": trace_off_vs_trace_on_force,
+            "step0_potential_abs_diff_kj_per_mol": trace_off_vs_trace_on_potential,
+        },
+        "supports_exact_first_illegal_write": supports_exact_first_illegal_write,
+        "earlier_ownership_fault_alive": earlier_ownership_fault_alive,
+        "why_not_fully_closed": (
+            "The exact pair-write boundary is captured, but the traced pair already belongs to earlier "
+            "topology ownership buckets."
+            if earlier_ownership_fault_alive
+            else "The exact pair-write boundary is captured within this dense step-0 scope only."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "localization": localization,
+    }
+
+
 def summarize_dense_trace_fixture(
     fixture_id: str,
     topology_terms: list[str],
@@ -1076,7 +1387,7 @@ def run_case(
         deffnm = "legacy"
         mdp_path = work_dir / "legacy.mdp"
         nsteps = write_legacy_mdp(mdp_path, dt_ps, total_time_ps)
-    elif mode == "exact_three_level":
+    elif mode in {"exact_three_level", "exact_three_level_trace_off"}:
         deffnm = "exact"
         mdp_path = work_dir / "exact.mdp"
         nsteps = write_exact_mdp(mdp_path, dt_ps, total_time_ps)
@@ -1344,6 +1655,7 @@ def main() -> int:
             args.dense_force_ownership_isolation
             or args.dense_merge_trace
             or args.dense_early_accumulation_trace
+            or args.exact_pair_write_ownership_proof
         ) and fixture_id == "dense_oligomer":
             coarse_plain_env = {
                 "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
@@ -1367,6 +1679,11 @@ def main() -> int:
         if args.dense_early_accumulation_trace and fixture_id == "dense_oligomer":
             coarse_exact_env = dict(coarse_exact_env or {})
             coarse_exact_env["GMX_PCFF_RESPA_EARLY_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
+        if args.exact_pair_write_ownership_proof and fixture_id == "dense_oligomer":
+            coarse_exact_env = dict(coarse_exact_env or {})
+            coarse_exact_env["GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR"] = str(
                 system_root / "dt_0p0005" / "exact_three_level"
             )
         if args.dense_bookkeeping_isolation and fixture_id == "dense_oligomer":
@@ -1403,7 +1720,28 @@ def main() -> int:
             commands_log,
             extra_env=coarse_exact_env,
         )
-        if (args.dense_merge_trace or args.dense_early_accumulation_trace) and fixture_id == "dense_oligomer":
+        coarse_exact_trace_off = None
+        if args.exact_pair_write_ownership_proof and fixture_id == "dense_oligomer":
+            coarse_exact_trace_off = run_case(
+                gmx_bin,
+                system_root,
+                system_root / "dt_0p0005" / "exact_three_level_trace_off",
+                "exact_three_level_trace_off",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env={
+                    "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                    "GMX_TOTAL_FORCE_DUMP_FILE": str(
+                        system_root / "dt_0p0005" / "exact_three_level_trace_off" / "exact_total_force.tsv"
+                    ),
+                },
+            )
+        if (
+            args.dense_merge_trace
+            or args.dense_early_accumulation_trace
+            or args.exact_pair_write_ownership_proof
+        ) and fixture_id == "dense_oligomer":
             fixture_summary = summarize_dense_trace_fixture(
                 fixture_id,
                 inner_terms_from_topology(topology_text),
@@ -1412,6 +1750,8 @@ def main() -> int:
                 coarse_side_reference,
                 coarse_exact,
             )
+            if coarse_exact_trace_off is not None:
+                fixture_summary["coarse"]["exact_trace_off_work_dir"] = coarse_exact_trace_off["work_dir"]
         else:
             fine_plain = run_case(
                 gmx_bin,
@@ -1471,10 +1811,27 @@ def main() -> int:
             fixture_summary["dense_exact_early_accumulation_localization"] = dense_early_accumulation_localization(
                 fixture_summary
             )
+        if args.exact_pair_write_ownership_proof and fixture_id == "dense_oligomer":
+            fixture_summary["dense_exact_pair_write_ownership_proof"] = dense_pair_write_ownership_proof(
+                fixture_summary
+            )
         fixture_results.append(fixture_summary)
         write_json(system_root / "fixture_summary.json", fixture_summary)
 
-    if args.dense_early_accumulation_trace:
+    if args.exact_pair_write_ownership_proof:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_exact_pair_write_ownership_proof", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_exact_first_illegal_write"):
+            verdict = "EXACT FIRST ILLEGAL PAIR-WRITE OWNERSHIP PROVEN"
+        elif dense_localization and dense_localization.get("earlier_ownership_fault_alive"):
+            verdict = "FIRST VISIBLE CONSUMER PROVEN; EARLIER OWNERSHIP STILL ALIVE"
+        else:
+            verdict = "PAIR-WRITE OWNERSHIP STILL PARTIAL"
+    elif args.dense_early_accumulation_trace:
         dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
         dense_localization = (
             None

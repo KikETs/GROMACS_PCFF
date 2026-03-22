@@ -44,6 +44,11 @@
 
 #include "pairlistset.h"
 
+#include <cstdio>
+#include <cstdlib>
+#include <filesystem>
+#include <string>
+
 #include "gromacs/nbnxm/atomdata.h"
 #include "gromacs/nbnxm/nbnxm.h"
 #include "gromacs/nbnxm/pairlist.h"
@@ -63,6 +68,23 @@ PairlistSet::~PairlistSet() = default;
 namespace
 {
 
+void appendPairlistTraceLine(const char* traceDirPath, const std::string& line)
+{
+    GMX_RELEASE_ASSERT(traceDirPath != nullptr && *traceDirPath != '\0', "Need a valid pairlist trace directory");
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::filesystem::path outputPath = traceDir / "step0_pairlist_builder_append_trace.txt";
+
+    FILE* dumpFile = std::fopen(outputPath.string().c_str(), "a");
+    if (dumpFile == nullptr)
+    {
+        GMX_RELEASE_ASSERT(false, "Could not open pairlist builder trace output");
+    }
+    std::fprintf(dumpFile, "%s\n", line.c_str());
+    std::fclose(dumpFile);
+}
+
 void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
                             const NbnxnPairlistCpu& pairlist,
                             const PairlistParams&   params,
@@ -71,8 +93,12 @@ void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
                             ArrayRef<const int>     atomIndices)
 {
     constexpr int                      c_maxClusterSize = 8;
+    constexpr int                      c_maxTracedPairs = 8;
     std::array<int, c_maxClusterSize>  atomI;
     std::array<RVec, c_maxClusterSize> xI;
+    const char*                        pairWriteProofDirPath = std::getenv("GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR");
+    static int                         tracedPairsAppended   = 0;
+    static int                         tracedExcludedAppended = 0;
 
     ArrayRef<const nbnxn_ci_t> ciList;
     ArrayRef<const nbnxn_cj_t> cjList;
@@ -128,12 +154,39 @@ void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
                     {
                         if (jEntry.excl & (1 << (i * pairlist.na_cj + j)))
                         {
+                            if (pairWriteProofDirPath != nullptr && *pairWriteProofDirPath != '\0'
+                                && tracedPairsAppended < c_maxTracedPairs)
+                            {
+                                appendPairlistTraceLine(pairWriteProofDirPath,
+                                                        "kind=pairs ordinal=" + std::to_string(tracedPairsAppended)
+                                                                + " source=appendPlainPairlistCpu ai="
+                                                                + std::to_string(atomI[i]) + " aj="
+                                                                + std::to_string(atomJ) + " shift_index="
+                                                                + std::to_string(shiftIndex) + " i_atom_index="
+                                                                + std::to_string(iAtomIndex) + " j_atom_index="
+                                                                + std::to_string(jAtomIndex) + " excl_bit=1");
+                                tracedPairsAppended++;
+                            }
                             plainPairlist->pairs.push_back({ { atomI[i], atomJ }, shiftIndex });
                         }
                         else if (shiftIndex != gmx::c_centralShiftIndex || jAtomIndex > iAtomIndex)
                         {
                             GMX_ASSERT(atomJ != atomI[i], "We should not add self-pairs");
 
+                            if (pairWriteProofDirPath != nullptr && *pairWriteProofDirPath != '\0'
+                                && tracedExcludedAppended < 1)
+                            {
+                                appendPairlistTraceLine(pairWriteProofDirPath,
+                                                        "kind=excludedPairs ordinal="
+                                                                + std::to_string(tracedExcludedAppended)
+                                                                + " source=appendPlainPairlistCpu ai="
+                                                                + std::to_string(atomI[i]) + " aj="
+                                                                + std::to_string(atomJ) + " shift_index="
+                                                                + std::to_string(shiftIndex) + " i_atom_index="
+                                                                + std::to_string(iAtomIndex) + " j_atom_index="
+                                                                + std::to_string(jAtomIndex) + " excl_bit=0");
+                                tracedExcludedAppended++;
+                            }
                             plainPairlist->excludedPairs.push_back({ { atomI[i], atomJ }, shiftIndex });
                         }
                     }
