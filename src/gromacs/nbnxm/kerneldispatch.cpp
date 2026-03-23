@@ -35,6 +35,9 @@
 #include "gmxpre.h"
 
 #include <algorithm>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <string>
 
@@ -90,6 +93,92 @@
 
 namespace gmx
 {
+
+namespace
+{
+
+void appendM2pTraceTextLine(const char* traceDirPath, const char* fileName, const std::string& line)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::create_directories(traceDirPath);
+    std::ofstream output(std::filesystem::path(traceDirPath) / fileName, std::ios::app);
+    output << line << '\n';
+}
+
+struct KernelEnergyReadTrace
+{
+    double firstReadTotal = 0.0;
+    double finalTotal     = 0.0;
+    bool   firstCaptured  = false;
+};
+
+double sumKernelStoredEnergyOutputs(const nbnxn_atomdata_t* nbat, int nlist, const bool vdwEnergy)
+{
+    const int nenergrp = nbat->params().numEnergyGroups;
+    double    total    = 0.0;
+
+    for (int nb = 0; nb < nlist; ++nb)
+    {
+        const auto& energies = vdwEnergy ? nbat->outputBuffer(nb).Vvdw : nbat->outputBuffer(nb).Vc;
+        for (int i = 0; i < nenergrp; ++i)
+        {
+            for (int j = 0; j < nenergrp; ++j)
+            {
+                total += energies[i * nenergrp + j];
+            }
+        }
+    }
+
+    return total;
+}
+
+KernelEnergyReadTrace traceKernelEnergyOutputs(const nbnxn_atomdata_t* nbat, int nlist, const bool vdwEnergy)
+{
+    const int             nenergrp = nbat->params().numEnergyGroups;
+    KernelEnergyReadTrace trace;
+    double                total = 0.0;
+
+    const auto noteRead = [&trace, &total](const real value)
+    {
+        total += value;
+        if (!trace.firstCaptured)
+        {
+            trace.firstReadTotal = total;
+            trace.firstCaptured  = true;
+        }
+    };
+
+    for (int nb = 0; nb < nlist; ++nb)
+    {
+        const auto& energies = vdwEnergy ? nbat->outputBuffer(nb).Vvdw : nbat->outputBuffer(nb).Vc;
+        for (int i = 0; i < nenergrp; ++i)
+        {
+            const int indDiagonal = i * nenergrp + i;
+            noteRead(energies[indDiagonal]);
+            for (int j = i + 1; j < nenergrp; ++j)
+            {
+                const int ind  = i * nenergrp + j;
+                const int indr = j * nenergrp + i;
+                noteRead(energies[ind]);
+                noteRead(energies[indr]);
+            }
+        }
+    }
+
+    trace.finalTotal = total;
+    return trace;
+}
+
+double sumKernelEnergyOutputs(const nbnxn_atomdata_t* nbat, int nlist, const bool vdwEnergy)
+{
+    return traceKernelEnergyOutputs(nbat, nlist, vdwEnergy).finalTotal;
+}
+
+} // namespace
 enum class InteractionLocality : int;
 
 CoulombKernelType getCoulombKernelType(const EwaldExclusionType     ewaldExclusionType,
@@ -245,6 +334,44 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
                                        ic.vdw.pmeCombinationRule);
 
     const bool usingSimdKernel = kernelTypeIsSimd(kernelSetup.kernelType);
+    const char* m2wTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2W_TRACE_DIR");
+    const char* m2wCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2W_CASE_LABEL");
+    const bool  dumpM2wTrace = (m2wTraceDirPath != nullptr && *m2wTraceDirPath != '\0');
+    const char* m2xTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2X_TRACE_DIR");
+    const char* gmx_unused m2xCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2X_CASE_LABEL");
+    const bool  dumpM2xTrace = (m2xTraceDirPath != nullptr && *m2xTraceDirPath != '\0');
+    const char* m2vTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2V_TRACE_DIR");
+    const char* m2vCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2V_CASE_LABEL");
+    const bool  dumpM2vTrace = (m2vTraceDirPath != nullptr && *m2vTraceDirPath != '\0');
+    const char* m2uTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2U_TRACE_DIR");
+    const char* m2uCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2U_CASE_LABEL");
+    const bool  dumpM2uTrace = (m2uTraceDirPath != nullptr && *m2uTraceDirPath != '\0');
+    const char* m2sTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2S_TRACE_DIR");
+    const char* m2sCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2S_CASE_LABEL");
+    const bool  dumpM2sTrace = (m2sTraceDirPath != nullptr && *m2sTraceDirPath != '\0');
+    const char* m2rTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2R_TRACE_DIR");
+    const char* m2rCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2R_CASE_LABEL");
+    const bool  dumpM2rTrace = (m2rTraceDirPath != nullptr && *m2rTraceDirPath != '\0');
+    const char* m2qTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2Q_TRACE_DIR");
+    const char* m2qCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2Q_CASE_LABEL");
+    const bool  dumpM2qTrace = (m2qTraceDirPath != nullptr && *m2qTraceDirPath != '\0');
+    const char* m2pTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    const char* m2pCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2P_CASE_LABEL");
+    const bool  dumpM2pTrace = (m2pTraceDirPath != nullptr && *m2pTraceDirPath != '\0');
+    if ((dumpM2wTrace || dumpM2xTrace || dumpM2vTrace || dumpM2uTrace || dumpM2qTrace || dumpM2rTrace
+         || dumpM2sTrace || dumpM2pTrace)
+        && kernelSetup.kernelType == NbnxmKernelType::Cpu4x4_PlainC)
+    {
+        resetM2wPlain4x4AlignedEventTrace();
+        resetM2xPlain4x4GeometryTrace();
+        resetM2vPlain4x4AlignedEventTrace();
+        resetM2uPlain4x4WriteOrdinalTrace();
+        resetM2qPlain4x4EarliestRawTrace();
+        resetM2rPlain4x4AmplificationTrace();
+        resetM2sPlain4x4InternalTrace();
+        resetM2pPlain4x4CoulombContractReplay();
+        resetM2pPlain4x4LjContractReplay();
+    }
 
     gmx::ArrayRef<const NbnxnPairlistCpu> pairlists = pairlistSet.cpuLists();
 
@@ -389,6 +516,271 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
 
     if (stepWork.computeEnergy)
     {
+        const char* ljSrTraceDirPath =
+                dumpM2wTrace ? m2wTraceDirPath
+                             : (dumpM2vTrace ? m2vTraceDirPath
+                             : (dumpM2uTrace ? m2uTraceDirPath
+                             : (dumpM2sTrace ? m2sTraceDirPath
+                                             : (dumpM2rTrace ? m2rTraceDirPath
+                                                             : (dumpM2qTrace ? m2qTraceDirPath
+                                                                             : std::getenv(
+                                                                                       "GMX_PCFF_RESPA_M2P_TRACE_DIR"))))));
+        const char* ljSrCaseLabelEnv =
+                dumpM2wTrace ? m2wCaseLabelEnv
+                             : (dumpM2vTrace ? m2vCaseLabelEnv
+                             : (dumpM2uTrace ? m2uCaseLabelEnv
+                             : (dumpM2sTrace ? m2sCaseLabelEnv
+                                             : (dumpM2rTrace ? m2rCaseLabelEnv
+                                                             : (dumpM2qTrace ? m2qCaseLabelEnv
+                                                                             : std::getenv(
+                                                                                       "GMX_PCFF_RESPA_M2P_CASE_LABEL"))))));
+        if ((dumpM2qTrace || dumpM2rTrace || dumpM2sTrace || dumpM2uTrace || dumpM2vTrace || dumpM2wTrace)
+            && kernelSetup.kernelType == NbnxmKernelType::Cpu4x4_PlainC)
+        {
+            appendM2pTraceTextLine(
+                    ljSrTraceDirPath,
+                    "step0_lj_sr_internal_trace.txt",
+                    "stage=EARLIEST_RAW_STAGE code_location=src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:pre_Vvdw_accumulation case_label="
+                            + std::string(
+                                    (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0') ? ljSrCaseLabelEnv :
+                                                                                                  "unknown")
+                            + " execution_path=plain_cpu4x4_ref_kernel_inner kernel_type="
+                            + std::string(nbnxmKernelTypeToName(kernelSetup.kernelType))
+                            + " using_simd_kernel=false trace_role=contract_matched_raw_lj_formation_aggregate lj_sr="
+                            + formatString("%.15f", readM2qPlain4x4EarliestRawTrace()));
+        }
+        if ((dumpM2rTrace || dumpM2sTrace) && kernelSetup.kernelType == NbnxmKernelType::Cpu4x4_PlainC)
+        {
+            appendM2pTraceTextLine(
+                    ljSrTraceDirPath,
+                    "step0_lj_sr_internal_trace.txt",
+                    "stage=INTERMEDIATE_LOCAL_STAGE code_location=src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:post_kernel_local_energy_buffer_before_dispatch_transfer case_label="
+                            + std::string(
+                                    (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0') ? ljSrCaseLabelEnv :
+                                                                                                  "unknown")
+                            + " execution_path=plain_cpu4x4_ref_kernel_local_energy_buffer kernel_type="
+                            + std::string(nbnxmKernelTypeToName(kernelSetup.kernelType))
+                            + " using_simd_kernel=false trace_role=contract_matched_kernel_local_lj_aggregate lj_sr="
+                            + formatString("%.15f", readM2rPlain4x4KernelLocalAggregateTrace()));
+        }
+        if (ljSrTraceDirPath != nullptr && *ljSrTraceDirPath != '\0')
+        {
+            const double             rawPostWriteLjSrTotal = sumKernelStoredEnergyOutputs(nbat, pairlists.ssize(), true);
+            const auto               rawLjReadTrace        = traceKernelEnergyOutputs(nbat, pairlists.ssize(), true);
+            const auto               rawCoulReadTrace      = traceKernelEnergyOutputs(nbat, pairlists.ssize(), false);
+            const double             plainPatchContractReplayTotal = readM2pPlain4x4CoulombContractReplayTotal();
+            const double             rawLjSrTotal          = rawLjReadTrace.finalTotal;
+            const double             rawCoulSrTotal        = rawCoulReadTrace.finalTotal;
+            const std::string        caseLabel =
+                    (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0') ? ljSrCaseLabelEnv :
+                    ((m2pCaseLabelEnv != nullptr && *m2pCaseLabelEnv != '\0') ? m2pCaseLabelEnv : "unknown");
+            const std::string        kernelType = nbnxmKernelTypeToName(kernelSetup.kernelType);
+            const std::string        simdLabel  = usingSimdKernel ? "true" : "false";
+            if ((dumpM2vTrace || dumpM2wTrace) && kernelSetup.kernelType == NbnxmKernelType::Cpu4x4_PlainC)
+            {
+                const auto alignedEventTotals =
+                        dumpM2wTrace ? readM2wPlain4x4AlignedEventTotals() : readM2vPlain4x4AlignedEventTotals();
+                if (!alignedEventTotals.empty())
+                {
+                    for (std::size_t eventIndex = 0; eventIndex < alignedEventTotals.size(); ++eventIndex)
+                    {
+                        appendM2pTraceTextLine(
+                                ljSrTraceDirPath,
+                                "step0_lj_sr_internal_trace.txt",
+                                "stage=ALIGNED_WRITE_EVENT_" + std::to_string(eventIndex + 1)
+                                        + " code_location=src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:after_plain_pair_energy_event case_label="
+                                        + caseLabel
+                                        + " execution_path=plain_aligned_pair_energy_event kernel_type="
+                                        + kernelType + " using_simd_kernel=" + simdLabel
+                                        + " aligned_contract=running_total_after_admitted_pair_energy_event aligned_event_ordinal="
+                                        + std::to_string(eventIndex + 1) + " lj_sr="
+                                        + formatString("%.15f", alignedEventTotals[eventIndex]));
+                    }
+                    appendM2pTraceTextLine(
+                            ljSrTraceDirPath,
+                            "step0_lj_sr_internal_trace.txt",
+                            "stage=ALIGNED_LAST_EVENT_BEFORE_RAW_POST_WRITE code_location=src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:after_plain_last_pair_energy_event case_label="
+                                    + caseLabel
+                                    + " execution_path=plain_aligned_pair_energy_after_last_event kernel_type="
+                                    + kernelType + " using_simd_kernel=" + simdLabel
+                                    + " aligned_contract=running_total_after_admitted_pair_energy_event aligned_event_ordinal="
+                                    + std::to_string(alignedEventTotals.size()) + " lj_sr="
+                                    + formatString("%.15f", alignedEventTotals.back()));
+                }
+                appendM2pTraceTextLine(
+                        ljSrTraceDirPath,
+                        "step0_lj_sr_internal_trace.txt",
+                        "stage=RAW_POST_WRITE_EQUIVALENT code_location=src/gromacs/nbnxm/kerneldispatch.cpp:plain_output_buffer_post_kernel case_label="
+                                + caseLabel + " execution_path=plain_aligned_post_write_equivalent kernel_type="
+                                + kernelType + " using_simd_kernel=" + simdLabel
+                                + " trace_role=post_aligned_event_target_state lj_sr="
+                                + formatString("%.15f", rawPostWriteLjSrTotal));
+                if (rawLjReadTrace.firstCaptured)
+                {
+                    appendM2pTraceTextLine(
+                            ljSrTraceDirPath,
+                            "step0_lj_sr_internal_trace.txt",
+                            "stage=RAW_FIRST_READ_OR_REDUCE code_location=src/gromacs/nbnxm/kerneldispatch.cpp:sumKernelEnergyOutputs_first_read case_label="
+                                    + caseLabel
+                                    + " execution_path=plain_sumKernelEnergyOutputs_first_read kernel_type="
+                                    + kernelType + " using_simd_kernel=" + simdLabel
+                                    + " trace_role=first_reducer_read_partial_total lj_sr="
+                                    + formatString("%.15f", rawLjReadTrace.firstReadTotal));
+                }
+                appendM2pTraceTextLine(
+                        ljSrTraceDirPath,
+                        "step0_lj_sr_internal_trace.txt",
+                        "stage=RAW_POST_READ_OR_REDUCE code_location=src/gromacs/nbnxm/kerneldispatch.cpp:sumKernelEnergyOutputs_final_total case_label="
+                                + caseLabel + " execution_path=plain_sumKernelEnergyOutputs_post_read kernel_type="
+                                + kernelType + " using_simd_kernel=" + simdLabel
+                                + " trace_role=post_reducer_total lj_sr="
+                                + formatString("%.15f", rawLjReadTrace.finalTotal));
+            }
+            else if ((dumpM2sTrace || dumpM2uTrace) && kernelSetup.kernelType == NbnxmKernelType::Cpu4x4_PlainC)
+            {
+                const auto writeOrdinalTotals = readM2uPlain4x4WriteOrdinalTotals();
+                appendM2pTraceTextLine(
+                        ljSrTraceDirPath,
+                        "step0_lj_sr_internal_trace.txt",
+                        "stage=RAW_PRE_TRANSFER code_location=src/gromacs/nbnxm/kerneldispatch.cpp:plain_pre_output_buffer_transfer case_label="
+                                + caseLabel
+                                + " execution_path=plain_cpu4x4_ref_kernel_pre_transfer kernel_type=" + kernelType
+                                + " using_simd_kernel=" + simdLabel
+                                + " trace_role=source_aggregate_before_first_output_buffer_write lj_sr="
+                                + formatString("%.15f", readM2rPlain4x4KernelLocalAggregateTrace()));
+                if (dumpM2uTrace && !writeOrdinalTotals.empty())
+                {
+                    appendM2pTraceTextLine(
+                            ljSrTraceDirPath,
+                            "step0_lj_sr_internal_trace.txt",
+                            "stage=RAW_FIRST_WRITE code_location=src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:after_outputBuffer_Vvdw_write_ordinal_1 case_label="
+                                    + caseLabel
+                                    + " execution_path=plain_outputBuffer_after_write_ordinal kernel_type="
+                                    + kernelType + " using_simd_kernel=" + simdLabel
+                                    + " target_container=outputBuffer.Vvdw output_buffer_count="
+                                    + std::to_string(pairlists.ssize())
+                                    + " trace_role=running_total_after_write_ordinal write_ordinal=1 lj_sr="
+                                    + formatString("%.15f", writeOrdinalTotals.front()));
+                    for (std::size_t ordinalIndex = 1; ordinalIndex < writeOrdinalTotals.size(); ++ordinalIndex)
+                    {
+                        appendM2pTraceTextLine(
+                                ljSrTraceDirPath,
+                                "step0_lj_sr_internal_trace.txt",
+                                "stage=AFTER_WRITE_ORDINAL_" + std::to_string(ordinalIndex + 1)
+                                        + " code_location=src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:after_outputBuffer_Vvdw_write_ordinal case_label="
+                                        + caseLabel
+                                        + " execution_path=plain_outputBuffer_after_write_ordinal kernel_type="
+                                        + kernelType + " using_simd_kernel=" + simdLabel
+                                        + " target_container=outputBuffer.Vvdw output_buffer_count="
+                                        + std::to_string(pairlists.ssize())
+                                        + " trace_role=running_total_after_write_ordinal write_ordinal="
+                                        + std::to_string(ordinalIndex + 1) + " lj_sr="
+                                        + formatString("%.15f", writeOrdinalTotals[ordinalIndex]));
+                    }
+                    appendM2pTraceTextLine(
+                            ljSrTraceDirPath,
+                            "step0_lj_sr_internal_trace.txt",
+                            "stage=AFTER_LAST_WRITE_BEFORE_RAW_POST_WRITE code_location=src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:after_outputBuffer_Vvdw_last_write case_label="
+                                    + caseLabel
+                                    + " execution_path=plain_outputBuffer_after_last_write kernel_type="
+                                    + kernelType + " using_simd_kernel=" + simdLabel
+                                    + " target_container=outputBuffer.Vvdw output_buffer_count="
+                                    + std::to_string(pairlists.ssize())
+                                    + " trace_role=running_total_after_last_write_before_raw_post_write write_ordinal="
+                                    + std::to_string(writeOrdinalTotals.size()) + " lj_sr="
+                                    + formatString("%.15f", writeOrdinalTotals.back()));
+                }
+                else if (m2sPlain4x4FirstWriteCaptured())
+                {
+                    appendM2pTraceTextLine(
+                            ljSrTraceDirPath,
+                            "step0_lj_sr_internal_trace.txt",
+                            "stage=RAW_FIRST_WRITE code_location=src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:first_output_buffer_mutation case_label="
+                                    + caseLabel
+                                    + " execution_path=plain_cpu4x4_ref_kernel_first_output_write kernel_type="
+                                    + kernelType + " using_simd_kernel=" + simdLabel
+                                    + " trace_role=first_output_buffer_write_target lj_sr="
+                                    + formatString("%.15f", readM2sPlain4x4FirstWriteTargetTotal()));
+                }
+                appendM2pTraceTextLine(
+                        ljSrTraceDirPath,
+                        "step0_lj_sr_internal_trace.txt",
+                        "stage=RAW_POST_WRITE code_location=src/gromacs/nbnxm/kerneldispatch.cpp:plain_output_buffer_post_kernel case_label="
+                                + caseLabel + " execution_path=plain_output_buffer_after_kernel_write kernel_type="
+                                + kernelType + " using_simd_kernel=" + simdLabel
+                                + " target_container=outputBuffer.Vvdw output_buffer_count="
+                                + std::to_string(pairlists.ssize()) + " write_count="
+                                + std::to_string(writeOrdinalTotals.size())
+                                + " trace_role=post_write_target_state lj_sr="
+                                + formatString("%.15f", rawPostWriteLjSrTotal));
+                if (rawLjReadTrace.firstCaptured)
+                {
+                    appendM2pTraceTextLine(
+                            ljSrTraceDirPath,
+                            "step0_lj_sr_internal_trace.txt",
+                            "stage=RAW_FIRST_READ_OR_REDUCE code_location=src/gromacs/nbnxm/kerneldispatch.cpp:sumKernelEnergyOutputs_first_read case_label="
+                                    + caseLabel
+                                    + " execution_path=plain_sumKernelEnergyOutputs_first_read kernel_type="
+                                    + kernelType + " using_simd_kernel=" + simdLabel
+                                    + " trace_role=first_reducer_read_partial_total lj_sr="
+                                    + formatString("%.15f", rawLjReadTrace.firstReadTotal));
+                }
+                appendM2pTraceTextLine(
+                        ljSrTraceDirPath,
+                        "step0_lj_sr_internal_trace.txt",
+                        "stage=RAW_POST_READ_OR_REDUCE code_location=src/gromacs/nbnxm/kerneldispatch.cpp:sumKernelEnergyOutputs_final_total case_label="
+                                + caseLabel + " execution_path=plain_sumKernelEnergyOutputs_post_read kernel_type="
+                                + kernelType + " using_simd_kernel=" + simdLabel
+                                + " trace_role=post_reducer_total lj_sr="
+                                + formatString("%.15f", rawLjReadTrace.finalTotal));
+            }
+            appendM2pTraceTextLine(
+                    ljSrTraceDirPath,
+                    "step0_lj_sr_internal_trace.txt",
+                    "stage=RAW_SR_FORMATION code_location=src/gromacs/nbnxm/kerneldispatch.cpp:430 case_label="
+                            + caseLabel + " execution_path=plain_nbnxm_cpu kernel_type=" + kernelType
+                            + " using_simd_kernel=" + simdLabel
+                            + " trace_role=thread_output_pre_reduce lj_sr="
+                            + formatString("%.15f", rawLjSrTotal) + " coulomb_sr="
+                            + formatString("%.15f", rawCoulSrTotal));
+            appendM2pTraceTextLine(
+                    ljSrTraceDirPath,
+                    "step0_coulomb_source_truth_trace.txt",
+                    "side=PLAIN variable=rawCoulReadTrace.finalTotal role=plain_comparable_coulomb_source before=0.000000000000000 delta="
+                            + formatString("%.15f", rawCoulSrTotal) + " after="
+                            + formatString("%.15f", rawCoulSrTotal)
+                            + " code_location=src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce");
+            const double plainPatchLjContractReplayTotal = readM2pPlain4x4LjContractReplayTotal();
+            appendM2pTraceTextLine(
+                    ljSrTraceDirPath,
+                    "step0_lj_source_truth_trace.txt",
+                    "side=PLAIN variable=rawLjReadTrace.finalTotal role=plain_native_lj_sr_source before=0.000000000000000 delta="
+                            + formatString("%.15f", rawLjSrTotal) + " after="
+                            + formatString("%.15f", rawLjSrTotal)
+                            + " code_location=src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce");
+            appendM2pTraceTextLine(
+                    ljSrTraceDirPath,
+                    "step0_lj_source_truth_trace.txt",
+                    "side=PLAIN variable=plainPatchLjContractReplay.finalTotal role=plain_shadow_patch_lj_contract_source before=0.000000000000000 delta="
+                            + formatString("%.15f", plainPatchLjContractReplayTotal) + " after="
+                            + formatString("%.15f", plainPatchLjContractReplayTotal)
+                            + " code_location=src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce");
+            appendM2pTraceTextLine(
+                    ljSrTraceDirPath,
+                    "step0_coulomb_source_truth_trace.txt",
+                    "side=PLAIN variable=plainPatchContractReplay.finalTotal role=plain_shadow_patch_contract_source before=0.000000000000000 delta="
+                            + formatString("%.15f", plainPatchContractReplayTotal) + " after="
+                            + formatString("%.15f", plainPatchContractReplayTotal)
+                            + " code_location=src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce");
+            appendM2pTraceTextLine(
+                    ljSrTraceDirPath,
+                    "step0_coulomb_sr_component_trace.txt",
+                    "stage=PRE_SR_ACCUMULATION_COMPARABLE code_location=src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce case_label="
+                            + caseLabel + " execution_path=plain_nbnxm_cpu kernel_type=" + kernelType
+                            + " using_simd_kernel=" + simdLabel + " plain_coulomb_sr="
+                            + formatString("%.15f", rawCoulSrTotal));
+        }
+
         reduce_energies_over_lists(nbat, pairlists.ssize(), vVdw, vCoulomb);
     }
 }

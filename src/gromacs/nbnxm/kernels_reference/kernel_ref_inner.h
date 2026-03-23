@@ -70,6 +70,7 @@
              * when that interaction should be excluded
              * (e.g. because of bonding). */
             const real interact = static_cast<real>((l_cj[cjind].excl >> (i * UNROLLI + j)) & 1);
+            const real excludedMask = 1.0 - interact;
 #    ifndef EXCL_FORCES
             real skipmask = interact;
 #    else
@@ -77,6 +78,7 @@
 #    endif
 #else
             constexpr real interact = 1.0;
+            constexpr real excludedMask = 0.0;
             real           skipmask = interact;
 #endif
 
@@ -161,6 +163,7 @@
                  * but before potential switching.
                  */
                 /* Need to zero the interaction if there should be exclusion. */
+                const real gmx_unused m2wRawLjTerm = VLJ;
                 VLJ = VLJ * interact;
 #endif
 
@@ -219,6 +222,7 @@
 
 #ifdef VDW_CUTOFF_CHECK
                 /* Mask for VdW cut-off shorter than Coulomb cut-off */
+                const real gmx_unused m2wCutoffMask = (rsq < rvdw2) ? 1.0 : 0.0;
                 {
                     real skipmask_rvdw = (rsq < rvdw2) ? 1.0 : 0.0;
                     frLJ *= skipmask_rvdw;
@@ -229,6 +233,7 @@
 #else
 #    if defined CALC_ENERGIES
                 /* Need to zero the interaction if r >= rcut */
+                const real gmx_unused m2wCutoffMask = skipmask;
                 VLJ = VLJ * skipmask;
                 /* 1 more flop for LJ energy */
 #    endif
@@ -236,10 +241,111 @@
 
 
 #ifdef CALC_ENERGIES
+#    ifdef GMX_PCFF_RESPA_M2Q_PLAIN_RAW_TRACE_ENABLED
+                if (m2qPlainEarliestRawStageEnabled)
+                {
+                    m2qPlainEarliestRawLjLocal += VLJ;
+                }
+#    endif
+#    ifdef GMX_PCFF_RESPA_M2R_PLAIN_TRACE_ENABLED
+                if (m2rPlainKernelLocalStageEnabled)
+                {
+                    m2rPlainKernelLocalLjLocal += VLJ;
+                }
+#    endif
+#    ifdef GMX_PCFF_RESPA_M2V_PLAIN_TRACE_ENABLED
+                if (m2vPlain4x4AlignedEventTraceEnabled() && VLJ != 0.0)
+                {
+                    noteM2vPlain4x4AlignedEvent(VLJ);
+                }
+#    endif
+#    ifdef GMX_PCFF_RESPA_M2W_PLAIN_TRACE_ENABLED
+                if (m2wPlain4x4AlignedEventTraceEnabled() && VLJ != 0.0)
+                {
+                    noteM2wPlain4x4AlignedEvent(ai,
+                                                aj,
+                                                type[ai],
+                                                type[aj],
+                                                ci,
+                                                cj,
+                                                i,
+                                                j,
+                                                c6,
+                                                c12,
+                                                rsq,
+                                                rsq * rinv,
+                                                m2wRawLjTerm,
+                                                interact * m2wCutoffMask,
+                                                VLJ);
+                }
+#    endif
+#    ifdef GMX_PCFF_RESPA_M2X_PLAIN_TRACE_ENABLED
+                if (m2xPlain4x4GeometryTraceEnabled() && VLJ != 0.0)
+                {
+                    M2xPlain4x4GeometryEventData m2xData;
+                    m2xData.pairI          = ai;
+                    m2xData.pairJ          = aj;
+                    m2xData.typeI          = type[ai];
+                    m2xData.typeJ          = type[aj];
+                    m2xData.ciIndex        = ci;
+                    m2xData.cjIndex        = cj;
+                    m2xData.iIndex         = i;
+                    m2xData.jIndex         = j;
+                    m2xData.shiftIndex     = ish;
+                    m2xData.coordISourceX  = x[(ci * UNROLLI + i) * X_STRIDE + XX];
+                    m2xData.coordISourceY  = x[(ci * UNROLLI + i) * X_STRIDE + YY];
+                    m2xData.coordISourceZ  = x[(ci * UNROLLI + i) * X_STRIDE + ZZ];
+                    m2xData.coordJSourceX  = x[aj * X_STRIDE + XX];
+                    m2xData.coordJSourceY  = x[aj * X_STRIDE + YY];
+                    m2xData.coordJSourceZ  = x[aj * X_STRIDE + ZZ];
+                    m2xData.shiftX         = shiftvec[ishf + XX];
+                    m2xData.shiftY         = shiftvec[ishf + YY];
+                    m2xData.shiftZ         = shiftvec[ishf + ZZ];
+                    m2xData.coordIShiftedX = xi[i * XI_STRIDE + XX];
+                    m2xData.coordIShiftedY = xi[i * XI_STRIDE + YY];
+                    m2xData.coordIShiftedZ = xi[i * XI_STRIDE + ZZ];
+                    m2xData.dx             = dx;
+                    m2xData.dy             = dy;
+                    m2xData.dz             = dz;
+                    m2xData.rsq            = rsq;
+                    m2xData.r              = rsq * rinv;
+                    m2xData.rawLjTerm      = m2wRawLjTerm;
+                    m2xData.finalEventLj   = VLJ;
+                    noteM2xPlain4x4GeometryEvent(m2xData);
+                }
+#    endif
 #    ifdef ENERGY_GROUPS
+                if (m2pPlain4x4LjContractReplayEnabled() && VLJ != 0.0)
+                {
+                    noteM2pPlain4x4LjContractReplayPairContribution(VLJ);
+                }
                 Vvdw[egp_sh_i[i] + egpJ] += VLJ;
+#        ifdef GMX_PCFF_RESPA_M2S_PLAIN_TRACE_ENABLED
+                if (m2sPlain4x4InternalTraceEnabled() && VLJ != 0.0)
+                {
+                    noteM2sPlain4x4FirstWriteTargetTotal(
+                            Vvdw, nbatParams.numEnergyGroups * nbatParams.numEnergyGroups);
+                }
+#        endif
+#        ifdef GMX_PCFF_RESPA_M2U_PLAIN_TRACE_ENABLED
+                if (m2uPlain4x4WriteOrdinalTraceEnabled() && VLJ != 0.0)
+                {
+                    noteM2uPlain4x4WriteTargetTotal(
+                            Vvdw, nbatParams.numEnergyGroups * nbatParams.numEnergyGroups);
+                }
+#        endif
 #    else
+                if (m2pPlain4x4LjContractReplayEnabled() && VLJ != 0.0)
+                {
+                    noteM2pPlain4x4LjContractReplayPairContribution(VLJ);
+                }
                 Vvdw_ci += VLJ;
+#        ifdef GMX_PCFF_RESPA_M2S_PLAIN_TRACE_ENABLED
+                if (m2sPlain4x4InternalTraceEnabled() && VLJ != 0.0)
+                {
+                    noteM2sPlain4x4FirstWriteTargetTotal(&Vvdw_ci, 1);
+                }
+#        endif
                 /* 1 flop for LJ energy addition */
 #    endif
 #endif
@@ -281,24 +387,65 @@
             /* 7 flops for float 1/r-table force */
 #        ifdef CALC_ENERGIES
 #            if !GMX_DOUBLE
-            real vcoul =
-                    qq * interact
-                    * (rinv - ic.coulomb.ewaldShift
-                       - (tab_coul_FDV0[ri * 4 + 2] - halfsp * frac * (tab_coul_FDV0[ri * 4] + fexcl)));
+            const real vcorr = tab_coul_FDV0[ri * 4 + 2] - halfsp * frac * (tab_coul_FDV0[ri * 4] + fexcl);
+            const real vcoulUnmasked = qq * (rinv - ic.coulomb.ewaldShift - vcorr);
+            real vcoul = vcoulUnmasked * interact;
             /* 7 flops for float 1/r-table energy (8 with excls) */
 #            else
-            real vcoul = qq * interact
-                         * (rinv - ic.coulomb.ewaldShift
-                            - (tab_coul_V[ri] - halfsp * frac * (tab_coul_F[ri] + fexcl)));
+            const real vcorr = tab_coul_V[ri] - halfsp * frac * (tab_coul_F[ri] + fexcl);
+            const real vcoulUnmasked = qq * (rinv - ic.coulomb.ewaldShift - vcorr);
+            real vcoul = vcoulUnmasked * interact;
 #            endif
+            if (m2pPlain4x4CoulombProducerTraceEnabled() && excludedMask != 0.0 && vcoulUnmasked != 0.0)
+            {
+#        ifdef ENERGY_GROUPS
+                const int coulProducerEnergyIndex = egp_sh_i[i] + egpJ;
+#        else
+                const int coulProducerEnergyIndex = 0;
+#        endif
+                noteM2pPlain4x4CoulombProducer(ai,
+                                               aj,
+                                               coulProducerEnergyIndex,
+                                               excludedMask,
+                                               qq,
+                                               interact,
+                                               rinv,
+                                               ic.coulomb.ewaldShift,
+                                               ri,
+                                               frac,
+                                               fexcl,
+                                               vcorr,
+                                               vcoul,
+                                               vcoulUnmasked,
+                                               "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:380");
+            }
 #        endif
             fcoul *= qq * rinv;
 #    endif
 
 #    ifdef CALC_ENERGIES
 #        ifdef ENERGY_GROUPS
-            Vc[egp_sh_i[i] + egpJ] += vcoul;
+            const int coulEnergyIndex = egp_sh_i[i] + egpJ;
+            if (m2pPlain4x4CoulombContractReplayEnabled() && vcoul != 0.0)
+            {
+                noteM2pPlain4x4CoulombContractReplayPairContribution(coulEnergyIndex, vcoul);
+            }
+            if (m2pPlain4x4CoulombFirstWriteTraceEnabled() && vcoul != 0.0)
+            {
+                const real targetBefore = Vc[coulEnergyIndex];
+                const real targetAfter  = targetBefore + vcoul;
+                noteM2pPlain4x4CoulombFirstWrite(targetBefore,
+                                                 vcoul,
+                                                 targetAfter,
+                                                 coulEnergyIndex,
+                                                 "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:396");
+            }
+            Vc[coulEnergyIndex] += vcoul;
 #        else
+            if (m2pPlain4x4CoulombContractReplayEnabled() && vcoul != 0.0)
+            {
+                noteM2pPlain4x4CoulombContractReplayPairContribution(0, vcoul);
+            }
             Vc_ci += vcoul;
             /* 1 flop for Coulomb energy addition */
 #        endif

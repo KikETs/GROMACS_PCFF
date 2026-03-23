@@ -32,6 +32,7 @@ OUTPUT_INTERVAL = 4
 FOURIER_SPACING_NM = 0.08
 FORCE_BOOKKEEPING_TOL = 5.0e-3
 POTENTIAL_BOOKKEEPING_TOL = 5.0e-3
+LEDGER_TRACE_TOL = 1.0e-5
 LEGACY_FORCE_GROUPS = "nonbonded longrange-nonbonded"
 NUMERIC_FIELD_TOL = 1.0e-9
 PME_LEGACY_SIDE_REFERENCE_MODE = "pme_legacy_side_reference"
@@ -92,8 +93,12 @@ M2K_PATCH_SPECS = (
         "work_dir_name": "patch_shape_b",
     },
 )
-
-
+M2L_DIAGNOSTIC_PROBE = {
+    "candidate": "Patch-B bookkeeping-suppressed micro-probe",
+    "key": "patch_b_bookkeeping_suppressed",
+    "probe_mode": "patch_shape_b_bookkeeping_suppressed",
+    "work_dir_name": "probe_patch_b_bookkeeping_suppressed",
+}
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run the exact 3-level R-RESPA M2 reconnection on validated PCFF microfixtures."
@@ -174,6 +179,61 @@ def parse_args() -> argparse.Namespace:
         "--narrow-patch-proof",
         action="store_true",
         help="Collect dense_oligomer coarse step-0 narrow patch-proof diagnostics for M2k-style excluded-correction outer-promotion validation.",
+    )
+    parser.add_argument(
+        "--locked-scope-bookkeeping-residual-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 Patch-shape-B bookkeeping residual diagnostics for M2l-style classification.",
+    )
+    parser.add_argument(
+        "--reciprocal-internal-delta-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 equal-depth reciprocal internal diagnostics for M2m-style origin tracing.",
+    )
+    parser.add_argument(
+        "--post-final-ledger-mutation-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 post-FINAL-LEDGER mutation/export diagnostics for M2n-style tracing.",
+    )
+    parser.add_argument(
+        "--lj-sr-first-sink-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 LJ-(SR) first sink/origin diagnostics for M2p-style tracing.",
+    )
+    parser.add_argument(
+        "--lj-sr-true-first-raw-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 contract-matched earliest raw LJ diagnostics for M2q-style tracing.",
+    )
+    parser.add_argument(
+        "--lj-sr-first-amplification-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 contract-matched LJ amplification diagnostics for M2r-style tracing.",
+    )
+    parser.add_argument(
+        "--raw-sr-formation-internal-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 RAW_SR_FORMATION internal mutation/read diagnostics for M2s-style tracing.",
+    )
+    parser.add_argument(
+        "--raw-sr-write-ordinal-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 RAW_FIRST_WRITE->RAW_POST_WRITE write-ordinal running-total diagnostics for M2u-style tracing.",
+    )
+    parser.add_argument(
+        "--aligned-write-contract-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 cross-side aligned-event running-total diagnostics for M2v-style contract alignment.",
+    )
+    parser.add_argument(
+        "--aligned-event-669-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 aligned-event 669 identity/arithmetic diagnostics for M2w-style localization.",
+    )
+    parser.add_argument(
+        "--event-669-geometry-producer-trace",
+        action="store_true",
+        help="Collect dense_oligomer coarse step-0 upstream geometry-producer diagnostics for aligned event 669 / pair (18,0).",
     )
     return parser.parse_args()
 
@@ -533,6 +593,107 @@ def read_potential_xvg(path: Path) -> list[dict[str, float]]:
     return series
 
 
+def canonical_energy_term_label(label: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", label.lower())
+
+
+def parse_energy_stdout_term_order(stdout_text: str) -> list[str]:
+    term_order: list[str] = []
+    in_energy_table = False
+    energy_row_pattern = re.compile(
+        r"^(?P<label>.+?)\s{2,}(?P<value>[-+0-9.]+(?:[eE][-+]?\d+)?|nan|inf|--)\b"
+    )
+
+    for raw_line in stdout_text.splitlines():
+        line = raw_line.rstrip()
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if not in_energy_table:
+            if set(stripped) == {"-"}:
+                in_energy_table = True
+            continue
+
+        match = energy_row_pattern.match(line)
+        if match is None:
+            continue
+        term_order.append(match.group("label").strip())
+    return term_order
+
+
+def resolve_energy_output_order(stdout_text: str, requested_term_names: tuple[str, ...]) -> tuple[str, ...]:
+    stdout_term_order = parse_energy_stdout_term_order(stdout_text)
+    requested_by_canonical = {
+        canonical_energy_term_label(term_name): term_name for term_name in requested_term_names
+    }
+    resolved = []
+    for stdout_label in stdout_term_order:
+        requested_name = requested_by_canonical.get(canonical_energy_term_label(stdout_label))
+        if requested_name is not None:
+            resolved.append(requested_name)
+    if len(resolved) == len(requested_term_names) and len(set(resolved)) == len(requested_term_names):
+        return tuple(resolved)
+    return requested_term_names
+
+
+def extract_named_energy_series_detail(
+    gmx_bin: str,
+    work_dir: Path,
+    deffnm: str,
+    term_names: tuple[str, ...],
+    output_stem: str,
+    commands_log: list[str],
+    label_prefix: str,
+) -> dict[str, Any]:
+    process = subprocess.run(
+        [gmx_bin, "energy", "-f", f"{deffnm}.edr", "-o", f"{output_stem}.xvg", "-xvg", "none"],
+        cwd=work_dir,
+        input="".join(f"{term}\n" for term in term_names) + "0\n",
+        capture_output=True,
+        text=True,
+        check=True,
+        errors="replace",
+    )
+    commands_log.append(
+        f"(cd {shlex.quote(str(work_dir))} && {' '.join(shlex.quote(part) for part in [gmx_bin, 'energy', '-f', f'{deffnm}.edr', '-o', f'{output_stem}.xvg', '-xvg', 'none'])} <<'EOF'\n"
+        + "\n".join(term_names)
+        + "\n0\nEOF)"
+    )
+    stdout_path = work_dir / f"{label_prefix}_energy_terms.stdout.txt"
+    stderr_path = work_dir / f"{label_prefix}_energy_terms.stderr.txt"
+    stdout_path.write_text(process.stdout, encoding="utf-8")
+    stderr_path.write_text(process.stderr, encoding="utf-8")
+
+    resolved_output_order = resolve_energy_output_order(process.stdout, term_names)
+    rows = []
+    legacy_rows = []
+    raw_rows = []
+    for raw_line in (work_dir / f"{output_stem}.xvg").read_text(encoding="utf-8").splitlines():
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith(("#", "@")):
+            continue
+        values = [float(token) for token in stripped.split()]
+        raw_rows.append(values)
+        legacy_row = {"time_ps": values[0]}
+        corrected_row = {"time_ps": values[0]}
+        for index, term_name in enumerate(term_names, start=1):
+            legacy_row[term_name] = values[index]
+        for index, term_name in enumerate(resolved_output_order, start=1):
+            corrected_row[term_name] = values[index]
+        rows.append(corrected_row)
+        legacy_rows.append(legacy_row)
+
+    return {
+        "rows": rows,
+        "legacy_rows": legacy_rows,
+        "raw_rows": raw_rows,
+        "resolved_output_order": resolved_output_order,
+        "stdout_term_order": parse_energy_stdout_term_order(process.stdout),
+        "stdout_path": str(stdout_path),
+        "stderr_path": str(stderr_path),
+    }
+
+
 def maybe_minimum_image(diff: float, box_length: float | None) -> float:
     if box_length is None or box_length <= 0:
         return diff
@@ -644,34 +805,9 @@ def extract_named_energy_series(
     commands_log: list[str],
     label_prefix: str,
 ) -> list[dict[str, float]]:
-    process = subprocess.run(
-        [gmx_bin, "energy", "-f", f"{deffnm}.edr", "-o", f"{output_stem}.xvg", "-xvg", "none"],
-        cwd=work_dir,
-        input="".join(f"{term}\n" for term in term_names) + "0\n",
-        capture_output=True,
-        text=True,
-        check=True,
-        errors="replace",
-    )
-    commands_log.append(
-        f"(cd {shlex.quote(str(work_dir))} && {' '.join(shlex.quote(part) for part in [gmx_bin, 'energy', '-f', f'{deffnm}.edr', '-o', f'{output_stem}.xvg', '-xvg', 'none'])} <<'EOF'\n"
-        + "\n".join(term_names)
-        + "\n0\nEOF)"
-    )
-    (work_dir / f"{label_prefix}_energy_terms.stdout.txt").write_text(process.stdout, encoding="utf-8")
-    (work_dir / f"{label_prefix}_energy_terms.stderr.txt").write_text(process.stderr, encoding="utf-8")
-
-    rows = []
-    for raw_line in (work_dir / f"{output_stem}.xvg").read_text(encoding="utf-8").splitlines():
-        stripped = raw_line.strip()
-        if not stripped or stripped.startswith(("#", "@")):
-            continue
-        values = [float(token) for token in stripped.split()]
-        row = {"time_ps": values[0]}
-        for index, term_name in enumerate(term_names, start=1):
-            row[term_name] = values[index]
-        rows.append(row)
-    return rows
+    return extract_named_energy_series_detail(
+        gmx_bin, work_dir, deffnm, term_names, output_stem, commands_log, label_prefix
+    )["rows"]
 
 
 def parse_debug_stats(stderr_text: str) -> dict[str, Any]:
@@ -2232,6 +2368,3468 @@ def load_dispatch_probe_state(work_dir: Path, role: str) -> dict[str, Any]:
     }
 
 
+def load_bookkeeping_trace_state(work_dir: Path, role: str) -> dict[str, Any]:
+    rows = parse_key_value_text(work_dir / "step0_patch_b_bookkeeping_trace.txt")
+    raw_row = next(
+        (row for row in rows if row.get("stage") == "bookkeeping_raw_state" and row.get("role") == role),
+        None,
+    )
+    force_row = next(
+        (row for row in rows if row.get("stage") == "bookkeeping_force_state" and row.get("role") == role),
+        None,
+    )
+    energy_row = next(
+        (row for row in rows if row.get("stage") == "bookkeeping_energy_sink" and row.get("role") == role),
+        None,
+    )
+    raw_scalar_present = raw_row is not None and parse_bool_text(raw_row.get("raw_scalar_present"))
+    effective_outer_scalar = 0.0 if force_row is None else float(force_row.get("effective_outer_scalar", "0"))
+    outer_force_write = force_row is not None and parse_bool_text(force_row.get("actual_outer_write_executed"))
+    bookkeeping_sink_active = (
+        energy_row is not None and parse_bool_text(energy_row.get("accumulate_energy_effective"))
+    )
+    residual_visible = energy_row is not None and parse_bool_text(energy_row.get("residual_visible"))
+    return {
+        "work_dir": str(work_dir),
+        "raw_row": raw_row,
+        "force_row": force_row,
+        "energy_row": energy_row,
+        "raw_scalar_present": raw_scalar_present,
+        "effective_outer_scalar": effective_outer_scalar,
+        "outer_force_write": outer_force_write,
+        "bookkeeping_sink_active": bookkeeping_sink_active,
+        "residual_visible": residual_visible,
+    }
+
+
+def load_bookkeeping_reciprocal_row(work_dir: Path) -> dict[str, str] | None:
+    rows = parse_key_value_text(work_dir / "step0_patch_b_bookkeeping_trace.txt")
+    return next((row for row in rows if row.get("stage") == "bookkeeping_reciprocal_sink"), None)
+
+
+def load_reciprocal_internal_trace_rows(work_dir: Path) -> dict[str, dict[str, str]]:
+    rows = parse_key_value_text(work_dir / "step0_reciprocal_internal_trace.txt")
+    return {row["stage"]: row for row in rows if "stage" in row}
+
+
+def load_post_final_ledger_trace_rows(work_dir: Path) -> list[dict[str, str]]:
+    return [row for row in parse_key_value_text(work_dir / "step0_post_final_ledger_trace.txt") if "stage" in row]
+
+
+def load_lj_sr_internal_trace_rows(work_dir: Path) -> list[dict[str, str]]:
+    return [row for row in parse_key_value_text(work_dir / "step0_lj_sr_internal_trace.txt") if "stage" in row]
+
+
+def load_aligned_event_identity_rows(work_dir: Path) -> dict[str, dict[str, str]]:
+    path = work_dir / "step0_aligned_event_identity_trace.txt"
+    if not path.exists():
+        return {}
+    rows = [row for row in parse_key_value_text(path) if "stage" in row]
+    first_rows: dict[str, dict[str, str]] = {}
+    for row in rows:
+        stage = row["stage"]
+        if stage not in first_rows:
+            first_rows[stage] = row
+    return first_rows
+
+
+def load_event_669_geometry_rows(work_dir: Path) -> dict[str, dict[str, str]]:
+    path = work_dir / "step0_event_669_geometry_trace.txt"
+    if not path.exists():
+        return {}
+    rows = [row for row in parse_key_value_text(path) if "stage" in row]
+    first_rows: dict[str, dict[str, str]] = {}
+    for row in rows:
+        stage = row["stage"]
+        if stage not in first_rows:
+            first_rows[stage] = row
+    return first_rows
+
+
+def load_coulomb_source_truth_rows(work_dir: Path) -> dict[str, dict[str, str]]:
+    path = work_dir / "step0_coulomb_source_truth_trace.txt"
+    if not path.exists():
+        return {}
+    rows = [row for row in parse_key_value_text(path) if "variable" in row]
+    first_rows: dict[str, dict[str, str]] = {}
+    for row in rows:
+        variable = row["variable"]
+        if variable not in first_rows:
+            first_rows[variable] = row
+    return first_rows
+
+
+def load_lj_source_truth_rows(work_dir: Path) -> dict[str, dict[str, str]]:
+    path = work_dir / "step0_lj_source_truth_trace.txt"
+    if not path.exists():
+        return {}
+    rows = [row for row in parse_key_value_text(path) if "variable" in row]
+    first_rows: dict[str, dict[str, str]] = {}
+    for row in rows:
+        variable = row["variable"]
+        if variable not in first_rows:
+            first_rows[variable] = row
+    return first_rows
+
+
+def load_potential_ledger_trace_row(work_dir: Path) -> dict[str, str] | None:
+    path = work_dir / "step0_potential_ledger_trace.txt"
+    if not path.exists():
+        return None
+    rows = [row for row in parse_key_value_text(path) if row.get("stage") == "FINAL_INTERNAL_LEDGER"]
+    return rows[0] if rows else None
+
+
+def trim_lj_sr_trace_to_first_cycle(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    trimmed_rows: list[dict[str, str]] = []
+    for row in rows:
+        trimmed_rows.append(row)
+        if row.get("stage") == "FINAL_INTERNAL_LEDGER":
+            break
+    return trimmed_rows
+
+
+def parse_float_field(row: dict[str, str] | None, key: str) -> float | None:
+    if row is None:
+        return None
+    value = row.get(key)
+    if value is None:
+        return None
+    return float(value)
+
+
+def aggregate_lj_sr_stage(rows: list[dict[str, str]], stage: str) -> dict[str, Any]:
+    stage_rows = [row for row in rows if row.get("stage") == stage]
+    if not stage_rows:
+        return {
+            "stage": stage,
+            "rows": [],
+            "lj_sr": None,
+            "coulomb_sr": None,
+            "code_locations": [],
+            "execution_paths": [],
+        }
+
+    lj_values = [float(row["lj_sr"]) for row in stage_rows if row.get("lj_sr") is not None]
+    coul_values = [float(row["coulomb_sr"]) for row in stage_rows if row.get("coulomb_sr") is not None]
+    lj_total = None if len(lj_values) != len(stage_rows) else sum(lj_values)
+    coul_total = None if len(coul_values) != len(stage_rows) else sum(coul_values)
+
+    return {
+        "stage": stage,
+        "rows": stage_rows,
+        "lj_sr": lj_total,
+        "coulomb_sr": coul_total,
+        "code_locations": sorted({row.get("code_location", "") for row in stage_rows if row.get("code_location")}),
+        "execution_paths": sorted({row.get("execution_path", "") for row in stage_rows if row.get("execution_path")}),
+    }
+
+
+def aggregate_lj_sr_stage_with_paths(
+    rows: list[dict[str, str]], stage: str, execution_path_prefixes: tuple[str, ...]
+) -> dict[str, Any]:
+    filtered_rows = [
+        row
+        for row in rows
+        if row.get("stage") == stage
+        and (
+            not execution_path_prefixes
+            or any((row.get("execution_path") or "").startswith(prefix) for prefix in execution_path_prefixes)
+        )
+    ]
+    return aggregate_lj_sr_stage(filtered_rows, stage)
+
+
+def write_ordinal_from_row(row: dict[str, str]) -> int | None:
+    value = row.get("write_ordinal")
+    if value is not None:
+        return int(value)
+    stage = row.get("stage", "")
+    if stage == "RAW_FIRST_WRITE":
+        return 1
+    match = re.fullmatch(r"AFTER_WRITE_ORDINAL_(\d+)", stage)
+    if match is None:
+        return None
+    return int(match.group(1))
+
+
+def collect_write_ordinals(
+    rows: list[dict[str, str]], execution_path_prefixes: tuple[str, ...]
+) -> list[int]:
+    ordinals: set[int] = set()
+    for row in rows:
+        execution_path = row.get("execution_path") or ""
+        if execution_path_prefixes and not any(execution_path.startswith(prefix) for prefix in execution_path_prefixes):
+            continue
+        write_ordinal = write_ordinal_from_row(row)
+        if write_ordinal is not None:
+            ordinals.add(write_ordinal)
+    return sorted(ordinals)
+
+
+def aligned_event_ordinal_from_row(row: dict[str, str]) -> int | None:
+    value = row.get("aligned_event_ordinal")
+    if value is not None:
+        return int(value)
+    stage = row.get("stage", "")
+    match = re.fullmatch(r"ALIGNED_WRITE_EVENT_(\d+)", stage)
+    if match is None:
+        return None
+    return int(match.group(1))
+
+
+def collect_aligned_event_ordinals(
+    rows: list[dict[str, str]], execution_path_prefixes: tuple[str, ...]
+) -> list[int]:
+    ordinals: set[int] = set()
+    for row in rows:
+        execution_path = row.get("execution_path") or ""
+        if execution_path_prefixes and not any(execution_path.startswith(prefix) for prefix in execution_path_prefixes):
+            continue
+        aligned_event_ordinal = aligned_event_ordinal_from_row(row)
+        if aligned_event_ordinal is not None:
+            ordinals.add(aligned_event_ordinal)
+    return sorted(ordinals)
+
+
+def trim_post_final_trace_to_first_export_cycle(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    trimmed_rows: list[dict[str, str]] = []
+    for row in rows:
+        trimmed_rows.append(row)
+        if row.get("stage") == "PRINTSTEP_DO_ENX_INPUT":
+            break
+    return trimmed_rows
+
+
+def with_stage_occurrences(rows: list[dict[str, str]]) -> list[dict[str, Any]]:
+    occurrence_counts: dict[str, int] = {}
+    labeled_rows: list[dict[str, Any]] = []
+    for row in rows:
+        stage = row["stage"]
+        occurrence_counts[stage] = occurrence_counts.get(stage, 0) + 1
+        labeled_row = dict(row)
+        labeled_row["occurrence"] = occurrence_counts[stage]
+        labeled_row["stage_label"] = f"{stage}#{occurrence_counts[stage]}"
+        labeled_rows.append(labeled_row)
+    return labeled_rows
+
+
+def find_stage_value(rows: list[dict[str, Any]], stage_label: str) -> float | None:
+    row = next((candidate for candidate in rows if candidate["stage_label"] == stage_label), None)
+    return None if row is None else parse_float_field(row, "value")
+
+
+def dense_patch_b_post_final_ledger_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_rows = with_stage_occurrences(
+        trim_post_final_trace_to_first_export_cycle(load_post_final_ledger_trace_rows(plain_dir))
+    )
+    patch_b_rows = with_stage_occurrences(
+        trim_post_final_trace_to_first_export_cycle(load_post_final_ledger_trace_rows(patch_b_dir))
+    )
+    plain_terms_detail = extract_named_energy_series_detail(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2n_plain_diag_terms", commands_log, "m2n_plain"
+    )
+    patch_b_terms_detail = extract_named_energy_series_detail(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2n_patch_b_diag_terms",
+        commands_log,
+        "m2n_patch_b",
+    )
+    plain_terms = plain_terms_detail["rows"][0]
+    patch_b_terms = patch_b_terms_detail["rows"][0]
+
+    def aggregate_stage_with_paths(
+        rows: list[dict[str, str]], stage: str, execution_path_prefixes: tuple[str, ...]
+    ) -> dict[str, Any]:
+        filtered_rows = [
+            row
+            for row in rows
+            if row.get("stage") == stage
+            and (
+                not execution_path_prefixes
+                or any((row.get("execution_path") or "").startswith(prefix) for prefix in execution_path_prefixes)
+            )
+        ]
+        return aggregate_lj_sr_stage(filtered_rows, stage)
+    plain_legacy_terms = plain_terms_detail["legacy_rows"][0]
+    patch_b_legacy_terms = patch_b_terms_detail["legacy_rows"][0]
+
+    stage_inventory = [
+        {
+            "stage": "FORCECPP_FINAL_LEDGER_WRITE",
+            "code_location": "src/gromacs/mdlib/force.cpp:455",
+            "candidate_type": "direct_write",
+            "contract_identity": "direct_energy_field",
+        },
+        {
+            "stage": "SIM_UTIL_PME_RECEIVE_ADD",
+            "code_location": "src/gromacs/mdlib/sim_util.cpp:327",
+            "candidate_type": "direct_write",
+            "contract_identity": "direct_energy_field",
+        },
+        {
+            "stage": "PME_GPU_REDUCE_ADD",
+            "code_location": "src/gromacs/ewald/pme_gpu.cpp:295",
+            "candidate_type": "direct_write",
+            "contract_identity": "direct_energy_field",
+        },
+        {
+            "stage": "ENERGYOUTPUT_ADDDATA_INPUT",
+            "code_location": "src/gromacs/mdlib/energyoutput.cpp:933",
+            "candidate_type": "copy_input",
+            "contract_identity": "direct_energy_field",
+        },
+        {
+            "stage": "ENERGYOUTPUT_AFTER_ADDVALUES",
+            "code_location": "src/gromacs/mdlib/energyoutput.cpp:944",
+            "candidate_type": "copy_output",
+            "contract_identity": "aliased_container",
+        },
+        {
+            "stage": "PRINTSTEP_DO_ENX_INPUT",
+            "code_location": "src/gromacs/mdlib/energyoutput.cpp:1306",
+            "candidate_type": "export_input",
+            "contract_identity": "exported_field",
+        },
+        {
+            "stage": "FINAL_EDR_EXPORT",
+            "code_location": "gmx energy xvg output",
+            "candidate_type": "export_output",
+            "contract_identity": "exported_field",
+        },
+        {
+            "stage": "ANALYSIS_XVG_COLUMN_MAPPING",
+            "code_location": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series",
+            "candidate_type": "export_mapping",
+            "contract_identity": "reported_field",
+        },
+    ]
+
+    plain_stage_set = {row["stage"] for row in plain_rows}
+    patch_b_stage_set = {row["stage"] for row in patch_b_rows}
+    for candidate in stage_inventory:
+        if candidate["stage"] in {"FINAL_EDR_EXPORT", "ANALYSIS_XVG_COLUMN_MAPPING"}:
+            candidate["executed_plain"] = True
+            candidate["executed_patch_b"] = True
+        else:
+            candidate["executed_plain"] = candidate["stage"] in plain_stage_set
+            candidate["executed_patch_b"] = candidate["stage"] in patch_b_stage_set
+        candidate["executed_in_locked_scope"] = candidate["executed_plain"] or candidate["executed_patch_b"]
+
+    executed_branch_plain = next(
+        (row.get("reciprocal_branch") for row in plain_rows if row["stage"] == "FORCECPP_FINAL_LEDGER_WRITE"),
+        None,
+    )
+    executed_branch_patch_b = next(
+        (row.get("reciprocal_branch") for row in patch_b_rows if row["stage"] == "FORCECPP_FINAL_LEDGER_WRITE"),
+        None,
+    )
+
+    stage_order = [
+        "FORCECPP_FINAL_LEDGER_WRITE",
+        "SIM_UTIL_PME_RECEIVE_ADD",
+        "PME_GPU_REDUCE_ADD",
+        "ENERGYOUTPUT_ADDDATA_INPUT",
+        "ENERGYOUTPUT_AFTER_ADDVALUES",
+        "PRINTSTEP_DO_ENX_INPUT",
+    ]
+    occurrence_limits: dict[str, int] = {}
+    for stage_name in stage_order:
+        plain_count = sum(1 for row in plain_rows if row["stage"] == stage_name)
+        patch_b_count = sum(1 for row in patch_b_rows if row["stage"] == stage_name)
+        occurrence_limits[stage_name] = max(plain_count, patch_b_count)
+
+    comparison_table: list[dict[str, Any]] = []
+    plain_initial_trace = find_stage_value(plain_rows, "FORCECPP_FINAL_LEDGER_WRITE#1")
+    patch_b_initial_trace = find_stage_value(patch_b_rows, "FORCECPP_FINAL_LEDGER_WRITE#1")
+    final_edr_plain = plain_terms["Coul.-recip."]
+    final_edr_patch_b = patch_b_terms["Coul.-recip."]
+    legacy_edr_plain = plain_legacy_terms["Coul.-recip."]
+    legacy_edr_patch_b = patch_b_legacy_terms["Coul.-recip."]
+
+    first_divergence_stage = None
+    first_divergence_reason = None
+    earlier_exonerated: list[str] = []
+    divergence_seen = False
+
+    for stage_name in stage_order:
+        for occurrence in range(1, occurrence_limits[stage_name] + 1):
+            stage_label = f"{stage_name}#{occurrence}"
+            plain_row = next((row for row in plain_rows if row["stage_label"] == stage_label), None)
+            patch_b_row = next((row for row in patch_b_rows if row["stage_label"] == stage_label), None)
+            plain_value = None if plain_row is None else parse_float_field(plain_row, "value")
+            patch_b_value = None if patch_b_row is None else parse_float_field(patch_b_row, "value")
+            delta = (
+                None
+                if plain_value is None or patch_b_value is None
+                else patch_b_value - plain_value
+            )
+
+            plain_breaks_trace = (
+                plain_value is not None
+                and plain_initial_trace is not None
+                and stage_label != "FORCECPP_FINAL_LEDGER_WRITE#1"
+                and abs(plain_value - plain_initial_trace) > LEDGER_TRACE_TOL
+            )
+            patch_b_breaks_trace = (
+                patch_b_value is not None
+                and patch_b_initial_trace is not None
+                and stage_label != "FORCECPP_FINAL_LEDGER_WRITE#1"
+                and abs(patch_b_value - patch_b_initial_trace) > LEDGER_TRACE_TOL
+            )
+            if stage_name == "PRINTSTEP_DO_ENX_INPUT":
+                traced_equals_edr_contract = (
+                    plain_value is not None
+                    and patch_b_value is not None
+                    and abs(plain_value - final_edr_plain) <= LEDGER_TRACE_TOL
+                    and abs(patch_b_value - final_edr_patch_b) <= LEDGER_TRACE_TOL
+                )
+            else:
+                traced_equals_edr_contract = None
+
+            divergence_here = False
+            divergence_reason = None
+            if (
+                stage_label != "FORCECPP_FINAL_LEDGER_WRITE#1"
+                and delta is not None
+                and abs(delta) > LEDGER_TRACE_TOL
+            ):
+                divergence_here = True
+                divergence_reason = "plain_vs_patch_b_delta_nonzero"
+            elif plain_breaks_trace or patch_b_breaks_trace:
+                divergence_here = True
+                divergence_reason = "traced_field_ceases_to_equal_later_contract"
+
+            if not divergence_seen and divergence_here:
+                divergence_seen = True
+                first_divergence_stage = stage_label
+                first_divergence_reason = divergence_reason
+            elif not divergence_seen:
+                earlier_exonerated.append(stage_label)
+
+            comparison_table.append(
+                {
+                    "stage": stage_label,
+                    "code_location": (
+                        plain_row.get("code_location")
+                        if plain_row is not None
+                        else (None if patch_b_row is None else patch_b_row.get("code_location"))
+                    ),
+                    "plain": plain_value,
+                    "patch_b": patch_b_value,
+                    "delta_patch_b_minus_plain": delta,
+                    "traced_equals_edr_contract": traced_equals_edr_contract,
+                    "plain_breaks_initial_trace": plain_breaks_trace,
+                    "patch_b_breaks_initial_trace": patch_b_breaks_trace,
+                    "first_divergence_here": divergence_here and first_divergence_stage == stage_label,
+                }
+            )
+
+    final_export_delta = final_edr_patch_b - final_edr_plain
+    printstep_plain = find_stage_value(plain_rows, "PRINTSTEP_DO_ENX_INPUT#1")
+    printstep_patch_b = find_stage_value(patch_b_rows, "PRINTSTEP_DO_ENX_INPUT#1")
+    final_export_matches_runtime = (
+        printstep_plain is not None
+        and printstep_patch_b is not None
+        and abs(printstep_plain - final_edr_plain) <= LEDGER_TRACE_TOL
+        and abs(printstep_patch_b - final_edr_patch_b) <= LEDGER_TRACE_TOL
+    )
+    final_export_divergence = not final_export_matches_runtime
+    if not divergence_seen and final_export_divergence:
+        first_divergence_stage = "FINAL_EDR_EXPORT"
+        first_divergence_reason = "runtime_export_input_differs_from_readback"
+        divergence_seen = True
+    elif not divergence_seen:
+        earlier_exonerated.append("FINAL_EDR_EXPORT")
+    comparison_table.append(
+        {
+            "stage": "FINAL_EDR_EXPORT",
+            "code_location": "gmx energy xvg output",
+            "plain": final_edr_plain,
+            "patch_b": final_edr_patch_b,
+            "delta_patch_b_minus_plain": final_export_delta,
+            "traced_equals_edr_contract": final_export_matches_runtime,
+            "plain_breaks_initial_trace": (
+                plain_initial_trace is not None and abs(final_edr_plain - plain_initial_trace) > LEDGER_TRACE_TOL
+            ),
+            "patch_b_breaks_initial_trace": (
+                patch_b_initial_trace is not None
+                and abs(final_edr_patch_b - patch_b_initial_trace) > LEDGER_TRACE_TOL
+            ),
+            "first_divergence_here": first_divergence_stage == "FINAL_EDR_EXPORT",
+        }
+    )
+
+    legacy_contract_matches_runtime = (
+        printstep_plain is not None
+        and printstep_patch_b is not None
+        and abs(printstep_plain - legacy_edr_plain) <= LEDGER_TRACE_TOL
+        and abs(printstep_patch_b - legacy_edr_patch_b) <= LEDGER_TRACE_TOL
+    )
+    if not divergence_seen and not legacy_contract_matches_runtime:
+        first_divergence_stage = "ANALYSIS_XVG_COLUMN_MAPPING"
+        first_divergence_reason = "legacy_requested_order_assumption_mislabels_xvg_columns"
+        divergence_seen = True
+    elif not divergence_seen:
+        earlier_exonerated.append("ANALYSIS_XVG_COLUMN_MAPPING")
+    comparison_table.append(
+        {
+            "stage": "ANALYSIS_XVG_COLUMN_MAPPING",
+            "code_location": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series",
+            "plain": legacy_edr_plain,
+            "patch_b": legacy_edr_patch_b,
+            "delta_patch_b_minus_plain": legacy_edr_patch_b - legacy_edr_plain,
+            "traced_equals_edr_contract": legacy_contract_matches_runtime,
+            "plain_breaks_initial_trace": (
+                plain_initial_trace is not None and abs(legacy_edr_plain - plain_initial_trace) > LEDGER_TRACE_TOL
+            ),
+            "patch_b_breaks_initial_trace": (
+                patch_b_initial_trace is not None
+                and abs(legacy_edr_patch_b - patch_b_initial_trace) > LEDGER_TRACE_TOL
+            ),
+            "first_divergence_here": first_divergence_stage == "ANALYSIS_XVG_COLUMN_MAPPING",
+        }
+    )
+
+    if first_divergence_stage is None:
+        classification = "NOT-YET-RESOLVED"
+    elif first_divergence_stage.startswith("FORCECPP_FINAL_LEDGER_WRITE") or first_divergence_stage.startswith(
+        "SIM_UTIL_PME_RECEIVE_ADD"
+    ):
+        classification = "DIRECT_MUTATION_OF_LEDGER"
+    elif first_divergence_stage.startswith("ENERGYOUTPUT_ADDDATA_INPUT") or first_divergence_stage.startswith(
+        "ENERGYOUTPUT_AFTER_ADDVALUES"
+    ):
+        classification = "ALIAS_OR_COPY_DIVERGENCE"
+    elif first_divergence_stage.startswith("PRINTSTEP_DO_ENX_INPUT"):
+        classification = "POSTPROCESS_AGGREGATION_MISMATCH"
+    elif first_divergence_stage in {"FINAL_EDR_EXPORT", "ANALYSIS_XVG_COLUMN_MAPPING"}:
+        classification = "EXPORT_CONTRACT_MISMATCH"
+    else:
+        classification = "NOT-YET-RESOLVED"
+
+    supports_post_final_origin = (
+        first_divergence_stage is not None
+        and classification != "NOT-YET-RESOLVED"
+        and executed_branch_plain is not None
+        and executed_branch_patch_b is not None
+    )
+
+    localization = {
+        "post_final_ledger_write_export_inventory": stage_inventory,
+        "runtime_post_final_ledger_trace_dossier": {
+            "plain_rows": plain_rows,
+            "patch_b_rows": patch_b_rows,
+            "plain_energy_terms_step0": plain_terms,
+            "patch_b_energy_terms_step0": patch_b_terms,
+            "plain_legacy_energy_terms_step0": plain_legacy_terms,
+            "patch_b_legacy_energy_terms_step0": patch_b_legacy_terms,
+        },
+        "first_divergence_proof": {
+            "first_stage": first_divergence_stage,
+            "reason": first_divergence_reason,
+            "earlier_exonerated": earlier_exonerated,
+            "printstep_matches_final_edr": final_export_matches_runtime,
+            "legacy_mapping_matches_final_edr": legacy_contract_matches_runtime,
+        },
+        "classification_verdict": classification,
+        "comparison_table": comparison_table,
+        "supports_post_final_divergence": supports_post_final_origin,
+        "provenance": {
+            "executed_branch_plain": executed_branch_plain,
+            "executed_branch_patch_b": executed_branch_patch_b,
+            "instrumented_code_locations": [
+                "src/gromacs/mdlib/force.cpp:455",
+                "src/gromacs/mdlib/sim_util.cpp:327",
+                "src/gromacs/mdlib/energyoutput.cpp:933",
+                "src/gromacs/mdlib/energyoutput.cpp:944",
+                "src/gromacs/mdlib/energyoutput.cpp:1306",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series",
+            ],
+            "final_edr_plain": final_edr_plain,
+            "final_edr_patch_b": final_edr_patch_b,
+            "final_edr_delta_patch_b_minus_plain": final_export_delta,
+            "legacy_edr_plain": legacy_edr_plain,
+            "legacy_edr_patch_b": legacy_edr_patch_b,
+            "plain_stdout_term_order": plain_terms_detail["stdout_term_order"],
+            "patch_b_stdout_term_order": patch_b_terms_detail["stdout_term_order"],
+            "plain_resolved_output_order": plain_terms_detail["resolved_output_order"],
+            "patch_b_resolved_output_order": patch_b_terms_detail["resolved_output_order"],
+        },
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "localization": localization,
+    }
+
+
+def dense_patch_b_lj_sr_first_sink_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(plain_dir))
+    patch_b_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(patch_b_dir))
+    plain_lj_source_truth_rows = load_lj_source_truth_rows(plain_dir)
+    plain_coulomb_source_truth_rows = load_coulomb_source_truth_rows(plain_dir)
+    plain_terms_detail = extract_named_energy_series_detail(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2p_plain_diag_terms", commands_log, "m2p_plain"
+    )
+    patch_b_terms_detail = extract_named_energy_series_detail(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2p_patch_b_diag_terms",
+        commands_log,
+        "m2p_patch_b",
+    )
+    plain_terms = plain_terms_detail["rows"][0]
+    patch_b_terms = patch_b_terms_detail["rows"][0]
+    plain_native_coulomb_sr = parse_float_field(
+        plain_coulomb_source_truth_rows.get("rawCoulReadTrace.finalTotal"), "after"
+    )
+    plain_patch_contract_replay_coulomb_sr = parse_float_field(
+        plain_coulomb_source_truth_rows.get("plainPatchContractReplay.finalTotal"), "after"
+    )
+    plain_native_lj_sr = parse_float_field(plain_lj_source_truth_rows.get("rawLjReadTrace.finalTotal"), "after")
+    plain_patch_contract_replay_lj_sr = parse_float_field(
+        plain_lj_source_truth_rows.get("plainPatchLjContractReplay.finalTotal"), "after"
+    )
+
+    def contract_matched_plain_lj_reference(stage: str, native_value: float | None) -> float | None:
+        if plain_patch_contract_replay_lj_sr is None:
+            return native_value
+        if stage in ("SR_ACCUMULATION", "FINAL_INTERNAL_LEDGER"):
+            return plain_patch_contract_replay_lj_sr
+        if stage == "CORRECTED_EXPORT":
+            return float(f"{plain_patch_contract_replay_lj_sr:.6f}")
+        return native_value
+
+    def contract_matched_plain_coulomb_reference(stage: str, native_value: float | None) -> float | None:
+        if plain_patch_contract_replay_coulomb_sr is None:
+            return native_value
+        if stage in ("SR_ACCUMULATION", "FINAL_INTERNAL_LEDGER"):
+            return plain_patch_contract_replay_coulomb_sr
+        if stage == "CORRECTED_EXPORT":
+            return float(f"{plain_patch_contract_replay_coulomb_sr:.6f}")
+        return native_value
+
+    stage_order = ["RAW_SR_FORMATION", "SR_ACCUMULATION", "FINAL_INTERNAL_LEDGER", "CORRECTED_EXPORT"]
+    stage_data_plain = {
+        stage: aggregate_lj_sr_stage(plain_rows, stage) for stage in ("RAW_SR_FORMATION", "SR_ACCUMULATION", "FINAL_INTERNAL_LEDGER")
+    }
+    stage_data_patch_b = {
+        stage: aggregate_lj_sr_stage(patch_b_rows, stage) for stage in ("RAW_SR_FORMATION", "SR_ACCUMULATION", "FINAL_INTERNAL_LEDGER")
+    }
+    stage_data_plain["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": plain_terms["LJ-(SR)"],
+        "coulomb_sr": plain_terms["Coulomb-(SR)"],
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+    stage_data_patch_b["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": patch_b_terms["LJ-(SR)"],
+        "coulomb_sr": patch_b_terms["Coulomb-(SR)"],
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+
+    comparison_table: list[dict[str, Any]] = []
+    first_nonzero_lj_stage = None
+    earlier_exonerated: list[str] = []
+    first_nonzero_coul_stage = None
+
+    for stage in stage_order:
+        plain_stage = stage_data_plain[stage]
+        patch_stage = stage_data_patch_b[stage]
+        plain_lj = plain_stage["lj_sr"]
+        patch_lj = patch_stage["lj_sr"]
+        plain_coul = plain_stage["coulomb_sr"]
+        patch_coul = patch_stage["coulomb_sr"]
+        comparator_plain_lj = contract_matched_plain_lj_reference(stage, plain_lj)
+        comparator_plain_coul = contract_matched_plain_coulomb_reference(stage, plain_coul)
+        delta_lj = None if comparator_plain_lj is None or patch_lj is None else patch_lj - comparator_plain_lj
+        delta_coul = (
+            None if comparator_plain_coul is None or patch_coul is None else patch_coul - comparator_plain_coul
+        )
+        first_nonzero_here = False
+        if first_nonzero_lj_stage is None and delta_lj is not None and abs(delta_lj) > NUMERIC_FIELD_TOL:
+            first_nonzero_lj_stage = stage
+            first_nonzero_here = True
+        elif first_nonzero_lj_stage is None:
+            earlier_exonerated.append(stage)
+        plain_locations = plain_stage["code_locations"]
+        patch_locations = patch_stage["code_locations"]
+        if plain_locations == patch_locations:
+            code_location = "; ".join(plain_locations)
+        else:
+            code_location = f"plain={'; '.join(plain_locations)} | patch_b={'; '.join(patch_locations)}"
+
+        comparison_table.append(
+            {
+                "stage": stage,
+                "code_location": code_location,
+                "plain_LJ_SR": comparator_plain_lj,
+                "plain_native_LJ_SR": plain_lj,
+                "plain_patch_contract_replay_LJ_SR": plain_patch_contract_replay_lj_sr,
+                "patch_b_LJ_SR": patch_lj,
+                "delta_LJ_SR": delta_lj,
+                "plain_Coulomb_SR": comparator_plain_coul,
+                "plain_native_Coulomb_SR": plain_coul,
+                "plain_patch_contract_replay_Coulomb_SR": plain_patch_contract_replay_coulomb_sr,
+                "patch_b_Coulomb_SR": patch_coul,
+                "delta_Coulomb_SR": delta_coul,
+                "first_nonzero_LJ_here": first_nonzero_here,
+            }
+        )
+
+    for stage in ("SR_ACCUMULATION", "FINAL_INTERNAL_LEDGER", "CORRECTED_EXPORT"):
+        row = next(candidate for candidate in comparison_table if candidate["stage"] == stage)
+        delta_coul = row["delta_Coulomb_SR"]
+        if first_nonzero_coul_stage is None and delta_coul is not None and abs(delta_coul) > NUMERIC_FIELD_TOL:
+            first_nonzero_coul_stage = stage
+
+    final_internal_plain = stage_data_plain["FINAL_INTERNAL_LEDGER"]
+    final_internal_patch_b = stage_data_patch_b["FINAL_INTERNAL_LEDGER"]
+    corrected_export_matches_internal = (
+        final_internal_plain["lj_sr"] is not None
+        and final_internal_patch_b["lj_sr"] is not None
+        and abs(final_internal_plain["lj_sr"] - plain_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch_b["lj_sr"] - patch_b_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and final_internal_plain["coulomb_sr"] is not None
+        and final_internal_patch_b["coulomb_sr"] is not None
+        and abs(final_internal_plain["coulomb_sr"] - plain_terms["Coulomb-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch_b["coulomb_sr"] - patch_b_terms["Coulomb-(SR)"]) <= LEDGER_TRACE_TOL
+    )
+
+    if first_nonzero_coul_stage is None:
+        coulomb_coupling = "NOT-YET-RESOLVED"
+    elif first_nonzero_lj_stage is None:
+        coulomb_coupling = "NOT-YET-RESOLVED"
+    elif first_nonzero_coul_stage == first_nonzero_lj_stage:
+        coulomb_coupling = "SAME_STAGE_COUPLED"
+    elif stage_order.index(first_nonzero_coul_stage) > stage_order.index(first_nonzero_lj_stage):
+        coulomb_coupling = "LATER_STAGE_REFLECTION"
+    else:
+        coulomb_coupling = "INDEPENDENT_SECONDARY"
+
+    if first_nonzero_lj_stage is None:
+        classification = "NOT-YET-RESOLVED"
+    elif first_nonzero_lj_stage == "RAW_SR_FORMATION":
+        classification = "LJ_SR_EVALUATION_ORIGIN"
+    elif first_nonzero_lj_stage == "SR_ACCUMULATION":
+        classification = "SR_ACCUMULATION_ORIGIN"
+    elif first_nonzero_lj_stage == "FINAL_INTERNAL_LEDGER":
+        classification = "LEDGER_AGGREGATION_ORIGIN"
+    elif first_nonzero_lj_stage == "CORRECTED_EXPORT":
+        classification = "EXPORT_CONTRACT_MISMATCH"
+    else:
+        classification = "NOT-YET-RESOLVED"
+
+    patch_b_raw_rows = stage_data_patch_b["RAW_SR_FORMATION"]["rows"]
+    inventory = [
+        {
+            "candidate": "plain_pairwise_lj_sr_evaluation",
+            "code_location": "src/gromacs/nbnxm/kerneldispatch.cpp:430",
+            "candidate_type": "pairwise_lj_sr_evaluation_path",
+            "executed_plain": any(row.get("execution_path") == "plain_nbnxm_cpu" for row in plain_rows),
+            "executed_patch_b": False,
+        },
+        {
+            "candidate": "exact_pairwise_lj_sr_evaluation",
+            "code_location": "src/gromacs/mdlib/sim_util.cpp:1754",
+            "candidate_type": "pairwise_lj_sr_evaluation_path",
+            "executed_plain": False,
+            "executed_patch_b": any(row.get("execution_path") == "exact_respa_pairs" for row in patch_b_raw_rows),
+        },
+        {
+            "candidate": "exact_excluded_pair_sr_handling",
+            "code_location": "src/gromacs/mdlib/sim_util.cpp:1769",
+            "candidate_type": "excluded_pair_sr_handling",
+            "executed_plain": False,
+            "executed_patch_b": any(
+                row.get("execution_path") == "exact_respa_excluded_pairs" for row in patch_b_raw_rows
+            ),
+        },
+        {
+            "candidate": "sr_accumulation_grpp",
+            "code_location": "src/gromacs/mdlib/sim_util.cpp:4284",
+            "candidate_type": "bookkeeping_ledger_accumulation",
+            "executed_plain": stage_data_plain["SR_ACCUMULATION"]["lj_sr"] is not None,
+            "executed_patch_b": stage_data_patch_b["SR_ACCUMULATION"]["lj_sr"] is not None,
+        },
+        {
+            "candidate": "final_internal_ledger",
+            "code_location": "src/gromacs/mdlib/sim_util.cpp:4298",
+            "candidate_type": "ledger_aggregation",
+            "executed_plain": stage_data_plain["FINAL_INTERNAL_LEDGER"]["lj_sr"] is not None,
+            "executed_patch_b": stage_data_patch_b["FINAL_INTERNAL_LEDGER"]["lj_sr"] is not None,
+        },
+        {
+            "candidate": "corrected_export",
+            "code_location": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            "candidate_type": "output_export_mapping_path",
+            "executed_plain": True,
+            "executed_patch_b": True,
+        },
+    ]
+
+    supports_origin = False
+
+    localization = {
+        "lj_sr_sink_origin_inventory": inventory,
+        "runtime_trace_dossier": {
+            "plain_rows": plain_rows,
+            "patch_b_rows": patch_b_rows,
+            "plain_energy_terms_step0": plain_terms,
+            "patch_b_energy_terms_step0": patch_b_terms,
+            "plain_lj_source_truth_rows": plain_lj_source_truth_rows,
+            "plain_native_lj_sr": plain_native_lj_sr,
+            "plain_patch_contract_replay_lj_sr": plain_patch_contract_replay_lj_sr,
+            "plain_coulomb_source_truth_rows": plain_coulomb_source_truth_rows,
+            "plain_native_coulomb_sr": plain_native_coulomb_sr,
+            "plain_patch_contract_replay_coulomb_sr": plain_patch_contract_replay_coulomb_sr,
+        },
+        "lj_comparator_contract": {
+            "plain_native_lj_sr": plain_native_lj_sr,
+            "plain_patch_contract_replay_lj_sr": plain_patch_contract_replay_lj_sr,
+            "comparator_rule": (
+                "Use plain patch-contract replay LJ total as the plain reference for "
+                "SR_ACCUMULATION, FINAL_INTERNAL_LEDGER, and CORRECTED_EXPORT; keep plain native total reported separately."
+            ),
+        },
+        "first_nonzero_lj_sr_delta_proof": {
+            "first_stage": first_nonzero_lj_stage,
+            "earlier_exonerated": earlier_exonerated,
+            "corrected_export_matches_internal": corrected_export_matches_internal,
+        },
+        "coulomb_sr_coupling_result": coulomb_coupling,
+        "coulomb_comparator_contract": {
+            "plain_native_coulomb_sr": plain_native_coulomb_sr,
+            "plain_patch_contract_replay_coulomb_sr": plain_patch_contract_replay_coulomb_sr,
+            "comparator_rule": (
+                "Use plain patch-contract replay Coulomb total as the plain reference for "
+                "SR_ACCUMULATION, FINAL_INTERNAL_LEDGER, and CORRECTED_EXPORT; keep plain native total reported separately."
+            ),
+        },
+        "origin_classification_verdict": classification,
+        "comparison_table": comparison_table,
+        "supports_lj_sr_origin": supports_origin,
+        "provenance": {
+            "instrumented_code_locations": [
+                "src/gromacs/nbnxm/kerneldispatch.cpp:430",
+                "src/gromacs/mdlib/sim_util.cpp:1754",
+                "src/gromacs/mdlib/sim_util.cpp:1769",
+                "src/gromacs/mdlib/sim_util.cpp:4284",
+                "src/gromacs/mdlib/sim_util.cpp:4298",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            ],
+            "corrected_extractor_code_path": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            "plain_resolved_output_order": plain_terms_detail["resolved_output_order"],
+            "patch_b_resolved_output_order": patch_b_terms_detail["resolved_output_order"],
+            "plain_stdout_term_order": plain_terms_detail["stdout_term_order"],
+            "patch_b_stdout_term_order": patch_b_terms_detail["stdout_term_order"],
+        },
+        "why_not_fully_closed": (
+            "This closes only the first LJ-(SR) residual origin for dense_oligomer coarse step 0 under Patch-shape B; it does not establish all-term bookkeeping closure."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
+def dense_patch_b_potential_ledger_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_ledger_row = load_potential_ledger_trace_row(plain_dir)
+    patch_ledger_row = load_potential_ledger_trace_row(patch_b_dir)
+    plain_lj_source_truth_rows = load_lj_source_truth_rows(plain_dir)
+    plain_coulomb_source_truth_rows = load_coulomb_source_truth_rows(plain_dir)
+    plain_terms_detail = extract_named_energy_series_detail(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2pot_plain_diag_terms", commands_log, "m2pot_plain"
+    )
+    patch_terms_detail = extract_named_energy_series_detail(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2pot_patch_b_diag_terms",
+        commands_log,
+        "m2pot_patch_b",
+    )
+    plain_terms = plain_terms_detail["rows"][0]
+    patch_terms = patch_terms_detail["rows"][0]
+
+    plain_patch_contract_replay_coulomb_sr = parse_float_field(
+        plain_coulomb_source_truth_rows.get("plainPatchContractReplay.finalTotal"), "after"
+    )
+    plain_patch_contract_replay_lj_sr = parse_float_field(
+        plain_lj_source_truth_rows.get("plainPatchLjContractReplay.finalTotal"), "after"
+    )
+
+    def ledger_value(row: dict[str, str] | None, key: str) -> float | None:
+        return parse_float_field(row, key)
+
+    def adjusted_plain_ledger_value(key: str) -> float | None:
+        native_value = ledger_value(plain_ledger_row, key)
+        native_coulomb = ledger_value(plain_ledger_row, "coul_sr")
+        native_lj = ledger_value(plain_ledger_row, "lj_sr")
+        adjusted_value = native_value
+        if adjusted_value is None:
+            return None
+        if key == "coul_sr" and plain_patch_contract_replay_coulomb_sr is not None:
+            adjusted_value = plain_patch_contract_replay_coulomb_sr
+        elif key == "lj_sr" and plain_patch_contract_replay_lj_sr is not None:
+            adjusted_value = plain_patch_contract_replay_lj_sr
+        else:
+            if native_coulomb is not None and plain_patch_contract_replay_coulomb_sr is not None and key in (
+                "component_sum",
+                "potential",
+            ):
+                adjusted_value = adjusted_value - native_coulomb + plain_patch_contract_replay_coulomb_sr
+            if native_lj is not None and plain_patch_contract_replay_lj_sr is not None and key in (
+                "component_sum",
+                "potential",
+            ):
+                adjusted_value = adjusted_value - native_lj + plain_patch_contract_replay_lj_sr
+        return adjusted_value
+
+    def adjusted_plain_export_potential() -> float | None:
+        native_potential = plain_terms.get("Potential")
+        native_coulomb = plain_terms.get("Coulomb-(SR)")
+        native_lj = plain_terms.get("LJ-(SR)")
+        if native_potential is None:
+            return native_potential
+        adjusted_value = native_potential
+        if native_coulomb is not None and plain_patch_contract_replay_coulomb_sr is not None:
+            replay_export_coulomb = float(f"{plain_patch_contract_replay_coulomb_sr:.6f}")
+            adjusted_value = adjusted_value - native_coulomb + replay_export_coulomb
+        if native_lj is not None and plain_patch_contract_replay_lj_sr is not None:
+            replay_export_lj = float(f"{plain_patch_contract_replay_lj_sr:.6f}")
+            adjusted_value = adjusted_value - native_lj + replay_export_lj
+        return adjusted_value
+
+    component_rows = [
+        ("bond", "Class2-Bond"),
+        ("angle", "Class2-Angle"),
+        ("proper_dih", "Class2-Dih"),
+        ("improper_dih", "Improper-Dih"),
+        ("lj14", "LJ-14"),
+        ("coul14", "Coulomb-14"),
+        ("lj_sr", "LJ-(SR)"),
+        ("coul_sr", "Coulomb-(SR)"),
+        ("coul_recip", "Coul.-recip."),
+        ("buckingham_sr", "Buckingham-(SR)"),
+        ("other_terms", "Other-Terms"),
+    ]
+    component_table: list[dict[str, Any]] = []
+    for key, label in component_rows:
+        plain_native_value = ledger_value(plain_ledger_row, key)
+        plain_contract_value = adjusted_plain_ledger_value(key)
+        patch_value = ledger_value(patch_ledger_row, key)
+        delta_value = (
+            None
+            if plain_contract_value is None or patch_value is None
+            else patch_value - plain_contract_value
+        )
+        component_table.append(
+            {
+                "component": label,
+                "plain_native": plain_native_value,
+                "plain_coulomb_contract_baseline": plain_contract_value,
+                "patch_b": patch_value,
+                "delta_patch_minus_plain_baseline": delta_value,
+            }
+        )
+
+    plain_component_sum_baseline = adjusted_plain_ledger_value("component_sum")
+    patch_component_sum = ledger_value(patch_ledger_row, "component_sum")
+    plain_final_internal_potential_baseline = adjusted_plain_ledger_value("potential")
+    patch_final_internal_potential = ledger_value(patch_ledger_row, "potential")
+    plain_corrected_export_potential_baseline = adjusted_plain_export_potential()
+    patch_corrected_export_potential = patch_terms.get("Potential")
+
+    component_sum_delta = (
+        None
+        if plain_component_sum_baseline is None or patch_component_sum is None
+        else patch_component_sum - plain_component_sum_baseline
+    )
+    final_internal_delta = (
+        None
+        if plain_final_internal_potential_baseline is None or patch_final_internal_potential is None
+        else patch_final_internal_potential - plain_final_internal_potential_baseline
+    )
+    corrected_export_delta = (
+        None
+        if plain_corrected_export_potential_baseline is None or patch_corrected_export_potential is None
+        else patch_corrected_export_potential - plain_corrected_export_potential_baseline
+    )
+
+    plain_ledger_sum_matches_potential = (
+        plain_component_sum_baseline is not None
+        and plain_final_internal_potential_baseline is not None
+        and abs(plain_component_sum_baseline - plain_final_internal_potential_baseline) <= LEDGER_TRACE_TOL
+    )
+    patch_ledger_sum_matches_potential = (
+        patch_component_sum is not None
+        and patch_final_internal_potential is not None
+        and abs(patch_component_sum - patch_final_internal_potential) <= LEDGER_TRACE_TOL
+    )
+
+    if (
+        (component_sum_delta is not None and abs(component_sum_delta) > LEDGER_TRACE_TOL)
+        or (final_internal_delta is not None and abs(final_internal_delta) > LEDGER_TRACE_TOL)
+    ):
+        first_stage = "FINAL_INTERNAL_LEDGER"
+    elif corrected_export_delta is not None and abs(corrected_export_delta) > LEDGER_TRACE_TOL:
+        first_stage = "CORRECTED_EXPORT"
+    else:
+        first_stage = None
+
+    if (
+        first_stage == "FINAL_INTERNAL_LEDGER"
+        and plain_ledger_sum_matches_potential
+        and patch_ledger_sum_matches_potential
+    ):
+        classification = "POTENTIAL_LEDGER_AGGREGATION_MISMATCH"
+    elif (
+        first_stage == "CORRECTED_EXPORT"
+        and (component_sum_delta is None or abs(component_sum_delta) <= LEDGER_TRACE_TOL)
+        and (final_internal_delta is None or abs(final_internal_delta) <= LEDGER_TRACE_TOL)
+    ):
+        classification = "POTENTIAL_EXPORT_CONTRACT_MISMATCH"
+    else:
+        classification = "NOT_YET_RESOLVED"
+
+    localization = {
+        "potential_component_table": component_table,
+        "potential_ledger_export_table": {
+            "plain_component_sum_at_ledger": plain_component_sum_baseline,
+            "patch_component_sum_at_ledger": patch_component_sum,
+            "plain_final_internal_potential": plain_final_internal_potential_baseline,
+            "patch_final_internal_potential": patch_final_internal_potential,
+            "plain_corrected_export_potential": plain_corrected_export_potential_baseline,
+            "patch_corrected_export_potential": patch_corrected_export_potential,
+            "component_sum_delta_patch_minus_plain": component_sum_delta,
+            "final_internal_delta_patch_minus_plain": final_internal_delta,
+            "corrected_export_delta_patch_minus_plain": corrected_export_delta,
+        },
+        "coulomb_comparator_contract": {
+            "plain_patch_contract_replay_coulomb_sr": plain_patch_contract_replay_coulomb_sr,
+            "plain_native_coulomb_sr_at_ledger": ledger_value(plain_ledger_row, "coul_sr"),
+            "plain_native_coulomb_sr_at_export": plain_terms.get("Coulomb-(SR)"),
+            "rule": "Replace plain Coulomb-(SR) with the plain patch-contract replay value when comparing Potential under the locked-scope Coulomb baseline.",
+        },
+        "lj_comparator_contract": {
+            "plain_patch_contract_replay_lj_sr": plain_patch_contract_replay_lj_sr,
+            "plain_native_lj_sr_at_ledger": ledger_value(plain_ledger_row, "lj_sr"),
+            "plain_native_lj_sr_at_export": plain_terms.get("LJ-(SR)"),
+            "rule": "Replace plain LJ-(SR) with the plain patch-contract replay value when comparing Potential under the locked-scope LJ baseline.",
+        },
+        "first_stage_where_potential_diverges": first_stage,
+        "classification": classification,
+        "provenance": {
+            "instrumented_code_locations": [
+                "src/gromacs/mdlib/sim_util.cpp:5410",
+                "src/gromacs/mdlib/enerdata_utils.cpp:179",
+                "src/gromacs/mdlib/enerdata_utils.cpp:322",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            ],
+            "trace_row_plain": plain_ledger_row,
+            "trace_row_patch_b": patch_ledger_row,
+            "plain_resolved_output_order": plain_terms_detail["resolved_output_order"],
+            "patch_b_resolved_output_order": patch_terms_detail["resolved_output_order"],
+        },
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
+def dense_patch_b_lj_sr_true_first_raw_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(plain_dir))
+    patch_b_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(patch_b_dir))
+    plain_terms_detail = extract_named_energy_series_detail(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2q_plain_diag_terms", commands_log, "m2q_plain"
+    )
+    patch_b_terms_detail = extract_named_energy_series_detail(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2q_patch_b_diag_terms",
+        commands_log,
+        "m2q_patch_b",
+    )
+    plain_terms = plain_terms_detail["rows"][0]
+    patch_b_terms = patch_b_terms_detail["rows"][0]
+
+    def aggregate_stage_with_paths(
+        rows: list[dict[str, str]], stage: str, execution_path_prefixes: tuple[str, ...]
+    ) -> dict[str, Any]:
+        filtered_rows = [
+            row
+            for row in rows
+            if row.get("stage") == stage
+            and (
+                not execution_path_prefixes
+                or any((row.get("execution_path") or "").startswith(prefix) for prefix in execution_path_prefixes)
+            )
+        ]
+        return aggregate_lj_sr_stage(filtered_rows, stage)
+
+    stage_order = [
+        "EARLIEST_RAW_STAGE",
+        "RAW_SR_FORMATION",
+        "SR_ACCUMULATION",
+        "FINAL_INTERNAL_LEDGER",
+        "CORRECTED_EXPORT",
+    ]
+    stage_data_plain = {
+        stage: aggregate_lj_sr_stage(plain_rows, stage)
+        for stage in ("EARLIEST_RAW_STAGE", "RAW_SR_FORMATION", "SR_ACCUMULATION", "FINAL_INTERNAL_LEDGER")
+    }
+    stage_data_patch_b = {
+        stage: aggregate_lj_sr_stage(patch_b_rows, stage)
+        for stage in ("EARLIEST_RAW_STAGE", "RAW_SR_FORMATION", "SR_ACCUMULATION", "FINAL_INTERNAL_LEDGER")
+    }
+    stage_data_plain["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": plain_terms["LJ-(SR)"],
+        "coulomb_sr": plain_terms["Coulomb-(SR)"],
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+    stage_data_patch_b["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": patch_b_terms["LJ-(SR)"],
+        "coulomb_sr": patch_b_terms["Coulomb-(SR)"],
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+
+    comparison_table: list[dict[str, Any]] = []
+    first_nonzero_lj_stage = None
+    earlier_exonerated: list[str] = []
+    first_nonzero_coul_stage = None
+
+    for stage in stage_order:
+        plain_stage = stage_data_plain[stage]
+        patch_stage = stage_data_patch_b[stage]
+        plain_lj = plain_stage["lj_sr"]
+        patch_lj = patch_stage["lj_sr"]
+        plain_coul = plain_stage["coulomb_sr"]
+        patch_coul = patch_stage["coulomb_sr"]
+        delta_lj = None if plain_lj is None or patch_lj is None else patch_lj - plain_lj
+        delta_coul = None if plain_coul is None or patch_coul is None else patch_coul - plain_coul
+        first_nonzero_here = False
+        if first_nonzero_lj_stage is None and delta_lj is not None and abs(delta_lj) > NUMERIC_FIELD_TOL:
+            first_nonzero_lj_stage = stage
+            first_nonzero_here = True
+        elif first_nonzero_lj_stage is None:
+            earlier_exonerated.append(stage)
+        plain_locations = plain_stage["code_locations"]
+        patch_locations = patch_stage["code_locations"]
+        if plain_locations == patch_locations:
+            code_location = "; ".join(plain_locations)
+        else:
+            code_location = f"plain={'; '.join(plain_locations)} | patch_b={'; '.join(patch_locations)}"
+
+        comparison_table.append(
+            {
+                "stage": stage,
+                "code_location": code_location,
+                "plain_LJ_SR": plain_lj,
+                "patch_b_LJ_SR": patch_lj,
+                "delta_LJ_SR": delta_lj,
+                "plain_Coulomb_SR": plain_coul,
+                "patch_b_Coulomb_SR": patch_coul,
+                "delta_Coulomb_SR": delta_coul,
+                "first_nonzero_LJ_here": first_nonzero_here,
+            }
+        )
+
+    for stage in ("SR_ACCUMULATION", "FINAL_INTERNAL_LEDGER", "CORRECTED_EXPORT"):
+        row = next(candidate for candidate in comparison_table if candidate["stage"] == stage)
+        delta_coul = row["delta_Coulomb_SR"]
+        if first_nonzero_coul_stage is None and delta_coul is not None and abs(delta_coul) > NUMERIC_FIELD_TOL:
+            first_nonzero_coul_stage = stage
+
+    final_internal_plain = stage_data_plain["FINAL_INTERNAL_LEDGER"]
+    final_internal_patch_b = stage_data_patch_b["FINAL_INTERNAL_LEDGER"]
+    corrected_export_matches_internal = (
+        final_internal_plain["lj_sr"] is not None
+        and final_internal_patch_b["lj_sr"] is not None
+        and abs(final_internal_plain["lj_sr"] - plain_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch_b["lj_sr"] - patch_b_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and final_internal_plain["coulomb_sr"] is not None
+        and final_internal_patch_b["coulomb_sr"] is not None
+        and abs(final_internal_plain["coulomb_sr"] - plain_terms["Coulomb-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch_b["coulomb_sr"] - patch_b_terms["Coulomb-(SR)"]) <= LEDGER_TRACE_TOL
+    )
+
+    if first_nonzero_lj_stage == "EARLIEST_RAW_STAGE":
+        exact_first_verdict = "EARLIEST_RAW_STAGE_CONFIRMED"
+    elif first_nonzero_lj_stage == "RAW_SR_FORMATION":
+        exact_first_verdict = "RAW_SR_FORMATION_STILL_FIRST"
+    else:
+        exact_first_verdict = "NOT-YET-RESOLVED"
+
+    if first_nonzero_coul_stage is None or first_nonzero_lj_stage is None:
+        coulomb_coupling = "NOT-YET-RESOLVED"
+    elif first_nonzero_coul_stage == first_nonzero_lj_stage:
+        coulomb_coupling = "SAME_STAGE_COUPLED"
+    elif stage_order.index(first_nonzero_coul_stage) > stage_order.index(first_nonzero_lj_stage):
+        coulomb_coupling = "LATER_STAGE_REFLECTION"
+    else:
+        coulomb_coupling = "INDEPENDENT_SECONDARY"
+
+    if first_nonzero_lj_stage in ("EARLIEST_RAW_STAGE", "RAW_SR_FORMATION"):
+        classification = "LJ_SR_EVALUATION_ORIGIN"
+    elif first_nonzero_lj_stage == "SR_ACCUMULATION":
+        classification = "SR_ACCUMULATION_ORIGIN"
+    elif first_nonzero_lj_stage == "FINAL_INTERNAL_LEDGER":
+        classification = "LEDGER_AGGREGATION_ORIGIN"
+    elif first_nonzero_lj_stage == "CORRECTED_EXPORT":
+        classification = "EXPORT_CONTRACT_MISMATCH"
+    else:
+        classification = "NOT-YET-RESOLVED"
+
+    plain_earliest_rows = stage_data_plain["EARLIEST_RAW_STAGE"]["rows"]
+    patch_earliest_rows = stage_data_patch_b["EARLIEST_RAW_STAGE"]["rows"]
+    plain_raw_rows = stage_data_plain["RAW_SR_FORMATION"]["rows"]
+    patch_raw_rows = stage_data_patch_b["RAW_SR_FORMATION"]["rows"]
+    plain_earliest_row = plain_earliest_rows[0] if plain_earliest_rows else {}
+    patch_earliest_row = patch_earliest_rows[0] if patch_earliest_rows else {}
+    inventory = [
+        {
+            "candidate": "plain_earliest_lj_raw_site",
+            "code_location": "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:pre_Vvdw_accumulation",
+            "candidate_type": "contract_matched_raw_lj_formation",
+            "executed_plain": bool(plain_earliest_rows),
+            "executed_patch_b": False,
+            "execution_path": plain_earliest_row.get("execution_path"),
+            "kernel_type": plain_earliest_row.get("kernel_type"),
+        },
+        {
+            "candidate": "patch_b_earliest_lj_raw_site",
+            "code_location": "src/gromacs/mdlib/sim_util.cpp:per_pair_rawLjEnergy_before_pairStats_aggregate",
+            "candidate_type": "contract_matched_raw_lj_formation",
+            "executed_plain": False,
+            "executed_patch_b": bool(patch_earliest_rows),
+            "execution_path": patch_earliest_row.get("execution_path"),
+        },
+        {
+            "candidate": "plain_raw_sr_formation_aggregate",
+            "code_location": "src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce",
+            "candidate_type": "post_kernel_thread_output_aggregate",
+            "executed_plain": any(row.get("execution_path") == "plain_nbnxm_cpu" for row in plain_raw_rows),
+            "executed_patch_b": False,
+        },
+        {
+            "candidate": "patch_b_raw_sr_formation_aggregate",
+            "code_location": "src/gromacs/mdlib/sim_util.cpp:pair_loop_raw_energy_delta",
+            "candidate_type": "post_pairloop_aggregate",
+            "executed_plain": False,
+            "executed_patch_b": any(row.get("execution_path") == "exact_respa_pairs" for row in patch_raw_rows),
+        },
+    ]
+
+    supports_origin = (
+        exact_first_verdict != "NOT-YET-RESOLVED"
+        and corrected_export_matches_internal
+        and stage_data_plain["EARLIEST_RAW_STAGE"]["lj_sr"] is not None
+        and stage_data_patch_b["EARLIEST_RAW_STAGE"]["lj_sr"] is not None
+    )
+    overclaim_reason = (
+        "Harness now ties origin support to the contract-matched EARLIEST_RAW_STAGE/RAW_SR_FORMATION proof instead of the old aggregate-only RAW_SR_FORMATION claim."
+        if supports_origin
+        else "Harness origin support stays false because the exact contract-matched first raw LJ stage is still not proven."
+    )
+
+    localization = {
+        "executed_earliest_site_inventory": inventory,
+        "runtime_trace_dossier": {
+            "plain_rows": plain_rows,
+            "patch_b_rows": patch_b_rows,
+            "plain_energy_terms_step0": plain_terms,
+            "patch_b_energy_terms_step0": patch_b_terms,
+            "plain_execution_path": plain_earliest_row.get("execution_path"),
+            "plain_kernel_type": plain_earliest_row.get("kernel_type"),
+            "patch_b_execution_path": patch_earliest_row.get("execution_path"),
+        },
+        "first_nonzero_lj_sr_delta_proof": {
+            "first_stage": first_nonzero_lj_stage,
+            "earlier_exonerated": earlier_exonerated,
+            "corrected_export_matches_internal": corrected_export_matches_internal,
+        },
+        "exact_first_nonzero_lj_verdict": exact_first_verdict,
+        "coulomb_sr_coupling_result": coulomb_coupling,
+        "origin_classification_verdict": classification,
+        "comparison_table": comparison_table,
+        "harness_claim_audit": {
+            "supports_lj_sr_origin": supports_origin,
+            "old_overclaim_removed": True,
+            "reason": overclaim_reason,
+        },
+        "supports_lj_sr_origin": supports_origin,
+        "provenance": {
+            "instrumented_code_locations": [
+                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:pre_Vvdw_accumulation",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce",
+                "src/gromacs/mdlib/sim_util.cpp:per_pair_rawLjEnergy_before_pairStats_aggregate",
+                "src/gromacs/mdlib/sim_util.cpp:pair_loop_raw_energy_delta",
+                "src/gromacs/mdlib/sim_util.cpp:4284",
+                "src/gromacs/mdlib/sim_util.cpp:4298",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            ],
+            "corrected_extractor_code_path": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            "plain_resolved_output_order": plain_terms_detail["resolved_output_order"],
+            "patch_b_resolved_output_order": patch_b_terms_detail["resolved_output_order"],
+            "plain_stdout_term_order": plain_terms_detail["stdout_term_order"],
+            "patch_b_stdout_term_order": patch_b_terms_detail["stdout_term_order"],
+        },
+        "why_not_fully_closed": (
+            "This milestone closes only the exact first contract-matched LJ-(SR) raw stage for dense_oligomer coarse step 0 under Patch-shape B."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
+def dense_patch_b_lj_sr_first_amplification_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(plain_dir))
+    patch_b_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(patch_b_dir))
+    plain_terms_detail = extract_named_energy_series_detail(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2r_plain_diag_terms", commands_log, "m2r_plain"
+    )
+    patch_b_terms_detail = extract_named_energy_series_detail(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2r_patch_b_diag_terms",
+        commands_log,
+        "m2r_patch_b",
+    )
+    plain_terms = plain_terms_detail["rows"][0]
+    patch_b_terms = patch_b_terms_detail["rows"][0]
+
+    def aggregate_stage_with_paths(
+        rows: list[dict[str, str]], stage: str, execution_path_prefixes: tuple[str, ...]
+    ) -> dict[str, Any]:
+        filtered_rows = [
+            row
+            for row in rows
+            if row.get("stage") == stage
+            and (
+                not execution_path_prefixes
+                or any((row.get("execution_path") or "").startswith(prefix) for prefix in execution_path_prefixes)
+            )
+        ]
+        return aggregate_lj_sr_stage(filtered_rows, stage)
+
+    stage_order = [
+        "EARLIEST_RAW_STAGE",
+        "INTERMEDIATE_LOCAL_STAGE",
+        "RAW_SR_FORMATION",
+        "SR_ACCUMULATION",
+        "FINAL_INTERNAL_LEDGER",
+        "CORRECTED_EXPORT",
+    ]
+    traced_internal_stages = (
+        "EARLIEST_RAW_STAGE",
+        "INTERMEDIATE_LOCAL_STAGE",
+        "RAW_SR_FORMATION",
+        "SR_ACCUMULATION",
+        "FINAL_INTERNAL_LEDGER",
+    )
+    stage_data_plain = {stage: aggregate_lj_sr_stage(plain_rows, stage) for stage in traced_internal_stages}
+    stage_data_patch_b = {stage: aggregate_lj_sr_stage(patch_b_rows, stage) for stage in traced_internal_stages}
+    stage_data_plain["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": plain_terms["LJ-(SR)"],
+        "coulomb_sr": plain_terms["Coulomb-(SR)"],
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+    stage_data_patch_b["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": patch_b_terms["LJ-(SR)"],
+        "coulomb_sr": patch_b_terms["Coulomb-(SR)"],
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+
+    # Raw/intermediate Coulomb rows are not contract-matched across plain and exact Patch-B paths.
+    for stage in ("EARLIEST_RAW_STAGE", "INTERMEDIATE_LOCAL_STAGE", "RAW_SR_FORMATION"):
+        stage_data_plain[stage]["coulomb_sr"] = None
+        stage_data_patch_b[stage]["coulomb_sr"] = None
+
+    comparison_table: list[dict[str, Any]] = []
+    first_amplification_stage = None
+    first_amplification_increment = None
+    non_amplifying_stages_before_first: list[str] = ["EARLIEST_RAW_STAGE"]
+    first_comparable_coulomb_stage = None
+    material_amplification_tol = NUMERIC_FIELD_TOL
+    prev_abs_delta_lj = None
+
+    for index, stage in enumerate(stage_order):
+        plain_stage = stage_data_plain[stage]
+        patch_stage = stage_data_patch_b[stage]
+        plain_lj = plain_stage["lj_sr"]
+        patch_lj = patch_stage["lj_sr"]
+        plain_coul = plain_stage["coulomb_sr"]
+        patch_coul = patch_stage["coulomb_sr"]
+        delta_lj = None if plain_lj is None or patch_lj is None else patch_lj - plain_lj
+        abs_delta_lj = None if delta_lj is None else abs(delta_lj)
+        delta_increment = None
+        first_amplification_here = False
+        if prev_abs_delta_lj is not None and abs_delta_lj is not None:
+            delta_increment = abs_delta_lj - prev_abs_delta_lj
+            if first_amplification_stage is None and delta_increment > material_amplification_tol:
+                first_amplification_stage = stage
+                first_amplification_increment = delta_increment
+                first_amplification_here = True
+            elif first_amplification_stage is None:
+                non_amplifying_stages_before_first.append(stage)
+        delta_coul = None if plain_coul is None or patch_coul is None else patch_coul - plain_coul
+        if (
+            first_comparable_coulomb_stage is None
+            and delta_coul is not None
+            and abs(delta_coul) > NUMERIC_FIELD_TOL
+        ):
+            first_comparable_coulomb_stage = stage
+
+        plain_locations = plain_stage["code_locations"]
+        patch_locations = patch_stage["code_locations"]
+        if plain_locations == patch_locations:
+            code_location = "; ".join(plain_locations)
+        else:
+            code_location = f"plain={'; '.join(plain_locations)} | patch_b={'; '.join(patch_locations)}"
+
+        comparison_table.append(
+            {
+                "stage": stage,
+                "code_location": code_location,
+                "plain_LJ_SR": plain_lj,
+                "patch_b_LJ_SR": patch_lj,
+                "delta_LJ_SR": delta_lj,
+                "delta_increment_vs_prev": delta_increment,
+                "plain_Coulomb_SR": plain_coul,
+                "patch_b_Coulomb_SR": patch_coul,
+                "delta_Coulomb_SR": delta_coul,
+                "first_amplification_here": first_amplification_here,
+            }
+        )
+        if abs_delta_lj is not None:
+            prev_abs_delta_lj = abs_delta_lj
+
+    final_internal_plain = stage_data_plain["FINAL_INTERNAL_LEDGER"]
+    final_internal_patch_b = stage_data_patch_b["FINAL_INTERNAL_LEDGER"]
+    corrected_export_matches_internal = (
+        final_internal_plain["lj_sr"] is not None
+        and final_internal_patch_b["lj_sr"] is not None
+        and abs(final_internal_plain["lj_sr"] - plain_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch_b["lj_sr"] - patch_b_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and final_internal_plain["coulomb_sr"] is not None
+        and final_internal_patch_b["coulomb_sr"] is not None
+        and abs(final_internal_plain["coulomb_sr"] - plain_terms["Coulomb-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch_b["coulomb_sr"] - patch_b_terms["Coulomb-(SR)"]) <= LEDGER_TRACE_TOL
+    )
+
+    if first_amplification_stage == "INTERMEDIATE_LOCAL_STAGE":
+        exact_first_amplification_verdict = "INTERMEDIATE_STAGE_CONFIRMED"
+    elif first_amplification_stage == "RAW_SR_FORMATION":
+        exact_first_amplification_verdict = "RAW_SR_FORMATION_IS_FIRST_AMPLIFICATION"
+    elif first_amplification_stage == "SR_ACCUMULATION":
+        exact_first_amplification_verdict = "SR_ACCUMULATION_IS_FIRST_AMPLIFICATION"
+    else:
+        exact_first_amplification_verdict = "NOT-YET-RESOLVED"
+
+    if first_amplification_stage is None or first_comparable_coulomb_stage is None:
+        coulomb_verdict = "NOT-YET-RESOLVED"
+    elif first_comparable_coulomb_stage == first_amplification_stage:
+        coulomb_verdict = "SAME_STAGE_COUPLED_AMPLIFICATION"
+    elif stage_order.index(first_comparable_coulomb_stage) > stage_order.index(first_amplification_stage):
+        coulomb_verdict = "LATER_STAGE_REFLECTION"
+    else:
+        coulomb_verdict = "INDEPENDENT_SECONDARY"
+
+    if first_amplification_stage == "INTERMEDIATE_LOCAL_STAGE":
+        amplification_classification = "KERNEL_LOCAL_ACCUMULATION_AMPLIFICATION"
+    elif first_amplification_stage == "RAW_SR_FORMATION":
+        amplification_classification = "REDUCTION_TRANSFER_AMPLIFICATION"
+    elif first_amplification_stage == "SR_ACCUMULATION":
+        amplification_classification = "SR_LEDGER_ACCUMULATION_AMPLIFICATION"
+    else:
+        amplification_classification = "NOT-YET-RESOLVED"
+
+    plain_earliest_row = stage_data_plain["EARLIEST_RAW_STAGE"]["rows"][0] if stage_data_plain["EARLIEST_RAW_STAGE"]["rows"] else {}
+    patch_earliest_row = stage_data_patch_b["EARLIEST_RAW_STAGE"]["rows"][0] if stage_data_patch_b["EARLIEST_RAW_STAGE"]["rows"] else {}
+    plain_intermediate_row = (
+        stage_data_plain["INTERMEDIATE_LOCAL_STAGE"]["rows"][0]
+        if stage_data_plain["INTERMEDIATE_LOCAL_STAGE"]["rows"]
+        else {}
+    )
+    patch_intermediate_row = (
+        stage_data_patch_b["INTERMEDIATE_LOCAL_STAGE"]["rows"][0]
+        if stage_data_patch_b["INTERMEDIATE_LOCAL_STAGE"]["rows"]
+        else {}
+    )
+    inventory = {
+        "plain_executed_stages": [
+            {
+                "stage": "EARLIEST_RAW_STAGE",
+                "code_location": "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:pre_Vvdw_accumulation",
+                "executed": bool(stage_data_plain["EARLIEST_RAW_STAGE"]["rows"]),
+                "execution_path": plain_earliest_row.get("execution_path"),
+                "kernel_type": plain_earliest_row.get("kernel_type"),
+            },
+            {
+                "stage": "INTERMEDIATE_LOCAL_STAGE",
+                "code_location": "src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:post_kernel_local_energy_buffer_before_dispatch_transfer",
+                "executed": bool(stage_data_plain["INTERMEDIATE_LOCAL_STAGE"]["rows"]),
+                "execution_path": plain_intermediate_row.get("execution_path"),
+                "kernel_type": plain_intermediate_row.get("kernel_type"),
+            },
+            {
+                "stage": "RAW_SR_FORMATION",
+                "code_location": "src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce",
+                "executed": bool(stage_data_plain["RAW_SR_FORMATION"]["rows"]),
+                "execution_path": (
+                    stage_data_plain["RAW_SR_FORMATION"]["rows"][0].get("execution_path")
+                    if stage_data_plain["RAW_SR_FORMATION"]["rows"]
+                    else None
+                ),
+            },
+            {
+                "stage": "SR_ACCUMULATION",
+                "code_location": "src/gromacs/mdlib/sim_util.cpp:4284",
+                "executed": bool(stage_data_plain["SR_ACCUMULATION"]["rows"]),
+                "execution_path": (
+                    stage_data_plain["SR_ACCUMULATION"]["rows"][0].get("execution_path")
+                    if stage_data_plain["SR_ACCUMULATION"]["rows"]
+                    else None
+                ),
+            },
+        ],
+        "patch_b_executed_stages": [
+            {
+                "stage": "EARLIEST_RAW_STAGE",
+                "code_location": "src/gromacs/mdlib/sim_util.cpp:per_pair_rawLjEnergy_before_pairStats_aggregate",
+                "executed": bool(stage_data_patch_b["EARLIEST_RAW_STAGE"]["rows"]),
+                "execution_path": patch_earliest_row.get("execution_path"),
+            },
+            {
+                "stage": "INTERMEDIATE_LOCAL_STAGE",
+                "code_location": "src/gromacs/mdlib/sim_util.cpp:after_pairs_pairStats_before_excluded_transfer",
+                "executed": bool(stage_data_patch_b["INTERMEDIATE_LOCAL_STAGE"]["rows"]),
+                "execution_path": patch_intermediate_row.get("execution_path"),
+            },
+            {
+                "stage": "RAW_SR_FORMATION",
+                "code_location": "src/gromacs/mdlib/sim_util.cpp:1754; src/gromacs/mdlib/sim_util.cpp:1769",
+                "executed": bool(stage_data_patch_b["RAW_SR_FORMATION"]["rows"]),
+                "execution_path": sorted(
+                    {
+                        row.get("execution_path")
+                        for row in stage_data_patch_b["RAW_SR_FORMATION"]["rows"]
+                        if row.get("execution_path")
+                    }
+                ),
+            },
+            {
+                "stage": "SR_ACCUMULATION",
+                "code_location": "src/gromacs/mdlib/sim_util.cpp:4284",
+                "executed": bool(stage_data_patch_b["SR_ACCUMULATION"]["rows"]),
+                "execution_path": (
+                    stage_data_patch_b["SR_ACCUMULATION"]["rows"][0].get("execution_path")
+                    if stage_data_patch_b["SR_ACCUMULATION"]["rows"]
+                    else None
+                ),
+            },
+        ],
+        "contract_match_notes": [
+            "EARLIEST_RAW_STAGE compares the aggregate of pairwise final LJ energy contributions before later local buffering on both sides.",
+            "INTERMEDIATE_LOCAL_STAGE compares the first local LJ aggregate that survives into later transfer/reduction on both sides.",
+            "RAW_SR_FORMATION remains a later visible aggregate; it is not used for raw Coulomb companion claims.",
+            "Coulomb-(SR) is considered contract-matched only from SR_ACCUMULATION onward because Patch-B raw/local Coulomb rows split across pairs and excludedPairs paths.",
+        ],
+    }
+
+    supports_amplification_localization = (
+        first_amplification_stage is not None
+        and corrected_export_matches_internal
+        and stage_data_plain["INTERMEDIATE_LOCAL_STAGE"]["lj_sr"] is not None
+        and stage_data_patch_b["INTERMEDIATE_LOCAL_STAGE"]["lj_sr"] is not None
+    )
+
+    localization = {
+        "executed_intermediate_stage_inventory": inventory,
+        "runtime_trace_dossier": {
+            "plain_rows": plain_rows,
+            "patch_b_rows": patch_b_rows,
+            "plain_energy_terms_step0": plain_terms,
+            "patch_b_energy_terms_step0": patch_b_terms,
+            "material_amplification_definition": f"abs(delta_LJ_SR_stage_n) - abs(delta_LJ_SR_stage_n-1) > {material_amplification_tol}",
+            "material_amplification_tol": material_amplification_tol,
+        },
+        "first_amplification_proof": {
+            "first_stage": first_amplification_stage,
+            "first_increment": first_amplification_increment,
+            "earlier_non_amplifying_stages": non_amplifying_stages_before_first,
+            "corrected_export_matches_internal": corrected_export_matches_internal,
+        },
+        "exact_first_amplification_verdict": exact_first_amplification_verdict,
+        "coulomb_companion_verdict": coulomb_verdict,
+        "amplification_classification_verdict": amplification_classification,
+        "comparison_table": comparison_table,
+        "supports_lj_sr_amplification": supports_amplification_localization,
+        "provenance": {
+            "instrumented_code_locations": [
+                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:pre_Vvdw_accumulation",
+                "src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:post_kernel_local_energy_buffer_before_dispatch_transfer",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce",
+                "src/gromacs/mdlib/sim_util.cpp:per_pair_rawLjEnergy_before_pairStats_aggregate",
+                "src/gromacs/mdlib/sim_util.cpp:after_pairs_pairStats_before_excluded_transfer",
+                "src/gromacs/mdlib/sim_util.cpp:1754",
+                "src/gromacs/mdlib/sim_util.cpp:1769",
+                "src/gromacs/mdlib/sim_util.cpp:4284",
+                "src/gromacs/mdlib/sim_util.cpp:4298",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            ],
+            "corrected_extractor_code_path": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            "plain_execution_path": plain_earliest_row.get("execution_path"),
+            "plain_kernel_type": plain_earliest_row.get("kernel_type"),
+            "patch_b_execution_path": patch_earliest_row.get("execution_path"),
+            "plain_resolved_output_order": plain_terms_detail["resolved_output_order"],
+            "patch_b_resolved_output_order": patch_b_terms_detail["resolved_output_order"],
+        },
+        "why_not_fully_closed": (
+            "This milestone closes only the first amplification stage for dense_oligomer coarse step 0 under Patch-shape B."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
+def dense_patch_b_raw_sr_formation_internal_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(plain_dir))
+    patch_b_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(patch_b_dir))
+    plain_terms_detail = extract_named_energy_series_detail(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2s_plain_diag_terms", commands_log, "m2s_plain"
+    )
+    patch_b_terms_detail = extract_named_energy_series_detail(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2s_patch_b_diag_terms",
+        commands_log,
+        "m2s_patch_b",
+    )
+    plain_terms = plain_terms_detail["rows"][0]
+    patch_b_terms = patch_b_terms_detail["rows"][0]
+
+    stage_order = [
+        "INTERMEDIATE_LOCAL_STAGE",
+        "RAW_PRE_TRANSFER",
+        "RAW_FIRST_WRITE",
+        "RAW_POST_WRITE",
+        "RAW_FIRST_READ_OR_REDUCE",
+        "RAW_POST_READ_OR_REDUCE",
+        "RAW_SR_FORMATION",
+        "SR_ACCUMULATION",
+        "FINAL_INTERNAL_LEDGER",
+        "CORRECTED_EXPORT",
+    ]
+    traced_internal_stages = tuple(stage for stage in stage_order if stage != "CORRECTED_EXPORT")
+    plain_path_filters = {
+        "INTERMEDIATE_LOCAL_STAGE": ("plain_",),
+        "RAW_PRE_TRANSFER": ("plain_",),
+        "RAW_FIRST_WRITE": ("plain_",),
+        "RAW_POST_WRITE": ("plain_",),
+        "RAW_FIRST_READ_OR_REDUCE": ("plain_",),
+        "RAW_POST_READ_OR_REDUCE": ("plain_",),
+        "RAW_SR_FORMATION": ("plain_",),
+        "SR_ACCUMULATION": (),
+        "FINAL_INTERNAL_LEDGER": (),
+    }
+    patch_path_filters = {
+        "INTERMEDIATE_LOCAL_STAGE": ("exact_",),
+        "RAW_PRE_TRANSFER": ("exact_",),
+        "RAW_FIRST_WRITE": ("exact_",),
+        "RAW_POST_WRITE": ("exact_",),
+        "RAW_FIRST_READ_OR_REDUCE": ("exact_",),
+        "RAW_POST_READ_OR_REDUCE": ("exact_",),
+        "RAW_SR_FORMATION": ("exact_",),
+        "SR_ACCUMULATION": (),
+        "FINAL_INTERNAL_LEDGER": (),
+    }
+    stage_data_plain = {
+        stage: aggregate_lj_sr_stage_with_paths(plain_rows, stage, plain_path_filters[stage])
+        for stage in traced_internal_stages
+    }
+    stage_data_patch_b = {
+        stage: aggregate_lj_sr_stage_with_paths(patch_b_rows, stage, patch_path_filters[stage])
+        for stage in traced_internal_stages
+    }
+    stage_data_plain["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": plain_terms["LJ-(SR)"],
+        "coulomb_sr": plain_terms["Coulomb-(SR)"],
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+    stage_data_patch_b["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": patch_b_terms["LJ-(SR)"],
+        "coulomb_sr": patch_b_terms["Coulomb-(SR)"],
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+
+    # Contract-matched Coulomb evidence starts only at the shared ledger stages.
+    for stage in (
+        "INTERMEDIATE_LOCAL_STAGE",
+        "RAW_PRE_TRANSFER",
+        "RAW_FIRST_WRITE",
+        "RAW_POST_WRITE",
+        "RAW_FIRST_READ_OR_REDUCE",
+        "RAW_POST_READ_OR_REDUCE",
+        "RAW_SR_FORMATION",
+    ):
+        stage_data_plain[stage]["coulomb_sr"] = None
+        stage_data_patch_b[stage]["coulomb_sr"] = None
+
+    comparison_table: list[dict[str, Any]] = []
+    first_internal_stage = None
+    first_internal_increment = None
+    earlier_non_amplifying_stages: list[str] = ["INTERMEDIATE_LOCAL_STAGE"]
+    first_comparable_coulomb_stage = None
+    material_amplification_tol = NUMERIC_FIELD_TOL
+    prev_abs_delta_lj = None
+
+    for stage in stage_order:
+        plain_stage = stage_data_plain[stage]
+        patch_stage = stage_data_patch_b[stage]
+        plain_lj = plain_stage["lj_sr"]
+        patch_lj = patch_stage["lj_sr"]
+        plain_coul = plain_stage["coulomb_sr"]
+        patch_coul = patch_stage["coulomb_sr"]
+        delta_lj = None if plain_lj is None or patch_lj is None else patch_lj - plain_lj
+        abs_delta_lj = None if delta_lj is None else abs(delta_lj)
+        delta_increment = None
+        first_amplification_here = False
+        if prev_abs_delta_lj is not None and abs_delta_lj is not None:
+            delta_increment = abs_delta_lj - prev_abs_delta_lj
+            if first_internal_stage is None and delta_increment > material_amplification_tol:
+                first_internal_stage = stage
+                first_internal_increment = delta_increment
+                first_amplification_here = True
+            elif first_internal_stage is None:
+                earlier_non_amplifying_stages.append(stage)
+        delta_coul = None if plain_coul is None or patch_coul is None else patch_coul - plain_coul
+        if (
+            first_comparable_coulomb_stage is None
+            and delta_coul is not None
+            and abs(delta_coul) > NUMERIC_FIELD_TOL
+        ):
+            first_comparable_coulomb_stage = stage
+
+        plain_locations = plain_stage["code_locations"]
+        patch_locations = patch_stage["code_locations"]
+        if plain_locations == patch_locations:
+            code_location = "; ".join(plain_locations)
+        else:
+            code_location = f"plain={'; '.join(plain_locations)} | patch_b={'; '.join(patch_locations)}"
+
+        comparison_table.append(
+            {
+                "stage": stage,
+                "code_location": code_location,
+                "plain_LJ_SR": plain_lj,
+                "patch_b_LJ_SR": patch_lj,
+                "delta_LJ_SR": delta_lj,
+                "delta_increment_vs_prev": delta_increment,
+                "plain_Coulomb_SR": plain_coul,
+                "patch_b_Coulomb_SR": patch_coul,
+                "delta_Coulomb_SR": delta_coul,
+                "first_internal_amplification_here": first_amplification_here,
+            }
+        )
+        if abs_delta_lj is not None:
+            prev_abs_delta_lj = abs_delta_lj
+
+    final_internal_plain = stage_data_plain["FINAL_INTERNAL_LEDGER"]
+    final_internal_patch_b = stage_data_patch_b["FINAL_INTERNAL_LEDGER"]
+    corrected_export_matches_internal = (
+        final_internal_plain["lj_sr"] is not None
+        and final_internal_patch_b["lj_sr"] is not None
+        and abs(final_internal_plain["lj_sr"] - plain_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch_b["lj_sr"] - patch_b_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and final_internal_plain["coulomb_sr"] is not None
+        and final_internal_patch_b["coulomb_sr"] is not None
+        and abs(final_internal_plain["coulomb_sr"] - plain_terms["Coulomb-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch_b["coulomb_sr"] - patch_b_terms["Coulomb-(SR)"]) <= LEDGER_TRACE_TOL
+    )
+
+    if first_internal_stage == "RAW_FIRST_WRITE":
+        exact_internal_verdict = "RAW_FIRST_WRITE_CONFIRMED"
+    elif first_internal_stage == "RAW_FIRST_READ_OR_REDUCE":
+        exact_internal_verdict = "RAW_FIRST_READ_OR_REDUCE_CONFIRMED"
+    elif first_internal_stage in ("RAW_POST_WRITE", "RAW_POST_READ_OR_REDUCE"):
+        exact_internal_verdict = "LATER_INTERNAL_SUBSTEP_CONFIRMED"
+    else:
+        exact_internal_verdict = "NOT-YET-RESOLVED"
+
+    asymmetry_verdict = "NOT-YET-RESOLVED"
+    if first_internal_stage is not None:
+        stage_index = stage_order.index(first_internal_stage)
+        if stage_index > 0:
+            prev_stage_name = stage_order[stage_index - 1]
+            prev_plain_lj = stage_data_plain[prev_stage_name]["lj_sr"]
+            prev_patch_lj = stage_data_patch_b[prev_stage_name]["lj_sr"]
+            curr_plain_lj = stage_data_plain[first_internal_stage]["lj_sr"]
+            curr_patch_lj = stage_data_patch_b[first_internal_stage]["lj_sr"]
+            plain_change = (
+                None if prev_plain_lj is None or curr_plain_lj is None else curr_plain_lj - prev_plain_lj
+            )
+            patch_change = (
+                None if prev_patch_lj is None or curr_patch_lj is None else curr_patch_lj - prev_patch_lj
+            )
+            plain_changed = plain_change is not None and abs(plain_change) > NUMERIC_FIELD_TOL
+            patch_changed = patch_change is not None and abs(patch_change) > NUMERIC_FIELD_TOL
+            if first_internal_stage in ("RAW_FIRST_READ_OR_REDUCE", "RAW_POST_READ_OR_REDUCE"):
+                asymmetry_verdict = "READ_REDUCE_INTERPRETATION_DIFFERENCE"
+            elif plain_changed and not patch_changed:
+                asymmetry_verdict = "PLAIN_SIDE_MUTATION"
+            elif patch_changed and not plain_changed:
+                asymmetry_verdict = "PATCH_SIDE_MUTATION"
+            elif plain_changed and patch_changed:
+                asymmetry_verdict = "SYMMETRIC_PROCESS_ASYMMETRIC_INPUT"
+
+    if first_internal_stage is None or first_comparable_coulomb_stage is None:
+        coulomb_verdict = "NOT-YET-RESOLVED"
+    elif stage_order.index(first_comparable_coulomb_stage) == stage_order.index(first_internal_stage):
+        coulomb_verdict = "SAME_INTERNAL_STAGE_COUPLED"
+    elif stage_order.index(first_comparable_coulomb_stage) > stage_order.index(first_internal_stage):
+        coulomb_verdict = "LATER_STAGE_REFLECTION"
+    else:
+        coulomb_verdict = "INDEPENDENT_SECONDARY"
+
+    supports_internal_culprit = False
+    harness_reason = (
+        "RAW_POST_WRITE and RAW_POST_READ_OR_REDUCE remain composite boundaries. The harness now keeps culprit support disabled until a write-ordinal proof isolates the exact internal write."
+    )
+
+    plain_exec = {
+        stage: (
+            {
+                "code_location": "; ".join(stage_data_plain[stage]["code_locations"]),
+                "executed": bool(stage_data_plain[stage]["rows"]),
+                "execution_paths": stage_data_plain[stage]["execution_paths"],
+            }
+        )
+        for stage in (
+            "INTERMEDIATE_LOCAL_STAGE",
+            "RAW_PRE_TRANSFER",
+            "RAW_FIRST_WRITE",
+            "RAW_POST_WRITE",
+            "RAW_FIRST_READ_OR_REDUCE",
+            "RAW_POST_READ_OR_REDUCE",
+            "RAW_SR_FORMATION",
+        )
+    }
+    patch_exec = {
+        stage: (
+            {
+                "code_location": "; ".join(stage_data_patch_b[stage]["code_locations"]),
+                "executed": bool(stage_data_patch_b[stage]["rows"]),
+                "execution_paths": stage_data_patch_b[stage]["execution_paths"],
+            }
+        )
+        for stage in (
+            "INTERMEDIATE_LOCAL_STAGE",
+            "RAW_PRE_TRANSFER",
+            "RAW_FIRST_WRITE",
+            "RAW_POST_WRITE",
+            "RAW_FIRST_READ_OR_REDUCE",
+            "RAW_POST_READ_OR_REDUCE",
+            "RAW_SR_FORMATION",
+        )
+    }
+
+    localization = {
+        "raw_sr_internal_substep_inventory": {
+            "plain_executed_internal_substeps": plain_exec,
+            "patch_b_executed_internal_substeps": patch_exec,
+            "contract_match_notes": [
+                "INTERMEDIATE_LOCAL_STAGE and RAW_PRE_TRANSFER compare the local source aggregate immediately before crossing the RAW_SR_FORMATION boundary on both sides.",
+                "RAW_FIRST_WRITE compares the first mutation of the target energy container on both sides: plain outputBuffer.Vvdw versus exact vdwEnergyTerms.",
+                "RAW_POST_WRITE compares the target-container state after writes and before the first later consumer read.",
+                "RAW_FIRST_READ_OR_REDUCE and RAW_POST_READ_OR_REDUCE compare the first and final consumer reads of those target containers.",
+                "Coulomb-(SR) is treated as contract-matched only from SR_ACCUMULATION onward.",
+            ],
+        },
+        "runtime_trace_dossier": {
+            "plain_rows": plain_rows,
+            "patch_b_rows": patch_b_rows,
+            "plain_energy_terms_step0": plain_terms,
+            "patch_b_energy_terms_step0": patch_b_terms,
+            "material_amplification_definition": (
+                f"abs(delta_LJ_SR_stage_n) - abs(delta_LJ_SR_stage_n-1) > {material_amplification_tol}"
+            ),
+            "material_amplification_tol": material_amplification_tol,
+        },
+        "first_internal_amplification_proof": {
+            "first_stage": first_internal_stage,
+            "first_increment": first_internal_increment,
+            "earlier_non_amplifying_stages": earlier_non_amplifying_stages,
+            "corrected_export_matches_internal": corrected_export_matches_internal,
+        },
+        "exact_first_internal_amplification_verdict": exact_internal_verdict,
+        "asymmetry_classification_verdict": asymmetry_verdict,
+        "coulomb_companion_verdict": coulomb_verdict,
+        "comparison_table": comparison_table,
+        "supports_raw_sr_internal_culprit": supports_internal_culprit,
+        "harness_claim_audit": {
+            "supports_raw_sr_internal_culprit": supports_internal_culprit,
+            "old_stage_level_only_claim_preserved_correctly": True,
+            "reason": harness_reason,
+        },
+        "provenance": {
+            "instrumented_code_locations": [
+                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:first_output_buffer_mutation",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:plain_pre_output_buffer_transfer",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:plain_output_buffer_post_kernel",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:sumKernelEnergyOutputs_first_read",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:sumKernelEnergyOutputs_final_total",
+                "src/gromacs/mdlib/sim_util.cpp:1700",
+                "src/gromacs/mdlib/sim_util.cpp:before_vdwEnergyTerms_transfer",
+                "src/gromacs/mdlib/sim_util.cpp:after_pair_loop_vdwEnergyTerms",
+                "src/gromacs/mdlib/sim_util.cpp:sumEnergyTerms_first_read",
+                "src/gromacs/mdlib/sim_util.cpp:sumEnergyTerms_final_total",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            ],
+            "corrected_extractor_code_path": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            "plain_execution_path": stage_data_plain["INTERMEDIATE_LOCAL_STAGE"]["execution_paths"],
+            "patch_b_execution_path": stage_data_patch_b["INTERMEDIATE_LOCAL_STAGE"]["execution_paths"],
+            "plain_resolved_output_order": plain_terms_detail["resolved_output_order"],
+            "patch_b_resolved_output_order": patch_b_terms_detail["resolved_output_order"],
+        },
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
+def dense_patch_b_raw_sr_write_ordinal_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(plain_dir))
+    patch_b_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(patch_b_dir))
+    plain_terms_detail = extract_named_energy_series_detail(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2u_plain_diag_terms", commands_log, "m2u_plain"
+    )
+    patch_b_terms_detail = extract_named_energy_series_detail(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2u_patch_b_diag_terms",
+        commands_log,
+        "m2u_patch_b",
+    )
+    plain_terms = plain_terms_detail["rows"][0]
+    patch_b_terms = patch_b_terms_detail["rows"][0]
+
+    def aggregate_stage_with_paths(
+        rows: list[dict[str, str]], stage: str, execution_path_prefixes: tuple[str, ...]
+    ) -> dict[str, Any]:
+        return aggregate_lj_sr_stage_with_paths(rows, stage, execution_path_prefixes)
+
+    plain_write_ordinals = collect_write_ordinals(plain_rows, ("plain_outputBuffer_after_write_ordinal",))
+    patch_write_ordinals = collect_write_ordinals(patch_b_rows, ("exact_vdwEnergyTerms_after_write_ordinal",))
+    all_write_ordinals = sorted(set(plain_write_ordinals) | set(patch_write_ordinals))
+    write_stage_order = ["RAW_FIRST_WRITE"] + [
+        f"AFTER_WRITE_ORDINAL_{ordinal}" for ordinal in all_write_ordinals if ordinal >= 2
+    ]
+    stage_order = list(write_stage_order)
+    stage_order.extend(
+        [
+            "AFTER_LAST_WRITE_BEFORE_RAW_POST_WRITE",
+            "RAW_POST_WRITE",
+            "RAW_FIRST_READ_OR_REDUCE",
+            "RAW_POST_READ_OR_REDUCE",
+            "RAW_SR_FORMATION",
+            "SR_ACCUMULATION",
+            "FINAL_INTERNAL_LEDGER",
+            "CORRECTED_EXPORT",
+        ]
+    )
+
+    def plain_stage_prefixes(stage: str) -> tuple[str, ...]:
+        if stage == "RAW_PRE_TRANSFER":
+            return ("plain_cpu4x4_ref_kernel_pre_transfer",)
+        if stage == "RAW_FIRST_WRITE" or stage.startswith("AFTER_WRITE_ORDINAL_"):
+            return ("plain_outputBuffer_after_write_ordinal",)
+        if stage == "AFTER_LAST_WRITE_BEFORE_RAW_POST_WRITE":
+            return ("plain_outputBuffer_after_last_write",)
+        if stage == "RAW_POST_WRITE":
+            return ("plain_output_buffer_after_kernel_write",)
+        if stage in ("RAW_FIRST_READ_OR_REDUCE", "RAW_POST_READ_OR_REDUCE"):
+            return ("plain_sumKernelEnergyOutputs_",)
+        if stage == "RAW_SR_FORMATION":
+            return ("plain_",)
+        return ()
+
+    def patch_stage_prefixes(stage: str) -> tuple[str, ...]:
+        if stage == "RAW_PRE_TRANSFER":
+            return ("exact_pairs_local_aggregate_pre_transfer",)
+        if stage == "RAW_FIRST_WRITE" or stage.startswith("AFTER_WRITE_ORDINAL_"):
+            return ("exact_vdwEnergyTerms_after_write_ordinal",)
+        if stage == "AFTER_LAST_WRITE_BEFORE_RAW_POST_WRITE":
+            return ("exact_vdwEnergyTerms_after_last_write",)
+        if stage == "RAW_POST_WRITE":
+            return ("exact_vdwEnergyTerms_post_write",)
+        if stage in ("RAW_FIRST_READ_OR_REDUCE", "RAW_POST_READ_OR_REDUCE"):
+            return ("exact_sumEnergyTerms_",)
+        if stage == "RAW_SR_FORMATION":
+            return ("exact_",)
+        return ()
+
+    traced_stages = set(stage_order)
+    traced_stages.add("RAW_PRE_TRANSFER")
+    stage_data_plain = {
+        stage: aggregate_stage_with_paths(plain_rows, stage, plain_stage_prefixes(stage))
+        for stage in traced_stages
+        if stage != "CORRECTED_EXPORT"
+    }
+    stage_data_patch_b = {
+        stage: aggregate_stage_with_paths(patch_b_rows, stage, patch_stage_prefixes(stage))
+        for stage in traced_stages
+        if stage != "CORRECTED_EXPORT"
+    }
+    stage_data_plain["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": plain_terms["LJ-(SR)"],
+        "coulomb_sr": None,
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+    stage_data_patch_b["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": patch_b_terms["LJ-(SR)"],
+        "coulomb_sr": None,
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+
+    plain_first_write_row = stage_data_plain["RAW_FIRST_WRITE"]["rows"][0] if stage_data_plain["RAW_FIRST_WRITE"]["rows"] else {}
+    patch_first_write_row = stage_data_patch_b["RAW_FIRST_WRITE"]["rows"][0] if stage_data_patch_b["RAW_FIRST_WRITE"]["rows"] else {}
+    plain_post_write_row = stage_data_plain["RAW_POST_WRITE"]["rows"][0] if stage_data_plain["RAW_POST_WRITE"]["rows"] else {}
+    patch_post_write_row = stage_data_patch_b["RAW_POST_WRITE"]["rows"][0] if stage_data_patch_b["RAW_POST_WRITE"]["rows"] else {}
+
+    plain_write_count = int(plain_post_write_row.get("write_count", str(len(plain_write_ordinals) or 0)))
+    patch_write_count = int(patch_post_write_row.get("write_count", str(len(patch_write_ordinals) or 0)))
+    plain_output_buffer_count = (
+        None
+        if plain_post_write_row.get("output_buffer_count") is None
+        else int(plain_post_write_row["output_buffer_count"])
+    )
+    plain_target_container = plain_first_write_row.get("target_container")
+    patch_target_container = patch_first_write_row.get("target_container")
+
+    plain_expected_ordinals = list(range(1, plain_write_count + 1)) if plain_write_count > 0 else []
+    patch_expected_ordinals = list(range(1, patch_write_count + 1)) if patch_write_count > 0 else []
+    plain_has_full_ordinal_trace = plain_write_ordinals == plain_expected_ordinals and plain_write_count > 0
+    patch_has_full_ordinal_trace = patch_write_ordinals == patch_expected_ordinals and patch_write_count > 0
+    actual_runtime_checkpoints_exist = plain_has_full_ordinal_trace and patch_has_full_ordinal_trace
+    same_write_ordinal_depth = plain_write_count == patch_write_count
+    contract_match = (
+        actual_runtime_checkpoints_exist
+        and plain_target_container == "outputBuffer.Vvdw"
+        and patch_target_container == "vdwEnergyTerms"
+        and plain_output_buffer_count == 1
+        and same_write_ordinal_depth
+    )
+
+    comparison_table: list[dict[str, Any]] = []
+    first_delta_write_stage = None
+    first_delta_write_increment = None
+    earlier_write_ordinals_exonerated: list[str] = []
+    materiality_tol = NUMERIC_FIELD_TOL
+    prev_delta_lj = None
+
+    write_stage_set = set(write_stage_order)
+    for stage in stage_order:
+        plain_stage = stage_data_plain[stage]
+        patch_stage = stage_data_patch_b[stage]
+        plain_lj = plain_stage["lj_sr"]
+        patch_lj = patch_stage["lj_sr"]
+        delta_lj = None if plain_lj is None or patch_lj is None else patch_lj - plain_lj
+        delta_increment = None
+        first_delta_changing_write_here = False
+        if prev_delta_lj is not None and delta_lj is not None:
+            delta_increment = delta_lj - prev_delta_lj
+            if stage in write_stage_set and first_delta_write_stage is None and abs(delta_increment) > materiality_tol:
+                first_delta_write_stage = stage
+                first_delta_write_increment = delta_increment
+                first_delta_changing_write_here = True
+            elif stage in write_stage_set and first_delta_write_stage is None:
+                earlier_write_ordinals_exonerated.append(stage)
+        elif stage == "RAW_FIRST_WRITE" and delta_lj is not None:
+            earlier_write_ordinals_exonerated.append(stage)
+
+        plain_locations = plain_stage["code_locations"]
+        patch_locations = patch_stage["code_locations"]
+        if plain_locations == patch_locations:
+            code_location = "; ".join(plain_locations)
+        else:
+            code_location = f"plain={'; '.join(plain_locations)} | patch_b={'; '.join(patch_locations)}"
+
+        comparison_table.append(
+            {
+                "stage": stage,
+                "code_location": code_location,
+                "plain_LJ_SR_running_total": plain_lj,
+                "patch_b_LJ_SR_running_total": patch_lj,
+                "delta_LJ_SR": delta_lj,
+                "delta_increment_vs_prev": delta_increment,
+                "first_delta_changing_write_here": first_delta_changing_write_here,
+            }
+        )
+        if delta_lj is not None:
+            prev_delta_lj = delta_lj
+
+    final_internal_plain = stage_data_plain["FINAL_INTERNAL_LEDGER"]
+    final_internal_patch_b = stage_data_patch_b["FINAL_INTERNAL_LEDGER"]
+    corrected_export_matches_internal = (
+        final_internal_plain["lj_sr"] is not None
+        and final_internal_patch_b["lj_sr"] is not None
+        and abs(final_internal_plain["lj_sr"] - plain_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch_b["lj_sr"] - patch_b_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+    )
+
+    last_write_stage_name = (
+        f"AFTER_WRITE_ORDINAL_{all_write_ordinals[-1]}"
+        if all_write_ordinals and all_write_ordinals[-1] >= 2
+        else "RAW_FIRST_WRITE"
+    )
+    last_write_row = next((row for row in comparison_table if row["stage"] == last_write_stage_name), None)
+    after_last_row = next(
+        (row for row in comparison_table if row["stage"] == "AFTER_LAST_WRITE_BEFORE_RAW_POST_WRITE"), None
+    )
+    raw_post_write_row_cmp = next((row for row in comparison_table if row["stage"] == "RAW_POST_WRITE"), None)
+    if first_delta_write_stage is not None and contract_match:
+        exact_first_write_verdict = "WRITE_ORDINAL_CONFIRMED"
+    elif (
+        last_write_row is not None
+        and after_last_row is not None
+        and last_write_row["delta_LJ_SR"] is not None
+        and after_last_row["delta_LJ_SR"] is not None
+        and abs(after_last_row["delta_LJ_SR"] - last_write_row["delta_LJ_SR"]) > materiality_tol
+    ):
+        exact_first_write_verdict = "WRITE_ORDINAL_TRACE_EXISTS_BUT_FIRST_NOT_ISOLATED"
+    elif (
+        after_last_row is not None
+        and raw_post_write_row_cmp is not None
+        and after_last_row["delta_LJ_SR"] is not None
+        and raw_post_write_row_cmp["delta_LJ_SR"] is not None
+        and abs(raw_post_write_row_cmp["delta_LJ_SR"] - after_last_row["delta_LJ_SR"]) > materiality_tol
+    ):
+        exact_first_write_verdict = "WRITE_ORDINAL_TRACE_EXISTS_BUT_FIRST_NOT_ISOLATED"
+    elif actual_runtime_checkpoints_exist:
+        exact_first_write_verdict = "WRITE_ORDINAL_TRACE_EXISTS_BUT_FIRST_NOT_ISOLATED"
+    else:
+        exact_first_write_verdict = "NOT-YET-RESOLVED"
+
+    side_responsibility_verdict = "NOT-YET-RESOLVED"
+    if first_delta_write_stage is not None and contract_match:
+        stage_index = stage_order.index(first_delta_write_stage)
+        prev_stage_name = stage_order[stage_index - 1]
+        prev_plain = stage_data_plain[prev_stage_name]["lj_sr"]
+        prev_patch = stage_data_patch_b[prev_stage_name]["lj_sr"]
+        curr_plain = stage_data_plain[first_delta_write_stage]["lj_sr"]
+        curr_patch = stage_data_patch_b[first_delta_write_stage]["lj_sr"]
+        plain_change = None if prev_plain is None or curr_plain is None else curr_plain - prev_plain
+        patch_change = None if prev_patch is None or curr_patch is None else curr_patch - prev_patch
+        plain_changed = plain_change is not None and abs(plain_change) > materiality_tol
+        patch_changed = patch_change is not None and abs(patch_change) > materiality_tol
+        if plain_changed and not patch_changed:
+            side_responsibility_verdict = "PLAIN_SIDE_LATER_WRITE"
+        elif patch_changed and not plain_changed:
+            side_responsibility_verdict = "PATCH_SIDE_LATER_WRITE"
+        elif plain_changed and patch_changed:
+            if abs(plain_change) > abs(patch_change) + materiality_tol:
+                side_responsibility_verdict = "BOTH_SIDES_WRITE_BUT_PLAIN_DOMINATES"
+            elif abs(patch_change) > abs(plain_change) + materiality_tol:
+                side_responsibility_verdict = "BOTH_SIDES_WRITE_BUT_PATCH_DOMINATES"
+            else:
+                side_responsibility_verdict = "SYMMETRIC_WRITES_ASYMMETRIC_INPUT"
+
+    old_stage_order = [
+        "RAW_PRE_TRANSFER",
+        "RAW_FIRST_WRITE",
+        "RAW_POST_WRITE",
+        "RAW_FIRST_READ_OR_REDUCE",
+        "RAW_POST_READ_OR_REDUCE",
+        "RAW_SR_FORMATION",
+        "SR_ACCUMULATION",
+        "FINAL_INTERNAL_LEDGER",
+        "CORRECTED_EXPORT",
+    ]
+    old_first_stage = None
+    prev_old_abs_delta = None
+    for stage in old_stage_order:
+        plain_lj = stage_data_plain[stage]["lj_sr"]
+        patch_lj = stage_data_patch_b[stage]["lj_sr"]
+        delta_lj = None if plain_lj is None or patch_lj is None else patch_lj - plain_lj
+        abs_delta_lj = None if delta_lj is None else abs(delta_lj)
+        if prev_old_abs_delta is not None and abs_delta_lj is not None:
+            if old_first_stage is None and (abs_delta_lj - prev_old_abs_delta) > materiality_tol:
+                old_first_stage = stage
+                break
+        if abs_delta_lj is not None:
+            prev_old_abs_delta = abs_delta_lj
+
+    if old_first_stage == "RAW_FIRST_WRITE":
+        old_exact_internal_verdict = "RAW_FIRST_WRITE_CONFIRMED"
+    elif old_first_stage == "RAW_FIRST_READ_OR_REDUCE":
+        old_exact_internal_verdict = "RAW_FIRST_READ_OR_REDUCE_CONFIRMED"
+    elif old_first_stage in ("RAW_POST_WRITE", "RAW_POST_READ_OR_REDUCE"):
+        old_exact_internal_verdict = "LATER_INTERNAL_SUBSTEP_CONFIRMED"
+    else:
+        old_exact_internal_verdict = "NOT-YET-RESOLVED"
+    supports_before = old_exact_internal_verdict != "NOT-YET-RESOLVED" and corrected_export_matches_internal
+    verdict_before = (
+        "RAW_SR_FORMATION INTERNAL CULPRIT IDENTIFIED"
+        if supports_before
+        else (
+            "RAW_SR_FORMATION INTERNAL TRACE STILL PARTIAL"
+            if old_first_stage is not None
+            else "RAW_SR_FORMATION INTERNAL TRACE FAILED"
+        )
+    )
+    supports_after = (
+        contract_match
+        and exact_first_write_verdict == "WRITE_ORDINAL_CONFIRMED"
+        and corrected_export_matches_internal
+    )
+    verdict_after = (
+        "RAW_SR_FORMATION INTERNAL CULPRIT IDENTIFIED"
+        if supports_after
+        else (
+            "RAW_SR_FORMATION WRITE-ORDINAL TRACE STILL PARTIAL"
+            if actual_runtime_checkpoints_exist
+            else "RAW_SR_FORMATION WRITE-ORDINAL TRACE FAILED"
+        )
+    )
+
+    old_overclaim_removed = (
+        not supports_after if exact_first_write_verdict != "WRITE_ORDINAL_CONFIRMED" else supports_after
+    )
+    final_verdict = (
+        "PASS"
+        if (
+            actual_runtime_checkpoints_exist
+            and contract_match
+            and corrected_export_matches_internal
+            and old_overclaim_removed
+        )
+        else ("PARTIAL" if actual_runtime_checkpoints_exist and old_overclaim_removed else "FAIL")
+    )
+
+    localization = {
+        "write_ordinal_instrumentation_inventory": {
+            "plain_side_instrumented_checkpoints": [
+                "RAW_FIRST_WRITE",
+                *[f"AFTER_WRITE_ORDINAL_{ordinal}" for ordinal in plain_write_ordinals if ordinal >= 2],
+                "AFTER_LAST_WRITE_BEFORE_RAW_POST_WRITE",
+                "RAW_POST_WRITE",
+            ],
+            "patch_b_side_instrumented_checkpoints": [
+                "RAW_FIRST_WRITE",
+                *[f"AFTER_WRITE_ORDINAL_{ordinal}" for ordinal in patch_write_ordinals if ordinal >= 2],
+                "AFTER_LAST_WRITE_BEFORE_RAW_POST_WRITE",
+                "RAW_POST_WRITE",
+            ],
+            "plain_actual_executed_write_count": plain_write_count,
+            "patch_b_actual_executed_write_count": patch_write_count,
+            "same_write_ordinal_depth": same_write_ordinal_depth,
+            "plain_target_container": plain_target_container,
+            "patch_b_target_container": patch_target_container,
+            "plain_output_buffer_count": plain_output_buffer_count,
+            "contract_match_note": (
+                "Compared checkpoints use the same contract: target container running total immediately after write ordinal N."
+                if contract_match
+                else "Contract match is limited. Plain target container must resolve to a single outputBuffer.Vvdw, Patch-B must resolve to vdwEnergyTerms, and both sides must expose the same write-ordinal depth."
+            ),
+        },
+        "runtime_write_ordinal_trace_dossier": {
+            "plain_rows": plain_rows,
+            "patch_b_rows": patch_b_rows,
+            "plain_energy_terms_step0": plain_terms,
+            "patch_b_energy_terms_step0": patch_b_terms,
+            "material_delta_change_definition": f"abs(delta_LJ_SR_checkpoint_n - delta_LJ_SR_checkpoint_n-1) > {materiality_tol}",
+            "material_delta_change_tol": materiality_tol,
+        },
+        "comparison_table": comparison_table,
+        "exact_first_delta_changing_write_proof": {
+            "first_stage": first_delta_write_stage,
+            "first_increment": first_delta_write_increment,
+            "earlier_write_ordinals_exonerated": earlier_write_ordinals_exonerated,
+            "corrected_export_matches_internal": corrected_export_matches_internal,
+        },
+        "exact_first_write_verdict": exact_first_write_verdict,
+        "side_responsibility_verdict": side_responsibility_verdict,
+        "coulomb_companion_verdict": "OMITTED_NO_CONTRACT_MATCH",
+        "overclaim_shutdown_proof": {
+            "supports_raw_sr_internal_culprit_before": supports_before,
+            "supports_raw_sr_internal_culprit_after": supports_after,
+            "culprit_identified_verdict_before": verdict_before,
+            "culprit_identified_verdict_after": verdict_after,
+            "exact_rule_change_summary": (
+                "Composite RAW_POST_WRITE/RAW_POST_READ_OR_REDUCE evidence is no longer sufficient. Culprit support now requires exact write-ordinal confirmation plus final-ledger/export reconciliation."
+            ),
+        },
+        "harness_claim_audit": {
+            "supports_exact_raw_internal_culprit": supports_after,
+            "old_overclaim_removed": old_overclaim_removed,
+            "reason": (
+                "Exact culprit support stays disabled until WRITE_ORDINAL_CONFIRMED on a contract-matched write-ordinal depth."
+                if not supports_after
+                else "Exact culprit support is re-enabled only because a contract-matched write ordinal is isolated."
+            ),
+        },
+        "write_ordinal_instrumentation_ready": actual_runtime_checkpoints_exist,
+        "contract_match": contract_match,
+        "final_internal_reconciled": corrected_export_matches_internal,
+        "final_verdict": final_verdict,
+        "provenance": {
+            "instrumented_code_locations": [
+                "src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:after_outputBuffer_Vvdw_write_ordinal",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:plain_output_buffer_post_kernel",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:sumKernelEnergyOutputs_first_read",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:sumKernelEnergyOutputs_final_total",
+                "src/gromacs/mdlib/sim_util.cpp:after_vdwEnergyTerms_write_ordinal",
+                "src/gromacs/mdlib/sim_util.cpp:after_pair_loop_vdwEnergyTerms",
+                "src/gromacs/mdlib/sim_util.cpp:sumEnergyTerms_first_read",
+                "src/gromacs/mdlib/sim_util.cpp:sumEnergyTerms_final_total",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            ],
+            "plain_execution_path": stage_data_plain["RAW_FIRST_WRITE"]["execution_paths"],
+            "patch_b_execution_path": stage_data_patch_b["RAW_FIRST_WRITE"]["execution_paths"],
+            "corrected_extractor_code_path": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            "plain_resolved_output_order": plain_terms_detail["resolved_output_order"],
+            "patch_b_resolved_output_order": patch_b_terms_detail["resolved_output_order"],
+        },
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
+def dense_patch_b_aligned_write_contract_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(plain_dir))
+    patch_b_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(patch_b_dir))
+    plain_terms_detail = extract_named_energy_series_detail(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2v_plain_diag_terms", commands_log, "m2v_plain"
+    )
+    patch_b_terms_detail = extract_named_energy_series_detail(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2v_patch_b_diag_terms",
+        commands_log,
+        "m2v_patch_b",
+    )
+    plain_terms = plain_terms_detail["rows"][0]
+    patch_b_terms = patch_b_terms_detail["rows"][0]
+
+    repo_root = Path(__file__).resolve().parents[2]
+    prior_m2u_path = (
+        repo_root
+        / "tests/reference_results/r_respa_m2u_write_ordinal_trace_rerun2/dense_oligomer/fixture_summary.json"
+    )
+    prior_m2u_audit = {
+        "plain_target_container": "outputBuffer.Vvdw",
+        "patch_b_target_container": "vdwEnergyTerms",
+        "plain_actual_executed_write_count": 255,
+        "patch_b_actual_executed_write_count": 20352,
+        "semantic_depth_mismatch": (
+            "Plain RAW_FIRST_WRITE->RAW_POST_WRITE rows tracked outputBuffer.Vvdw target writes, "
+            "while Patch-B tracked per-pair vdwEnergyTerms ledger writes."
+        ),
+        "why_after_write_ordinal_n_was_not_equivalent": (
+            "AFTER_WRITE_ORDINAL_N did not mean the same event depth across sides because plain advanced once per "
+            "kernel-visible outputBuffer write, while Patch-B advanced once per admitted pair-energy ledger write."
+        ),
+    }
+    if prior_m2u_path.exists():
+        prior_fixture = json.loads(prior_m2u_path.read_text())
+        prior_loc = prior_fixture.get("dense_patch_b_raw_sr_write_ordinal_trace", {}).get("localization", {})
+        prior_inv = prior_loc.get("write_ordinal_instrumentation_inventory", {})
+        prior_m2u_audit.update(
+            {
+                "plain_target_container": prior_inv.get("plain_target_container", prior_m2u_audit["plain_target_container"]),
+                "patch_b_target_container": prior_inv.get("patch_b_target_container", prior_m2u_audit["patch_b_target_container"]),
+                "plain_actual_executed_write_count": prior_inv.get(
+                    "plain_actual_executed_write_count", prior_m2u_audit["plain_actual_executed_write_count"]
+                ),
+                "patch_b_actual_executed_write_count": prior_inv.get(
+                    "patch_b_actual_executed_write_count", prior_m2u_audit["patch_b_actual_executed_write_count"]
+                ),
+            }
+        )
+
+    chosen_contract = "running_total_after_admitted_pair_energy_event_K"
+    rejected_alternative = "running_total_after_reduced_target_container_write_batch_K"
+    rejected_reason = (
+        "Patch-B pair-energy ledger writes cannot be collapsed upward into the plain outputBuffer write sequence with "
+        "a runtime-explicit one-to-one mapping, so that batching would stay heuristic."
+    )
+
+    aligned_stage_prefixes_plain = ("plain_aligned_pair_energy_event",)
+    aligned_stage_prefixes_patch = ("exact_aligned_pair_energy_event",)
+    plain_aligned_ordinals = collect_aligned_event_ordinals(plain_rows, aligned_stage_prefixes_plain)
+    patch_aligned_ordinals = collect_aligned_event_ordinals(patch_b_rows, aligned_stage_prefixes_patch)
+    all_aligned_ordinals = sorted(set(plain_aligned_ordinals) | set(patch_aligned_ordinals))
+    aligned_stage_order = [f"ALIGNED_WRITE_EVENT_{ordinal}" for ordinal in all_aligned_ordinals]
+    stage_order = list(aligned_stage_order)
+    stage_order.extend(
+        [
+            "ALIGNED_LAST_EVENT_BEFORE_RAW_POST_WRITE",
+            "RAW_POST_WRITE_EQUIVALENT",
+            "RAW_FIRST_READ_OR_REDUCE",
+            "RAW_POST_READ_OR_REDUCE",
+            "RAW_SR_FORMATION",
+            "SR_ACCUMULATION",
+            "FINAL_INTERNAL_LEDGER",
+            "CORRECTED_EXPORT",
+        ]
+    )
+
+    def plain_stage_prefixes(stage: str) -> tuple[str, ...]:
+        if stage.startswith("ALIGNED_WRITE_EVENT_"):
+            return ("plain_aligned_pair_energy_event",)
+        if stage == "ALIGNED_LAST_EVENT_BEFORE_RAW_POST_WRITE":
+            return ("plain_aligned_pair_energy_after_last_event",)
+        if stage == "RAW_POST_WRITE_EQUIVALENT":
+            return ("plain_aligned_post_write_equivalent",)
+        if stage in ("RAW_FIRST_READ_OR_REDUCE", "RAW_POST_READ_OR_REDUCE"):
+            return ("plain_sumKernelEnergyOutputs_",)
+        if stage == "RAW_SR_FORMATION":
+            return ("plain_",)
+        return ()
+
+    def patch_stage_prefixes(stage: str) -> tuple[str, ...]:
+        if stage.startswith("ALIGNED_WRITE_EVENT_"):
+            return ("exact_aligned_pair_energy_event",)
+        if stage == "ALIGNED_LAST_EVENT_BEFORE_RAW_POST_WRITE":
+            return ("exact_aligned_pair_energy_after_last_event",)
+        if stage == "RAW_POST_WRITE_EQUIVALENT":
+            return ("exact_aligned_post_write_equivalent",)
+        if stage in ("RAW_FIRST_READ_OR_REDUCE", "RAW_POST_READ_OR_REDUCE"):
+            return ("exact_sumEnergyTerms_",)
+        if stage == "RAW_SR_FORMATION":
+            return ("exact_",)
+        return ()
+
+    stage_data_plain = {
+        stage: aggregate_lj_sr_stage_with_paths(plain_rows, stage, plain_stage_prefixes(stage))
+        for stage in stage_order
+        if stage != "CORRECTED_EXPORT"
+    }
+    stage_data_patch_b = {
+        stage: aggregate_lj_sr_stage_with_paths(patch_b_rows, stage, patch_stage_prefixes(stage))
+        for stage in stage_order
+        if stage != "CORRECTED_EXPORT"
+    }
+    stage_data_plain["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": plain_terms["LJ-(SR)"],
+        "coulomb_sr": None,
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+    stage_data_patch_b["CORRECTED_EXPORT"] = {
+        "stage": "CORRECTED_EXPORT",
+        "rows": [],
+        "lj_sr": patch_b_terms["LJ-(SR)"],
+        "coulomb_sr": None,
+        "code_locations": ["gmx energy corrected extractor"],
+        "execution_paths": ["corrected_export"],
+    }
+
+    plain_expected_ordinals = list(range(1, len(plain_aligned_ordinals) + 1)) if plain_aligned_ordinals else []
+    patch_expected_ordinals = list(range(1, len(patch_aligned_ordinals) + 1)) if patch_aligned_ordinals else []
+    plain_has_full_aligned_trace = plain_aligned_ordinals == plain_expected_ordinals and bool(plain_aligned_ordinals)
+    patch_has_full_aligned_trace = patch_aligned_ordinals == patch_expected_ordinals and bool(patch_aligned_ordinals)
+    actual_runtime_checkpoints_exist = plain_has_full_aligned_trace and patch_has_full_aligned_trace
+    same_write_ordinal_depth = len(plain_aligned_ordinals) == len(patch_aligned_ordinals) and bool(plain_aligned_ordinals)
+    contract_match = actual_runtime_checkpoints_exist and same_write_ordinal_depth
+
+    comparison_table: list[dict[str, Any]] = []
+    first_aligned_stage = None
+    first_aligned_increment = None
+    earlier_aligned_events_exonerated: list[str] = []
+    materiality_tol = NUMERIC_FIELD_TOL
+    prev_delta_lj = None
+    aligned_stage_set = set(aligned_stage_order)
+    for stage in stage_order:
+        plain_stage = stage_data_plain[stage]
+        patch_stage = stage_data_patch_b[stage]
+        plain_lj = plain_stage["lj_sr"]
+        patch_lj = patch_stage["lj_sr"]
+        delta_lj = None if plain_lj is None or patch_lj is None else patch_lj - plain_lj
+        delta_increment = None
+        first_delta_changing_here = False
+        if prev_delta_lj is not None and delta_lj is not None:
+            delta_increment = delta_lj - prev_delta_lj
+            if stage in aligned_stage_set and first_aligned_stage is None and abs(delta_increment) > materiality_tol:
+                first_aligned_stage = stage
+                first_aligned_increment = delta_increment
+                first_delta_changing_here = True
+            elif stage in aligned_stage_set and first_aligned_stage is None:
+                earlier_aligned_events_exonerated.append(stage)
+        elif stage == "ALIGNED_WRITE_EVENT_1" and delta_lj is not None:
+            earlier_aligned_events_exonerated.append(stage)
+
+        plain_locations = plain_stage["code_locations"]
+        patch_locations = patch_stage["code_locations"]
+        if plain_locations == patch_locations:
+            code_location = "; ".join(plain_locations)
+        else:
+            code_location = f"plain={'; '.join(plain_locations)} | patch_b={'; '.join(patch_locations)}"
+
+        comparison_table.append(
+            {
+                "stage": stage,
+                "code_location": code_location,
+                "plain_LJ_SR_running_total": plain_lj,
+                "patch_b_LJ_SR_running_total": patch_lj,
+                "delta_LJ_SR": delta_lj,
+                "delta_increment_vs_prev": delta_increment,
+                "first_delta_changing_aligned_event_here": first_delta_changing_here,
+            }
+        )
+        if delta_lj is not None:
+            prev_delta_lj = delta_lj
+
+    final_internal_plain = stage_data_plain["FINAL_INTERNAL_LEDGER"]
+    final_internal_patch_b = stage_data_patch_b["FINAL_INTERNAL_LEDGER"]
+    corrected_export_matches_internal = (
+        final_internal_plain["lj_sr"] is not None
+        and final_internal_patch_b["lj_sr"] is not None
+        and abs(final_internal_plain["lj_sr"] - plain_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch_b["lj_sr"] - patch_b_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+    )
+
+    admissibility_verdict = (
+        "CONTRACT_ALIGNED_AND_ADMISSIBLE"
+        if contract_match
+        else ("ALIGNMENT_IMPROVED_BUT_STILL_INADMISSIBLE" if actual_runtime_checkpoints_exist else "NOT-YET-RESOLVED")
+    )
+    exact_first_write_admissibility_verdict = (
+        "EXACT_FIRST_WRITE_NOW_ADMISSIBLE"
+        if contract_match and same_write_ordinal_depth and first_aligned_stage is not None
+        else ("CULPRIT_STILL_BLOCKED_BY_CONTRACT" if not contract_match or not same_write_ordinal_depth else "NOT-YET-RESOLVED")
+    )
+    culprit_support_enabled = False
+    culprit_reinstatement_blocked = True
+    overclaim_reason = (
+        "Scope remains pre-reinstatement. Even with admissible alignment, culprit support stays disabled until a dedicated culprit milestone chooses to re-enable it."
+        if contract_match
+        else "Culprit support remains blocked because the aligned contract is not yet admissible."
+    )
+    final_verdict = (
+        "PASS"
+        if (
+            contract_match
+            and same_write_ordinal_depth
+            and actual_runtime_checkpoints_exist
+            and corrected_export_matches_internal
+            and exact_first_write_admissibility_verdict == "EXACT_FIRST_WRITE_NOW_ADMISSIBLE"
+        )
+        else ("PARTIAL" if actual_runtime_checkpoints_exist and corrected_export_matches_internal else "FAIL")
+    )
+
+    localization = {
+        "contract_gap_audit": prior_m2u_audit,
+        "alignment_design_note": {
+            "chosen_contract": chosen_contract,
+            "rejected_alternative": rejected_alternative,
+            "admissibility_rationale": (
+                "Lowering plain to the admitted pair-energy event depth matches Patch-B's natural per-pair ledger event semantics one-for-one."
+            ),
+            "rejected_alternative_reason": rejected_reason,
+        },
+        "aligned_runtime_trace_dossier": comparison_table,
+        "aligned_event_proof": {
+            "first_stage": first_aligned_stage,
+            "first_increment": first_aligned_increment,
+            "earlier_aligned_events_exonerated": earlier_aligned_events_exonerated,
+        },
+        "aligned_event_inventory": {
+            "plain_aligned_event_count": len(plain_aligned_ordinals),
+            "patch_b_aligned_event_count": len(patch_aligned_ordinals),
+            "same_write_ordinal_depth": same_write_ordinal_depth,
+            "plain_execution_path": "plain_aligned_pair_energy_event",
+            "patch_b_execution_path": "exact_aligned_pair_energy_event",
+        },
+        "admissibility_verdict": admissibility_verdict,
+        "exact_first_write_admissibility_verdict": exact_first_write_admissibility_verdict,
+        "overclaim_status": {
+            "culprit_support_enabled": culprit_support_enabled,
+            "culprit_reinstatement_blocked": culprit_reinstatement_blocked,
+            "reason": overclaim_reason,
+        },
+        "contract_match": contract_match,
+        "same_write_ordinal_depth": same_write_ordinal_depth,
+        "final_internal_reconciled": corrected_export_matches_internal,
+        "final_verdict": final_verdict,
+        "provenance": {
+            "instrumented_code_locations": [
+                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:after_plain_pair_energy_event",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:plain_aligned_post_write_equivalent",
+                "src/gromacs/mdlib/sim_util.cpp:after_patch_pair_energy_event",
+                "src/gromacs/mdlib/sim_util.cpp:after_pair_loop_vdwEnergyTerms",
+                "src/gromacs/mdlib/sim_util.cpp:sumEnergyTerms_first_read",
+                "src/gromacs/mdlib/sim_util.cpp:sumEnergyTerms_final_total",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            ],
+            "chosen_contract_definition": chosen_contract,
+            "rejected_alternative": rejected_alternative,
+            "corrected_extractor_code_path": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            "plain_execution_path": stage_data_plain.get("ALIGNED_WRITE_EVENT_1", {}).get("execution_paths", []),
+            "patch_b_execution_path": stage_data_patch_b.get("ALIGNED_WRITE_EVENT_1", {}).get("execution_paths", []),
+            "plain_resolved_output_order": plain_terms_detail["resolved_output_order"],
+            "patch_b_resolved_output_order": patch_b_terms_detail["resolved_output_order"],
+        },
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
+def dense_patch_b_aligned_event_669_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(plain_dir))
+    patch_b_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(patch_b_dir))
+    plain_event_rows = load_aligned_event_identity_rows(plain_dir)
+    patch_event_rows = load_aligned_event_identity_rows(patch_b_dir)
+    plain_terms_detail = extract_named_energy_series_detail(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2w_plain_diag_terms", commands_log, "m2w_plain"
+    )
+    patch_b_terms_detail = extract_named_energy_series_detail(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2w_patch_b_diag_terms",
+        commands_log,
+        "m2w_patch_b",
+    )
+    plain_terms = plain_terms_detail["rows"][0]
+    patch_b_terms = patch_b_terms_detail["rows"][0]
+
+    event_stages = ["ALIGNED_WRITE_EVENT_668", "ALIGNED_WRITE_EVENT_669", "ALIGNED_WRITE_EVENT_670"]
+
+    def compare_numeric(left: str | None, right: str | None) -> bool:
+        if left is None or right is None:
+            return left == right
+        return abs(float(left) - float(right)) <= NUMERIC_FIELD_TOL
+
+    def stage_lj(rows: list[dict[str, str]], stage: str, prefixes: tuple[str, ...]) -> float | None:
+        return aggregate_lj_sr_stage_with_paths(rows, stage, prefixes)["lj_sr"]
+
+    def stage_code_location(rows: list[dict[str, str]], stage: str, prefixes: tuple[str, ...]) -> str:
+        stage_data = aggregate_lj_sr_stage_with_paths(rows, stage, prefixes)
+        return "; ".join(stage_data["code_locations"])
+
+    event_identity_dossier: list[dict[str, Any]] = []
+    event_local_delta_table: list[dict[str, Any]] = []
+    first_differing_event = None
+    identity_match_669 = False
+
+    for stage in event_stages:
+        plain_row = plain_event_rows.get(stage)
+        patch_row = patch_event_rows.get(stage)
+        plain_identity = (
+            None
+            if plain_row is None
+            else f"pair=({plain_row.get('pair_i')},{plain_row.get('pair_j')}) "
+                 f"types=({plain_row.get('type_i')},{plain_row.get('type_j')}) "
+                 f"key={plain_row.get('event_ordering_key')}"
+        )
+        patch_identity = (
+            None
+            if patch_row is None
+            else f"pair=({patch_row.get('pair_i')},{patch_row.get('pair_j')}) "
+                 f"types=({patch_row.get('type_i')},{patch_row.get('type_j')}) "
+                 f"key={patch_row.get('event_ordering_key')}"
+        )
+        identities_match = (
+            plain_row is not None
+            and patch_row is not None
+            and plain_row.get("pair_i") == patch_row.get("pair_i")
+            and plain_row.get("pair_j") == patch_row.get("pair_j")
+            and plain_row.get("type_i") == patch_row.get("type_i")
+            and plain_row.get("type_j") == patch_row.get("type_j")
+            and plain_row.get("event_ordering_key") == patch_row.get("event_ordering_key")
+        )
+        if stage == "ALIGNED_WRITE_EVENT_669":
+            identity_match_669 = identities_match
+
+        plain_before = parse_float_field(plain_row, "running_total_before")
+        patch_before = parse_float_field(patch_row, "running_total_before")
+        plain_after = parse_float_field(plain_row, "running_total_after")
+        patch_after = parse_float_field(patch_row, "running_total_after")
+        plain_event_lj = parse_float_field(plain_row, "final_event_lj_contribution")
+        patch_event_lj = parse_float_field(patch_row, "final_event_lj_contribution")
+        delta_event_lj = (
+            None if plain_event_lj is None or patch_event_lj is None else patch_event_lj - plain_event_lj
+        )
+        delta_after = None if plain_after is None or patch_after is None else patch_after - plain_after
+        is_first = False
+        if first_differing_event is None and delta_event_lj is not None and abs(delta_event_lj) > NUMERIC_FIELD_TOL:
+            first_differing_event = stage
+            is_first = True
+
+        event_identity_dossier.append(
+            {
+                "stage": stage,
+                "plain_event_identity": plain_identity,
+                "patch_b_event_identity": patch_identity,
+                "identities_match": identities_match,
+                "plain_running_total_before": plain_before,
+                "patch_b_running_total_before": patch_before,
+                "plain_running_total_after": plain_after,
+                "patch_b_running_total_after": patch_after,
+            }
+        )
+        event_local_delta_table.append(
+            {
+                "stage": stage,
+                "plain_event_LJ": plain_event_lj,
+                "patch_b_event_LJ": patch_event_lj,
+                "delta_event_LJ": delta_event_lj,
+                "plain_running_total_before": plain_before,
+                "patch_b_running_total_before": patch_before,
+                "plain_running_total_after": plain_after,
+                "patch_b_running_total_after": patch_after,
+                "delta_running_total_after": delta_after,
+                "is_first_differing_event": is_first,
+            }
+        )
+
+    plain_669 = plain_event_rows.get("ALIGNED_WRITE_EVENT_669")
+    patch_669 = patch_event_rows.get("ALIGNED_WRITE_EVENT_669")
+    arithmetic_fields = [
+        "pair_i",
+        "pair_j",
+        "type_i",
+        "type_j",
+        "c6",
+        "c12",
+        "rsq",
+        "r",
+        "scaling_factor",
+        "raw_lj_term",
+        "final_event_lj_contribution",
+    ]
+    arithmetic_input_dossier: list[dict[str, Any]] = []
+    differing_fields: list[str] = []
+    for field_name in arithmetic_fields:
+        plain_value = None if plain_669 is None else plain_669.get(field_name)
+        patch_value = None if patch_669 is None else patch_669.get(field_name)
+        if field_name in {"pair_i", "pair_j", "type_i", "type_j"}:
+            values_match = plain_value == patch_value
+        else:
+            values_match = compare_numeric(plain_value, patch_value)
+        if not values_match:
+            differing_fields.append(field_name)
+        arithmetic_input_dossier.append(
+            {
+                "field_name": field_name,
+                "plain_value": None if plain_value is None else (int(plain_value) if field_name in {"pair_i", "pair_j", "type_i", "type_j"} else float(plain_value)),
+                "patch_b_value": None if patch_value is None else (int(patch_value) if field_name in {"pair_i", "pair_j", "type_i", "type_j"} else float(patch_value)),
+                "values_match": values_match,
+            }
+        )
+
+    arithmetic_source_verdict = "NOT-YET-RESOLVED"
+    if not identity_match_669:
+        arithmetic_source_verdict = "PAIR_IDENTITY_MISMATCH"
+    elif {"c6", "c12"} & set(differing_fields):
+        arithmetic_source_verdict = "PARAMETER_INPUT_MISMATCH"
+    elif {"rsq", "r"} & set(differing_fields):
+        arithmetic_source_verdict = "DISTANCE_OR_GEOMETRY_INPUT_MISMATCH"
+    elif {"scaling_factor"} & set(differing_fields):
+        arithmetic_source_verdict = "SCALING_OR_SWITCH_INPUT_MISMATCH"
+    elif {"raw_lj_term", "final_event_lj_contribution"} & set(differing_fields):
+        arithmetic_source_verdict = "RAW_LJ_FORMULA_INPUT_MISMATCH"
+    else:
+        row_669 = next((row for row in event_local_delta_table if row["stage"] == "ALIGNED_WRITE_EVENT_669"), None)
+        if row_669 is not None:
+            delta_event = row_669["delta_event_LJ"]
+            delta_after = row_669["delta_running_total_after"]
+            if (
+                delta_event is not None
+                and abs(delta_event) <= NUMERIC_FIELD_TOL
+                and delta_after is not None
+                and abs(delta_after) > NUMERIC_FIELD_TOL
+            ):
+                arithmetic_source_verdict = "RUNNING_TOTAL_ONLY_NO_EVENT_LOCAL_DIFF"
+
+    final_internal_plain = aggregate_lj_sr_stage_with_paths(
+        plain_rows, "FINAL_INTERNAL_LEDGER", ("post_sum_epot_enerd_term",)
+    )["lj_sr"]
+    final_internal_patch = aggregate_lj_sr_stage_with_paths(
+        patch_b_rows, "FINAL_INTERNAL_LEDGER", ("post_sum_epot_enerd_term",)
+    )["lj_sr"]
+    corrected_export_matches_internal = (
+        final_internal_plain is not None
+        and final_internal_patch is not None
+        and abs(final_internal_plain - plain_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch - patch_b_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+    )
+
+    culprit_support_enabled = False
+    culprit_reinstatement_blocked = True
+    if identity_match_669 and arithmetic_source_verdict != "NOT-YET-RESOLVED":
+        culprit_reason = (
+            "Scope remains pre-reinstatement. Event 669 arithmetic divergence is localized, but culprit support stays disabled until a dedicated reinstatement milestone opts in."
+        )
+    else:
+        culprit_reason = (
+            "Culprit support remains blocked because event 669 semantic identity and arithmetic divergence are not both proven."
+        )
+
+    final_verdict = (
+        "PASS"
+        if (
+            identity_match_669
+            and all(item["identities_match"] for item in event_identity_dossier)
+            and first_differing_event == "ALIGNED_WRITE_EVENT_669"
+            and arithmetic_source_verdict != "NOT-YET-RESOLVED"
+            and corrected_export_matches_internal
+        )
+        else ("PARTIAL" if plain_669 is not None and patch_669 is not None and corrected_export_matches_internal else "FAIL")
+    )
+
+    localization = {
+        "chosen_contract": "running_total_after_admitted_pair_energy_event_K",
+        "event_identity_dossier": event_identity_dossier,
+        "arithmetic_input_dossier_event_669": arithmetic_input_dossier,
+        "event_local_delta_table": event_local_delta_table,
+        "first_differing_event": first_differing_event,
+        "arithmetic_source_verdict": arithmetic_source_verdict,
+        "culprit_admissibility_status": {
+            "culprit_support_enabled": culprit_support_enabled,
+            "culprit_reinstatement_blocked": culprit_reinstatement_blocked,
+            "reason": culprit_reason,
+        },
+        "final_internal_reconciled": corrected_export_matches_internal,
+        "final_verdict": final_verdict,
+        "provenance": {
+            "instrumented_code_locations": [
+                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:after_plain_pair_energy_event",
+                "src/gromacs/nbnxm/kerneldispatch.cpp:plain_aligned_post_write_equivalent",
+                "src/gromacs/mdlib/sim_util.cpp:after_patch_pair_energy_event",
+                "src/gromacs/mdlib/sim_util.cpp:after_pair_loop_vdwEnergyTerms",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            ],
+            "aligned_event_contract_source": "running_total_after_admitted_pair_energy_event_K",
+            "event_identity_extraction_logic": [
+                "pair_i",
+                "pair_j",
+                "type_i",
+                "type_j",
+                "event_ordering_key",
+                "running_total_before",
+                "final_event_lj_contribution",
+                "running_total_after",
+            ],
+            "corrected_extractor_code_path": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+        },
+    }
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
+def dense_patch_b_event_669_geometry_producer_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_lj_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(plain_dir))
+    patch_lj_rows = trim_lj_sr_trace_to_first_cycle(load_lj_sr_internal_trace_rows(patch_b_dir))
+    plain_identity_rows = load_aligned_event_identity_rows(plain_dir)
+    patch_identity_rows = load_aligned_event_identity_rows(patch_b_dir)
+    plain_geometry_rows = load_event_669_geometry_rows(plain_dir)
+    patch_geometry_rows = load_event_669_geometry_rows(patch_b_dir)
+    plain_terms_detail = extract_named_energy_series_detail(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2x_plain_diag_terms", commands_log, "m2x_plain"
+    )
+    patch_b_terms_detail = extract_named_energy_series_detail(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2x_patch_b_diag_terms",
+        commands_log,
+        "m2x_patch_b",
+    )
+    plain_terms = plain_terms_detail["rows"][0]
+    patch_b_terms = patch_b_terms_detail["rows"][0]
+
+    identity_stage = "ALIGNED_WRITE_EVENT_669"
+    plain_identity_row = plain_identity_rows.get(identity_stage)
+    patch_identity_row = patch_identity_rows.get(identity_stage)
+    expected_pair_i = None if plain_identity_row is None else plain_identity_row.get("pair_i")
+    expected_pair_j = None if plain_identity_row is None else plain_identity_row.get("pair_j")
+    expected_key = None if plain_identity_row is None else plain_identity_row.get("event_ordering_key")
+
+    stage_order = [
+        "GEOM_COORD_SOURCE",
+        "GEOM_SHIFT_OR_PBC_APPLY",
+        "GEOM_DXDYDZ_CONSTRUCTION",
+        "GEOM_RSQ_FORMATION",
+        "EVENT_669_LJ_INPUT",
+    ]
+    stage_field_map: dict[str, list[str]] = {
+        "GEOM_COORD_SOURCE": [
+            "coord_i_x",
+            "coord_i_y",
+            "coord_i_z",
+            "coord_j_x",
+            "coord_j_y",
+            "coord_j_z",
+        ],
+        "GEOM_SHIFT_OR_PBC_APPLY": [
+            "shift_index",
+            "shift_x",
+            "shift_y",
+            "shift_z",
+            "coord_i_shifted_x",
+            "coord_i_shifted_y",
+            "coord_i_shifted_z",
+        ],
+        "GEOM_DXDYDZ_CONSTRUCTION": ["dx", "dy", "dz"],
+        "GEOM_RSQ_FORMATION": ["rsq"],
+        "EVENT_669_LJ_INPUT": ["rsq", "r"],
+    }
+
+    def float_matches(left: str | None, right: str | None) -> bool:
+        if left is None or right is None:
+            return left == right
+        return abs(float(left) - float(right)) <= NUMERIC_FIELD_TOL
+
+    geometry_inventory: list[dict[str, Any]] = [
+        {
+            "stage": "GEOM_COORD_SOURCE",
+            "plain_executed": "GEOM_COORD_SOURCE" in plain_geometry_rows,
+            "patch_b_executed": "GEOM_COORD_SOURCE" in patch_geometry_rows,
+            "semantic_note": "pair-local coordinate source components for pair (18,0) before shift/PBC application",
+        },
+        {
+            "stage": "GEOM_SHIFT_OR_PBC_APPLY",
+            "plain_executed": "GEOM_SHIFT_OR_PBC_APPLY" in plain_geometry_rows,
+            "patch_b_executed": "GEOM_SHIFT_OR_PBC_APPLY" in patch_geometry_rows,
+            "semantic_note": "shift index/vector and shifted i-coordinate after PBC image application",
+        },
+        {
+            "stage": "GEOM_DXDYDZ_CONSTRUCTION",
+            "plain_executed": "GEOM_DXDYDZ_CONSTRUCTION" in plain_geometry_rows,
+            "patch_b_executed": "GEOM_DXDYDZ_CONSTRUCTION" in patch_geometry_rows,
+            "semantic_note": "pair-local dx/dy/dz components used to build rsq",
+        },
+        {
+            "stage": "GEOM_RSQ_FORMATION",
+            "plain_executed": "GEOM_RSQ_FORMATION" in plain_geometry_rows,
+            "patch_b_executed": "GEOM_RSQ_FORMATION" in patch_geometry_rows,
+            "semantic_note": "rsq formed from dx/dy/dz before LJ evaluation",
+        },
+        {
+            "stage": "EVENT_669_LJ_INPUT",
+            "plain_executed": "EVENT_669_LJ_INPUT" in plain_geometry_rows,
+            "patch_b_executed": "EVENT_669_LJ_INPUT" in patch_geometry_rows,
+            "semantic_note": "event-local LJ input stage carrying rsq/r into raw LJ evaluation",
+        },
+    ]
+
+    geometry_dossier: list[dict[str, Any]] = []
+    first_divergence_stage = None
+    earlier_exonerated_stages: list[str] = []
+    producer_classification_verdict = "NOT-YET-RESOLVED"
+
+    for stage in stage_order:
+        plain_row = plain_geometry_rows.get(stage)
+        patch_row = patch_geometry_rows.get(stage)
+        plain_location = None if plain_row is None else plain_row.get("code_location")
+        patch_location = None if patch_row is None else patch_row.get("code_location")
+        if plain_location == patch_location:
+            code_location = plain_location
+        else:
+            code_location = f"plain={plain_location} | patch_b={patch_location}"
+
+        pair_identity_matches = (
+            plain_row is not None
+            and patch_row is not None
+            and plain_row.get("pair_i") == patch_row.get("pair_i")
+            and plain_row.get("pair_j") == patch_row.get("pair_j")
+            and plain_row.get("event_ordering_key") == patch_row.get("event_ordering_key")
+            and plain_row.get("pair_i") == expected_pair_i
+            and plain_row.get("pair_j") == expected_pair_j
+            and plain_row.get("event_ordering_key") == expected_key
+        )
+
+        stage_differs = False
+        if first_divergence_stage is None:
+            if not pair_identity_matches:
+                stage_differs = True
+                first_divergence_stage = stage
+                producer_classification_verdict = "PAIR_TRAVERSAL_STATE_MISMATCH"
+            elif plain_row is None or patch_row is None:
+                stage_differs = False
+            else:
+                relevant_fields = stage_field_map[stage]
+                stage_differs = any(
+                    not float_matches(plain_row.get(field_name), patch_row.get(field_name))
+                    for field_name in relevant_fields
+                )
+                if stage_differs:
+                    first_divergence_stage = stage
+                    if stage == "GEOM_COORD_SOURCE":
+                        producer_classification_verdict = "COORD_SOURCE_MISMATCH"
+                    elif stage == "GEOM_SHIFT_OR_PBC_APPLY":
+                        producer_classification_verdict = "SHIFT_OR_PBC_APPLICATION_MISMATCH"
+                    elif stage == "GEOM_DXDYDZ_CONSTRUCTION":
+                        producer_classification_verdict = "DXDYDZ_CONSTRUCTION_MISMATCH"
+                    elif stage == "GEOM_RSQ_FORMATION":
+                        producer_classification_verdict = "RSQ_FORMATION_MISMATCH"
+                    else:
+                        producer_classification_verdict = "NOT-YET-RESOLVED"
+                else:
+                    earlier_exonerated_stages.append(stage)
+
+        geometry_dossier.append(
+            {
+                "stage": stage,
+                "code_location": code_location,
+                "plain_pair_identity": None
+                if plain_row is None
+                else f"pair=({plain_row.get('pair_i')},{plain_row.get('pair_j')}) key={plain_row.get('event_ordering_key')}",
+                "patch_b_pair_identity": None
+                if patch_row is None
+                else f"pair=({patch_row.get('pair_i')},{patch_row.get('pair_j')}) key={patch_row.get('event_ordering_key')}",
+                "plain_dx": parse_float_field(plain_row, "dx"),
+                "patch_b_dx": parse_float_field(patch_row, "dx"),
+                "plain_dy": parse_float_field(plain_row, "dy"),
+                "patch_b_dy": parse_float_field(patch_row, "dy"),
+                "plain_dz": parse_float_field(plain_row, "dz"),
+                "patch_b_dz": parse_float_field(patch_row, "dz"),
+                "plain_rsq": parse_float_field(plain_row, "rsq"),
+                "patch_b_rsq": parse_float_field(patch_row, "rsq"),
+                "plain_r": parse_float_field(plain_row, "r"),
+                "patch_b_r": parse_float_field(patch_row, "r"),
+                "first_geometry_divergence_here": first_divergence_stage == stage,
+            }
+        )
+
+    final_internal_plain = aggregate_lj_sr_stage_with_paths(
+        plain_lj_rows, "FINAL_INTERNAL_LEDGER", ("post_sum_epot_enerd_term",)
+    )["lj_sr"]
+    final_internal_patch = aggregate_lj_sr_stage_with_paths(
+        patch_lj_rows, "FINAL_INTERNAL_LEDGER", ("post_sum_epot_enerd_term",)
+    )["lj_sr"]
+    corrected_export_matches_internal = (
+        final_internal_plain is not None
+        and final_internal_patch is not None
+        and abs(final_internal_plain - plain_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+        and abs(final_internal_patch - patch_b_terms["LJ-(SR)"]) <= LEDGER_TRACE_TOL
+    )
+
+    culprit_support_enabled = False
+    culprit_reinstatement_blocked = True
+    culprit_reason = (
+        "Scope remains pre-reinstatement. Even with a concrete upstream geometry producer mismatch, culprit support stays disabled until a dedicated reinstatement milestone opts in."
+        if first_divergence_stage is not None and producer_classification_verdict != "NOT-YET-RESOLVED"
+        else "Culprit support remains blocked because the first upstream geometry producer mismatch is not yet concrete."
+    )
+
+    final_verdict = (
+        "PASS"
+        if (
+            expected_pair_i == "18"
+            and expected_pair_j == "0"
+            and first_divergence_stage is not None
+            and producer_classification_verdict != "NOT-YET-RESOLVED"
+            and corrected_export_matches_internal
+        )
+        else (
+            "PARTIAL"
+            if (
+                plain_geometry_rows
+                and patch_geometry_rows
+                and corrected_export_matches_internal
+            )
+            else "FAIL"
+        )
+    )
+
+    localization = {
+        "geometry_producer_inventory": geometry_inventory,
+        "event_669_upstream_geometry_dossier": geometry_dossier,
+        "producer_classification_verdict": producer_classification_verdict,
+        "first_divergence_proof": {
+            "first_upstream_stage": first_divergence_stage,
+            "earlier_traced_stages_exonerated": earlier_exonerated_stages,
+            "event_669_identity_binding": {
+                "plain_event_identity": None
+                if plain_identity_row is None
+                else {
+                    "pair_i": int(plain_identity_row["pair_i"]),
+                    "pair_j": int(plain_identity_row["pair_j"]),
+                    "event_ordering_key": plain_identity_row["event_ordering_key"],
+                },
+                "patch_b_event_identity": None
+                if patch_identity_row is None
+                else {
+                    "pair_i": int(patch_identity_row["pair_i"]),
+                    "pair_j": int(patch_identity_row["pair_j"]),
+                    "event_ordering_key": patch_identity_row["event_ordering_key"],
+                },
+            },
+        },
+        "culprit_admissibility_status": {
+            "culprit_support_enabled": culprit_support_enabled,
+            "culprit_reinstatement_blocked": culprit_reinstatement_blocked,
+            "reason": culprit_reason,
+        },
+        "final_internal_reconciled": corrected_export_matches_internal,
+        "final_verdict": final_verdict,
+        "provenance": {
+            "instrumented_code_locations": [
+                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:plain_event_669_geometry_trace_capture",
+                "src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:plain_coord_source_and_shift_application",
+                "src/gromacs/mdlib/sim_util.cpp:coordinates_fetch_before_shift",
+                "src/gromacs/mdlib/sim_util.cpp:shift_vec_application_before_dx",
+                "src/gromacs/mdlib/sim_util.cpp:dx_vector_construction",
+                "src/gromacs/mdlib/sim_util.cpp:iprod_dx_dx_before_lj",
+                "src/gromacs/mdlib/sim_util.cpp:rawLjEnergy_factorLj_event_input",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:load_event_669_geometry_rows",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:dense_patch_b_event_669_geometry_producer_trace",
+                "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+            ],
+            "aligned_event_contract_source": "running_total_after_admitted_pair_energy_event_K",
+            "event_identity_extraction_logic": "load_aligned_event_identity_rows(stage=ALIGNED_WRITE_EVENT_669)",
+            "geometry_producer_trace_logic": stage_order,
+            "corrected_extractor_code_path": "tools/run_respa_m2_microfixtures/run_respa_m2.py:extract_named_energy_series_detail",
+        },
+    }
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
+def dense_patch_b_reciprocal_internal_delta_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+
+    plain_rows = load_reciprocal_internal_trace_rows(plain_dir)
+    patch_b_rows = load_reciprocal_internal_trace_rows(patch_b_dir)
+    plain_terms = extract_named_energy_series(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "m2m_plain_diag_terms", commands_log, "m2m_plain"
+    )[0]
+    patch_b_terms = extract_named_energy_series(
+        gmx_bin,
+        patch_b_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "m2m_patch_b_diag_terms",
+        commands_log,
+        "m2m_patch_b",
+    )[0]
+
+    stage_specs = (
+        ("VCORR", "vcorr_q"),
+        ("VLR", "vlr_q"),
+        ("MERGE_PRE_LEDGER", "merge_pre_ledger"),
+        ("FINAL_LEDGER", "final_ledger"),
+        ("PME_RECEIVE_EQ", "eq_received"),
+        ("PME_RECEIVE_POST_LEDGER", "ledger_after_receive"),
+    )
+
+    comparison_table = []
+    stage_order = [stage_name for stage_name, _ in stage_specs]
+    first_nonzero_stage = None
+    earlier_stages_exonerated = True
+    for stage_name, field_name in stage_specs:
+        plain_row = plain_rows.get(stage_name)
+        patch_b_row = patch_b_rows.get(stage_name)
+        plain_value = parse_float_field(plain_row, field_name)
+        patch_b_value = parse_float_field(patch_b_row, field_name)
+        delta = None
+        if plain_value is not None and patch_b_value is not None:
+            delta = patch_b_value - plain_value
+        first_here = (
+            earlier_stages_exonerated
+            and delta is not None
+            and abs(delta) > NUMERIC_FIELD_TOL
+        )
+        comparison_table.append(
+            {
+                "stage": stage_name,
+                "plain": plain_value,
+                "patch_b": patch_b_value,
+                "delta_patch_b_minus_plain": delta,
+                "first_nonzero_delta_here": first_here,
+            }
+        )
+        if first_here:
+            first_nonzero_stage = stage_name
+            earlier_stages_exonerated = False
+        elif delta is None or abs(delta) > NUMERIC_FIELD_TOL:
+            earlier_stages_exonerated = False
+
+    delta_by_stage = {
+        row["stage"]: row["delta_patch_b_minus_plain"] for row in comparison_table
+    }
+    plain_branch = None if plain_rows.get("VLR") is None else plain_rows["VLR"].get("reciprocal_branch")
+    patch_b_branch = None if patch_b_rows.get("VLR") is None else patch_b_rows["VLR"].get("reciprocal_branch")
+
+    if first_nonzero_stage == "VCORR":
+        classification = "VCORR_Q_ORIGIN"
+    elif (
+        first_nonzero_stage == "VLR"
+        and delta_by_stage.get("VCORR") is not None
+        and abs(delta_by_stage["VCORR"]) <= NUMERIC_FIELD_TOL
+    ):
+        classification = "VLR_Q_ORIGIN"
+    elif (
+        first_nonzero_stage in {"MERGE_PRE_LEDGER", "FINAL_LEDGER"}
+        and delta_by_stage.get("VCORR") is not None
+        and delta_by_stage.get("VLR") is not None
+        and abs(delta_by_stage["VCORR"]) <= NUMERIC_FIELD_TOL
+        and abs(delta_by_stage["VLR"]) <= NUMERIC_FIELD_TOL
+    ):
+        classification = "MERGE_REPRESENTATION_MISMATCH"
+    elif (
+        first_nonzero_stage in {"PME_RECEIVE_EQ", "PME_RECEIVE_POST_LEDGER"}
+        and delta_by_stage.get("VCORR") is not None
+        and delta_by_stage.get("VLR") is not None
+        and delta_by_stage.get("MERGE_PRE_LEDGER") is not None
+        and delta_by_stage.get("FINAL_LEDGER") is not None
+        and abs(delta_by_stage["VCORR"]) <= NUMERIC_FIELD_TOL
+        and abs(delta_by_stage["VLR"]) <= NUMERIC_FIELD_TOL
+        and abs(delta_by_stage["MERGE_PRE_LEDGER"]) <= NUMERIC_FIELD_TOL
+        and abs(delta_by_stage["FINAL_LEDGER"]) <= NUMERIC_FIELD_TOL
+    ):
+        classification = "RECIPROCAL_SEMANTIC_CONSUMER_MISMATCH"
+    else:
+        classification = "NOT-YET-RESOLVED"
+
+    final_trace_row_plain = plain_rows.get("PME_RECEIVE_POST_LEDGER") or plain_rows.get("FINAL_LEDGER")
+    final_trace_row_patch_b = patch_b_rows.get("PME_RECEIVE_POST_LEDGER") or patch_b_rows.get("FINAL_LEDGER")
+    final_trace_key = "ledger_after_receive" if plain_rows.get("PME_RECEIVE_POST_LEDGER") else "final_ledger"
+    final_trace_plain = parse_float_field(final_trace_row_plain, final_trace_key)
+    final_trace_patch_b = parse_float_field(final_trace_row_patch_b, final_trace_key)
+    final_trace_matches_energy_term = (
+        final_trace_plain is not None
+        and final_trace_patch_b is not None
+        and abs(final_trace_plain - plain_terms["Coul.-recip."]) <= LEDGER_TRACE_TOL
+        and abs(final_trace_patch_b - patch_b_terms["Coul.-recip."]) <= LEDGER_TRACE_TOL
+    )
+
+    supports_origin = (
+        first_nonzero_stage is not None
+        and classification != "NOT-YET-RESOLVED"
+        and plain_branch is not None
+        and patch_b_branch is not None
+        and plain_branch == patch_b_branch
+        and final_trace_matches_energy_term
+    )
+
+    localization = {
+        "reciprocal_trace_dossier": {
+            "plain_rows": plain_rows,
+            "patch_b_rows": patch_b_rows,
+            "plain_energy_terms_step0": plain_terms,
+            "patch_b_energy_terms_step0": patch_b_terms,
+        },
+        "first_nonzero_delta_stage": first_nonzero_stage,
+        "first_nonzero_delta_proof": {
+            "first_stage": first_nonzero_stage,
+            "earlier_stages_exonerated": [
+                row["stage"]
+                for row in comparison_table
+                if first_nonzero_stage is not None
+                and stage_order.index(row["stage"]) < stage_order.index(first_nonzero_stage)
+                and row["delta_patch_b_minus_plain"] is not None
+                and abs(row["delta_patch_b_minus_plain"]) <= NUMERIC_FIELD_TOL
+            ],
+        },
+        "residual_origin_classification_verdict": classification,
+        "comparison_table": comparison_table,
+        "provenance_note": {
+            "instrumented_code_locations": [
+                "src/gromacs/mdlib/force.cpp:ewald_charge_correction",
+                "src/gromacs/mdlib/force.cpp:gmx_pme_do/do_ewald Vlr_q assignment",
+                "src/gromacs/mdlib/force.cpp:CoulombReciprocalSpace pre-ledger merge",
+                "src/gromacs/mdlib/force.cpp:CoulombReciprocalSpace final ledger assignment",
+                "src/gromacs/mdlib/sim_util.cpp:pme_receive_force_ener reciprocal receive accumulation",
+            ],
+            "executed_reciprocal_branch": {
+                "plain": plain_branch,
+                "patch_b": patch_b_branch,
+            },
+            "final_trace_matches_energy_term": final_trace_matches_energy_term,
+            "final_trace_vs_energy_term": {
+                "plain_trace_final_ledger": final_trace_plain,
+                "plain_energy_term_coul_recip": plain_terms["Coul.-recip."],
+                "patch_b_trace_final_ledger": final_trace_patch_b,
+                "patch_b_energy_term_coul_recip": patch_b_terms["Coul.-recip."],
+                "energy_term_delta_patch_b_minus_plain": patch_b_terms["Coul.-recip."] - plain_terms["Coul.-recip."],
+            },
+        },
+        "supports_reciprocal_internal_origin": supports_origin,
+        "why_not_fully_closed": (
+            "This closes only the first equal-depth reciprocal delta stage for dense_oligomer coarse step 0 under Patch-shape B; it does not establish full bookkeeping closure."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
 def dense_dispatch_minimal_fix_isolation(dense_fixture_summary: dict[str, Any]) -> dict[str, Any]:
     coarse = dense_fixture_summary["coarse"]
     exact_dir = Path(coarse["exact_work_dir"])
@@ -2734,6 +6332,268 @@ def dense_narrow_patch_proof(dense_fixture_summary: dict[str, Any]) -> dict[str,
     }
 
 
+def dense_patch_b_bookkeeping_residual_trace(
+    gmx_bin: str,
+    dense_fixture_summary: dict[str, Any],
+    commands_log: list[str],
+) -> dict[str, Any]:
+    coarse = dense_fixture_summary["coarse"]
+    plain_dir = Path(coarse["plain_work_dir"])
+    exact_dir = Path(coarse["exact_work_dir"])
+    patch_b_dir = Path(coarse["patch_b_work_dir"])
+    diagnostic_probe_dir = Path(coarse["bookkeeping_probe_work_dir"])
+
+    plain_terms = extract_named_energy_series(
+        gmx_bin, plain_dir, "plain", DIAGNOSTIC_ENERGY_TERMS, "plain_terms", commands_log, "plain"
+    )[0]
+    baseline_terms = extract_named_energy_series(
+        gmx_bin, exact_dir, "exact", DIAGNOSTIC_ENERGY_TERMS, "exact_terms", commands_log, "exact"
+    )[0]
+    patch_b_terms = extract_named_energy_series(
+        gmx_bin, patch_b_dir, "exact", DIAGNOSTIC_ENERGY_TERMS, "patch_b_terms", commands_log, "patch_b"
+    )[0]
+    diagnostic_probe_terms = extract_named_energy_series(
+        gmx_bin,
+        diagnostic_probe_dir,
+        "exact",
+        DIAGNOSTIC_ENERGY_TERMS,
+        "patch_b_bookkeeping_probe_terms",
+        commands_log,
+        "patch_b_bookkeeping_probe",
+    )[0]
+
+    baseline_target = load_bookkeeping_trace_state(exact_dir, "target_pair_0_1")
+    patch_b_target = load_bookkeeping_trace_state(patch_b_dir, "target_pair_0_1")
+    diagnostic_probe_target = load_bookkeeping_trace_state(diagnostic_probe_dir, "target_pair_0_1")
+    baseline_control = load_bookkeeping_trace_state(exact_dir, "control_pair_0_4")
+    patch_b_control = load_bookkeeping_trace_state(patch_b_dir, "control_pair_0_4")
+    diagnostic_probe_control = load_bookkeeping_trace_state(diagnostic_probe_dir, "control_pair_0_4")
+    baseline_reciprocal_row = load_bookkeeping_reciprocal_row(exact_dir)
+    patch_b_reciprocal_row = load_bookkeeping_reciprocal_row(patch_b_dir)
+    diagnostic_probe_reciprocal_row = load_bookkeeping_reciprocal_row(diagnostic_probe_dir)
+
+    def compare_terms(row: dict[str, float]) -> dict[str, float]:
+        return {
+            "LJ-(SR)_minus_plain_kj_per_mol": row["LJ-(SR)"] - plain_terms["LJ-(SR)"],
+            "Coul.-recip._minus_plain_kj_per_mol": row["Coul.-recip."] - plain_terms["Coul.-recip."],
+            "Coulomb-(SR)_minus_plain_kj_per_mol": row["Coulomb-(SR)"] - plain_terms["Coulomb-(SR)"],
+            "Potential_minus_plain_kj_per_mol": row["Potential"] - plain_terms["Potential"],
+        }
+
+    baseline_term_delta = compare_terms(baseline_terms)
+    patch_b_term_delta = compare_terms(patch_b_terms)
+    diagnostic_probe_term_delta = compare_terms(diagnostic_probe_terms)
+
+    baseline_vs_plain = coarse["exact_vs_plain"]
+    patch_b_vs_plain = coarse["patch_b_vs_plain"]
+    diagnostic_probe_vs_plain = coarse["bookkeeping_probe_vs_plain"]
+
+    def bookkeeping_ok(series_diff: dict[str, Any]) -> bool:
+        return (
+            series_diff["step0_force_diff"]["max_abs"] <= FORCE_BOOKKEEPING_TOL
+            and series_diff["step0_potential_abs_diff_kj_per_mol"] <= POTENTIAL_BOOKKEEPING_TOL
+        )
+
+    baseline_bookkeeping_ok = bookkeeping_ok(baseline_vs_plain)
+    patch_b_bookkeeping_ok = bookkeeping_ok(patch_b_vs_plain)
+    diagnostic_probe_bookkeeping_ok = bookkeeping_ok(diagnostic_probe_vs_plain)
+    patch_b_nonaggregate_deltas = {
+        "LJ-(SR)": patch_b_term_delta["LJ-(SR)_minus_plain_kj_per_mol"],
+        "Coulomb-(SR)": patch_b_term_delta["Coulomb-(SR)_minus_plain_kj_per_mol"],
+        "Coul.-recip.": patch_b_term_delta["Coul.-recip._minus_plain_kj_per_mol"],
+    }
+    dominant_patch_b_term = max(
+        patch_b_nonaggregate_deltas, key=lambda term_name: abs(patch_b_nonaggregate_deltas[term_name])
+    )
+
+    control_clean = (
+        baseline_control["raw_row"] is not None
+        and patch_b_control["raw_row"] is not None
+        and diagnostic_probe_control["raw_row"] is not None
+        and abs(patch_b_control["effective_outer_scalar"] - baseline_control["effective_outer_scalar"])
+        <= NUMERIC_FIELD_TOL
+        and abs(
+            diagnostic_probe_control["effective_outer_scalar"] - baseline_control["effective_outer_scalar"]
+        )
+        <= NUMERIC_FIELD_TOL
+        and patch_b_control["outer_force_write"] == baseline_control["outer_force_write"]
+        and diagnostic_probe_control["outer_force_write"] == baseline_control["outer_force_write"]
+        and patch_b_control["bookkeeping_sink_active"] == baseline_control["bookkeeping_sink_active"]
+        and diagnostic_probe_control["bookkeeping_sink_active"] == baseline_control["bookkeeping_sink_active"]
+    )
+
+    target_pair_sink_exonerated = (
+        patch_b_target["raw_scalar_present"]
+        and abs(patch_b_target["effective_outer_scalar"]) <= NUMERIC_FIELD_TOL
+        and not patch_b_target["outer_force_write"]
+        and not patch_b_target["bookkeeping_sink_active"]
+        and patch_b_target["energy_row"] is None
+    )
+    diagnostic_probe_matches_patch_b = (
+        diagnostic_probe_target["raw_scalar_present"] == patch_b_target["raw_scalar_present"]
+        and abs(diagnostic_probe_target["effective_outer_scalar"] - patch_b_target["effective_outer_scalar"])
+        <= NUMERIC_FIELD_TOL
+        and diagnostic_probe_target["outer_force_write"] == patch_b_target["outer_force_write"]
+        and diagnostic_probe_target["bookkeeping_sink_active"] == patch_b_target["bookkeeping_sink_active"]
+    )
+    reciprocal_sink_found = (
+        patch_b_reciprocal_row is not None
+        and diagnostic_probe_reciprocal_row is not None
+        and parse_bool_text(patch_b_reciprocal_row.get("residual_visible"))
+        and abs(patch_b_term_delta["Coul.-recip._minus_plain_kj_per_mol"])
+        > abs(patch_b_term_delta["Coulomb-(SR)_minus_plain_kj_per_mol"])
+        and abs(
+            float(diagnostic_probe_reciprocal_row.get("received_coulomb_reciprocal_energy", "0"))
+            - float(patch_b_reciprocal_row.get("received_coulomb_reciprocal_energy", "0"))
+        )
+        <= NUMERIC_FIELD_TOL
+    )
+
+    first_sink_found = target_pair_sink_exonerated and diagnostic_probe_matches_patch_b and reciprocal_sink_found
+
+    if first_sink_found:
+        residual_classification = "BOOKKEEPING-ONLY"
+    elif patch_b_target["outer_force_write"]:
+        residual_classification = "RESIDUAL-CONSUMER-STILL-LIVE"
+    else:
+        residual_classification = "NOT-YET-RESOLVED"
+
+    comparison_table = [
+        {
+            "variant": "baseline",
+            "raw_scalar_present": baseline_target["raw_scalar_present"],
+            "effective_outer_scalar": baseline_target["effective_outer_scalar"],
+            "outer_force_write": baseline_target["outer_force_write"],
+            "bookkeeping_sink_active": baseline_target["bookkeeping_sink_active"]
+            or parse_bool_text(None if baseline_reciprocal_row is None else baseline_reciprocal_row.get("residual_visible")),
+            "residual_visible": baseline_vs_plain["step0_potential_abs_diff_kj_per_mol"] > NUMERIC_FIELD_TOL,
+            "bookkeeping_ok": baseline_bookkeeping_ok,
+            "step0_potential_abs_diff_kj_per_mol": baseline_vs_plain["step0_potential_abs_diff_kj_per_mol"],
+            "lj_sr_minus_plain_kj_per_mol": baseline_term_delta["LJ-(SR)_minus_plain_kj_per_mol"],
+            "coul_recip_minus_plain_kj_per_mol": baseline_term_delta["Coul.-recip._minus_plain_kj_per_mol"],
+            "coulomb_sr_minus_plain_kj_per_mol": baseline_term_delta["Coulomb-(SR)_minus_plain_kj_per_mol"],
+        },
+        {
+            "variant": "patch_b",
+            "raw_scalar_present": patch_b_target["raw_scalar_present"],
+            "effective_outer_scalar": patch_b_target["effective_outer_scalar"],
+            "outer_force_write": patch_b_target["outer_force_write"],
+            "bookkeeping_sink_active": patch_b_target["bookkeeping_sink_active"]
+            or parse_bool_text(None if patch_b_reciprocal_row is None else patch_b_reciprocal_row.get("residual_visible")),
+            "residual_visible": patch_b_vs_plain["step0_potential_abs_diff_kj_per_mol"] > NUMERIC_FIELD_TOL,
+            "bookkeeping_ok": patch_b_bookkeeping_ok,
+            "step0_potential_abs_diff_kj_per_mol": patch_b_vs_plain["step0_potential_abs_diff_kj_per_mol"],
+            "lj_sr_minus_plain_kj_per_mol": patch_b_term_delta["LJ-(SR)_minus_plain_kj_per_mol"],
+            "coul_recip_minus_plain_kj_per_mol": patch_b_term_delta["Coul.-recip._minus_plain_kj_per_mol"],
+            "coulomb_sr_minus_plain_kj_per_mol": patch_b_term_delta["Coulomb-(SR)_minus_plain_kj_per_mol"],
+        },
+        {
+            "variant": "patch_b_bookkeeping_suppressed_probe",
+            "raw_scalar_present": diagnostic_probe_target["raw_scalar_present"],
+            "effective_outer_scalar": diagnostic_probe_target["effective_outer_scalar"],
+            "outer_force_write": diagnostic_probe_target["outer_force_write"],
+            "bookkeeping_sink_active": diagnostic_probe_target["bookkeeping_sink_active"]
+            or parse_bool_text(
+                None if diagnostic_probe_reciprocal_row is None else diagnostic_probe_reciprocal_row.get("residual_visible")
+            ),
+            "residual_visible": diagnostic_probe_vs_plain["step0_potential_abs_diff_kj_per_mol"] > NUMERIC_FIELD_TOL,
+            "bookkeeping_ok": diagnostic_probe_bookkeeping_ok,
+            "step0_potential_abs_diff_kj_per_mol": diagnostic_probe_vs_plain[
+                "step0_potential_abs_diff_kj_per_mol"
+            ],
+            "lj_sr_minus_plain_kj_per_mol": diagnostic_probe_term_delta["LJ-(SR)_minus_plain_kj_per_mol"],
+            "coul_recip_minus_plain_kj_per_mol": diagnostic_probe_term_delta[
+                "Coul.-recip._minus_plain_kj_per_mol"
+            ],
+            "coulomb_sr_minus_plain_kj_per_mol": diagnostic_probe_term_delta[
+                "Coulomb-(SR)_minus_plain_kj_per_mol"
+            ],
+        },
+    ]
+
+    localization = {
+        "patch_b_bookkeeping_trace_dossier": {
+            "target_pair": {
+                "pair": [0, 1],
+                "baseline": baseline_target,
+                "patch_b": patch_b_target,
+                "diagnostic_probe": diagnostic_probe_target,
+            },
+            "control_pair": {
+                "pair": [0, 4],
+                "baseline": baseline_control,
+                "patch_b": patch_b_control,
+                "diagnostic_probe": diagnostic_probe_control,
+            },
+            "bookkeeping_sink_map": [
+                {
+                    "sink_name": "forceWithVirial",
+                    "sink_class": "physical_force_sink",
+                    "patch_b_target_receives_contribution": patch_b_target["outer_force_write"],
+                },
+                {
+                    "sink_name": "coulEnergyTerms",
+                    "sink_class": "energy_potential_sink",
+                    "patch_b_target_receives_contribution": patch_b_target["bookkeeping_sink_active"],
+                    "patch_b_target_energy_delta_kj_per_mol": None
+                    if patch_b_target["energy_row"] is None
+                    else float(patch_b_target["energy_row"].get("coul_energy_delta", "0")),
+                },
+                {
+                    "sink_name": "enerd.term[CoulombReciprocalSpace]",
+                    "sink_class": "deferred_bookkeeping_sink",
+                    "patch_b_target_receives_contribution": parse_bool_text(
+                        None if patch_b_reciprocal_row is None else patch_b_reciprocal_row.get("residual_visible")
+                    ),
+                    "patch_b_target_energy_delta_kj_per_mol": patch_b_term_delta[
+                        "Coul.-recip._minus_plain_kj_per_mol"
+                    ],
+                },
+            ],
+        },
+        "first_residual_sink": {
+            "found": first_sink_found,
+            "stage": None if patch_b_reciprocal_row is None else patch_b_reciprocal_row.get("stage"),
+            "sink_name": None if patch_b_reciprocal_row is None else patch_b_reciprocal_row.get("sink_name"),
+            "sink_class": None if patch_b_reciprocal_row is None else patch_b_reciprocal_row.get("sink_class"),
+            "why_earlier_stages_are_exonerated": (
+                "Patch B still forms correction_scalar, but the target pair has effectiveOuterScalar = 0, no physical outer force sink, and no target-pair bookkeeping_energy_sink row."
+            ),
+            "why_later_stages_are_exonerated": (
+                "The target-only bookkeeping-suppressed probe does not change the residual, so the remaining step-0 delta lies beyond the target-pair excludedPairs bookkeeping sink."
+            ),
+        },
+        "residual_classification_verdict": residual_classification,
+        "baseline_vs_patch_b_table": comparison_table,
+        "reference_reconciliation": {
+            "plain_terms_step0": plain_terms,
+            "baseline_terms_step0": baseline_terms,
+            "patch_b_terms_step0": patch_b_terms,
+            "diagnostic_probe_terms_step0": diagnostic_probe_terms,
+            "interpretation": (
+                f"Patch B removes the target pair's outer-force misuse, but the remaining corrected step-0 residual is now led by {dominant_patch_b_term}; Coul.-recip. matches plain at the exported-term level."
+            ),
+        },
+        "control_result": {
+            "pair": [0, 4],
+            "control_clean": control_clean,
+            "baseline": baseline_control,
+            "patch_b": patch_b_control,
+            "diagnostic_probe": diagnostic_probe_control,
+        },
+        "supports_patch_b_bookkeeping_trace": first_sink_found and control_clean,
+        "why_not_fully_closed": (
+            "This classifies only the first locked-scope bookkeeping sink for Patch-shape B on pair (0,1); it does not prove a production-ready combined force/energy fix."
+        ),
+    }
+
+    return {
+        "coarse_dt_ps": coarse["dt_ps"],
+        "step0": 0,
+        "localization": localization,
+    }
+
+
 def summarize_dense_trace_fixture(
     fixture_id: str,
     topology_terms: list[str],
@@ -2775,6 +6635,170 @@ def summarize_dense_trace_fixture(
         "comparison_notes": [
             "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
             "The simpler split here is a PME-side legacy side-reference on the same harness; it is not direct archived-M1 continuity because archived M1 used md + Cut-off settings.",
+        ],
+    }
+
+
+def summarize_dense_patch_b_bookkeeping_fixture(
+    fixture_id: str,
+    topology_terms: list[str],
+    box_nm: tuple[float, float, float],
+    coarse_plain: dict[str, Any],
+    coarse_exact: dict[str, Any],
+    patch_b_run: dict[str, Any],
+    bookkeeping_probe_run: dict[str, Any],
+) -> dict[str, Any]:
+    coarse_exact_vs_plain = compare_series(coarse_exact, coarse_plain, box_nm)
+    patch_b_vs_plain = compare_series(patch_b_run, coarse_plain, box_nm)
+    bookkeeping_probe_vs_plain = compare_series(bookkeeping_probe_run, coarse_plain, box_nm)
+
+    return {
+        "fixture_id": fixture_id,
+        "listed_terms_present": topology_terms,
+        "exact_split": {
+            "inner_terms": topology_terms + ["nonbonded_inner"],
+            "middle_terms": ["nonbonded_middle"],
+            "outer_terms": ["pair", "nonbonded_outer", "kspace"],
+        },
+        "exact_schedule_active": exact_scheduler_active(coarse_exact["schedule"]),
+        "bookkeeping_ok": (
+            patch_b_vs_plain["step0_force_diff"]["max_abs"] <= FORCE_BOOKKEEPING_TOL
+            and patch_b_vs_plain["step0_potential_abs_diff_kj_per_mol"] <= POTENTIAL_BOOKKEEPING_TOL
+        ),
+        "coarse": {
+            "dt_ps": coarse_exact["dt_ps"],
+            "nsteps": coarse_exact["nsteps"],
+            "plain_work_dir": coarse_plain["work_dir"],
+            "exact_work_dir": coarse_exact["work_dir"],
+            "patch_b_work_dir": patch_b_run["work_dir"],
+            "bookkeeping_probe_work_dir": bookkeeping_probe_run["work_dir"],
+            "exact_vs_plain": coarse_exact_vs_plain,
+            "patch_b_vs_plain": patch_b_vs_plain,
+            "bookkeeping_probe_vs_plain": bookkeeping_probe_vs_plain,
+        },
+        "comparison_notes": [
+            "This milestone audits only Patch-shape B and one target-only bookkeeping-suppressed diagnostic micro-probe.",
+            "The bookkeeping reference contract remains the same plain Verlet step-0 energy ledger on the same dense_oligomer harness.",
+        ],
+    }
+
+
+def summarize_dense_patch_b_reciprocal_fixture(
+    fixture_id: str,
+    topology_terms: list[str],
+    box_nm: tuple[float, float, float],
+    coarse_plain: dict[str, Any],
+    coarse_exact: dict[str, Any],
+    patch_b_run: dict[str, Any],
+) -> dict[str, Any]:
+    coarse_exact_vs_plain = compare_series(coarse_exact, coarse_plain, box_nm)
+    patch_b_vs_plain = compare_series(patch_b_run, coarse_plain, box_nm)
+
+    return {
+        "fixture_id": fixture_id,
+        "listed_terms_present": topology_terms,
+        "exact_split": {
+            "inner_terms": topology_terms + ["nonbonded_inner"],
+            "middle_terms": ["nonbonded_middle"],
+            "outer_terms": ["pair", "nonbonded_outer", "kspace"],
+        },
+        "exact_schedule_active": exact_scheduler_active(patch_b_run["schedule"]),
+        "bookkeeping_ok": (
+            patch_b_vs_plain["step0_force_diff"]["max_abs"] <= FORCE_BOOKKEEPING_TOL
+            and patch_b_vs_plain["step0_potential_abs_diff_kj_per_mol"] <= POTENTIAL_BOOKKEEPING_TOL
+        ),
+        "coarse": {
+            "dt_ps": patch_b_run["dt_ps"],
+            "nsteps": patch_b_run["nsteps"],
+            "plain_work_dir": coarse_plain["work_dir"],
+            "exact_work_dir": coarse_exact["work_dir"],
+            "patch_b_work_dir": patch_b_run["work_dir"],
+            "exact_vs_plain": coarse_exact_vs_plain,
+            "patch_b_vs_plain": patch_b_vs_plain,
+        },
+        "comparison_notes": [
+            "This milestone traces only the reciprocal bookkeeping path for plain Verlet versus exact three-level Patch-shape B.",
+            "The plain/reference contract remains the step-0 Coulomb reciprocal ledger from the same dense_oligomer harness.",
+        ],
+    }
+
+
+def summarize_dense_patch_b_post_final_fixture(
+    fixture_id: str,
+    topology_terms: list[str],
+    box_nm: tuple[float, float, float],
+    coarse_plain: dict[str, Any],
+    coarse_exact: dict[str, Any],
+    patch_b_run: dict[str, Any],
+) -> dict[str, Any]:
+    coarse_exact_vs_plain = compare_series(coarse_exact, coarse_plain, box_nm)
+    patch_b_vs_plain = compare_series(patch_b_run, coarse_plain, box_nm)
+
+    return {
+        "fixture_id": fixture_id,
+        "listed_terms_present": topology_terms,
+        "exact_split": {
+            "inner_terms": topology_terms + ["nonbonded_inner"],
+            "middle_terms": ["nonbonded_middle"],
+            "outer_terms": ["pair", "nonbonded_outer", "kspace"],
+        },
+        "exact_schedule_active": exact_scheduler_active(patch_b_run["schedule"]),
+        "bookkeeping_ok": (
+            patch_b_vs_plain["step0_force_diff"]["max_abs"] <= FORCE_BOOKKEEPING_TOL
+            and patch_b_vs_plain["step0_potential_abs_diff_kj_per_mol"] <= POTENTIAL_BOOKKEEPING_TOL
+        ),
+        "coarse": {
+            "dt_ps": patch_b_run["dt_ps"],
+            "nsteps": patch_b_run["nsteps"],
+            "plain_work_dir": coarse_plain["work_dir"],
+            "exact_work_dir": coarse_exact["work_dir"],
+            "patch_b_work_dir": patch_b_run["work_dir"],
+            "exact_vs_plain": coarse_exact_vs_plain,
+            "patch_b_vs_plain": patch_b_vs_plain,
+        },
+        "comparison_notes": [
+            "This milestone traces only the post-FINAL-LEDGER mutation/export path for CoulombReciprocalSpace.",
+            "The comparison remains plain/reference versus exact three-level Patch-shape B on dense_oligomer coarse step 0.",
+        ],
+    }
+
+
+def summarize_dense_patch_b_lj_sr_fixture(
+    fixture_id: str,
+    topology_terms: list[str],
+    box_nm: tuple[float, float, float],
+    coarse_plain: dict[str, Any],
+    coarse_exact: dict[str, Any],
+    patch_b_run: dict[str, Any],
+) -> dict[str, Any]:
+    coarse_exact_vs_plain = compare_series(coarse_exact, coarse_plain, box_nm)
+    patch_b_vs_plain = compare_series(patch_b_run, coarse_plain, box_nm)
+
+    return {
+        "fixture_id": fixture_id,
+        "listed_terms_present": topology_terms,
+        "exact_split": {
+            "inner_terms": topology_terms + ["nonbonded_inner"],
+            "middle_terms": ["nonbonded_middle"],
+            "outer_terms": ["pair", "nonbonded_outer", "kspace"],
+        },
+        "exact_schedule_active": exact_scheduler_active(patch_b_run["schedule"]),
+        "bookkeeping_ok": (
+            patch_b_vs_plain["step0_force_diff"]["max_abs"] <= FORCE_BOOKKEEPING_TOL
+            and patch_b_vs_plain["step0_potential_abs_diff_kj_per_mol"] <= POTENTIAL_BOOKKEEPING_TOL
+        ),
+        "coarse": {
+            "dt_ps": patch_b_run["dt_ps"],
+            "nsteps": patch_b_run["nsteps"],
+            "plain_work_dir": coarse_plain["work_dir"],
+            "exact_work_dir": coarse_exact["work_dir"],
+            "patch_b_work_dir": patch_b_run["work_dir"],
+            "exact_vs_plain": coarse_exact_vs_plain,
+            "patch_b_vs_plain": patch_b_vs_plain,
+        },
+        "comparison_notes": [
+            "This milestone traces only the LJ-(SR) primary residual path under corrected exported-term mapping.",
+            "Coulomb-(SR) is treated only as a secondary companion term on the same dense_oligomer step-0 harness.",
         ],
     }
 
@@ -3149,6 +7173,16 @@ def main() -> int:
         or args.downstream_misconsumption_trace
         or args.dispatch_minimal_fix_isolation
         or args.narrow_patch_proof
+        or args.locked_scope_bookkeeping_residual_trace
+        or args.reciprocal_internal_delta_trace
+        or args.post_final_ledger_mutation_trace
+        or args.lj_sr_first_amplification_trace
+        or args.raw_sr_formation_internal_trace
+        or args.raw_sr_write_ordinal_trace
+        or args.event_669_geometry_producer_trace
+        or args.aligned_event_669_trace
+        or args.lj_sr_true_first_raw_trace
+        or args.lj_sr_first_sink_trace
     ) and not args.fixtures:
         fixtures = ["dense_oligomer"]
     else:
@@ -3187,6 +7221,14 @@ def main() -> int:
             or args.downstream_misconsumption_trace
             or args.dispatch_minimal_fix_isolation
             or args.narrow_patch_proof
+            or args.locked_scope_bookkeeping_residual_trace
+            or args.reciprocal_internal_delta_trace
+            or args.post_final_ledger_mutation_trace
+            or args.lj_sr_first_amplification_trace
+            or args.raw_sr_formation_internal_trace
+            or args.raw_sr_write_ordinal_trace
+            or args.event_669_geometry_producer_trace
+            or args.aligned_event_669_trace
         ) and fixture_id == "dense_oligomer":
             coarse_plain_env = {
                 "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
@@ -3254,6 +7296,76 @@ def main() -> int:
                 system_root / "dt_0p0005" / "exact_three_level"
             )
             coarse_exact_env["GMX_PCFF_RESPA_M2K_PATCH_MODE"] = "baseline"
+        if args.locked_scope_bookkeeping_residual_trace and fixture_id == "dense_oligomer":
+            coarse_exact_env = dict(coarse_exact_env or {})
+            coarse_exact_env["GMX_PCFF_RESPA_M2L_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "exact_three_level"
+            )
+            coarse_exact_env["GMX_PCFF_RESPA_M2L_PROBE_MODE"] = "baseline"
+        if args.post_final_ledger_mutation_trace and fixture_id == "dense_oligomer":
+            coarse_plain_env = dict(coarse_plain_env or {})
+            coarse_plain_env["GMX_PCFF_RESPA_M2N_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2N_MODE"] = "plain"
+        if args.lj_sr_first_amplification_trace and fixture_id == "dense_oligomer":
+            coarse_plain_env = dict(coarse_plain_env or {})
+            coarse_plain_env["GMX_PCFF_RESPA_M2R_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2R_CASE_LABEL"] = "plain_verlet"
+        if args.raw_sr_formation_internal_trace and fixture_id == "dense_oligomer":
+            coarse_plain_env = dict(coarse_plain_env or {})
+            coarse_plain_env["GMX_PCFF_RESPA_M2S_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2S_CASE_LABEL"] = "plain_verlet"
+        if args.raw_sr_write_ordinal_trace and fixture_id == "dense_oligomer":
+            coarse_plain_env = dict(coarse_plain_env or {})
+            coarse_plain_env["GMX_PCFF_RESPA_M2U_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2U_CASE_LABEL"] = "plain_verlet"
+        if args.aligned_write_contract_trace and fixture_id == "dense_oligomer":
+            coarse_plain_env = dict(coarse_plain_env or {})
+            coarse_plain_env["GMX_PCFF_RESPA_M2V_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2V_CASE_LABEL"] = "plain_verlet"
+        if args.aligned_event_669_trace and fixture_id == "dense_oligomer":
+            coarse_plain_env = dict(coarse_plain_env or {})
+            coarse_plain_env["GMX_PCFF_RESPA_M2W_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2W_CASE_LABEL"] = "plain_verlet"
+        if args.event_669_geometry_producer_trace and fixture_id == "dense_oligomer":
+            coarse_plain_env = dict(coarse_plain_env or {})
+            coarse_plain_env["GMX_PCFF_RESPA_M2W_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2W_CASE_LABEL"] = "plain_verlet"
+            coarse_plain_env["GMX_PCFF_RESPA_M2X_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2X_CASE_LABEL"] = "plain_verlet"
+        if args.lj_sr_true_first_raw_trace and fixture_id == "dense_oligomer":
+            coarse_plain_env = dict(coarse_plain_env or {})
+            coarse_plain_env["GMX_PCFF_RESPA_M2Q_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2Q_CASE_LABEL"] = "plain_verlet"
+        if args.lj_sr_first_sink_trace and fixture_id == "dense_oligomer":
+            coarse_plain_env = dict(coarse_plain_env or {})
+            coarse_plain_env["GMX_PCFF_RESPA_M2P_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2P_CASE_LABEL"] = "plain_verlet"
+        if args.reciprocal_internal_delta_trace and fixture_id == "dense_oligomer":
+            coarse_plain_env = dict(coarse_plain_env or {})
+            coarse_plain_env["GMX_PCFF_RESPA_M2M_TRACE_DIR"] = str(
+                system_root / "dt_0p0005" / "plain_verlet"
+            )
+            coarse_plain_env["GMX_PCFF_RESPA_M2M_MODE"] = "plain"
         if (args.upstream_ownership_handoff_trace or args.pair_rule_derivation_trace) and fixture_id == "dense_oligomer":
             coarse_exact_grompp_env = {
                 "GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR": str(
@@ -3264,7 +7376,20 @@ def main() -> int:
             coarse_exact_env = dict(coarse_exact_env or {})
             coarse_exact_env["GMX_PCFF_RESPA_DEBUG"] = "1"
 
-        if args.narrow_patch_proof and fixture_id == "dense_oligomer":
+        if (
+            args.narrow_patch_proof
+            or args.locked_scope_bookkeeping_residual_trace
+            or args.reciprocal_internal_delta_trace
+            or args.post_final_ledger_mutation_trace
+            or args.lj_sr_first_amplification_trace
+            or args.raw_sr_formation_internal_trace
+            or args.raw_sr_write_ordinal_trace
+            or args.event_669_geometry_producer_trace
+            or args.aligned_write_contract_trace
+            or args.aligned_event_669_trace
+            or args.lj_sr_true_first_raw_trace
+            or args.lj_sr_first_sink_trace
+        ) and fixture_id == "dense_oligomer":
             coarse_plain = run_case(
                 gmx_bin,
                 system_root,
@@ -3326,8 +7451,325 @@ def main() -> int:
                     commands_log,
                     extra_env=patch_env,
                 )
+        bookkeeping_probe_run = None
+        patch_b_run = None
+        if args.locked_scope_bookkeeping_residual_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2L_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2L_PROBE_MODE": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
+            bookkeeping_probe_work_dir = system_root / "dt_0p0005" / M2L_DIAGNOSTIC_PROBE["work_dir_name"]
+            bookkeeping_probe_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2L_TRACE_DIR": str(bookkeeping_probe_work_dir),
+                "GMX_PCFF_RESPA_M2L_PROBE_MODE": M2L_DIAGNOSTIC_PROBE["probe_mode"],
+            }
+            bookkeeping_probe_run = run_case(
+                gmx_bin,
+                system_root,
+                bookkeeping_probe_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=bookkeeping_probe_env,
+            )
+        elif args.post_final_ledger_mutation_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2N_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2N_MODE": "patch_b",
+                "GMX_PCFF_RESPA_M2K_PATCH_MODE": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
+        elif args.reciprocal_internal_delta_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2M_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2M_MODE": "patch_b",
+                "GMX_PCFF_RESPA_M2K_PATCH_MODE": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
+        elif args.lj_sr_first_amplification_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2K_PATCH_MODE": "patch_shape_b",
+                "GMX_PCFF_RESPA_M2R_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2R_CASE_LABEL": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
+        elif args.raw_sr_formation_internal_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2K_PATCH_MODE": "patch_shape_b",
+                "GMX_PCFF_RESPA_M2S_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2S_CASE_LABEL": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
+        elif args.raw_sr_write_ordinal_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2K_PATCH_MODE": "patch_shape_b",
+                "GMX_PCFF_RESPA_M2U_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2U_CASE_LABEL": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
+        elif args.aligned_write_contract_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2K_PATCH_MODE": "patch_shape_b",
+                "GMX_PCFF_RESPA_M2V_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2V_CASE_LABEL": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
+        elif args.aligned_event_669_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2K_PATCH_MODE": "patch_shape_b",
+                "GMX_PCFF_RESPA_M2W_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2W_CASE_LABEL": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
+        elif args.event_669_geometry_producer_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2K_PATCH_MODE": "patch_shape_b",
+                "GMX_PCFF_RESPA_M2W_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2W_CASE_LABEL": "patch_shape_b",
+                "GMX_PCFF_RESPA_M2X_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2X_CASE_LABEL": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
+        elif args.lj_sr_true_first_raw_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2K_PATCH_MODE": "patch_shape_b",
+                "GMX_PCFF_RESPA_M2Q_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2Q_CASE_LABEL": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
+        elif args.lj_sr_first_sink_trace and fixture_id == "dense_oligomer":
+            patch_b_work_dir = system_root / "dt_0p0005" / "patch_shape_b"
+            patch_b_env = {
+                "GMX_DISABLE_MODULAR_SIMULATOR": "ON",
+                "GMX_PCFF_RESPA_M2K_PATCH_MODE": "patch_shape_b",
+                "GMX_PCFF_RESPA_M2P_TRACE_DIR": str(patch_b_work_dir),
+                "GMX_PCFF_RESPA_M2P_CASE_LABEL": "patch_shape_b",
+            }
+            patch_b_run = run_case(
+                gmx_bin,
+                system_root,
+                patch_b_work_dir,
+                "exact_three_level",
+                DEFAULT_DT_VALUES[0],
+                args.total_time_ps,
+                commands_log,
+                extra_env=patch_b_env,
+            )
         coarse_exact_trace_off = None
-        if args.narrow_patch_proof and fixture_id == "dense_oligomer":
+        if args.locked_scope_bookkeeping_residual_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_bookkeeping_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+                bookkeeping_probe_run,
+            )
+        elif args.post_final_ledger_mutation_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_post_final_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+            )
+        elif args.reciprocal_internal_delta_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_reciprocal_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+            )
+        elif args.lj_sr_first_amplification_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_lj_sr_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+            )
+        elif args.raw_sr_formation_internal_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_lj_sr_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+            )
+        elif args.raw_sr_write_ordinal_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_lj_sr_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+            )
+        elif args.aligned_write_contract_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_lj_sr_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+            )
+        elif args.aligned_event_669_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_lj_sr_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+            )
+        elif args.event_669_geometry_producer_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_lj_sr_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+            )
+        elif args.lj_sr_true_first_raw_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_lj_sr_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+            )
+        elif args.lj_sr_first_sink_trace and fixture_id == "dense_oligomer":
+            fixture_summary = summarize_dense_patch_b_lj_sr_fixture(
+                fixture_id,
+                inner_terms_from_topology(topology_text),
+                tuple(gro_meta["box_nm"]),
+                coarse_plain,
+                coarse_exact,
+                patch_b_run,
+            )
+        elif args.narrow_patch_proof and fixture_id == "dense_oligomer":
             fixture_summary = summarize_dense_patch_fixture(
                 fixture_id,
                 inner_terms_from_topology(topology_text),
@@ -3490,10 +7932,196 @@ def main() -> int:
             )
         if args.narrow_patch_proof and fixture_id == "dense_oligomer":
             fixture_summary["dense_narrow_patch_proof"] = dense_narrow_patch_proof(fixture_summary)
+        if args.locked_scope_bookkeeping_residual_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_bookkeeping_residual_trace"] = dense_patch_b_bookkeeping_residual_trace(
+                gmx_bin, fixture_summary, commands_log
+            )
+        if args.reciprocal_internal_delta_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_reciprocal_internal_delta_trace"] = (
+                dense_patch_b_reciprocal_internal_delta_trace(gmx_bin, fixture_summary, commands_log)
+            )
+        if args.lj_sr_first_amplification_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_lj_sr_first_amplification_trace"] = (
+                dense_patch_b_lj_sr_first_amplification_trace(gmx_bin, fixture_summary, commands_log)
+            )
+        if args.raw_sr_formation_internal_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_raw_sr_formation_internal_trace"] = (
+                dense_patch_b_raw_sr_formation_internal_trace(gmx_bin, fixture_summary, commands_log)
+            )
+        if args.raw_sr_write_ordinal_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_raw_sr_write_ordinal_trace"] = (
+                dense_patch_b_raw_sr_write_ordinal_trace(gmx_bin, fixture_summary, commands_log)
+            )
+        if args.aligned_write_contract_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_aligned_write_contract_trace"] = (
+                dense_patch_b_aligned_write_contract_trace(gmx_bin, fixture_summary, commands_log)
+            )
+        if args.aligned_event_669_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_aligned_event_669_trace"] = (
+                dense_patch_b_aligned_event_669_trace(gmx_bin, fixture_summary, commands_log)
+            )
+        if args.event_669_geometry_producer_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_event_669_geometry_producer_trace"] = (
+                dense_patch_b_event_669_geometry_producer_trace(gmx_bin, fixture_summary, commands_log)
+            )
+        if args.lj_sr_true_first_raw_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_lj_sr_true_first_raw_trace"] = (
+                dense_patch_b_lj_sr_true_first_raw_trace(gmx_bin, fixture_summary, commands_log)
+            )
+        if args.post_final_ledger_mutation_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_post_final_ledger_trace"] = dense_patch_b_post_final_ledger_trace(
+                gmx_bin, fixture_summary, commands_log
+            )
+        if args.lj_sr_first_sink_trace and fixture_id == "dense_oligomer":
+            fixture_summary["dense_patch_b_lj_sr_first_sink_trace"] = dense_patch_b_lj_sr_first_sink_trace(
+                gmx_bin, fixture_summary, commands_log
+            )
+            fixture_summary["dense_patch_b_potential_ledger_trace"] = dense_patch_b_potential_ledger_trace(
+                gmx_bin, fixture_summary, commands_log
+            )
         fixture_results.append(fixture_summary)
         write_json(system_root / "fixture_summary.json", fixture_summary)
 
-    if args.narrow_patch_proof:
+    if args.event_669_geometry_producer_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_event_669_geometry_producer_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("final_verdict") == "PASS":
+            verdict = "EVENT 669 GEOMETRY PRODUCER IDENTIFIED"
+        elif dense_localization and dense_localization.get("final_verdict") == "PARTIAL":
+            verdict = "EVENT 669 GEOMETRY PRODUCER TRACE STILL PARTIAL"
+        else:
+            verdict = "EVENT 669 GEOMETRY PRODUCER TRACE FAILED"
+    elif args.aligned_event_669_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_aligned_event_669_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("final_verdict") == "PASS":
+            verdict = "ALIGNED EVENT 669 ARITHMETIC SOURCE IDENTIFIED"
+        elif dense_localization and dense_localization.get("final_verdict") == "PARTIAL":
+            verdict = "ALIGNED EVENT 669 TRACE STILL PARTIAL"
+        else:
+            verdict = "ALIGNED EVENT 669 TRACE FAILED"
+    elif args.aligned_write_contract_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_aligned_write_contract_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("final_verdict") == "PASS":
+            verdict = "CROSS-SIDE ALIGNED WRITE CONTRACT READY"
+        elif dense_localization and dense_localization.get("final_verdict") == "PARTIAL":
+            verdict = "CROSS-SIDE ALIGNED WRITE CONTRACT STILL PARTIAL"
+        else:
+            verdict = "CROSS-SIDE ALIGNED WRITE CONTRACT FAILED"
+    elif args.raw_sr_write_ordinal_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_raw_sr_write_ordinal_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("final_verdict") == "PASS":
+            verdict = "RAW_SR_FORMATION WRITE-ORDINAL TRACE READY"
+        elif dense_localization and dense_localization.get("final_verdict") == "PARTIAL":
+            verdict = "RAW_SR_FORMATION WRITE-ORDINAL TRACE STILL PARTIAL"
+        else:
+            verdict = "RAW_SR_FORMATION WRITE-ORDINAL TRACE FAILED"
+    elif args.raw_sr_formation_internal_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_raw_sr_formation_internal_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_raw_sr_internal_culprit"):
+            verdict = "RAW_SR_FORMATION INTERNAL CULPRIT IDENTIFIED"
+        elif dense_localization and dense_localization.get("first_internal_amplification_proof", {}).get("first_stage"):
+            verdict = "RAW_SR_FORMATION INTERNAL TRACE STILL PARTIAL"
+        else:
+            verdict = "RAW_SR_FORMATION INTERNAL TRACE FAILED"
+    elif args.lj_sr_first_amplification_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_lj_sr_first_amplification_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_lj_sr_amplification"):
+            verdict = "FIRST LJ-SR AMPLIFICATION STAGE IDENTIFIED"
+        elif dense_localization and dense_localization.get("first_amplification_proof", {}).get("first_stage"):
+            verdict = "FIRST LJ-SR AMPLIFICATION TRACE STILL PARTIAL"
+        else:
+            verdict = "FIRST LJ-SR AMPLIFICATION TRACE FAILED"
+    elif args.lj_sr_true_first_raw_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_lj_sr_true_first_raw_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_lj_sr_origin"):
+            verdict = "TRUE FIRST LJ-SR RAW STAGE IDENTIFIED"
+        elif dense_localization and dense_localization.get("first_nonzero_lj_sr_delta_proof", {}).get("first_stage"):
+            verdict = "TRUE FIRST LJ-SR RAW TRACE STILL PARTIAL"
+        else:
+            verdict = "TRUE FIRST LJ-SR RAW TRACE FAILED"
+    elif args.lj_sr_first_sink_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_lj_sr_first_sink_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_lj_sr_origin"):
+            verdict = "LJ-SR FIRST ORIGIN IDENTIFIED"
+        elif dense_localization and dense_localization.get("first_nonzero_lj_sr_delta_proof", {}).get("first_stage"):
+            verdict = "LJ-SR ORIGIN NARROWED BUT STILL PARTIAL"
+        else:
+            verdict = "LJ-SR FIRST SINK TRACE STILL PARTIAL"
+    elif args.post_final_ledger_mutation_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_post_final_ledger_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_post_final_divergence"):
+            verdict = "POST-FINAL-LEDGER DIVERGENCE IDENTIFIED"
+        else:
+            verdict = "POST-FINAL-LEDGER TRACE STILL PARTIAL"
+    elif args.reciprocal_internal_delta_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_reciprocal_internal_delta_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_reciprocal_internal_origin"):
+            verdict = "RECIPROCAL INTERNAL DELTA ORIGIN IDENTIFIED"
+        elif dense_localization and dense_localization.get("first_nonzero_delta_stage") is not None:
+            verdict = "RECIPROCAL INTERNAL DELTA NARROWED BUT STILL PARTIAL"
+        else:
+            verdict = "RECIPROCAL INTERNAL DELTA TRACE STILL PARTIAL"
+    elif args.locked_scope_bookkeeping_residual_trace:
+        dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
+        dense_localization = (
+            None
+            if dense_fixture is None
+            else dense_fixture.get("dense_patch_b_bookkeeping_residual_trace", {}).get("localization")
+        )
+        if dense_localization and dense_localization.get("supports_patch_b_bookkeeping_trace"):
+            verdict = "PATCH-B RESIDUAL BOOKKEEPING SOURCE IDENTIFIED"
+        else:
+            verdict = "PATCH-B RESIDUAL BOOKKEEPING TRACE STILL PARTIAL"
+    elif args.narrow_patch_proof:
         dense_fixture = next((item for item in fixture_results if item["fixture_id"] == "dense_oligomer"), None)
         dense_localization = (
             None if dense_fixture is None else dense_fixture.get("dense_narrow_patch_proof", {}).get("localization")
