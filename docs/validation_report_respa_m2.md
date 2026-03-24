@@ -1,176 +1,80 @@
-# R-RESPA M2 Validation Report
+# R-RESPA M2 Current Status
 
 ## Scope
 
-M2 does not reopen the M1 two-level bring-up and does not claim full-system readiness.
+이 문서는 현재 구현 상태를 좁은 검증 범위 기준으로만 요약한다.
 
-It reconnects the frozen exact 3-level `mts-mode = lammps-respa` path onto the same deterministic microfixture harness style used for M1, then checks only:
+검증 범위:
 
-- scheduler execution
-- bookkeeping coherence
-- tight-limit behavior against plain Verlet
-- relationship to the already-working legacy two-level split on the same harness
+- fixture: `dense_oligomer`
+- integrator path: exact 3-level `mts-mode = lammps-respa`
+- timestep: coarse `dt = 0.0005 ps`
+- baseline comparison: plain Verlet
+- primary analysis scope: step `0`
 
-Out of scope:
+이 문서는 다음을 주장하지 않는다:
 
-- TP1.xx blocker work
-- `vcoul` reopening
-- full-system TRL-5
-- transport or performance claims
+- full-system closure
+- broad fixture closure
+- long-trajectory closure
+- production readiness
 
-## Starting Point
+## Closed In Locked Scope
 
-- worktree: `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2`
-- branch: `respa-m2-exact-three-level`
-- build: `/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx`
-- exact 3-level design basis:
-  - `src/gromacs/mdtypes/multipletimestepping.cpp`
-  - `src/gromacs/gmxpreprocess/readir.cpp`
-  - `src/gromacs/mdlib/sim_util.cpp`
-  - `src/programs/mdrun/tests/pcff_short_md.cpp`
-  - `docs/respa_design_m6.md`
+- event-669 LJ geometry branch는 locked scope에서 닫혔다.
+  - semantic event identity는 plain/patch 양쪽에서 일치한다.
+  - first arithmetic divergence는 `rsq/r`였고, upstream producer trace는 `dx/dy/dz` construction mismatch로 좁혀졌다.
+  - engine fix는 exact path의 shifted-i coordinate producer shape를 plain reference와 맞춘 것이다.
 
-M1 had already shown that the harness style works for the current legacy two-level split on validated microfixtures. M2 therefore only reconnects the frozen exact 3-level path instead of reopening the 2-level design.
+- `Coulomb-(SR)` residual은 engine-side first cause가 아니라 comparator contract mismatch로 정리됐다.
+  - plain native total과 patch total은 달랐다.
+  - plain shadow replay in patch contract가 patch comparable total과 일치했다.
+  - locked-scope comparator는 plain native `Coulomb-(SR)` 대신 plain patch-contract replay total을 기준으로 써야 한다.
 
-## Files Changed
+- `LJ-(SR)` residual도 같은 종류의 comparator contract mismatch로 정리됐다.
+  - plain native LJ total과 patch comparable total은 달랐다.
+  - plain shadow replay in patch LJ contract가 patch pair-phase truth와 일치했다.
+  - locked-scope comparator는 plain native `LJ-(SR)` 대신 plain patch-contract replay total을 기준으로 써야 한다.
 
-- added `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py`
-- added `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/docs/validation_report_respa_m2.md`
+- 현재 locked-scope baseline에서:
+  - `Coulomb-(SR)` comparator delta는 `0.0`
+  - `LJ-(SR)` comparator delta는 small numerical tail only
+  - 남은 `Potential` residual은 component deltas로 설명된다
 
-No engine C++ files were changed for M2. The exact 3-level runtime path was already present; the reconnection work was in the microfixture harness and validation logic.
+## Fixed In Engine
 
-## Exact 3-Level Schedule Reconnected
+- [sim_util.cpp](/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/src/gromacs/mdlib/sim_util.cpp)
+  - exact path geometry producer를 plain reference shape로 맞추는 shifted-i fix를 유지한다.
+  - 핵심은 raw `coord_i - coord_j + shift` 대신 shifted-i coordinate를 먼저 materialize한 뒤 `dx/dy/dz`를 구성하는 것이다.
 
-Active exact schedule used by the harness:
+이 문서 기준으로 유지하는 engine fix는 이것뿐이다.
 
-- mode: `lammps-respa`
-- integrator: `md-vv`
-- levels: `3`
-- level factors:
-  - level 2 factor = `2`
-  - level 3 factor = `4`
-- ownership:
-  - inner: `bond`, `angle`, `dihedral`, `improper`, `pair14`, `nonbonded_inner`
-  - middle: `nonbonded_middle`
-  - outer: `pair`, `nonbonded_outer`, `kspace`
-- switching:
-  - `inner-off = 0.30 nm`
-  - `inner-on = 0.45 nm`
-  - `outer-on = 0.60 nm`
-  - `outer-off = 0.80 nm`
+## Fixed In Comparator/Analysis
 
-The exact path stayed exact 3-level. It was not silently downgraded back to 2 levels.
+- [run_respa_m2.py](/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py)
+  - locked-scope `Coulomb-(SR)` comparator는 plain native total이 아니라 plain patch-contract replay total을 plain reference로 사용한다.
+  - locked-scope `LJ-(SR)` comparator도 같은 방식으로 plain patch-contract replay total을 plain reference로 사용한다.
+  - artifact에는 native plain total과 replay plain total을 둘 다 남긴다.
 
-## Fixtures Used
+## Still Open / Still Needs Validation
 
-- `coulomb_toy`
-  - smallest validated charged Cut-off microfixture
-  - useful for confirming exact 3-level scheduler activation and tight-limit behavior without listed-term complexity
-- `dense_oligomer`
-  - same richer validated microfixture family used in M1
-  - useful for checking whether the reconnected exact path remains coherent once listed terms are present
+- 현재 closure는 locked scope only다.
+  - `dense_oligomer`
+  - coarse `dt = 0.0005 ps`
+  - exact 3-level path
+  - primarily step `0`
 
-## Commands Run
+- `Potential` residual은 더 이상 standalone mystery가 아니다.
+  - current locked-scope baseline에서는 remaining `LJ-(SR)` tail과 `Other-Terms` delta로 설명된다.
+  - 다만 이것이 broader scope에서도 그대로 유지되는지는 아직 검증되지 않았다.
 
-Main M2 harness:
+- 아직 필요한 검증:
+  - same fixture, multiple steps
+  - at least one additional harness fixture
+  - same comparator-corrected baseline under a slightly broader validation matrix
 
-```bash
-python3 /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py \
-  --gmx-bin /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx \
-  --out /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures
-```
+## Working Summary
 
-The exact per-case `grompp`, `mdrun`, `dump`, and `energy` invocations are stored in:
+현재 상태를 한 줄로 줄이면 이렇다.
 
-- `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/raw_commands.txt`
-
-Focused dense bookkeeping diagnosis:
-
-```bash
-cd /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet
-/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx energy -f plain.edr -o plain_terms.xvg -xvg none
-
-cd /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level
-/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx energy -f exact.edr -o exact_terms.xvg -xvg none
-```
-
-## Strongest Confirmed Finding
-
-The exact 3-level path is reconnected and genuinely active on the M2 microfixture harness.
-
-Evidence:
-
-- both fixtures complete `grompp` and `mdrun` without fatal errors
-- the dumped exact schedule reports:
-  - `mts = true`
-  - `mts-mode = lammps-respa`
-  - `mts-level2-factor = 2`
-  - `mts-level3-factor = 4`
-  - exact inner/middle/outer ownership keys
-- `coulomb_toy` is clean:
-  - exact schedule active = `true`
-  - bookkeeping ok = `true`
-  - convergence ok = `true`
-  - exact-vs-plain final differences are near machine noise and tighter `dt` improves them further
-
-Primary evidence file:
-
-- `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/summary.json`
-
-## Strongest Unresolved Uncertainty
-
-`dense_oligomer` shows that execution alone is not enough; exact 3-level bookkeeping is still not clean once listed terms are present.
-
-The failure is not subtle:
-
-- step-0 exact-vs-plain force difference: `742.348184 kJ/mol/nm`
-- step-0 exact-vs-plain potential difference: `8583.465088 kJ/mol`
-- coarse exact-vs-plain final potential difference: `8583.863281 kJ/mol`
-- fine exact-vs-plain final potential difference: `8583.873779 kJ/mol`
-
-The most concrete localized signal in the current artifacts is the `Coulomb-(SR)` energy term at `t = 0`:
-
-- plain Verlet: `-7160.835449 kJ/mol`
-- exact 3-level: `1422.623291 kJ/mol`
-
-Files:
-
-- `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet/plain_terms.xvg`
-- `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level/exact_terms.xvg`
-
-This is strong evidence of a real bookkeeping defect in the exact path on this richer fixture, not just another harness false-negative.
-
-## Fixture-by-Fixture Outcome
-
-### `coulomb_toy`
-
-- execution: pass
-- exact 3-level schedule active: yes
-- bookkeeping: pass
-- tight-limit behavior vs plain Verlet: pass
-- relationship to legacy two-level:
-  - exact is far closer to plain Verlet than legacy at both timesteps
-
-### `dense_oligomer`
-
-- execution: pass
-- exact 3-level schedule active: yes
-- bookkeeping: fail
-- tight-limit behavior vs plain Verlet: fail
-- relationship to legacy two-level:
-  - legacy remains much closer to plain Verlet than exact on force and potential bookkeeping
-  - exact coordinate drift remains small in absolute terms, but the bookkeeping defect dominates the milestone result
-
-## Verdict
-
-`EXACT 3-LEVEL PATH RUNS BUT BOOKKEEPING/CONVERGENCE IS STILL PARTIAL`
-
-## Next Step
-
-Keep the same M2 harness and isolate the dense exact-path bookkeeping defect before any broader scheduler work.
-
-Priority:
-
-1. trace exact 3-level dense `Coulomb-(SR)` bookkeeping against plain Verlet on the same `dense_oligomer` fixture
-2. verify whether the bad term is only energy/reporting, or the underlying exact force buffer ownership is also wrong for listed-rich fixtures
-3. do not broaden to full-system TRL-5 until this fixture-level exact bookkeeping defect is resolved
+exact 3-level path의 locked-scope primary defects는 모두 engine-side physics bug로 남아 있지 않다. 남은 주요 차이는 comparator contract와 narrow residual accounting으로 설명되며, broader validation은 아직 열려 있다.

@@ -39,6 +39,53 @@
 #    define EXCL_FORCES
 #endif
 
+bool m2pPlain4x4MultiStepCoulombPairTraceEnabled();
+void noteM2pPlain4x4MultiStepCoulombPairContribution(int         pairI,
+                                                     int         pairJ,
+                                                     int         energyIndex,
+                                                     int         shiftIndex,
+                                                     real        coordIX,
+                                                     real        coordIY,
+                                                     real        coordIZ,
+                                                     real        coordJX,
+                                                     real        coordJY,
+                                                     real        coordJZ,
+                                                     real        shiftX,
+                                                     real        shiftY,
+                                                     real        shiftZ,
+                                                     real        dx,
+                                                     real        dy,
+                                                     real        dz,
+                                                     real        rsq,
+                                                     int         clusterI,
+                                                     int         clusterJ,
+                                                     int         localI,
+                                                     int         localJ,
+                                                     real        qq,
+                                                     real        interact,
+                                                     real        rinv,
+                                                     int         tableIndex,
+                                                     real        frac,
+                                                     real        fexcl,
+                                                     real        vcorr,
+                                                     real        vcoul,
+                                                     const char* codeLocation);
+bool m2pPlain4x4RealspaceForceSubcomponentTraceEnabled();
+void noteM2pPlain4x4RealspaceForceSubcomponents(int  ai,
+                                                int  aj,
+                                                real ljFx,
+                                                real ljFy,
+                                                real ljFz,
+                                                real coulombSrFx,
+                                                real coulombSrFy,
+                                                real coulombSrFz,
+                                                real exclusionCorrectionFx,
+                                                real exclusionCorrectionFy,
+                                                real exclusionCorrectionFz,
+                                                real combinedFx,
+                                                real combinedFy,
+                                                real combinedFz);
+
 {
     const int cj = l_cj[cjind].cj;
 
@@ -426,6 +473,41 @@
 #    ifdef CALC_ENERGIES
 #        ifdef ENERGY_GROUPS
             const int coulEnergyIndex = egp_sh_i[i] + egpJ;
+#            ifdef CALC_COUL_TAB
+            if (m2pPlain4x4MultiStepCoulombPairTraceEnabled() && vcoul != 0.0)
+            {
+                noteM2pPlain4x4MultiStepCoulombPairContribution(ai,
+                                                                aj,
+                                                                coulEnergyIndex,
+                                                                ish,
+                                                                x[(ci * UNROLLI + i) * X_STRIDE + XX],
+                                                                x[(ci * UNROLLI + i) * X_STRIDE + YY],
+                                                                x[(ci * UNROLLI + i) * X_STRIDE + ZZ],
+                                                                x[aj * X_STRIDE + XX],
+                                                                x[aj * X_STRIDE + YY],
+                                                                x[aj * X_STRIDE + ZZ],
+                                                                shiftvec[ishf + XX],
+                                                                shiftvec[ishf + YY],
+                                                                shiftvec[ishf + ZZ],
+                                                                dx,
+                                                                dy,
+                                                                dz,
+                                                                rsq,
+                                                                ci,
+                                                                cj,
+                                                                i,
+                                                                j,
+                                                                qq,
+                                                                interact,
+                                                                rinv,
+                                                                ri,
+                                                                frac,
+                                                                fexcl,
+                                                                vcorr,
+                                                                vcoul,
+                                                                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:431");
+            }
+#            endif
             if (m2pPlain4x4CoulombContractReplayEnabled() && vcoul != 0.0)
             {
                 noteM2pPlain4x4CoulombContractReplayPairContribution(coulEnergyIndex, vcoul);
@@ -442,6 +524,41 @@
             }
             Vc[coulEnergyIndex] += vcoul;
 #        else
+#            ifdef CALC_COUL_TAB
+            if (m2pPlain4x4MultiStepCoulombPairTraceEnabled() && vcoul != 0.0)
+            {
+                noteM2pPlain4x4MultiStepCoulombPairContribution(ai,
+                                                                aj,
+                                                                0,
+                                                                ish,
+                                                                x[(ci * UNROLLI + i) * X_STRIDE + XX],
+                                                                x[(ci * UNROLLI + i) * X_STRIDE + YY],
+                                                                x[(ci * UNROLLI + i) * X_STRIDE + ZZ],
+                                                                x[aj * X_STRIDE + XX],
+                                                                x[aj * X_STRIDE + YY],
+                                                                x[aj * X_STRIDE + ZZ],
+                                                                shiftvec[ishf + XX],
+                                                                shiftvec[ishf + YY],
+                                                                shiftvec[ishf + ZZ],
+                                                                dx,
+                                                                dy,
+                                                                dz,
+                                                                rsq,
+                                                                ci,
+                                                                cj,
+                                                                i,
+                                                                j,
+                                                                qq,
+                                                                interact,
+                                                                rinv,
+                                                                ri,
+                                                                frac,
+                                                                fexcl,
+                                                                vcorr,
+                                                                vcoul,
+                                                                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:449");
+            }
+#            endif
             if (m2pPlain4x4CoulombContractReplayEnabled() && vcoul != 0.0)
             {
                 noteM2pPlain4x4CoulombContractReplayPairContribution(0, vcoul);
@@ -465,6 +582,41 @@
             const real fx = fscal * dx;
             const real fy = fscal * dy;
             const real fz = fscal * dz;
+
+            if (m2pPlain4x4RealspaceForceSubcomponentTraceEnabled())
+            {
+#ifdef HALF_LJ
+                const real ljScalar = (i < UNROLLI / 2) ? frLJ * rinvsq : 0;
+#else
+                const real ljScalar = frLJ * rinvsq;
+#endif
+#ifdef CALC_COULOMB
+#    ifdef CALC_COUL_TAB
+                const real coulombSrScalar          = interact * rinvsq * qq * rinv;
+                const real exclusionCorrectionScalar = -interact * fexcl * qq * rinv;
+#    else
+                const real coulombSrScalar          = fcoul;
+                const real exclusionCorrectionScalar = 0;
+#    endif
+#else
+                const real coulombSrScalar          = 0;
+                const real exclusionCorrectionScalar = 0;
+#endif
+                noteM2pPlain4x4RealspaceForceSubcomponents(ai,
+                                                            aj,
+                                                            ljScalar * dx,
+                                                            ljScalar * dy,
+                                                            ljScalar * dz,
+                                                            coulombSrScalar * dx,
+                                                            coulombSrScalar * dy,
+                                                            coulombSrScalar * dz,
+                                                            exclusionCorrectionScalar * dx,
+                                                            exclusionCorrectionScalar * dy,
+                                                            exclusionCorrectionScalar * dz,
+                                                            fx,
+                                                            fy,
+                                                            fz);
+            }
 
             /* Increment i-atom force */
             fi[i * FI_STRIDE + XX] += fx;

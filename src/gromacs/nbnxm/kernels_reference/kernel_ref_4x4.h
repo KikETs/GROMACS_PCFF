@@ -43,6 +43,8 @@
 #ifndef GMX_NBNXM_KERNELS_REFERENCE_KERNEL_REF_4X4_H
 #define GMX_NBNXM_KERNELS_REFERENCE_KERNEL_REF_4X4_H
 
+#include <array>
+#include <cstdint>
 #include <vector>
 
 #include "gromacs/nbnxm/kernel_common.h"
@@ -239,6 +241,37 @@ void noteM2pPlain4x4CoulombProducer(int         pairI,
                                     real        vcoul,
                                     real        vcoulUnmasked,
                                     const char* codeLocation);
+bool m2pPlain4x4MultiStepCoulombPairTraceEnabled();
+void noteM2pPlain4x4MultiStepCoulombPairContribution(int         pairI,
+                                                     int         pairJ,
+                                                     int         energyIndex,
+                                                     int         shiftIndex,
+                                                     real        coordIX,
+                                                     real        coordIY,
+                                                     real        coordIZ,
+                                                     real        coordJX,
+                                                     real        coordJY,
+                                                     real        coordJZ,
+                                                     real        shiftX,
+                                                     real        shiftY,
+                                                     real        shiftZ,
+                                                     real        dx,
+                                                     real        dy,
+                                                     real        dz,
+                                                     real        rsq,
+                                                     int         clusterI,
+                                                     int         clusterJ,
+                                                     int         localI,
+                                                     int         localJ,
+                                                     real        qq,
+                                                     real        interact,
+                                                     real        rinv,
+                                                     int         tableIndex,
+                                                     real        frac,
+                                                     real        fexcl,
+                                                     real        vcorr,
+                                                     real        vcoul,
+                                                     const char* codeLocation);
 bool m2pPlain4x4CoulombSelfTraceEnabled();
 void noteM2pPlain4x4CoulombSelfContribution(int         atom,
                                             int         energyIndex,
@@ -252,10 +285,39 @@ bool m2pPlain4x4CoulombContractReplayEnabled();
 void noteM2pPlain4x4CoulombContractReplayPairContribution(int energyIndex, real vcoul);
 void noteM2pPlain4x4CoulombContractReplaySelfContribution(int energyIndex, real selfEnergy);
 double readM2pPlain4x4CoulombContractReplayTotal();
+double readM2pPlain4x4CoulombContractReplayPairOnlyTotal();
+void   setM2pPlain4x4CurrentStep(int64_t step);
+int64_t readM2pPlain4x4CurrentStep();
 void resetM2pPlain4x4LjContractReplay();
 bool m2pPlain4x4LjContractReplayEnabled();
 void noteM2pPlain4x4LjContractReplayPairContribution(real vlj);
 double readM2pPlain4x4LjContractReplayTotal();
+
+struct M2pPlain4x4TracedForcePair
+{
+    std::array<std::array<double, DIM>, 2> atoms = { { { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 } } };
+};
+
+void                    resetM2pPlain4x4RealspaceForceSubcomponentTrace();
+bool                    m2pPlain4x4RealspaceForceSubcomponentTraceEnabled();
+void                    noteM2pPlain4x4RealspaceForceSubcomponents(int  ai,
+                                                                   int  aj,
+                                                                   real ljFx,
+                                                                   real ljFy,
+                                                                   real ljFz,
+                                                                   real coulombSrFx,
+                                                                   real coulombSrFy,
+                                                                   real coulombSrFz,
+                                                                   real exclusionCorrectionFx,
+                                                                   real exclusionCorrectionFy,
+                                                                   real exclusionCorrectionFz,
+                                                                   real combinedFx,
+                                                                   real combinedFy,
+                                                                   real combinedFz);
+M2pPlain4x4TracedForcePair readM2pPlain4x4LjSrForcePair();
+M2pPlain4x4TracedForcePair readM2pPlain4x4CoulombSrForcePair();
+M2pPlain4x4TracedForcePair readM2pPlain4x4ExclusionCorrectionForcePair();
+M2pPlain4x4TracedForcePair readM2pPlain4x4CombinedRealspaceForcePair();
 
 //! \}
 

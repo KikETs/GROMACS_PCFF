@@ -102,6 +102,11 @@ std::mutex                        m2pPlain4x4CoulombProducerTraceMutex;
 int                               m2pPlain4x4CoulombProducerOrdinal     = 0;
 std::string                       m2pPlain4x4CoulombProducerClearedTracePath;
 double                            m2pPlain4x4CoulombProducerPrefixSum   = 0.0;
+std::mutex                        m2pPlain4x4MultiStepCoulombPairTraceMutex;
+int                               m2pPlain4x4MultiStepCoulombPairOrdinal   = 0;
+std::string                       m2pPlain4x4MultiStepCoulombPairClearedTracePath;
+int64_t                           m2pPlain4x4MultiStepCoulombPairCurrentStep = -1;
+std::vector<real>                 m2pPlain4x4MultiStepCoulombPairReplayTerms;
 std::mutex                        m2pPlain4x4CoulombSelfTraceMutex;
 int                               m2pPlain4x4CoulombSelfOrdinal         = 0;
 std::string                       m2pPlain4x4CoulombSelfClearedTracePath;
@@ -110,9 +115,17 @@ std::mutex                        m2pPlain4x4CoulombContractReplayMutex;
 bool                              m2pPlain4x4CoulombContractReplayTraceEnabled = false;
 std::vector<std::pair<int, real>> m2pPlain4x4CoulombContractReplayPairContributions;
 std::vector<std::pair<int, real>> m2pPlain4x4CoulombContractReplaySelfContributions;
+std::mutex                        m2pPlain4x4CurrentStepMutex;
+int64_t                           m2pPlain4x4CurrentStep = -1;
 std::mutex                        m2pPlain4x4LjContractReplayMutex;
 bool                              m2pPlain4x4LjContractReplayTraceEnabled = false;
 std::vector<real>                 m2pPlain4x4LjContractReplayPairContributions;
+std::mutex                        m2pPlain4x4RealspaceForceSubcomponentTraceMutex;
+bool                              m2pPlain4x4RealspaceForceSubcomponentTraceEnabledFlag = false;
+M2pPlain4x4TracedForcePair        m2pPlain4x4LjSrForcePair;
+M2pPlain4x4TracedForcePair        m2pPlain4x4CoulombSrForcePair;
+M2pPlain4x4TracedForcePair        m2pPlain4x4ExclusionCorrectionForcePair;
+M2pPlain4x4TracedForcePair        m2pPlain4x4CombinedRealspaceForcePair;
 
 const char* activeLjSrTraceDirPath()
 {
@@ -152,6 +165,56 @@ const char* activeLjSrTraceDirPath()
         return traceDir;
     }
     return nullptr;
+}
+
+bool activeLjSrOptionalTraceEnabled(const char* envVarName)
+{
+    const char* value = std::getenv(envVarName);
+    return (value != nullptr && *value != '\0');
+}
+
+void clearTracedForcePair(M2pPlain4x4TracedForcePair* pair)
+{
+    if (pair == nullptr)
+    {
+        return;
+    }
+    for (auto& atom : pair->atoms)
+    {
+        atom.fill(0.0);
+    }
+}
+
+void addForceContributionToTrackedAtoms(M2pPlain4x4TracedForcePair* pair,
+                                        int                         ai,
+                                        int                         aj,
+                                        real                        fx,
+                                        real                        fy,
+                                        real                        fz)
+{
+    if (pair == nullptr)
+    {
+        return;
+    }
+
+    const std::array<real, DIM> contribution = { fx, fy, fz };
+    for (const auto [traceAtomIndex, atomIndex] : { std::pair<int, int>{ 0, 0 }, std::pair<int, int>{ 1, 5 } })
+    {
+        if (ai == atomIndex)
+        {
+            for (int dim = 0; dim < DIM; ++dim)
+            {
+                pair->atoms[traceAtomIndex][dim] += contribution[dim];
+            }
+        }
+        if (aj == atomIndex)
+        {
+            for (int dim = 0; dim < DIM; ++dim)
+            {
+                pair->atoms[traceAtomIndex][dim] -= contribution[dim];
+            }
+        }
+    }
 }
 
 std::string m2xPlain4x4GeometryTracePath()
@@ -316,6 +379,10 @@ void appendM2wPlain4x4IdentityTraceLine(const M2wPlain4x4AlignedEventRecord& rec
 
 std::string m2pPlain4x4CoulombFirstWriteTracePath()
 {
+    if (!activeLjSrOptionalTraceEnabled("GMX_PCFF_RESPA_TRACE_COULOMB_FIRST_WRITES"))
+    {
+        return {};
+    }
     const char* traceDir = activeLjSrTraceDirPath();
     if (traceDir == nullptr || *traceDir == '\0')
     {
@@ -364,6 +431,26 @@ std::string m2pPlain4x4CoulombSelfPrefixTracePath()
     return std::string(traceDir) + "/step0_coulomb_self_prefix_checkpoints.txt";
 }
 
+std::string m2pPlain4x4MultiStepCoulombPairDetailTracePath()
+{
+    const char* traceDir = activeLjSrTraceDirPath();
+    if (traceDir == nullptr || *traceDir == '\0')
+    {
+        return {};
+    }
+    return std::string(traceDir) + "/multistep_coulomb_pair_detail_rows.txt";
+}
+
+std::string m2pPlain4x4MultiStepCoulombPairPrefixTracePath()
+{
+    const char* traceDir = activeLjSrTraceDirPath();
+    if (traceDir == nullptr || *traceDir == '\0')
+    {
+        return {};
+    }
+    return std::string(traceDir) + "/multistep_coulomb_pair_prefix_trace.txt";
+}
+
 std::vector<int> parseOrdinalList(const char* envName)
 {
     const char* value = std::getenv(envName);
@@ -409,6 +496,61 @@ const std::vector<int>& m2pPlain4x4CoulombSelfDetailOrdinals()
     static const std::vector<int> ordinals =
             parseOrdinalList("GMX_PCFF_RESPA_COULOMB_SELF_DETAIL_ORDINALS");
     return ordinals;
+}
+
+const std::vector<int>& m2pPlain4x4MultiStepCoulombPairPrefixCheckpoints()
+{
+    static const std::vector<int> checkpoints =
+            parseOrdinalList("GMX_PCFF_RESPA_MULTI_STEP_COULOMB_PAIR_PREFIX_CHECKPOINTS");
+    return checkpoints;
+}
+
+const std::vector<int>& m2pPlain4x4MultiStepCoulombPairDetailOrdinals()
+{
+    static const std::vector<int> ordinals =
+            parseOrdinalList("GMX_PCFF_RESPA_MULTI_STEP_COULOMB_PAIR_DETAIL_ORDINALS");
+    return ordinals;
+}
+
+const std::vector<int64_t>& m2pPlain4x4MultiStepCoulombTraceSteps()
+{
+    static const std::vector<int64_t> steps = []()
+    {
+        std::vector<int64_t> result;
+        const char*          value = std::getenv("GMX_PCFF_RESPA_TRACE_MULTI_STEP_COULOMB_STEPS");
+        if (value == nullptr || *value == '\0')
+        {
+            return result;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                result.push_back(std::stoll(item));
+            }
+        }
+        return result;
+    }();
+    return steps;
+}
+
+bool m2pPlain4x4ShouldTraceMultiStepCoulombStep(int64_t step)
+{
+    const auto& steps = m2pPlain4x4MultiStepCoulombTraceSteps();
+    return std::find(steps.begin(), steps.end(), step) != steps.end();
+}
+
+double sumMultiStepReplayTerms(const std::vector<real>& replayTerms)
+{
+    double total = 0.0;
+    for (const real value : replayTerms)
+    {
+        total += value;
+    }
+    return total;
 }
 
 bool ordinalRequested(int ordinal, const std::vector<int>& ordinals)
@@ -762,6 +904,15 @@ bool m2pPlain4x4CoulombSelfTraceEnabled()
                || !m2pPlain4x4CoulombSelfDetailOrdinals().empty());
 }
 
+bool m2pPlain4x4MultiStepCoulombPairTraceEnabled()
+{
+    const int64_t currentStep = readM2pPlain4x4CurrentStep();
+    return m2pPlain4x4ShouldTraceMultiStepCoulombStep(currentStep)
+           && !m2pPlain4x4MultiStepCoulombPairDetailTracePath().empty()
+           && (!m2pPlain4x4MultiStepCoulombPairPrefixCheckpoints().empty()
+               || !m2pPlain4x4MultiStepCoulombPairDetailOrdinals().empty());
+}
+
 void noteM2pPlain4x4CoulombProducer(int         pairI,
                                     int         pairJ,
                                     int         energyIndex,
@@ -920,6 +1071,150 @@ void noteM2pPlain4x4CoulombSelfContribution(int         atom,
         << '\n';
 }
 
+void noteM2pPlain4x4MultiStepCoulombPairContribution(int         pairI,
+                                                     int         pairJ,
+                                                     int         energyIndex,
+                                                     int         shiftIndex,
+                                                     real        coordIX,
+                                                     real        coordIY,
+                                                     real        coordIZ,
+                                                     real        coordJX,
+                                                     real        coordJY,
+                                                     real        coordJZ,
+                                                     real        shiftX,
+                                                     real        shiftY,
+                                                     real        shiftZ,
+                                                     real        dx,
+                                                     real        dy,
+                                                     real        dz,
+                                                     real        rsq,
+                                                     int         clusterI,
+                                                     int         clusterJ,
+                                                     int         localI,
+                                                     int         localJ,
+                                                     real        qq,
+                                                     real        interact,
+                                                     real        rinv,
+                                                     int         tableIndex,
+                                                     real        frac,
+                                                     real        fexcl,
+                                                     real        vcorr,
+                                                     real        vcoul,
+                                                     const char* codeLocation)
+{
+    const int64_t currentStep = readM2pPlain4x4CurrentStep();
+    if (!m2pPlain4x4ShouldTraceMultiStepCoulombStep(currentStep))
+    {
+        return;
+    }
+
+    const std::string detailTracePath = m2pPlain4x4MultiStepCoulombPairDetailTracePath();
+    const std::string prefixTracePath = m2pPlain4x4MultiStepCoulombPairPrefixTracePath();
+    if (detailTracePath.empty() || prefixTracePath.empty())
+    {
+        return;
+    }
+
+    const auto& prefixCheckpoints = m2pPlain4x4MultiStepCoulombPairPrefixCheckpoints();
+    const auto& detailOrdinals    = m2pPlain4x4MultiStepCoulombPairDetailOrdinals();
+    if (prefixCheckpoints.empty() && detailOrdinals.empty())
+    {
+        return;
+    }
+
+    std::lock_guard<std::mutex> guard(m2pPlain4x4MultiStepCoulombPairTraceMutex);
+    if (m2pPlain4x4MultiStepCoulombPairClearedTracePath != detailTracePath)
+    {
+        std::ofstream clearDetail(detailTracePath, std::ios::trunc);
+        std::ofstream clearPrefix(prefixTracePath, std::ios::trunc);
+        m2pPlain4x4MultiStepCoulombPairClearedTracePath = detailTracePath;
+        m2pPlain4x4MultiStepCoulombPairCurrentStep      = -1;
+        m2pPlain4x4MultiStepCoulombPairOrdinal          = 0;
+        m2pPlain4x4MultiStepCoulombPairReplayTerms.clear();
+    }
+    if (m2pPlain4x4MultiStepCoulombPairCurrentStep != currentStep)
+    {
+        m2pPlain4x4MultiStepCoulombPairCurrentStep = currentStep;
+        m2pPlain4x4MultiStepCoulombPairOrdinal     = 0;
+        m2pPlain4x4MultiStepCoulombPairReplayTerms.clear();
+    }
+
+    const double cumulativeBefore = sumMultiStepReplayTerms(m2pPlain4x4MultiStepCoulombPairReplayTerms);
+    if (energyIndex >= 0)
+    {
+        if (static_cast<int>(m2pPlain4x4MultiStepCoulombPairReplayTerms.size()) <= energyIndex)
+        {
+            m2pPlain4x4MultiStepCoulombPairReplayTerms.resize(energyIndex + 1, 0.0_real);
+        }
+        m2pPlain4x4MultiStepCoulombPairReplayTerms[energyIndex] += vcoul;
+    }
+    ++m2pPlain4x4MultiStepCoulombPairOrdinal;
+    const double cumulativeAfter = sumMultiStepReplayTerms(m2pPlain4x4MultiStepCoulombPairReplayTerms);
+
+    if (ordinalRequested(m2pPlain4x4MultiStepCoulombPairOrdinal, prefixCheckpoints))
+    {
+        std::ofstream prefixOut(prefixTracePath, std::ios::app);
+        if (prefixOut)
+        {
+            prefixOut << std::fixed << std::setprecision(15)
+                      << "side=PLAIN"
+                      << " step=" << currentStep
+                      << " pair_ordinal=" << m2pPlain4x4MultiStepCoulombPairOrdinal
+                      << " cumulative_coulomb_prefix_sum=" << cumulativeAfter
+                      << '\n';
+        }
+    }
+
+    if (!ordinalRequested(m2pPlain4x4MultiStepCoulombPairOrdinal, detailOrdinals))
+    {
+        return;
+    }
+
+    std::ofstream out(detailTracePath, std::ios::app);
+    if (!out)
+    {
+        return;
+    }
+
+    out << std::fixed << std::setprecision(15)
+        << "side=PLAIN"
+        << " step=" << currentStep
+        << " pair_ordinal=" << m2pPlain4x4MultiStepCoulombPairOrdinal
+        << " pair_i=" << pairI
+        << " pair_j=" << pairJ
+        << " energyIndex=" << energyIndex
+        << " shiftIndex=" << shiftIndex
+        << " coord_i_x=" << coordIX
+        << " coord_i_y=" << coordIY
+        << " coord_i_z=" << coordIZ
+        << " coord_j_x=" << coordJX
+        << " coord_j_y=" << coordJY
+        << " coord_j_z=" << coordJZ
+        << " shift_x=" << shiftX
+        << " shift_y=" << shiftY
+        << " shift_z=" << shiftZ
+        << " dx=" << dx
+        << " dy=" << dy
+        << " dz=" << dz
+        << " rsq=" << rsq
+        << " qq=" << qq
+        << " rinv=" << rinv
+        << " table_index=" << tableIndex
+        << " frac=" << frac
+        << " fexcl=" << fexcl
+        << " vcorr=" << vcorr
+        << " interact=" << interact
+        << " pair_contribution=" << vcoul
+        << " cumulative_before=" << cumulativeBefore
+        << " cumulative_after=" << cumulativeAfter
+        << " cluster_i=" << clusterI
+        << " cluster_j=" << clusterJ
+        << " local_i=" << localI
+        << " local_j=" << localJ
+        << " code_location=" << codeLocation
+        << '\n';
+}
+
 std::vector<M2wPlain4x4AlignedEventRecord> readM2wPlain4x4AlignedEventRecords()
 {
     std::lock_guard<std::mutex> guard(m2wPlain4x4TraceMutex);
@@ -1006,6 +1301,50 @@ double readM2pPlain4x4CoulombContractReplayTotal()
     return total;
 }
 
+double readM2pPlain4x4CoulombContractReplayPairOnlyTotal()
+{
+    std::lock_guard<std::mutex> guard(m2pPlain4x4CoulombContractReplayMutex);
+    if (!m2pPlain4x4CoulombContractReplayTraceEnabled)
+    {
+        return 0.0;
+    }
+
+    int maxEnergyIndex = -1;
+    for (const auto& contribution : m2pPlain4x4CoulombContractReplayPairContributions)
+    {
+        maxEnergyIndex = std::max(maxEnergyIndex, contribution.first);
+    }
+    if (maxEnergyIndex < 0)
+    {
+        return 0.0;
+    }
+
+    std::vector<real> replayTerms(maxEnergyIndex + 1, 0.0_real);
+    for (const auto& contribution : m2pPlain4x4CoulombContractReplayPairContributions)
+    {
+        replayTerms[contribution.first] += contribution.second;
+    }
+
+    double total = 0.0;
+    for (const real value : replayTerms)
+    {
+        total += value;
+    }
+    return total;
+}
+
+void setM2pPlain4x4CurrentStep(int64_t step)
+{
+    std::lock_guard<std::mutex> guard(m2pPlain4x4CurrentStepMutex);
+    m2pPlain4x4CurrentStep = step;
+}
+
+int64_t readM2pPlain4x4CurrentStep()
+{
+    std::lock_guard<std::mutex> guard(m2pPlain4x4CurrentStepMutex);
+    return m2pPlain4x4CurrentStep;
+}
+
 void resetM2pPlain4x4LjContractReplay()
 {
     std::lock_guard<std::mutex> guard(m2pPlain4x4LjContractReplayMutex);
@@ -1043,6 +1382,88 @@ double readM2pPlain4x4LjContractReplayTotal()
         total += static_cast<double>(value);
     }
     return total;
+}
+
+void resetM2pPlain4x4RealspaceForceSubcomponentTrace()
+{
+    int64_t currentStep = -1;
+    {
+        std::lock_guard<std::mutex> stepGuard(m2pPlain4x4CurrentStepMutex);
+        currentStep = m2pPlain4x4CurrentStep;
+    }
+
+    std::lock_guard<std::mutex> guard(m2pPlain4x4RealspaceForceSubcomponentTraceMutex);
+    m2pPlain4x4RealspaceForceSubcomponentTraceEnabledFlag =
+            activeLjSrOptionalTraceEnabled("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS")
+            && currentStep == 0;
+    clearTracedForcePair(&m2pPlain4x4LjSrForcePair);
+    clearTracedForcePair(&m2pPlain4x4CoulombSrForcePair);
+    clearTracedForcePair(&m2pPlain4x4ExclusionCorrectionForcePair);
+    clearTracedForcePair(&m2pPlain4x4CombinedRealspaceForcePair);
+}
+
+bool m2pPlain4x4RealspaceForceSubcomponentTraceEnabled()
+{
+    std::lock_guard<std::mutex> guard(m2pPlain4x4RealspaceForceSubcomponentTraceMutex);
+    return m2pPlain4x4RealspaceForceSubcomponentTraceEnabledFlag;
+}
+
+void noteM2pPlain4x4RealspaceForceSubcomponents(int  ai,
+                                                int  aj,
+                                                real ljFx,
+                                                real ljFy,
+                                                real ljFz,
+                                                real coulombSrFx,
+                                                real coulombSrFy,
+                                                real coulombSrFz,
+                                                real exclusionCorrectionFx,
+                                                real exclusionCorrectionFy,
+                                                real exclusionCorrectionFz,
+                                                real combinedFx,
+                                                real combinedFy,
+                                                real combinedFz)
+{
+    std::lock_guard<std::mutex> guard(m2pPlain4x4RealspaceForceSubcomponentTraceMutex);
+    if (!m2pPlain4x4RealspaceForceSubcomponentTraceEnabledFlag)
+    {
+        return;
+    }
+
+    addForceContributionToTrackedAtoms(&m2pPlain4x4LjSrForcePair, ai, aj, ljFx, ljFy, ljFz);
+    addForceContributionToTrackedAtoms(
+            &m2pPlain4x4CoulombSrForcePair, ai, aj, coulombSrFx, coulombSrFy, coulombSrFz);
+    addForceContributionToTrackedAtoms(&m2pPlain4x4ExclusionCorrectionForcePair,
+                                       ai,
+                                       aj,
+                                       exclusionCorrectionFx,
+                                       exclusionCorrectionFy,
+                                       exclusionCorrectionFz);
+    addForceContributionToTrackedAtoms(
+            &m2pPlain4x4CombinedRealspaceForcePair, ai, aj, combinedFx, combinedFy, combinedFz);
+}
+
+M2pPlain4x4TracedForcePair readM2pPlain4x4LjSrForcePair()
+{
+    std::lock_guard<std::mutex> guard(m2pPlain4x4RealspaceForceSubcomponentTraceMutex);
+    return m2pPlain4x4LjSrForcePair;
+}
+
+M2pPlain4x4TracedForcePair readM2pPlain4x4CoulombSrForcePair()
+{
+    std::lock_guard<std::mutex> guard(m2pPlain4x4RealspaceForceSubcomponentTraceMutex);
+    return m2pPlain4x4CoulombSrForcePair;
+}
+
+M2pPlain4x4TracedForcePair readM2pPlain4x4ExclusionCorrectionForcePair()
+{
+    std::lock_guard<std::mutex> guard(m2pPlain4x4RealspaceForceSubcomponentTraceMutex);
+    return m2pPlain4x4ExclusionCorrectionForcePair;
+}
+
+M2pPlain4x4TracedForcePair readM2pPlain4x4CombinedRealspaceForcePair()
+{
+    std::lock_guard<std::mutex> guard(m2pPlain4x4RealspaceForceSubcomponentTraceMutex);
+    return m2pPlain4x4CombinedRealspaceForcePair;
 }
 
 #define UNROLLI 4

@@ -99,6 +99,18 @@ M2L_DIAGNOSTIC_PROBE = {
     "probe_mode": "patch_shape_b_bookkeeping_suppressed",
     "work_dir_name": "probe_patch_b_bookkeeping_suppressed",
 }
+
+
+def configured_output_interval() -> int:
+    value = os.environ.get("GMX_PCFF_RESPA_OUTPUT_INTERVAL_OVERRIDE")
+    if not value:
+        return OUTPUT_INTERVAL
+    interval = int(value)
+    if interval <= 0:
+        raise ValueError("GMX_PCFF_RESPA_OUTPUT_INTERVAL_OVERRIDE must be positive")
+    return interval
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run the exact 3-level R-RESPA M2 reconnection on validated PCFF microfixtures."
@@ -325,9 +337,10 @@ def inner_terms_from_topology(topology_text: str) -> list[str]:
 
 
 def common_mdp_lines(dt_ps: float, total_time_ps: float, integrator: str) -> tuple[list[str], int]:
+    output_interval = configured_output_interval()
     nsteps = int(round(total_time_ps / dt_ps))
-    if nsteps <= 0 or nsteps % OUTPUT_INTERVAL != 0:
-        raise ValueError(f"nsteps={nsteps} must be positive and divisible by {OUTPUT_INTERVAL}")
+    if nsteps <= 0 or nsteps % output_interval != 0:
+        raise ValueError(f"nsteps={nsteps} must be positive and divisible by {output_interval}")
 
     lines = [
         f"integrator               = {integrator}",
@@ -335,7 +348,7 @@ def common_mdp_lines(dt_ps: float, total_time_ps: float, integrator: str) -> tup
         f"nsteps                   = {nsteps}",
         "constraints              = none",
         "cutoff-scheme            = Verlet",
-        f"nstlist                  = {OUTPUT_INTERVAL}",
+        f"nstlist                  = {output_interval}",
         "rlist                    = 0.99",
         "rvdw                     = 0.9",
         "rcoulomb                 = 0.9",
@@ -353,12 +366,12 @@ def common_mdp_lines(dt_ps: float, total_time_ps: float, integrator: str) -> tup
         "comm-mode                = none",
         "verlet-buffer-tolerance  = -1",
         "gen-vel                  = no",
-        f"nstcalcenergy            = {OUTPUT_INTERVAL}",
-        f"nstenergy                = {OUTPUT_INTERVAL}",
-        f"nstlog                   = {OUTPUT_INTERVAL}",
-        f"nstxout                  = {OUTPUT_INTERVAL}",
-        f"nstvout                  = {OUTPUT_INTERVAL}",
-        f"nstfout                  = {OUTPUT_INTERVAL}",
+        f"nstcalcenergy            = {output_interval}",
+        f"nstenergy                = {output_interval}",
+        f"nstlog                   = {output_interval}",
+        f"nstxout                  = {output_interval}",
+        f"nstvout                  = {output_interval}",
+        f"nstfout                  = {output_interval}",
         "nstxout-compressed       = 0",
     ]
     return lines, nsteps

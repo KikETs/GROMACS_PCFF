@@ -42,6 +42,13 @@
 
 #include "forceelement.h"
 
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <string>
+
 #include "gromacs/domdec/mdsetup.h"
 #include "gromacs/listed_forces/listed_forces_gpu.h"
 #include "gromacs/mdlib/constr.h"
@@ -76,6 +83,115 @@ class history_t;
 
 namespace gmx
 {
+static const char* activeM2pTraceDirPath()
+{
+    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
+}
+
+static bool shouldTraceXvfStageStep(const Step step)
+{
+    const char* traceDir = activeM2pTraceDirPath();
+    const char* value    = std::getenv("GMX_PCFF_RESPA_TRACE_XVF_STEPS");
+    if (traceDir == nullptr || value == nullptr || *value == '\0')
+    {
+        return false;
+    }
+
+    std::stringstream ss(value);
+    std::string       item;
+    while (std::getline(ss, item, ','))
+    {
+        if (!item.empty() && step == std::stoll(item))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+static const char* xvfPreForceStageName(const Step step)
+{
+    return (step == 0) ? "STEP0_PRE_FORCE_XVF"
+           : (step == 1) ? "STEP1_PRE_FORCE_XVF"
+           : (step == 2) ? "STEP2_PRE_FORCE_XVF"
+           : (step == 3) ? "STEP3_PRE_FORCE_XVF"
+           : (step == 4) ? "STEP4_PRE_FORCE_XVF"
+                         : nullptr;
+}
+
+static const char* xvfPostForceStageName(const Step step)
+{
+    return (step == 0) ? "STEP0_POST_FORCE_XVF"
+           : (step == 1) ? "STEP1_POST_FORCE_XVF"
+           : (step == 2) ? "STEP2_POST_FORCE_XVF"
+           : (step == 3) ? "STEP3_POST_FORCE_XVF"
+           : (step == 4) ? "STEP4_POST_FORCE_XVF"
+                         : nullptr;
+}
+
+static void appendModularBoundarySnapshotPair(const char*                    traceDirPath,
+                                              const char*                    stageName,
+                                              Step                           step,
+                                              ArrayRefWithPadding<const RVec> coords,
+                                              const char*                    writerName,
+                                              const char*                    codeLocation)
+{
+    const auto unpaddedCoords = coords.unpaddedArrayRef();
+    if (traceDirPath == nullptr || *traceDirPath == '\0' || unpaddedCoords.ssize() <= 5)
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "multistep_md_loop_boundary_trace.txt", std::ios::app);
+    for (const int atomIndex : { 0, 5 })
+    {
+        output << "side=PLAIN step=" << step << " stage=" << stageName << " atom=" << atomIndex << " x="
+               << std::setprecision(15) << unpaddedCoords[atomIndex][XX] << " y=" << std::setprecision(15)
+               << unpaddedCoords[atomIndex][YY] << " z=" << std::setprecision(15)
+               << unpaddedCoords[atomIndex][ZZ]
+               << " writer=" << writerName << " code_location=" << codeLocation
+               << " snapshot_type=boundary_read\n";
+    }
+}
+
+static void appendModularXvfStageTracePair(const char*          traceDirPath,
+                                           const char*          stageName,
+                                           Step                 step,
+                                           ArrayRef<const RVec> position,
+                                           ArrayRef<const RVec> velocity,
+                                           ArrayRef<const RVec> force,
+                                           const char*          writerName,
+                                           const char*          codeLocation,
+                                           const char*          snapshotType,
+                                           const char*          boundaryKind)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0' || position.size() <= 5 || velocity.size() <= 5
+        || force.size() <= 5)
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "multistep_xvf_stage_trace.txt", std::ios::app);
+    for (const int atomIndex : { 0, 5 })
+    {
+        output << "side=PLAIN stage=" << stageName << " step=" << step << " atom=" << atomIndex << " x="
+               << std::setprecision(15) << position[atomIndex][XX] << " y=" << std::setprecision(15)
+               << position[atomIndex][YY] << " z=" << std::setprecision(15) << position[atomIndex][ZZ]
+               << " vx=" << std::setprecision(15) << velocity[atomIndex][XX] << " vy="
+               << std::setprecision(15) << velocity[atomIndex][YY] << " vz=" << std::setprecision(15)
+               << velocity[atomIndex][ZZ] << " fx=" << std::setprecision(15) << force[atomIndex][XX]
+               << " fy=" << std::setprecision(15) << force[atomIndex][YY] << " fz="
+               << std::setprecision(15) << force[atomIndex][ZZ] << " writer=" << writerName
+               << " code_location=" << codeLocation << " snapshot_type=" << snapshotType
+               << " boundary_kind=" << boundaryKind << "\n";
+    }
+}
+
 ForceElement::ForceElement(StatePropagatorData*        statePropagatorData,
                            EnergyData*                 energyData,
                            FreeEnergyPerturbationData* freeEnergyPerturbationData,
@@ -266,6 +382,20 @@ void ForceElement::run(Step step, Time time, unsigned int flags)
         gmx_edsam* ed  = nullptr;
 
         auto v = statePropagatorData_->velocitiesView();
+        if (const char* stageName = xvfPreForceStageName(step);
+            stageName != nullptr && shouldTraceXvfStageStep(step))
+        {
+            appendModularXvfStageTracePair(activeM2pTraceDirPath(),
+                                           stageName,
+                                           step,
+                                           statePropagatorData_->constPositionsView().unpaddedArrayRef(),
+                                           statePropagatorData_->constVelocitiesView().unpaddedArrayRef(),
+                                           statePropagatorData_->constForcesView().force(),
+                                           "ForceElement::run",
+                                           "src/gromacs/modularsimulator/forceelement.cpp:354",
+                                           "boundary_read",
+                                           "read");
+        }
 
         do_force(fplog_,
                  cr_,
@@ -296,8 +426,31 @@ void ForceElement::run(Step step, Time time, unsigned int flags)
                  ed,
                  longRangeNonbondeds_.get(),
                  ddBalanceRegionHandler_);
+        if (const char* stageName = xvfPostForceStageName(step);
+            stageName != nullptr && shouldTraceXvfStageStep(step))
+        {
+            appendModularXvfStageTracePair(activeM2pTraceDirPath(),
+                                           stageName,
+                                           step,
+                                           statePropagatorData_->constPositionsView().unpaddedArrayRef(),
+                                           statePropagatorData_->constVelocitiesView().unpaddedArrayRef(),
+                                           statePropagatorData_->constForcesView().force(),
+                                           "ForceElement::run",
+                                           "src/gromacs/modularsimulator/forceelement.cpp:390",
+                                           "after_stage_snapshot",
+                                           "read");
+        }
     }
     energyData_->addToForceVirial(force_vir, step);
+    if (step == 5)
+    {
+        appendModularBoundarySnapshotPair(activeM2pTraceDirPath(),
+                                          "STEP5_POST_FORCE_STATE_X",
+                                          step,
+                                          statePropagatorData_->constPositionsView(),
+                                          "ForceElement::run",
+                                          "src/gromacs/modularsimulator/forceelement.cpp:339");
+    }
 }
 
 void ForceElement::elementTeardown()

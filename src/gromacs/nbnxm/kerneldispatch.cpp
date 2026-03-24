@@ -39,6 +39,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <sstream>
 #include <string>
 
 #include "kernels_reference/kernel_gpu_ref.h"
@@ -107,6 +108,49 @@ void appendM2pTraceTextLine(const char* traceDirPath, const char* fileName, cons
     std::filesystem::create_directories(traceDirPath);
     std::ofstream output(std::filesystem::path(traceDirPath) / fileName, std::ios::app);
     output << line << '\n';
+}
+
+void writeM2pTraceTextFile(const char* traceDirPath, const char* fileName, const std::string& contents)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::create_directories(traceDirPath);
+    std::ofstream output(std::filesystem::path(traceDirPath) / fileName, std::ios::trunc);
+    output << contents;
+}
+
+const std::vector<int64_t>& multiStepCoulombTraceSteps()
+{
+    static const std::vector<int64_t> steps = []()
+    {
+        std::vector<int64_t> parsedSteps;
+        const char*          value = std::getenv("GMX_PCFF_RESPA_TRACE_MULTI_STEP_COULOMB_STEPS");
+        if (value == nullptr || *value == '\0')
+        {
+            return parsedSteps;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                parsedSteps.push_back(std::stoll(item));
+            }
+        }
+        return parsedSteps;
+    }();
+    return steps;
+}
+
+bool shouldTraceMultiStepCoulombStep(const int64_t step)
+{
+    const auto& traceSteps = multiStepCoulombTraceSteps();
+    return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
 }
 
 struct KernelEnergyReadTrace
@@ -371,9 +415,27 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
         resetM2sPlain4x4InternalTrace();
         resetM2pPlain4x4CoulombContractReplay();
         resetM2pPlain4x4LjContractReplay();
+        resetM2pPlain4x4RealspaceForceSubcomponentTrace();
     }
 
     gmx::ArrayRef<const NbnxnPairlistCpu> pairlists = pairlistSet.cpuLists();
+    const int64_t                         currentTraceStep               = readM2pPlain4x4CurrentStep();
+    const bool                            dumpMultiStepCoulombStateTrace =
+            dumpM2pTrace && kernelSetup.kernelType == NbnxmKernelType::Cpu4x4_PlainC
+            && shouldTraceMultiStepCoulombStep(currentTraceStep);
+    const double plainNativeCoulBeforeStep =
+            dumpMultiStepCoulombStateTrace ? sumKernelStoredEnergyOutputs(nbat, pairlists.ssize(), false) : 0.0;
+    if (dumpMultiStepCoulombStateTrace)
+    {
+        static std::string clearedMultiStepTracePath;
+        const std::string  tracePath =
+                (std::filesystem::path(m2pTraceDirPath) / "multistep_coulomb_state_trace.txt").string();
+        if (tracePath != clearedMultiStepTracePath)
+        {
+            writeM2pTraceTextFile(m2pTraceDirPath, "multistep_coulomb_state_trace.txt", "");
+            clearedMultiStepTracePath = tracePath;
+        }
+    }
 
     const auto* shiftVecPointer = as_rvec_array(shiftVectors.data());
 
@@ -513,6 +575,24 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
         }
     }
     wallcycle_sub_stop(wcycle, WallCycleSubCounter::NonbondedKernel);
+
+    if (!stepWork.computeEnergy && dumpMultiStepCoulombStateTrace)
+    {
+        appendM2pTraceTextLine(
+                m2pTraceDirPath,
+                "multistep_coulomb_state_trace.txt",
+                "side=PLAIN step=" + std::to_string(currentTraceStep)
+                        + " code_location=src/gromacs/nbnxm/kerneldispatch.cpp:post_kernel_no_energy_step"
+                        + " compute_energy=false"
+                        + " plain_native_coul_total_before_step="
+                        + formatString("%.15f", plainNativeCoulBeforeStep)
+                        + " plain_native_coul_final=0.000000000000000"
+                        + " plain_replay_coul_total_before_step=0.000000000000000"
+                        + " plain_replay_coul_total_after_pairs=0.000000000000000"
+                        + " plain_replay_coul_total_after_excluded=0.000000000000000"
+                        + " plain_replay_coul_total_after_self=0.000000000000000"
+                        + " plain_replay_coul_final=0.000000000000000");
+    }
 
     if (stepWork.computeEnergy)
     {
@@ -772,6 +852,29 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
                             + formatString("%.15f", plainPatchContractReplayTotal) + " after="
                             + formatString("%.15f", plainPatchContractReplayTotal)
                             + " code_location=src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce");
+            if (dumpMultiStepCoulombStateTrace)
+            {
+                const double plainPatchContractReplayPairOnlyTotal =
+                        readM2pPlain4x4CoulombContractReplayPairOnlyTotal();
+                appendM2pTraceTextLine(
+                        ljSrTraceDirPath,
+                        "multistep_coulomb_state_trace.txt",
+                        "side=PLAIN step=" + std::to_string(currentTraceStep)
+                                + " code_location=src/gromacs/nbnxm/kerneldispatch.cpp:thread_output_pre_reduce"
+                                + " compute_energy=true"
+                                + " plain_native_coul_total_before_step="
+                                + formatString("%.15f", plainNativeCoulBeforeStep)
+                                + " plain_native_coul_final=" + formatString("%.15f", rawCoulSrTotal)
+                                + " plain_replay_coul_total_before_step=0.000000000000000"
+                                + " plain_replay_coul_total_after_pairs="
+                                + formatString("%.15f", plainPatchContractReplayPairOnlyTotal)
+                                + " plain_replay_coul_total_after_excluded="
+                                + formatString("%.15f", plainPatchContractReplayPairOnlyTotal)
+                                + " plain_replay_coul_total_after_self="
+                                + formatString("%.15f", plainPatchContractReplayTotal)
+                                + " plain_replay_coul_final="
+                                + formatString("%.15f", plainPatchContractReplayTotal));
+            }
             appendM2pTraceTextLine(
                     ljSrTraceDirPath,
                     "step0_coulomb_sr_component_trace.txt",

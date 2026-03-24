@@ -42,6 +42,13 @@
 
 #include "propagator.h"
 
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <string>
+
 #include "gromacs/mdlib/gmx_omp_nthreads.h"
 #include "gromacs/mdlib/mdatoms.h"
 #include "gromacs/mdlib/update.h"
@@ -59,6 +66,154 @@ namespace gmx
 {
 namespace
 {
+const char* activeM2pTraceDirPath()
+{
+    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
+}
+
+bool shouldTracePositionUpdateStep(const Step step)
+{
+    const char* traceDir = activeM2pTraceDirPath();
+    const char* value    = std::getenv("GMX_PCFF_RESPA_TRACE_POSITION_UPDATE_STEPS");
+    if (traceDir == nullptr || value == nullptr || *value == '\0')
+    {
+        return false;
+    }
+
+    std::stringstream ss(value);
+    std::string       item;
+    while (std::getline(ss, item, ','))
+    {
+        if (!item.empty() && step == std::stoll(item))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool shouldTraceXvfStageStep(const Step step)
+{
+    const char* traceDir = activeM2pTraceDirPath();
+    const char* value    = std::getenv("GMX_PCFF_RESPA_TRACE_XVF_STEPS");
+    if (traceDir == nullptr || value == nullptr || *value == '\0')
+    {
+        return false;
+    }
+
+    std::stringstream ss(value);
+    std::string       item;
+    while (std::getline(ss, item, ','))
+    {
+        if (!item.empty() && step == std::stoll(item))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+const char* xvfPreUpdateStageName(const Step step)
+{
+    return (step == 0) ? "STEP0_PRE_UPDATE_XVF"
+           : (step == 1) ? "STEP1_PRE_UPDATE_XVF"
+           : (step == 2) ? "STEP2_PRE_UPDATE_XVF"
+           : (step == 3) ? "STEP3_PRE_UPDATE_XVF"
+           : (step == 4) ? "STEP4_PRE_UPDATE_XVF"
+                         : nullptr;
+}
+
+const char* xvfUpdateInputStageName(const Step step)
+{
+    return (step == 0) ? "STEP0_UPDATE_INPUT_XVF"
+           : (step == 1) ? "STEP1_UPDATE_INPUT_XVF"
+           : (step == 2) ? "STEP2_UPDATE_INPUT_XVF"
+           : (step == 3) ? "STEP3_UPDATE_INPUT_XVF"
+           : (step == 4) ? "STEP4_UPDATE_INPUT_XVF"
+                         : nullptr;
+}
+
+const char* xvfPostPositionCommitStageName(const Step step)
+{
+    return (step == 0) ? "STEP0_POST_POSITION_COMMIT_XVF"
+           : (step == 1) ? "STEP1_POST_POSITION_COMMIT_XVF"
+           : (step == 2) ? "STEP2_POST_POSITION_COMMIT_XVF"
+           : (step == 3) ? "STEP3_POST_POSITION_COMMIT_XVF"
+           : (step == 4) ? "STEP4_POST_POSITION_COMMIT_XVF"
+                         : nullptr;
+}
+
+thread_local Step g_positionUpdateTraceCurrentStep = -1;
+
+template<typename Callable>
+void runWithPositionUpdateTraceStep(const Step step, Callable&& callable)
+{
+    g_positionUpdateTraceCurrentStep = step;
+    callable();
+    g_positionUpdateTraceCurrentStep = -1;
+}
+
+void appendPositionUpdateTraceAtom(const char*      traceDirPath,
+                                   const char*      side,
+                                   const char*      rowName,
+                                   Step             step,
+                                   int              atomIndex,
+                                   const RVec&      x,
+                                   const RVec&      v,
+                                   const RVec&      f,
+                                   real             dt,
+                                   const char*      writerName,
+                                   const char*      codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "multistep_position_update_contract_trace.txt", std::ios::app);
+    output << "side=" << side << " row=" << rowName << " step=" << step << " atom=" << atomIndex
+           << " x=" << std::setprecision(15) << x[XX] << " y=" << std::setprecision(15) << x[YY]
+           << " z=" << std::setprecision(15) << x[ZZ] << " vx=" << std::setprecision(15) << v[XX]
+           << " vy=" << std::setprecision(15) << v[YY] << " vz=" << std::setprecision(15) << v[ZZ]
+           << " fx=" << std::setprecision(15) << f[XX] << " fy=" << std::setprecision(15) << f[YY]
+           << " fz=" << std::setprecision(15) << f[ZZ] << " dt=" << std::setprecision(15) << dt
+           << " writer=" << writerName << " code_location=" << codeLocation << "\n";
+}
+
+void appendXvfStageTraceAtom(const char*    traceDirPath,
+                             const char*    side,
+                             const char*    stageName,
+                             Step           step,
+                             int            atomIndex,
+                             const RVec&    x,
+                             const RVec&    v,
+                             const RVec&    f,
+                             const char*    writerName,
+                             const char*    codeLocation,
+                             const char*    snapshotType,
+                             const char*    boundaryKind)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "multistep_xvf_stage_trace.txt", std::ios::app);
+    output << "side=" << side << " stage=" << stageName << " step=" << step << " atom=" << atomIndex
+           << " x=" << std::setprecision(15) << x[XX] << " y=" << std::setprecision(15) << x[YY]
+           << " z=" << std::setprecision(15) << x[ZZ] << " vx=" << std::setprecision(15) << v[XX]
+           << " vy=" << std::setprecision(15) << v[YY] << " vz=" << std::setprecision(15) << v[ZZ]
+           << " fx=" << std::setprecision(15) << f[XX] << " fy=" << std::setprecision(15) << f[YY]
+           << " fz=" << std::setprecision(15) << f[ZZ] << " writer=" << writerName
+           << " code_location=" << codeLocation << " snapshot_type=" << snapshotType
+           << " boundary_kind=" << boundaryKind << "\n";
+}
+
 // Names of integration steps, only used locally for error messages
 constexpr EnumerationArray<IntegrationStage, const char*> integrationStepNames = {
     "IntegrationStage::PositionsOnly",   "IntegrationStage::VelocitiesOnly",
@@ -465,10 +620,13 @@ void Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run()
 
     const int nth    = gmx_omp_nthreads_get(ModuleMultiThread::Update);
     const int homenr = mdAtoms_->mdatoms()->homenr;
+    const Step traceStep = g_positionUpdateTraceCurrentStep;
+    const bool tracePositionUpdate = shouldTracePositionUpdateStep(traceStep);
+    const bool traceXvfStage       = shouldTraceXvfStageStep(traceStep);
 
 #pragma omp parallel for num_threads(nth) schedule(static) default(none) \
         shared(x, xp, v, f, invMassPerDim)                               \
-        firstprivate(nth, homenr, lambdaStart, lambdaEnd, treatPRScalingMatrixAsDiagonal, diagonalOfPRScalingMatrix)
+        firstprivate(nth, homenr, lambdaStart, lambdaEnd, treatPRScalingMatrixAsDiagonal, diagonalOfPRScalingMatrix, traceStep, tracePositionUpdate, traceXvfStage)
     for (int th = 0; th < nth; th++)
     {
         try
@@ -512,7 +670,91 @@ void Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run()
                             diagonalOfPRScalingMatrix,
                             matrixPR_);
                 }
-                updatePositions(a, timestep_, x, xp, v);
+                if ((tracePositionUpdate || traceXvfStage) && (a == 0 || a == 5))
+                {
+                    const RVec xBefore = x[a];
+                    const RVec vBefore = v[a];
+                    const RVec fBefore = f[a];
+                    if (traceXvfStage)
+                    {
+                        if (const char* stageName = xvfPreUpdateStageName(traceStep); stageName != nullptr)
+                        {
+                            appendXvfStageTraceAtom(activeM2pTraceDirPath(),
+                                                    "PLAIN",
+                                                    stageName,
+                                                    traceStep,
+                                                    a,
+                                                    xBefore,
+                                                    vBefore,
+                                                    fBefore,
+                                                    "Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run",
+                                                    "src/gromacs/modularsimulator/propagator.cpp:658",
+                                                    "boundary_read",
+                                                    "read");
+                        }
+                        if (const char* stageName = xvfUpdateInputStageName(traceStep); stageName != nullptr)
+                        {
+                            appendXvfStageTraceAtom(activeM2pTraceDirPath(),
+                                                    "PLAIN",
+                                                    stageName,
+                                                    traceStep,
+                                                    a,
+                                                    xBefore,
+                                                    vBefore,
+                                                    fBefore,
+                                                    "Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run",
+                                                    "src/gromacs/modularsimulator/propagator.cpp:671",
+                                                    "boundary_read",
+                                                    "read");
+                        }
+                    }
+                    appendPositionUpdateTraceAtom(activeM2pTraceDirPath(),
+                                                  "PLAIN",
+                                                  "UPDATE_INPUT",
+                                                  traceStep,
+                                                  a,
+                                                  xBefore,
+                                                  vBefore,
+                                                  fBefore,
+                                                  timestep_,
+                                                  "Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run",
+                                                  "src/gromacs/modularsimulator/propagator.cpp:604");
+                    updatePositions(a, timestep_, x, xp, v);
+                    if (traceXvfStage)
+                    {
+                        if (const char* stageName = xvfPostPositionCommitStageName(traceStep);
+                            stageName != nullptr)
+                        {
+                            appendXvfStageTraceAtom(activeM2pTraceDirPath(),
+                                                    "PLAIN",
+                                                    stageName,
+                                                    traceStep,
+                                                    a,
+                                                    xp[a],
+                                                    vBefore,
+                                                    fBefore,
+                                                    "Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run",
+                                                    "src/gromacs/modularsimulator/propagator.cpp:690",
+                                                    "post_write_commit",
+                                                    "write");
+                        }
+                    }
+                    appendPositionUpdateTraceAtom(activeM2pTraceDirPath(),
+                                                  "PLAIN",
+                                                  "UPDATE_OUTPUT",
+                                                  traceStep,
+                                                  a,
+                                                  xp[a],
+                                                  vBefore,
+                                                  fBefore,
+                                                  timestep_,
+                                                  "Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run",
+                                                  "src/gromacs/modularsimulator/propagator.cpp:616");
+                }
+                else
+                {
+                    updatePositions(a, timestep_, x, xp, v);
+                }
             }
         }
         GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
@@ -648,25 +890,33 @@ void Propagator<integrationStage>::scheduleTask(Step                       step,
         {
             if (doSingleEndVelocityScaling_)
             {
-                registerRunFunction(
-                        [this]()
-                        {
-                            run<NumVelocityScalingValues::Single,
-                                ParrinelloRahmanVelocityScaling::Anisotropic,
-                                NumVelocityScalingValues::Single,
-                                NumPositionScalingValues::None>();
-                        });
+            registerRunFunction(
+                    [this, step]()
+                    {
+                        runWithPositionUpdateTraceStep(step,
+                                                       [this]()
+                                                       {
+                                                           run<NumVelocityScalingValues::Single,
+                                                               ParrinelloRahmanVelocityScaling::Anisotropic,
+                                                               NumVelocityScalingValues::Single,
+                                                               NumPositionScalingValues::None>();
+                                                       });
+                    });
             }
             else
             {
-                registerRunFunction(
-                        [this]()
-                        {
-                            run<NumVelocityScalingValues::Single,
-                                ParrinelloRahmanVelocityScaling::Anisotropic,
-                                NumVelocityScalingValues::None,
-                                NumPositionScalingValues::None>();
-                        });
+            registerRunFunction(
+                    [this, step]()
+                    {
+                        runWithPositionUpdateTraceStep(step,
+                                                       [this]()
+                                                       {
+                                                           run<NumVelocityScalingValues::Single,
+                                                               ParrinelloRahmanVelocityScaling::Anisotropic,
+                                                               NumVelocityScalingValues::None,
+                                                               NumPositionScalingValues::None>();
+                                                       });
+                    });
             }
         }
         else
@@ -674,23 +924,31 @@ void Propagator<integrationStage>::scheduleTask(Step                       step,
             if (doSingleEndVelocityScaling_)
             {
                 registerRunFunction(
-                        [this]()
+                        [this, step]()
                         {
-                            run<NumVelocityScalingValues::Single,
-                                ParrinelloRahmanVelocityScaling::No,
-                                NumVelocityScalingValues::Single,
-                                NumPositionScalingValues::None>();
+                            runWithPositionUpdateTraceStep(step,
+                                                           [this]()
+                                                           {
+                                                               run<NumVelocityScalingValues::Single,
+                                                                   ParrinelloRahmanVelocityScaling::No,
+                                                                   NumVelocityScalingValues::Single,
+                                                                   NumPositionScalingValues::None>();
+                                                           });
                         });
             }
             else
             {
                 registerRunFunction(
-                        [this]()
+                        [this, step]()
                         {
-                            run<NumVelocityScalingValues::Single,
-                                ParrinelloRahmanVelocityScaling::No,
-                                NumVelocityScalingValues::None,
-                                NumPositionScalingValues::None>();
+                            runWithPositionUpdateTraceStep(step,
+                                                           [this]()
+                                                           {
+                                                               run<NumVelocityScalingValues::Single,
+                                                                   ParrinelloRahmanVelocityScaling::No,
+                                                                   NumVelocityScalingValues::None,
+                                                                   NumPositionScalingValues::None>();
+                                                           });
                         });
             }
         }
@@ -702,23 +960,31 @@ void Propagator<integrationStage>::scheduleTask(Step                       step,
             if (doGroupEndVelocityScaling_)
             {
                 registerRunFunction(
-                        [this]()
+                        [this, step]()
                         {
-                            run<NumVelocityScalingValues::Multiple,
-                                ParrinelloRahmanVelocityScaling::Anisotropic,
-                                NumVelocityScalingValues::Multiple,
-                                NumPositionScalingValues::None>();
+                            runWithPositionUpdateTraceStep(step,
+                                                           [this]()
+                                                           {
+                                                               run<NumVelocityScalingValues::Multiple,
+                                                                   ParrinelloRahmanVelocityScaling::Anisotropic,
+                                                                   NumVelocityScalingValues::Multiple,
+                                                                   NumPositionScalingValues::None>();
+                                                           });
                         });
             }
             else
             {
                 registerRunFunction(
-                        [this]()
+                        [this, step]()
                         {
-                            run<NumVelocityScalingValues::Multiple,
-                                ParrinelloRahmanVelocityScaling::Anisotropic,
-                                NumVelocityScalingValues::None,
-                                NumPositionScalingValues::None>();
+                            runWithPositionUpdateTraceStep(step,
+                                                           [this]()
+                                                           {
+                                                               run<NumVelocityScalingValues::Multiple,
+                                                                   ParrinelloRahmanVelocityScaling::Anisotropic,
+                                                                   NumVelocityScalingValues::None,
+                                                                   NumPositionScalingValues::None>();
+                                                           });
                         });
             }
         }
@@ -727,23 +993,31 @@ void Propagator<integrationStage>::scheduleTask(Step                       step,
             if (doGroupEndVelocityScaling_)
             {
                 registerRunFunction(
-                        [this]()
+                        [this, step]()
                         {
-                            run<NumVelocityScalingValues::Multiple,
-                                ParrinelloRahmanVelocityScaling::No,
-                                NumVelocityScalingValues::Multiple,
-                                NumPositionScalingValues::None>();
+                            runWithPositionUpdateTraceStep(step,
+                                                           [this]()
+                                                           {
+                                                               run<NumVelocityScalingValues::Multiple,
+                                                                   ParrinelloRahmanVelocityScaling::No,
+                                                                   NumVelocityScalingValues::Multiple,
+                                                                   NumPositionScalingValues::None>();
+                                                           });
                         });
             }
             else
             {
                 registerRunFunction(
-                        [this]()
+                        [this, step]()
                         {
-                            run<NumVelocityScalingValues::Multiple,
-                                ParrinelloRahmanVelocityScaling::No,
-                                NumVelocityScalingValues::None,
-                                NumPositionScalingValues::None>();
+                            runWithPositionUpdateTraceStep(step,
+                                                           [this]()
+                                                           {
+                                                               run<NumVelocityScalingValues::Multiple,
+                                                                   ParrinelloRahmanVelocityScaling::No,
+                                                                   NumVelocityScalingValues::None,
+                                                                   NumPositionScalingValues::None>();
+                                                           });
                         });
             }
         }
@@ -753,23 +1027,31 @@ void Propagator<integrationStage>::scheduleTask(Step                       step,
         if (doParrinelloRahmanThisStep)
         {
             registerRunFunction(
-                    [this]()
+                    [this, step]()
                     {
-                        run<NumVelocityScalingValues::None,
-                            ParrinelloRahmanVelocityScaling::Anisotropic,
-                            NumVelocityScalingValues::None,
-                            NumPositionScalingValues::None>();
+                        runWithPositionUpdateTraceStep(step,
+                                                       [this]()
+                                                       {
+                                                           run<NumVelocityScalingValues::None,
+                                                               ParrinelloRahmanVelocityScaling::Anisotropic,
+                                                               NumVelocityScalingValues::None,
+                                                               NumPositionScalingValues::None>();
+                                                       });
                     });
         }
         else
         {
             registerRunFunction(
-                    [this]()
+                    [this, step]()
                     {
-                        run<NumVelocityScalingValues::None,
-                            ParrinelloRahmanVelocityScaling::No,
-                            NumVelocityScalingValues::None,
-                            NumPositionScalingValues::None>();
+                        runWithPositionUpdateTraceStep(step,
+                                                       [this]()
+                                                       {
+                                                           run<NumVelocityScalingValues::None,
+                                                               ParrinelloRahmanVelocityScaling::No,
+                                                               NumVelocityScalingValues::None,
+                                                               NumPositionScalingValues::None>();
+                                                       });
                     });
         }
     }
