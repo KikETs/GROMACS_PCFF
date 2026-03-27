@@ -1,0 +1,3 @@
+system	exact_coulsr_plus_ljsr	single_coulsr_plus_ljsr	difference_exact_minus_single	exact_minus_single_coulsr_plus_ljsr	identity_delta	interpretation
+small_oligomer	-27.003697148160900000	-27.003697148160900000	0.000000000000000000	0.000000000000000000	0.000000000000000000	exact identity
+small_salt_polymer_box	-167.521871483610000000	-167.521856910856000000	-0.000014572754000000	-0.000014573506594002	0.000000000752594002	a very small identity difference is visible

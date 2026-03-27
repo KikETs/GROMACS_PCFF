@@ -1,0 +1,316 @@
+{
+  "comparison_boundary": "same-file raw-sum identity comparison: (raw_sum(exact_step0_breakdown) - raw_sum(single_time_step_breakdown)) vs raw_sum(exact_minus_single_time_step)",
+  "mapping": {
+    "raw_sum_formula": "bond_kcal_mol + angle_kcal_mol + dihedral_kcal_mol + coul14_kcal_mol + coulsr_kcal_mol + coul_recip_kcal_mol + lj14_kcal_mol + ljsr_kcal_mol",
+    "component_extraction_code": "src/programs/mdrun/tests/pcff_short_md.cpp:1114-1121",
+    "delta_map_code": "src/programs/mdrun/tests/pcff_short_md.cpp:1130-1135",
+    "diagnostics_write_code": "src/programs/mdrun/tests/pcff_short_md.cpp:2242-2244",
+    "json_precision_code": "src/programs/mdrun/tests/pcff_short_md.cpp:1035",
+    "algebra": "Because exact_minus_single_time_step stores per-key (exact - single), the same linear raw-component sum applied to that section should equal raw_sum(exact_step0_breakdown) - raw_sum(single_time_step_breakdown).",
+    "note": "same-file raw-sum identity comparison; potential_total_kcal_mol is intentionally excluded from this boundary"
+  },
+  "systems": {
+    "small_oligomer": {
+      "file": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_oligomer_nve.json",
+      "sections": {
+        "exact_step0_breakdown": {
+          "section_line": 41,
+          "fields": {
+            "bond_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.bond_kcal_mol",
+              "line": 43,
+              "value": 24.8716784709
+            },
+            "angle_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.angle_kcal_mol",
+              "line": 42,
+              "value": 1.38759897954
+            },
+            "dihedral_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.dihedral_kcal_mol",
+              "line": 47,
+              "value": 9.73829666925
+            },
+            "coul14_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.coul14_kcal_mol",
+              "line": 44,
+              "value": -15.0060188702
+            },
+            "coulsr_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.coulsr_kcal_mol",
+              "line": 46,
+              "value": -26.9761787546
+            },
+            "coul_recip_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.coul_recip_kcal_mol",
+              "line": 45,
+              "value": 3.32412414295
+            },
+            "lj14_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.lj14_kcal_mol",
+              "line": 49,
+              "value": -0.125712093614
+            },
+            "ljsr_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.ljsr_kcal_mol",
+              "line": 50,
+              "value": -0.0275183935609
+            }
+          },
+          "raw_component_sum": "-2.8137298493349"
+        },
+        "single_time_step_breakdown": {
+          "section_line": 54,
+          "fields": {
+            "bond_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.bond_kcal_mol",
+              "line": 56,
+              "value": 24.8716784709
+            },
+            "angle_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.angle_kcal_mol",
+              "line": 55,
+              "value": 1.38759897954
+            },
+            "dihedral_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.dihedral_kcal_mol",
+              "line": 60,
+              "value": 9.73829666925
+            },
+            "coul14_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.coul14_kcal_mol",
+              "line": 57,
+              "value": -15.0060188702
+            },
+            "coulsr_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.coulsr_kcal_mol",
+              "line": 59,
+              "value": -26.9761787546
+            },
+            "coul_recip_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.coul_recip_kcal_mol",
+              "line": 58,
+              "value": 3.32412414295
+            },
+            "lj14_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.lj14_kcal_mol",
+              "line": 62,
+              "value": -0.125712093614
+            },
+            "ljsr_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.ljsr_kcal_mol",
+              "line": 63,
+              "value": -0.0275183935609
+            }
+          },
+          "raw_component_sum": "-2.8137298493349"
+        },
+        "exact_minus_single_time_step": {
+          "section_line": 28,
+          "fields": {
+            "bond_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.bond_kcal_mol",
+              "line": 30,
+              "value": 0
+            },
+            "angle_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.angle_kcal_mol",
+              "line": 29,
+              "value": 0
+            },
+            "dihedral_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.dihedral_kcal_mol",
+              "line": 34,
+              "value": 0
+            },
+            "coul14_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.coul14_kcal_mol",
+              "line": 31,
+              "value": 0
+            },
+            "coulsr_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.coulsr_kcal_mol",
+              "line": 33,
+              "value": 0
+            },
+            "coul_recip_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.coul_recip_kcal_mol",
+              "line": 32,
+              "value": 0
+            },
+            "lj14_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.lj14_kcal_mol",
+              "line": 36,
+              "value": 0
+            },
+            "ljsr_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.ljsr_kcal_mol",
+              "line": 37,
+              "value": 0
+            }
+          },
+          "raw_component_sum": "0"
+        }
+      },
+      "computed": {
+        "exact_raw_component_sum": "-2.8137298493349",
+        "single_raw_component_sum": "-2.8137298493349",
+        "difference_exact_minus_single": "0E-13",
+        "exact_minus_single_raw_component_sum": "0",
+        "identity_delta": "0E-13",
+        "interpretation": "exact identity"
+      }
+    },
+    "small_salt_polymer_box": {
+      "file": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_salt_polymer_box_nve.json",
+      "sections": {
+        "exact_step0_breakdown": {
+          "section_line": 42,
+          "fields": {
+            "bond_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.bond_kcal_mol",
+              "line": 44,
+              "value": 125.702750387
+            },
+            "angle_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.angle_kcal_mol",
+              "line": 43,
+              "value": 7.40078348047
+            },
+            "dihedral_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.dihedral_kcal_mol",
+              "line": 48,
+              "value": 17.3596387612
+            },
+            "coul14_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.coul14_kcal_mol",
+              "line": 45,
+              "value": -15.3550390532
+            },
+            "coulsr_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.coulsr_kcal_mol",
+              "line": 47,
+              "value": -167.366188297
+            },
+            "coul_recip_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.coul_recip_kcal_mol",
+              "line": 46,
+              "value": 99.40842871
+            },
+            "lj14_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.lj14_kcal_mol",
+              "line": 50,
+              "value": -0.182203763302
+            },
+            "ljsr_kcal_mol": {
+              "json_path": "diagnostics.exact_step0_breakdown.ljsr_kcal_mol",
+              "line": 51,
+              "value": -0.15568318661
+            }
+          },
+          "raw_component_sum": "66.812487038558"
+        },
+        "single_time_step_breakdown": {
+          "section_line": 55,
+          "fields": {
+            "bond_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.bond_kcal_mol",
+              "line": 57,
+              "value": 125.702750387
+            },
+            "angle_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.angle_kcal_mol",
+              "line": 56,
+              "value": 7.40078348047
+            },
+            "dihedral_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.dihedral_kcal_mol",
+              "line": 61,
+              "value": 17.3596387612
+            },
+            "coul14_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.coul14_kcal_mol",
+              "line": 58,
+              "value": -15.3550390532
+            },
+            "coulsr_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.coulsr_kcal_mol",
+              "line": 60,
+              "value": -167.36617371
+            },
+            "coul_recip_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.coul_recip_kcal_mol",
+              "line": 59,
+              "value": 99.40842871
+            },
+            "lj14_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.lj14_kcal_mol",
+              "line": 63,
+              "value": -0.182203763302
+            },
+            "ljsr_kcal_mol": {
+              "json_path": "diagnostics.single_time_step_breakdown.ljsr_kcal_mol",
+              "line": 64,
+              "value": -0.155683200856
+            }
+          },
+          "raw_component_sum": "66.812501611312"
+        },
+        "exact_minus_single_time_step": {
+          "section_line": 29,
+          "fields": {
+            "bond_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.bond_kcal_mol",
+              "line": 31,
+              "value": 0
+            },
+            "angle_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.angle_kcal_mol",
+              "line": 30,
+              "value": 0
+            },
+            "dihedral_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.dihedral_kcal_mol",
+              "line": 35,
+              "value": 0
+            },
+            "coul14_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.coul14_kcal_mol",
+              "line": 32,
+              "value": 0
+            },
+            "coulsr_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.coulsr_kcal_mol",
+              "line": 34,
+              "value": -1.4587752446e-05
+            },
+            "coul_recip_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.coul_recip_kcal_mol",
+              "line": 33,
+              "value": 0
+            },
+            "lj14_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.lj14_kcal_mol",
+              "line": 37,
+              "value": 0
+            },
+            "ljsr_kcal_mol": {
+              "json_path": "diagnostics.exact_minus_single_time_step.ljsr_kcal_mol",
+              "line": 38,
+              "value": 1.42458519981e-08
+            }
+          },
+          "raw_component_sum": "-0.0000145735065940019"
+        }
+      },
+      "computed": {
+        "exact_raw_component_sum": "66.812487038558",
+        "single_raw_component_sum": "66.812501611312",
+        "difference_exact_minus_single": "-0.000014572754",
+        "exact_minus_single_raw_component_sum": "-0.0000145735065940019",
+        "identity_delta": "7.525940019E-10",
+        "interpretation": "a tiny precision-scale identity difference is visible"
+      }
+    }
+  }
+}

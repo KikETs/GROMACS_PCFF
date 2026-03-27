@@ -1,0 +1,76 @@
+{
+  "file": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_salt_polymer_box_nve.json",
+  "sections": {
+    "exact_step0_breakdown": {
+      "section_line": 42,
+      "fields": {
+        "coulsr_kcal_mol": {
+          "json_path": "diagnostics.exact_step0_breakdown.coulsr_kcal_mol",
+          "line": 47,
+          "value": -167.366188297
+        },
+        "ljsr_kcal_mol": {
+          "json_path": "diagnostics.exact_step0_breakdown.ljsr_kcal_mol",
+          "line": 51,
+          "value": -0.15568318661
+        }
+      }
+    },
+    "single_time_step_breakdown": {
+      "section_line": 55,
+      "fields": {
+        "coulsr_kcal_mol": {
+          "json_path": "diagnostics.single_time_step_breakdown.coulsr_kcal_mol",
+          "line": 60,
+          "value": -167.36617371
+        },
+        "ljsr_kcal_mol": {
+          "json_path": "diagnostics.single_time_step_breakdown.ljsr_kcal_mol",
+          "line": 64,
+          "value": -0.155683200856
+        }
+      }
+    },
+    "exact_minus_single_time_step": {
+      "section_line": 29,
+      "fields": {
+        "coulsr_kcal_mol": {
+          "json_path": "diagnostics.exact_minus_single_time_step.coulsr_kcal_mol",
+          "line": 34,
+          "value": -1.4587752446e-05
+        },
+        "ljsr_kcal_mol": {
+          "json_path": "diagnostics.exact_minus_single_time_step.ljsr_kcal_mol",
+          "line": 38,
+          "value": 1.42458519981e-08
+        }
+      }
+    }
+  },
+  "mapping": {
+    "coulsr_single_term_identity_delta": "[(exact_step0_breakdown.coulsr_kcal_mol - single_time_step_breakdown.coulsr_kcal_mol) - exact_minus_single_time_step.coulsr_kcal_mol]",
+    "ljsr_single_term_identity_delta": "[(exact_step0_breakdown.ljsr_kcal_mol - single_time_step_breakdown.ljsr_kcal_mol) - exact_minus_single_time_step.ljsr_kcal_mol]",
+    "coulsr_plus_ljsr_two_term_identity_delta": "[((exact_step0_breakdown.coulsr_kcal_mol + exact_step0_breakdown.ljsr_kcal_mol) - (single_time_step_breakdown.coulsr_kcal_mol + single_time_step_breakdown.ljsr_kcal_mol)) - (exact_minus_single_time_step.coulsr_kcal_mol + exact_minus_single_time_step.ljsr_kcal_mol)]",
+    "signed_share_formula": "signed_share_percent = single_term_identity_delta / two_term_identity_delta * 100",
+    "absolute_share_formula": "absolute_share_percent = abs(single_term_identity_delta) / (abs(coulsr_single_term_identity_delta) + abs(ljsr_single_term_identity_delta)) * 100",
+    "denominator_handling": {
+      "signed_share_denominator": "signed two-term identity delta",
+      "absolute_share_denominator": "abs(coulsr single-term identity delta) + abs(ljsr single-term identity delta)"
+    },
+    "component_extraction_code": "src/programs/mdrun/tests/pcff_short_md.cpp:1118-1120",
+    "delta_map_code": "src/programs/mdrun/tests/pcff_short_md.cpp:1130-1135",
+    "diagnostics_write_code": "src/programs/mdrun/tests/pcff_short_md.cpp:2242-2244",
+    "json_precision_code": "src/programs/mdrun/tests/pcff_short_md.cpp:1035",
+    "note": "salt-box-only same-file allocation summary at the serialized JSON boundary; salt_box_coulsr_ljsr_allocation_note.md is the human-readable presentation artifact and salt_box_coulsr_ljsr_allocation_note.tsv is the machine-readable companion artifact; together they are paired presentation artifacts for the same summary, not a writer-localization result"
+  },
+  "computed": {
+    "system": "small_salt_polymer_box",
+    "coulsr_single_term_identity_delta": "7.52446E-10",
+    "ljsr_single_term_identity_delta": "1.480019E-13",
+    "coulsr_plus_ljsr_two_term_identity_delta": "7.525940019E-10",
+    "signed_coulsr_share_percent": "99.9803344300344735447459058469543723319435081455703002195293",
+    "signed_ljsr_share_percent": "0.0196655699655264552540941530456276680564918544296997804707059",
+    "absolute_coulsr_share_percent": "99.9803344300344735447459058469543723319435081455703002195293",
+    "absolute_ljsr_share_percent": "0.0196655699655264552540941530456276680564918544296997804707059"
+  }
+}

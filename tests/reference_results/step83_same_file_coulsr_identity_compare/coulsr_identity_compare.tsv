@@ -1,0 +1,3 @@
+system	exact_coulsr_kcal_mol	single_coulsr_kcal_mol	difference_exact_minus_single	exact_minus_single_coulsr_kcal_mol	identity_delta	interpretation
+small_oligomer	-26.976178754600000000	-26.976178754600000000	0.000000000000000000	0.000000000000000000	0.000000000000000000	exact identity
+small_salt_polymer_box	-167.366188297000000000	-167.366173710000000000	-0.000014587000000000	-0.000014587752446000	0.000000000752446000	a very small identity difference is visible
