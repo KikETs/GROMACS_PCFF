@@ -75,6 +75,7 @@
 #include "gromacs/mdtypes/forcerec.h"
 #include "gromacs/mdtypes/group.h"
 #include "gromacs/mdtypes/iforceprovider.h"
+#include "gromacs/mdtypes/exactrespaschedule.h"
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/interaction_const.h"
 #include "gromacs/mdtypes/md_enums.h"
@@ -110,6 +111,41 @@
 
 #include "gpuforcereduction.h"
 #include "mdgraph_gpu.h"
+
+namespace
+{
+
+std::vector<ListedForces::InteractionSelection> exactRespaListedForceSelections(
+        const gmx::ExactRespaParameters& exactRespa)
+{
+    std::vector<ListedForces::InteractionSelection> selections(exactRespa.levelStepFactors.size());
+    if (!exactRespa.enabled() || selections.empty())
+    {
+        return selections;
+    }
+
+    const auto assignSelection = [&selections](const int level, const ListedForces::InteractionGroup group)
+    {
+        if (level >= 0 && level < static_cast<int>(selections.size()))
+        {
+            selections[level].set(static_cast<int>(group));
+        }
+    };
+
+    const auto& forceLayout = exactRespa.forceLayout;
+    assignSelection(forceLayout.pair14Level, ListedForces::InteractionGroup::Pairs);
+    assignSelection(forceLayout.bondLevel, ListedForces::InteractionGroup::Bonds);
+    assignSelection(forceLayout.dihedralLevel, ListedForces::InteractionGroup::Dihedrals);
+    assignSelection(forceLayout.improperLevel, ListedForces::InteractionGroup::Impropers);
+    assignSelection(forceLayout.angleLevel, ListedForces::InteractionGroup::Angles);
+
+    // Keep the remaining listed interactions on the fastest exact-respa level.
+    selections[0].set(static_cast<int>(ListedForces::InteractionGroup::Rest));
+
+    return selections;
+}
+
+} // namespace
 
 ForceHelperBuffers::ForceHelperBuffers(bool haveDirectVirialContributions) :
     haveDirectVirialContributions_(haveDirectVirialContributions)
@@ -927,7 +963,12 @@ void init_forcerec(FILE*                            fplog,
     /* 1-4 interaction electrostatics */
     forcerec->fudgeQQ = mtop.ffparams.fudgeQQ;
 
-    if (simulationWork.useMts)
+    if (simulationWork.useExactRespa)
+    {
+        GMX_RELEASE_ASSERT(gmx::checkExactRespaRequirements(inputrec).empty(),
+                           "All exact r-RESPA requirements should be met here");
+    }
+    else if (simulationWork.useLegacyMtsSubsteps())
     {
         GMX_RELEASE_ASSERT(gmx::checkMtsRequirements(inputrec).empty(),
                            "All MTS requirements should be met here");
@@ -939,22 +980,34 @@ void init_forcerec(FILE*                            fplog,
             || gmx_mtop_ftype_count(mtop, InteractionFunction::FlatBottomedPositionRestraints) > 0
             || inputrec.nwall > 0 || inputrec.bRot || inputrec.bIMD;
     const bool exactLammpsRespaWithSplitNonbonded =
-            inputrec.useMts && inputrec.mtsMode == gmx::MtsMode::LammpsRespa
-            && inputrec.lammpsRespa.hasPairSplitting();
+            gmx::useExactRespa(inputrec) && gmx::exactRespaHasPairSplitting(inputrec);
     const bool haveDirectVirialContributionsSlow = usingFullElectrostatics(interactionConst->coulomb.type)
                                                    || usingLJPme(interactionConst->vdw.type);
-    const int pullMtsLevel = inputrec.bPull ? gmx::forceGroupMtsLevel(inputrec.mtsLevels, gmx::MtsForceGroups::Pull) : 0;
-    const int longrangeMtsLevel =
-            gmx::forceGroupMtsLevel(inputrec.mtsLevels, gmx::MtsForceGroups::LongrangeNonbonded);
-    for (int i = 0; i < (simulationWork.useMts ? static_cast<int>(inputrec.mtsLevels.size()) : 1); i++)
+    const int pullMtsLevel = inputrec.bPull
+                                     ? (gmx::useExactRespa(inputrec) ? gmx::exactRespaPullLevel(inputrec)
+                                                                     : gmx::forceGroupMtsLevel(inputrec.mtsLevels, gmx::MtsForceGroups::Pull))
+                                     : 0;
+    const int longrangeMtsLevel = gmx::useExactRespa(inputrec)
+                                          ? gmx::exactRespaLongrangeNonbondedLevel(inputrec)
+                                          : gmx::forceGroupMtsLevel(inputrec.mtsLevels,
+                                                                    gmx::MtsForceGroups::LongrangeNonbonded);
+    const bool useExactRespaRuntime = simulationWork.useExactRespa;
+    const bool useLegacyMtsRuntime  = simulationWork.useLegacyMtsSubsteps();
+    const int numRuntimeMtsLevels   = useExactRespaRuntime
+                                            ? gmx::exactRespaNumLevels(inputrec)
+                                            : (useLegacyMtsRuntime
+                                                       ? static_cast<int>(inputrec.mtsLevels.size())
+                                                       : 1);
+    for (int i = 0; i < numRuntimeMtsLevels; i++)
     {
         bool haveDirectVirialContributions =
-                ((!simulationWork.useMts || i == 0) && haveDirectVirialContributionsFast)
+                (((!useExactRespaRuntime && !useLegacyMtsRuntime) || i == 0)
+                 && haveDirectVirialContributionsFast)
                 || (inputrec.bPull && pullMtsLevel == i)
                 || (haveDirectVirialContributionsSlow
-                    && ((simulationWork.useMts && longrangeMtsLevel == i)
-                        || (!simulationWork.useMts && i == 0)))
-                || (exactLammpsRespaWithSplitNonbonded && inputrec.lammpsRespa.outerLevel == i);
+                    && (((useExactRespaRuntime || useLegacyMtsRuntime) && longrangeMtsLevel == i)
+                        || ((!useExactRespaRuntime && !useLegacyMtsRuntime) && i == 0)))
+                || (exactLammpsRespaWithSplitNonbonded && gmx::exactRespaNonbondedOuterLevel(inputrec) == i);
         forcerec->forceHelperBuffers.emplace_back(haveDirectVirialContributions);
     }
 
@@ -1082,33 +1135,49 @@ void init_forcerec(FILE*                            fplog,
     }
 
     /* Initialize the thread working data for bonded interactions */
-    if (simulationWork.useMts)
+    if (useExactRespaRuntime || useLegacyMtsRuntime)
     {
         // Add one ListedForces object for each MTS level
         bool isFirstLevel = true;
-        for (const auto& mtsLevel : inputrec.mtsLevels)
+        const auto exactRespaSelections =
+                gmx::useExactRespa(inputrec) ? exactRespaListedForceSelections(inputrec.exactRespa)
+                                             : std::vector<ListedForces::InteractionSelection>();
+        const auto* listedForceSelections =
+                gmx::useExactRespa(inputrec) ? &exactRespaSelections : nullptr;
+        const auto* mtsLevels = gmx::useExactRespa(inputrec) ? nullptr : &inputrec.mtsLevels;
+        const int   numListedForceLevels =
+                gmx::useExactRespa(inputrec) ? static_cast<int>(listedForceSelections->size())
+                                             : static_cast<int>(mtsLevels->size());
+        for (int level = 0; level < numListedForceLevels; ++level)
         {
             ListedForces::InteractionSelection interactionSelection;
-            const auto&                        forceGroups = mtsLevel.forceGroups;
-            if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Pair)])
+            if (gmx::useExactRespa(inputrec))
             {
-                interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Pairs));
+                interactionSelection = (*listedForceSelections)[level];
             }
-            if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Bond)])
+            else
             {
-                interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Bonds));
-            }
-            if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Dihedral)])
-            {
-                interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Dihedrals));
-            }
-            if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Improper)])
-            {
-                interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Impropers));
-            }
-            if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Angle)])
-            {
-                interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Angles));
+                const auto& forceGroups = (*mtsLevels)[level].forceGroups;
+                if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Pair)])
+                {
+                    interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Pairs));
+                }
+                if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Bond)])
+                {
+                    interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Bonds));
+                }
+                if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Dihedral)])
+                {
+                    interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Dihedrals));
+                }
+                if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Improper)])
+                {
+                    interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Impropers));
+                }
+                if (forceGroups[static_cast<int>(gmx::MtsForceGroups::Angle)])
+                {
+                    interactionSelection.set(static_cast<int>(ListedForces::InteractionGroup::Angles));
+                }
             }
             if (isFirstLevel)
             {

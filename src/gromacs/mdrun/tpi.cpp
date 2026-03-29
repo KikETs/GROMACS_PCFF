@@ -592,6 +592,7 @@ std::pair<double, double> TestParticleInsertion::performSingleInsertion(const do
              stateGlobal->v.arrayRefWithPadding().unpaddedArrayRef(),
              &stateGlobal->hist,
              &forceBuffers_.view(),
+             nullptr,
              force_vir,
              &mdatoms_,
              &enerd_,

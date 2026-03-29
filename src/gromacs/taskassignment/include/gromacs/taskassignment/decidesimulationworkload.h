@@ -148,6 +148,18 @@ StepWorkload setupStepWorkload(int                           legacyFlags,
                                const DomainLifetimeWorkload& domainWork,
                                const SimulationWorkload&     simulationWork);
 
+ExactRespaStepWork setupExactRespaStepWork(int                       legacyFlags,
+                                           const t_inputrec&         inputrec,
+                                           int64_t                   step,
+                                           const DomainLifetimeWorkload& domainWork,
+                                           const SimulationWorkload& simulationWork);
+
+StepWorkload setupExactRespaStepWorkload(int                       legacyFlags,
+                                         const t_inputrec&         inputrec,
+                                         int64_t                   step,
+                                         const DomainLifetimeWorkload& domainWork,
+                                         const SimulationWorkload& simulationWork);
+
 } // namespace gmx
 
 #endif

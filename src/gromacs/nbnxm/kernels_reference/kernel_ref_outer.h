@@ -39,6 +39,45 @@
 #define XI_STRIDE 3
 #define FI_STRIDE 3
 
+bool m2pPlain4x4CoulombFirstWriteTraceEnabled();
+void noteM2pPlain4x4CoulombFirstWrite(real        targetBefore,
+                                      real        writeValue,
+                                      real        targetAfter,
+                                      int         energyIndex,
+                                      const char* codeLocation);
+bool m2pPlain4x4CoulombProducerTraceEnabled();
+void noteM2pPlain4x4CoulombProducer(int         pairI,
+                                    int         pairJ,
+                                    int         energyIndex,
+                                    real        excludedMask,
+                                    real        qq,
+                                    real        interact,
+                                    real        rinv,
+                                    real        ewaldShift,
+                                    int         tableIndex,
+                                    real        frac,
+                                    real        fexcl,
+                                    real        vcorr,
+                                    real        vcoul,
+                                    real        vcoulUnmasked,
+                                    const char* codeLocation);
+bool m2pPlain4x4CoulombSelfTraceEnabled();
+void noteM2pPlain4x4CoulombSelfContribution(int         atom,
+                                            int         energyIndex,
+                                            real        charge,
+                                            real        selfEnergy,
+                                            real        targetBefore,
+                                            real        targetAfter,
+                                            const char* codeLocation);
+void resetM2pPlain4x4CoulombContractReplay();
+bool m2pPlain4x4CoulombContractReplayEnabled();
+void noteM2pPlain4x4CoulombContractReplayPairContribution(int energyIndex, real vcoul);
+void noteM2pPlain4x4CoulombContractReplaySelfContribution(int energyIndex, real selfEnergy);
+double readM2pPlain4x4CoulombContractReplayTotal();
+void resetM2pPlain4x4LjContractReplay();
+bool m2pPlain4x4LjContractReplayEnabled();
+void noteM2pPlain4x4LjContractReplayPairContribution(real vlj);
+double readM2pPlain4x4LjContractReplayTotal();
 
 /* All functionality defines are set here, except for:
  * CALC_ENERGIES, ENERGY_GROUPS which are defined before.
@@ -193,6 +232,15 @@ void
 
     const nbnxn_cj_t* l_cj = pairlist.cj.list_.data();
 
+#ifdef GMX_PCFF_RESPA_M2Q_PLAIN_RAW_TRACE_ENABLED
+    const bool m2qPlainEarliestRawStageEnabled = m2qPlain4x4EarliestRawTraceEnabled();
+    double     m2qPlainEarliestRawLjLocal      = 0.0;
+#endif
+#ifdef GMX_PCFF_RESPA_M2R_PLAIN_TRACE_ENABLED
+    const bool m2rPlainKernelLocalStageEnabled = m2rPlain4x4AmplificationTraceEnabled();
+    double     m2rPlainKernelLocalLjLocal      = 0.0;
+#endif
+
     for (const nbnxn_ci_t& ciEntry : pairlist.ci)
     {
         const int ish = (ciEntry.shift & NBNXN_CI_SHIFT);
@@ -279,15 +327,50 @@ void
 
 #    if HAVE_ELECTROSTATICS
                     /* Coulomb self interaction */
-                    Vc[egp_ind] -= qi[i] * q[ci * UNROLLI + i] * Vc_sub_self;
+                    const real selfCoulombDelta = -qi[i] * q[ci * UNROLLI + i] * Vc_sub_self;
+                    if (m2pPlain4x4CoulombSelfTraceEnabled() && selfCoulombDelta != 0.0)
+                    {
+                        const int  atom         = ci * UNROLLI + i;
+                        const real targetBefore = Vc[egp_ind];
+                        const real targetAfter  = targetBefore + selfCoulombDelta;
+                        noteM2pPlain4x4CoulombSelfContribution(atom,
+                                                               egp_ind,
+                                                               q[atom],
+                                                               selfCoulombDelta,
+                                                               targetBefore,
+                                                               targetAfter,
+                                                               "src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:313");
+                    }
+                    if (m2pPlain4x4CoulombFirstWriteTraceEnabled() && selfCoulombDelta != 0.0)
+                    {
+                        const real targetBefore = Vc[egp_ind];
+                        const real targetAfter  = targetBefore + selfCoulombDelta;
+                        noteM2pPlain4x4CoulombFirstWrite(targetBefore,
+                                                         selfCoulombDelta,
+                                                         targetAfter,
+                                                         egp_ind,
+                                                         "src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:291");
+                    }
+                    if (m2pPlain4x4CoulombContractReplayEnabled() && selfCoulombDelta != 0.0)
+                    {
+                        noteM2pPlain4x4CoulombContractReplaySelfContribution(egp_ind, selfCoulombDelta);
+                    }
+                    Vc[egp_ind] += selfCoulombDelta;
 #    endif
 
 #    ifdef LJ_EWALD
                     /* LJ Ewald self interaction */
-                    Vvdw[egp_ind] +=
+                    const real ljSelfEnergy =
                             0.5
                             * nbatParams.nbfp[nbatParams.type[ci * UNROLLI + i] * (nbatParams.numTypes + 1) * 2]
                             / 6 * lje_coeff6_6;
+                    Vvdw[egp_ind] += ljSelfEnergy;
+#        ifdef GMX_PCFF_RESPA_M2R_PLAIN_TRACE_ENABLED
+                    if (m2rPlainKernelLocalStageEnabled)
+                    {
+                        m2rPlainKernelLocalLjLocal += ljSelfEnergy;
+                    }
+#        endif
 #    endif
                 }
             }
@@ -383,8 +466,24 @@ void
 #ifdef CALC_ENERGIES
 #    ifndef ENERGY_GROUPS
         *Vvdw += Vvdw_ci;
+#        ifdef GMX_PCFF_RESPA_M2U_PLAIN_TRACE_ENABLED
+        if (m2uPlain4x4WriteOrdinalTraceEnabled() && Vvdw_ci != 0.0)
+        {
+            noteM2uPlain4x4WriteTargetTotal(Vvdw, 1);
+        }
+#        endif
 
 #        if HAVE_ELECTROSTATICS
+        if (m2pPlain4x4CoulombFirstWriteTraceEnabled() && Vc_ci != 0.0)
+        {
+            const real targetBefore = *Vc;
+            const real targetAfter  = targetBefore + Vc_ci;
+            noteM2pPlain4x4CoulombFirstWrite(targetBefore,
+                                             Vc_ci,
+                                             targetAfter,
+                                             0,
+                                             "src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h:410");
+        }
         *Vc += Vc_ci;
 #        endif
 #    endif
@@ -393,6 +492,19 @@ void
 
 #ifdef COUNT_PAIRS
     printf("atom pairs %d\n", npair);
+#endif
+
+#ifdef GMX_PCFF_RESPA_M2Q_PLAIN_RAW_TRACE_ENABLED
+    if (m2qPlainEarliestRawStageEnabled)
+    {
+        accumulateM2qPlain4x4EarliestRawTrace(m2qPlainEarliestRawLjLocal);
+    }
+#endif
+#ifdef GMX_PCFF_RESPA_M2R_PLAIN_TRACE_ENABLED
+    if (m2rPlainKernelLocalStageEnabled)
+    {
+        accumulateM2rPlain4x4KernelLocalAggregateTrace(m2rPlainKernelLocalLjLocal);
+    }
 #endif
 }
 

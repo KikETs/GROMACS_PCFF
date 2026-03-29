@@ -138,6 +138,7 @@
 #include "gromacs/mdtypes/fcdata.h"
 #include "gromacs/mdtypes/forcerec.h"
 #include "gromacs/mdtypes/group.h"
+#include "gromacs/mdtypes/exactrespaschedule.h"
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/interaction_const.h"
 #include "gromacs/mdtypes/locality.h"
@@ -1412,7 +1413,7 @@ int Mdrunner::mdrunner()
     // library supported that.
     const bool canUseDirectGpuComm =
             decideWhetherDirectGpuCommunicationCanBeUsed(hwinfo_->minGpuAwareMpiStatus,
-                                                         inputrec->useMts,
+                                                         gmx::useMtsSubstepping(*inputrec),
                                                          replExParams.exchangeInterval > 0,
                                                          (inputrec->eSwapCoords != SwapType::No),
                                                          gpusWereDetected,
@@ -1887,8 +1888,7 @@ int Mdrunner::mdrunner()
             }
         }
 
-        if (inputrec->useMts && inputrec->mtsMode == gmx::MtsMode::LammpsRespa
-            && inputrec->lammpsRespa.hasPairSplitting())
+        if (gmx::useExactRespa(*inputrec) && gmx::exactRespaHasPairSplitting(*inputrec))
         {
             const real requiredPlainPairlistRange = std::max(fr->ic->coulomb.cutoff, fr->ic->vdw.cutoff);
             fr->plainPairlistRange = std::max(fr->plainPairlistRange.value_or(0.0_real), requiredPlainPairlistRange);

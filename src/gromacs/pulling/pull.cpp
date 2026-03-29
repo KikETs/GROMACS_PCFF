@@ -2134,9 +2134,8 @@ struct pull_t* init_pull(FILE*                     fplog,
                           enumValueToString(PullingAlgorithm::Umbrella));
             }
 
-            GMX_RELEASE_ASSERT(
-                    !ir->useMts,
-                    "Constraint pulling can not be combined with multiple time stepping");
+            GMX_RELEASE_ASSERT(!(gmx::useExactRespa(*ir) || gmx::useMtsSubstepping(*ir)),
+                               "Constraint pulling can not be combined with substepped dynamics");
 
             pull->bConstraint = TRUE;
         }

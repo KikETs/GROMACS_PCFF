@@ -79,8 +79,8 @@ public:
     bool computeEnergy = false;
     //! Whether (any) forces need to be computed this step, not only energies
     bool computeForces = false;
-    //! Whether only the MTS combined force buffers are needed and not the separate normal force buffer.
-    bool useOnlyMtsCombinedForceBuffer = false;
+    //! Whether only the combined substep force buffers are needed and not the separate normal force buffer.
+    bool useOnlyCombinedForceBuffer = false;
     //! Whether nonbonded forces need to be computed this step
     bool computeNonbondedForces = false;
     //! Whether listed forces need to be computed this step
@@ -109,6 +109,23 @@ public:
     bool combineMtsForcesBeforeHaloExchange = false;
     //! Whether to clear local force buffer on the device early on in the step
     bool clearGpuFBufferEarly = false;
+};
+
+/*! \libinternal
+ * \brief Describes exact r-RESPA-specific per-step schedule ownership.
+ *
+ * This is intentionally separate from StepWorkload so the exact path does not
+ * read MTS-named scheduling fields from the generic run workload.
+ */
+class ExactRespaStepWork
+{
+public:
+    //! Highest active exact r-RESPA level on this step.
+    int highestActiveLevel = 0;
+    //! Whether the exact path needs any slow force levels this step.
+    bool haveSlowForceLevels = false;
+    //! Whether exact slow forces should be combined before halo exchange.
+    bool combineForcesBeforeHaloExchange = false;
 };
 
 /*! \libinternal
@@ -169,8 +186,8 @@ class SimulationWorkload
 public:
     //! Whether to compute nonbonded pair interactions
     bool computeNonbonded = false;
-    //! MTS level for nonbonded pair forces, 0 without MTS or when evaluated every base step
-    int nonbondedMtsLevel = 0;
+    //! Substep level for nonbonded pair forces, 0 when evaluated every base step
+    int nonbondedSubstepLevel = 0;
     //! Whether total dipole needs to be computed
     bool computeMuTot = false;
     //! Whether the box might change over the course of the simulation
@@ -219,8 +236,10 @@ public:
     bool useGpuPmeDecomposition = false;
     //! If there is an Ewald surface (dipole) term to compute
     bool haveEwaldSurfaceContribution = false;
-    //! Whether to use multiple time stepping
+    //! Whether to use legacy multiple time stepping
     bool useMts = false;
+    //! Whether to use standalone exact r-RESPA
+    bool useExactRespa = false;
     //! Whether a GPU graph should be used to execute steps in the MD loop if run conditions allow.
     bool useMdGpuGraph = false;
     //! Whether to use NVSHMEM enabled GPU initiated communication.
@@ -235,6 +254,16 @@ public:
     {
         return useGpuPme && !haveSeparatePmeRank;
     }
+
+#if !defined(_MSC_VER)
+    __attribute__((always_inline))
+#endif
+    bool
+    useLegacyMtsSubsteps() const
+    {
+        return useMts;
+    }
+
 };
 
 class MdrunScheduleWorkload
@@ -248,6 +277,9 @@ public:
 
     //! Workload descriptor for information that may change per-step
     StepWorkload stepWork;
+
+    //! Exact r-RESPA-only per-step schedule data.
+    ExactRespaStepWork exactRespaStepWork;
 };
 
 } // namespace gmx

@@ -44,8 +44,13 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <iterator>
+#include <sstream>
+#include <string>
 
 #include "gromacs/commandline/filenm.h"
 #include "gromacs/domdec/domdec.h"
@@ -107,6 +112,133 @@ struct gmx_walltime_accounting;
 
 namespace gmx
 {
+static const char* activeM2pTraceDirPath()
+{
+    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
+}
+
+static bool shouldTraceXvfStageStep(const Step step)
+{
+    const char* traceDir = activeM2pTraceDirPath();
+    const char* value    = std::getenv("GMX_PCFF_RESPA_TRACE_XVF_STEPS");
+    if (traceDir == nullptr || value == nullptr || *value == '\0')
+    {
+        return false;
+    }
+
+    std::stringstream ss(value);
+    std::string       item;
+    while (std::getline(ss, item, ','))
+    {
+        if (!item.empty() && step == std::stoll(item))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+static const char* xvfLoopEntryStageName(const Step step)
+{
+    return (step == 0) ? "STEP0_LOOP_ENTRY_XVF"
+           : (step == 1) ? "STEP1_LOOP_ENTRY_XVF"
+           : (step == 2) ? "STEP2_LOOP_ENTRY_XVF"
+           : (step == 3) ? "STEP3_LOOP_ENTRY_XVF"
+           : (step == 4) ? "STEP4_LOOP_ENTRY_XVF"
+           : (step == 5) ? "STEP5_LOOP_ENTRY_XVF"
+           : (step == 6) ? "STEP6_LOOP_ENTRY_XVF"
+           : (step == 7) ? "STEP7_LOOP_ENTRY_XVF"
+           : (step == 8) ? "STEP8_LOOP_ENTRY_XVF"
+           : (step == 9) ? "STEP9_LOOP_ENTRY_XVF"
+           : (step == 10) ? "STEP10_LOOP_ENTRY_XVF"
+           : (step == 11) ? "STEP11_LOOP_ENTRY_XVF"
+           : (step == 12) ? "STEP12_LOOP_ENTRY_XVF"
+           : (step == 13) ? "STEP13_LOOP_ENTRY_XVF"
+                         : nullptr;
+}
+
+static const char* xvfEndStageName(const Step step)
+{
+    return (step == 0) ? "STEP0_END_XVF"
+           : (step == 1) ? "STEP1_END_XVF"
+           : (step == 2) ? "STEP2_END_XVF"
+           : (step == 3) ? "STEP3_END_XVF"
+           : (step == 4) ? "STEP4_END_XVF"
+           : (step == 5) ? "STEP5_END_XVF"
+           : (step == 6) ? "STEP6_END_XVF"
+           : (step == 7) ? "STEP7_END_XVF"
+           : (step == 8) ? "STEP8_END_XVF"
+           : (step == 9) ? "STEP9_END_XVF"
+           : (step == 10) ? "STEP10_END_XVF"
+           : (step == 11) ? "STEP11_END_XVF"
+           : (step == 12) ? "STEP12_END_XVF"
+           : (step == 13) ? "STEP13_END_XVF"
+                         : nullptr;
+}
+
+static void appendModularBoundarySnapshotPair(const char*                    traceDirPath,
+                                              const char*                    stageName,
+                                              Step                           step,
+                                              ArrayRefWithPadding<const RVec> coords,
+                                              const char*                    writerName,
+                                              const char*                    codeLocation)
+{
+    const auto unpaddedCoords = coords.unpaddedArrayRef();
+    if (traceDirPath == nullptr || *traceDirPath == '\0' || unpaddedCoords.ssize() <= 5)
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "multistep_md_loop_boundary_trace.txt", std::ios::app);
+    for (const int atomIndex : { 0, 5 })
+    {
+        output << "side=PLAIN step=" << step << " stage=" << stageName << " atom=" << atomIndex << " x="
+               << std::setprecision(15) << unpaddedCoords[atomIndex][XX] << " y=" << std::setprecision(15)
+               << unpaddedCoords[atomIndex][YY] << " z=" << std::setprecision(15)
+               << unpaddedCoords[atomIndex][ZZ]
+               << " writer=" << writerName << " code_location=" << codeLocation
+               << " snapshot_type=boundary_read\n";
+    }
+}
+
+static void appendModularXvfStageTracePair(const char*          traceDirPath,
+                                           const char*          stageName,
+                                           Step                 step,
+                                           ArrayRef<const RVec> position,
+                                           ArrayRef<const RVec> velocity,
+                                           ArrayRef<const RVec> force,
+                                           const char*          writerName,
+                                           const char*          codeLocation,
+                                           const char*          snapshotType,
+                                           const char*          boundaryKind)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0' || position.size() <= 5 || velocity.size() <= 5
+        || force.size() <= 5)
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "multistep_xvf_stage_trace.txt", std::ios::app);
+    for (const int atomIndex : { 0, 5 })
+    {
+        output << "side=PLAIN stage=" << stageName << " step=" << step << " atom=" << atomIndex << " x="
+               << std::setprecision(15) << position[atomIndex][XX] << " y=" << std::setprecision(15)
+               << position[atomIndex][YY] << " z=" << std::setprecision(15) << position[atomIndex][ZZ]
+               << " vx=" << std::setprecision(15) << velocity[atomIndex][XX] << " vy="
+               << std::setprecision(15) << velocity[atomIndex][YY] << " vz=" << std::setprecision(15)
+               << velocity[atomIndex][ZZ] << " fx=" << std::setprecision(15) << force[atomIndex][XX]
+               << " fy=" << std::setprecision(15) << force[atomIndex][YY] << " fz="
+               << std::setprecision(15) << force[atomIndex][ZZ] << " writer=" << writerName
+               << " code_location=" << codeLocation << " snapshot_type=" << snapshotType
+               << " boundary_kind=" << boundaryKind << "\n";
+    }
+}
+
 ModularSimulatorAlgorithm::ModularSimulatorAlgorithm(std::string              topologyName,
                                                      FILE*                    fplog,
                                                      t_commrec&               cr,
@@ -272,6 +404,30 @@ void ModularSimulatorAlgorithm::simulatorTeardown()
 
 void ModularSimulatorAlgorithm::preStep(Step step, Time gmx_unused time)
 {
+    if (step == 5)
+    {
+        appendModularBoundarySnapshotPair(activeM2pTraceDirPath(),
+                                          "STEP5_LOOP_ENTRY_STATE_X",
+                                          step,
+                                          statePropagatorData_->constPositionsView(),
+                                          "ModularSimulatorAlgorithm::preStep",
+                                          "src/gromacs/modularsimulator/simulatoralgorithm.cpp:297");
+    }
+    if (const char* stageName = xvfLoopEntryStageName(step);
+        stageName != nullptr && shouldTraceXvfStageStep(step))
+    {
+        appendModularXvfStageTracePair(activeM2pTraceDirPath(),
+                                       stageName,
+                                       step,
+                                       statePropagatorData_->constPositionsView().unpaddedArrayRef(),
+                                       statePropagatorData_->constVelocitiesView().unpaddedArrayRef(),
+                                       statePropagatorData_->constForcesView().force(),
+                                       "ModularSimulatorAlgorithm::preStep",
+                                       "src/gromacs/modularsimulator/simulatoralgorithm.cpp:338",
+                                       "boundary_read",
+                                       "read");
+    }
+
     if (stopHandler_->stoppingAfterCurrentStep(step) && step != signalHelper_->lastStep_)
     {
         /*
@@ -300,6 +456,29 @@ void ModularSimulatorAlgorithm::preStep(Step step, Time gmx_unused time)
 
 void ModularSimulatorAlgorithm::postStep(Step step, Time gmx_unused time)
 {
+    if (step == 4)
+    {
+        appendModularBoundarySnapshotPair(activeM2pTraceDirPath(),
+                                          "STEP4_END_STATE_X",
+                                          step,
+                                          statePropagatorData_->constPositionsView(),
+                                          "ModularSimulatorAlgorithm::postStep",
+                                          "src/gromacs/modularsimulator/simulatoralgorithm.cpp:327");
+    }
+    if (const char* stageName = xvfEndStageName(step); stageName != nullptr && shouldTraceXvfStageStep(step))
+    {
+        appendModularXvfStageTracePair(activeM2pTraceDirPath(),
+                                       stageName,
+                                       step,
+                                       statePropagatorData_->constPositionsView().unpaddedArrayRef(),
+                                       statePropagatorData_->constVelocitiesView().unpaddedArrayRef(),
+                                       statePropagatorData_->constForcesView().force(),
+                                       "ModularSimulatorAlgorithm::postStep",
+                                       "src/gromacs/modularsimulator/simulatoralgorithm.cpp:377",
+                                       "boundary_read",
+                                       "read");
+    }
+
     // Output stuff
     if (cr_.commMyGroup.isMainRank())
     {
@@ -374,6 +553,19 @@ void ModularSimulatorAlgorithm::populateTaskQueue()
     if (domDecHelper_)
     {
         domDecHelper_->run(step_, time);
+    }
+    if (shouldTraceXvfStageStep(step_))
+    {
+        appendModularXvfStageTracePair(activeM2pTraceDirPath(),
+                                       "INITIAL_XVF",
+                                       step_,
+                                       statePropagatorData_->constPositionsView().unpaddedArrayRef(),
+                                       statePropagatorData_->constVelocitiesView().unpaddedArrayRef(),
+                                       statePropagatorData_->constForcesView().force(),
+                                       "ModularSimulatorAlgorithm::run",
+                                       "src/gromacs/modularsimulator/simulatoralgorithm.cpp:544",
+                                       "boundary_read",
+                                       "read");
     }
 
     do

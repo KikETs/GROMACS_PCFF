@@ -99,6 +99,48 @@
 namespace gmx
 {
 
+namespace
+{
+
+void appendOwnershipHandoffTraceLine(const char* traceDirPath, const std::string& filename, const std::string& line)
+{
+    GMX_RELEASE_ASSERT(traceDirPath != nullptr && *traceDirPath != '\0',
+                       "Need a valid ownership handoff trace directory");
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::filesystem::path outputPath = traceDir / filename;
+
+    FILE* dumpFile = std::fopen(outputPath.string().c_str(), "a");
+    if (dumpFile == nullptr)
+    {
+        gmx_fatal(FARGS, "Could not open ownership handoff trace output '%s'", outputPath.string().c_str());
+    }
+    std::fprintf(dumpFile, "%s\n", line.c_str());
+    std::fclose(dumpFile);
+}
+
+std::string joinIndexList(const ArrayRef<const int> values)
+{
+    std::string result;
+    for (Index index = 0; index < values.ssize(); ++index)
+    {
+        if (!result.empty())
+        {
+            result += ",";
+        }
+        result += std::to_string(values[index]);
+    }
+    return result.empty() ? std::string("none") : result;
+}
+
+bool arrayRefContains(const ArrayRef<const int> values, const int target)
+{
+    return std::find(values.begin(), values.end(), target) != values.end();
+}
+
+} // namespace
+
 // Whether we use SIMD to compute the distance between a pair of clusters for the GPU pair list
 static constexpr bool c_useSimdGpuClusterPairDistance(const PairlistType layoutType)
 {
@@ -1068,6 +1110,13 @@ static void setExclusionsForIEntry(const GridSet&          gridSet,
                                    int                     na_cj_2log,
                                    const ListOfLists<int>& exclusions)
 {
+    const char* ownershipTraceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+    static bool dumpedRuntimeExclusionInput = false;
+    static bool dumpedTargetBitClearTrace   = false;
+    constexpr int targetAtomI               = 0;
+    constexpr int targetAtomJ               = 1;
+    constexpr int controlAtomJ              = 4;
+
     // Set the exclusions for the current (ie. last) i-entry in the list
     const nbnxn_ci_t& currentIEntry = nbl->ci.back();
     if (currentIEntry.cj_ind_end == currentIEntry.cj_ind_start)
@@ -1090,6 +1139,20 @@ static void setExclusionsForIEntry(const GridSet&          gridSet,
         const int iAtom  = atomIndices[iIndex];
         if (iAtom >= 0)
         {
+            if (!dumpedRuntimeExclusionInput && ownershipTraceDirPath != nullptr
+                && *ownershipTraceDirPath != '\0' && iAtom == targetAtomI)
+            {
+                const auto exclusionsForAtom = exclusions[iAtom];
+                appendOwnershipHandoffTraceLine(
+                        ownershipTraceDirPath,
+                        "step0_runtime_exclusions_input.txt",
+                        "stage=runtime_exclusions_input source=top.excls_via_constructPairlist atom=0 exclusions="
+                                + joinIndexList(exclusionsForAtom) + " contains_target="
+                                + std::string(arrayRefContains(exclusionsForAtom, targetAtomJ) ? "true" : "false")
+                                + " contains_control="
+                                + std::string(arrayRefContains(exclusionsForAtom, controlAtomJ) ? "true" : "false"));
+                dumpedRuntimeExclusionInput = true;
+            }
             /* Loop over the topology-based exclusions for this i-atom */
             for (const int jAtom : exclusions[iAtom])
             {
@@ -1123,8 +1186,30 @@ static void setExclusionsForIEntry(const GridSet&          gridSet,
                          * interaction bit.
                          */
                         const int innerJ = jIndex - (jCluster << na_cj_2log);
-
+                        const unsigned int bitMask =
+                                (1U << static_cast<unsigned int>((i << na_cj_2log) + innerJ));
+                        const unsigned int maskBefore  = nbl->cj.excl(index);
+                        const unsigned int maskedBefore = maskBefore & bitMask;
                         nbl->cj.excl(index) &= ~(1U << ((i << na_cj_2log) + innerJ));
+                        const unsigned int maskAfter  = nbl->cj.excl(index);
+                        const unsigned int maskedAfter = maskAfter & bitMask;
+                        if (!dumpedTargetBitClearTrace && ownershipTraceDirPath != nullptr
+                            && *ownershipTraceDirPath != '\0' && iAtom == targetAtomI && jAtom == targetAtomJ)
+                        {
+                            appendOwnershipHandoffTraceLine(
+                                    ownershipTraceDirPath,
+                                    "step0_exclusion_bit_clear_trace.txt",
+                                    "stage=runtime_clear_exclusion_bit source=top.excls atom_i=0 atom_j=1 i_index="
+                                            + std::to_string(iIndex) + " j_index=" + std::to_string(jIndex)
+                                            + " j_cluster=" + std::to_string(jCluster) + " list_index="
+                                            + std::to_string(index) + " inner_j=" + std::to_string(innerJ)
+                                            + " mask_before=" + std::to_string(maskBefore) + " bit_mask="
+                                            + std::to_string(bitMask) + " masked_before="
+                                            + std::to_string(maskedBefore) + " mask_after="
+                                            + std::to_string(maskAfter) + " masked_after="
+                                            + std::to_string(maskedAfter) + " rule=jAtom_in_topology_exclusions");
+                            dumpedTargetBitClearTrace = true;
+                        }
                     }
                 }
             }

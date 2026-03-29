@@ -48,6 +48,7 @@
 #include "gromacs/utility/basedefinitions.h"
 #include "gromacs/utility/real.h"
 
+#include "exactrespastepper.h"
 #include "isimulator.h"
 
 namespace gmx
@@ -73,6 +74,57 @@ using SimulatorFunctionType = void();
 class LegacySimulator : public ISimulator, private LegacySimulatorData
 {
 private:
+    void prepareExactRespaVelocityVerletObservablesForStep(const t_inputrec& inputRecord,
+                                                           int64_t           step,
+                                                           const MpiComm&    mpiComm,
+                                                           const t_mdatoms&  mdatoms,
+                                                           t_nrnb*           nrnb,
+                                                           t_vcm*            vcm,
+                                                           gmx_enerdata_t*   enerd,
+                                                           gmx_global_stat*  gstat,
+                                                           SimulationSignaller* nullSignaller,
+                                                           ObservablesReducer* observablesReducer,
+                                                           tensor&           forceVir,
+                                                           tensor&           shakeVir,
+                                                           tensor&           totalVir,
+                                                           tensor&           pres,
+                                                           bool              calcEner,
+                                                           bool              calcVir,
+                                                           bool              calcGlobalStats,
+                                                           gmx_bool*         sumEkinhOld,
+                                                           real*             savedConservedQuantity,
+                                                           real*             lastEkin);
+    void dispatchExactRespaVelocityVerletStep(const t_inputrec&                 inputRecord,
+                                              int64_t                           step,
+                                              double                            time,
+                                              const t_mdatoms&                  mdatoms,
+                                              const SimulationWorkload&         simulationWork,
+                                              const DomainLifetimeWorkload&     domainWork,
+                                              ForceBuffers&                     forceBuffers,
+                                              ExactRespaForceStore&             exactRespaForceStore,
+                                              tensor&                           forceVir,
+                                              rvec&                             muTot,
+                                              gmx_enerdata_t&                   enerd,
+                                              Awh*                              awh,
+                                              gmx_edsam*                        ed,
+                                              const DDBalanceRegionHandler&     ddBalanceRegionHandler);
+    void dispatchExactRespaNestedPrototypeStep(const t_inputrec&                inputRecord,
+                                               int64_t                          step,
+                                               double                           time,
+                                               const t_mdatoms&                 mdatoms,
+                                               const SimulationWorkload&        simulationWork,
+                                               const DomainLifetimeWorkload&    domainWork,
+                                               ForceBuffers&                    forceBuffers,
+                                               ExactRespaForceStore&            exactRespaForceStore,
+                                               tensor&                          forceVir,
+                                               rvec&                            muTot,
+                                               gmx_enerdata_t&                  enerd,
+                                               Awh*                             awh,
+                                               gmx_edsam*                       ed,
+                                               const DDBalanceRegionHandler&    ddBalanceRegionHandler);
+    void doExactRespaVelocityVerletStep(const ExactRespaStepContext& exactRespaStep);
+    void doExactRespaNestedPrototypeStep(const ExactRespaStepContext& exactRespaStep);
+
     //! Implements the normal MD simulations.
     SimulatorFunctionType do_md;
     //! Implements the rerun functionality.

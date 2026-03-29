@@ -202,8 +202,13 @@ bool canUseGpusForNonbonded(const t_inputrec& ir, const bool doRerun, std::strin
     {
         MtsLevel mtsLevelOnlyPme;
         mtsLevelOnlyPme.forceGroups.set(static_cast<int>(MtsForceGroups::LongrangeNonbonded));
-        if (ir.useMts
-            && !(ir.mtsLevels.size() == 2 && ir.mtsLevels[1].forceGroups == mtsLevelOnlyPme.forceGroups))
+        if (useExactRespa(ir))
+        {
+            errorReasons.append("Standalone exact r-RESPA is not supported on GPUs.");
+        }
+        else if (useMtsSubstepping(ir)
+                 && !(ir.mtsLevels.size() == 2
+                      && ir.mtsLevels[1].forceGroups == mtsLevelOnlyPme.forceGroups))
         {
             errorReasons.append(gmx::formatString(
                     "Multiple time stepping is only supported with GPUs when MTS is only applied "
@@ -750,7 +755,8 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
                               "With separate PME rank(s), PME must run on the GPU.");
     }
 
-    errorReasons.appendIf(inputrec.useMts, "Multiple time stepping is not supported.");
+    errorReasons.appendIf(useExactRespa(inputrec), "Standalone exact r-RESPA is not supported.");
+    errorReasons.appendIf(useMtsSubstepping(inputrec), "Multiple time stepping is not supported.");
 
     errorReasons.appendIf((inputrec.eConstrAlg == ConstraintAlgorithm::Shake && hasAnyConstraints
                            && gmx_mtop_ftype_count(mtop, InteractionFunction::Constraints) > 0),
@@ -850,7 +856,7 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
 }
 
 bool decideWhetherDirectGpuCommunicationCanBeUsed(gmx::GpuAwareMpiStatus gpuAwareMpiStatus,
-                                                  bool                   haveMts,
+                                                  bool                   haveLegacyMts,
                                                   bool                   useReplicaExchange,
                                                   bool                   haveSwapCoords,
                                                   bool                   gpusWereDetected,
@@ -963,7 +969,7 @@ bool decideWhetherDirectGpuCommunicationCanBeUsed(gmx::GpuAwareMpiStatus gpuAwar
     // fallback to CPU halo, and report accordingly
     gmx::MessageStringCollector errorReasons;
     errorReasons.startContext("Direct GPU communication cannot be activated because:");
-    errorReasons.appendIf(haveMts, "MTS is not supported.");
+    errorReasons.appendIf(haveLegacyMts, "MTS is not supported.");
     errorReasons.appendIf(useReplicaExchange, "Replica exchange is not supported.");
     errorReasons.appendIf(haveSwapCoords, "Swap-coords is not supported.");
     errorReasons.finishContext();

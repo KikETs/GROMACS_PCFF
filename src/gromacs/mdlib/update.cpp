@@ -37,10 +37,14 @@
 
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 
 #include <algorithm>
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <type_traits>
 
@@ -84,6 +88,121 @@
 #include "gromacs/utility/vec.h"
 
 using namespace gmx; // TODO: Remove when this file is moved into gmx namespace
+
+static bool shouldTraceRespaStateXChainStep(const int64_t step)
+{
+    static const std::vector<int64_t> steps = []()
+    {
+        std::vector<int64_t> parsedSteps;
+        const char*          value = std::getenv("GMX_PCFF_RESPA_TRACE_MULTI_STEP_COULOMB_STEPS");
+        if (value == nullptr || *value == '\0')
+        {
+            return parsedSteps;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                parsedSteps.push_back(std::stoll(item));
+            }
+        }
+        return parsedSteps;
+    }();
+
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_STATE_X_CHAIN");
+    return enabled != nullptr && *enabled != '\0'
+           && std::find(steps.begin(), steps.end(), step) != steps.end();
+}
+
+static const char* activeM2pTraceDirPath()
+{
+    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
+}
+
+static int64_t g_respaStateXTraceCurrentStep = -1;
+
+static const std::vector<int>& configuredStateXTraceAtomIndices()
+{
+    static const std::vector<int> atomIndices = []()
+    {
+        std::vector<int> parsedAtomIndices;
+        const char*      value = std::getenv("GMX_PCFF_RESPA_TRACE_ATOMS");
+        if (value == nullptr || *value == '\0')
+        {
+            return parsedAtomIndices;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                parsedAtomIndices.push_back(std::stoi(item));
+            }
+        }
+        return parsedAtomIndices;
+    }();
+
+    return atomIndices;
+}
+
+static bool shouldTraceStateXAtom(const int atomIndex)
+{
+    const auto& configuredAtoms = configuredStateXTraceAtomIndices();
+    if (!configuredAtoms.empty())
+    {
+        return std::find(configuredAtoms.begin(), configuredAtoms.end(), atomIndex) != configuredAtoms.end();
+    }
+    return atomIndex == 0 || atomIndex == 5;
+}
+
+static void appendStateXFinishUpdateAtomTrace(const char*        traceDirPath,
+                                              const int64_t      step,
+                                              const int          atomIndex,
+                                              const gmx::RVec&   coord)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    const char* stageName = (step == 4) ? "STEP4_POST_POSITION_COMMIT_STATE_X"
+                           : (step == 5) ? "STEP5_POST_POSITION_COMMIT_STATE_X"
+                           : (step == 6) ? "STEP6_POST_POSITION_COMMIT_STATE_X"
+                           : (step == 7) ? "STEP7_POST_UPDATE_STATE_X"
+                                         : "POST_UPDATE_STATE_X";
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "multistep_state_x_chain_trace.txt", std::ios::app);
+    output << "side=PLAIN step=" << step << " stage=" << stageName << " atom=" << atomIndex
+           << " x=" << std::setprecision(15) << coord[XX] << " y=" << std::setprecision(15)
+           << coord[YY] << " z=" << std::setprecision(15) << coord[ZZ]
+           << " writer=Update::Impl::finish_update code_location=src/gromacs/mdlib/update.cpp:finish_update"
+           << " writes_state_x=true\n";
+}
+
+static void appendPlainFinishUpdateDirectTrace(const char*        traceDirPath,
+                                               const int64_t      step,
+                                               const int          atomIndex,
+                                               const gmx::RVec&   coord)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "plain_finish_update_direct_trace.txt", std::ios::app);
+    output << "step=" << step << " atom=" << atomIndex << " x=" << std::setprecision(15) << coord[XX]
+           << " y=" << std::setprecision(15) << coord[YY] << " z=" << std::setprecision(15) << coord[ZZ]
+           << " writer=Update::Impl::finish_update\n";
+}
 
 struct gmx_sd_const_t
 {
@@ -1734,6 +1853,15 @@ void Update::Impl::finish_update(const t_inputrec&                   inputRecord
                     x[i][d] = xp[i][d];
                 }
             }
+            if (g_respaStateXTraceCurrentStep >= 0
+                && shouldTraceRespaStateXChainStep(g_respaStateXTraceCurrentStep)
+                && shouldTraceStateXAtom(i))
+            {
+                appendStateXFinishUpdateAtomTrace(
+                        activeM2pTraceDirPath(), g_respaStateXTraceCurrentStep, i, x[i]);
+                appendPlainFinishUpdateDirectTrace(
+                        activeM2pTraceDirPath(), g_respaStateXTraceCurrentStep, i, x[i]);
+            }
         }
     }
     else
@@ -1747,6 +1875,15 @@ void Update::Impl::finish_update(const t_inputrec&                   inputRecord
         {
             // Trivial statement, does not throw
             x[i] = xp[i];
+            if (g_respaStateXTraceCurrentStep >= 0
+                && shouldTraceRespaStateXChainStep(g_respaStateXTraceCurrentStep)
+                && shouldTraceStateXAtom(i))
+            {
+                appendStateXFinishUpdateAtomTrace(
+                        activeM2pTraceDirPath(), g_respaStateXTraceCurrentStep, i, x[i]);
+                appendPlainFinishUpdateDirectTrace(
+                        activeM2pTraceDirPath(), g_respaStateXTraceCurrentStep, i, x[i]);
+            }
         }
     }
 
@@ -1769,6 +1906,11 @@ void Update::Impl::update_coords(const t_inputrec&                 inputRecord,
                                  const gmx_domdec_t*                         dd,
                                  const bool                                  haveConstraints)
 {
+    if (updatePart == etrtPOSITION)
+    {
+        g_respaStateXTraceCurrentStep = step;
+    }
+
     /* Running the velocity half does nothing except for velocity verlet */
     if ((updatePart == etrtVELOCITY1 || updatePart == etrtVELOCITY2) && !EI_VV(inputRecord.eI))
     {

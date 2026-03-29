@@ -420,7 +420,11 @@ MessageStringCollector getReasonsForIncompatibility(const t_inputrec*           
             "Set GMX_USE_MODULAR_SIMULATOR=ON to use the modular "
             "simulator with integrator md.");
     reasonsForIncompatibility.appendIf(
-            inputrec->useMts, "Multiple time stepping is not supported by the modular simulator.");
+            gmx::useExactRespa(*inputrec),
+            "Standalone exact r-RESPA is not supported by the modular simulator.");
+    reasonsForIncompatibility.appendIf(
+            gmx::useMtsSubstepping(*inputrec),
+            "Multiple time stepping is not supported by the modular simulator.");
     reasonsForIncompatibility.appendIf(doRerun, "Rerun is not supported by the modular simulator.");
     reasonsForIncompatibility.appendIf(inputrec->useConstantAcceleration || inputrec->cos_accel != 0.0,
                                        "Acceleration is not supported by the modular simulator.");
