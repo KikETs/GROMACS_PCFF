@@ -38,6 +38,7 @@
 
 #include <cstdlib>
 
+#include <algorithm>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -78,6 +79,102 @@ static int compare_int(const void* a, const void* b)
 {
     return (*reinterpret_cast<const int*>(a) - *reinterpret_cast<const int*>(b));
 }
+
+namespace
+{
+
+constexpr int c_targetAtomI  = 0;
+constexpr int c_targetAtomJ  = 1;
+constexpr int c_controlAtomI = 0;
+constexpr int c_controlAtomJ = 4;
+
+void appendOwnershipTraceLine(const char* traceDirPath, const std::string& filename, const std::string& line)
+{
+    GMX_RELEASE_ASSERT(traceDirPath != nullptr && *traceDirPath != '\0',
+                       "Need a valid ownership handoff trace directory");
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::filesystem::path outputPath = traceDir / filename;
+
+    FILE* dumpFile = std::fopen(outputPath.string().c_str(), "a");
+    if (dumpFile == nullptr)
+    {
+        gmx_fatal(FARGS, "Could not open ownership handoff trace output '%s'", outputPath.string().c_str());
+    }
+    std::fprintf(dumpFile, "%s\n", line.c_str());
+    std::fclose(dumpFile);
+}
+
+void appendOwnershipHandoffTraceLine(const char* traceDirPath, const std::string& line)
+{
+    appendOwnershipTraceLine(traceDirPath, "step0_grompp_generate_excl_trace.txt", line);
+}
+
+std::string joinExclusionList(const gmx::ArrayRef<const int> exclusionsForAtom)
+{
+    std::string result;
+    for (gmx::Index index = 0; index < exclusionsForAtom.ssize(); ++index)
+    {
+        if (!result.empty())
+        {
+            result += ",";
+        }
+        result += std::to_string(exclusionsForAtom[index]);
+    }
+    return result.empty() ? std::string("none") : result;
+}
+
+bool listContains(const gmx::ArrayRef<const int> values, const int target)
+{
+    return std::find(values.begin(), values.end(), target) != values.end();
+}
+
+bool matchesDirectedPair(const int ai, const int aj, const int expectedAi, const int expectedAj)
+{
+    return ai == expectedAi && aj == expectedAj;
+}
+
+int countDirectedPairEntries(const sortable* sortables, const int count, const int expectedAi, const int expectedAj)
+{
+    int matches = 0;
+    for (int index = 0; index < count; ++index)
+    {
+        if (matchesDirectedPair(sortables[index].ai, sortables[index].aj, expectedAi, expectedAj))
+        {
+            matches++;
+        }
+    }
+    return matches;
+}
+
+std::string joinNnbBucket(const t_nextnb* nnb, const int atom, const int order)
+{
+    std::string result;
+    for (int index = 0; index < nnb->nrexcl[atom][order]; ++index)
+    {
+        if (!result.empty())
+        {
+            result += ",";
+        }
+        result += std::to_string(nnb->a[atom][order][index]);
+    }
+    return result.empty() ? std::string("none") : result;
+}
+
+bool nnbBucketContains(const t_nextnb* nnb, const int atom, const int order, const int target)
+{
+    for (int index = 0; index < nnb->nrexcl[atom][order]; ++index)
+    {
+        if (nnb->a[atom][order][index] == target)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+} // namespace
 
 
 #ifdef DEBUG
@@ -179,6 +276,10 @@ static void nnb2excl(t_nextnb* nnb, gmx::ListOfLists<int>* excls)
     int       i, j, j_index;
     int       nre, nrx, nrs, nr_of_sortables;
     sortable* s;
+    const char* traceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+    static bool dumpedTargetFlattenTrace = false;
+    static bool dumpedTargetEmitTrace    = false;
+    static bool dumpedControlFlattenTrace = false;
 
     excls->clear();
 
@@ -209,6 +310,33 @@ static void nnb2excl(t_nextnb* nnb, gmx::ListOfLists<int>* excls)
         {
             gmx_incons("Generating exclusions");
         }
+        if (traceDirPath != nullptr && *traceDirPath != '\0' && i == c_targetAtomI)
+        {
+            const int targetCount  = countDirectedPairEntries(s, nr_of_sortables, c_targetAtomI, c_targetAtomJ);
+            const int controlCount = countDirectedPairEntries(s, nr_of_sortables, c_controlAtomI, c_controlAtomJ);
+            if (!dumpedTargetFlattenTrace)
+            {
+                appendOwnershipTraceLine(
+                        traceDirPath,
+                        "step0_generate_excl_internal_trace.txt",
+                        "stage=nnb2excl_flattened atom=0 nr_of_sortables=" + std::to_string(nr_of_sortables)
+                                + " target_present=" + std::string(targetCount > 0 ? "true" : "false")
+                                + " target_count=" + std::to_string(targetCount) + " control_present="
+                                + std::string(controlCount > 0 ? "true" : "false") + " control_count="
+                                + std::to_string(controlCount));
+                dumpedTargetFlattenTrace = true;
+            }
+            if (!dumpedControlFlattenTrace)
+            {
+                appendOwnershipTraceLine(
+                        traceDirPath,
+                        "step0_generate_excl_internal_trace.txt",
+                        "stage=nnb2excl_control_check atom=0 control_present="
+                                + std::string(controlCount > 0 ? "true" : "false") + " control_count="
+                                + std::to_string(controlCount));
+                dumpedControlFlattenTrace = true;
+            }
+        }
         prints("nnb2excl before qsort", nr_of_sortables, s);
         if (nr_of_sortables > 1)
         {
@@ -238,6 +366,35 @@ static void nnb2excl(t_nextnb* nnb, gmx::ListOfLists<int>* excls)
         for (nrs = 0; (nrs < nr_of_sortables); nrs++)
         {
             exclusionsForAtom[nrs] = s[nrs].aj;
+        }
+        if (!dumpedTargetEmitTrace && traceDirPath != nullptr && *traceDirPath != '\0' && i == c_targetAtomI)
+        {
+            appendOwnershipTraceLine(
+                    traceDirPath,
+                    "step0_generate_excl_internal_trace.txt",
+                    "stage=nnb2excl_emit atom=0 emitted=" + joinExclusionList(exclusionsForAtom)
+                            + " target_output_index="
+                            + std::to_string(
+                                    static_cast<int>(std::find(exclusionsForAtom.begin(),
+                                                               exclusionsForAtom.end(),
+                                                               c_targetAtomJ)
+                                                     - exclusionsForAtom.begin()))
+                            + " control_output_index="
+                            + std::to_string(
+                                    std::find(exclusionsForAtom.begin(),
+                                              exclusionsForAtom.end(),
+                                              c_controlAtomJ)
+                                            == exclusionsForAtom.end()
+                                            ? -1
+                                            : static_cast<int>(std::find(exclusionsForAtom.begin(),
+                                                                         exclusionsForAtom.end(),
+                                                                         c_controlAtomJ)
+                                                               - exclusionsForAtom.begin()))
+                            + " target_present="
+                            + std::string(listContains(exclusionsForAtom, c_targetAtomJ) ? "true" : "false")
+                            + " control_present="
+                            + std::string(listContains(exclusionsForAtom, c_controlAtomJ) ? "true" : "false"));
+            dumpedTargetEmitTrace = true;
         }
 
         /* cleanup temporary space */
@@ -285,6 +442,13 @@ static void do_gen(int       nrbonds, /* total number of bonds in s	*/
 /* Assume excl is initialised and s[] contains all bonds bidirectional */
 {
     int i, j, k, n, nb;
+    const char* traceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+    static bool dumpedTargetBondRuleFire  = false;
+    static bool dumpedControlBondRuleFire = false;
+    bool        targetDirectBondRuleFired = false;
+    bool        controlDirectBondRuleFired = false;
+    bool        targetHigherOrderRuleFired = false;
+    bool        controlHigherOrderRuleFired = false;
 
     /* exclude self */
     for (i = 0; (i < nnb->nr); i++)
@@ -298,6 +462,34 @@ static void do_gen(int       nrbonds, /* total number of bonds in s	*/
     {
         for (i = 0; (i < nrbonds); i++)
         {
+            if (matchesDirectedPair(s[i].ai, s[i].aj, c_targetAtomI, c_targetAtomJ))
+            {
+                targetDirectBondRuleFired = true;
+                if (!dumpedTargetBondRuleFire && traceDirPath != nullptr && *traceDirPath != '\0')
+                {
+                    appendOwnershipTraceLine(
+                            traceDirPath,
+                            "step0_generate_excl_internal_trace.txt",
+                            "stage=do_gen_direct_bond_rule_fire ai=0 aj=1 source=exclude_all_bonded_atoms "
+                                    "condition_nrex_positive=true bond_list_index="
+                                    + std::to_string(i) + " nre_bucket=1 add_nnb_called=true");
+                    dumpedTargetBondRuleFire = true;
+                }
+            }
+            if (matchesDirectedPair(s[i].ai, s[i].aj, c_controlAtomI, c_controlAtomJ))
+            {
+                controlDirectBondRuleFired = true;
+                if (!dumpedControlBondRuleFire && traceDirPath != nullptr && *traceDirPath != '\0')
+                {
+                    appendOwnershipTraceLine(
+                            traceDirPath,
+                            "step0_generate_excl_internal_trace.txt",
+                            "stage=do_gen_direct_bond_control_fire ai=0 aj=4 source=exclude_all_bonded_atoms "
+                                    "condition_nrex_positive=true bond_list_index="
+                                    + std::to_string(i) + " nre_bucket=1 add_nnb_called=true");
+                    dumpedControlBondRuleFire = true;
+                }
+            }
             add_nnb(nnb, 1, s[i].ai, s[i].aj);
         }
     }
@@ -319,6 +511,14 @@ static void do_gen(int       nrbonds, /* total number of bonds in s	*/
                 /* store all atoms in nb's n-th list into i's n+1-th list */
                 for (k = 0; (k < nnb->nrexcl[nb][n]); k++)
                 {
+                    if (i == c_targetAtomI && nnb->a[nb][n][k] == c_targetAtomJ)
+                    {
+                        targetHigherOrderRuleFired = true;
+                    }
+                    if (i == c_controlAtomI && nnb->a[nb][n][k] == c_controlAtomJ)
+                    {
+                        controlHigherOrderRuleFired = true;
+                    }
                     // Only add if it is not already present as a closer neighbor
                     // to avoid exploding complexity for highly connected molecules
                     // with high exclusion order
@@ -331,6 +531,20 @@ static void do_gen(int       nrbonds, /* total number of bonds in s	*/
         }
     }
     print_nnb(nnb, "After exclude rest");
+    if (traceDirPath != nullptr && *traceDirPath != '\0')
+    {
+        appendOwnershipTraceLine(
+                traceDirPath,
+                "step0_generate_excl_internal_trace.txt",
+                "stage=do_gen_summary target_direct_bond_rule_fired="
+                        + std::string(targetDirectBondRuleFired ? "true" : "false")
+                        + " target_higher_order_rule_fired="
+                        + std::string(targetHigherOrderRuleFired ? "true" : "false")
+                        + " control_direct_bond_rule_fired="
+                        + std::string(controlDirectBondRuleFired ? "true" : "false")
+                        + " control_higher_order_rule_fired="
+                        + std::string(controlHigherOrderRuleFired ? "true" : "false"));
+    }
 }
 
 static void add_b(InteractionsOfType* bonds, int* nrf, sortable* s)
@@ -357,6 +571,8 @@ void gen_nnb(t_nextnb* nnb, gmx::EnumerationArray<InteractionFunction, Interacti
 {
     sortable* s;
     int       nrbonds, nrf;
+    const char* traceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+    static bool dumpedGenNnbBondMembership = false;
 
     nrbonds = 0;
     for (const auto i : gmx::EnumerationWrapper<InteractionFunction>{})
@@ -386,6 +602,26 @@ void gen_nnb(t_nextnb* nnb, gmx::EnumerationArray<InteractionFunction, Interacti
         std::qsort(s, nrbonds, static_cast<size_t>(sizeof(sortable)), bond_sort);
         prints("gen_excl after qsort", nrbonds, s);
     }
+    if (!dumpedGenNnbBondMembership && traceDirPath != nullptr && *traceDirPath != '\0')
+    {
+        appendOwnershipTraceLine(
+                traceDirPath,
+                "step0_generate_excl_internal_trace.txt",
+                "stage=gen_nnb_bond_membership nrbonds=" + std::to_string(nrbonds)
+                        + " target_present="
+                        + std::string(countDirectedPairEntries(s, nrbonds, c_targetAtomI, c_targetAtomJ) > 0
+                                              ? "true"
+                                              : "false")
+                        + " target_count="
+                        + std::to_string(countDirectedPairEntries(s, nrbonds, c_targetAtomI, c_targetAtomJ))
+                        + " control_present="
+                        + std::string(countDirectedPairEntries(s, nrbonds, c_controlAtomI, c_controlAtomJ) > 0
+                                              ? "true"
+                                              : "false")
+                        + " control_count="
+                        + std::to_string(countDirectedPairEntries(s, nrbonds, c_controlAtomI, c_controlAtomJ)));
+        dumpedGenNnbBondMembership = true;
+    }
 
     do_gen(nrbonds, s, nnb);
     sfree(s);
@@ -395,6 +631,8 @@ static void sort_and_purge_nnb(t_nextnb* nnb)
 {
     int  i, j, k, m, n, cnt, prev, idx;
     bool found;
+    const char* traceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+    static bool dumpedSortAndPurgeTrace = false;
 
     for (i = 0; (i < nnb->nr); i++)
     {
@@ -429,6 +667,25 @@ static void sort_and_purge_nnb(t_nextnb* nnb)
             }
             nnb->nrexcl[i][n] = cnt;
         }
+        if (!dumpedSortAndPurgeTrace && traceDirPath != nullptr && *traceDirPath != '\0' && i == c_targetAtomI)
+        {
+            appendOwnershipTraceLine(
+                    traceDirPath,
+                    "step0_generate_excl_internal_trace.txt",
+                    "stage=sort_and_purge_output atom=0 level0=" + joinNnbBucket(nnb, i, 0)
+                            + " level1=" + joinNnbBucket(nnb, i, 1) + " level2="
+                            + joinNnbBucket(nnb, i, 2) + " level3="
+                            + joinNnbBucket(nnb, i, 3) + " target_in_level1="
+                            + std::string(nnbBucketContains(nnb, i, 1, c_targetAtomJ) ? "true" : "false")
+                            + " control_in_any_level="
+                            + std::string((nnbBucketContains(nnb, i, 0, c_controlAtomJ)
+                                           || nnbBucketContains(nnb, i, 1, c_controlAtomJ)
+                                           || nnbBucketContains(nnb, i, 2, c_controlAtomJ)
+                                           || nnbBucketContains(nnb, i, 3, c_controlAtomJ))
+                                                  ? "true"
+                                                  : "false"));
+            dumpedSortAndPurgeTrace = true;
+        }
     }
 }
 
@@ -447,5 +704,20 @@ void generate_excl(int                                                          
     gen_nnb(&nnb, plist);
     sort_and_purge_nnb(&nnb);
     nnb2excl(&nnb, excls);
+    const char* ownershipTraceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+    static bool dumpedOwnershipTrace  = false;
+    if (!dumpedOwnershipTrace && ownershipTraceDirPath != nullptr && *ownershipTraceDirPath != '\0'
+        && excls->ssize() > 0)
+    {
+        const auto    exclusionsForAtom0 = (*excls)[c_targetAtomI];
+        appendOwnershipHandoffTraceLine(
+                ownershipTraceDirPath,
+                "stage=generate_excl_output atom=0 nrexcl=" + std::to_string(nrexcl) + " exclusions="
+                        + joinExclusionList(exclusionsForAtom0) + " contains_target="
+                        + std::string(listContains(exclusionsForAtom0, c_targetAtomJ) ? "true" : "false")
+                        + " contains_control="
+                        + std::string(listContains(exclusionsForAtom0, c_controlAtomJ) ? "true" : "false"));
+        dumpedOwnershipTrace = true;
+    }
     done_nnb(&nnb);
 }

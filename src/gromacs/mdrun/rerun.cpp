@@ -710,6 +710,7 @@ void gmx::LegacySimulator::do_rerun()
                          {},
                          &state_->hist,
                          &f.view(),
+                         nullptr,
                          force_vir,
                          mdatoms,
                          enerd_,

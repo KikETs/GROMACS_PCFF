@@ -201,6 +201,7 @@ enum tpxv
     tpxv_NNPotIFuncType,       /**< Add interaction function type for neural network potential */
     tpxv_AwhHistogramTolerance, /**< Add AWH histogram tolerance */
     tpxv_LammpsRespaExactMts,   /**< Add exact LAMMPS-style r-RESPA metadata */
+    tpxv_StandaloneExactRespa,  /**< Add standalone exact r-RESPA metadata */
     tpxv_Count                  /**< the total number of tpxv versions */
 };
 
@@ -1108,6 +1109,36 @@ static void do_legacy_efield(gmx::ISerializer* serializer, gmx::KeyValueTreeObje
     }
 }
 
+static void do_exact_respa_parameters(gmx::ISerializer* serializer, gmx::ExactRespaParameters* exactRespa)
+{
+    int numLevels = exactRespa->levelStepFactors.size();
+    serializer->doInt(&numLevels);
+    if (serializer->reading())
+    {
+        exactRespa->levelStepFactors.resize(numLevels);
+    }
+    for (int& stepFactor : exactRespa->levelStepFactors)
+    {
+        serializer->doInt(&stepFactor);
+    }
+
+    serializer->doBool(&exactRespa->forceLayout.enabled);
+    serializer->doInt(&exactRespa->forceLayout.bondLevel);
+    serializer->doInt(&exactRespa->forceLayout.angleLevel);
+    serializer->doInt(&exactRespa->forceLayout.dihedralLevel);
+    serializer->doInt(&exactRespa->forceLayout.improperLevel);
+    serializer->doInt(&exactRespa->forceLayout.pair14Level);
+    serializer->doInt(&exactRespa->forceLayout.pairLevel);
+    serializer->doInt(&exactRespa->forceLayout.kspaceLevel);
+    serializer->doInt(&exactRespa->forceLayout.innerLevel);
+    serializer->doInt(&exactRespa->forceLayout.middleLevel);
+    serializer->doInt(&exactRespa->forceLayout.outerLevel);
+    serializer->doReal(&exactRespa->forceLayout.innerOff);
+    serializer->doReal(&exactRespa->forceLayout.innerOn);
+    serializer->doReal(&exactRespa->forceLayout.outerOn);
+    serializer->doReal(&exactRespa->forceLayout.outerOff);
+}
+
 
 static void do_inputrec(gmx::ISerializer* serializer, t_inputrec* ir, int file_version)
 {
@@ -1162,14 +1193,18 @@ static void do_inputrec(gmx::ISerializer* serializer, t_inputrec* ir, int file_v
         if (ir->useMts)
         {
             serializer->doInt(&numLevels);
+            ir->mtsLevels.resize(numLevels);
+            for (auto& mtsLevel : ir->mtsLevels)
+            {
+                int forceGroups = mtsLevel.forceGroups.to_ulong();
+                serializer->doInt(&forceGroups);
+                mtsLevel.forceGroups = std::bitset<static_cast<int>(gmx::MtsForceGroups::Count)>(forceGroups);
+                serializer->doInt(&mtsLevel.stepFactor);
+            }
         }
-        ir->mtsLevels.resize(numLevels);
-        for (auto& mtsLevel : ir->mtsLevels)
+        else if (serializer->reading())
         {
-            int forceGroups = mtsLevel.forceGroups.to_ulong();
-            serializer->doInt(&forceGroups);
-            mtsLevel.forceGroups = std::bitset<static_cast<int>(gmx::MtsForceGroups::Count)>(forceGroups);
-            serializer->doInt(&mtsLevel.stepFactor);
+            ir->mtsLevels.clear();
         }
     }
     else
@@ -1201,6 +1236,22 @@ static void do_inputrec(gmx::ISerializer* serializer, t_inputrec* ir, int file_v
     {
         ir->mtsMode     = gmx::MtsMode::Legacy;
         ir->lammpsRespa = {};
+    }
+
+    if (file_version >= tpxv_StandaloneExactRespa)
+    {
+        do_exact_respa_parameters(serializer, &ir->exactRespa);
+        if (serializer->reading() && ir->exactRespa.enabled())
+        {
+            ir->useMts     = false;
+            ir->mtsMode    = gmx::MtsMode::Legacy;
+            ir->mtsLevels.clear();
+            ir->lammpsRespa = {};
+        }
+    }
+    else
+    {
+        ir->exactRespa = gmx::exactRespaParametersFromLegacyMts(ir->mtsMode, ir->mtsLevels, ir->lammpsRespa);
     }
 
     if (file_version >= tpxv_MassRepartitioning)

@@ -40,6 +40,9 @@ file(GLOB MDTYPES_SOURCES
     commrec.cpp
     df_history.cpp
     energyhistory.cpp
+    exactrespaforcestore.cpp
+    exactrespaparameters.cpp
+    exactrespaschedule.cpp
     forcebuffers.cpp
     group.cpp
     iforceprovider.cpp

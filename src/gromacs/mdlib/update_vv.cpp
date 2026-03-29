@@ -36,10 +36,15 @@
 #include "update_vv.h"
 
 #include <cmath>
+#include <cstdlib>
 
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <utility>
 
 #include "gromacs/domdec/localtopologychecker.h"
@@ -75,6 +80,191 @@
 #include "gromacs/utility/mpicomm.h"
 #include "gromacs/utility/smalloc.h"
 #include "gromacs/utility/vec.h"
+
+static bool shouldTraceRespaStateXChainStep(const int64_t step)
+{
+    static const std::vector<int64_t> steps = []()
+    {
+        std::vector<int64_t> parsedSteps;
+        const char*          value = std::getenv("GMX_PCFF_RESPA_TRACE_MULTI_STEP_COULOMB_STEPS");
+        if (value == nullptr || *value == '\0')
+        {
+            return parsedSteps;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                parsedSteps.push_back(std::stoll(item));
+            }
+        }
+        return parsedSteps;
+    }();
+
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_STATE_X_CHAIN");
+    return enabled != nullptr && *enabled != '\0'
+           && std::find(steps.begin(), steps.end(), step) != steps.end();
+}
+
+static bool shouldTraceRespaStateXChainAnyStep()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_STATE_X_CHAIN");
+    return enabled != nullptr && *enabled != '\0';
+}
+
+static const char* activeM2pTraceDirPath()
+{
+    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
+}
+
+static const std::vector<int>& configuredStateXTraceAtomIndices()
+{
+    static const std::vector<int> atomIndices = []()
+    {
+        std::vector<int> parsedAtomIndices;
+        const char*      value = std::getenv("GMX_PCFF_RESPA_TRACE_ATOMS");
+        if (value == nullptr || *value == '\0')
+        {
+            return parsedAtomIndices;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                parsedAtomIndices.push_back(std::stoi(item));
+            }
+        }
+        return parsedAtomIndices;
+    }();
+
+    return atomIndices;
+}
+
+static std::vector<int> filteredStateXTraceAtomIndices(const int availableAtoms)
+{
+    std::vector<int> filteredAtoms;
+    const auto&      configuredAtoms = configuredStateXTraceAtomIndices();
+    if (!configuredAtoms.empty())
+    {
+        for (const int atomIndex : configuredAtoms)
+        {
+            if (atomIndex >= 0 && atomIndex < availableAtoms)
+            {
+                filteredAtoms.push_back(atomIndex);
+            }
+        }
+        return filteredAtoms;
+    }
+
+    if (availableAtoms > 0)
+    {
+        filteredAtoms.push_back(0);
+    }
+    if (availableAtoms > 5)
+    {
+        filteredAtoms.push_back(5);
+    }
+    return filteredAtoms;
+}
+
+static const char* postConstraintStageName(const int64_t step)
+{
+    return (step == 4) ? "STEP4_POST_CONSTRAINT_STATE_X"
+           : (step == 5) ? "STEP5_POST_CONSTRAINT_STATE_X"
+           : (step == 6) ? "STEP6_POST_CONSTRAINT_STATE_X"
+           : (step == 7) ? "STEP7_POST_CONSTRAINT_STATE_X"
+                         : "POST_CONSTRAINT_STATE_X";
+}
+
+static void appendStateXChainTracePair(const char*                 traceDirPath,
+                                       const char*                 stageName,
+                                       const int64_t               step,
+                                       gmx::ArrayRef<const gmx::RVec> coords,
+                                       const char*                 writerName,
+                                       const char*                 codeLocation,
+                                       const bool                  writesStateX)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0' || coords.size() <= 5)
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "multistep_state_x_chain_trace.txt", std::ios::app);
+    for (const int atomIndex : filteredStateXTraceAtomIndices(coords.ssize()))
+    {
+        output << "side=PLAIN step=" << step << " stage=" << stageName << " atom=" << atomIndex
+               << " x=" << std::setprecision(15) << coords[atomIndex][XX] << " y="
+               << std::setprecision(15) << coords[atomIndex][YY] << " z=" << std::setprecision(15)
+               << coords[atomIndex][ZZ] << " writer=" << writerName << " code_location="
+               << codeLocation << " writes_state_x=" << (writesStateX ? "true" : "false") << "\n";
+    }
+}
+
+static void appendPlainUpdateVvAfterFinishTrace(const char*                 traceDirPath,
+                                                const int64_t               step,
+                                                gmx::ArrayRef<const gmx::RVec> coords)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0' || coords.size() <= 5)
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "plain_update_vv_after_finish_trace.txt", std::ios::app);
+    for (const int atomIndex : filteredStateXTraceAtomIndices(coords.ssize()))
+    {
+        output << "step=" << step << " atom=" << atomIndex << " x=" << std::setprecision(15)
+               << coords[atomIndex][XX] << " y=" << std::setprecision(15) << coords[atomIndex][YY]
+               << " z=" << std::setprecision(15) << coords[atomIndex][ZZ]
+               << " writer=integrateVVSecondStep_after_finish_update\n";
+    }
+}
+
+static void appendUpdateVvStateTrace(const char*                    traceDirPath,
+                                     const int64_t                  step,
+                                     const char*                    stageLabel,
+                                     gmx::ArrayRef<const gmx::RVec> stateCoords,
+                                     gmx::ArrayRef<const gmx::RVec> stateVelocities,
+                                     gmx::ArrayRef<const gmx::RVec> xpCoords,
+                                     const bool                     haveXp,
+                                     const char*                    codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "update_vv_state_trace.txt", std::ios::app);
+    for (const int atomIndex : filteredStateXTraceAtomIndices(stateCoords.ssize()))
+    {
+        output << "step=" << step << " stage=" << stageLabel << " atom=" << atomIndex
+               << " state_px=" << std::setprecision(15) << stateCoords[atomIndex][XX]
+               << " state_py=" << std::setprecision(15) << stateCoords[atomIndex][YY]
+               << " state_pz=" << std::setprecision(15) << stateCoords[atomIndex][ZZ]
+               << " state_vx=" << std::setprecision(15) << stateVelocities[atomIndex][XX]
+               << " state_vy=" << std::setprecision(15) << stateVelocities[atomIndex][YY]
+               << " state_vz=" << std::setprecision(15) << stateVelocities[atomIndex][ZZ];
+        if (haveXp)
+        {
+            output << " xp_px=" << std::setprecision(15) << xpCoords[atomIndex][XX] << " xp_py="
+                   << std::setprecision(15) << xpCoords[atomIndex][YY] << " xp_pz="
+                   << std::setprecision(15) << xpCoords[atomIndex][ZZ];
+        }
+        output << " code_location=" << codeLocation << "\n";
+    }
+}
 
 void integrateVVFirstStep(int64_t                   step,
                           bool                      bFirstStep,
@@ -426,11 +616,54 @@ void integrateVVSecondStep(int64_t                   step,
 
     constrain_coordinates(
             constr, do_log || do_ene, step, state, upd->xp()->arrayRefWithPadding(), dvdl_constr, bCalcVir, shake_vir);
+    if (shouldTraceRespaStateXChainStep(step))
+    {
+        appendStateXChainTracePair(activeM2pTraceDirPath(),
+                                   postConstraintStageName(step),
+                                   step,
+                                   state->x.arrayRefWithPadding().unpaddedArrayRef(),
+                                   "constrain_coordinates",
+                                   "src/gromacs/mdlib/update_vv.cpp:519",
+                                   true);
+    }
 
     upd->update_sd_second_half(
             *ir, step, dvdl_constr, mdatoms->homenr, mdatoms->ptype, mdatoms->invmass, state, dd, nrnb, wcycle, constr, do_log, do_ene);
+    appendUpdateVvStateTrace(activeM2pTraceDirPath(),
+                             step,
+                             "before_finish_update",
+                             state->x.arrayRefWithPadding().unpaddedArrayRef(),
+                             state->v.arrayRefWithPadding().unpaddedArrayRef(),
+                             upd->xp()->arrayRefWithPadding().unpaddedConstArrayRef(),
+                             true,
+                             "src/gromacs/mdlib/update_vv.cpp:before_finish_update");
     upd->finish_update(
             *ir, mdatoms->havePartiallyFrozenAtoms, mdatoms->homenr, state, wcycle, constr != nullptr);
+    appendUpdateVvStateTrace(activeM2pTraceDirPath(),
+                             step,
+                             "after_finish_update",
+                             state->x.arrayRefWithPadding().unpaddedArrayRef(),
+                             state->v.arrayRefWithPadding().unpaddedArrayRef(),
+                             gmx::ArrayRef<const gmx::RVec>{},
+                             false,
+                             "src/gromacs/mdlib/update_vv.cpp:after_finish_update");
+    if (shouldTraceRespaStateXChainStep(step))
+    {
+        const char* stageName = (step == 4) ? "STEP4_POST_UPDATE_STATE_X"
+                               : (step == 5) ? "STEP5_POST_UPDATE_STATE_X"
+                               : (step == 6) ? "STEP6_POST_UPDATE_STATE_X"
+                               : (step == 7) ? "STEP7_POST_UPDATE_STATE_X"
+                                             : "POST_UPDATE_STATE_X";
+        appendStateXChainTracePair(activeM2pTraceDirPath(),
+                                   stageName,
+                                   step,
+                                   state->x.arrayRefWithPadding().unpaddedArrayRef(),
+                                   "Update::finish_update (VV second step)",
+                                   "src/gromacs/mdlib/update_vv.cpp:432",
+                                   true);
+        appendPlainUpdateVvAfterFinishTrace(
+                activeM2pTraceDirPath(), step, state->x.arrayRefWithPadding().unpaddedArrayRef());
+    }
 
     if (ir->eI == IntegrationAlgorithm::VVAK)
     {

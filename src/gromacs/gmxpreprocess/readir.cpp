@@ -65,6 +65,7 @@
 #include "gromacs/mdrun/mdmodules.h"
 #include "gromacs/mdrunutility/mdmodulesnotifiers.h"
 #include "gromacs/mdtypes/awh_params.h"
+#include "gromacs/mdtypes/exactrespaschedule.h"
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/md_enums.h"
 #include "gromacs/mdtypes/multipletimestepping.h"
@@ -584,7 +585,16 @@ void check_ir(const char*                    mdparin,
             {
                 ir->pressureCouplingOptions.nstpcouple = ir_optimal_nstpcouple(ir);
             }
-            if (ir->useMts && ir->pressureCouplingOptions.nstpcouple % ir->mtsLevels.back().stepFactor != 0)
+            if (gmx::useExactRespa(*ir)
+                && ir->pressureCouplingOptions.nstpcouple
+                           % gmx::exactRespaSlowestStepFactor(*ir)
+                       != 0)
+            {
+                wi->addError(
+                        "With exact r-RESPA, nstpcouple should be a multiple of exact-respa slowest step factor");
+            }
+            else if (gmx::useMtsSubstepping(*ir)
+                     && ir->pressureCouplingOptions.nstpcouple % ir->mtsLevels.back().stepFactor != 0)
             {
                 wi->addError(
                         "With multiple time stepping, nstpcouple should be a multiple of "
@@ -2365,6 +2375,7 @@ void get_ir(const char*     mdparin,
     ir->simulation_part = get_eint(&inp, "simulation-part", 1, wi);
     printStringNoNewline(&inp, "Multiple time-stepping");
     ir->useMts = (getEnum<Boolean>(&inp, "mts", wi) != Boolean::No);
+    gmx::ExactRespaParameters standaloneExactRespa;
     if (ir->useMts)
     {
         gmx::GromppMtsOpts& mtsOpts = opts->mtsOpts;
@@ -2436,6 +2447,82 @@ void get_ir(const char*     mdparin,
             ir->useMts = false;
             mtsOpts.mode = gmx::MtsMode::Legacy;
             mtsOpts.lammpsRespa = {};
+        }
+    }
+    const bool legacyExactRespaInput =
+            ir->useMts && opts->mtsOpts.mode == gmx::MtsMode::LammpsRespa && opts->mtsOpts.lammpsRespa.enabled;
+    printStringNoNewline(&inp, "Standalone exact r-RESPA");
+    const bool useStandaloneExactRespa = (getEnum<Boolean>(&inp, "exact-respa", wi) != Boolean::No);
+    if (useStandaloneExactRespa)
+    {
+        if (ir->useMts && opts->mtsOpts.mode != gmx::MtsMode::LammpsRespa)
+        {
+            wi->addError(
+                    "exact-respa can not be combined with generic mts-mode = legacy; either use exact-respa alone or mts-mode = lammps-respa");
+        }
+
+        standaloneExactRespa.forceLayout.enabled = true;
+        const int defaultNumLevels = legacyExactRespaInput ? opts->mtsOpts.numLevels : 0;
+        const int numLevels        = get_eint(&inp, "exact-respa-levels", defaultNumLevels, wi);
+        if (numLevels < 2 || numLevels > gmx::c_maxMtsLevels)
+        {
+            wi->addError(gmx::formatString("exact-respa-levels should be within [2, %d]", gmx::c_maxMtsLevels));
+        }
+        else
+        {
+            standaloneExactRespa.levelStepFactors.resize(numLevels);
+            for (int levelIndex = 0; levelIndex < numLevels; levelIndex++)
+            {
+                const std::string factorKey = gmx::formatString("exact-respa-level%d-factor", levelIndex + 1);
+                const int defaultFactor =
+                        legacyExactRespaInput
+                                ? ((levelIndex == 0) ? 1 : opts->mtsOpts.levelFactors[levelIndex - 1])
+                                : ((levelIndex == 0) ? 1 : 0);
+                standaloneExactRespa.levelStepFactors[levelIndex] =
+                        get_eint(&inp, factorKey.c_str(), defaultFactor, wi);
+            }
+            if (standaloneExactRespa.levelStepFactors[0] != 1)
+            {
+                wi->addError("exact-respa-level1-factor should be 1");
+            }
+        }
+
+        auto readExactRespaLevel = [&inp, wi](const char* key, const int defaultOneBased) -> int
+        { return get_eint(&inp, key, defaultOneBased, wi) - 1; };
+        const auto& legacyRespa = opts->mtsOpts.lammpsRespa;
+        const int   lastLevel1  = std::max(1, numLevels);
+        standaloneExactRespa.forceLayout.bondLevel =
+                readExactRespaLevel("exact-respa-bond-level", legacyExactRespaInput ? legacyRespa.bondLevel + 1 : 1);
+        standaloneExactRespa.forceLayout.angleLevel = readExactRespaLevel(
+                "exact-respa-angle-level", legacyExactRespaInput ? legacyRespa.angleLevel + 1 : 1);
+        standaloneExactRespa.forceLayout.dihedralLevel = readExactRespaLevel(
+                "exact-respa-dihedral-level", legacyExactRespaInput ? legacyRespa.dihedralLevel + 1 : 1);
+        standaloneExactRespa.forceLayout.improperLevel = readExactRespaLevel(
+                "exact-respa-improper-level", legacyExactRespaInput ? legacyRespa.improperLevel + 1 : 1);
+        standaloneExactRespa.forceLayout.pair14Level = readExactRespaLevel(
+                "exact-respa-pair14-level", legacyExactRespaInput ? legacyRespa.pair14Level + 1 : 1);
+        standaloneExactRespa.forceLayout.pairLevel = readExactRespaLevel(
+                "exact-respa-pair-level", legacyExactRespaInput ? legacyRespa.pairLevel + 1 : lastLevel1);
+        standaloneExactRespa.forceLayout.kspaceLevel = readExactRespaLevel(
+                "exact-respa-kspace-level", legacyExactRespaInput ? legacyRespa.kspaceLevel + 1 : lastLevel1);
+        standaloneExactRespa.forceLayout.innerLevel = readExactRespaLevel(
+                "exact-respa-inner-level", legacyExactRespaInput ? legacyRespa.innerLevel + 1 : 0);
+        standaloneExactRespa.forceLayout.middleLevel = readExactRespaLevel(
+                "exact-respa-middle-level", legacyExactRespaInput ? legacyRespa.middleLevel + 1 : 0);
+        standaloneExactRespa.forceLayout.outerLevel = readExactRespaLevel(
+                "exact-respa-outer-level", legacyExactRespaInput ? legacyRespa.outerLevel + 1 : 0);
+        standaloneExactRespa.forceLayout.innerOff =
+                get_ereal(&inp, "exact-respa-inner-off", legacyExactRespaInput ? legacyRespa.innerOff : 0, wi);
+        standaloneExactRespa.forceLayout.innerOn =
+                get_ereal(&inp, "exact-respa-inner-on", legacyExactRespaInput ? legacyRespa.innerOn : 0, wi);
+        standaloneExactRespa.forceLayout.outerOn =
+                get_ereal(&inp, "exact-respa-outer-on", legacyExactRespaInput ? legacyRespa.outerOn : 0, wi);
+        standaloneExactRespa.forceLayout.outerOff =
+                get_ereal(&inp, "exact-respa-outer-off", legacyExactRespaInput ? legacyRespa.outerOff : 0, wi);
+
+        if (!EI_DYNAMICS(ir->eI))
+        {
+            standaloneExactRespa.clear();
         }
     }
     printStringNoNewline(&inp, "factor by which to increase the mass of the lightest atoms");
@@ -2662,7 +2749,7 @@ void get_ir(const char*     mdparin,
         ir->pull                        = std::make_unique<pull_params_t>();
         inputrecStrings->pullGroupNames = read_pullparams(&inp, ir->pull.get(), wi);
 
-        if (ir->useMts)
+        if (gmx::useExactRespa(*ir) || gmx::useMtsSubstepping(*ir))
         {
             for (int c = 0; c < ir->pull->ncoord; c++)
             {
@@ -2670,7 +2757,7 @@ void get_ir(const char*     mdparin,
                 {
                     wi->addError(
                             "Constraint COM pulling is not supported in combination with "
-                            "multiple time stepping");
+                            "substepped dynamics");
                     break;
                 }
             }
@@ -3239,12 +3326,22 @@ void get_ir(const char*     mdparin,
     }
 
     /* Set up MTS levels, this needs to happen before checking AWH parameters */
-    if (ir->useMts)
+    if (standaloneExactRespa.enabled())
+    {
+        ir->exactRespa = standaloneExactRespa;
+        ir->useMts     = false;
+        ir->mtsMode    = gmx::MtsMode::Legacy;
+        ir->lammpsRespa = {};
+        ir->mtsLevels.clear();
+        opts->mtsOpts = {};
+    }
+    else if (ir->useMts)
     {
         ir->mtsMode     = opts->mtsOpts.mode;
         ir->lammpsRespa = opts->mtsOpts.lammpsRespa;
         std::vector<std::string> errorMessages;
         ir->mtsLevels = gmx::setupMtsLevels(opts->mtsOpts, &errorMessages);
+        ir->exactRespa = gmx::exactRespaParametersFromLegacyMts(ir->mtsMode, ir->mtsLevels, ir->lammpsRespa);
 
         for (const auto& errorMessage : errorMessages)
         {
@@ -3255,6 +3352,8 @@ void get_ir(const char*     mdparin,
     {
         ir->mtsMode     = gmx::MtsMode::Legacy;
         ir->lammpsRespa = {};
+        ir->mtsLevels.clear();
+        ir->exactRespa.clear();
     }
 
     if (ir->bDoAwh)

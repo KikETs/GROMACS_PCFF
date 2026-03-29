@@ -71,6 +71,7 @@ namespace gmx
 template<typename>
 class ArrayRefWithPadding;
 class Awh;
+class ExactRespaForceStore;
 class ForceBuffersView;
 class ForceWithVirial;
 class ImdSession;
@@ -101,7 +102,7 @@ namespace gmx
  * At fast steps (step % mtsFactor != 0), the fast force is returned in
  * force->force(). The force->forceMtsCombined() buffer is unused.
  * At slow steps, the normal force is returned in force->force(),
- * unless the \p runScheduleWork.stepWork.useOnlyMtsCombinedForceBuffer==true.
+ * unless the \p runScheduleWork.stepWork.useOnlyCombinedForceBuffer==true.
  * A MTS-combined force, F_fast + mtsFactor*F_slow, is always returned in
  * force->forceMtsCombined(). This forceMts can be used directly in a standard
  * leap-frog integrator to do multiple time stepping.
@@ -123,6 +124,7 @@ void do_force(FILE*                         log,
               ArrayRef<RVec>                velocities,
               const history_t*              hist,
               ForceBuffersView*             force,
+              ExactRespaForceStore*         exactRespaForceStore,
               tensor                        vir_force,
               const t_mdatoms*              mdatoms,
               gmx_enerdata_t*               enerd,

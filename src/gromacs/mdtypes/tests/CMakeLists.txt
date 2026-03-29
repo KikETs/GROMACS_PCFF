@@ -36,10 +36,14 @@ gmx_add_unit_test(MdtypesUnitTest mdtypes-test
         enerdata.cpp
         observablesreducer.cpp
         checkpointdata.cpp
+        exactrespaforcestore.cpp
+        exactrespaschedule.cpp
+        exactresparecursion.cpp
         forcebuffers.cpp
         multipletimestepping.cpp
         )
 target_link_libraries(mdtypes-test PRIVATE
                       mdtypes
                       serialization
+                      taskassignment
                       )
