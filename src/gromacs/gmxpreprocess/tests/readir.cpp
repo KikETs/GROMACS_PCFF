@@ -342,6 +342,102 @@ TEST_F(GetIrTest, MtsAcceptsExactLammpsRespaWithVelocityVerletIntegrator)
     runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::NoErrorAndDoNotCompareOutput);
 }
 
+TEST_F(GetIrTest, StandaloneExactRespaClearsLegacyMtsFieldsAfterParsing)
+{
+    const char* inputMdpFile[] = { "integrator = md-vv",
+                                   "exact-respa = yes",
+                                   "mts = yes",
+                                   "mts-mode = lammps-respa",
+                                   "mts-levels = 3",
+                                   "mts-level2-factor = 2",
+                                   "mts-level3-factor = 4",
+                                   "mts-respa-bond-level = 1",
+                                   "mts-respa-angle-level = 2",
+                                   "mts-respa-dihedral-level = 2",
+                                   "mts-respa-improper-level = 2",
+                                   "mts-respa-pair14-level = 2",
+                                   "mts-respa-kspace-level = 3",
+                                   "mts-respa-inner-level = 1",
+                                   "mts-respa-middle-level = 2",
+                                   "mts-respa-outer-level = 3",
+                                   "mts-respa-inner-off = 0.30",
+                                   "mts-respa-inner-on = 0.45",
+                                   "mts-respa-outer-on = 0.60",
+                                   "mts-respa-outer-off = 0.80",
+                                   "coulomb-type = PME",
+                                   "coulomb-modifier = none",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = none",
+                                   "rlist = 0.99",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::NoErrorAndDoNotCompareOutput);
+
+    EXPECT_TRUE(ir_.exactRespa.enabled());
+    EXPECT_EQ(ir_.exactRespa.levelStepFactors, (std::vector<int>{ 1, 2, 4 }));
+    EXPECT_TRUE(ir_.exactRespa.forceLayout.enabled);
+    EXPECT_FALSE(ir_.useMts);
+    EXPECT_EQ(ir_.mtsMode, gmx::MtsMode::Legacy);
+    EXPECT_TRUE(ir_.mtsLevels.empty());
+    EXPECT_FALSE(ir_.lammpsRespa.enabled);
+    EXPECT_EQ(opts_.mtsOpts.mode, gmx::MtsMode::Legacy);
+    EXPECT_EQ(opts_.mtsOpts.numLevels, 0);
+    EXPECT_TRUE(opts_.mtsOpts.levelForces.empty());
+    EXPECT_TRUE(opts_.mtsOpts.levelFactors.empty());
+    EXPECT_FALSE(opts_.mtsOpts.lammpsRespa.enabled);
+}
+
+TEST_F(GetIrTest, StandaloneExactRespaOwnsParserStateWithoutLegacyMtsKeys)
+{
+    const char* inputMdpFile[] = { "integrator = md-vv",
+                                   "exact-respa = yes",
+                                   "exact-respa-levels = 3",
+                                   "exact-respa-level2-factor = 2",
+                                   "exact-respa-level3-factor = 4",
+                                   "exact-respa-bond-level = 1",
+                                   "exact-respa-angle-level = 2",
+                                   "exact-respa-dihedral-level = 2",
+                                   "exact-respa-improper-level = 2",
+                                   "exact-respa-pair14-level = 2",
+                                   "exact-respa-pair-level = 3",
+                                   "exact-respa-kspace-level = 2",
+                                   "exact-respa-inner-level = 1",
+                                   "exact-respa-middle-level = 2",
+                                   "exact-respa-outer-level = 3",
+                                   "exact-respa-inner-off = 0.30",
+                                   "exact-respa-inner-on = 0.45",
+                                   "exact-respa-outer-on = 0.60",
+                                   "exact-respa-outer-off = 0.80",
+                                   "coulomb-type = PME",
+                                   "coulomb-modifier = none",
+                                   "vdw-type = cut-off",
+                                   "vdw-modifier = none",
+                                   "rlist = 0.99",
+                                   "rcoulomb = 0.9",
+                                   "rvdw = 0.9",
+                                   "verlet-buffer-tolerance = -1",
+                                   "nstlist = 12" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::NoErrorAndDoNotCompareOutput);
+
+    EXPECT_TRUE(ir_.exactRespa.enabled());
+    EXPECT_EQ(ir_.exactRespa.levelStepFactors, (std::vector<int>{ 1, 2, 4 }));
+    EXPECT_TRUE(ir_.exactRespa.forceLayout.enabled);
+    EXPECT_EQ(ir_.exactRespa.forceLayout.pairLevel, 2);
+    EXPECT_EQ(ir_.exactRespa.forceLayout.kspaceLevel, 1);
+    EXPECT_EQ(ir_.exactRespa.forceLayout.outerLevel, 2);
+    EXPECT_FALSE(ir_.useMts);
+    EXPECT_EQ(ir_.mtsMode, gmx::MtsMode::Legacy);
+    EXPECT_TRUE(ir_.mtsLevels.empty());
+    EXPECT_FALSE(ir_.lammpsRespa.enabled);
+    EXPECT_EQ(opts_.mtsOpts.mode, gmx::MtsMode::Legacy);
+    EXPECT_EQ(opts_.mtsOpts.numLevels, 0);
+    EXPECT_TRUE(opts_.mtsOpts.levelForces.empty());
+    EXPECT_TRUE(opts_.mtsOpts.levelFactors.empty());
+    EXPECT_FALSE(opts_.mtsOpts.lammpsRespa.enabled);
+}
+
 TEST_F(GetIrTest, MtsRejectsExactLammpsRespaWithTwoLevels)
 {
     const char* inputMdpFile[] = { "mts = yes",

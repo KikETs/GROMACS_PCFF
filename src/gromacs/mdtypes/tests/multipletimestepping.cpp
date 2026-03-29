@@ -76,8 +76,9 @@ int countMtsLevelErrors(const GromppMtsOpts& mtsOpts, t_inputrec* ir)
     ir->mtsMode       = mtsOpts.mode;
     ir->lammpsRespa   = mtsOpts.lammpsRespa;
     ir->mtsLevels     = setupMtsLevels(mtsOpts, &errorMessages);
+    ir->exactRespa    = exactRespaParametersFromLegacyMts(ir->mtsMode, ir->mtsLevels, ir->lammpsRespa);
 
-    if (haveValidMtsSetup(*ir))
+    if (useExactRespa(*ir) || haveValidMtsSetup(*ir))
     {
         std::vector<std::string> errorMessagesCheck = checkMtsRequirements(*ir);
 
@@ -229,163 +230,6 @@ void configureExactLammpsRespaInputRecord(t_inputrec* ir)
     ir->rvdw             = 0.9;
 }
 
-struct ScalarRespaState
-{
-    double x = 0.0;
-    double v = 0.0;
-};
-
-double levelDt(const std::vector<MtsLevel>& mtsLevels, const int mtsLevel, const double baseDt)
-{
-    return baseDt * mtsLevels[mtsLevel].stepFactor;
-}
-
-double springForce(const double springConstant, const double position)
-{
-    return -springConstant * position;
-}
-
-void halfKick(ScalarRespaState* state, const double force, const double dt)
-{
-    state->v += 0.5 * dt * force;
-}
-
-void drift(ScalarRespaState* state, const double dt)
-{
-    state->x += dt * state->v;
-}
-
-void integrateReferenceRecursively(const std::vector<MtsLevel>& mtsLevels,
-                                   const std::vector<double>&   levelDt,
-                                   const std::vector<double>&   forces,
-                                   const int                    level,
-                                   ScalarRespaState*            state)
-{
-    const int loops =
-            (level + 1 == static_cast<int>(mtsLevels.size()))
-                    ? 1
-                    : mtsLevels[level + 1].stepFactor / mtsLevels[level].stepFactor;
-    for (int iloop = 0; iloop < loops; ++iloop)
-    {
-        halfKick(state, forces[level], levelDt[level]);
-        if (level == 0)
-        {
-            drift(state, levelDt[0]);
-        }
-        else
-        {
-            integrateReferenceRecursively(mtsLevels, levelDt, forces, level - 1, state);
-        }
-        halfKick(state, forces[level], levelDt[level]);
-    }
-}
-
-ScalarRespaState integrateWithFlattenedTrace(const std::vector<MtsLevel>& mtsLevels,
-                                             const std::vector<double>&   forces,
-                                             const double                 baseDt,
-                                             const int                    numBaseSteps)
-{
-    ScalarRespaState state;
-    for (int baseStep = 0; baseStep < numBaseSteps; ++baseStep)
-    {
-        const LammpsRespaBaseStepTrace trace = lammpsRespaBaseStepTrace(mtsLevels, baseStep);
-        for (const int level : trace.initialKickLevels)
-        {
-            halfKick(&state, forces[level], levelDt(mtsLevels, level, baseDt));
-        }
-        drift(&state, baseDt);
-        for (const int level : trace.finalKickLevels)
-        {
-            halfKick(&state, forces[level], levelDt(mtsLevels, level, baseDt));
-        }
-    }
-    return state;
-}
-
-void integrateReferenceRecursivelyWithDynamicForces(const std::vector<MtsLevel>& mtsLevels,
-                                                    const std::vector<double>&   levelDt,
-                                                    const std::vector<double>&   springConstants,
-                                                    const int                    level,
-                                                    ScalarRespaState*            state,
-                                                    std::vector<double>*         forces)
-{
-    const int loops =
-            (level + 1 == static_cast<int>(mtsLevels.size()))
-                    ? 1
-                    : mtsLevels[level + 1].stepFactor / mtsLevels[level].stepFactor;
-    for (int iloop = 0; iloop < loops; ++iloop)
-    {
-        halfKick(state, (*forces)[level], levelDt[level]);
-        if (level == 0)
-        {
-            drift(state, levelDt[0]);
-            (*forces)[0] = springForce(springConstants[0], state->x);
-        }
-        else
-        {
-            integrateReferenceRecursivelyWithDynamicForces(
-                    mtsLevels, levelDt, springConstants, level - 1, state, forces);
-            (*forces)[level] = springForce(springConstants[level], state->x);
-        }
-        halfKick(state, (*forces)[level], levelDt[level]);
-    }
-}
-
-ScalarRespaState integrateRecursivelyWithDynamicForces(const std::vector<MtsLevel>& mtsLevels,
-                                                       const std::vector<double>&   springConstants,
-                                                       const double                 baseDt,
-                                                       const int                    numBaseSteps)
-{
-    std::vector<double> levelDtByIndex(mtsLevels.size());
-    std::vector<double> forces(mtsLevels.size());
-    ScalarRespaState    state{ 1.0, 0.0 };
-    for (int level = 0; level < static_cast<int>(mtsLevels.size()); ++level)
-    {
-        levelDtByIndex[level] = levelDt(mtsLevels, level, baseDt);
-        forces[level]         = springForce(springConstants[level], state.x);
-    }
-
-    const int outerLoops = numBaseSteps / mtsLevels.back().stepFactor;
-    for (int i = 0; i < outerLoops; ++i)
-    {
-        integrateReferenceRecursivelyWithDynamicForces(
-                mtsLevels, levelDtByIndex, springConstants, static_cast<int>(mtsLevels.size()) - 1, &state, &forces);
-    }
-    return state;
-}
-
-ScalarRespaState integrateWithFlattenedTraceAndDynamicForces(const std::vector<MtsLevel>& mtsLevels,
-                                                             const std::vector<double>&   springConstants,
-                                                             const double                 baseDt,
-                                                             const int                    numBaseSteps)
-{
-    std::vector<double> forces(mtsLevels.size());
-    ScalarRespaState    state{ 1.0, 0.0 };
-    for (int level = 0; level < static_cast<int>(mtsLevels.size()); ++level)
-    {
-        forces[level] = springForce(springConstants[level], state.x);
-    }
-
-    for (int baseStep = 0; baseStep < numBaseSteps; ++baseStep)
-    {
-        const LammpsRespaBaseStepTrace trace = lammpsRespaBaseStepTrace(mtsLevels, baseStep);
-        for (const int level : trace.initialKickLevels)
-        {
-            halfKick(&state, forces[level], levelDt(mtsLevels, level, baseDt));
-        }
-        drift(&state, baseDt);
-        for (const int level : trace.refreshedForceLevels)
-        {
-            forces[level] = springForce(springConstants[level], state.x);
-        }
-        for (const int level : trace.finalKickLevels)
-        {
-            halfKick(&state, forces[level], levelDt(mtsLevels, level, baseDt));
-        }
-    }
-    return state;
-}
-
 } // namespace
 
 TEST(MultipleTimeStepping, ChecksPmeIsAtLastLevel)
@@ -410,6 +254,7 @@ TEST(MultipleTimeStepping, AcceptsVelocityVerletOnlyForExactLammpsRespa)
         ir.mtsMode   = mtsOpts.mode;
         ir.lammpsRespa = mtsOpts.lammpsRespa;
         ir.mtsLevels = setupMtsLevels(mtsOpts, nullptr);
+        ir.exactRespa = exactRespaParametersFromLegacyMts(ir.mtsMode, ir.mtsLevels, ir.lammpsRespa);
 
         EXPECT_TRUE(checkMtsRequirements(ir).empty());
     }
@@ -425,64 +270,6 @@ TEST(MultipleTimeStepping, AcceptsVelocityVerletOnlyForExactLammpsRespa)
 
         EXPECT_THAT(checkMtsRequirements(ir), ::testing::Not(::testing::IsEmpty()));
     }
-}
-
-TEST(MultipleTimeStepping, FlattenedBaseStepTraceMatchesRecursiveLammpsReference)
-{
-    const GromppMtsOpts mtsOpts = exactLammpsRespaOpts();
-
-    t_inputrec ir;
-    configureExactLammpsRespaInputRecord(&ir);
-    ir.useMts      = true;
-    ir.mtsMode     = mtsOpts.mode;
-    ir.lammpsRespa = mtsOpts.lammpsRespa;
-    ir.mtsLevels   = setupMtsLevels(mtsOpts, nullptr);
-
-    const std::vector<double> forces = { 1.25, -0.5, 3.0 };
-    const double              baseDt = 0.0025;
-    const int numBaseSteps = ir.mtsLevels.back().stepFactor;
-
-    std::vector<double> recursiveLevelDt(ir.mtsLevels.size());
-    for (int level = 0; level < static_cast<int>(ir.mtsLevels.size()); ++level)
-    {
-        recursiveLevelDt[level] = levelDt(ir.mtsLevels, level, baseDt);
-    }
-
-    ScalarRespaState recursiveState;
-    integrateReferenceRecursively(ir.mtsLevels,
-                                  recursiveLevelDt,
-                                  forces,
-                                  static_cast<int>(ir.mtsLevels.size()) - 1,
-                                  &recursiveState);
-    const ScalarRespaState flattenedState =
-            integrateWithFlattenedTrace(ir.mtsLevels, forces, baseDt, numBaseSteps);
-
-    EXPECT_NEAR(flattenedState.x, recursiveState.x, 1e-12);
-    EXPECT_NEAR(flattenedState.v, recursiveState.v, 1e-12);
-}
-
-TEST(MultipleTimeStepping, FlattenedBaseStepTraceMatchesRecursiveLammpsReferenceWithDynamicForces)
-{
-    const GromppMtsOpts mtsOpts = exactLammpsRespaOpts();
-
-    t_inputrec ir;
-    configureExactLammpsRespaInputRecord(&ir);
-    ir.useMts      = true;
-    ir.mtsMode     = mtsOpts.mode;
-    ir.lammpsRespa = mtsOpts.lammpsRespa;
-    ir.mtsLevels   = setupMtsLevels(mtsOpts, nullptr);
-
-    const std::vector<double> springConstants = { 1.25, 0.5, 0.125 };
-    const double              baseDt          = 0.0025;
-    const int                 numBaseSteps    = ir.mtsLevels.back().stepFactor * 5;
-
-    const ScalarRespaState recursiveState =
-            integrateRecursivelyWithDynamicForces(ir.mtsLevels, springConstants, baseDt, numBaseSteps);
-    const ScalarRespaState flattenedState =
-            integrateWithFlattenedTraceAndDynamicForces(ir.mtsLevels, springConstants, baseDt, numBaseSteps);
-
-    EXPECT_NEAR(flattenedState.x, recursiveState.x, 1e-12);
-    EXPECT_NEAR(flattenedState.v, recursiveState.v, 1e-12);
 }
 
 //! Test fixture base for parametrizing interval tests
@@ -601,35 +388,6 @@ TEST(MultipleTimeStepping, ReportsHighestActiveLevelForNestedSchedule)
     EXPECT_EQ(highestActiveMtsLevel(ir.mtsLevels, 4), 2);
 }
 
-TEST(MultipleTimeStepping, ReportsLammpsRespaBaseStepTraceForThreeLevelSchedule)
-{
-    const auto exactMtsOpts = exactLammpsRespaOpts();
-
-    t_inputrec ir;
-    configureExactLammpsRespaInputRecord(&ir);
-    setAndCheckMtsLevels(exactMtsOpts, &ir, 0);
-
-    const auto trace0 = lammpsRespaBaseStepTrace(ir.mtsLevels, 0);
-    EXPECT_THAT(trace0.initialKickLevels, ::testing::ElementsAre(2, 1, 0));
-    EXPECT_THAT(trace0.refreshedForceLevels, ::testing::ElementsAre(0));
-    EXPECT_THAT(trace0.finalKickLevels, ::testing::ElementsAre(0));
-
-    const auto trace1 = lammpsRespaBaseStepTrace(ir.mtsLevels, 1);
-    EXPECT_THAT(trace1.initialKickLevels, ::testing::ElementsAre(0));
-    EXPECT_THAT(trace1.refreshedForceLevels, ::testing::ElementsAre(0, 1));
-    EXPECT_THAT(trace1.finalKickLevels, ::testing::ElementsAre(0, 1));
-
-    const auto trace2 = lammpsRespaBaseStepTrace(ir.mtsLevels, 2);
-    EXPECT_THAT(trace2.initialKickLevels, ::testing::ElementsAre(1, 0));
-    EXPECT_THAT(trace2.refreshedForceLevels, ::testing::ElementsAre(0));
-    EXPECT_THAT(trace2.finalKickLevels, ::testing::ElementsAre(0));
-
-    const auto trace3 = lammpsRespaBaseStepTrace(ir.mtsLevels, 3);
-    EXPECT_THAT(trace3.initialKickLevels, ::testing::ElementsAre(0));
-    EXPECT_THAT(trace3.refreshedForceLevels, ::testing::ElementsAre(0, 1, 2));
-    EXPECT_THAT(trace3.finalKickLevels, ::testing::ElementsAre(0, 1, 2));
-}
-
 TEST(MultipleTimeStepping, RejectsTwoLevelExactLammpsRespaSchedule)
 {
     GromppMtsOpts mtsOpts;
@@ -662,6 +420,7 @@ TEST(MultipleTimeStepping, ParsesExactLammpsRespaSchedule)
     configureExactLammpsRespaInputRecord(&ir);
 
     setAndCheckMtsLevels(mtsOpts, &ir, 0);
+    ir.exactRespa = exactRespaParametersFromLegacyMts(ir.mtsMode, ir.mtsLevels, ir.lammpsRespa);
     ASSERT_EQ(ir.mtsLevels.size(), 3);
     EXPECT_EQ(forceGroupMtsLevel(ir.mtsLevels, MtsForceGroups::Bond), 0);
     EXPECT_EQ(forceGroupMtsLevel(ir.mtsLevels, MtsForceGroups::Angle), 1);

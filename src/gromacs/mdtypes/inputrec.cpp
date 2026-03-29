@@ -33,6 +33,7 @@
  */
 #include "gmxpre.h"
 
+#include "gromacs/mdtypes/exactrespaschedule.h"
 #include "gromacs/mdtypes/inputrec.h"
 
 #include <cmath>
@@ -206,7 +207,9 @@ int ir_optimal_nstpcouple(const t_inputrec* ir)
     const int nwanted = c_defaultNstPCouple;
 
     // With multiple time-stepping we can only compute the pressure at slowest steps
-    const int minNstPCouple = (ir->useMts ? ir->mtsLevels.back().stepFactor : 1);
+    const int minNstPCouple =
+            gmx::useExactRespa(*ir) ? gmx::exactRespaSlowestStepFactor(*ir)
+                                    : (gmx::useMtsSubstepping(*ir) ? ir->mtsLevels.back().stepFactor : 1);
 
     int n;
     if (minIntegrationSteps == 0
@@ -222,7 +225,7 @@ int ir_optimal_nstpcouple(const t_inputrec* ir)
             n = minNstPCouple;
         }
         // Without MTS we try to make nstpcouple a "nice" number
-        if (!ir->useMts)
+        if (!(gmx::useExactRespa(*ir) || gmx::useMtsSubstepping(*ir)))
         {
             while (nwanted % n != 0)
             {
@@ -232,7 +235,7 @@ int ir_optimal_nstpcouple(const t_inputrec* ir)
     }
 
     // With MTS, nstpcouple should be a multiple of the slowest MTS interval
-    if (ir->useMts)
+    if (gmx::useExactRespa(*ir) || gmx::useMtsSubstepping(*ir))
     {
         n = n - (n % minNstPCouple);
     }
@@ -878,6 +881,30 @@ void pr_inputrec(FILE* fp, int indent, const char* title, const t_inputrec* ir, 
                 PR("mts-respa-outer-on", ir->lammpsRespa.outerOn);
                 PR("mts-respa-outer-off", ir->lammpsRespa.outerOff);
             }
+        }
+        PS("exact-respa", EBOOL(ir->exactRespa.enabled()));
+        if (ir->exactRespa.enabled())
+        {
+            PI("exact-respa-levels", ir->exactRespa.levelStepFactors.size());
+            for (int levelIndex = 0; levelIndex < gmx::ssize(ir->exactRespa.levelStepFactors); levelIndex++)
+            {
+                const std::string factorKey = gmx::formatString("exact-respa-level%d-factor", levelIndex + 1);
+                PI(factorKey.c_str(), ir->exactRespa.levelStepFactors[levelIndex]);
+            }
+            PI("exact-respa-bond-level", ir->exactRespa.forceLayout.bondLevel + 1);
+            PI("exact-respa-angle-level", ir->exactRespa.forceLayout.angleLevel + 1);
+            PI("exact-respa-dihedral-level", ir->exactRespa.forceLayout.dihedralLevel + 1);
+            PI("exact-respa-improper-level", ir->exactRespa.forceLayout.improperLevel + 1);
+            PI("exact-respa-pair14-level", ir->exactRespa.forceLayout.pair14Level + 1);
+            PI("exact-respa-pair-level", ir->exactRespa.forceLayout.pairLevel + 1);
+            PI("exact-respa-kspace-level", ir->exactRespa.forceLayout.kspaceLevel + 1);
+            PI("exact-respa-inner-level", ir->exactRespa.forceLayout.innerLevel + 1);
+            PI("exact-respa-middle-level", ir->exactRespa.forceLayout.middleLevel + 1);
+            PI("exact-respa-outer-level", ir->exactRespa.forceLayout.outerLevel + 1);
+            PR("exact-respa-inner-off", ir->exactRespa.forceLayout.innerOff);
+            PR("exact-respa-inner-on", ir->exactRespa.forceLayout.innerOn);
+            PR("exact-respa-outer-on", ir->exactRespa.forceLayout.outerOn);
+            PR("exact-respa-outer-off", ir->exactRespa.forceLayout.outerOff);
         }
         PR("mass-repartition-factor", ir->massRepartitionFactor);
         PS("comm-mode", enumValueToString(ir->comm_mode));
@@ -1575,6 +1602,108 @@ void cmp_inputrec(FILE* fp, const t_inputrec* ir1, const t_inputrec* ir2, real f
                      ftol,
                      abstol);
         }
+    }
+    cmp_bool(fp,
+             "inputrec->exactRespa.enabled",
+             -1,
+             ir1->exactRespa.enabled(),
+             ir2->exactRespa.enabled());
+    cmp_int(fp,
+            "inputrec->exactRespa.levels",
+            -1,
+            ir1->exactRespa.levelStepFactors.size(),
+            ir2->exactRespa.levelStepFactors.size());
+    for (int levelIndex = 0;
+         levelIndex < static_cast<int>(std::min(ir1->exactRespa.levelStepFactors.size(),
+                                                ir2->exactRespa.levelStepFactors.size()));
+         levelIndex++)
+    {
+        cmp_int(fp,
+                gmx::formatString("inputrec->exactRespa.level%d.factor", levelIndex + 1).c_str(),
+                -1,
+                ir1->exactRespa.levelStepFactors[levelIndex],
+                ir2->exactRespa.levelStepFactors[levelIndex]);
+    }
+    if (ir1->exactRespa.enabled() || ir2->exactRespa.enabled())
+    {
+        cmp_int(fp,
+                "inputrec->exactRespa.forceLayout.bondLevel",
+                -1,
+                ir1->exactRespa.forceLayout.bondLevel,
+                ir2->exactRespa.forceLayout.bondLevel);
+        cmp_int(fp,
+                "inputrec->exactRespa.forceLayout.angleLevel",
+                -1,
+                ir1->exactRespa.forceLayout.angleLevel,
+                ir2->exactRespa.forceLayout.angleLevel);
+        cmp_int(fp,
+                "inputrec->exactRespa.forceLayout.dihedralLevel",
+                -1,
+                ir1->exactRespa.forceLayout.dihedralLevel,
+                ir2->exactRespa.forceLayout.dihedralLevel);
+        cmp_int(fp,
+                "inputrec->exactRespa.forceLayout.improperLevel",
+                -1,
+                ir1->exactRespa.forceLayout.improperLevel,
+                ir2->exactRespa.forceLayout.improperLevel);
+        cmp_int(fp,
+                "inputrec->exactRespa.forceLayout.pair14Level",
+                -1,
+                ir1->exactRespa.forceLayout.pair14Level,
+                ir2->exactRespa.forceLayout.pair14Level);
+        cmp_int(fp,
+                "inputrec->exactRespa.forceLayout.pairLevel",
+                -1,
+                ir1->exactRespa.forceLayout.pairLevel,
+                ir2->exactRespa.forceLayout.pairLevel);
+        cmp_int(fp,
+                "inputrec->exactRespa.forceLayout.kspaceLevel",
+                -1,
+                ir1->exactRespa.forceLayout.kspaceLevel,
+                ir2->exactRespa.forceLayout.kspaceLevel);
+        cmp_int(fp,
+                "inputrec->exactRespa.forceLayout.innerLevel",
+                -1,
+                ir1->exactRespa.forceLayout.innerLevel,
+                ir2->exactRespa.forceLayout.innerLevel);
+        cmp_int(fp,
+                "inputrec->exactRespa.forceLayout.middleLevel",
+                -1,
+                ir1->exactRespa.forceLayout.middleLevel,
+                ir2->exactRespa.forceLayout.middleLevel);
+        cmp_int(fp,
+                "inputrec->exactRespa.forceLayout.outerLevel",
+                -1,
+                ir1->exactRespa.forceLayout.outerLevel,
+                ir2->exactRespa.forceLayout.outerLevel);
+        cmp_real(fp,
+                 "inputrec->exactRespa.forceLayout.innerOff",
+                 -1,
+                 ir1->exactRespa.forceLayout.innerOff,
+                 ir2->exactRespa.forceLayout.innerOff,
+                 ftol,
+                 abstol);
+        cmp_real(fp,
+                 "inputrec->exactRespa.forceLayout.innerOn",
+                 -1,
+                 ir1->exactRespa.forceLayout.innerOn,
+                 ir2->exactRespa.forceLayout.innerOn,
+                 ftol,
+                 abstol);
+        cmp_real(fp,
+                 "inputrec->exactRespa.forceLayout.outerOn",
+                 -1,
+                 ir1->exactRespa.forceLayout.outerOn,
+                 ir2->exactRespa.forceLayout.outerOn,
+                 ftol,
+                 abstol);
+        cmp_real(fp,
+                 "inputrec->exactRespa.forceLayout.outerOff",
+                 -1,
+                 ir1->exactRespa.forceLayout.outerOff,
+                 ir2->exactRespa.forceLayout.outerOff,
+                 ftol,
+                 abstol);
     }
     cmp_real(fp, "inputrec->massRepartitionFactor", -1, ir1->massRepartitionFactor, ir2->massRepartitionFactor, ftol, abstol);
     cmp_int(fp, "inputrec->pbcType", -1, static_cast<int>(ir1->pbcType), static_cast<int>(ir2->pbcType));

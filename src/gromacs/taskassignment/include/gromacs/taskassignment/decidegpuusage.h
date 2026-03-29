@@ -325,7 +325,7 @@ bool decideWhetherToUseGpuForUpdate(bool                 isDomainDecomposition,
  * which rely on it is made during task assignment / simulationWorkload initialization.
  *
  * \param[in]  mpiStatus                    Information about GPU-aware availability
- * \param[in]  haveMts                      Whether the simulation uses multiple time stepping
+ * \param[in]  haveLegacyMts                Whether the simulation uses legacy multiple time stepping
  * \param[in]  useReplicaExchange           Whether replica exchange is used
  * \param[in]  haveSwapCoords               Whether the swap-coords functionality is active
  * \param[in]  gpusWereDetected             Whether we have any GPUs
@@ -334,7 +334,7 @@ bool decideWhetherToUseGpuForUpdate(bool                 isDomainDecomposition,
  * \returns    Whether the MPI-parallel runs can use direct GPU communication.
  */
 bool decideWhetherDirectGpuCommunicationCanBeUsed(gmx::GpuAwareMpiStatus mpiStatus,
-                                                  bool                   haveMts,
+                                                  bool                   haveLegacyMts,
                                                   bool                   useReplicaExchange,
                                                   bool                   haveSwapCoords,
                                                   bool                   gpusWereDetected,

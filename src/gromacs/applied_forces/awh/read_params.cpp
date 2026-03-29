@@ -54,6 +54,7 @@
 #include "gromacs/math/units.h"
 #include "gromacs/math/utilities.h"
 #include "gromacs/mdtypes/awh_params.h"
+#include "gromacs/mdtypes/exactrespaschedule.h"
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/md_enums.h"
 #include "gromacs/mdtypes/multipletimestepping.h"
@@ -121,12 +122,10 @@ namespace
  */
 void checkMtsConsistency(const t_inputrec& inputrec, WarningHandler* wi)
 {
-    if (!inputrec.useMts)
+    if (!(useExactRespa(inputrec) || useMtsSubstepping(inputrec)))
     {
         return;
     }
-
-    GMX_RELEASE_ASSERT(inputrec.mtsLevels.size() == 2, "Only 2 MTS levels supported here");
 
     bool usesPull = false;
     bool usesFep  = false;
@@ -142,23 +141,52 @@ void checkMtsConsistency(const t_inputrec& inputrec, WarningHandler* wi)
             }
         }
     }
-    const int awhMtsLevel = forceGroupMtsLevel(inputrec.mtsLevels, MtsForceGroups::Awh);
-    if (usesPull && forceGroupMtsLevel(inputrec.mtsLevels, MtsForceGroups::Pull) != awhMtsLevel)
+    if (useExactRespa(inputrec))
+    {
+        const int awhLevel = exactRespaAwhLevel(inputrec);
+        if (usesPull && exactRespaPullLevel(inputrec) != awhLevel)
+        {
+            wi->addError(
+                    "When AWH is applied to pull coordinates, pull and AWH should be computed at "
+                    "the same exact-respa level");
+        }
+        if (usesFep && awhLevel != exactRespaNumLevels(inputrec) - 1)
+        {
+            wi->addError(
+                    "When AWH is applied to the free-energy lambda with exact-respa dynamics, "
+                    "AWH should be computed at the slow level");
+        }
+        if (inputrec.awhParams->nstSampleCoord() % exactRespaLevelStepFactor(inputrec, awhLevel) != 0)
+        {
+            wi->addError(
+                    "With exact-respa applied to AWH, awh-nstsample should be a multiple of "
+                    "the active exact-respa step factor");
+        }
+        return;
+    }
+
+    const ArrayRef<const MtsLevel> mtsLevels(inputrec.mtsLevels);
+    GMX_RELEASE_ASSERT(mtsLevels.size() == 2, "Only 2 MTS levels supported here");
+
+    const int awhMtsLevel = forceGroupMtsLevel(mtsLevels, MtsForceGroups::Awh);
+    if (usesPull && forceGroupMtsLevel(mtsLevels, MtsForceGroups::Pull) != awhMtsLevel)
     {
         wi->addError(
                 "When AWH is applied to pull coordinates, pull and AWH should be computed at "
                 "the same MTS level");
     }
-    if (usesFep && awhMtsLevel != gmx::ssize(inputrec.mtsLevels) - 1)
+    if (usesFep && awhMtsLevel != gmx::ssize(mtsLevels) - 1)
     {
         wi->addError(
-                "When AWH is applied to the free-energy lambda with MTS, AWH should be "
-                "computed at the slow MTS level");
+                "When AWH is applied to the free-energy lambda with substepped dynamics, "
+                "AWH should be computed at the slow level");
     }
 
-    if (inputrec.awhParams->nstSampleCoord() % inputrec.mtsLevels[awhMtsLevel].stepFactor != 0)
+    if (inputrec.awhParams->nstSampleCoord() % mtsLevels[awhMtsLevel].stepFactor != 0)
     {
-        wi->addError("With MTS applied to AWH, awh-nstsample should be a multiple of mts-factor");
+        wi->addError(
+                "With substepped dynamics applied to AWH, awh-nstsample should be a multiple of "
+                "the active step factor");
     }
 }
 

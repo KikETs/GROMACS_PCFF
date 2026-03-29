@@ -146,6 +146,15 @@ static const char* xvfLoopEntryStageName(const Step step)
            : (step == 2) ? "STEP2_LOOP_ENTRY_XVF"
            : (step == 3) ? "STEP3_LOOP_ENTRY_XVF"
            : (step == 4) ? "STEP4_LOOP_ENTRY_XVF"
+           : (step == 5) ? "STEP5_LOOP_ENTRY_XVF"
+           : (step == 6) ? "STEP6_LOOP_ENTRY_XVF"
+           : (step == 7) ? "STEP7_LOOP_ENTRY_XVF"
+           : (step == 8) ? "STEP8_LOOP_ENTRY_XVF"
+           : (step == 9) ? "STEP9_LOOP_ENTRY_XVF"
+           : (step == 10) ? "STEP10_LOOP_ENTRY_XVF"
+           : (step == 11) ? "STEP11_LOOP_ENTRY_XVF"
+           : (step == 12) ? "STEP12_LOOP_ENTRY_XVF"
+           : (step == 13) ? "STEP13_LOOP_ENTRY_XVF"
                          : nullptr;
 }
 
@@ -155,6 +164,16 @@ static const char* xvfEndStageName(const Step step)
            : (step == 1) ? "STEP1_END_XVF"
            : (step == 2) ? "STEP2_END_XVF"
            : (step == 3) ? "STEP3_END_XVF"
+           : (step == 4) ? "STEP4_END_XVF"
+           : (step == 5) ? "STEP5_END_XVF"
+           : (step == 6) ? "STEP6_END_XVF"
+           : (step == 7) ? "STEP7_END_XVF"
+           : (step == 8) ? "STEP8_END_XVF"
+           : (step == 9) ? "STEP9_END_XVF"
+           : (step == 10) ? "STEP10_END_XVF"
+           : (step == 11) ? "STEP11_END_XVF"
+           : (step == 12) ? "STEP12_END_XVF"
+           : (step == 13) ? "STEP13_END_XVF"
                          : nullptr;
 }
 

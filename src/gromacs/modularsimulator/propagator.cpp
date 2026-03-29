@@ -114,6 +114,13 @@ bool shouldTraceXvfStageStep(const Step step)
     return false;
 }
 
+bool shouldTraceInitialKickAuditStep(const Step step)
+{
+    const char* traceDir = activeM2pTraceDirPath();
+    const char* value    = std::getenv("GMX_PCFF_RESPA_TRACE_INITIAL_KICK_AUDIT");
+    return step == 0 && traceDir != nullptr && value != nullptr && *value != '\0';
+}
+
 const char* xvfPreUpdateStageName(const Step step)
 {
     return (step == 0) ? "STEP0_PRE_UPDATE_XVF"
@@ -121,6 +128,15 @@ const char* xvfPreUpdateStageName(const Step step)
            : (step == 2) ? "STEP2_PRE_UPDATE_XVF"
            : (step == 3) ? "STEP3_PRE_UPDATE_XVF"
            : (step == 4) ? "STEP4_PRE_UPDATE_XVF"
+           : (step == 5) ? "STEP5_PRE_UPDATE_XVF"
+           : (step == 6) ? "STEP6_PRE_UPDATE_XVF"
+           : (step == 7) ? "STEP7_PRE_UPDATE_XVF"
+           : (step == 8) ? "STEP8_PRE_UPDATE_XVF"
+           : (step == 9) ? "STEP9_PRE_UPDATE_XVF"
+           : (step == 10) ? "STEP10_PRE_UPDATE_XVF"
+           : (step == 11) ? "STEP11_PRE_UPDATE_XVF"
+           : (step == 12) ? "STEP12_PRE_UPDATE_XVF"
+           : (step == 13) ? "STEP13_PRE_UPDATE_XVF"
                          : nullptr;
 }
 
@@ -131,6 +147,15 @@ const char* xvfUpdateInputStageName(const Step step)
            : (step == 2) ? "STEP2_UPDATE_INPUT_XVF"
            : (step == 3) ? "STEP3_UPDATE_INPUT_XVF"
            : (step == 4) ? "STEP4_UPDATE_INPUT_XVF"
+           : (step == 5) ? "STEP5_UPDATE_INPUT_XVF"
+           : (step == 6) ? "STEP6_UPDATE_INPUT_XVF"
+           : (step == 7) ? "STEP7_UPDATE_INPUT_XVF"
+           : (step == 8) ? "STEP8_UPDATE_INPUT_XVF"
+           : (step == 9) ? "STEP9_UPDATE_INPUT_XVF"
+           : (step == 10) ? "STEP10_UPDATE_INPUT_XVF"
+           : (step == 11) ? "STEP11_UPDATE_INPUT_XVF"
+           : (step == 12) ? "STEP12_UPDATE_INPUT_XVF"
+           : (step == 13) ? "STEP13_UPDATE_INPUT_XVF"
                          : nullptr;
 }
 
@@ -141,6 +166,15 @@ const char* xvfPostPositionCommitStageName(const Step step)
            : (step == 2) ? "STEP2_POST_POSITION_COMMIT_XVF"
            : (step == 3) ? "STEP3_POST_POSITION_COMMIT_XVF"
            : (step == 4) ? "STEP4_POST_POSITION_COMMIT_XVF"
+           : (step == 5) ? "STEP5_POST_POSITION_COMMIT_XVF"
+           : (step == 6) ? "STEP6_POST_POSITION_COMMIT_XVF"
+           : (step == 7) ? "STEP7_POST_POSITION_COMMIT_XVF"
+           : (step == 8) ? "STEP8_POST_POSITION_COMMIT_XVF"
+           : (step == 9) ? "STEP9_POST_POSITION_COMMIT_XVF"
+           : (step == 10) ? "STEP10_POST_POSITION_COMMIT_XVF"
+           : (step == 11) ? "STEP11_POST_POSITION_COMMIT_XVF"
+           : (step == 12) ? "STEP12_POST_POSITION_COMMIT_XVF"
+           : (step == 13) ? "STEP13_POST_POSITION_COMMIT_XVF"
                          : nullptr;
 }
 
@@ -212,6 +246,42 @@ void appendXvfStageTraceAtom(const char*    traceDirPath,
            << " fz=" << std::setprecision(15) << f[ZZ] << " writer=" << writerName
            << " code_location=" << codeLocation << " snapshot_type=" << snapshotType
            << " boundary_kind=" << boundaryKind << "\n";
+}
+
+void appendInitialKickAuditAtom(const char* traceDirPath,
+                                const char* side,
+                                Step        step,
+                                int         atomIndex,
+                                const RVec& velocityBefore,
+                                const RVec& forceUsed,
+                                real        dtUsed,
+                                const RVec& velocityAfter,
+                                const char* writerName,
+                                const char* codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "step0_initial_kick_audit_trace.txt", std::ios::app);
+    output << "side=" << side << " step=" << step << " phase=Initial atom=" << atomIndex
+           << " kick_order=0 level_index=-1 kick_levels=plain_total force_source_label=plainTotalForce"
+           << " dt_used=" << std::setprecision(15) << dtUsed << " half_dt_used=" << std::setprecision(15)
+           << (0.5 * dtUsed) << " velocity_before_x=" << std::setprecision(15) << velocityBefore[XX]
+           << " velocity_before_y=" << std::setprecision(15) << velocityBefore[YY]
+           << " velocity_before_z=" << std::setprecision(15) << velocityBefore[ZZ] << " force_x="
+           << std::setprecision(15) << forceUsed[XX] << " force_y=" << std::setprecision(15)
+           << forceUsed[YY] << " force_z=" << std::setprecision(15) << forceUsed[ZZ]
+           << " dv_x=" << std::setprecision(15) << (velocityAfter[XX] - velocityBefore[XX])
+           << " dv_y=" << std::setprecision(15) << (velocityAfter[YY] - velocityBefore[YY])
+           << " dv_z=" << std::setprecision(15) << (velocityAfter[ZZ] - velocityBefore[ZZ])
+           << " velocity_after_x=" << std::setprecision(15) << velocityAfter[XX]
+           << " velocity_after_y=" << std::setprecision(15) << velocityAfter[YY]
+           << " velocity_after_z=" << std::setprecision(15) << velocityAfter[ZZ] << " writer="
+           << writerName << " code_location=" << codeLocation << "\n";
 }
 
 // Names of integration steps, only used locally for error messages
@@ -623,10 +693,11 @@ void Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run()
     const Step traceStep = g_positionUpdateTraceCurrentStep;
     const bool tracePositionUpdate = shouldTracePositionUpdateStep(traceStep);
     const bool traceXvfStage       = shouldTraceXvfStageStep(traceStep);
+    const bool traceInitialKickAudit = shouldTraceInitialKickAuditStep(traceStep);
 
 #pragma omp parallel for num_threads(nth) schedule(static) default(none) \
         shared(x, xp, v, f, invMassPerDim)                               \
-        firstprivate(nth, homenr, lambdaStart, lambdaEnd, treatPRScalingMatrixAsDiagonal, diagonalOfPRScalingMatrix, traceStep, tracePositionUpdate, traceXvfStage)
+        firstprivate(nth, homenr, lambdaStart, lambdaEnd, treatPRScalingMatrixAsDiagonal, diagonalOfPRScalingMatrix, traceStep, tracePositionUpdate, traceXvfStage, traceInitialKickAudit)
     for (int th = 0; th < nth; th++)
     {
         try
@@ -636,6 +707,14 @@ void Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run()
 
             for (int a = start_th; a < end_th; a++)
             {
+                const bool traceThisAtomInitialKick = traceInitialKickAudit && (a == 0 || a == 5);
+                RVec       velocityBeforeKick       = {};
+                RVec       forceBeforeKick          = {};
+                if (traceThisAtomInitialKick)
+                {
+                    copy_rvec(v[a], velocityBeforeKick);
+                    copy_rvec(f[a], forceBeforeKick);
+                }
                 if (treatPRScalingMatrixAsDiagonal)
                 {
                     updateVelocities<numStartVelocityScalingValues, ParrinelloRahmanVelocityScaling::Diagonal, numEndVelocityScalingValues>(
@@ -669,6 +748,19 @@ void Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run()
                             f,
                             diagonalOfPRScalingMatrix,
                             matrixPR_);
+                }
+                if (traceThisAtomInitialKick)
+                {
+                    appendInitialKickAuditAtom(activeM2pTraceDirPath(),
+                                               "PLAIN",
+                                               traceStep,
+                                               a,
+                                               velocityBeforeKick,
+                                               forceBeforeKick,
+                                               timestep_,
+                                               v[a],
+                                               "Propagator<IntegrationStage::VelocityVerletPositionsAndVelocities>::run",
+                                               "src/gromacs/modularsimulator/propagator.cpp:651");
                 }
                 if ((tracePositionUpdate || traceXvfStage) && (a == 0 || a == 5))
                 {

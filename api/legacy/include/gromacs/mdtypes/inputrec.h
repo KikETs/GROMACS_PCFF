@@ -40,6 +40,7 @@
 #include <string>
 #include <vector>
 
+#include "gromacs/mdtypes/exactrespaparameters.h"
 #include "gromacs/mdtypes/md_enums.h"
 #include "gromacs/mdtypes/multipletimestepping.h"
 #include "gromacs/utility/arrayref.h"
@@ -436,6 +437,8 @@ struct t_inputrec // NOLINT (clang-analyzer-optin.performance.Padding)
     std::vector<gmx::MtsLevel> mtsLevels;
     //! Exact LAMMPS-style r-RESPA settings
     gmx::LammpsRespaParameters lammpsRespa;
+    //! Standalone exact r-RESPA metadata, mirrored from legacy MTS-backed settings during migration
+    gmx::ExactRespaParameters exactRespa;
 
     //! The factor for repartitioning atom masses
     real massRepartitionFactor = 1;

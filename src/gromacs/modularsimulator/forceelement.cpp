@@ -117,6 +117,15 @@ static const char* xvfPreForceStageName(const Step step)
            : (step == 2) ? "STEP2_PRE_FORCE_XVF"
            : (step == 3) ? "STEP3_PRE_FORCE_XVF"
            : (step == 4) ? "STEP4_PRE_FORCE_XVF"
+           : (step == 5) ? "STEP5_PRE_FORCE_XVF"
+           : (step == 6) ? "STEP6_PRE_FORCE_XVF"
+           : (step == 7) ? "STEP7_PRE_FORCE_XVF"
+           : (step == 8) ? "STEP8_PRE_FORCE_XVF"
+           : (step == 9) ? "STEP9_PRE_FORCE_XVF"
+           : (step == 10) ? "STEP10_PRE_FORCE_XVF"
+           : (step == 11) ? "STEP11_PRE_FORCE_XVF"
+           : (step == 12) ? "STEP12_PRE_FORCE_XVF"
+           : (step == 13) ? "STEP13_PRE_FORCE_XVF"
                          : nullptr;
 }
 
@@ -127,6 +136,15 @@ static const char* xvfPostForceStageName(const Step step)
            : (step == 2) ? "STEP2_POST_FORCE_XVF"
            : (step == 3) ? "STEP3_POST_FORCE_XVF"
            : (step == 4) ? "STEP4_POST_FORCE_XVF"
+           : (step == 5) ? "STEP5_POST_FORCE_XVF"
+           : (step == 6) ? "STEP6_POST_FORCE_XVF"
+           : (step == 7) ? "STEP7_POST_FORCE_XVF"
+           : (step == 8) ? "STEP8_POST_FORCE_XVF"
+           : (step == 9) ? "STEP9_POST_FORCE_XVF"
+           : (step == 10) ? "STEP10_POST_FORCE_XVF"
+           : (step == 11) ? "STEP11_POST_FORCE_XVF"
+           : (step == 12) ? "STEP12_POST_FORCE_XVF"
+           : (step == 13) ? "STEP13_POST_FORCE_XVF"
                          : nullptr;
 }
 
@@ -414,6 +432,7 @@ void ForceElement::run(Step step, Time time, unsigned int flags)
                  v.unpaddedArrayRef(),
                  hist,
                  &forces,
+                 nullptr,
                  force_vir,
                  mdAtoms_->mdatoms(),
                  energyData_->enerdata(),

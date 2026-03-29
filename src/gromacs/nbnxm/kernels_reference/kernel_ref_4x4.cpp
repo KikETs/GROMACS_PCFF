@@ -120,12 +120,16 @@ int64_t                           m2pPlain4x4CurrentStep = -1;
 std::mutex                        m2pPlain4x4LjContractReplayMutex;
 bool                              m2pPlain4x4LjContractReplayTraceEnabled = false;
 std::vector<real>                 m2pPlain4x4LjContractReplayPairContributions;
+std::mutex                        m2pPlain4x4ExclusionEquivalenceTraceMutex;
 std::mutex                        m2pPlain4x4RealspaceForceSubcomponentTraceMutex;
 bool                              m2pPlain4x4RealspaceForceSubcomponentTraceEnabledFlag = false;
 M2pPlain4x4TracedForcePair        m2pPlain4x4LjSrForcePair;
 M2pPlain4x4TracedForcePair        m2pPlain4x4CoulombSrForcePair;
 M2pPlain4x4TracedForcePair        m2pPlain4x4ExclusionCorrectionForcePair;
 M2pPlain4x4TracedForcePair        m2pPlain4x4CombinedRealspaceForcePair;
+std::mutex                        m2pPlain4x4PairTotalTraceMutex;
+std::string                       m2pPlain4x4PairTotalClearedTracePath;
+int64_t                           m2pPlain4x4PairTotalCurrentStep = -1;
 
 const char* activeLjSrTraceDirPath()
 {
@@ -171,6 +175,30 @@ bool activeLjSrOptionalTraceEnabled(const char* envVarName)
 {
     const char* value = std::getenv(envVarName);
     return (value != nullptr && *value != '\0');
+}
+
+std::string m2pPlain4x4ExclusionEquivalenceTracePath()
+{
+    const char* traceDir = activeLjSrTraceDirPath();
+    if (traceDir == nullptr || *traceDir == '\0')
+    {
+        return {};
+    }
+    return std::string(traceDir) + "/step0_exclusion_equivalence_pair_trace.txt";
+}
+
+std::string m2pPlain4x4Step2PairTotalTracePath()
+{
+    if (!activeLjSrOptionalTraceEnabled("GMX_PCFF_RESPA_TRACE_STEP1_SUBSET01_FORCEGROUP_AUDIT"))
+    {
+        return {};
+    }
+    const char* traceDir = activeLjSrTraceDirPath();
+    if (traceDir == nullptr || *traceDir == '\0')
+    {
+        return {};
+    }
+    return std::string(traceDir) + "/step2_plain_pair_total_trace.txt";
 }
 
 void clearTracedForcePair(M2pPlain4x4TracedForcePair* pair)
@@ -1384,6 +1412,203 @@ double readM2pPlain4x4LjContractReplayTotal()
     return total;
 }
 
+bool m2pPlain4x4ExclusionEquivalenceTraceEnabled()
+{
+    std::lock_guard<std::mutex> guard(m2pPlain4x4ExclusionEquivalenceTraceMutex);
+    return activeLjSrOptionalTraceEnabled("GMX_PCFF_RESPA_TRACE_EXCLUSION_EQUIVALENCE")
+           && readM2pPlain4x4CurrentStep() == 0 && !m2pPlain4x4ExclusionEquivalenceTracePath().empty();
+}
+
+void noteM2pPlain4x4ExclusionEquivalencePair(int         ai,
+                                             int         aj,
+                                             real        interact,
+                                             real        excludedMask,
+                                             real        skipmask,
+                                             real        qq,
+                                             int         tableIndex,
+                                             real        frac,
+                                             real        fexcl,
+                                             real        vcorr,
+                                             real        correctionScalarUnmasked,
+                                             real        correctionScalarEffective,
+                                             real        correctionForceUnmaskedFx,
+                                             real        correctionForceUnmaskedFy,
+                                             real        correctionForceUnmaskedFz,
+                                             real        correctionForceEffectiveFx,
+                                             real        correctionForceEffectiveFy,
+                                             real        correctionForceEffectiveFz,
+                                             real        combinedForceFx,
+                                             real        combinedForceFy,
+                                             real        combinedForceFz,
+                                             const char* sinkTarget,
+                                             bool        sinkWriteExecuted,
+                                             const char* codeLocation)
+{
+    if (!(ai == 0 || ai == 5 || aj == 0 || aj == 5))
+    {
+        return;
+    }
+
+    std::lock_guard<std::mutex> guard(m2pPlain4x4ExclusionEquivalenceTraceMutex);
+    if (!activeLjSrOptionalTraceEnabled("GMX_PCFF_RESPA_TRACE_EXCLUSION_EQUIVALENCE")
+        || readM2pPlain4x4CurrentStep() != 0)
+    {
+        return;
+    }
+
+    const std::string tracePath = m2pPlain4x4ExclusionEquivalenceTracePath();
+    if (tracePath.empty())
+    {
+        return;
+    }
+
+    std::ostringstream line;
+    line << std::fixed << std::setprecision(15);
+    line << "side=PLAIN"
+         << " step=0"
+         << " ai=" << ai
+         << " aj=" << aj
+         << " pair_key=" << ai << "_" << aj
+         << " source_path=plain_reference_kernel"
+         << " membership_source=kernel_pair_entry"
+         << " list_kind=kernel_pair_entry"
+         << " interact=" << interact
+         << " excluded_mask=" << excludedMask
+         << " skipmask=" << skipmask
+         << " qq=" << qq
+         << " table_index=" << tableIndex
+         << " frac=" << frac
+         << " fexcl=" << fexcl
+         << " vcorr=" << vcorr
+         << " correction_force_scalar_unmasked=" << correctionScalarUnmasked
+         << " correction_force_scalar_effective=" << correctionScalarEffective
+         << " correction_force_unmasked_fx=" << correctionForceUnmaskedFx
+         << " correction_force_unmasked_fy=" << correctionForceUnmaskedFy
+         << " correction_force_unmasked_fz=" << correctionForceUnmaskedFz
+         << " correction_force_effective_fx=" << correctionForceEffectiveFx
+         << " correction_force_effective_fy=" << correctionForceEffectiveFy
+         << " correction_force_effective_fz=" << correctionForceEffectiveFz
+         << " combined_force_fx=" << combinedForceFx
+         << " combined_force_fy=" << combinedForceFy
+         << " combined_force_fz=" << combinedForceFz
+         << " treated_as_exclusion_correction_producer_unmasked="
+         << (correctionScalarUnmasked != 0.0 ? "true" : "false")
+         << " treated_as_exclusion_correction_producer_effective="
+         << (correctionScalarEffective != 0.0 ? "true" : "false")
+         << " sink_target=" << (sinkTarget != nullptr ? sinkTarget : "unknown")
+         << " sink_write_executed=" << (sinkWriteExecuted ? "true" : "false")
+         << " code_location=" << (codeLocation != nullptr ? codeLocation : "unknown");
+
+    std::ofstream out(tracePath, std::ios::app);
+    if (out)
+    {
+        out << line.str() << '\n';
+    }
+}
+
+void noteM2pPlain4x4Step2PairTotal(int         ai,
+                                   int         aj,
+                                   real        r,
+                                   real        rawLjScalar,
+                                   real        bareCoulombScalar,
+                                   real        correctionScalar,
+                                   real        ljFx,
+                                   real        ljFy,
+                                   real        ljFz,
+                                   real        coulombFx,
+                                   real        coulombFy,
+                                   real        coulombFz,
+                                   real        correctionFx,
+                                   real        correctionFy,
+                                   real        correctionFz,
+                                   real        totalFx,
+                                   real        totalFy,
+                                   real        totalFz,
+                                   real        qq,
+                                   real        rinv,
+                                   int         tableIndex,
+                                   real        frac,
+                                   real        fexcl,
+                                   real        vcorr,
+                                   const char* codeLocation)
+{
+    if (!(ai == 0 || ai == 5 || aj == 0 || aj == 5))
+    {
+        return;
+    }
+
+    const int64_t currentStep = readM2pPlain4x4CurrentStep();
+    if (currentStep != 2)
+    {
+        return;
+    }
+
+    const std::string tracePath = m2pPlain4x4Step2PairTotalTracePath();
+    if (tracePath.empty())
+    {
+        return;
+    }
+
+    std::lock_guard<std::mutex> guard(m2pPlain4x4PairTotalTraceMutex);
+    if (m2pPlain4x4PairTotalClearedTracePath != tracePath || m2pPlain4x4PairTotalCurrentStep != currentStep)
+    {
+        std::ofstream clearTrace(tracePath, std::ios::trunc);
+        m2pPlain4x4PairTotalClearedTracePath = tracePath;
+        m2pPlain4x4PairTotalCurrentStep      = currentStep;
+    }
+
+    const auto appendForFocusAtom = [&](const int atomFocus)
+    {
+        if (atomFocus != ai && atomFocus != aj)
+        {
+            return;
+        }
+
+        const real sign = (atomFocus == ai) ? 1.0_real : -1.0_real;
+
+        std::ostringstream line;
+        line << std::fixed << std::setprecision(15);
+        line << "side=PLAIN"
+             << " step=" << currentStep
+             << " pair_i=" << ai
+             << " pair_j=" << aj
+             << " atom_focus=" << atomFocus
+             << " comparison_group=" << currentStep << "_" << ai << "_" << aj << "_" << atomFocus
+             << " r=" << r
+             << " plain_rawLjScalar=" << rawLjScalar
+             << " plain_bareCoulombScalar=" << bareCoulombScalar
+             << " plain_correctionScalar=" << correctionScalar
+             << " qq=" << qq
+             << " rinv=" << rinv
+             << " table_index=" << tableIndex
+             << " frac=" << frac
+             << " fexcl=" << fexcl
+             << " vcorr=" << vcorr
+             << " plain_lj_force_x=" << sign * ljFx
+             << " plain_lj_force_y=" << sign * ljFy
+             << " plain_lj_force_z=" << sign * ljFz
+             << " plain_coulomb_force_x=" << sign * coulombFx
+             << " plain_coulomb_force_y=" << sign * coulombFy
+             << " plain_coulomb_force_z=" << sign * coulombFz
+             << " plain_correction_force_x=" << sign * correctionFx
+             << " plain_correction_force_y=" << sign * correctionFy
+             << " plain_correction_force_z=" << sign * correctionFz
+             << " plain_total_force_x=" << sign * totalFx
+             << " plain_total_force_y=" << sign * totalFy
+             << " plain_total_force_z=" << sign * totalFz
+             << " code_location=" << (codeLocation != nullptr ? codeLocation : "unknown");
+
+        std::ofstream out(tracePath, std::ios::app);
+        if (out)
+        {
+            out << line.str() << '\n';
+        }
+    };
+
+    appendForFocusAtom(0);
+    appendForFocusAtom(5);
+}
+
 void resetM2pPlain4x4RealspaceForceSubcomponentTrace()
 {
     int64_t currentStep = -1;
@@ -1394,8 +1619,10 @@ void resetM2pPlain4x4RealspaceForceSubcomponentTrace()
 
     std::lock_guard<std::mutex> guard(m2pPlain4x4RealspaceForceSubcomponentTraceMutex);
     m2pPlain4x4RealspaceForceSubcomponentTraceEnabledFlag =
-            activeLjSrOptionalTraceEnabled("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS")
-            && currentStep == 0;
+            (activeLjSrOptionalTraceEnabled("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS")
+             && currentStep == 0)
+            || (activeLjSrOptionalTraceEnabled("GMX_PCFF_RESPA_TRACE_STEP1_SUBSET01_FORCEGROUP_AUDIT")
+                && currentStep == 2);
     clearTracedForcePair(&m2pPlain4x4LjSrForcePair);
     clearTracedForcePair(&m2pPlain4x4CoulombSrForcePair);
     clearTracedForcePair(&m2pPlain4x4ExclusionCorrectionForcePair);

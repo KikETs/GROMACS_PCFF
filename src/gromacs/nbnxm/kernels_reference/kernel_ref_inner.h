@@ -85,6 +85,56 @@ void noteM2pPlain4x4RealspaceForceSubcomponents(int  ai,
                                                 real combinedFx,
                                                 real combinedFy,
                                                 real combinedFz);
+bool m2pPlain4x4ExclusionEquivalenceTraceEnabled();
+void noteM2pPlain4x4ExclusionEquivalencePair(int         ai,
+                                             int         aj,
+                                             real        interact,
+                                             real        excludedMask,
+                                             real        skipmask,
+                                             real        qq,
+                                             int         tableIndex,
+                                             real        frac,
+                                             real        fexcl,
+                                             real        vcorr,
+                                             real        correctionScalarUnmasked,
+                                             real        correctionScalarEffective,
+                                             real        correctionForceUnmaskedFx,
+                                             real        correctionForceUnmaskedFy,
+                                             real        correctionForceUnmaskedFz,
+                                             real        correctionForceEffectiveFx,
+                                             real        correctionForceEffectiveFy,
+                                             real        correctionForceEffectiveFz,
+                                             real        combinedForceFx,
+                                             real        combinedForceFy,
+                                             real        combinedForceFz,
+                                             const char* sinkTarget,
+                                             bool        sinkWriteExecuted,
+                                             const char* codeLocation);
+void noteM2pPlain4x4Step2PairTotal(int         ai,
+                                   int         aj,
+                                   real        r,
+                                   real        rawLjScalar,
+                                   real        bareCoulombScalar,
+                                   real        correctionScalar,
+                                   real        ljFx,
+                                   real        ljFy,
+                                   real        ljFz,
+                                   real        coulombFx,
+                                   real        coulombFy,
+                                   real        coulombFz,
+                                   real        correctionFx,
+                                   real        correctionFy,
+                                   real        correctionFz,
+                                   real        totalFx,
+                                   real        totalFy,
+                                   real        totalFz,
+                                   real        qq,
+                                   real        rinv,
+                                   int         tableIndex,
+                                   real        frac,
+                                   real        fexcl,
+                                   real        vcorr,
+                                   const char* codeLocation);
 
 {
     const int cj = l_cj[cjind].cj;
@@ -430,18 +480,18 @@ void noteM2pPlain4x4RealspaceForceSubcomponents(int  ai,
             /* fexcl = (1-frac) * F_i + frac * F_(i+1) */
             const real fexcl = (1 - frac) * tab_coul_F[ri] + frac * tab_coul_F[ri + 1];
 #        endif
-            real fcoul = interact * (rinvsq - fexcl);
+            real fcoul = interact * rinvsq - fexcl;
             /* 7 flops for float 1/r-table force */
 #        ifdef CALC_ENERGIES
 #            if !GMX_DOUBLE
             const real vcorr = tab_coul_FDV0[ri * 4 + 2] - halfsp * frac * (tab_coul_FDV0[ri * 4] + fexcl);
             const real vcoulUnmasked = qq * (rinv - ic.coulomb.ewaldShift - vcorr);
-            real vcoul = vcoulUnmasked * interact;
+            real vcoul = qq * (interact * (rinv - ic.coulomb.ewaldShift) - vcorr);
             /* 7 flops for float 1/r-table energy (8 with excls) */
 #            else
             const real vcorr = tab_coul_V[ri] - halfsp * frac * (tab_coul_F[ri] + fexcl);
             const real vcoulUnmasked = qq * (rinv - ic.coulomb.ewaldShift - vcorr);
-            real vcoul = vcoulUnmasked * interact;
+            real vcoul = qq * (interact * (rinv - ic.coulomb.ewaldShift) - vcorr);
 #            endif
             if (m2pPlain4x4CoulombProducerTraceEnabled() && excludedMask != 0.0 && vcoulUnmasked != 0.0)
             {
@@ -602,9 +652,9 @@ void noteM2pPlain4x4RealspaceForceSubcomponents(int  ai,
                 const real coulombSrScalar          = 0;
                 const real exclusionCorrectionScalar = 0;
 #endif
-                noteM2pPlain4x4RealspaceForceSubcomponents(ai,
-                                                            aj,
-                                                            ljScalar * dx,
+	                noteM2pPlain4x4RealspaceForceSubcomponents(ai,
+	                                                            aj,
+	                                                            ljScalar * dx,
                                                             ljScalar * dy,
                                                             ljScalar * dz,
                                                             coulombSrScalar * dx,
@@ -613,13 +663,140 @@ void noteM2pPlain4x4RealspaceForceSubcomponents(int  ai,
                                                             exclusionCorrectionScalar * dx,
                                                             exclusionCorrectionScalar * dy,
                                                             exclusionCorrectionScalar * dz,
-                                                            fx,
-                                                            fy,
-                                                            fz);
-            }
+	                                                            fx,
+	                                                            fy,
+		                                                            fz);
 
-            /* Increment i-atom force */
-            fi[i * FI_STRIDE + XX] += fx;
+	                if (m2pPlain4x4RealspaceForceSubcomponentTraceEnabled())
+	                {
+	                    const real plainRawLjScalar = 
+#ifdef HALF_LJ
+	                            (i < UNROLLI / 2) ? frLJ : 0;
+#else
+	                            frLJ;
+#endif
+#ifdef CALC_COULOMB
+#    ifdef CALC_COUL_TAB
+	                    const real plainBareCoulombScalar = interact * qq * rinv;
+	                    const real plainCorrectionScalar  = (rinv != 0.0) ? (-interact * qq * fexcl / rinv) : 0.0;
+	                    const real plainQq               = qq;
+	                    const int  plainTableIndex        = ri;
+	                    const real plainFrac              = frac;
+	                    const real plainFexcl             = fexcl;
+#        ifdef CALC_ENERGIES
+	                    const real plainVcorr             = vcorr;
+#        else
+	                    const real plainVcorr             = 0.0;
+#        endif
+#    else
+	                    const real plainBareCoulombScalar = 0.0;
+	                    const real plainCorrectionScalar  = 0.0;
+	                    const real plainQq               = qq;
+	                    const int  plainTableIndex        = -1;
+	                    const real plainFrac              = 0.0;
+	                    const real plainFexcl             = 0.0;
+	                    const real plainVcorr             = 0.0;
+#    endif
+#else
+	                    const real plainBareCoulombScalar = 0.0;
+	                    const real plainCorrectionScalar  = 0.0;
+	                    const real plainQq               = 0.0;
+	                    const int  plainTableIndex        = -1;
+	                    const real plainFrac              = 0.0;
+	                    const real plainFexcl             = 0.0;
+	                    const real plainVcorr             = 0.0;
+#endif
+	                    const real rForTrace = (rinv != 0.0) ? (rsq * rinv) : 0.0;
+
+	                    noteM2pPlain4x4Step2PairTotal(ai,
+	                                                  aj,
+	                                                  rForTrace,
+	                                                  plainRawLjScalar,
+	                                                  plainBareCoulombScalar,
+	                                                  plainCorrectionScalar,
+	                                                  ljScalar * dx,
+	                                                  ljScalar * dy,
+	                                                  ljScalar * dz,
+	                                                  coulombSrScalar * dx,
+	                                                  coulombSrScalar * dy,
+	                                                  coulombSrScalar * dz,
+	                                                  exclusionCorrectionScalar * dx,
+	                                                  exclusionCorrectionScalar * dy,
+	                                                  exclusionCorrectionScalar * dz,
+	                                                  fx,
+	                                                  fy,
+	                                                  fz,
+	                                                  plainQq,
+	                                                  rinv,
+	                                                  plainTableIndex,
+	                                                  plainFrac,
+	                                                  plainFexcl,
+	                                                  plainVcorr,
+	                                                  "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:plain_step2_pair_total_trace");
+	                }
+	            }
+
+	            if (m2pPlain4x4ExclusionEquivalenceTraceEnabled())
+	            {
+#ifdef CALC_COULOMB
+#    ifdef CALC_COUL_TAB
+	                const real correctionScalarUnmasked = -qq * fexcl * rinv;
+	                const real correctionScalarEffective = -interact * qq * fexcl * rinv;
+	                const real correctionQq              = qq;
+	                const int  correctionTableIndex      = ri;
+	                const real correctionFrac            = frac;
+	                const real correctionFexcl           = fexcl;
+#        ifdef CALC_ENERGIES
+	                const real correctionVcorr           = vcorr;
+#        else
+	                const real correctionVcorr           = 0;
+#        endif
+#    else
+	                const real correctionScalarUnmasked = 0;
+	                const real correctionScalarEffective = 0;
+	                const real correctionQq              = qq;
+	                const int  correctionTableIndex      = -1;
+	                const real correctionFrac            = 0;
+	                const real correctionFexcl           = 0;
+	                const real correctionVcorr           = 0;
+#    endif
+#else
+	                const real correctionScalarUnmasked = 0;
+	                const real correctionScalarEffective = 0;
+	                const real correctionQq              = 0;
+	                const int  correctionTableIndex      = -1;
+	                const real correctionFrac            = 0;
+	                const real correctionFexcl           = 0;
+	                const real correctionVcorr           = 0;
+#endif
+	                noteM2pPlain4x4ExclusionEquivalencePair(ai,
+	                                                        aj,
+	                                                        interact,
+	                                                        excludedMask,
+	                                                        skipmask,
+	                                                        correctionQq,
+	                                                        correctionTableIndex,
+	                                                        correctionFrac,
+	                                                        correctionFexcl,
+	                                                        correctionVcorr,
+	                                                        correctionScalarUnmasked,
+	                                                        correctionScalarEffective,
+	                                                        correctionScalarUnmasked * dx,
+	                                                        correctionScalarUnmasked * dy,
+	                                                        correctionScalarUnmasked * dz,
+	                                                        correctionScalarEffective * dx,
+	                                                        correctionScalarEffective * dy,
+	                                                        correctionScalarEffective * dz,
+	                                                        fx,
+	                                                        fy,
+	                                                        fz,
+	                                                        "nbat_force_array_via_fscal",
+	                                                        correctionScalarEffective != 0.0,
+	                                                        "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:plain_exclusion_equivalence_trace");
+	            }
+
+	            /* Increment i-atom force */
+	            fi[i * FI_STRIDE + XX] += fx;
             fi[i * FI_STRIDE + YY] += fy;
             fi[i * FI_STRIDE + ZZ] += fz;
             /* Decrement j-atom force */

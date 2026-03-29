@@ -125,6 +125,42 @@ static const char* activeM2pTraceDirPath()
 
 static int64_t g_respaStateXTraceCurrentStep = -1;
 
+static const std::vector<int>& configuredStateXTraceAtomIndices()
+{
+    static const std::vector<int> atomIndices = []()
+    {
+        std::vector<int> parsedAtomIndices;
+        const char*      value = std::getenv("GMX_PCFF_RESPA_TRACE_ATOMS");
+        if (value == nullptr || *value == '\0')
+        {
+            return parsedAtomIndices;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                parsedAtomIndices.push_back(std::stoi(item));
+            }
+        }
+        return parsedAtomIndices;
+    }();
+
+    return atomIndices;
+}
+
+static bool shouldTraceStateXAtom(const int atomIndex)
+{
+    const auto& configuredAtoms = configuredStateXTraceAtomIndices();
+    if (!configuredAtoms.empty())
+    {
+        return std::find(configuredAtoms.begin(), configuredAtoms.end(), atomIndex) != configuredAtoms.end();
+    }
+    return atomIndex == 0 || atomIndex == 5;
+}
+
 static void appendStateXFinishUpdateAtomTrace(const char*        traceDirPath,
                                               const int64_t      step,
                                               const int          atomIndex,
@@ -1819,7 +1855,7 @@ void Update::Impl::finish_update(const t_inputrec&                   inputRecord
             }
             if (g_respaStateXTraceCurrentStep >= 0
                 && shouldTraceRespaStateXChainStep(g_respaStateXTraceCurrentStep)
-                && (i == 0 || i == 5))
+                && shouldTraceStateXAtom(i))
             {
                 appendStateXFinishUpdateAtomTrace(
                         activeM2pTraceDirPath(), g_respaStateXTraceCurrentStep, i, x[i]);
@@ -1841,7 +1877,7 @@ void Update::Impl::finish_update(const t_inputrec&                   inputRecord
             x[i] = xp[i];
             if (g_respaStateXTraceCurrentStep >= 0
                 && shouldTraceRespaStateXChainStep(g_respaStateXTraceCurrentStep)
-                && (i == 0 || i == 5))
+                && shouldTraceStateXAtom(i))
             {
                 appendStateXFinishUpdateAtomTrace(
                         activeM2pTraceDirPath(), g_respaStateXTraceCurrentStep, i, x[i]);
