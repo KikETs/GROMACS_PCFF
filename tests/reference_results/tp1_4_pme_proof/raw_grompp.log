@@ -1,0 +1,295 @@
+===== rcut=0.7 stderr =====
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work
+Command line:
+  gmx grompp -f test.mdp -c system.gro -p system.top -o test.tpr -maxwarn 10
+
+
+NOTE 1 [file test.mdp]:
+  For a correct single-point energy evaluation with nsteps = 0, use
+  continuation = yes to avoid constraining the input coordinates.
+
+Generating 1-4 interactions: fudge = 1
+
+NOTE 2 [file system.top, line 23]:
+  In moleculetype 'MOL' 2 atoms are not bound by a potential or constraint
+  to any other atom in the same moleculetype. Although technically this
+  might not cause issues in a simulation, this often means that the user
+  forgot to add a bond/potential/constraint or put multiple molecules in
+  the same moleculetype definition by mistake. Run with -v to get
+  information for each atom.
+
+Number of degrees of freedom in T-Coupling group rest is 3.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 3 [file test.mdp]:
+  NVE simulation with an initial temperature of zero: will use a Verlet
+  buffer of 10%. Check your energy drift!
+
+
+There were 3 NOTEs
+
+Back Off! I just backed up test.tpr to ./#test.tpr.5#
+
+GROMACS reminds you: "I went to Venice and looked at the paintings of Canaletto to understand how he presented perspective, and it turned out it was an exponential law. If I had published this, maybe there would be a Karplus law in art theory as well as the Karplus equation in NMR" (Martin Karplus, Nobel lecture 2013)
+
+
+===== rcut=0.7 stdout =====
+Setting the LD random seed to 1620830893
+
+Generated 3 of the 3 non-bonded parameter combinations
+
+Generated 3 of the 3 1-4 parameter combinations
+
+Excluding 1 bonded neighbours molecule type 'MOL'
+
+Taking velocities from 'system.gro', all velocities are zero
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.000 nm between atom 0 and 0
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 42x42x42, spacing 0.119 0.119 0.119
+
+This run will generate roughly 0 Mb of data
+
+===== rcut=0.8 stderr =====
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work
+Command line:
+  gmx grompp -f test.mdp -c system.gro -p system.top -o test.tpr -maxwarn 10
+
+
+NOTE 1 [file test.mdp]:
+  For a correct single-point energy evaluation with nsteps = 0, use
+  continuation = yes to avoid constraining the input coordinates.
+
+Generating 1-4 interactions: fudge = 1
+
+NOTE 2 [file system.top, line 23]:
+  In moleculetype 'MOL' 2 atoms are not bound by a potential or constraint
+  to any other atom in the same moleculetype. Although technically this
+  might not cause issues in a simulation, this often means that the user
+  forgot to add a bond/potential/constraint or put multiple molecules in
+  the same moleculetype definition by mistake. Run with -v to get
+  information for each atom.
+
+Number of degrees of freedom in T-Coupling group rest is 3.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 3 [file test.mdp]:
+  NVE simulation with an initial temperature of zero: will use a Verlet
+  buffer of 10%. Check your energy drift!
+
+
+There were 3 NOTEs
+
+Back Off! I just backed up test.tpr to ./#test.tpr.6#
+
+GROMACS reminds you: "I went to Venice and looked at the paintings of Canaletto to understand how he presented perspective, and it turned out it was an exponential law. If I had published this, maybe there would be a Karplus law in art theory as well as the Karplus equation in NMR" (Martin Karplus, Nobel lecture 2013)
+
+
+===== rcut=0.8 stdout =====
+Setting the LD random seed to 683290886
+
+Generated 3 of the 3 non-bonded parameter combinations
+
+Generated 3 of the 3 1-4 parameter combinations
+
+Excluding 1 bonded neighbours molecule type 'MOL'
+
+Taking velocities from 'system.gro', all velocities are zero
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.000 nm between atom 0 and 0
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 42x42x42, spacing 0.119 0.119 0.119
+
+This run will generate roughly 0 Mb of data
+
+===== rcut=0.9 stderr =====
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work
+Command line:
+  gmx grompp -f test.mdp -c system.gro -p system.top -o test.tpr -maxwarn 10
+
+
+NOTE 1 [file test.mdp]:
+  For a correct single-point energy evaluation with nsteps = 0, use
+  continuation = yes to avoid constraining the input coordinates.
+
+Generating 1-4 interactions: fudge = 1
+
+NOTE 2 [file system.top, line 23]:
+  In moleculetype 'MOL' 2 atoms are not bound by a potential or constraint
+  to any other atom in the same moleculetype. Although technically this
+  might not cause issues in a simulation, this often means that the user
+  forgot to add a bond/potential/constraint or put multiple molecules in
+  the same moleculetype definition by mistake. Run with -v to get
+  information for each atom.
+
+Number of degrees of freedom in T-Coupling group rest is 3.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 3 [file test.mdp]:
+  NVE simulation with an initial temperature of zero: will use a Verlet
+  buffer of 10%. Check your energy drift!
+
+
+There were 3 NOTEs
+
+Back Off! I just backed up test.tpr to ./#test.tpr.7#
+
+GROMACS reminds you: "I went to Venice and looked at the paintings of Canaletto to understand how he presented perspective, and it turned out it was an exponential law. If I had published this, maybe there would be a Karplus law in art theory as well as the Karplus equation in NMR" (Martin Karplus, Nobel lecture 2013)
+
+
+===== rcut=0.9 stdout =====
+Setting the LD random seed to 72348630
+
+Generated 3 of the 3 non-bonded parameter combinations
+
+Generated 3 of the 3 1-4 parameter combinations
+
+Excluding 1 bonded neighbours molecule type 'MOL'
+
+Taking velocities from 'system.gro', all velocities are zero
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.000 nm between atom 0 and 0
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 42x42x42, spacing 0.119 0.119 0.119
+
+This run will generate roughly 0 Mb of data
+
+===== rcut=1.0 stderr =====
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work
+Command line:
+  gmx grompp -f test.mdp -c system.gro -p system.top -o test.tpr -maxwarn 10
+
+
+NOTE 1 [file test.mdp]:
+  For a correct single-point energy evaluation with nsteps = 0, use
+  continuation = yes to avoid constraining the input coordinates.
+
+Generating 1-4 interactions: fudge = 1
+
+NOTE 2 [file system.top, line 23]:
+  In moleculetype 'MOL' 2 atoms are not bound by a potential or constraint
+  to any other atom in the same moleculetype. Although technically this
+  might not cause issues in a simulation, this often means that the user
+  forgot to add a bond/potential/constraint or put multiple molecules in
+  the same moleculetype definition by mistake. Run with -v to get
+  information for each atom.
+
+Number of degrees of freedom in T-Coupling group rest is 3.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 3 [file test.mdp]:
+  NVE simulation with an initial temperature of zero: will use a Verlet
+  buffer of 10%. Check your energy drift!
+
+
+There were 3 NOTEs
+
+Back Off! I just backed up test.tpr to ./#test.tpr.8#
+
+GROMACS reminds you: "I went to Venice and looked at the paintings of Canaletto to understand how he presented perspective, and it turned out it was an exponential law. If I had published this, maybe there would be a Karplus law in art theory as well as the Karplus equation in NMR" (Martin Karplus, Nobel lecture 2013)
+
+
+===== rcut=1.0 stdout =====
+Setting the LD random seed to 1846800146
+
+Generated 3 of the 3 non-bonded parameter combinations
+
+Generated 3 of the 3 1-4 parameter combinations
+
+Excluding 1 bonded neighbours molecule type 'MOL'
+
+Taking velocities from 'system.gro', all velocities are zero
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.000 nm between atom 0 and 0
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 42x42x42, spacing 0.119 0.119 0.119
+
+This run will generate roughly 0 Mb of data
+
+===== rcut=1.1 stderr =====
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work
+Command line:
+  gmx grompp -f test.mdp -c system.gro -p system.top -o test.tpr -maxwarn 10
+
+
+NOTE 1 [file test.mdp]:
+  For a correct single-point energy evaluation with nsteps = 0, use
+  continuation = yes to avoid constraining the input coordinates.
+
+Generating 1-4 interactions: fudge = 1
+
+NOTE 2 [file system.top, line 23]:
+  In moleculetype 'MOL' 2 atoms are not bound by a potential or constraint
+  to any other atom in the same moleculetype. Although technically this
+  might not cause issues in a simulation, this often means that the user
+  forgot to add a bond/potential/constraint or put multiple molecules in
+  the same moleculetype definition by mistake. Run with -v to get
+  information for each atom.
+
+Number of degrees of freedom in T-Coupling group rest is 3.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 3 [file test.mdp]:
+  NVE simulation with an initial temperature of zero: will use a Verlet
+  buffer of 10%. Check your energy drift!
+
+
+There were 3 NOTEs
+
+Back Off! I just backed up test.tpr to ./#test.tpr.9#
+
+GROMACS reminds you: "I went to Venice and looked at the paintings of Canaletto to understand how he presented perspective, and it turned out it was an exponential law. If I had published this, maybe there would be a Karplus law in art theory as well as the Karplus equation in NMR" (Martin Karplus, Nobel lecture 2013)
+
+
+===== rcut=1.1 stdout =====
+Setting the LD random seed to -1509808684
+
+Generated 3 of the 3 non-bonded parameter combinations
+
+Generated 3 of the 3 1-4 parameter combinations
+
+Excluding 1 bonded neighbours molecule type 'MOL'
+
+Taking velocities from 'system.gro', all velocities are zero
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.000 nm between atom 0 and 0
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 42x42x42, spacing 0.119 0.119 0.119
+
+This run will generate roughly 0 Mb of data
+

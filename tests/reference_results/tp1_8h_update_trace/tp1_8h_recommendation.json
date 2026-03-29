@@ -1,0 +1,7 @@
+{
+  "milestone": "TP1.8h",
+  "source_patching_now_justified": false,
+  "plain_safe_baseline_acceptable_for_later_non_rrespa_validation": "PARTIAL",
+  "overall_classification": "still_unresolved",
+  "next_step_recommendation": "If one final trace step is required, target the next active kinetic/temperature consumer after update rather than returning to inactive pressure-control branches."
+}

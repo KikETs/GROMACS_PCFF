@@ -90,6 +90,24 @@
 
 namespace gmx
 {
+namespace
+{
+
+gmx_unused bool ljPmePairCombinationRuleMatches(LongRangeVdW ljpmeCombinationRule,
+                                                LJCombinationRule pairCombinationRule)
+{
+    switch (ljpmeCombinationRule)
+    {
+        case LongRangeVdW::Geom:
+            return pairCombinationRule == LJCombinationRule::Geometric
+                   || pairCombinationRule == LJCombinationRule::None;
+        case LongRangeVdW::LB: return pairCombinationRule == LJCombinationRule::LorentzBerthelot;
+        default: return false;
+    }
+}
+
+} // namespace
+
 enum class InteractionLocality : int;
 
 CoulombKernelType getCoulombKernelType(const EwaldExclusionType     ewaldExclusionType,
@@ -227,10 +245,8 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
     const nbnxn_atomdata_t::Params& nbatParams = nbat->params();
 
     GMX_ASSERT(ic.vdw.type != VanDerWaalsType::Pme
-                       || ((ic.vdw.pmeCombinationRule == LongRangeVdW::Geom
-                            && nbatParams.ljCombinationRule == LJCombinationRule::Geometric)
-                           || (ic.vdw.pmeCombinationRule == LongRangeVdW::LB
-                               && nbatParams.ljCombinationRule == LJCombinationRule::LorentzBerthelot)),
+                       || ljPmePairCombinationRuleMatches(ic.vdw.pmeCombinationRule,
+                                                          nbatParams.ljCombinationRule),
                "nbat combination rule parameters should match those for LJ-PME");
 
     const int coulkt = static_cast<int>(getCoulombKernelType(kernelSetup.ewaldExclusionType,

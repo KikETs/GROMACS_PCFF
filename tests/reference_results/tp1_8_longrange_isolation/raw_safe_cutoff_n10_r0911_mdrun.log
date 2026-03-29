@@ -1,0 +1,35 @@
+===== safe_cutoff_n10_r0911 mdrun stdout =====
+
+
+===== safe_cutoff_n10_r0911 mdrun stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_8_longrange_isolation/work/safe_cutoff_n10_r0911
+Command line:
+  gmx mdrun -s run.tpr -deffnm run -nt 1
+
+Reading file run.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+Can not increase nstlist because an NVE ensemble is used
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+starting mdrun 'dense_salt_polymer'
+100000 steps,    100.0 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:       26.476       26.476      100.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      326.340        0.074        0.265            1.020 
+
+GROMACS reminds you: "They don't have any beavers in India, so they have to simulate them" (The Tubes)
+
+

@@ -1,0 +1,100 @@
+===== shift fixture across_boundary mdrun stdout =====
+
+
+===== shift fixture across_boundary mdrun stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5_cutoff_audit/work/shift_periodic/across_boundary
+Command line:
+  gmx mdrun -s topol.tpr -rerun system.gro -e ener.edr -o traj.trr -g md.log -nt 1
+
+
+Back Off! I just backed up md.log to ./#md.log.3#
+Reading file topol.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+
+Back Off! I just backed up traj.trr to ./#traj.trr.3#
+
+Back Off! I just backed up ener.edr to ./#ener.edr.3#
+starting md rerun 'tp1_5_shift_cutoff', reading coordinates from input trajectory 'system.gro'
+
+Reading frames from gro file 'across_boundary', 2 atoms.
+
+Reading frame       0 time    0.000   
+Last frame          0 time    0.000   
+
+NOTE: 19 % of the run time was spent in pair search,
+      you might want to increase nstlist (this has no effect on accuracy)
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.000        0.000       92.1
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      700.944        0.034        0.123            0.016 
+
+GROMACS reminds you: "I think it would be a good idea." (Mahatma Gandhi, when asked what he thought of Western civilization)
+
+
+===== shift fixture inside_box mdrun stdout =====
+
+
+===== shift fixture inside_box mdrun stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5_cutoff_audit/work/shift_periodic/inside_box
+Command line:
+  gmx mdrun -s topol.tpr -rerun system.gro -e ener.edr -o traj.trr -g md.log -nt 1
+
+
+Back Off! I just backed up md.log to ./#md.log.3#
+Reading file topol.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+
+Back Off! I just backed up traj.trr to ./#traj.trr.3#
+
+Back Off! I just backed up ener.edr to ./#ener.edr.3#
+starting md rerun 'tp1_5_shift_cutoff', reading coordinates from input trajectory 'system.gro'
+
+Reading frames from gro file 'inside_box', 2 atoms.
+
+Reading frame       0 time    0.000   
+Last frame          0 time    0.000   
+
+NOTE: 18 % of the run time was spent in pair search,
+      you might want to increase nstlist (this has no effect on accuracy)
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.000        0.000       92.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      710.564        0.034        0.122            0.016 
+
+GROMACS reminds you: "I think it would be a good idea." (Mahatma Gandhi, when asked what he thought of Western civilization)
+
+

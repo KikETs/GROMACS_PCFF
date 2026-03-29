@@ -311,6 +311,14 @@ const PlainPairlist& nonbonded_verlet_t::plainPairlist(const real range, ArrayRe
     return pairlistSets_->plainPairlist(range, *nbat_, pairSearch_->gridSet().atomIndices());
 }
 
+const PlainPairlist& nonbonded_verlet_t::activePlainPairlist(const real range,
+                                                             ArrayRef<const RVec> shiftVectors)
+{
+    nbnxn_atomdata_copy_shiftvec(std::nullopt, shiftVectors, nbat_.get());
+
+    return pairlistSets_->activePlainPairlist(range, *nbat_, pairSearch_->gridSet().atomIndices());
+}
+
 } // namespace gmx
 
 /*! \endcond */

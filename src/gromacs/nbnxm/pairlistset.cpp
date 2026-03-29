@@ -68,7 +68,8 @@ void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
                             const PairlistParams&   params,
                             const real              range,
                             const nbnxn_atomdata_t& nbat,
-                            ArrayRef<const int>     atomIndices)
+                            ArrayRef<const int>     atomIndices,
+                            const bool              useOuterList)
 {
     constexpr int                      c_maxClusterSize = 8;
     std::array<int, c_maxClusterSize>  atomI;
@@ -76,7 +77,7 @@ void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
 
     ArrayRef<const nbnxn_ci_t> ciList;
     ArrayRef<const nbnxn_cj_t> cjList;
-    if (params.useDynamicPruning)
+    if (params.useDynamicPruning && useOuterList)
     {
         ciList = pairlist.ciOuter;
         cjList = pairlist.cjOuter;
@@ -265,8 +266,23 @@ void PairlistSet::appendPlainPairlist(PlainPairlist*          plainPairlist,
     {
         for (const auto& cpuList : cpuLists())
         {
-            appendPlainPairlistCpu(plainPairlist, cpuList, params_, range, nbat, atomIndices);
+            appendPlainPairlistCpu(plainPairlist, cpuList, params_, range, nbat, atomIndices, true);
         }
+    }
+}
+
+void PairlistSet::appendActivePlainPairlist(PlainPairlist*          plainPairlist,
+                                            const real              range,
+                                            const nbnxn_atomdata_t& nbat,
+                                            ArrayRef<const int>     atomIndices)
+{
+    GMX_RELEASE_ASSERT(range <= params_.rlistOuter, "range should be <= rlistOuter");
+    GMX_RELEASE_ASSERT(!sc_isGpuSpecificPairlist(params_.pairlistType),
+                       "Active plain pairlist extraction is only implemented for CPU pairlists");
+
+    for (const auto& cpuList : cpuLists())
+    {
+        appendPlainPairlistCpu(plainPairlist, cpuList, params_, range, nbat, atomIndices, false);
     }
 }
 

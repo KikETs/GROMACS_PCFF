@@ -1,0 +1,57 @@
+{
+  "milestone": "TP1.8c",
+  "authoritative_system_id": "dense_salt_polymer",
+  "tp13_baseline_source": "tests/reference_results/tp1_3_stabilization/TRL-0",
+  "tp18_source": "tests/reference_results/tp1_8_longrange_isolation",
+  "tp18b_source": "tests/reference_results/tp1_8b_coulomb_separation",
+  "reference_run_id": "safe_pme_shift_ref",
+  "comparison_runs": [
+    {
+      "run_id": "safe_pme_shift_ref",
+      "role": "baseline_reference",
+      "trace_filename": "trace_observables_baseline.csv",
+      "coulombtype": "PME",
+      "coulomb_modifier": "Potential-shift-Verlet",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 4,
+      "fourierspacing": 0.12,
+      "ewald_rtol": 1e-05,
+      "why": "Reuses the TP1.8b authoritative safe baseline and traces the default Coulomb PME accumulation path.",
+      "intended_path_change": "reference"
+    },
+    {
+      "run_id": "safe_ewald_shift",
+      "role": "ewald_variant",
+      "trace_filename": "trace_observables_variant.csv",
+      "coulombtype": "Ewald",
+      "coulomb_modifier": "Potential-shift-Verlet",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 4,
+      "fourierspacing": 0.12,
+      "ewald_rtol": 1e-05,
+      "why": "Switches the long-range Coulomb solver from PME mesh to full Ewald while preserving the Ewald-family short-range electrostatics path.",
+      "intended_path_change": "pme_vs_ewald_solver_trace"
+    },
+    {
+      "run_id": "safe_pme_none",
+      "role": "direct_modifier_variant",
+      "trace_filename": "trace_observables_direct_modifier.csv",
+      "coulombtype": "PME",
+      "coulomb_modifier": "None",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 4,
+      "fourierspacing": 0.12,
+      "ewald_rtol": 1e-05,
+      "why": "Changes only the Coulomb modifier while preserving Coulomb PME and the same short-range baseline.",
+      "intended_path_change": "direct_space_modifier_trace"
+    }
+  ],
+  "rationale_for_optional_direct_variant": "safe_pme_none is included because tracing only PME-versus-Ewald would still leave the Coulomb modifier path unmeasured at source level.",
+  "rationale_for_20ps_window": "TP1.8b already showed onset at 0.2 ps on the current 20 ps authoritative window, so TP1.8c traces the same window to keep baseline fairness while limiting trace volume."
+}

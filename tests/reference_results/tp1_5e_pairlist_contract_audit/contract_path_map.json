@@ -1,0 +1,77 @@
+{
+  "milestone": "TP1.5e",
+  "path_map": [
+    {
+      "source_type": "code",
+      "file": "src/gromacs/mdlib/sim_util.cpp",
+      "function": "doPairSearch",
+      "contract_role": "Pairlist rebuild scheduling on search steps.",
+      "why_relevant": "Determines when a reused outer list is rebuilt versus carried forward.",
+      "evidence_strength": "confirmed_runtime_entry_point"
+    },
+    {
+      "source_type": "code",
+      "file": "src/gromacs/nbnxm/pairlistsets.h",
+      "function": "PairlistSets::numStepsWithPairlist / isDynamicPruningStepCpu",
+      "contract_role": "Defines pairlist age and CPU dynamic-pruning cadence.",
+      "why_relevant": "Separates plain list reuse from pruning behavior.",
+      "evidence_strength": "confirmed_runtime_state_accessor"
+    },
+    {
+      "source_type": "code",
+      "file": "src/gromacs/nbnxm/pairlist_tuning.cpp",
+      "function": "supportsDynamicPairlistGenerationInterval",
+      "contract_role": "Enables dynamic pairlist tuning only when verletbuf_tol > 0.",
+      "why_relevant": "With verlet-buffer-tolerance = -1, dynamic pruning contract is disabled.",
+      "evidence_strength": "confirmed_static_contract"
+    },
+    {
+      "source_type": "code",
+      "file": "src/gromacs/nbnxm/pairlist_tuning.cpp",
+      "function": "setupDynamicPairlistPruning",
+      "contract_role": "Configures dual-list pruning and reports outer/inner buffers.",
+      "why_relevant": "Manual buffer mode bypasses this dynamic pruning path.",
+      "evidence_strength": "confirmed_static_contract"
+    },
+    {
+      "source_type": "code",
+      "file": "src/gromacs/mdlib/calc_verletbuf.h",
+      "function": "calcVerletBufferSize",
+      "contract_role": "Defines positive verlet-buffer-tolerance as a bound on average energy jump over list lifetime.",
+      "why_relevant": "Explains what guarantee exists in auto-buffer mode and what is absent in manual mode.",
+      "evidence_strength": "confirmed_static_contract"
+    },
+    {
+      "source_type": "code",
+      "file": "src/gromacs/nbnxm/nbnxm_setup.cpp",
+      "function": "nonbonded_verlet_t setup",
+      "contract_role": "Calls setupDynamicPairlistPruning only for non-PlainC1x1 kernels.",
+      "why_relevant": "Shows the audited plain-C cut-off path still goes through pairlist-tuning contract setup.",
+      "evidence_strength": "confirmed_static_localization"
+    },
+    {
+      "source_type": "doc",
+      "file": "docs/release-notes/2024/2024.4.rst",
+      "section": "Fix missing non-bonded interactions close to cut-off with GPUs",
+      "contract_role": "Manual Verlet buffer settings disable dual-list dynamic pruning.",
+      "why_relevant": "Supports that manually set buffers fall outside the automatic dual-list safeguard path.",
+      "evidence_strength": "supporting_doc"
+    }
+  ],
+  "official_sources": [
+    {
+      "site": "GROMACS Manual 2024.4",
+      "title": "Mdp options",
+      "url": "https://manual.gromacs.org/documentation/2024.4/user-guide/mdp-options.html",
+      "checked_date": "2026-03-19",
+      "relevance": "Default Verlet buffering is controlled by verlet-buffer-tolerance; setting it to -1 means rlist must be set manually."
+    },
+    {
+      "site": "GROMACS Manual 2024.4",
+      "title": "2024.4 Release Notes",
+      "url": "https://manual.gromacs.org/2024.4/release-notes/2024/2024.4.html",
+      "checked_date": "2026-03-19",
+      "relevance": "Manual Verlet buffer settings disable dual-list dynamic pruning."
+    }
+  ]
+}

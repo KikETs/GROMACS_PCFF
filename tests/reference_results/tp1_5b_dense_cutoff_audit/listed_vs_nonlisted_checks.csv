@@ -1,0 +1,7 @@
+check_name,fixture_id,comparison,metric,observed,status
+nonlisted_static_r0900_vs_r0909,dense_nonlisted,fixed-frame rlist change at nsteps=0,potential_diff_kj,0.0,invariant
+nonlisted_static_force_r0900_vs_r0909,dense_nonlisted,fixed-frame rlist change at nsteps=0,max_force_component_diff,0.0,invariant
+routed_static_r0900_vs_r0909,dense_routed_sister,fixed-frame rlist change at nsteps=0,potential_diff_kj,0.0,invariant
+routed_static_force_r0900_vs_r0909,dense_routed_sister,fixed-frame rlist change at nsteps=0,max_force_component_diff,0.0,invariant
+nonlisted_dynamic_tight_vs_n10_r0909,dense_nonlisted,pairlist lifetime sensitivity,energy_range_ratio,1.4526097730991219,pairlist_sensitive
+routed_dynamic_tight_vs_n10_r0909,dense_routed_sister,pairlist lifetime sensitivity,energy_range_ratio,1.0,no_material_change

@@ -1,0 +1,27 @@
+# This file was created Thu Mar 19 09:05:06 2026
+# Created by:
+#   :-) GROMACS - gmx energy, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+# 
+# Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+# Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+# Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5_cutoff_audit/work/shift_periodic/inside_box
+# Command line:
+#   gmx energy -f ener.edr -o energy.xvg
+# gmx energy is part of G R O M A C S:
+#
+# GRowing Old MAkes el Chrono Sweat
+#
+@    title "GROMACS Energies"
+@    xaxis  label "Time (ps)"
+@    yaxis  label "(kJ/mol)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "LJ (SR)"
+@ s1 legend "Coulomb (SR)"
+@ s2 legend "Potential"
+    0.000000  31822.736328  -1389.354248  30433.382812

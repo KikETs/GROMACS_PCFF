@@ -35,13 +35,19 @@
 
 #include "update.h"
 
+#include <atomic>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <iomanip>
 
 #include <algorithm>
 #include <filesystem>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 #include "gromacs/domdec/domdec_struct.h"
@@ -333,6 +339,252 @@ enum class ParrinelloRahmanVelocityScaling
     Anisotropic, //!< Apply velocity scaling using a matrix with off-diagonal elements
     Count
 };
+
+namespace
+{
+
+struct Tp18hTraceConfig
+{
+    bool        enabled = false;
+    std::string path;
+};
+
+struct Tp18hBufferSummary
+{
+    double l2     = 0.0;
+    double maxAbs = 0.0;
+};
+
+std::mutex              g_tp18hTraceMutex;
+std::atomic<long long> g_tp18hTraceCallIndex{ 0 };
+
+const Tp18hTraceConfig& tp18hTraceConfig()
+{
+    static const Tp18hTraceConfig config = []()
+    {
+        Tp18hTraceConfig result;
+        if (const char* value = std::getenv("GMX_TP18H_TRACE_FILE"); value != nullptr && *value != '\0')
+        {
+            result.enabled = true;
+            result.path    = value;
+
+            std::filesystem::path tracePath(result.path);
+            if (!tracePath.parent_path().empty())
+            {
+                std::filesystem::create_directories(tracePath.parent_path());
+            }
+
+            std::ofstream output(tracePath, std::ios::trunc);
+            GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18H_TRACE_FILE for writing");
+            output << "call_index,step,time_ps,integrator,update_part,helper_path,pcoupl_is_no,"
+                      "tcoupl_is_no,have_partially_frozen_atoms,have_constraints,"
+                      "do_temp_couple,do_nose_hoover,parrinello_rahman_velocity_scaling,"
+                      "temperature_group_mode,using_simd_path,"
+                      "force_l2_in,force_max_abs_in,"
+                      "v_l2_before,v_max_abs_before,v_l2_after,v_max_abs_after,"
+                      "delta_v_l2,delta_v_max_abs,"
+                      "xprime_l2_after,xprime_max_abs_after,"
+                      "delta_xprime_from_x_l2,delta_xprime_from_x_max_abs,"
+                      "kinetic_proxy_before,kinetic_proxy_after,delta_kinetic_proxy\n";
+        }
+        return result;
+    }();
+
+    return config;
+}
+
+Tp18hBufferSummary tp18hSummarizeRVecBuffer(const RVec* values, const int count)
+{
+    Tp18hBufferSummary summary;
+
+    for (int i = 0; i < count; ++i)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            const double component = values[i][d];
+            summary.l2 += component * component;
+            summary.maxAbs = std::max(summary.maxAbs, std::abs(component));
+        }
+    }
+
+    summary.l2 = std::sqrt(summary.l2);
+    return summary;
+}
+
+Tp18hBufferSummary tp18hSummarizeRVecDifference(const RVec* after, const RVec* before, const int count)
+{
+    Tp18hBufferSummary summary;
+
+    for (int i = 0; i < count; ++i)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            const double component = after[i][d] - before[i][d];
+            summary.l2 += component * component;
+            summary.maxAbs = std::max(summary.maxAbs, std::abs(component));
+        }
+    }
+
+    summary.l2 = std::sqrt(summary.l2);
+    return summary;
+}
+
+double tp18hKineticProxy(const RVec* velocities, gmx::ArrayRef<const RVec> invMassPerDim, const int count)
+{
+    double kineticProxy = 0.0;
+
+    for (int i = 0; i < count; ++i)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            const double inverseMass = invMassPerDim[i][d];
+            if (inverseMass > 0)
+            {
+                kineticProxy += 0.5 * velocities[i][d] * velocities[i][d] / inverseMass;
+            }
+        }
+    }
+
+    return kineticProxy;
+}
+
+const char* tp18hIntegrationAlgorithmName(const IntegrationAlgorithm algorithm)
+{
+    switch (algorithm)
+    {
+        case IntegrationAlgorithm::MD: return "md";
+        case IntegrationAlgorithm::SD1: return "sd1";
+        case IntegrationAlgorithm::BD: return "bd";
+        case IntegrationAlgorithm::VV: return "vv";
+        case IntegrationAlgorithm::VVAK: return "vvak";
+        default: return "unknown";
+    }
+}
+
+const char* tp18hUpdatePartName(const int updatePart)
+{
+    switch (updatePart)
+    {
+        case etrtPOSITION: return "position";
+        case etrtVELOCITY1: return "velocity1";
+        case etrtVELOCITY2: return "velocity2";
+        default: return "unknown";
+    }
+}
+
+const char* tp18hParrinelloRahmanScalingName(const ParrinelloRahmanVelocityScaling scaling)
+{
+    switch (scaling)
+    {
+        case ParrinelloRahmanVelocityScaling::No: return "no";
+        case ParrinelloRahmanVelocityScaling::Diagonal: return "diagonal";
+        case ParrinelloRahmanVelocityScaling::Anisotropic: return "anisotropic";
+        default: return "unknown";
+    }
+}
+
+const char* tp18hTemperatureGroupModeName(const NumTempScaleValues mode)
+{
+    switch (mode)
+    {
+        case NumTempScaleValues::None: return "none";
+        case NumTempScaleValues::Single: return "single";
+        case NumTempScaleValues::Multiple: return "multiple";
+        default: return "unknown";
+    }
+}
+
+const char* tp18hMdHelperPathName(const bool                             doNoseHoover,
+                                  const ParrinelloRahmanVelocityScaling prScaling,
+                                  const AccelerationType                stepAccelerationType,
+                                  const NumTempScaleValues             numTempScaleValues,
+                                  const bool                           havePartiallyFrozenAtoms)
+{
+    if (doNoseHoover || prScaling == ParrinelloRahmanVelocityScaling::Anisotropic
+        || stepAccelerationType != AccelerationType::None)
+    {
+        return "md_leapfrog_general";
+    }
+
+    if (prScaling == ParrinelloRahmanVelocityScaling::Diagonal)
+    {
+        return "md_leapfrog_simple_diag_pr";
+    }
+
+#if GMX_SIMD && GMX_SIMD_HAVE_REAL
+    if (numTempScaleValues != NumTempScaleValues::Multiple
+        && !havePartiallyFrozenAtoms)
+    {
+        return "md_leapfrog_simple_simd";
+    }
+#endif
+
+    return "md_leapfrog_simple_scalar";
+}
+
+void appendTp18hTraceRow(const int64_t                         step,
+                         const real                            dt,
+                         const t_inputrec&                     inputRecord,
+                         const int                             updatePart,
+                         const bool                            havePartiallyFrozenAtoms,
+                         const bool                            haveConstraints,
+                         const bool                            doTempCouple,
+                         const bool                            doNoseHoover,
+                         const ParrinelloRahmanVelocityScaling prScaling,
+                         const NumTempScaleValues              numTempScaleValues,
+                         const char*                           helperPath,
+                         const RVec*                           force,
+                         const RVec*                           x,
+                         const RVec*                           xprime,
+                         const RVec*                           vBefore,
+                         const RVec*                           vAfter,
+                         gmx::ArrayRef<const RVec>             invMassPerDim,
+                         const int                             count)
+{
+    const auto& config = tp18hTraceConfig();
+    if (!config.enabled)
+    {
+        return;
+    }
+
+    const long long callIndex             = g_tp18hTraceCallIndex.fetch_add(1, std::memory_order_relaxed);
+    const bool      pressureCouplingIsNo  = (inputRecord.pressureCouplingOptions.epc == PressureCoupling::No);
+    const bool      temperatureCouplingIsNo = (inputRecord.etc == TemperatureCoupling::No);
+    const auto      forceSummary          = tp18hSummarizeRVecBuffer(force, count);
+    const auto      vBeforeSummary        = tp18hSummarizeRVecBuffer(vBefore, count);
+    const auto      vAfterSummary         = tp18hSummarizeRVecBuffer(vAfter, count);
+    const auto      deltaVSummary         = tp18hSummarizeRVecDifference(vAfter, vBefore, count);
+    const auto      xPrimeSummary         = tp18hSummarizeRVecBuffer(xprime, count);
+    const auto      xPrimeDeltaSummary    = tp18hSummarizeRVecDifference(xprime, x, count);
+    const double    kineticBefore         = tp18hKineticProxy(vBefore, invMassPerDim, count);
+    const double    kineticAfter          = tp18hKineticProxy(vAfter, invMassPerDim, count);
+
+    std::lock_guard<std::mutex> lock(g_tp18hTraceMutex);
+    std::ofstream               output(config.path, std::ios::app);
+    GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18H_TRACE_FILE for appending");
+    output << std::setprecision(17) << callIndex << ',' << step << ',' << (step * dt) << ','
+           << tp18hIntegrationAlgorithmName(inputRecord.eI) << ','
+           << tp18hUpdatePartName(updatePart) << ','
+           << helperPath << ','
+           << static_cast<int>(pressureCouplingIsNo) << ','
+           << static_cast<int>(temperatureCouplingIsNo) << ','
+           << static_cast<int>(havePartiallyFrozenAtoms) << ','
+           << static_cast<int>(haveConstraints) << ','
+           << static_cast<int>(doTempCouple) << ','
+           << static_cast<int>(doNoseHoover) << ','
+           << tp18hParrinelloRahmanScalingName(prScaling) << ','
+           << tp18hTemperatureGroupModeName(numTempScaleValues) << ','
+           << static_cast<int>(std::string_view(helperPath) == "md_leapfrog_simple_simd") << ','
+           << forceSummary.l2 << ',' << forceSummary.maxAbs << ','
+           << vBeforeSummary.l2 << ',' << vBeforeSummary.maxAbs << ','
+           << vAfterSummary.l2 << ',' << vAfterSummary.maxAbs << ','
+           << deltaVSummary.l2 << ',' << deltaVSummary.maxAbs << ','
+           << xPrimeSummary.l2 << ',' << xPrimeSummary.maxAbs << ','
+           << xPrimeDeltaSummary.l2 << ',' << xPrimeDeltaSummary.maxAbs << ','
+           << kineticBefore << ',' << kineticAfter << ',' << (kineticAfter - kineticBefore) << '\n';
+}
+
+} // namespace
 
 /*! \brief Integrate using leap-frog with T-scaling and optionally diagonal Parrinello-Rahman p-coupling
  *
@@ -1789,6 +2041,17 @@ void Update::Impl::update_coords(const t_inputrec&                 inputRecord,
         fcdata->orires->updateHistory();
     }
 
+    const bool traceUpdate = tp18hTraceConfig().enabled;
+    std::vector<RVec> velocityBefore;
+    if (traceUpdate)
+    {
+        velocityBefore.resize(homenr);
+        for (int i = 0; i < homenr; ++i)
+        {
+            velocityBefore[i] = state->v[i];
+        }
+    }
+
     /* ############# START The update of velocities and positions ######### */
     int nth = gmx_omp_nthreads_get(ModuleMultiThread::Update);
 
@@ -1927,6 +2190,80 @@ void Update::Impl::update_coords(const t_inputrec&                 inputRecord,
             }
         }
         GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
+    }
+
+    if (traceUpdate)
+    {
+        ParrinelloRahmanVelocityScaling prScaling = ParrinelloRahmanVelocityScaling::No;
+        NumTempScaleValues              numTempScaleValues = NumTempScaleValues::None;
+        bool                            doTempCouple = false;
+        bool                            doNoseHoover = false;
+        const char*                     helperPath = "non_md_update";
+
+        if (inputRecord.eI == IntegrationAlgorithm::MD && ekind != nullptr)
+        {
+            doTempCouple = (inputRecord.etc != TemperatureCoupling::No
+                            && do_per_step(step + inputRecord.nsttcouple - 1, inputRecord.nsttcouple));
+            doNoseHoover = (inputRecord.etc == TemperatureCoupling::NoseHoover && doTempCouple);
+
+            const bool doParrinelloRahmanThisStep =
+                    (inputRecord.pressureCouplingOptions.epc == PressureCoupling::ParrinelloRahman
+                     && do_per_step(step + inputRecord.pressureCouplingOptions.nstpcouple - 1,
+                                    inputRecord.pressureCouplingOptions.nstpcouple));
+
+            prScaling = (doParrinelloRahmanThisStep
+                                 ? ((parrinelloRahmanM(YY, XX) != 0 || parrinelloRahmanM(ZZ, XX) != 0
+                                     || parrinelloRahmanM(ZZ, YY) != 0)
+                                            ? ParrinelloRahmanVelocityScaling::Anisotropic
+                                            : ParrinelloRahmanVelocityScaling::Diagonal)
+                                 : ParrinelloRahmanVelocityScaling::No);
+
+            const AccelerationType stepAccelerationType =
+                    (accelerationType_ == AccelerationType::BoxDeformation && !doTempCouple
+                             ? AccelerationType::None
+                             : accelerationType_);
+
+            const int ntcg = ekind->numTemperatureCouplingGroups();
+            numTempScaleValues =
+                    (!doTempCouple || ntcg == 0)
+                            ? NumTempScaleValues::None
+                            : (ntcg == 1 ? NumTempScaleValues::Single : NumTempScaleValues::Multiple);
+
+            helperPath = tp18hMdHelperPathName(
+                    doNoseHoover, prScaling, stepAccelerationType, numTempScaleValues, havePartiallyFrozenAtoms);
+        }
+        else
+        {
+            switch (inputRecord.eI)
+            {
+                case IntegrationAlgorithm::SD1: helperPath = "sd_update"; break;
+                case IntegrationAlgorithm::BD: helperPath = "bd_update"; break;
+                case IntegrationAlgorithm::VV:
+                case IntegrationAlgorithm::VVAK:
+                    helperPath = (updatePart == etrtPOSITION) ? "vv_position" : "vv_velocity";
+                    break;
+                default: helperPath = "unknown"; break;
+            }
+        }
+
+        appendTp18hTraceRow(step,
+                            dt,
+                            inputRecord,
+                            updatePart,
+                            havePartiallyFrozenAtoms,
+                            haveConstraints,
+                            doTempCouple,
+                            doNoseHoover,
+                            prScaling,
+                            numTempScaleValues,
+                            helperPath,
+                            f.unpaddedConstArrayRef().data(),
+                            state->x.data(),
+                            xp_.data(),
+                            velocityBefore.data(),
+                            state->v.data(),
+                            invMassPerDim,
+                            homenr);
     }
 }
 

@@ -1,0 +1,43 @@
+{
+  "milestone": "TP1.8d",
+  "authoritative_system_id": "dense_salt_polymer",
+  "reference_run_id": "safe_pme_shift_ref",
+  "paths": [
+    {
+      "file": "src/gromacs/mdlib/force.cpp",
+      "function": "CpuPpLongRangeNonbondeds::calculate",
+      "role": "Producer boundary for long-range Coulomb force, reciprocal energy, and direct virial outputs.",
+      "status": "active_upstream_reference",
+      "why": "TP1.8c already traced the PME-versus-Ewald split at this boundary."
+    },
+    {
+      "file": "src/gromacs/mdlib/sim_util.cpp",
+      "function": "do_force",
+      "role": "Caller-side handoff that passes ForceWithVirial and energy terms from long-range calculation into downstream post-processing.",
+      "status": "active_and_traced",
+      "why": "TP1.8d records after_longrange and after_accumulate_energy snapshots here."
+    },
+    {
+      "file": "src/gromacs/mdlib/sim_util.cpp",
+      "function": "postProcessForces",
+      "role": "Immediate consumer that sums ForceWithVirial.force_ into the final force buffer and adds direct virial contributions to vir_force.",
+      "status": "active_and_traced_at_caller_boundary",
+      "why": "TP1.8d records before_postprocess and after_postprocess snapshots around this consumer."
+    },
+    {
+      "file": "src/gromacs/mdlib/enerdata_utils.cpp",
+      "function": "accumulatePotentialEnergies",
+      "role": "Finalizes potential-energy bookkeeping from per-term energy contributions.",
+      "status": "active_and_traced_at_caller_boundary",
+      "why": "TP1.8d records after_accumulate_energy snapshots to see whether the Coulomb reciprocal term survives into final potential bookkeeping."
+    },
+    {
+      "file": "src/gromacs/mdtypes/forceoutput.h",
+      "function": "ForceWithVirial::addVirialContribution / getVirial",
+      "role": "Storage and accumulation buffer for direct virial contributions consumed by postProcessForces.",
+      "status": "active",
+      "why": "This is the object whose contents are transferred downstream into vir_force."
+    }
+  ],
+  "tp1_4_lj_pme_path_status": "inactive"
+}

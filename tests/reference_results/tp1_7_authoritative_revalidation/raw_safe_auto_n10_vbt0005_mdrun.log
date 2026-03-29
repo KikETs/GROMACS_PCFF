@@ -1,0 +1,35 @@
+===== safe_auto_n10_vbt0005 mdrun stdout =====
+
+
+===== safe_auto_n10_vbt0005 mdrun stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_7_authoritative_revalidation/work/safe_auto_n10_vbt0005
+Command line:
+  gmx mdrun -s run.tpr -deffnm run -nt 1
+
+Reading file run.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+Can not increase nstlist because an NVE ensemble is used
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+starting mdrun 'dense_salt_polymer'
+500000 steps,    500.0 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:      153.847      153.847      100.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      280.798        0.085        0.308            0.877 
+
+GROMACS reminds you: "We will always have STEM with us. Some things will drop out of the public eye and will go away, but there will always be science, engineering, and technology. And there will always, always be mathematics." (Katherine Johnson)
+
+

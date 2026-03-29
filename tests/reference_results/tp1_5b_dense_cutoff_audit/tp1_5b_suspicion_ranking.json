@@ -1,0 +1,26 @@
+[
+  {
+    "rank": 1,
+    "candidate": "Pairlist lifetime sensitivity on the dense cut-off-only plain-C path",
+    "status": "strongest supported contributor",
+    "basis": "The dense nonlisted fixture is fixed-frame invariant across rlist changes, but dynamic total-energy range widens from 8.657745 kJ/mol at tight_ref/n1_r0909 to 12.576325 kJ/mol at n10_r0909."
+  },
+  {
+    "rank": 2,
+    "candidate": "Fixed-frame plain-C kernel miscompute independent of pairlist lifetime",
+    "status": "weakened",
+    "basis": "The dense nonlisted rerun gives identical potential and forces for rlist 0.900, 0.909, and 1.200 at nsteps=0."
+  },
+  {
+    "rank": 3,
+    "candidate": "Listed-vs-nonlisted routing as the main driver of the pairlist-sensitive worsening",
+    "status": "partially weakened",
+    "basis": "The routed sister topology has different absolute dynamics, but its tight_ref and n10_r0909 pairlist runs match each other on total-energy range."
+  },
+  {
+    "rank": 4,
+    "candidate": "PME-only explanation",
+    "status": "split",
+    "basis": "TP1.4 still covers PME split inconsistency, but TP1.5b executes cut-off-only fixtures on the same plain-C family and isolates pairlist-sensitive behavior there."
+  }
+]

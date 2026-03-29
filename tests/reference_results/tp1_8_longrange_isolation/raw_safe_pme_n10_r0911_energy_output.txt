@@ -1,0 +1,73 @@
+===== safe_pme_n10_r0911 energy stdout =====
+
+Statistics over 100001 steps [ 0.0000 through 100.0000 ps ], 5 data sets
+All statistics are over 1001 points
+
+Energy                      Average   Err.Est.       RMSD  Tot-Drift
+-------------------------------------------------------------------------------
+Potential                  -28384.8         47    162.363   -281.945  (kJ/mol)
+Kinetic En.                 2433.93         47    162.432    282.193  (kJ/mol)
+Total Energy               -25950.8       0.16   0.780894   0.248196  (kJ/mol)
+Temperature                 725.487         14    48.4165    84.1141  (K)
+Pressure                   -100.318         47    1288.43   -134.971  (bar)
+
+===== safe_pme_n10_r0911 energy stderr =====
+   :-) GROMACS - gmx energy, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_8_longrange_isolation/work/safe_pme_n10_r0911
+Command line:
+  gmx energy -f run.edr -o energy.xvg
+
+Opened run.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  Class2-Bond      2  Class2-Angle     3  Class2-Dih.      4  LJ-14         
+  5  Coulomb-14       6  LJ-(SR)          7  Coulomb-(SR)     8  Coul.-recip.  
+  9  Potential       10  Kinetic-En.     11  Total-Energy    12  Temperature   
+ 13  Pressure        14  Vir-XX          15  Vir-XY          16  Vir-XZ        
+ 17  Vir-YX          18  Vir-YY          19  Vir-YZ          20  Vir-ZX        
+ 21  Vir-ZY          22  Vir-ZZ          23  Pres-XX         24  Pres-XY       
+ 25  Pres-XZ         26  Pres-YX         27  Pres-YY         28  Pres-YZ       
+ 29  Pres-ZX         30  Pres-ZY         31  Pres-ZZ         32  #Surf*SurfTen 
+ 33  T-rest        
+
+
+Reading energy frame      0 time    0.000         
+Reading energy frame      1 time    1.000         
+Reading energy frame      2 time    2.000         
+Reading energy frame      3 time    3.000         
+Reading energy frame      4 time    4.000         
+Reading energy frame      5 time    5.000         
+Reading energy frame      6 time    6.000         
+Reading energy frame      7 time    7.000         
+Reading energy frame      8 time    8.000         
+Reading energy frame      9 time    9.000         
+Reading energy frame     10 time   10.000         
+Reading energy frame     11 time   11.000         
+Reading energy frame     12 time   12.000         
+Reading energy frame     13 time   13.000         
+Reading energy frame     14 time   14.000         
+Reading energy frame     15 time   15.000         
+Reading energy frame     16 time   16.000         
+Reading energy frame     17 time   17.000         
+Reading energy frame     18 time   18.000         
+Reading energy frame     19 time   19.000         
+Reading energy frame     20 time   20.000         
+Reading energy frame     30 time   30.000         
+Reading energy frame     40 time   40.000         
+Reading energy frame     50 time   50.000         
+Reading energy frame     60 time   60.000         
+Reading energy frame     70 time   70.000         
+Reading energy frame     80 time   80.000         
+Reading energy frame     90 time   90.000         
+Reading energy frame    100 time  100.000         
+Last energy frame read 100 time  100.000         
+
+GROMACS reminds you: "We Don't Bother Anyone" (LIVE)
+
+

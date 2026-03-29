@@ -1,0 +1,41 @@
+{
+  "milestone": "TP1.5c",
+  "ranked_suspicions": [
+    {
+      "rank": 1,
+      "topic": "pairlist_lifetime_or_stale_membership",
+      "status": "confirmed_path_issue",
+      "evidence": {
+        "first_cross_run_inner_difference_step": 171,
+        "n1_sensitive_pair_inner_steps": 214,
+        "n10_sensitive_pair_inner_steps": 489
+      }
+    },
+    {
+      "rank": 2,
+      "topic": "pruning_inside_existing_outer_list",
+      "status": "weakened",
+      "evidence": {
+        "n1_steps_with_outer_inner_difference": 0,
+        "n10_steps_with_outer_inner_difference": 0,
+        "n1_num_prune_steps": 0,
+        "n10_num_prune_steps": 0
+      }
+    },
+    {
+      "rank": 3,
+      "topic": "downstream_kernel_accumulation_with_identical_membership",
+      "status": "weakened",
+      "evidence": {
+        "first_cross_run_sensitive_force_difference_step": 173,
+        "first_cross_run_inner_difference_step": 171
+      }
+    },
+    {
+      "rank": 4,
+      "topic": "listed_vs_nonlisted_routing",
+      "status": "deferred_from_tp1_5b",
+      "evidence": "TP1.5c stays on dense_nonlisted only and does not reopen routed-sister closure work."
+    }
+  ]
+}

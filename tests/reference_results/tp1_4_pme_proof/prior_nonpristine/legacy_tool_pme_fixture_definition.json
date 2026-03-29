@@ -1,0 +1,53 @@
+{
+  "fixture_name": "tp1_4_mixed_type_9_6_ljpme_split_scan",
+  "system": "2-atom periodic box with mixed atom types A/B",
+  "defaults": {
+    "comb_rule": 4,
+    "repulsion_power": 9.0,
+    "gen_pairs": "yes"
+  },
+  "atomtypes": [
+    {
+      "type": "A",
+      "sigma_nm": 0.34,
+      "epsilon_kj_per_mol": 0.2
+    },
+    {
+      "type": "B",
+      "sigma_nm": 0.4,
+      "epsilon_kj_per_mol": 0.1
+    }
+  ],
+  "coordinates_nm": [
+    [
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.5,
+      0.0,
+      0.0
+    ]
+  ],
+  "box_nm": [
+    5.0,
+    5.0,
+    5.0
+  ],
+  "mdp": {
+    "vdwtype": "PME",
+    "lj_pme_comb_rule": "geometric",
+    "coulombtype": "Cut-off",
+    "ewald_rtol_lj": 1e-05
+  },
+  "scan_parameter": "rcut",
+  "scan_values_nm": [
+    0.7,
+    0.8,
+    0.9,
+    1.0,
+    1.1
+  ],
+  "expected_property": "Total LJ force and energy should remain approximately invariant as rcut moves when the real-space/reciprocal-space split is correct."
+}

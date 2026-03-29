@@ -1,0 +1,40 @@
+===== n10_r0911 mdrun stdout =====
+
+
+===== n10_r0911 mdrun stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_6_rebaseline_audit/work/n10_r0911
+Command line:
+  gmx mdrun -s topol.tpr -deffnm run -nt 1
+
+Reading file topol.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Can not increase nstlist because an NVE ensemble is used
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+starting mdrun 'tp1_6_dense_nonlisted'
+1000 steps,      1.0 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.007        0.007       99.7
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:    13180.853        0.002        0.007            0.610 
+
+GROMACS reminds you: "As Always Your Logic Is Impeccable" (Tuvok)
+
+

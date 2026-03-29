@@ -1,0 +1,48 @@
+{
+  "milestone": "TP1.8h",
+  "scope": "active update/integration path after force computation under pcoupl = no",
+  "paths": [
+    {
+      "file": "src/gromacs/mdrun/md.cpp",
+      "function": "LegacySimulator::do_md",
+      "role": "Calls upd.update_coords after do_force and before compute_globals.",
+      "why_traced": "Caller boundary that forwards the surviving PME-vs-Ewald force difference into update.",
+      "status": "active"
+    },
+    {
+      "file": "src/gromacs/mdlib/update.cpp",
+      "function": "Update::Impl::update_coords",
+      "role": "Entry point for integration-state updates and TP1.8h trace boundary.",
+      "why_traced": "Captures pre/post aggregate state for v and xprime under the active authoritative path.",
+      "status": "active"
+    },
+    {
+      "file": "src/gromacs/mdlib/update.cpp",
+      "function": "do_update_md",
+      "role": "Leap-frog MD dispatcher for the active integrator.",
+      "why_traced": "Determines whether the surviving difference takes the simple or general MD update path.",
+      "status": "active"
+    },
+    {
+      "file": "src/gromacs/mdlib/update.cpp",
+      "function": "updateMDLeapfrogSimple / updateMDLeapfrogSimpleSimd",
+      "role": "Applies v <- v + f*dt/m and xprime <- x + v*dt in the simple leap-frog path.",
+      "why_traced": "Most direct place where force-side differences can carry into velocity and coordinate updates.",
+      "status": "active"
+    },
+    {
+      "file": "src/gromacs/mdlib/update.cpp",
+      "function": "updateMDLeapfrogGeneral",
+      "role": "General leap-frog path for NH, anisotropic PR, or acceleration.",
+      "why_traced": "Needed only to prove that the authoritative TP1.8h runs do not take this broader path.",
+      "status": "inactive"
+    },
+    {
+      "file": "src/gromacs/mdlib/update.cpp",
+      "function": "doUpdateMDDoNotUpdateVelocities",
+      "role": "Constraint-virial-only xprime update without storing velocities.",
+      "why_traced": "Would be a confounder if constraints were active.",
+      "status": "inactive"
+    }
+  ]
+}

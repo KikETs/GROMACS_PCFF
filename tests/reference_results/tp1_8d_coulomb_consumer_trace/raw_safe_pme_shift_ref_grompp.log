@@ -1,0 +1,66 @@
+===== safe_pme_shift_ref grompp stdout =====
+Setting the LD random seed to 139784878
+
+Generated 10 of the 10 non-bonded parameter combinations
+
+Generated 10 of the 10 1-4 parameter combinations
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL10'
+
+Excluding 3 bonded neighbours molecule type 'POL28'
+
+Velocities were taken from a Maxwell distribution at 300 K
+Analysing residue names:
+There are:    81      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.381 nm between atom 13 and 16
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 20x20x20, spacing 0.110 0.110 0.110
+
+Estimate for the relative computational load of the PME mesh part: 0.56
+
+This run will generate roughly 0 Mb of data
+
+===== safe_pme_shift_ref grompp stderr =====
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_8d_coulomb_consumer_trace/work/safe_pme_shift_ref
+Command line:
+  gmx grompp -f run.mdp -c start.gro -p system.top -o run.tpr -maxwarn 10
+
+
+NOTE 1 [file run.mdp]:
+  With Verlet lists and no buffer tolerance, the optimal nstlist is >= 10,
+  with GPUs >= 20. Note that with the Verlet scheme, nstlist has no effect
+  on the accuracy of your simulation.
+
+
+NOTE 2 [file run.mdp]:
+  verlet-buffer-pressure-tolerance is ignored when verlet-buffer-tolerance
+  < 0
+
+Generating 1-4 interactions: fudge = 1
+Number of degrees of freedom in T-Coupling group rest is 807.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 3 [file run.mdp]:
+  The optimal PME mesh load for parallel simulations is below 0.5
+  and for highly parallel simulations between 0.25 and 0.33,
+  for higher performance, increase the cut-off and the PME grid spacing.
+
+
+
+There were 3 NOTEs
+
+GROMACS reminds you: "Everything He Lacks, He Makes Up In Denial" (Offspring)
+
+

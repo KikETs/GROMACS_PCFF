@@ -1,7 +1,6 @@
-rcut, sr, recip, total
-Error running GROMACS: Command '['/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx', 'mdrun', '-s', 'test.tpr', '-rerun', 'system.gro', '-e', 'energy.edr']' returned non-zero exit status 1.
-Error running GROMACS: Command '['/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx', 'mdrun', '-s', 'test.tpr', '-rerun', 'system.gro', '-e', 'energy.edr']' returned non-zero exit status 1.
-Error running GROMACS: Command '['/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx', 'mdrun', '-s', 'test.tpr', '-rerun', 'system.gro', '-e', 'energy.edr']' returned non-zero exit status 1.
-Error running GROMACS: Command '['/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx', 'mdrun', '-s', 'test.tpr', '-rerun', 'system.gro', '-e', 'energy.edr']' returned non-zero exit status 1.
-Error running GROMACS: Command '['/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx', 'mdrun', '-s', 'test.tpr', '-rerun', 'system.gro', '-e', 'energy.edr']' returned non-zero exit status 1.
-Error running GROMACS: Command '['/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx', 'mdrun', '-s', 'test.tpr', '-rerun', 'system.gro', '-e', 'energy.edr']' returned non-zero exit status 1.
+rcut,lj_sr,lj_recip,potential,force_x_atom2
+0.7,6.943827,-41.748489,-34.804665,-14.4074
+0.8,3.12444,-18.999409,-15.874969,-6.63457
+0.9,1.544618,-9.550016,-8.005398,-4.29121
+1.0,0.819228,-5.205198,-4.38597,-3.14929
+1.1,0.456348,-3.030363,-2.574015,-2.38829

@@ -37,7 +37,9 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
+#include <mutex>
 
 #include <array>
 #include <filesystem>
@@ -72,6 +74,171 @@
 
 using gmx::ArrayRef;
 using gmx::RVec;
+
+namespace
+{
+
+struct Tp18cTraceRow
+{
+    int64_t     callIndex                 = 0;
+    const char* coulombType               = "";
+    const char* coulombModifier           = "";
+    const char* directSpaceFamily         = "";
+    const char* vdwType                   = "";
+    bool        ljPmeActive               = false;
+    bool        enteredLongRangeBlock     = false;
+    bool        computeNonbondedForces    = false;
+    bool        computeLongRangeNonbonded = false;
+    bool        computeEnergy             = false;
+    bool        computeVirial             = false;
+    bool        doNeighborSearch          = false;
+    bool        stateChanged              = false;
+    bool        computePmeOnCpu           = false;
+    bool        pmeDoCalled               = false;
+    bool        ewaldCalled               = false;
+    bool        haveEwaldSurfaceTerm      = false;
+    real        ewaldCoeffQ               = 0;
+    real        VlrQ                      = 0;
+    real        VcorrQ                    = 0;
+    real        coulombReciprocalTerm     = 0;
+    real        VlrLJ                     = 0;
+    real        VcorrLJ                   = 0;
+    real        ljReciprocalTerm          = 0;
+    real        virialQTrace              = 0;
+    real        virialLJTrace             = 0;
+};
+
+std::mutex g_tp18cTraceMutex;
+
+const char* tp18cCoulombTypeLabel(CoulombInteractionType type)
+{
+    switch (type)
+    {
+        case CoulombInteractionType::Cut: return "Cut-off";
+        case CoulombInteractionType::RF: return "Reaction-Field";
+        case CoulombInteractionType::RFZero: return "Reaction-Field-Zero";
+        case CoulombInteractionType::Pme: return "PME";
+        case CoulombInteractionType::P3mAD: return "P3m-AD";
+        case CoulombInteractionType::Ewald: return "Ewald";
+        case CoulombInteractionType::Switch: return "Switch";
+        case CoulombInteractionType::Shift: return "Shift";
+        case CoulombInteractionType::User: return "User";
+        case CoulombInteractionType::PmeSwitch: return "PME-Switch";
+        case CoulombInteractionType::PmeUser: return "PME-User";
+        case CoulombInteractionType::PmeUserSwitch: return "PME-User-Switch";
+        case CoulombInteractionType::Fmm: return "FMM";
+        default: return "Other";
+    }
+}
+
+const char* tp18cModifierLabel(InteractionModifiers modifier)
+{
+    switch (modifier)
+    {
+        case InteractionModifiers::None: return "None";
+        case InteractionModifiers::PotShift: return "Potential-shift";
+        case InteractionModifiers::ForceSwitch: return "Force-switch";
+        case InteractionModifiers::PotSwitch: return "Potential-switch";
+        case InteractionModifiers::ExactCutoff: return "Exact-cutoff";
+        default: return "Other";
+    }
+}
+
+const char* tp18cDirectSpaceFamilyLabel(CoulombInteractionType type)
+{
+    switch (type)
+    {
+        case CoulombInteractionType::Cut:
+        case CoulombInteractionType::RF:
+        case CoulombInteractionType::RFZero: return "reaction_field_family";
+        case CoulombInteractionType::Switch:
+        case CoulombInteractionType::Shift:
+        case CoulombInteractionType::User:
+        case CoulombInteractionType::PmeSwitch:
+        case CoulombInteractionType::PmeUser:
+        case CoulombInteractionType::PmeUserSwitch: return "table_family";
+        case CoulombInteractionType::Pme:
+        case CoulombInteractionType::P3mAD:
+        case CoulombInteractionType::Ewald: return "ewald_family";
+        default: return "other";
+    }
+}
+
+const char* tp18cVdwTypeLabel(VanDerWaalsType type)
+{
+    switch (type)
+    {
+        case VanDerWaalsType::Cut: return "Cut-off";
+        case VanDerWaalsType::Switch: return "Switch";
+        case VanDerWaalsType::Shift: return "Shift";
+        case VanDerWaalsType::User: return "User";
+        case VanDerWaalsType::Pme: return "PME";
+        default: return "Other";
+    }
+}
+
+real tp18cTraceOfMatrix(const matrix matrixValue)
+{
+    return matrixValue[XX][XX] + matrixValue[YY][YY] + matrixValue[ZZ][ZZ];
+}
+
+void tp18cInitializeTraceFile(const std::string& path)
+{
+    std::lock_guard<std::mutex> lock(g_tp18cTraceMutex);
+    FILE*                        handle = std::fopen(path.c_str(), "w");
+    if (handle == nullptr)
+    {
+        gmx_fatal(FARGS, "Could not open TP1.8c trace file '%s' for writing", path.c_str());
+    }
+    std::fprintf(handle,
+                 "call_index,coulomb_type,coulomb_modifier,direct_space_family,vdw_type,lj_pme_active,"
+                 "entered_longrange_block,compute_nonbonded_forces,compute_longrange_nonbonded_forces,"
+                 "compute_energy,compute_virial,do_neighbor_search,state_changed,compute_pme_on_cpu,"
+                 "pme_do_called,ewald_called,have_ewald_surface_term,ewald_coeff_q,vlr_q_kj,vcorr_q_kj,"
+                 "coulomb_recip_term_kj,vlr_lj_kj,vcorr_lj_kj,lj_recip_term_kj,virial_q_trace,virial_lj_trace\n");
+    std::fclose(handle);
+}
+
+void tp18cAppendTraceRow(const std::string& path, const Tp18cTraceRow& row)
+{
+    std::lock_guard<std::mutex> lock(g_tp18cTraceMutex);
+    FILE*                        handle = std::fopen(path.c_str(), "a");
+    if (handle == nullptr)
+    {
+        gmx_fatal(FARGS, "Could not open TP1.8c trace file '%s' for appending", path.c_str());
+    }
+    std::fprintf(handle,
+                 "%lld,%s,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g\n",
+                 static_cast<long long>(row.callIndex),
+                 row.coulombType,
+                 row.coulombModifier,
+                 row.directSpaceFamily,
+                 row.vdwType,
+                 static_cast<int>(row.ljPmeActive),
+                 static_cast<int>(row.enteredLongRangeBlock),
+                 static_cast<int>(row.computeNonbondedForces),
+                 static_cast<int>(row.computeLongRangeNonbonded),
+                 static_cast<int>(row.computeEnergy),
+                 static_cast<int>(row.computeVirial),
+                 static_cast<int>(row.doNeighborSearch),
+                 static_cast<int>(row.stateChanged),
+                 static_cast<int>(row.computePmeOnCpu),
+                 static_cast<int>(row.pmeDoCalled),
+                 static_cast<int>(row.ewaldCalled),
+                 static_cast<int>(row.haveEwaldSurfaceTerm),
+                 row.ewaldCoeffQ,
+                 row.VlrQ,
+                 row.VcorrQ,
+                 row.coulombReciprocalTerm,
+                 row.VlrLJ,
+                 row.VcorrLJ,
+                 row.ljReciprocalTerm,
+                 row.virialQTrace,
+                 row.virialLJTrace);
+    std::fclose(handle);
+}
+
+} // namespace
 
 static void clearEwaldThreadOutput(ewald_corr_thread_t* ewc_t)
 {
@@ -115,6 +282,7 @@ CpuPpLongRangeNonbondeds::CpuPpLongRangeNonbondeds(int                         n
     epsilonR_(epsilonR),
     chargeC6Sum_(chargeC6Sum),
     coulombInteractionType_(eeltype),
+    coulombModifier_(inputrec.coulomb_modifier),
     vanDerWaalsType_(vdwtype),
     ewaldGeometry_(inputrec.ewald_geometry),
     epsilonSurface_(inputrec.epsilon_surface),
@@ -135,6 +303,12 @@ CpuPpLongRangeNonbondeds::CpuPpLongRangeNonbondeds(int                         n
     if (inputrec.coulombtype == CoulombInteractionType::Ewald)
     {
         ewaldTable_ = std::make_unique<gmx_ewald_tab_t>(inputrec, fplog);
+    }
+
+    if (const char* tracePath = std::getenv("GMX_TP18C_TRACE_FILE"); tracePath != nullptr && tracePath[0] != '\0')
+    {
+        tp18cTraceFile_ = tracePath;
+        tp18cInitializeTraceFile(tp18cTraceFile_);
     }
 }
 
@@ -166,13 +340,18 @@ void CpuPpLongRangeNonbondeds::calculate(gmx_pme_t*                     pmedata,
     const bool computePmeOnCpu = (usingPme(coulombInteractionType_) || usingLJPme(vanDerWaalsType_))
                                  && thisRankHasPmeDuty(commrec->dd)
                                  && (pme_run_mode(pmedata) == PmeRunMode::CPU);
+    const bool enteredLongRangeBlock =
+            (computePmeOnCpu || coulombInteractionType_ == CoulombInteractionType::Ewald
+             || haveEwaldSurfaceTerm_ || chargeC6Sum_[0] != 0 || chargeC6Sum_[1] != 0)
+            && stepWork.computeNonbondedForces;
+    const bool pmeDoCalled = computePmeOnCpu && (numTpiAtoms_ == 0 || stepWork.stateChanged);
+    const bool ewaldCalled = (coulombInteractionType_ == CoulombInteractionType::Ewald);
+    const int64_t traceCallIndex = tp18cTraceCallCounter_++;
 
     /* Do long-range electrostatics and/or LJ-PME
      * and compute PME surface terms when necessary.
      */
-    if ((computePmeOnCpu || coulombInteractionType_ == CoulombInteractionType::Ewald
-         || haveEwaldSurfaceTerm_ || chargeC6Sum_[0] != 0 || chargeC6Sum_[1] != 0)
-        && stepWork.computeNonbondedForces)
+    if (enteredLongRangeBlock)
     {
         real Vlr_q = 0, Vlr_lj = 0;
         /* We reduce all virial, dV/dlambda and energy contributions, except
@@ -347,6 +526,38 @@ void CpuPpLongRangeNonbondeds::calculate(gmx_pme_t*                     pmedata,
         enerd->term[InteractionFunction::CoulombReciprocalSpace] = Vlr_q + ewaldOutput.Vcorr_q;
         enerd->term[InteractionFunction::LennardJonesReciprocalSpace] = Vlr_lj + ewaldOutput.Vcorr_lj;
 
+        if (!tp18cTraceFile_.empty())
+        {
+            tp18cAppendTraceRow(
+                    tp18cTraceFile_,
+                    Tp18cTraceRow{ traceCallIndex,
+                                   tp18cCoulombTypeLabel(coulombInteractionType_),
+                                   tp18cModifierLabel(coulombModifier_),
+                                   tp18cDirectSpaceFamilyLabel(coulombInteractionType_),
+                                   tp18cVdwTypeLabel(vanDerWaalsType_),
+                                   usingLJPme(vanDerWaalsType_),
+                                   enteredLongRangeBlock,
+                                   stepWork.computeNonbondedForces,
+                                   stepWork.computeLongRangeNonbondedForces,
+                                   stepWork.computeEnergy,
+                                   stepWork.computeVirial,
+                                   stepWork.doNeighborSearch,
+                                   stepWork.stateChanged,
+                                   computePmeOnCpu,
+                                   pmeDoCalled,
+                                   ewaldCalled,
+                                   haveEwaldSurfaceTerm_,
+                                   ewaldCoeffQ_,
+                                   Vlr_q,
+                                   ewaldOutput.Vcorr_q,
+                                   enerd->term[InteractionFunction::CoulombReciprocalSpace],
+                                   Vlr_lj,
+                                   ewaldOutput.Vcorr_lj,
+                                   enerd->term[InteractionFunction::LennardJonesReciprocalSpace],
+                                   tp18cTraceOfMatrix(ewaldOutput.vir_q),
+                                   tp18cTraceOfMatrix(ewaldOutput.vir_lj) });
+        }
+
         if (debug)
         {
             fprintf(debug,
@@ -362,6 +573,37 @@ void CpuPpLongRangeNonbondeds::calculate(gmx_pme_t*                     pmedata,
                     enerd->term[InteractionFunction::LennardJonesReciprocalSpace]);
             pr_rvecs(debug, 0, "vir_lj_recip after corr", ewaldOutput.vir_lj, DIM);
         }
+    }
+    else if (!tp18cTraceFile_.empty())
+    {
+        tp18cAppendTraceRow(
+                tp18cTraceFile_,
+                Tp18cTraceRow{ traceCallIndex,
+                               tp18cCoulombTypeLabel(coulombInteractionType_),
+                               tp18cModifierLabel(coulombModifier_),
+                               tp18cDirectSpaceFamilyLabel(coulombInteractionType_),
+                               tp18cVdwTypeLabel(vanDerWaalsType_),
+                               usingLJPme(vanDerWaalsType_),
+                               enteredLongRangeBlock,
+                               stepWork.computeNonbondedForces,
+                               stepWork.computeLongRangeNonbondedForces,
+                               stepWork.computeEnergy,
+                               stepWork.computeVirial,
+                               stepWork.doNeighborSearch,
+                               stepWork.stateChanged,
+                               computePmeOnCpu,
+                               pmeDoCalled,
+                               ewaldCalled,
+                               haveEwaldSurfaceTerm_,
+                               ewaldCoeffQ_,
+                               0,
+                               0,
+                               0,
+                               0,
+                               0,
+                               0,
+                               0,
+                               0 });
     }
 
     if (debug)

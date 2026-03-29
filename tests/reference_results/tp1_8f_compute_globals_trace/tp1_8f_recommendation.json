@@ -1,0 +1,8 @@
+{
+  "milestone": "TP1.8f",
+  "source_patching_now_justified": false,
+  "plain_safe_baseline_acceptable_for_later_non_rrespa_validation": "PARTIAL",
+  "final_classification": "still_unresolved",
+  "tp1_4_lj_pme_path_status": "inactive",
+  "exact_next_step_recommendation": "Keep the authoritative safe baseline fixed and only trace deeper into compute_globals-adjacent pressure/virial consumers if the TP1.8f internal pressure handoff still leaves ambiguity; do not patch production logic yet."
+}

@@ -1,0 +1,32 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_6_regressions/work/mixed_type_9_6_ljpme
+Command line:
+  gmx mdrun -s test.tpr -deffnm test -nt 1
+
+Reading file test.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+starting mdrun 'TP1.6 mixed-type 9-6 LJ-PME'
+0 steps,      0.0 ps.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.001        0.001       96.7
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      160.847        0.149        0.537            0.004 
+
+GROMACS reminds you: "The secret to getting ahead is getting started" (Mark Twain)
+

@@ -1,0 +1,11 @@
+integrator = md
+nsteps = 0
+cutoff-scheme = Verlet
+nstlist = 1
+nstfout = 1
+rlist = 0.9
+rcoulomb = 0.9
+rvdw = 0.9
+coulombtype = Cut-off
+vdw-type = Cut-off
+pbc = xyz

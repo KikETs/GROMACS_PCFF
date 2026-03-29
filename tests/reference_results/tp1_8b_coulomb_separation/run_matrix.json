@@ -1,0 +1,66 @@
+{
+  "milestone": "TP1.8b",
+  "authoritative_system_id": "dense_salt_polymer",
+  "authoritative_system_source": "tests/reference_results/m10_4_charged_ensemble_gate/dense_salt_polymer",
+  "tp1_3_executed_baseline_source": "tests/reference_results/tp1_3_stabilization/TRL-0",
+  "tp1_7b_same_build_source": "tests/reference_results/tp1_7b_authoritative_ab",
+  "tp1_8_source": "tests/reference_results/tp1_8_longrange_isolation",
+  "reference_run_id": "safe_pme_shift_ref",
+  "comparison_runs": [
+    {
+      "run_id": "safe_pme_shift_ref",
+      "role": "safe_baseline_reference",
+      "coulombtype": "PME",
+      "coulomb_modifier": "Potential-shift-Verlet",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 4,
+      "fourierspacing": 0.12,
+      "ewald_rtol": 1e-05,
+      "why": "Reuses the TP1.7b/TP1.8 authoritative safe short-range baseline and the same Coulomb PME baseline.",
+      "intended_path_change": "reference"
+    },
+    {
+      "run_id": "safe_pme_tight_mesh",
+      "role": "reciprocal_accuracy_variant",
+      "coulombtype": "PME",
+      "coulomb_modifier": "Potential-shift-Verlet",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 6,
+      "fourierspacing": 0.06,
+      "ewald_rtol": 1e-06,
+      "why": "Perturbs reciprocal-space Coulomb accuracy while keeping the PME/direct-space family and short-range baseline fixed.",
+      "intended_path_change": "reciprocal_accuracy_only"
+    },
+    {
+      "run_id": "safe_ewald_shift",
+      "role": "reciprocal_solver_variant",
+      "coulombtype": "Ewald",
+      "coulomb_modifier": "Potential-shift-Verlet",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "ewald_rtol": 1e-05,
+      "why": "Replaces Coulomb PME mesh handling with full Ewald while preserving the Ewald-family direct-space kernel and the short-range baseline.",
+      "intended_path_change": "reciprocal_solver_only_narrower_than_cutoff"
+    },
+    {
+      "run_id": "safe_pme_none",
+      "role": "direct_space_modifier_variant",
+      "coulombtype": "PME",
+      "coulomb_modifier": "None",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 4,
+      "fourierspacing": 0.12,
+      "ewald_rtol": 1e-05,
+      "why": "Perturbs direct-space Coulomb shifting while keeping Coulomb PME reciprocal treatment and the short-range baseline fixed.",
+      "intended_path_change": "direct_space_modifier_only"
+    }
+  ],
+  "rationale_for_20ps_window": "TP1.7b and TP1.8 already showed runaway onset at 1.0 ps, so TP1.8b uses a 20 ps authoritative window to isolate early Coulomb-path sensitivity while keeping the narrower Ewald variant feasible."
+}

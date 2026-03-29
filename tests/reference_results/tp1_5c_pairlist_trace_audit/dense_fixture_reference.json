@@ -1,0 +1,84 @@
+{
+  "milestone": "TP1.5c",
+  "source_fixture_artifact": "tests/reference_results/tp1_5b_dense_cutoff_audit/dense_fixture_definition.json",
+  "fixture_id": "dense_nonlisted",
+  "fixture": {
+    "fixture_id": "dense_nonlisted",
+    "purpose": "Smallest dense periodic cut-off-only 9-6 cluster with a near-cutoff attractive cross-pair.",
+    "why_dense": "Four charged atoms create two close contacts plus a 0.905 nm cross-pair inside one periodic box.",
+    "why_minimal": "Four atoms are enough to create both local crowding and pairlist-sensitive cross interactions without transport-scale complexity.",
+    "closer_to_tp1_3_than_tp1_5_toys": "Unlike the sparse exclusion and 2-atom shift toys, this fixture combines charge, density, multiple simultaneous nonbonded contacts, and a near-cutoff cross-pair.",
+    "system": {
+      "atoms": [
+        {
+          "atom": "A1",
+          "charge": 0.8,
+          "position_nm": [
+            0.4,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "atom": "A2",
+          "charge": -0.8,
+          "position_nm": [
+            0.74,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "atom": "A3",
+          "charge": 0.8,
+          "position_nm": [
+            1.645,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "atom": "A4",
+          "charge": -0.8,
+          "position_nm": [
+            1.985,
+            1.0,
+            1.0
+          ]
+        }
+      ],
+      "box_nm": [
+        2.5,
+        2.5,
+        2.5
+      ],
+      "repulsion_power": 9.0,
+      "coulombtype": "Cut-off",
+      "vdwtype": "Cut-off",
+      "near_cutoff_pair_nm": {
+        "atoms": [
+          "A2",
+          "A3"
+        ],
+        "distance_nm": 0.905
+      }
+    }
+  },
+  "executed_runs": [
+    {
+      "run_id": "n1_r0909",
+      "nstlist": 1,
+      "rlist": 0.909,
+      "verlet_buffer_tolerance": -1,
+      "trace_suffix": "n1"
+    },
+    {
+      "run_id": "n10_r0909",
+      "nstlist": 10,
+      "rlist": 0.909,
+      "verlet_buffer_tolerance": -1,
+      "trace_suffix": "n10"
+    }
+  ],
+  "trace_note": "TP1.5c uses env-var-gated inner/outer pairlist and final-force tracing on the TP1.5b dense_nonlisted fixture."
+}

@@ -1,0 +1,48 @@
+{
+  "milestone": "TP1.8j",
+  "authoritative_system_id": "dense_salt_polymer",
+  "reference_run_id": "safe_pme_shift_ref",
+  "expected_isolated_callsite": "post_update_compute_globals",
+  "paths": [
+    {
+      "file": "src/gromacs/mdrun/md.cpp",
+      "function": "LegacySimulator::do_md",
+      "callsite": "main post-update compute_globals invocation guarded by bGStat || needHalfStepKineticEnergy || doInterSimSignal",
+      "role": "The only compute_globals callsite TP1.8j keeps active for tracing.",
+      "why_traced": "TP1.8i mixed this call with pre-step compute_globals invocations, so TP1.8j adds a scope marker here.",
+      "status": "active_and_isolated"
+    },
+    {
+      "file": "src/gromacs/mdrun/md.cpp",
+      "function": "LegacySimulator::do_md",
+      "callsite": "pre-step compute_globals initialization calls",
+      "role": "Earlier compute_globals invocations that contaminated TP1.8i with step=-1 rows.",
+      "why_traced": "TP1.8j excludes them explicitly to isolate only the post-update slice.",
+      "status": "excluded_by_scope_marker"
+    },
+    {
+      "file": "src/gromacs/mdlib/md_support.cpp",
+      "function": "compute_globals",
+      "callsite": "ScopedTp18jPostUpdateComputeGlobalsTrace gate",
+      "role": "Trace-only filter that writes TP1.8j rows only for the post-update callsite.",
+      "why_traced": "This is the narrowest change that isolates a single compute_globals invocation without changing production logic.",
+      "status": "active_and_traced"
+    },
+    {
+      "file": "src/gromacs/mdlib/md_support.cpp",
+      "function": "calc_ke_part / calc_ke_part_normal",
+      "callsite": "within isolated post-update compute_globals slice",
+      "role": "Computes simulator-owned kinetic tensor state from post-update velocities.",
+      "why_traced": "Needed to distinguish bounded carry-through from slice-local amplification.",
+      "status": "active_and_traced"
+    },
+    {
+      "file": "src/gromacs/mdlib/tgroup.cpp",
+      "function": "sum_ekin",
+      "callsite": "within isolated post-update compute_globals slice",
+      "role": "Produces simulator-owned kinetic energy and temperature outputs at the isolated slice.",
+      "why_traced": "This is the actual consumer output TP1.8j compares between PME and Ewald.",
+      "status": "active_and_traced"
+    }
+  ]
+}

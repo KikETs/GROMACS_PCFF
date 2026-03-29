@@ -1,0 +1,235 @@
+===== rcut=0.7 stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work
+Command line:
+  gmx mdrun -s test.tpr -rerun system.gro -e test.edr -o test.trr -g test.log -nt 1
+
+
+Back Off! I just backed up test.log to ./#test.log.5#
+Reading file test.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+
+Back Off! I just backed up test.trr to ./#test.trr.5#
+
+Back Off! I just backed up test.edr to ./#test.edr.5#
+starting md rerun 'TP1.4 mixed-type 9-6 LJ-PME', reading coordinates from input trajectory 'system.gro'
+
+Reading frames from gro file 'TP1.4 mixed-type 9-6 LJ-PME', 2 atoms.
+
+Reading frame       0 time    0.000   
+Last frame          0 time    0.000   
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.001        0.001       97.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      134.968        0.178        0.640            0.003 
+
+GROMACS reminds you: "I went to Venice and looked at the paintings of Canaletto to understand how he presented perspective, and it turned out it was an exponential law. If I had published this, maybe there would be a Karplus law in art theory as well as the Karplus equation in NMR" (Martin Karplus, Nobel lecture 2013)
+
+
+===== rcut=0.7 stdout =====
+
+
+===== rcut=0.8 stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work
+Command line:
+  gmx mdrun -s test.tpr -rerun system.gro -e test.edr -o test.trr -g test.log -nt 1
+
+
+Back Off! I just backed up test.log to ./#test.log.6#
+Reading file test.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+
+Back Off! I just backed up test.trr to ./#test.trr.6#
+
+Back Off! I just backed up test.edr to ./#test.edr.6#
+starting md rerun 'TP1.4 mixed-type 9-6 LJ-PME', reading coordinates from input trajectory 'system.gro'
+
+Reading frames from gro file 'TP1.4 mixed-type 9-6 LJ-PME', 2 atoms.
+
+Reading frame       0 time    0.000   
+Last frame          0 time    0.000   
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.001        0.001       97.9
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      149.500        0.161        0.578            0.003 
+
+GROMACS reminds you: "I went to Venice and looked at the paintings of Canaletto to understand how he presented perspective, and it turned out it was an exponential law. If I had published this, maybe there would be a Karplus law in art theory as well as the Karplus equation in NMR" (Martin Karplus, Nobel lecture 2013)
+
+
+===== rcut=0.8 stdout =====
+
+
+===== rcut=0.9 stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work
+Command line:
+  gmx mdrun -s test.tpr -rerun system.gro -e test.edr -o test.trr -g test.log -nt 1
+
+
+Back Off! I just backed up test.log to ./#test.log.7#
+Reading file test.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+
+Back Off! I just backed up test.trr to ./#test.trr.7#
+
+Back Off! I just backed up test.edr to ./#test.edr.7#
+starting md rerun 'TP1.4 mixed-type 9-6 LJ-PME', reading coordinates from input trajectory 'system.gro'
+
+Reading frames from gro file 'TP1.4 mixed-type 9-6 LJ-PME', 2 atoms.
+
+Reading frame       0 time    0.000   
+Last frame          0 time    0.000   
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.001        0.001       98.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      155.866        0.154        0.554            0.004 
+
+GROMACS reminds you: "I went to Venice and looked at the paintings of Canaletto to understand how he presented perspective, and it turned out it was an exponential law. If I had published this, maybe there would be a Karplus law in art theory as well as the Karplus equation in NMR" (Martin Karplus, Nobel lecture 2013)
+
+
+===== rcut=0.9 stdout =====
+
+
+===== rcut=1.0 stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work
+Command line:
+  gmx mdrun -s test.tpr -rerun system.gro -e test.edr -o test.trr -g test.log -nt 1
+
+
+Back Off! I just backed up test.log to ./#test.log.8#
+Reading file test.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+
+Back Off! I just backed up test.trr to ./#test.trr.8#
+
+Back Off! I just backed up test.edr to ./#test.edr.8#
+starting md rerun 'TP1.4 mixed-type 9-6 LJ-PME', reading coordinates from input trajectory 'system.gro'
+
+Reading frames from gro file 'TP1.4 mixed-type 9-6 LJ-PME', 2 atoms.
+
+Reading frame       0 time    0.000   
+Last frame          0 time    0.000   
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.001        0.001       98.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      157.286        0.153        0.549            0.004 
+
+GROMACS reminds you: "I went to Venice and looked at the paintings of Canaletto to understand how he presented perspective, and it turned out it was an exponential law. If I had published this, maybe there would be a Karplus law in art theory as well as the Karplus equation in NMR" (Martin Karplus, Nobel lecture 2013)
+
+
+===== rcut=1.0 stdout =====
+
+
+===== rcut=1.1 stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work
+Command line:
+  gmx mdrun -s test.tpr -rerun system.gro -e test.edr -o test.trr -g test.log -nt 1
+
+
+Back Off! I just backed up test.log to ./#test.log.9#
+Reading file test.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+
+Back Off! I just backed up test.trr to ./#test.trr.9#
+
+Back Off! I just backed up test.edr to ./#test.edr.9#
+starting md rerun 'TP1.4 mixed-type 9-6 LJ-PME', reading coordinates from input trajectory 'system.gro'
+
+Reading frames from gro file 'TP1.4 mixed-type 9-6 LJ-PME', 2 atoms.
+
+Reading frame       0 time    0.000   
+Last frame          0 time    0.000   
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.001        0.001       98.1
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      159.082        0.151        0.543            0.004 
+
+GROMACS reminds you: "I went to Venice and looked at the paintings of Canaletto to understand how he presented perspective, and it turned out it was an exponential law. If I had published this, maybe there would be a Karplus law in art theory as well as the Karplus equation in NMR" (Martin Karplus, Nobel lecture 2013)
+
+
+===== rcut=1.1 stdout =====
+
+

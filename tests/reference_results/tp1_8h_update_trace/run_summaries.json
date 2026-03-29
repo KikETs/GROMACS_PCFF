@@ -1,0 +1,38 @@
+[
+  {
+    "run_id": "safe_pme_shift_ref",
+    "role": "baseline_reference",
+    "pairlist_runtime_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+    "pmse_runtime_line": "Solve PME                               88.004400        5632.282     8.2",
+    "ewald_runtime_line": null,
+    "energy_summary": {
+      "status": "RUNAWAY",
+      "runaway_onset_ps": 0.2,
+      "max_temperature_k": 780.858887,
+      "final_temperature_k": 695.491272,
+      "total_energy_range_kj": 5.501952999999048,
+      "max_abs_total_energy_drift_kj": 5.501952999999048,
+      "max_abs_pressure_bar": 3895.723389,
+      "duration_ps": 20.0,
+      "num_points": 201
+    }
+  },
+  {
+    "run_id": "safe_ewald_shift",
+    "role": "ewald_variant",
+    "pairlist_runtime_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+    "pmse_runtime_line": null,
+    "ewald_runtime_line": "Will do ordinary reciprocal space Ewald sum.",
+    "energy_summary": {
+      "status": "RUNAWAY",
+      "runaway_onset_ps": 0.2,
+      "max_temperature_k": 788.437805,
+      "final_temperature_k": 694.668518,
+      "total_energy_range_kj": 5.011718999998266,
+      "max_abs_total_energy_drift_kj": 5.011718999998266,
+      "max_abs_pressure_bar": 4435.358398,
+      "duration_ps": 20.0,
+      "num_points": 201
+    }
+  }
+]

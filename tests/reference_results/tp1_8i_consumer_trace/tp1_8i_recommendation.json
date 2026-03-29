@@ -1,0 +1,7 @@
+{
+  "milestone": "TP1.8i",
+  "source_patching_now_justified": false,
+  "plain_safe_baseline_acceptable_for_later_non_rrespa_validation": "PARTIAL",
+  "final_classification": "still_unresolved",
+  "exact_next_step_recommendation": "If tracing continues at all, target only the next active kinetic/temperature consumer after compute_globals; otherwise stop at unresolved rather than claiming a localized root cause."
+}

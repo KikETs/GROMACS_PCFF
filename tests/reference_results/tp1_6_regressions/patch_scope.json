@@ -1,0 +1,28 @@
+{
+  "milestone": "TP1.6",
+  "selected_fix_set": [
+    {
+      "id": "tp1_4_mixed_type_9_6_ljpme_pair_rule_assert",
+      "status": "fixed",
+      "confidence": "confirmed",
+      "relevance": "high",
+      "why_selected": "Current setup explicitly chooses full pair matrices for LJ-PME/non-12 repulsion, but later asserts rejected that valid state for geometric LJ-PME.",
+      "files": [
+        "src/gromacs/nbnxm/nbnxm_setup.cpp",
+        "src/gromacs/nbnxm/kerneldispatch.cpp"
+      ]
+    }
+  ],
+  "deferred_fix_candidates": [
+    {
+      "id": "tp1_4_existing_split_mismatch",
+      "status": "deferred",
+      "why_deferred": "Still reproduced by the existing TP1.4 split scan, but the current root cause was not localized to a single non-speculative patch in this milestone."
+    },
+    {
+      "id": "tp1_5_reference_kernel_ghost_energy",
+      "status": "not_selected",
+      "why_deferred": "Current source and documentation indicate RF shift terms on excluded pairs are expected behavior for the Verlet scheme, so no justified code fix was applied."
+    }
+  ]
+}

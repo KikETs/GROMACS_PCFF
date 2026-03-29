@@ -1,0 +1,26 @@
+{
+  "milestone": "TP1.7",
+  "authoritative_system_id": "dense_salt_polymer",
+  "authoritative_system_source": "tests/reference_results/m10_4_charged_ensemble_gate/dense_salt_polymer",
+  "historical_reference": {
+    "artifact_dir": "tests/reference_results/tp1_3_stabilization/TRL-0",
+    "note": "This authoritative TP1.3 reference already used nstlist=10 with positive verlet-buffer-tolerance in metadata; no prior authoritative manual-unsafe reference artifact was found."
+  },
+  "safe_runs": [
+    {
+      "run_id": "safe_auto_n10_vbt0005",
+      "role": "preferred_safe_baseline",
+      "nstlist": 10,
+      "verlet_buffer_tolerance": 0.005,
+      "why_safer": "Matches the TP1.6 preferred auto-buffer baseline candidate and avoids manual-rlist reuse semantics."
+    },
+    {
+      "run_id": "manual_safe_n10_r0911",
+      "role": "secondary_manual_safe_candidate",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "why_safer": "Uses the TP1.6 manual-safe margin that exceeded the TP1.5e critical-pair distance on the dense toy fixture."
+    }
+  ]
+}

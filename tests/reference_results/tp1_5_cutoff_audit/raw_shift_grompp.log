@@ -1,0 +1,122 @@
+===== shift fixture across_boundary grompp stdout =====
+Setting the LD random seed to 1514101781
+
+Generated 1 of the 1 non-bonded parameter combinations
+
+Generated 1 of the 1 1-4 parameter combinations
+
+Excluding 1 bonded neighbours molecule type 'MOL'
+
+Taking velocities from 'system.gro', all velocities are zero
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+This run will generate roughly 0 Mb of data
+
+===== shift fixture across_boundary grompp stderr =====
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5_cutoff_audit/work/shift_periodic/across_boundary
+Command line:
+  gmx grompp -f test.mdp -c system.gro -p system.top -o topol.tpr -maxwarn 10
+
+
+NOTE 1 [file test.mdp]:
+  For a correct single-point energy evaluation with nsteps = 0, use
+  continuation = yes to avoid constraining the input coordinates.
+
+Generating 1-4 interactions: fudge = 1
+
+NOTE 2 [file system.top, line 22]:
+  In moleculetype 'MOL' 2 atoms are not bound by a potential or constraint
+  to any other atom in the same moleculetype. Although technically this
+  might not cause issues in a simulation, this often means that the user
+  forgot to add a bond/potential/constraint or put multiple molecules in
+  the same moleculetype definition by mistake. Run with -v to get
+  information for each atom.
+
+Number of degrees of freedom in T-Coupling group rest is 3.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 3 [file test.mdp]:
+  NVE simulation with an initial temperature of zero: will use a Verlet
+  buffer of 10%. Check your energy drift!
+
+
+NOTE 4 [file test.mdp]:
+  You are using a plain Coulomb cut-off, which might produce artifacts.
+  You might want to consider using PME electrostatics.
+
+
+
+There were 4 NOTEs
+
+Back Off! I just backed up topol.tpr to ./#topol.tpr.3#
+
+GROMACS reminds you: "I think it would be a good idea." (Mahatma Gandhi, when asked what he thought of Western civilization)
+
+
+===== shift fixture inside_box grompp stdout =====
+Setting the LD random seed to -853520674
+
+Generated 1 of the 1 non-bonded parameter combinations
+
+Generated 1 of the 1 1-4 parameter combinations
+
+Excluding 1 bonded neighbours molecule type 'MOL'
+
+Taking velocities from 'system.gro', all velocities are zero
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+This run will generate roughly 0 Mb of data
+
+===== shift fixture inside_box grompp stderr =====
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5_cutoff_audit/work/shift_periodic/inside_box
+Command line:
+  gmx grompp -f test.mdp -c system.gro -p system.top -o topol.tpr -maxwarn 10
+
+
+NOTE 1 [file test.mdp]:
+  For a correct single-point energy evaluation with nsteps = 0, use
+  continuation = yes to avoid constraining the input coordinates.
+
+Generating 1-4 interactions: fudge = 1
+
+NOTE 2 [file system.top, line 22]:
+  In moleculetype 'MOL' 2 atoms are not bound by a potential or constraint
+  to any other atom in the same moleculetype. Although technically this
+  might not cause issues in a simulation, this often means that the user
+  forgot to add a bond/potential/constraint or put multiple molecules in
+  the same moleculetype definition by mistake. Run with -v to get
+  information for each atom.
+
+Number of degrees of freedom in T-Coupling group rest is 3.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 3 [file test.mdp]:
+  NVE simulation with an initial temperature of zero: will use a Verlet
+  buffer of 10%. Check your energy drift!
+
+
+NOTE 4 [file test.mdp]:
+  You are using a plain Coulomb cut-off, which might produce artifacts.
+  You might want to consider using PME electrostatics.
+
+
+
+There were 4 NOTEs
+
+Back Off! I just backed up topol.tpr to ./#topol.tpr.3#
+
+GROMACS reminds you: "I think it would be a good idea." (Mahatma Gandhi, when asked what he thought of Western civilization)
+
+

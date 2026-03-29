@@ -1,0 +1,90 @@
+{
+  "milestone": "TP1.5b",
+  "tp1_3_constraints": {
+    "trl0_repulsion_line": "Detected LJ repulsion power 9.",
+    "trl5_repulsion_line": "Detected LJ repulsion power 9.",
+    "trl0_kernel_line": "Using plain-C-4x4 4x4 nonbonded short-range kernels",
+    "trl5_kernel_line": "Using plain-C-4x4 4x4 nonbonded short-range kernels",
+    "trl0_pairlist_line": "updated every 10 steps, buffer 0.000 nm, rlist 0.900 nm",
+    "trl5_pairlist_line": "updated every 10 steps, buffer 0.009 nm, rlist 0.909 nm"
+  },
+  "executed_runtime_evidence": {
+    "dense_nonlisted_tight_ref_n1_r1200": {
+      "repulsion_line": "Detected LJ repulsion power 9.",
+      "kernel_line": "Using plain-C-4x4 4x4 nonbonded short-range kernels",
+      "pairlist_line": "updated every 1 steps, buffer 0.300 nm, rlist 1.200 nm",
+      "raw_md_log": "tests/reference_results/tp1_5b_dense_cutoff_audit/raw_dense_nonlisted__tight_ref_n1_r1200_md.log"
+    },
+    "dense_nonlisted_n10_r0909": {
+      "repulsion_line": "Detected LJ repulsion power 9.",
+      "kernel_line": "Using plain-C-4x4 4x4 nonbonded short-range kernels",
+      "pairlist_line": "updated every 10 steps, buffer 0.009 nm, rlist 0.909 nm",
+      "raw_md_log": "tests/reference_results/tp1_5b_dense_cutoff_audit/raw_dense_nonlisted__n10_r0909_md.log"
+    },
+    "dense_routed_sister_n10_r0909": {
+      "repulsion_line": "Detected LJ repulsion power 9.",
+      "kernel_line": "Using plain-C-4x4 4x4 nonbonded short-range kernels",
+      "pairlist_line": "updated every 10 steps, buffer 0.009 nm, rlist 0.909 nm",
+      "raw_md_log": "tests/reference_results/tp1_5b_dense_cutoff_audit/raw_dense_routed_sister__n10_r0909_md.log"
+    }
+  },
+  "localized_path": [
+    {
+      "file": "src/gromacs/mdlib/forcerec.cpp",
+      "function": "init_forcerec",
+      "line_hint": 678,
+      "physical_role": "Detects repulsion power 9 and disables SIMD, forcing the plain-C reference-family kernels.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/nbnxm_setup.cpp",
+      "function": "chooseLJCombinationRule",
+      "line_hint": 433,
+      "physical_role": "Routes non-12 repulsion to the explicit pair-matrix path.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/nbnxm_setup.cpp",
+      "function": "init_nb_verlet",
+      "line_hint": 478,
+      "physical_role": "Builds the cut-off NBNxM setup and invokes dynamic pairlist pruning.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/pairlist_tuning.cpp",
+      "function": "setupDynamicPairlistPruning",
+      "line_hint": 618,
+      "physical_role": "Reports the outer list lifetime, buffer, and rlist that TP1.5b sweeps.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/kerneldispatch.cpp",
+      "function": "getCoulombKernelType",
+      "line_hint": 113,
+      "physical_role": "Maps Coulomb cut-off to the ReactionField kernel family used by the plain-C CPU path.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/kerneldispatch.cpp",
+      "function": "getVdwKernelType",
+      "line_hint": 164,
+      "physical_role": "Chooses the cut-off LJ kernel variant for LJCombinationRule::None.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/kerneldispatch.cpp",
+      "function": "nbnxn_kernel_cpu",
+      "line_hint": 234,
+      "physical_role": "Dispatches the plain-C-4x4 CPU kernel over the generated pairlists.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
+      "function": "reference inner nonbonded loop",
+      "line_hint": 72,
+      "physical_role": "Applies skipmask, cut-off masking, LJ 9-6, Coulomb cut-off, and shift vectors inside the plain-C loop.",
+      "evidence_strength": "strong"
+    }
+  ],
+  "dynamic_function_level_evidence": "Not captured. TP1.5b preserves runtime-family logs plus static code localization only."
+}

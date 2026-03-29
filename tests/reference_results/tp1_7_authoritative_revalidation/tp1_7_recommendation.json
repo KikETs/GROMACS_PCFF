@@ -1,0 +1,10 @@
+{
+  "milestone": "TP1.7",
+  "source_patching_now_justified": false,
+  "plain_safe_baseline_acceptable_for_future_validation": "PARTIAL",
+  "preferred_safe_baseline_run_id": "safe_auto_n10_vbt0005",
+  "historical_reference_was_manual_unsafe": false,
+  "preferred_safe_runtime_changed_vs_reference": false,
+  "remaining_blocker_classification": "more_strongly_long_range_or_mixed",
+  "next_step_recommendation": "Do not treat the plain TP1.6 auto-buffer label as sufficient on larger charged systems; use a runtime-verified safe short-range setting such as the widened manual margin for the next authoritative comparison, and focus blocker isolation on PME/long-range or mixed causes rather than pairlist code patching."
+}

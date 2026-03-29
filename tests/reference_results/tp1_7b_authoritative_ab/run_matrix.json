@@ -1,0 +1,27 @@
+{
+  "milestone": "TP1.7b",
+  "authoritative_system_id": "dense_salt_polymer",
+  "authoritative_system_source": "tests/reference_results/m10_4_charged_ensemble_gate/dense_salt_polymer",
+  "tp1_3_executed_baseline_source": "tests/reference_results/tp1_3_stabilization/TRL-0",
+  "comparison_runs": [
+    {
+      "run_id": "unsafe_n10_r0909",
+      "role": "same_build_unsafe_reference",
+      "nstlist": 10,
+      "rlist": 0.909,
+      "verlet_buffer_tolerance": -1,
+      "why": "Transplants the TP1.5e demonstrated allowed-unsafe manual pairlist regime onto the authoritative system while keeping the TP1.3 executed baseline otherwise fixed.",
+      "expected_runtime_pairlist_line": "updated every 10 steps, buffer 0.009 nm, rlist 0.909 nm"
+    },
+    {
+      "run_id": "safe_n10_r0911",
+      "role": "same_build_safe_reference",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "why": "Uses the widened manual-safe margin that was runtime-distinct and stable on the TP1.6 toy fixture.",
+      "expected_runtime_pairlist_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm"
+    }
+  ],
+  "same_build_commit": "3c0b91be8eba68d22d6404cf70e4439fbb1dd0d6"
+}

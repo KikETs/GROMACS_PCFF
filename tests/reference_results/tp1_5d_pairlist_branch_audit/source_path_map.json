@@ -1,0 +1,47 @@
+{
+  "milestone": "TP1.5d",
+  "path_map": [
+    {
+      "file": "src/gromacs/mdlib/sim_util.cpp",
+      "function": "doPairSearch",
+      "branch_decision_role": "Schedules pairlist rebuilds on search steps and calls constructPairlist with the current step.",
+      "why_suspected": "This is where n1_r0909 rebuilds every step while n10_r0909 reuses an older list.",
+      "evidence_strength": "confirmed_runtime_entry_point"
+    },
+    {
+      "file": "src/gromacs/nbnxm/pairlistsets.h",
+      "function": "PairlistSets::numStepsWithPairlist / isDynamicPruningStepCpu",
+      "branch_decision_role": "Defines pairlist age and whether a CPU prune step should occur.",
+      "why_suspected": "TP1.5d needs the exact rebuild-age versus prune-step distinction around steps 170-173.",
+      "evidence_strength": "confirmed_runtime_state_accessor"
+    },
+    {
+      "file": "src/gromacs/nbnxm/pairlist.cpp",
+      "function": "PairlistSets::construct",
+      "branch_decision_role": "Stores outerListCreationStep_ after list construction.",
+      "why_suspected": "This is the narrowest rebuild-timing state updated by constructPairlist.",
+      "evidence_strength": "confirmed_static_localization"
+    },
+    {
+      "file": "src/gromacs/nbnxm/prunekerneldispatch.cpp",
+      "function": "PairlistSet::dispatchPruneKernel",
+      "branch_decision_role": "Runs refresh/pruning from ciOuter/cjOuter to ci/cj using rlistInner.",
+      "why_suspected": "Needed to rule pruning in or out as a live mechanism on the dense_nonlisted rerun.",
+      "evidence_strength": "confirmed_static_localization"
+    },
+    {
+      "file": "src/gromacs/nbnxm/pairlist.cpp",
+      "function": "nbnxn_make_pairlist_part",
+      "branch_decision_role": "Chooses shift indices, half-list skipping, cell ranges, and near-cutoff admission into the fresh outer list.",
+      "why_suspected": "Pair (1,4, shift 21) can only appear if this construction path admits that shifted image.",
+      "evidence_strength": "confirmed_static_localization"
+    },
+    {
+      "file": "src/gromacs/nbnxm/pairlist.cpp",
+      "function": "prepareListsForDynamicPruning",
+      "branch_decision_role": "Separates fresh outer lists from active inner lists when dynamic pruning is enabled.",
+      "why_suspected": "Needed to interpret whether TP1.5d is seeing rebuild reuse or inner/outer refresh differences.",
+      "evidence_strength": "confirmed_static_localization"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "milestone": "TP1.6",
+  "source_patching_now_justified": false,
+  "safe_baseline_acceptable_for_later_validation": "PARTIAL",
+  "unsafe_regime_reference": "n10_r0909",
+  "preferred_safe_validation_baseline": "auto_buffer_n10_vbt0005",
+  "secondary_safe_control": "n1_r0909",
+  "manual_safe_candidate": "n10_r0911",
+  "interpretation": "On the dense_nonlisted fixture, the previously reproduced worsening is removed by safer pairlist/buffer regimes, so the strongest supported interpretation is unsafe-regime behavior rather than a surviving short-range implementation defect.",
+  "remaining_short_range_concern": "TP1.6 does not prove global short-range correctness; it only shows that this fixture no longer signals a deeper defect once unsafe reuse is removed.",
+  "next_step_recommendation": "Use auto-buffered nstlist=10 as the preferred short-range validation baseline for later toy and pre-authoritative charged-system checks, but keep larger-system conclusions provisional until a denser validation tier is rerun under the same safe regime."
+}

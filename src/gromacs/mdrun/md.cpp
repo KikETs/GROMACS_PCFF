@@ -51,6 +51,7 @@
 #include <fstream>
 #include <iomanip>
 #include <memory>
+#include <mutex>
 #include <numeric>
 #include <optional>
 #include <string>
@@ -316,6 +317,229 @@ void maybeDumpTotalForceForDiagnostics(const t_inputrec&                 inputRe
                                      time,
                                      0,
                                      gmx::makeConstArrayRef(forceView->force()));
+}
+
+struct Tp18eTraceConfig
+{
+    bool        enabled = false;
+    std::string path;
+};
+
+std::mutex g_tp18eTraceMutex;
+
+const Tp18eTraceConfig& tp18eTraceConfig()
+{
+    static const Tp18eTraceConfig config = []()
+    {
+        Tp18eTraceConfig result;
+        if (const char* value = std::getenv("GMX_TP18E_TRACE_FILE"))
+        {
+            if (*value != '\0')
+            {
+                result.enabled = true;
+                result.path    = value;
+
+                std::filesystem::path tracePath(result.path);
+                std::filesystem::create_directories(tracePath.parent_path());
+                std::ofstream output(tracePath, std::ios::trunc);
+                GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18E_TRACE_FILE for writing");
+                output << "step,stage,using_mts_combined_force,force_l2,force_max_abs,"
+                          "state_x_l2,state_x_max_abs,state_v_l2,state_v_max_abs,"
+                          "xprime_available,xprime_l2,xprime_max_abs,"
+                          "force_vir_trace,shake_vir_trace,total_vir_trace,pres_trace,"
+                          "potential_energy_kj,kinetic_energy_kj,temperature_k\n";
+            }
+        }
+        return result;
+    }();
+
+    return config;
+}
+
+std::pair<double, double> tp18eSummarizeBuffer(gmx::ArrayRef<const gmx::RVec> values)
+{
+    double squaredNormSum = 0.0;
+    double maxAbs         = 0.0;
+
+    for (const auto& value : values)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            const double component = value[d];
+            squaredNormSum += component * component;
+            maxAbs = std::max(maxAbs, std::abs(component));
+        }
+    }
+
+    return { std::sqrt(squaredNormSum), maxAbs };
+}
+
+double tp18eTraceOfTensor(const tensor value)
+{
+    double trace = 0.0;
+    for (int d = 0; d < DIM; ++d)
+    {
+        trace += value[d][d];
+    }
+    return trace;
+}
+
+void appendTp18eTraceRow(const int64_t                   step,
+                         const char*                     stage,
+                         const gmx::ArrayRef<const gmx::RVec> force,
+                         const bool                      usingMtsCombinedForce,
+                         const gmx::ArrayRef<const gmx::RVec> stateX,
+                         const gmx::ArrayRef<const gmx::RVec> stateV,
+                         const gmx::ArrayRef<const gmx::RVec> xPrime,
+                         const bool                      haveXPrime,
+                         const tensor                    forceVir,
+                         const tensor                    shakeVir,
+                         const tensor                    totalVir,
+                         const tensor                    pres,
+                         const gmx_enerdata_t*           enerd)
+{
+    const auto& config = tp18eTraceConfig();
+    if (!config.enabled)
+    {
+        return;
+    }
+
+    const auto [forceL2, forceMaxAbs]     = tp18eSummarizeBuffer(force);
+    const auto [stateXL2, stateXMaxAbs]   = tp18eSummarizeBuffer(stateX);
+    const auto [stateVL2, stateVMaxAbs]   = tp18eSummarizeBuffer(stateV);
+    const auto [xPrimeL2, xPrimeMaxAbs]   = haveXPrime ? tp18eSummarizeBuffer(xPrime) : std::pair<double, double>{ 0.0, 0.0 };
+    const double forceVirTrace            = tp18eTraceOfTensor(forceVir);
+    const double shakeVirTrace            = tp18eTraceOfTensor(shakeVir);
+    const double totalVirTrace            = tp18eTraceOfTensor(totalVir);
+    const double presTrace                = tp18eTraceOfTensor(pres);
+    const double potentialEnergy          = (enerd != nullptr) ? enerd->term[InteractionFunction::PotentialEnergy] : 0.0;
+    const double kineticEnergy            = (enerd != nullptr) ? enerd->term[InteractionFunction::KineticEnergy] : 0.0;
+    const double temperature              = (enerd != nullptr) ? enerd->term[InteractionFunction::Temperature] : 0.0;
+
+    std::lock_guard<std::mutex> lock(g_tp18eTraceMutex);
+    std::ofstream               output(config.path, std::ios::app);
+    GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18E_TRACE_FILE for appending");
+    output << std::setprecision(17) << step << ',' << stage << ',' << static_cast<int>(usingMtsCombinedForce) << ','
+           << forceL2 << ',' << forceMaxAbs << ','
+           << stateXL2 << ',' << stateXMaxAbs << ','
+           << stateVL2 << ',' << stateVMaxAbs << ','
+           << static_cast<int>(haveXPrime) << ',' << xPrimeL2 << ',' << xPrimeMaxAbs << ','
+           << forceVirTrace << ',' << shakeVirTrace << ',' << totalVirTrace << ',' << presTrace << ','
+           << potentialEnergy << ',' << kineticEnergy << ',' << temperature << '\n';
+}
+
+struct Tp18gTraceConfig
+{
+    bool        enabled = false;
+    std::string path;
+};
+
+std::mutex g_tp18gTraceMutex;
+
+const Tp18gTraceConfig& tp18gTraceConfig()
+{
+    static const Tp18gTraceConfig config = []()
+    {
+        Tp18gTraceConfig result;
+        if (const char* value = std::getenv("GMX_TP18G_TRACE_FILE"))
+        {
+            if (*value != '\0')
+            {
+                result.enabled = true;
+                result.path    = value;
+
+                std::filesystem::path tracePath(result.path);
+                std::filesystem::create_directories(tracePath.parent_path());
+                std::ofstream output(tracePath, std::ios::trunc);
+                GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18G_TRACE_FILE for writing");
+                output << "step,time_ps,stage,b_calc_ener,b_calc_ener_step,"
+                          "pressure_coupling_is_no,pressure_coupling_consumer_active,"
+                          "has_pressure_previous,pressure_previous_copy_executed,"
+                          "energy_add_called,record_nonenergy_called,energy_print_called,"
+                          "total_vir_trace,total_vir_l2,pres_trace,pres_l2,pressure_scalar,"
+                          "potential_energy_kj,kinetic_energy_kj,temperature_k\n";
+            }
+        }
+        return result;
+    }();
+
+    return config;
+}
+
+double tp18gL2OfTensor(const tensor value)
+{
+    double squaredNormSum = 0.0;
+    for (int i = 0; i < DIM; ++i)
+    {
+        for (int j = 0; j < DIM; ++j)
+        {
+            const double component = value[i][j];
+            squaredNormSum += component * component;
+        }
+    }
+    return std::sqrt(squaredNormSum);
+}
+
+bool tp18gPressureCouplingConsumerActive(const t_inputrec* inputrec, const int64_t step)
+{
+    switch (inputrec->pressureCouplingOptions.epc)
+    {
+        case PressureCoupling::No: return false;
+        case PressureCoupling::Berendsen:
+        case PressureCoupling::CRescale:
+            return do_per_step(step, inputrec->pressureCouplingOptions.nstpcouple);
+        case PressureCoupling::ParrinelloRahman:
+            return do_per_step(step + inputrec->pressureCouplingOptions.nstpcouple - 1,
+                               inputrec->pressureCouplingOptions.nstpcouple);
+        case PressureCoupling::Mttk: return true;
+        default: return false;
+    }
+}
+
+void appendTp18gTraceRow(const int64_t         step,
+                         const double          time,
+                         const char*           stage,
+                         const bool            bCalcEner,
+                         const bool            bCalcEnerStep,
+                         const t_inputrec*     inputrec,
+                         const bool            hasPressurePrevious,
+                         const bool            pressurePreviousCopyExecuted,
+                         const bool            energyAddCalled,
+                         const bool            recordNonEnergyCalled,
+                         const bool            energyPrintCalled,
+                         const tensor          totalVir,
+                         const tensor          pres,
+                         const gmx_enerdata_t* enerd)
+{
+    const auto& config = tp18gTraceConfig();
+    if (!config.enabled)
+    {
+        return;
+    }
+
+    const bool   pressureCouplingIsNo       = (inputrec->pressureCouplingOptions.epc == PressureCoupling::No);
+    const bool   pressureCouplingActive     = tp18gPressureCouplingConsumerActive(inputrec, step);
+    const double totalVirTrace              = tp18eTraceOfTensor(totalVir);
+    const double totalVirL2                 = tp18gL2OfTensor(totalVir);
+    const double presTrace                  = tp18eTraceOfTensor(pres);
+    const double presL2                     = tp18gL2OfTensor(pres);
+    const double pressureScalar             = (enerd != nullptr) ? enerd->term[InteractionFunction::Pressure] : 0.0;
+    const double potentialEnergy            = (enerd != nullptr) ? enerd->term[InteractionFunction::PotentialEnergy] : 0.0;
+    const double kineticEnergy              = (enerd != nullptr) ? enerd->term[InteractionFunction::KineticEnergy] : 0.0;
+    const double temperature                = (enerd != nullptr) ? enerd->term[InteractionFunction::Temperature] : 0.0;
+
+    std::lock_guard<std::mutex> lock(g_tp18gTraceMutex);
+    std::ofstream               output(config.path, std::ios::app);
+    GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18G_TRACE_FILE for appending");
+    output << std::setprecision(17) << step << ',' << time << ',' << stage << ','
+           << static_cast<int>(bCalcEner) << ',' << static_cast<int>(bCalcEnerStep) << ','
+           << static_cast<int>(pressureCouplingIsNo) << ',' << static_cast<int>(pressureCouplingActive) << ','
+           << static_cast<int>(hasPressurePrevious) << ',' << static_cast<int>(pressurePreviousCopyExecuted) << ','
+           << static_cast<int>(energyAddCalled) << ',' << static_cast<int>(recordNonEnergyCalled) << ','
+           << static_cast<int>(energyPrintCalled) << ','
+           << totalVirTrace << ',' << totalVirL2 << ','
+           << presTrace << ',' << presL2 << ','
+           << pressureScalar << ',' << potentialEnergy << ',' << kineticEnergy << ',' << temperature << '\n';
 }
 
 void applyRespaVelocityHalfKick(const int                               homenr,
@@ -1624,6 +1848,20 @@ void gmx::LegacySimulator::do_md()
                          ddBalanceRegionHandler);
             }
 
+            appendTp18eTraceRow(step,
+                                "after_do_force_return",
+                                f.view().forceWithPadding().unpaddedConstArrayRef(),
+                                false,
+                                makeConstArrayRef(state_->x),
+                                makeConstArrayRef(state_->v),
+                                gmx::ArrayRef<const gmx::RVec>{},
+                                false,
+                                force_vir,
+                                shake_vir,
+                                total_vir,
+                                pres,
+                                enerd_);
+
             maybeDumpTotalForceForDiagnostics(*ir, step, t, &f.view(), *runScheduleWork_);
 
             // VV integrators do not need the following velocity half step
@@ -2215,6 +2453,21 @@ void gmx::LegacySimulator::do_md()
                                 (simulationWork.useMts && runScheduleWork_->stepWork.computeSlowForces)
                                         ? f.view().forceMtsCombinedWithPadding()
                                         : f.view().forceWithPadding();
+                        const bool usingMtsCombinedForce =
+                                (simulationWork.useMts && runScheduleWork_->stepWork.computeSlowForces);
+                        appendTp18eTraceRow(step,
+                                            "before_update_coords",
+                                            forceCombined.unpaddedConstArrayRef(),
+                                            usingMtsCombinedForce,
+                                            makeConstArrayRef(state_->x),
+                                            makeConstArrayRef(state_->v),
+                                            gmx::ArrayRef<const gmx::RVec>{},
+                                            false,
+                                            force_vir,
+                                            shake_vir,
+                                            total_vir,
+                                            pres,
+                                            enerd_);
                         upd.update_coords(*ir,
                                           step,
                                           md->homenr,
@@ -2230,6 +2483,19 @@ void gmx::LegacySimulator::do_md()
                                           etrtPOSITION,
                                           cr_->dd,
                                           constr_ != nullptr);
+                        appendTp18eTraceRow(step,
+                                            "after_update_coords",
+                                            forceCombined.unpaddedConstArrayRef(),
+                                            usingMtsCombinedForce,
+                                            makeConstArrayRef(state_->x),
+                                            makeConstArrayRef(state_->v),
+                                            upd.xp()->arrayRefWithPadding().unpaddedConstArrayRef(),
+                                            true,
+                                            force_vir,
+                                            shake_vir,
+                                            total_vir,
+                                            pres,
+                                            enerd_);
 
                         wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
 
@@ -2351,6 +2617,7 @@ void gmx::LegacySimulator::do_md()
                 bool doIntraSimSignal = true;
                 SimulationSignaller signaller(&signals, cr_, ms_, doInterSimSignal, doIntraSimSignal);
 
+                ScopedTp18jPostUpdateComputeGlobalsTrace tp18jPostUpdateComputeGlobalsTraceScope;
                 compute_globals(gstat,
                                 cr_->commMyGroup,
                                 ir,
@@ -2377,6 +2644,19 @@ void gmx::LegacySimulator::do_md()
                                         | (!EI_VV(ir->eI) ? CGLO_PRESSURE : 0) | CGLO_CONSTRAINT,
                                 step,
                                 &observablesReducer);
+                appendTp18eTraceRow(step,
+                                    "after_compute_globals",
+                                    f.view().forceWithPadding().unpaddedConstArrayRef(),
+                                    false,
+                                    makeConstArrayRef(state_->x),
+                                    makeConstArrayRef(state_->v),
+                                    gmx::ArrayRef<const gmx::RVec>{},
+                                    false,
+                                    force_vir,
+                                    shake_vir,
+                                    total_vir,
+                                    pres,
+                                    enerd_);
                 if (!EI_VV(ir->eI) && bStopCM)
                 {
                     process_and_stopcm_grp(
@@ -2438,6 +2718,23 @@ void gmx::LegacySimulator::do_md()
                                          nrnb_,
                                          upd.deform(),
                                          scaleCoordinates);
+        if (isMainRank)
+        {
+            appendTp18gTraceRow(step,
+                                t,
+                                "after_update_pcouple",
+                                bCalcEner,
+                                bCalcEnerStep,
+                                inputRec_,
+                                state_->hasEntry(StateEntry::PressurePrevious),
+                                false,
+                                false,
+                                false,
+                                false,
+                                total_vir,
+                                pres,
+                                enerd_);
+        }
 
         const bool doBerendsenPressureCoupling =
                 (inputRec_->pressureCouplingOptions.epc == PressureCoupling::Berendsen
@@ -2541,10 +2838,38 @@ void gmx::LegacySimulator::do_md()
                                                  ekind_,
                                                  mu_tot,
                                                  constr_);
+                appendTp18gTraceRow(step,
+                                    t,
+                                    "after_energy_add",
+                                    bCalcEner,
+                                    bCalcEnerStep,
+                                    inputRec_,
+                                    state_->hasEntry(StateEntry::PressurePrevious),
+                                    false,
+                                    true,
+                                    false,
+                                    false,
+                                    total_vir,
+                                    pres,
+                                    enerd_);
             }
             else
             {
                 energyOutput.recordNonEnergyStep();
+                appendTp18gTraceRow(step,
+                                    t,
+                                    "after_energy_add",
+                                    bCalcEner,
+                                    bCalcEnerStep,
+                                    inputRec_,
+                                    state_->hasEntry(StateEntry::PressurePrevious),
+                                    false,
+                                    false,
+                                    true,
+                                    false,
+                                    total_vir,
+                                    pres,
+                                    enerd_);
             }
 
             gmx_bool do_dr = do_per_step(step, ir->nstdisreout);
@@ -2567,6 +2892,20 @@ void gmx::LegacySimulator::do_md()
                                                    fr_->fcdata.get(),
                                                    awh.get());
             }
+            appendTp18gTraceRow(step,
+                                t,
+                                "after_energy_print",
+                                bCalcEner,
+                                bCalcEnerStep,
+                                inputRec_,
+                                state_->hasEntry(StateEntry::PressurePrevious),
+                                false,
+                                false,
+                                false,
+                                (do_log || do_ene || do_dr || do_or),
+                                total_vir,
+                                pres,
+                                enerd_);
             if (do_log && ((ir->bDoAwh && awh->hasFepLambdaDimension()) || ir->fepvals->delta_lambda != 0))
             {
                 const bool isInitialOutput = false;
@@ -2687,6 +3026,28 @@ void gmx::LegacySimulator::do_md()
              * at the next MD step.
              */
             copy_mat(pres, state_->pres_prev);
+        }
+        if (isMainRank)
+        {
+            const bool pressurePreviousCopyExecuted =
+                    (state_->hasEntry(StateEntry::PressurePrevious)
+                     && (bGStatEveryStep
+                         || (ir->pressureCouplingOptions.nstpcouple > 0
+                             && step % ir->pressureCouplingOptions.nstpcouple == 0)));
+            appendTp18gTraceRow(step,
+                                t,
+                                "after_pressure_prev_handoff",
+                                bCalcEner,
+                                bCalcEnerStep,
+                                inputRec_,
+                                state_->hasEntry(StateEntry::PressurePrevious),
+                                pressurePreviousCopyExecuted,
+                                false,
+                                false,
+                                false,
+                                total_vir,
+                                pres,
+                                enerd_);
         }
 
         /* #######  END SET VARIABLES FOR NEXT ITERATION ###### */

@@ -1,0 +1,50 @@
+===== shift fixture across_boundary dump stdout =====
+traj.trr frame 0:
+   natoms=         2  step=         0  time=0.0000000e+00  lambda=         0
+   box (3x3):
+      box[    0]={ 2.00000e+00,  0.00000e+00,  0.00000e+00}
+      box[    1]={ 0.00000e+00,  2.00000e+00,  0.00000e+00}
+      box[    2]={ 0.00000e+00,  0.00000e+00,  2.00000e+00}
+   f (2x3):
+      f[    0]={ 2.88478e+06,  0.00000e+00,  0.00000e+00}
+      f[    1]={-2.88478e+06,  0.00000e+00,  0.00000e+00}
+
+===== shift fixture across_boundary dump stderr =====
+    :-) GROMACS - gmx dump, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5_cutoff_audit/work/shift_periodic/across_boundary
+Command line:
+  gmx dump -f traj.trr
+
+trr version: GMX_trn_file (single precision)
+
+GROMACS reminds you: "I think it would be a good idea." (Mahatma Gandhi, when asked what he thought of Western civilization)
+
+
+===== shift fixture inside_box dump stdout =====
+traj.trr frame 0:
+   natoms=         2  step=         0  time=0.0000000e+00  lambda=         0
+   box (3x3):
+      box[    0]={ 2.00000e+00,  0.00000e+00,  0.00000e+00}
+      box[    1]={ 0.00000e+00,  2.00000e+00,  0.00000e+00}
+      box[    2]={ 0.00000e+00,  0.00000e+00,  2.00000e+00}
+   f (2x3):
+      f[    0]={-2.88476e+06,  0.00000e+00,  0.00000e+00}
+      f[    1]={ 2.88476e+06,  0.00000e+00,  0.00000e+00}
+
+===== shift fixture inside_box dump stderr =====
+    :-) GROMACS - gmx dump, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5_cutoff_audit/work/shift_periodic/inside_box
+Command line:
+  gmx dump -f traj.trr
+
+trr version: GMX_trn_file (single precision)
+
+GROMACS reminds you: "I think it would be a good idea." (Mahatma Gandhi, when asked what he thought of Western civilization)
+
+

@@ -1,0 +1,135 @@
+{
+  "milestone": "TP1.5b",
+  "primary_fixture": {
+    "fixture_id": "dense_nonlisted",
+    "purpose": "Smallest dense periodic cut-off-only 9-6 cluster with a near-cutoff attractive cross-pair.",
+    "why_dense": "Four charged atoms create two close contacts plus a 0.905 nm cross-pair inside one periodic box.",
+    "why_minimal": "Four atoms are enough to create both local crowding and pairlist-sensitive cross interactions without transport-scale complexity.",
+    "closer_to_tp1_3_than_tp1_5_toys": "Unlike the sparse exclusion and 2-atom shift toys, this fixture combines charge, density, multiple simultaneous nonbonded contacts, and a near-cutoff cross-pair.",
+    "system": {
+      "atoms": [
+        {
+          "atom": "A1",
+          "charge": 0.8,
+          "position_nm": [
+            0.4,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "atom": "A2",
+          "charge": -0.8,
+          "position_nm": [
+            0.74,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "atom": "A3",
+          "charge": 0.8,
+          "position_nm": [
+            1.645,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "atom": "A4",
+          "charge": -0.8,
+          "position_nm": [
+            1.985,
+            1.0,
+            1.0
+          ]
+        }
+      ],
+      "box_nm": [
+        2.5,
+        2.5,
+        2.5
+      ],
+      "repulsion_power": 9.0,
+      "coulombtype": "Cut-off",
+      "vdwtype": "Cut-off",
+      "near_cutoff_pair_nm": {
+        "atoms": [
+          "A2",
+          "A3"
+        ],
+        "distance_nm": 0.905
+      }
+    }
+  },
+  "sister_fixture": {
+    "fixture_id": "dense_routed_sister",
+    "purpose": "Reuse the same dense geometry while introducing exclusions and one explicit pair to probe listed-vs-nonlisted routing sensitivity.",
+    "routing_features": {
+      "nrexcl": 1,
+      "zero_force_bonds": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "explicit_pairs": [
+        [
+          1,
+          4
+        ]
+      ]
+    }
+  },
+  "pairlist_sweep_runs": [
+    {
+      "run_id": "tight_ref_n1_r1200",
+      "nstlist": 1,
+      "rlist": 1.2,
+      "verlet_buffer_tolerance": -1
+    },
+    {
+      "run_id": "n1_r0909",
+      "nstlist": 1,
+      "rlist": 0.909,
+      "verlet_buffer_tolerance": -1
+    },
+    {
+      "run_id": "n10_r0909",
+      "nstlist": 10,
+      "rlist": 0.909,
+      "verlet_buffer_tolerance": -1
+    },
+    {
+      "run_id": "n20_r0909",
+      "nstlist": 20,
+      "rlist": 0.909,
+      "verlet_buffer_tolerance": -1
+    },
+    {
+      "run_id": "n10_r0900",
+      "nstlist": 10,
+      "rlist": 0.9,
+      "verlet_buffer_tolerance": -1
+    },
+    {
+      "run_id": "auto_buffer_n10_vbt0005",
+      "nstlist": 10,
+      "verlet_buffer_tolerance": 0.005
+    }
+  ],
+  "static_rerun_runs": [
+    {
+      "run_id": "r0900",
+      "rlist": 0.9
+    },
+    {
+      "run_id": "r0909",
+      "rlist": 0.909
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+===== exclusion fixture grompp stdout =====
+Setting the LD random seed to 1045033748
+
+Generated 1 of the 1 non-bonded parameter combinations
+
+Generated 1 of the 1 1-4 parameter combinations
+
+Excluding 3 bonded neighbours molecule type 'TOY1'
+
+Taking velocities from 'system.gro', all velocities are zero
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+This run will generate roughly 0 Mb of data
+
+===== exclusion fixture grompp stderr =====
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5_cutoff_audit/work/exclusion_parity
+Command line:
+  gmx grompp -f test.mdp -c system.gro -p system.top -o topol.tpr -maxwarn 10
+
+
+NOTE 1 [file test.mdp]:
+  For a correct single-point energy evaluation with nsteps = 0, use
+  continuation = yes to avoid constraining the input coordinates.
+
+Generating 1-4 interactions: fudge = 1
+Number of degrees of freedom in T-Coupling group rest is 9.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 2 [file test.mdp]:
+  NVE simulation with an initial temperature of zero: will use a Verlet
+  buffer of 10%. Check your energy drift!
+
+
+There were 2 NOTEs
+
+Back Off! I just backed up topol.tpr to ./#topol.tpr.4#
+
+GROMACS reminds you: "I think it would be a good idea." (Mahatma Gandhi, when asked what he thought of Western civilization)
+
+

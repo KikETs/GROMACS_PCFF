@@ -1,0 +1,16 @@
+integrator = md
+nsteps = 0
+cutoff-scheme = Verlet
+nstlist = 10
+rlist = 0.9
+verlet-buffer-tolerance = -1
+nstcalcenergy = 1
+nstenergy = 1
+nstfout = 1
+coulombtype = Cut-off
+coulomb-modifier = Potential-shift
+rcoulomb = 0.9
+vdw-type = Cut-off
+vdw-modifier = Potential-shift
+rvdw = 0.9
+pbc = xyz

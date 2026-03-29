@@ -41,11 +41,16 @@
 
 #include <climits>
 #include <cmath>
+#include <cstdlib>
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -91,6 +96,439 @@
 #include "gromacs/utility/smalloc.h"
 #include "gromacs/utility/snprintf.h"
 #include "gromacs/utility/vec.h"
+
+namespace
+{
+
+struct Tp18fTraceConfig
+{
+    bool        enabled = false;
+    std::string path;
+};
+
+struct Tp18iTraceConfig
+{
+    bool        enabled = false;
+    std::string path;
+};
+
+struct Tp18jTraceConfig
+{
+    bool        enabled = false;
+    std::string path;
+};
+
+struct Tp18iTcstatSummary
+{
+    int    temperatureGroupCount   = 0;
+    double ekinhTraceSum           = 0.0;
+    double ekinhL2Sum              = 0.0;
+    double ekinhOldTraceSum        = 0.0;
+    double ekinhOldL2Sum           = 0.0;
+    double ekinfTraceSum           = 0.0;
+    double ekinfL2Sum              = 0.0;
+    double temperatureSum          = 0.0;
+    double temperatureMax          = 0.0;
+    double halfstepTemperatureSum  = 0.0;
+    double halfstepTemperatureMax  = 0.0;
+};
+
+std::mutex              g_tp18fTraceMutex;
+std::atomic<long long> g_tp18fTraceCallIndex{ 0 };
+std::mutex              g_tp18iTraceMutex;
+std::atomic<long long> g_tp18iTraceCallIndex{ 0 };
+std::mutex              g_tp18jTraceMutex;
+std::atomic<long long> g_tp18jTraceCallIndex{ 0 };
+thread_local int        g_tp18jPostUpdateScopeDepth = 0;
+
+const Tp18fTraceConfig& tp18fTraceConfig()
+{
+    static const Tp18fTraceConfig config = []()
+    {
+        Tp18fTraceConfig result;
+        if (const char* value = std::getenv("GMX_TP18F_TRACE_FILE"))
+        {
+            if (*value != '\0')
+            {
+                result.enabled = true;
+                result.path    = value;
+
+                std::filesystem::path tracePath(result.path);
+                if (!tracePath.parent_path().empty())
+                {
+                    std::filesystem::create_directories(tracePath.parent_path());
+                }
+                std::ofstream output(tracePath, std::ios::trunc);
+                GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18F_TRACE_FILE for writing");
+                output << "call_index,step,b_gstat,b_energy,b_temperature,b_pressure,b_constraint,"
+                          "entered_pressure_block,"
+                          "ekin_trace,ekin_l2,"
+                          "force_vir_trace_in,force_vir_l2_in,"
+                          "shake_vir_trace_in,shake_vir_l2_in,"
+                          "total_vir_trace_before,total_vir_l2_before,"
+                          "pres_trace_before,pres_l2_before,"
+                          "total_vir_trace_after,total_vir_l2_after,"
+                          "pressure_fac,"
+                          "pres_trace_after,pres_l2_after,"
+                          "pressure_scalar,pressure_formula_residual,pressure_scalar_residual,"
+                          "potential_energy_kj,kinetic_energy_kj,temperature_k\n";
+            }
+        }
+        return result;
+    }();
+
+    return config;
+}
+
+const Tp18iTraceConfig& tp18iTraceConfig()
+{
+    static const Tp18iTraceConfig config = []()
+    {
+        Tp18iTraceConfig result;
+        if (const char* value = std::getenv("GMX_TP18I_TRACE_FILE"); value != nullptr && *value != '\0')
+        {
+            result.enabled = true;
+            result.path    = value;
+
+            std::filesystem::path tracePath(result.path);
+            if (!tracePath.parent_path().empty())
+            {
+                std::filesystem::create_directories(tracePath.parent_path());
+            }
+            std::ofstream output(tracePath, std::ios::trunc);
+            GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18I_TRACE_FILE for writing");
+            output << "call_index,step,time_ps,stage,b_gstat,b_energy,b_temperature,compute_ekin,"
+                      "b_read_ekin,b_ekin_ave_vel,b_scale_ekin,have_leapfrog,have_ekinh_old,"
+                      "mpi_parallel,gstat_reduction_executed,temperature_group_count,"
+                      "v_l2_in,v_max_abs_in,"
+                      "tcstat_ekinh_trace_sum,tcstat_ekinh_l2_sum,"
+                      "tcstat_ekinh_old_trace_sum,tcstat_ekinh_old_l2_sum,"
+                      "tcstat_ekinf_trace_sum,tcstat_ekinf_l2_sum,"
+                      "tcstat_temperature_sum,tcstat_temperature_max,"
+                      "tcstat_halfstep_temperature_sum,tcstat_halfstep_temperature_max,"
+                      "ekind_ekin_trace,ekind_ekin_l2,dekindl,dekindl_old,dvdl_ekin,"
+                      "kinetic_energy_kj,temperature_k\n";
+        }
+        return result;
+    }();
+
+    return config;
+}
+
+const Tp18jTraceConfig& tp18jTraceConfig()
+{
+    static const Tp18jTraceConfig config = []()
+    {
+        Tp18jTraceConfig result;
+        if (const char* value = std::getenv("GMX_TP18J_TRACE_FILE"); value != nullptr && *value != '\0')
+        {
+            result.enabled = true;
+            result.path    = value;
+
+            std::filesystem::path tracePath(result.path);
+            if (!tracePath.parent_path().empty())
+            {
+                std::filesystem::create_directories(tracePath.parent_path());
+            }
+            std::ofstream output(tracePath, std::ios::trunc);
+            GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18J_TRACE_FILE for writing");
+            output << "call_index,step,time_ps,callsite,stage,b_gstat,b_energy,b_temperature,"
+                      "compute_ekin,b_read_ekin,b_ekin_ave_vel,b_scale_ekin,have_leapfrog,"
+                      "have_ekinh_old,mpi_parallel,gstat_reduction_executed,temperature_group_count,"
+                      "v_l2_in,v_max_abs_in,tcstat_ekinh_trace_sum,tcstat_ekinh_old_trace_sum,"
+                      "tcstat_ekinf_trace_sum,ekind_ekin_trace,ekind_ekin_l2,dekindl,dekindl_old,"
+                      "dvdl_ekin,kinetic_energy_kj,temperature_k,total_energy_term_kj,"
+                      "conserved_energy_term_kj\n";
+        }
+        return result;
+    }();
+
+    return config;
+}
+
+bool tp18jPostUpdateSliceIsActive()
+{
+    return g_tp18jPostUpdateScopeDepth > 0;
+}
+
+double tp18fTraceOfTensor(const tensor value)
+{
+    double trace = 0.0;
+    for (int d = 0; d < DIM; ++d)
+    {
+        trace += value[d][d];
+    }
+    return trace;
+}
+
+double tp18fTensorL2(const tensor value)
+{
+    double squaredNorm = 0.0;
+    for (int i = 0; i < DIM; ++i)
+    {
+        for (int j = 0; j < DIM; ++j)
+        {
+            const double component = value[i][j];
+            squaredNorm += component * component;
+        }
+    }
+    return std::sqrt(squaredNorm);
+}
+
+double tp18fPressureFactor(PbcType pbcType, int nwall, const matrix box)
+{
+    if (pbcType == PbcType::No || (pbcType == PbcType::XY && nwall != 2))
+    {
+        return 0.0;
+    }
+
+    return gmx::c_presfac * 2.0 / det(box);
+}
+
+double tp18iRVecArrayL2(gmx::ArrayRef<const gmx::RVec> values)
+{
+    double squaredNorm = 0.0;
+    for (const auto& value : values)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            const double component = value[d];
+            squaredNorm += component * component;
+        }
+    }
+    return std::sqrt(squaredNorm);
+}
+
+double tp18iRVecArrayMaxAbs(gmx::ArrayRef<const gmx::RVec> values)
+{
+    double maxAbs = 0.0;
+    for (const auto& value : values)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            maxAbs = std::max(maxAbs, std::abs(static_cast<double>(value[d])));
+        }
+    }
+    return maxAbs;
+}
+
+Tp18iTcstatSummary tp18iSummarizeTcstat(const gmx_ekindata_t* ekind)
+{
+    Tp18iTcstatSummary summary;
+    if (ekind == nullptr)
+    {
+        return summary;
+    }
+
+    summary.temperatureGroupCount = static_cast<int>(ekind->tcstat.size());
+    for (const auto& tcstat : ekind->tcstat)
+    {
+        summary.ekinhTraceSum += tp18fTraceOfTensor(tcstat.ekinh);
+        summary.ekinhL2Sum += tp18fTensorL2(tcstat.ekinh);
+        summary.ekinhOldTraceSum += tp18fTraceOfTensor(tcstat.ekinh_old);
+        summary.ekinhOldL2Sum += tp18fTensorL2(tcstat.ekinh_old);
+        summary.ekinfTraceSum += tp18fTraceOfTensor(tcstat.ekinf);
+        summary.ekinfL2Sum += tp18fTensorL2(tcstat.ekinf);
+        summary.temperatureSum += tcstat.T;
+        summary.temperatureMax = std::max(summary.temperatureMax, static_cast<double>(tcstat.T));
+        summary.halfstepTemperatureSum += tcstat.Th;
+        summary.halfstepTemperatureMax =
+                std::max(summary.halfstepTemperatureMax, static_cast<double>(tcstat.Th));
+    }
+
+    return summary;
+}
+
+void appendTp18iTraceRow(const char*                      stage,
+                         const int64_t                    step,
+                         const double                     timePs,
+                         const bool                       bGStat,
+                         const bool                       bEner,
+                         const bool                       bTemp,
+                         const bool                       computeEkin,
+                         const bool                       bReadEkin,
+                         const bool                       bEkinAveVel,
+                         const bool                       bScaleEkin,
+                         const bool                       haveLeapFrog,
+                         const bool                       haveEkinhOld,
+                         const bool                       mpiParallel,
+                         const bool                       gstatReductionExecuted,
+                         gmx::ArrayRef<const gmx::RVec>   v,
+                         const gmx_ekindata_t*            ekind,
+                         const gmx_enerdata_t*            enerd,
+                         const double                     dvdlEkin)
+{
+    const auto& config = tp18iTraceConfig();
+    if (!config.enabled)
+    {
+        return;
+    }
+
+    const long long callIndex = g_tp18iTraceCallIndex.fetch_add(1, std::memory_order_relaxed);
+
+    const auto   tcstatSummary = tp18iSummarizeTcstat(ekind);
+    const double vL2           = tp18iRVecArrayL2(v);
+    const double vMaxAbs       = tp18iRVecArrayMaxAbs(v);
+    const double ekinTrace     = (ekind != nullptr) ? tp18fTraceOfTensor(ekind->ekin) : 0.0;
+    const double ekinL2        = (ekind != nullptr) ? tp18fTensorL2(ekind->ekin) : 0.0;
+    const double dekindl       = (ekind != nullptr) ? ekind->dekindl : 0.0;
+    const double dekindlOld    = (ekind != nullptr) ? ekind->dekindl_old : 0.0;
+    const double kineticEnergy = (enerd != nullptr) ? enerd->term[InteractionFunction::KineticEnergy] : 0.0;
+    const double temperature   = (enerd != nullptr) ? enerd->term[InteractionFunction::Temperature] : 0.0;
+
+    std::lock_guard<std::mutex> lock(g_tp18iTraceMutex);
+    std::ofstream               output(config.path, std::ios::app);
+    GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18I_TRACE_FILE for appending");
+    output << std::setprecision(17) << callIndex << ',' << step << ',' << timePs << ',' << stage << ','
+           << static_cast<int>(bGStat) << ',' << static_cast<int>(bEner) << ','
+           << static_cast<int>(bTemp) << ',' << static_cast<int>(computeEkin) << ','
+           << static_cast<int>(bReadEkin) << ',' << static_cast<int>(bEkinAveVel) << ','
+           << static_cast<int>(bScaleEkin) << ',' << static_cast<int>(haveLeapFrog) << ','
+           << static_cast<int>(haveEkinhOld) << ',' << static_cast<int>(mpiParallel) << ','
+           << static_cast<int>(gstatReductionExecuted) << ',' << tcstatSummary.temperatureGroupCount << ','
+           << vL2 << ',' << vMaxAbs << ','
+           << tcstatSummary.ekinhTraceSum << ',' << tcstatSummary.ekinhL2Sum << ','
+           << tcstatSummary.ekinhOldTraceSum << ',' << tcstatSummary.ekinhOldL2Sum << ','
+           << tcstatSummary.ekinfTraceSum << ',' << tcstatSummary.ekinfL2Sum << ','
+           << tcstatSummary.temperatureSum << ',' << tcstatSummary.temperatureMax << ','
+           << tcstatSummary.halfstepTemperatureSum << ',' << tcstatSummary.halfstepTemperatureMax << ','
+           << ekinTrace << ',' << ekinL2 << ',' << dekindl << ',' << dekindlOld << ',' << dvdlEkin << ','
+           << kineticEnergy << ',' << temperature << '\n';
+}
+
+void appendTp18jTraceRow(const char*                      stage,
+                         const int64_t                    step,
+                         const double                     timePs,
+                         const bool                       bGStat,
+                         const bool                       bEner,
+                         const bool                       bTemp,
+                         const bool                       computeEkin,
+                         const bool                       bReadEkin,
+                         const bool                       bEkinAveVel,
+                         const bool                       bScaleEkin,
+                         const bool                       haveLeapFrog,
+                         const bool                       haveEkinhOld,
+                         const bool                       mpiParallel,
+                         const bool                       gstatReductionExecuted,
+                         gmx::ArrayRef<const gmx::RVec>   v,
+                         const gmx_ekindata_t*            ekind,
+                         const gmx_enerdata_t*            enerd,
+                         const double                     dvdlEkin)
+{
+    const auto& config = tp18jTraceConfig();
+    if (!config.enabled || !tp18jPostUpdateSliceIsActive())
+    {
+        return;
+    }
+
+    const long long callIndex           = g_tp18jTraceCallIndex.fetch_add(1, std::memory_order_relaxed);
+    const auto      tcstatSummary       = tp18iSummarizeTcstat(ekind);
+    const double    vL2                 = tp18iRVecArrayL2(v);
+    const double    vMaxAbs             = tp18iRVecArrayMaxAbs(v);
+    const double    ekinTrace           = (ekind != nullptr) ? tp18fTraceOfTensor(ekind->ekin) : 0.0;
+    const double    ekinL2              = (ekind != nullptr) ? tp18fTensorL2(ekind->ekin) : 0.0;
+    const double    dekindl             = (ekind != nullptr) ? ekind->dekindl : 0.0;
+    const double    dekindlOld          = (ekind != nullptr) ? ekind->dekindl_old : 0.0;
+    const double    kineticEnergy       = (enerd != nullptr) ? enerd->term[InteractionFunction::KineticEnergy] : 0.0;
+    const double    temperature         = (enerd != nullptr) ? enerd->term[InteractionFunction::Temperature] : 0.0;
+    const double    totalEnergyTerm     = (enerd != nullptr) ? enerd->term[InteractionFunction::TotalEnergy] : 0.0;
+    const double    conservedEnergyTerm = (enerd != nullptr) ? enerd->term[InteractionFunction::ConservedEnergy] : 0.0;
+
+    std::lock_guard<std::mutex> lock(g_tp18jTraceMutex);
+    std::ofstream               output(config.path, std::ios::app);
+    GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18J_TRACE_FILE for appending");
+    output << std::setprecision(17) << callIndex << ',' << step << ',' << timePs
+           << ",post_update_compute_globals," << stage << ',' << static_cast<int>(bGStat) << ','
+           << static_cast<int>(bEner) << ',' << static_cast<int>(bTemp) << ','
+           << static_cast<int>(computeEkin) << ',' << static_cast<int>(bReadEkin) << ','
+           << static_cast<int>(bEkinAveVel) << ',' << static_cast<int>(bScaleEkin) << ','
+           << static_cast<int>(haveLeapFrog) << ',' << static_cast<int>(haveEkinhOld) << ','
+           << static_cast<int>(mpiParallel) << ',' << static_cast<int>(gstatReductionExecuted) << ','
+           << tcstatSummary.temperatureGroupCount << ',' << vL2 << ',' << vMaxAbs << ','
+           << tcstatSummary.ekinhTraceSum << ',' << tcstatSummary.ekinhOldTraceSum << ','
+           << tcstatSummary.ekinfTraceSum << ',' << ekinTrace << ',' << ekinL2 << ',' << dekindl << ','
+           << dekindlOld << ',' << dvdlEkin << ',' << kineticEnergy << ',' << temperature << ','
+           << totalEnergyTerm << ',' << conservedEnergyTerm << '\n';
+}
+
+void appendTp18fTraceRow(const int64_t         step,
+                         const bool            bGStat,
+                         const bool            bEner,
+                         const bool            bTemp,
+                         const bool            bPres,
+                         const bool            bConstrain,
+                         const bool            enteredPressureBlock,
+                         const tensor          ekin,
+                         const tensor          forceVir,
+                         const tensor          shakeVir,
+                         const tensor          totalVirBefore,
+                         const tensor          presBefore,
+                         const tensor          totalVirAfter,
+                         const tensor          presAfter,
+                         const double          pressureFac,
+                         const double          pressureScalar,
+                         const gmx_enerdata_t* enerd)
+{
+    const auto& config = tp18fTraceConfig();
+    if (!config.enabled)
+    {
+        return;
+    }
+
+    const long long callIndex = g_tp18fTraceCallIndex.fetch_add(1, std::memory_order_relaxed);
+
+    const double ekinTrace             = tp18fTraceOfTensor(ekin);
+    const double ekinL2                = tp18fTensorL2(ekin);
+    const double forceVirTrace         = tp18fTraceOfTensor(forceVir);
+    const double forceVirL2            = tp18fTensorL2(forceVir);
+    const double shakeVirTrace         = tp18fTraceOfTensor(shakeVir);
+    const double shakeVirL2            = tp18fTensorL2(shakeVir);
+    const double totalVirBeforeTrace   = tp18fTraceOfTensor(totalVirBefore);
+    const double totalVirBeforeL2      = tp18fTensorL2(totalVirBefore);
+    const double presBeforeTrace       = tp18fTraceOfTensor(presBefore);
+    const double presBeforeL2          = tp18fTensorL2(presBefore);
+    const double totalVirAfterTrace    = tp18fTraceOfTensor(totalVirAfter);
+    const double totalVirAfterL2       = tp18fTensorL2(totalVirAfter);
+    const double presAfterTrace        = tp18fTraceOfTensor(presAfter);
+    const double presAfterL2           = tp18fTensorL2(presAfter);
+    const double pressureResidual      = enteredPressureBlock ? (presAfterTrace - pressureFac * (ekinTrace - totalVirAfterTrace)) : 0.0;
+    const double pressureScalarResidual =
+            enteredPressureBlock ? (pressureScalar - presAfterTrace / DIM) : 0.0;
+    const double potentialEnergy = (enerd != nullptr) ? enerd->term[InteractionFunction::PotentialEnergy] : 0.0;
+    const double kineticEnergy   = (enerd != nullptr) ? enerd->term[InteractionFunction::KineticEnergy] : 0.0;
+    const double temperature     = (enerd != nullptr) ? enerd->term[InteractionFunction::Temperature] : 0.0;
+
+    std::lock_guard<std::mutex> lock(g_tp18fTraceMutex);
+    std::ofstream               output(config.path, std::ios::app);
+    GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18F_TRACE_FILE for appending");
+    output << std::setprecision(17) << callIndex << ',' << step << ',' << static_cast<int>(bGStat) << ','
+           << static_cast<int>(bEner) << ',' << static_cast<int>(bTemp) << ',' << static_cast<int>(bPres)
+           << ',' << static_cast<int>(bConstrain) << ',' << static_cast<int>(enteredPressureBlock) << ','
+           << ekinTrace << ',' << ekinL2 << ','
+           << forceVirTrace << ',' << forceVirL2 << ','
+           << shakeVirTrace << ',' << shakeVirL2 << ','
+           << totalVirBeforeTrace << ',' << totalVirBeforeL2 << ','
+           << presBeforeTrace << ',' << presBeforeL2 << ','
+           << totalVirAfterTrace << ',' << totalVirAfterL2 << ','
+           << pressureFac << ','
+           << presAfterTrace << ',' << presAfterL2 << ','
+           << pressureScalar << ',' << pressureResidual << ',' << pressureScalarResidual << ','
+           << potentialEnergy << ',' << kineticEnergy << ',' << temperature << '\n';
+}
+
+} // namespace
+
+ScopedTp18jPostUpdateComputeGlobalsTrace::ScopedTp18jPostUpdateComputeGlobalsTrace()
+{
+    ++g_tp18jPostUpdateScopeDepth;
+}
+
+ScopedTp18jPostUpdateComputeGlobalsTrace::~ScopedTp18jPostUpdateComputeGlobalsTrace()
+{
+    GMX_RELEASE_ASSERT(g_tp18jPostUpdateScopeDepth > 0,
+                       "TP1.8j post-update compute_globals trace scope underflow");
+    --g_tp18jPostUpdateScopeDepth;
+}
 
 template<bool haveBoxDeformation>
 static void calc_ke_part_normal(const matrix                   deform,
@@ -477,14 +915,89 @@ void compute_globals(gmx_global_stat*               gstat,
 
     const bool haveLeapFrog = (ir->eI == IntegrationAlgorithm::MD || EI_SD(ir->eI));
     const bool haveEkinhOld = (haveLeapFrog && step == ekind->lastComputeGlobalsStep + 1);
+    const bool mpiParallel  = mpiComm.isParallel();
+    bool       gstatReductionExecuted = false;
+    const double timePs = step * ir->delta_t;
 
     if (computeEkin)
     {
         if (!bReadEkin)
         {
+            appendTp18iTraceRow("before_calc_ke_part",
+                                step,
+                                timePs,
+                                bGStat,
+                                bEner,
+                                bTemp,
+                                computeEkin,
+                                bReadEkin,
+                                bEkinAveVel,
+                                bScaleEkin,
+                                haveLeapFrog,
+                                haveEkinhOld,
+                                mpiParallel,
+                                gstatReductionExecuted,
+                                v,
+                                ekind,
+                                enerd,
+                                0.0);
+            appendTp18jTraceRow("before_calc_ke_part",
+                                step,
+                                timePs,
+                                bGStat,
+                                bEner,
+                                bTemp,
+                                computeEkin,
+                                bReadEkin,
+                                bEkinAveVel,
+                                bScaleEkin,
+                                haveLeapFrog,
+                                haveEkinhOld,
+                                mpiParallel,
+                                gstatReductionExecuted,
+                                v,
+                                ekind,
+                                enerd,
+                                0.0);
             wallcycle_start(wcycle, WallCycleCounter::ComputeEKin);
             calc_ke_part(fr->haveBoxDeformation, ir->deform, x, v, box, &(ir->opts), mdatoms, ekind, nrnb, bEkinAveVel);
             wallcycle_stop(wcycle, WallCycleCounter::ComputeEKin);
+            appendTp18iTraceRow("after_calc_ke_part",
+                                step,
+                                timePs,
+                                bGStat,
+                                bEner,
+                                bTemp,
+                                computeEkin,
+                                bReadEkin,
+                                bEkinAveVel,
+                                bScaleEkin,
+                                haveLeapFrog,
+                                haveEkinhOld,
+                                mpiParallel,
+                                gstatReductionExecuted,
+                                v,
+                                ekind,
+                                enerd,
+                                0.0);
+            appendTp18jTraceRow("after_calc_ke_part",
+                                step,
+                                timePs,
+                                bGStat,
+                                bEner,
+                                bTemp,
+                                computeEkin,
+                                bReadEkin,
+                                bEkinAveVel,
+                                bScaleEkin,
+                                haveLeapFrog,
+                                haveEkinhOld,
+                                mpiParallel,
+                                gstatReductionExecuted,
+                                v,
+                                ekind,
+                                enerd,
+                                0.0);
         }
     }
 
@@ -507,7 +1020,7 @@ void compute_globals(gmx_global_stat*               gstat,
         else
         {
             gmx::ArrayRef<real> signalBuffer = signalCoordinator->getCommunicationBuffer();
-            if (mpiComm.isParallel())
+            if (mpiParallel)
             {
                 wallcycle_start(wcycle, WallCycleCounter::MoveE);
                 global_stat(*gstat,
@@ -524,6 +1037,7 @@ void compute_globals(gmx_global_stat*               gstat,
                             step,
                             observablesReducer);
                 wallcycle_stop(wcycle, WallCycleCounter::MoveE);
+                gstatReductionExecuted = true;
             }
             if (signalCoordinator->haveInterSimulationSignalling())
             {
@@ -541,6 +1055,46 @@ void compute_globals(gmx_global_stat*               gstat,
             }
             *bSumEkinhOld = FALSE;
         }
+    }
+
+    if (computeEkin)
+    {
+        appendTp18iTraceRow("after_gstat_block",
+                            step,
+                            timePs,
+                            bGStat,
+                            bEner,
+                            bTemp,
+                            computeEkin,
+                            bReadEkin,
+                            bEkinAveVel,
+                            bScaleEkin,
+                            haveLeapFrog,
+                            haveEkinhOld,
+                            mpiParallel,
+                            gstatReductionExecuted,
+                            v,
+                            ekind,
+                            enerd,
+                            0.0);
+        appendTp18jTraceRow("after_gstat_block",
+                            step,
+                            timePs,
+                            bGStat,
+                            bEner,
+                            bTemp,
+                            computeEkin,
+                            bReadEkin,
+                            bEkinAveVel,
+                            bScaleEkin,
+                            haveLeapFrog,
+                            haveEkinhOld,
+                            mpiParallel,
+                            gstatReductionExecuted,
+                            v,
+                            ekind,
+                            enerd,
+                            0.0);
     }
 
     if (bEner)
@@ -582,10 +1136,51 @@ void compute_globals(gmx_global_stat*               gstat,
         enerd->term[InteractionFunction::KineticEnergy] = trace(ekind->ekin);
 
         ekind->lastComputeGlobalsStep = step;
+
+        appendTp18iTraceRow("after_sum_ekin",
+                            step,
+                            timePs,
+                            bGStat,
+                            bEner,
+                            bTemp,
+                            computeEkin,
+                            bReadEkin,
+                            bEkinAveVel,
+                            bScaleEkin,
+                            haveLeapFrog,
+                            haveEkinhOld,
+                            mpiParallel,
+                            gstatReductionExecuted,
+                            v,
+                            ekind,
+                            enerd,
+                            dvdl_ekin);
+        appendTp18jTraceRow("after_sum_ekin",
+                            step,
+                            timePs,
+                            bGStat,
+                            bEner,
+                            bTemp,
+                            computeEkin,
+                            bReadEkin,
+                            bEkinAveVel,
+                            bScaleEkin,
+                            haveLeapFrog,
+                            haveEkinhOld,
+                            mpiParallel,
+                            gstatReductionExecuted,
+                            v,
+                            ekind,
+                            enerd,
+                            dvdl_ekin);
     }
 
     /* ########## Now pressure ############## */
     // TODO: For the VV integrator bConstrain is needed in the conditional. This is confusing, so get rid of this.
+    tensor totalVirBefore = { { 0 } }, presBefore = { { 0 } };
+    copy_mat(total_vir, totalVirBefore);
+    copy_mat(pres, presBefore);
+    const bool enteredPressureBlock = (bPres || bConstrain);
     if (bPres || bConstrain)
     {
         m_add(force_vir, shake_vir, total_vir);
@@ -597,6 +1192,24 @@ void compute_globals(gmx_global_stat*               gstat,
         enerd->term[InteractionFunction::Pressure] =
                 calc_pres(fr->pbcType, ir->nwall, lastbox, ekind->ekin, total_vir, pres);
     }
+
+    appendTp18fTraceRow(step,
+                        bGStat,
+                        bEner,
+                        bTemp,
+                        bPres,
+                        bConstrain,
+                        enteredPressureBlock,
+                        ekind->ekin,
+                        force_vir,
+                        shake_vir,
+                        totalVirBefore,
+                        presBefore,
+                        total_vir,
+                        pres,
+                        tp18fPressureFactor(fr->pbcType, ir->nwall, lastbox),
+                        enteredPressureBlock ? enerd->term[InteractionFunction::Pressure] : 0.0,
+                        enerd);
 }
 
 static void min_zero(int* n, int i)

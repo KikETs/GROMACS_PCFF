@@ -1,0 +1,111 @@
+{
+  "milestone": "TP1.8",
+  "authoritative_system_id": "dense_salt_polymer",
+  "safe_reference_run_id": "safe_pme_n10_r0911",
+  "runtime_reference_facts": {
+    "mdout_source": "tests/reference_results/tp1_8_longrange_isolation/raw_safe_pme_n10_r0911_mdout.mdp",
+    "log_source": "tests/reference_results/tp1_8_longrange_isolation/raw_safe_pme_n10_r0911_md.log",
+    "coulombtype": "PME",
+    "runtime_longrange_class": "pme_coulomb",
+    "runtime_pairlist_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+    "runtime_kernel_line": "Using plain-C-4x4 4x4 nonbonded short-range kernels",
+    "runtime_repulsion_line": "Detected LJ repulsion power 9."
+  },
+  "paths": [
+    {
+      "file": "src/gromacs/ewald/pme.cpp",
+      "function": "gmx_pme_init",
+      "physical_role": "Initializes Coulomb PME reciprocal-space work and independently toggles LJ-PME.",
+      "status": "active_for_coulomb_in_safe_reference",
+      "why": [
+        "TP1.7b-safe mdout uses coulombtype = PME.",
+        "TP1.7b-safe mdout uses vdw-type = Cut-off.",
+        "TP1.7b-safe log says 'Will do PME sum in reciprocal space for electrostatic interactions.'",
+        "Source sets pme->doCoulomb = usingPme(ir->coulombtype) and pme->doLJ = usingLJPme(ir->vdwtype)."
+      ],
+      "evidence": [
+        "tests/reference_results/tp1_7b_authoritative_ab/raw_safe_n10_r0911_mdout.mdp",
+        "tests/reference_results/tp1_7b_authoritative_ab/raw_safe_n10_r0911_md.log",
+        "src/gromacs/ewald/pme.cpp:782",
+        "src/gromacs/ewald/pme.cpp:783"
+      ]
+    },
+    {
+      "file": "src/gromacs/nbnxm/kerneldispatch.cpp",
+      "function": "getCoulombKernelType",
+      "physical_role": "Chooses the short-range Coulomb direct-space kernel family.",
+      "status": "active_for_real_space_split_logic",
+      "why": [
+        "For PME or Ewald electrostatics, the short-range direct-space kernel stays in the Ewald/EwaldTwin family rather than ReactionField.",
+        "This means TP1.8 can change the reciprocal solver while keeping the short-range Coulomb family fixed."
+      ],
+      "evidence": [
+        "src/gromacs/nbnxm/kerneldispatch.cpp:113",
+        "src/gromacs/nbnxm/kerneldispatch.cpp:154",
+        "tests/reference_results/tp1_7b_authoritative_ab/raw_safe_n10_r0911_mdout.mdp"
+      ]
+    },
+    {
+      "file": "src/gromacs/nbnxm/kerneldispatch.cpp",
+      "function": "getVdwKernelType",
+      "physical_role": "Chooses the short-range VdW kernel family.",
+      "status": "active_cutoff_vdw_lj_pme_inactive",
+      "why": [
+        "Safe authoritative mdout uses vdw-type = Cut-off, so the Cut-off VdW kernel is selected.",
+        "This excludes LJ-PME reciprocal correction from the active authoritative path."
+      ],
+      "evidence": [
+        "src/gromacs/nbnxm/kerneldispatch.cpp:164",
+        "src/gromacs/nbnxm/kerneldispatch.cpp:170",
+        "tests/reference_results/tp1_7b_authoritative_ab/raw_safe_n10_r0911_mdout.mdp"
+      ]
+    },
+    {
+      "file": "src/gromacs/nbnxm/nbnxm_setup.cpp",
+      "function": "chooseLJPmeCombinationRule",
+      "physical_role": "Prepares the LJ-PME grid combination rule only when vdw-type = Pme.",
+      "status": "inactive_for_safe_reference",
+      "why": [
+        "Source only enters LJ-PME combination-rule logic when forcerec.ic->vdw.type == VanDerWaalsType::Pme.",
+        "Safe authoritative mdout uses vdw-type = Cut-off."
+      ],
+      "evidence": [
+        "src/gromacs/nbnxm/nbnxm_setup.cpp:462",
+        "src/gromacs/nbnxm/nbnxm_setup.cpp:464",
+        "tests/reference_results/tp1_7b_authoritative_ab/raw_safe_n10_r0911_mdout.mdp"
+      ]
+    },
+    {
+      "file": "src/gromacs/nbnxm/atomdata.cpp",
+      "function": "setParamCombinationRule",
+      "physical_role": "Builds LJ-PME dispersion-grid parameters for the PCFF 9-6 path only when LJ-PME is active.",
+      "status": "inactive_for_safe_reference",
+      "why": [
+        "The PCFF 9-6 LJ-PME grid branch is guarded by usingLJPme.",
+        "Safe authoritative mdout uses vdw-type = Cut-off, so this TP1.4-style reciprocal LJ path is inactive here."
+      ],
+      "evidence": [
+        "src/gromacs/nbnxm/atomdata.cpp:400",
+        "src/gromacs/nbnxm/atomdata.cpp:401",
+        "tests/reference_results/tp1_7b_authoritative_ab/raw_safe_n10_r0911_mdout.mdp",
+        "docs/validation_report_tp1_4.md"
+      ]
+    },
+    {
+      "file": "src/gromacs/mdlib/forcerec.cpp",
+      "function": "makeNonBondedParameterLists / init_forcerec path",
+      "physical_role": "Disables SIMD kernels for repulsion power 9 and keeps the plain-C reference short-range kernels active.",
+      "status": "active_short_range_family_but_not_lj_pme_proof_path",
+      "why": [
+        "Safe authoritative log reports repulsion power 9 and plain-C kernels.",
+        "This is a short-range family fact, not evidence that LJ-PME reciprocal correction is active."
+      ],
+      "evidence": [
+        "src/gromacs/mdlib/forcerec.cpp:892",
+        "src/gromacs/mdlib/forcerec.cpp:908",
+        "tests/reference_results/tp1_7b_authoritative_ab/raw_safe_n10_r0911_md.log"
+      ]
+    }
+  ],
+  "tp1_4_path_status_for_authoritative_setup": "inactive"
+}

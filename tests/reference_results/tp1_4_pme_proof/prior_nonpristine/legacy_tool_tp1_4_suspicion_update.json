@@ -1,0 +1,12 @@
+{
+  "milestone": "TP1.4",
+  "status": "FAIL",
+  "result_classification": "defect reproduced and plausibly large enough to matter",
+  "key_findings": [
+    "Current source allows 9-6 LJ-PME, but routes it through a split path that uses full-matrix real-space pairs and a geometric C6 reciprocal correction.",
+    "The minimal mixed-type 2-atom periodic fixture shows a large dependence of total LJ energy and force on rcut, violating expected split continuity.",
+    "K1 already cleared isolated 9-6 pair-force mathematics, so this evidence localizes the inconsistency to the LJ-PME split path rather than a standalone pair kernel derivative bug."
+  ],
+  "tp1_3_link_assessment": "Not directly demonstrated. The reproduced drift is large enough to be a plausible contributor, but TP1.4 alone does not prove it is the dominant TP1.3 cause.",
+  "recommended_action": "Do not patch broad production workflows yet; first isolate the exact LJ-PME correction mismatch at kernel level using this fixture as the acceptance test."
+}

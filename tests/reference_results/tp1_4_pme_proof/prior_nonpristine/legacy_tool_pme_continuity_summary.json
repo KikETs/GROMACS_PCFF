@@ -1,0 +1,53 @@
+{
+  "localized_path": [
+    "K1 isolated 9-6 nonbonded kernel consistency passed, so TP1.4 targets the PME split path rather than isolated pair-force mathematics.",
+    "src/gromacs/mdlib/forcerec.cpp builds full pair prefactors (6*C6, repulsionPower*C_repulsive) and separate LJ-PME C6 grid parameters.",
+    "src/gromacs/nbnxm/atomdata.cpp uses LJCombinationRule::None for 9-6 LJ-PME pair parameters while still generating geometric C6 grid data.",
+    "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h computes the real-space 9-6 pair term from the full pair matrix and subtracts a geometric c6grid reciprocal correction.",
+    "src/gromacs/ewald/pme.cpp allocates a single geometric LJ grid for non-LB LJ-PME."
+  ],
+  "rcut_scan": [
+    {
+      "rcut": 0.7,
+      "lj_sr": 6.943827,
+      "lj_recip": -41.748489,
+      "potential": -34.804665,
+      "force_x_atom2": -14.4074
+    },
+    {
+      "rcut": 0.8,
+      "lj_sr": 3.12444,
+      "lj_recip": -18.999409,
+      "potential": -15.874969,
+      "force_x_atom2": -6.63457
+    },
+    {
+      "rcut": 0.9,
+      "lj_sr": 1.544618,
+      "lj_recip": -9.550016,
+      "potential": -8.005398,
+      "force_x_atom2": -4.29121
+    },
+    {
+      "rcut": 1.0,
+      "lj_sr": 0.819228,
+      "lj_recip": -5.205198,
+      "potential": -4.38597,
+      "force_x_atom2": -3.14929
+    },
+    {
+      "rcut": 1.1,
+      "lj_sr": 0.456348,
+      "lj_recip": -3.030363,
+      "potential": -2.574015,
+      "force_x_atom2": -2.38829
+    }
+  ],
+  "expected_behavior": "Invariant total force/potential versus rcut for a fixed pair geometry.",
+  "observed_behavior": "Large monotonic drift in both total potential and force as rcut moves from 0.7 to 1.1 nm.",
+  "potential_span": 32.23065,
+  "force_span": 12.019110000000001,
+  "relative_span_vs_rcut_1p1": 12.521547077231483,
+  "invariance_check": "FAILED",
+  "conclusion": "defect reproduced and plausibly large enough to matter"
+}

@@ -1,0 +1,5 @@
+fixture_id,run_id,nstlist,rlist,verlet_buffer_tolerance,runtime_pairlist_line,initial_total_energy_kj,final_total_energy_kj,final_total_energy_drift_kj,max_abs_total_energy_drift_kj,total_energy_range_kj,max_temperature_k,range_ratio_vs_tight_ref,final_drift_ratio_vs_tight_ref
+dense_nonlisted,tight_ref_n1_r1200,1,1.2,-1,"updated every 1 steps, buffer 0.300 nm, rlist 1.200 nm",-516.035034,-515.49353,0.5415040000000317,7.403716999999972,8.65774499999992,7812.521484,1.0,1.0
+dense_nonlisted,auto_buffer_n10_vbt0005,10,,0.005,"updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",-516.035034,-515.495239,0.5397950000000264,7.403716999999972,8.65774499999992,7812.521484,1.0,0.9968439752984185
+dense_nonlisted,n10_r0900,10,0.9,-1,"updated every 10 steps, buffer 0.000 nm, rlist 0.900 nm",-516.035034,-520.797119,-4.762084999999956,7.200072999999975,13.749511999999982,7616.456543,1.5881169981328982,8.794182499112983
+dense_nonlisted,n10_r0909,10,0.909,-1,"updated every 10 steps, buffer 0.009 nm, rlist 0.909 nm",-516.035034,-520.408875,-4.37384099999997,7.403716999999972,12.57632499999994,7648.200684,1.4526097730991219,8.077209032619729

@@ -1,0 +1,75 @@
+{
+  "milestone": "TP1.8b",
+  "authoritative_system_id": "dense_salt_polymer",
+  "reference_run_id": "safe_pme_shift_ref",
+  "paths": [
+    {
+      "file": "src/gromacs/ewald/pme.cpp",
+      "function": "gmx_pme_init",
+      "physical_role": "Enables Coulomb PME reciprocal-space work when coulombtype = PME.",
+      "control_that_may_alter_it": "coulombtype = PME versus Ewald",
+      "status": "active_in_reference",
+      "why": [
+        "Reference mdout uses coulombtype = PME.",
+        "Source sets pme->doCoulomb = usingPme(ir->coulombtype)."
+      ]
+    },
+    {
+      "file": "src/gromacs/mdlib/force.cpp",
+      "function": "CpuPpLongRangeNonbondeds::calculate",
+      "physical_role": "Chooses CPU long-range Coulomb calculation path: PME solve versus do_ewald.",
+      "control_that_may_alter_it": "coulombtype = PME versus Ewald",
+      "status": "active_and_tunable",
+      "why": [
+        "PME path uses computePmeOnCpu.",
+        "Ewald path calls do_ewald when coulombInteractionType_ == Ewald."
+      ]
+    },
+    {
+      "file": "src/gromacs/mdlib/forcerec.cpp",
+      "function": "init_forcerec electrostatics translation",
+      "physical_role": "Sets short-range electrostatics interaction family and modifier.",
+      "control_that_may_alter_it": "coulombtype and coulomb-modifier",
+      "status": "active_and_tunable",
+      "why": [
+        "PME and Ewald both map to NbkernelElecType::Ewald.",
+        "The Coulomb modifier is stored separately in nbkernel_elec_modifier."
+      ]
+    },
+    {
+      "file": "src/gromacs/nbnxm/kerneldispatch.cpp",
+      "function": "getCoulombKernelType",
+      "physical_role": "Selects the direct-space Coulomb kernel family.",
+      "control_that_may_alter_it": "coulombtype",
+      "status": "active_and_tunable",
+      "why": [
+        "PME/Ewald select the Ewald/EwaldTwin family.",
+        "Cut-off would switch to ReactionField, which is why TP1.8's cut-off variant was too mixed."
+      ]
+    },
+    {
+      "file": "src/gromacs/mdtypes/interaction_const.cpp",
+      "function": "initCoulombEwaldParameters",
+      "physical_role": "Sets Ewald coefficient and direct-space Coulomb shift term, and prints a generic reciprocal-space banner for PME or Ewald.",
+      "control_that_may_alter_it": "ewald-rtol and coulomb-modifier",
+      "status": "active_and_tunable",
+      "why": [
+        "ewald-rtol changes beta/splitting.",
+        "coulomb-modifier = PotShift versus None changes ewaldShift without changing coulombtype.",
+        "The log string 'Will do PME sum in reciprocal space for electrostatic interactions.' is emitted for usingPmeOrEwald and is therefore not sufficient to distinguish PME mesh from full Ewald."
+      ]
+    },
+    {
+      "file": "src/gromacs/nbnxm/nbnxm_setup.cpp",
+      "function": "chooseLJPmeCombinationRule",
+      "physical_role": "Activates LJ-PME-specific reciprocal path only for vdwtype = Pme.",
+      "control_that_may_alter_it": "vdw-type",
+      "status": "inactive_in_reference",
+      "why": [
+        "Reference mdout uses vdw-type = Cut-off.",
+        "TP1.4-style LJ-PME path therefore remains inactive here."
+      ]
+    }
+  ],
+  "tp1_4_lj_pme_path_status": "inactive"
+}

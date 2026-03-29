@@ -47,6 +47,7 @@
 #include <filesystem>
 #include <memory>
 #include <limits>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -114,6 +115,7 @@
 #include "gromacs/nbnxm/nbnxm.h"
 #include "gromacs/nbnxm/nbnxm_gpu.h"
 #include "gromacs/nbnxm/pairlist.h"
+#include "gromacs/nbnxm/pairlistsets.h"
 #include "gromacs/pbcutil/ishift.h"
 #include "gromacs/pbcutil/pbc.h"
 #include "gromacs/pulling/pull.h"
@@ -158,6 +160,551 @@ struct pull_t;
 
 namespace gmx
 {
+
+namespace
+{
+
+struct Tp15cTraceConfig
+{
+    bool                  enabled = false;
+    std::filesystem::path membershipPath;
+    std::filesystem::path forcePath;
+    real                  range = 0;
+};
+
+const Tp15cTraceConfig& tp15cTraceConfig()
+{
+    static const Tp15cTraceConfig config = []()
+    {
+        Tp15cTraceConfig traceConfig;
+
+        const char* membershipPath = std::getenv("GMX_TP15C_PAIRLIST_TRACE_PATH");
+        const char* forcePath      = std::getenv("GMX_TP15C_FORCE_TRACE_PATH");
+        const char* rangeText      = std::getenv("GMX_TP15C_TRACE_RANGE");
+
+        traceConfig.enabled = (membershipPath != nullptr || forcePath != nullptr);
+        if (!traceConfig.enabled)
+        {
+            return traceConfig;
+        }
+
+        GMX_RELEASE_ASSERT(membershipPath != nullptr && forcePath != nullptr && rangeText != nullptr,
+                           "GMX_TP15C tracing requires GMX_TP15C_PAIRLIST_TRACE_PATH, "
+                           "GMX_TP15C_FORCE_TRACE_PATH, and GMX_TP15C_TRACE_RANGE");
+
+        char*        endptr      = nullptr;
+        const double parsedRange = std::strtod(rangeText, &endptr);
+        GMX_RELEASE_ASSERT(endptr != nullptr && *endptr == '\0' && parsedRange > 0,
+                           "GMX_TP15C_TRACE_RANGE should contain a positive real value");
+
+        traceConfig.membershipPath = membershipPath;
+        traceConfig.forcePath      = forcePath;
+        traceConfig.range          = parsedRange;
+        return traceConfig;
+    }();
+
+    return config;
+}
+
+struct Tp15dTraceConfig
+{
+    bool                  enabled = false;
+    std::filesystem::path branchTracePath;
+    int                   pairAtomI = -1;
+    int                   pairAtomJ = -1;
+    int                   shiftIndex = -1;
+    int64_t               stepStart = -1;
+    int64_t               stepEnd = -1;
+};
+
+const Tp15dTraceConfig& tp15dTraceConfig()
+{
+    static const Tp15dTraceConfig config = []()
+    {
+        Tp15dTraceConfig traceConfig;
+
+        const char* branchTracePath = std::getenv("GMX_TP15D_BRANCH_TRACE_PATH");
+        if (branchTracePath == nullptr)
+        {
+            return traceConfig;
+        }
+
+        const char* pairAtomIText = std::getenv("GMX_TP15D_PAIR_I");
+        const char* pairAtomJText = std::getenv("GMX_TP15D_PAIR_J");
+        const char* shiftIndexText = std::getenv("GMX_TP15D_SHIFT_INDEX");
+        const char* stepStartText = std::getenv("GMX_TP15D_STEP_START");
+        const char* stepEndText = std::getenv("GMX_TP15D_STEP_END");
+
+        GMX_RELEASE_ASSERT(pairAtomIText != nullptr && pairAtomJText != nullptr
+                                   && shiftIndexText != nullptr && stepStartText != nullptr
+                                   && stepEndText != nullptr,
+                           "GMX_TP15D tracing requires GMX_TP15D_PAIR_I, GMX_TP15D_PAIR_J, "
+                           "GMX_TP15D_SHIFT_INDEX, GMX_TP15D_STEP_START, and GMX_TP15D_STEP_END");
+
+        auto parseInteger = [](const char* text, const char* name) -> long long
+        {
+            char* endptr = nullptr;
+            const auto value = std::strtoll(text, &endptr, 10);
+            GMX_RELEASE_ASSERT(endptr != nullptr && *endptr == '\0',
+                               formatString("%s should contain an integer value", name).c_str());
+            return value;
+        };
+
+        traceConfig.branchTracePath = branchTracePath;
+        traceConfig.pairAtomI       = static_cast<int>(parseInteger(pairAtomIText, "GMX_TP15D_PAIR_I")) - 1;
+        traceConfig.pairAtomJ       = static_cast<int>(parseInteger(pairAtomJText, "GMX_TP15D_PAIR_J")) - 1;
+        traceConfig.shiftIndex      = static_cast<int>(parseInteger(shiftIndexText, "GMX_TP15D_SHIFT_INDEX"));
+        traceConfig.stepStart       = parseInteger(stepStartText, "GMX_TP15D_STEP_START");
+        traceConfig.stepEnd         = parseInteger(stepEndText, "GMX_TP15D_STEP_END");
+
+        GMX_RELEASE_ASSERT(traceConfig.pairAtomI >= 0 && traceConfig.pairAtomJ >= 0,
+                           "GMX_TP15D pair indices should be positive and 1-based");
+        GMX_RELEASE_ASSERT(traceConfig.shiftIndex >= 0 && traceConfig.shiftIndex < c_numShiftVectors,
+                           "GMX_TP15D_SHIFT_INDEX should reference a valid shift vector");
+        GMX_RELEASE_ASSERT(traceConfig.stepStart <= traceConfig.stepEnd,
+                           "GMX_TP15D_STEP_START should be <= GMX_TP15D_STEP_END");
+
+        traceConfig.enabled = true;
+        return traceConfig;
+    }();
+
+    return config;
+}
+
+bool tp15dShouldTraceStep(const int64_t step)
+{
+    const auto& traceConfig = tp15dTraceConfig();
+    return traceConfig.enabled && step >= traceConfig.stepStart && step <= traceConfig.stepEnd;
+}
+
+const char* interactionLocalityName(const InteractionLocality locality)
+{
+    return (locality == InteractionLocality::Local ? "local" : "nonlocal");
+}
+
+struct Tp18dTraceConfig
+{
+    bool                  enabled = false;
+    std::filesystem::path tracePath;
+};
+
+std::mutex g_tp18dTraceMutex;
+
+const Tp18dTraceConfig& tp18dTraceConfig()
+{
+    static const Tp18dTraceConfig config = []()
+    {
+        Tp18dTraceConfig traceConfig;
+
+        const char* tracePath = std::getenv("GMX_TP18D_TRACE_FILE");
+        if (tracePath == nullptr || tracePath[0] == '\0')
+        {
+            return traceConfig;
+        }
+
+        traceConfig.enabled   = true;
+        traceConfig.tracePath = tracePath;
+
+        FILE* fp = std::fopen(traceConfig.tracePath.string().c_str(), "w");
+        GMX_RELEASE_ASSERT(fp != nullptr, "Could not open GMX_TP18D_TRACE_FILE for writing");
+        std::fprintf(fp,
+                     "step,stage,compute_longrange_nonbonded_forces,compute_energy,compute_virial,"
+                     "have_force_with_virial,buffers_share_storage,coulomb_recip_term_kj,potential_energy_kj,"
+                     "force_with_virial_l2,force_with_virial_max_abs,final_force_l2,final_force_max_abs,"
+                     "direct_virial_trace,vir_force_trace\n");
+        std::fclose(fp);
+        return traceConfig;
+    }();
+
+    return config;
+}
+
+std::pair<double, double> tp18dSummarizeForceBuffer(ArrayRef<const RVec> forces)
+{
+    double sumSquares = 0.0;
+    double maxAbs     = 0.0;
+
+    for (const RVec& force : forces)
+    {
+        for (int dim = 0; dim < DIM; dim++)
+        {
+            const double value = force[dim];
+            sumSquares += value * value;
+            maxAbs = std::max(maxAbs, std::abs(value));
+        }
+    }
+
+    return { std::sqrt(sumSquares), maxAbs };
+}
+
+real tp18dTraceOfMatrix(const matrix matrixValue)
+{
+    return matrixValue[XX][XX] + matrixValue[YY][YY] + matrixValue[ZZ][ZZ];
+}
+
+void appendTp18dTraceRow(const int64_t       step,
+                         const char*         stage,
+                         ForceOutputs*       forceOutputs,
+                         const tensor        vir_force,
+                         gmx_enerdata_t*     enerd,
+                         const StepWorkload& stepWork)
+{
+    const auto& traceConfig = tp18dTraceConfig();
+    if (!traceConfig.enabled)
+    {
+        return;
+    }
+
+    auto finalForceSummary = tp18dSummarizeForceBuffer(forceOutputs->forceWithShiftForces().force());
+
+    bool   haveForceWithVirial      = false;
+    bool   buffersShareStorage      = false;
+    double forceWithVirialL2        = 0.0;
+    double forceWithVirialMaxAbs    = 0.0;
+    double directVirialTrace        = 0.0;
+
+    if (forceOutputs->haveForceWithVirial())
+    {
+        haveForceWithVirial = true;
+        auto& forceWithVirial = forceOutputs->forceWithVirial();
+        std::tie(forceWithVirialL2, forceWithVirialMaxAbs) =
+                tp18dSummarizeForceBuffer(forceWithVirial.force_);
+        buffersShareStorage = (forceOutputs->forceWithShiftForces().force().data() == forceWithVirial.force_.data());
+        directVirialTrace   = tp18dTraceOfMatrix(forceWithVirial.getVirial());
+    }
+
+    const double virForceTrace       = tp18dTraceOfMatrix(vir_force);
+    const double coulombReciprocal   = enerd->term[InteractionFunction::CoulombReciprocalSpace];
+    const double potentialEnergyTerm = enerd->term[InteractionFunction::PotentialEnergy];
+
+    std::lock_guard<std::mutex> lock(g_tp18dTraceMutex);
+    FILE* fp = std::fopen(traceConfig.tracePath.string().c_str(), "a");
+    GMX_RELEASE_ASSERT(fp != nullptr, "Could not open GMX_TP18D_TRACE_FILE for appending");
+    std::fprintf(fp,
+                 "%" PRId64 ",%s,%d,%d,%d,%d,%d,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g\n",
+                 step,
+                 stage,
+                 static_cast<int>(stepWork.computeLongRangeNonbondedForces),
+                 static_cast<int>(stepWork.computeEnergy),
+                 static_cast<int>(stepWork.computeVirial),
+                 static_cast<int>(haveForceWithVirial),
+                 static_cast<int>(buffersShareStorage),
+                 coulombReciprocal,
+                 potentialEnergyTerm,
+                 forceWithVirialL2,
+                 forceWithVirialMaxAbs,
+                 finalForceSummary.first,
+                 finalForceSummary.second,
+                 directVirialTrace,
+                 virForceTrace);
+    std::fclose(fp);
+}
+
+bool pairEntryMatches(const PlainPairlist::PairlistEntry& entry, const int atomI, const int atomJ, const int shiftIndex)
+{
+    return std::min(entry.first.first, entry.first.second) == std::min(atomI, atomJ)
+           && std::max(entry.first.first, entry.first.second) == std::max(atomI, atomJ)
+           && entry.second == shiftIndex;
+}
+
+bool plainPairlistContains(const PlainPairlist& plainPairlist,
+                           const int            atomI,
+                           const int            atomJ,
+                           const int            shiftIndex,
+                           const bool           excluded)
+{
+    const auto& entries = excluded ? plainPairlist.excludedPairs : plainPairlist.pairs;
+    return std::any_of(entries.begin(),
+                       entries.end(),
+                       [&](const PlainPairlist::PairlistEntry& entry)
+                       { return pairEntryMatches(entry, atomI, atomJ, shiftIndex); });
+}
+
+const PlainPairlist::PairlistEntry* findPlainPairlistEntry(const PlainPairlist& plainPairlist,
+                                                           const int            atomI,
+                                                           const int            atomJ,
+                                                           const int            shiftIndex,
+                                                           const bool           excluded)
+{
+    const auto& entries = excluded ? plainPairlist.excludedPairs : plainPairlist.pairs;
+    const auto  it = std::find_if(entries.begin(),
+                                 entries.end(),
+                                 [&](const PlainPairlist::PairlistEntry& entry)
+                                 { return pairEntryMatches(entry, atomI, atomJ, shiftIndex); });
+    return (it == entries.end() ? nullptr : &(*it));
+}
+
+void appendTp15cMembershipRow(FILE*                        fp,
+                              int64_t                      step,
+                              const InteractionLocality    locality,
+                              const bool                   pruneStep,
+                              const char*                  listKind,
+                              const char*                  pairKind,
+                              const PlainPairlist::PairlistEntry& entry)
+{
+    std::fprintf(fp,
+                 "%" PRId64 ",%s,%d,%s,%s,%d,%d,%d\n",
+                 step,
+                 interactionLocalityName(locality),
+                 pruneStep ? 1 : 0,
+                 listKind,
+                 pairKind,
+                 entry.first.first + 1,
+                 entry.first.second + 1,
+                 entry.second);
+}
+
+void traceTp15cPairMembership(const InteractionLocality locality,
+                              int64_t                   step,
+                              const bool                pruneStep,
+                              const PlainPairlist&      outerPairlist,
+                              const PlainPairlist&      innerPairlist)
+{
+    const auto& traceConfig = tp15cTraceConfig();
+    if (!traceConfig.enabled)
+    {
+        return;
+    }
+
+    static bool wroteMembershipHeader = false;
+
+    FILE* fp = std::fopen(traceConfig.membershipPath.string().c_str(), "a");
+    GMX_RELEASE_ASSERT(fp != nullptr, "Failed to open TP1.5c pair-membership trace file");
+
+    if (!wroteMembershipHeader)
+    {
+        std::fprintf(fp, "step,locality,prune_step,list_kind,pair_kind,atom_i,atom_j,shift_index\n");
+        wroteMembershipHeader = true;
+    }
+
+    for (const auto& entry : outerPairlist.pairs)
+    {
+        appendTp15cMembershipRow(fp, step, locality, pruneStep, "outer", "active", entry);
+    }
+    for (const auto& entry : outerPairlist.excludedPairs)
+    {
+        appendTp15cMembershipRow(fp, step, locality, pruneStep, "outer", "excluded", entry);
+    }
+    for (const auto& entry : innerPairlist.pairs)
+    {
+        appendTp15cMembershipRow(fp, step, locality, pruneStep, "inner", "active", entry);
+    }
+    for (const auto& entry : innerPairlist.excludedPairs)
+    {
+        appendTp15cMembershipRow(fp, step, locality, pruneStep, "inner", "excluded", entry);
+    }
+
+    std::fclose(fp);
+}
+
+int findNbnxmIndexForLocalAtom(const nonbonded_verlet_t& nbv, const int localAtomIndex)
+{
+    const auto localAtomOrder = nbv.getLocalAtomOrder();
+    for (Index i = 0; i < localAtomOrder.ssize(); i++)
+    {
+        if (localAtomOrder[i] == localAtomIndex)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+struct Tp15dGeometryObservation
+{
+    int  geometryAtomI = -1;
+    int  geometryAtomJ = -1;
+    RVec targetDx      = { 0, 0, 0 };
+    real targetDistanceSquared = -1;
+    int  minShiftIndex         = -1;
+    real minDistanceSquared    = std::numeric_limits<real>::max();
+};
+
+Tp15dGeometryObservation observeTp15dGeometry(nonbonded_verlet_t*  nbv,
+                                              ArrayRef<const RVec> shiftVectors,
+                                              const int            geometryAtomI,
+                                              const int            geometryAtomJ)
+{
+    const int atomINbnxmIndex = findNbnxmIndexForLocalAtom(*nbv, geometryAtomI);
+    const int atomJNbnxmIndex = findNbnxmIndexForLocalAtom(*nbv, geometryAtomJ);
+    GMX_RELEASE_ASSERT(atomINbnxmIndex >= 0 && atomJNbnxmIndex >= 0,
+                       "TP1.5d could not map the traced atoms into the local NBNXM order");
+
+    const RVec xI = getCoordinate(nbv->nbat(), atomINbnxmIndex);
+    const RVec xJ = getCoordinate(nbv->nbat(), atomJNbnxmIndex);
+
+    Tp15dGeometryObservation observation;
+    observation.geometryAtomI = geometryAtomI;
+    observation.geometryAtomJ = geometryAtomJ;
+
+    const int tracedShiftIndex = tp15dTraceConfig().shiftIndex;
+    for (int shiftIndex = 0; shiftIndex < c_numShiftVectors; shiftIndex++)
+    {
+        RVec dx;
+        for (int d = 0; d < DIM; d++)
+        {
+            dx[d] = xI[d] - xJ[d] + shiftVectors[shiftIndex][d];
+        }
+
+        const real distanceSquared = norm2(dx);
+        if (shiftIndex == tracedShiftIndex)
+        {
+            copy_rvec(dx, observation.targetDx);
+            observation.targetDistanceSquared = distanceSquared;
+        }
+        if (distanceSquared < observation.minDistanceSquared)
+        {
+            observation.minDistanceSquared = distanceSquared;
+            observation.minShiftIndex      = shiftIndex;
+        }
+    }
+
+    GMX_RELEASE_ASSERT(observation.targetDistanceSquared >= 0,
+                       "TP1.5d target shift distance should have been set");
+    return observation;
+}
+
+void traceTp15dBranch(const InteractionLocality locality,
+                      const int64_t             step,
+                      const bool                pruneStep,
+                      nonbonded_verlet_t*       nbv,
+                      ArrayRef<const RVec>      shiftVectors)
+{
+    const auto& traceConfig = tp15dTraceConfig();
+    if (!tp15dShouldTraceStep(step) || locality != InteractionLocality::Local)
+    {
+        return;
+    }
+
+    const auto& outerPairlist = nbv->plainPairlist(nbv->pairlistOuterRadius(), shiftVectors);
+    const auto& innerPairlist = nbv->activePlainPairlist(nbv->pairlistOuterRadius(), shiftVectors);
+
+    const PlainPairlist::PairlistEntry* representativeEntry =
+            findPlainPairlistEntry(innerPairlist, traceConfig.pairAtomI, traceConfig.pairAtomJ, traceConfig.shiftIndex, false);
+    if (representativeEntry == nullptr)
+    {
+        representativeEntry =
+                findPlainPairlistEntry(outerPairlist, traceConfig.pairAtomI, traceConfig.pairAtomJ, traceConfig.shiftIndex, false);
+    }
+    if (representativeEntry == nullptr)
+    {
+        representativeEntry =
+                findPlainPairlistEntry(innerPairlist, traceConfig.pairAtomI, traceConfig.pairAtomJ, traceConfig.shiftIndex, true);
+    }
+    if (representativeEntry == nullptr)
+    {
+        representativeEntry =
+                findPlainPairlistEntry(outerPairlist, traceConfig.pairAtomI, traceConfig.pairAtomJ, traceConfig.shiftIndex, true);
+    }
+
+    const auto forwardGeometry = observeTp15dGeometry(nbv, shiftVectors, traceConfig.pairAtomI, traceConfig.pairAtomJ);
+    const auto reverseGeometry = observeTp15dGeometry(nbv, shiftVectors, traceConfig.pairAtomJ, traceConfig.pairAtomI);
+    const auto geometryObservation =
+            (representativeEntry != nullptr) ? observeTp15dGeometry(nbv,
+                                                                    shiftVectors,
+                                                                    representativeEntry->first.first,
+                                                                    representativeEntry->first.second)
+                                             : ((forwardGeometry.targetDistanceSquared <= reverseGeometry.targetDistanceSquared)
+                                                        ? forwardGeometry
+                                                        : reverseGeometry);
+
+    static bool wroteHeader = false;
+
+    FILE* fp = std::fopen(traceConfig.branchTracePath.string().c_str(), "a");
+    GMX_RELEASE_ASSERT(fp != nullptr, "Failed to open TP1.5d branch trace file");
+
+    if (!wroteHeader)
+    {
+        std::fprintf(fp,
+                     "step,locality,rebuild_this_step,pairlist_age,dynamic_pruning_enabled,prune_step,"
+                     "rlist_outer_nm,rlist_inner_nm,pair_atom_i,pair_atom_j,target_shift_index,"
+                     "geometry_atom_i,geometry_atom_j,"
+                     "target_shift_dx,target_shift_dy,target_shift_dz,target_shift_distance_nm,"
+                     "min_shift_index,min_distance_nm,target_shift_is_minimum,pair_in_outer_active,"
+                     "pair_in_outer_excluded,pair_in_inner_active,pair_in_inner_excluded\n");
+        wroteHeader = true;
+    }
+
+    const int pairlistAge = nbv->pairlistSets().numStepsWithPairlist(step);
+    std::fprintf(fp,
+                 "%" PRId64 ",%s,%d,%d,%d,%d,%.16g,%.16g,%d,%d,%d,%d,%d,%.16g,%.16g,%.16g,%.16g,%d,"
+                 "%.16g,%d,%d,%d,%d,%d\n",
+                 step,
+                 interactionLocalityName(locality),
+                 pairlistAge == 0 ? 1 : 0,
+                 pairlistAge,
+                 nbv->pairlistSets().params().useDynamicPruning ? 1 : 0,
+                 pruneStep ? 1 : 0,
+                 nbv->pairlistOuterRadius(),
+                 nbv->pairlistInnerRadius(),
+                 traceConfig.pairAtomI + 1,
+                 traceConfig.pairAtomJ + 1,
+                 traceConfig.shiftIndex,
+                 geometryObservation.geometryAtomI + 1,
+                 geometryObservation.geometryAtomJ + 1,
+                 geometryObservation.targetDx[XX],
+                 geometryObservation.targetDx[YY],
+                 geometryObservation.targetDx[ZZ],
+                 std::sqrt(geometryObservation.targetDistanceSquared),
+                 geometryObservation.minShiftIndex,
+                 std::sqrt(geometryObservation.minDistanceSquared),
+                 geometryObservation.minShiftIndex == traceConfig.shiftIndex ? 1 : 0,
+                 plainPairlistContains(
+                         outerPairlist, traceConfig.pairAtomI, traceConfig.pairAtomJ, traceConfig.shiftIndex, false)
+                         ? 1
+                         : 0,
+                 plainPairlistContains(
+                         outerPairlist, traceConfig.pairAtomI, traceConfig.pairAtomJ, traceConfig.shiftIndex, true)
+                         ? 1
+                         : 0,
+                 plainPairlistContains(
+                         innerPairlist, traceConfig.pairAtomI, traceConfig.pairAtomJ, traceConfig.shiftIndex, false)
+                         ? 1
+                         : 0,
+                 plainPairlistContains(
+                         innerPairlist, traceConfig.pairAtomI, traceConfig.pairAtomJ, traceConfig.shiftIndex, true)
+                         ? 1
+                         : 0);
+
+    std::fclose(fp);
+}
+
+void traceTp15cForces(const int64_t step, ArrayRef<const RVec> force)
+{
+    const auto& traceConfig = tp15cTraceConfig();
+    if (!traceConfig.enabled)
+    {
+        return;
+    }
+
+    static bool wroteForceHeader = false;
+
+    FILE* fp = std::fopen(traceConfig.forcePath.string().c_str(), "a");
+    GMX_RELEASE_ASSERT(fp != nullptr, "Failed to open TP1.5c force trace file");
+
+    if (!wroteForceHeader)
+    {
+        std::fprintf(fp, "step,atom_index,fx,fy,fz\n");
+        wroteForceHeader = true;
+    }
+
+    const int numAtomsToWrite = std::min<int>(4, force.ssize());
+    for (int atomIndex = 0; atomIndex < numAtomsToWrite; atomIndex++)
+    {
+        std::fprintf(fp,
+                     "%" PRId64 ",%d,%.16g,%.16g,%.16g\n",
+                     step,
+                     atomIndex + 1,
+                     force[atomIndex][XX],
+                     force[atomIndex][YY],
+                     force[atomIndex][ZZ]);
+    }
+
+    std::fclose(fp);
+}
+
+} // namespace
 
 // TODO: this environment variable allows us to verify before release
 // that on less common architectures the total cost of polling is not larger than
@@ -426,6 +973,8 @@ static void postProcessForces(const gmx_domdec_t*  dd,
                    "We should have spread the vsite forces (earlier)");
     }
 
+    traceTp15cForces(step, f);
+
     if (fr->print_force >= 0)
     {
         print_large_forces(stderr, mdatoms, dd, step, fr->print_force, x, f);
@@ -456,7 +1005,8 @@ static void do_nb_verlet(t_forcerec*                fr,
         /* When dynamic pair-list  pruning is requested, we need to prune
          * at nstlistPrune steps.
          */
-        if (nbv->isDynamicPruningStepCpu(step))
+        const bool pruneStep = nbv->isDynamicPruningStepCpu(step);
+        if (pruneStep)
         {
             /* Prune the pair-list beyond fr->ic->rlistPrune using
              * the current coordinates of the atoms.
@@ -465,6 +1015,16 @@ static void do_nb_verlet(t_forcerec*                fr,
             nbv->dispatchPruneKernelCpu(ilocality, fr->shift_vec);
             wallcycle_sub_stop(wcycle, WallCycleSubCounter::NonbondedPruning);
         }
+
+        if (tp15cTraceConfig().enabled)
+        {
+            const real traceRange = tp15cTraceConfig().range;
+            const auto& outerPairlist = nbv->plainPairlist(traceRange, fr->shift_vec);
+            const auto& innerPairlist = nbv->activePlainPairlist(traceRange, fr->shift_vec);
+            traceTp15cPairMembership(ilocality, step, pruneStep, outerPairlist, innerPairlist);
+        }
+
+        traceTp15dBranch(ilocality, step, pruneStep, nbv, fr->shift_vec);
     }
 
     nbv->dispatchNonbondedKernel(
@@ -1963,7 +2523,8 @@ static void doPairSearch(const t_commrec*             cr,
     wallcycle_start_nocount(wcycle, WallCycleCounter::NS);
     wallcycle_sub_start(wcycle, WallCycleSubCounter::NBSSearchLocal);
     /* Note that with a GPU the launch overhead of the list transfer is not timed separately */
-    const bool alsoMakePlainPairlist = fr->plainPairlistRange.has_value();
+    const bool alsoMakePlainPairlist =
+            fr->plainPairlistRange.has_value() || tp15cTraceConfig().enabled || tp15dTraceConfig().enabled;
     nbv->constructPairlist(InteractionLocality::Local, top.excls, alsoMakePlainPairlist, step, nrnb);
 
     nbv->setupGpuShortRangeWork(fr->listedForcesGpu.get(), InteractionLocality::Local);
@@ -2034,7 +2595,7 @@ static void doPairSearch(const t_commrec*             cr,
         wallcycle_sub_stop(wcycle, WallCycleSubCounter::NonbondedFep);
     }
 
-    if (alsoMakePlainPairlist)
+    if (fr->plainPairlistRange.has_value())
     {
         const auto& plainPairlist = nbv->plainPairlist(fr->plainPairlistRange.value(), fr->shift_vec);
         MDModulesPairlistConstructedSignal mdModulesPairlistConstructedSignal(
@@ -2786,6 +3347,13 @@ void do_force(FILE*                         fplog,
                                        dipoleData.muStateAB,
                                        stepWork,
                                        ddBalanceRegionHandler);
+
+        appendTp18dTraceRow(step,
+                            "after_longrange",
+                            forceOutMtsLevel1,
+                            vir_force,
+                            enerd,
+                            stepWork);
     }
 
     wallcycle_stop(wcycle, WallCycleCounter::Force);
@@ -3249,8 +3817,20 @@ void do_force(FILE*                         fplog,
          * otherwise we have to post-process two outputs and then combine them.
          */
         ForceOutputs& forceOutCombined = (haveCombinedMtsForces ? forceOutSingleSlowLevel.value() : forceOutMtsLevel0);
+        appendTp18dTraceRow(step,
+                            "before_postprocess",
+                            &forceOutCombined,
+                            vir_force,
+                            enerd,
+                            stepWork);
         postProcessForces(
                 cr->dd, step, nrnb, wcycle, box, x.unpaddedArrayRef(), &forceOutCombined, vir_force, mdatoms, fr, vsite, stepWork);
+        appendTp18dTraceRow(step,
+                            "after_postprocess",
+                            &forceOutCombined,
+                            vir_force,
+                            enerd,
+                            stepWork);
 
         if (simulationWork.useMts && stepWork.computeSlowForces && !haveCombinedMtsForces)
         {
@@ -3286,6 +3866,13 @@ void do_force(FILE*                         fplog,
     {
         /* Compute the final potential energy terms */
         accumulatePotentialEnergies(enerd, lambda, inputrec.fepvals.get());
+        ForceOutputs& forceOutCombined = (haveCombinedMtsForces ? forceOutSingleSlowLevel.value() : forceOutMtsLevel0);
+        appendTp18dTraceRow(step,
+                            "after_accumulate_energy",
+                            &forceOutCombined,
+                            vir_force,
+                            enerd,
+                            stepWork);
 
         if (!EI_TPI(inputrec.eI))
         {

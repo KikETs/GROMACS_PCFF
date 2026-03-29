@@ -107,6 +107,18 @@ void rerun_parallel_comm(const gmx::MpiComm& mpiComm, t_trxframe* fr, gmx_bool* 
 //! \brief Allocate and initialize node-local state entries
 void set_state_entries(t_state* state, const t_inputrec* ir, bool useModularSimulator);
 
+/*! \brief Marks the single post-update compute_globals callsite for TP1.8j trace-only isolation. */
+class ScopedTp18jPostUpdateComputeGlobalsTrace
+{
+public:
+    ScopedTp18jPostUpdateComputeGlobalsTrace();
+    ~ScopedTp18jPostUpdateComputeGlobalsTrace();
+
+    ScopedTp18jPostUpdateComputeGlobalsTrace(const ScopedTp18jPostUpdateComputeGlobalsTrace&) = delete;
+    ScopedTp18jPostUpdateComputeGlobalsTrace&
+    operator=(const ScopedTp18jPostUpdateComputeGlobalsTrace&) = delete;
+};
+
 /* Compute global variables during integration
  *
  * Coordinates x are needed for kinetic energy calculation with cosine accelation

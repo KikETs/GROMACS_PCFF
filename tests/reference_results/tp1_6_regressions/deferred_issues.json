@@ -1,0 +1,23 @@
+{
+  "milestone": "TP1.6",
+  "issues": [
+    {
+      "id": "tp1_4_existing_split_mismatch",
+      "state": "open",
+      "evidence": "The existing TP1.4 isolated split scan still shows large potential and force drift versus rcut after the minimal assert fix.",
+      "next_action": "Localize the remaining LJ-PME split error with a smaller kernel-level parity fixture before changing force/energy math."
+    },
+    {
+      "id": "tp1_5_reference_kernel_ghost_energy",
+      "state": "deferred_from_fix_set",
+      "evidence": "Current repository documentation and source comments state that reaction-field shift terms apply to excluded pairs/self interactions with the Verlet scheme.",
+      "next_action": "If TP1.5 is to remain actionable, replace the stale hypothesis with a fixture that isolates a demonstrable current-code defect."
+    },
+    {
+      "id": "tp1_5_reference_kernel_ghost_force",
+      "state": "deferred_speculative",
+      "evidence": "No direct failing fixture or current-code execution evidence was reproduced in TP1.6.",
+      "next_action": "Do not patch until a dedicated excluded-pair force fixture fails on current code."
+    }
+  ]
+}

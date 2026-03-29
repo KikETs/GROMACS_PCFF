@@ -1,0 +1,6 @@
+check_name,path_family,metric,expected,observed,status
+tp1_3_cutoff_vs_pme_path,kernel dispatch,kernel_type,TRL-0 and TRL-5 should reveal whether cut-off-only bypassed PME and whether kernel family changed,Using plain-C-4x4 4x4 nonbonded short-range kernels | Using plain-C-4x4 4x4 nonbonded short-range kernels,same_plain_c_reference_path
+tp1_3_cutoff_vs_pme_nstlist,neighbor list update cadence,pairlist_update,"If cadence alone explains worsening, TP1.3 cut-off run should have materially different update cadence","updated every 10 steps, buffer 0.000 nm, rlist 0.900 nm | updated every 10 steps, buffer 0.009 nm, rlist 0.909 nm",weakened
+exclusion_parity,exclusion mask handling,energy_diff_kj,< 0.01,1.04000003054e-10,pass
+shift_periodic_invariance,shift handling / periodic image bookkeeping,potential_relative_diff,< 1e-5,5.32668804822e-06,pass
+shift_periodic_invariance,shift handling / periodic image bookkeeping,force_relative_diff,< 1e-5,6.93293769369e-06,pass

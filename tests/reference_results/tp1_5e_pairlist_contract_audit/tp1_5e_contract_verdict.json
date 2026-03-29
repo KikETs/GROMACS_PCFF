@@ -1,0 +1,60 @@
+{
+  "milestone": "TP1.5e",
+  "classification": "ALLOWED-UNSAFE",
+  "patching_now_justified": false,
+  "strongest_confirmed_contract_fact": {
+    "n10_last_rebuild_before_step_171": 170,
+    "n10_next_rebuild_after_step_171": 180,
+    "distance_at_last_rebuild_nm": 0.909534752368927,
+    "manual_rlist_outer_nm": 0.9089999794960022,
+    "manual_buffer_nm": 0.008999979496002175,
+    "distance_minus_rlist_at_last_rebuild_nm": 0.0005347728729248047,
+    "first_step_below_rlist": 171,
+    "distance_at_first_step_below_rlist_nm": 0.90388423204422,
+    "first_step_below_cutoff": 172,
+    "distance_at_first_step_below_cutoff_nm": 0.8984141945838928
+  },
+  "observed_branch_facts": {
+    "n1_rebuild_step_170": true,
+    "n1_rebuild_step_171": true,
+    "n10_rebuild_step_170": true,
+    "n10_rebuild_step_171": false,
+    "n10_pair_present_step_170": false,
+    "n10_pair_present_step_171": false,
+    "n10_pair_present_step_172": false,
+    "n10_pair_present_step_180": true,
+    "dynamic_pruning_enabled_n1": false,
+    "dynamic_pruning_enabled_n10": false
+  },
+  "contract_interpretation": {
+    "manual_rlist_mode": "With verlet-buffer-tolerance = -1, rlist is user-set rather than auto-sized from the buffer-tolerance contract.",
+    "dynamic_pruning_status": "Dynamic pruning is not active in this manual-buffer run.",
+    "guarantee_assessment": "The current settings do not guarantee that pairs outside rlist at the last rebuild remain captured before the next rebuild.",
+    "justification": "The pair is outside the manually requested outer list at the last rebuild (step 170) by 0.000534773 nm, so omission on reused steps is allowed by the current manual-rlist contract. Auto-buffered TP1.5b settings choose rlist \u2248 0.911 nm and remove the instability on the same fixture."
+  },
+  "comparison_to_reference_runs": {
+    "tp1_5b_n10_r0909_total_energy_range_kj": 12.57632499999994,
+    "tp1_5b_n1_r0909_total_energy_range_kj": 8.65774499999992,
+    "tp1_5b_auto_buffer_n10_vbt0005_rlist_nm": 0.911,
+    "tp1_5b_auto_buffer_n10_vbt0005_total_energy_range_kj": 8.65774499999992,
+    "auto_buffer_exceeds_step_170_distance_nm": 0.00146524763107303
+  },
+  "official_sources_checked": [
+    {
+      "site": "GROMACS Manual 2024.4",
+      "title": "Mdp options",
+      "url": "https://manual.gromacs.org/documentation/2024.4/user-guide/mdp-options.html",
+      "checked_date": "2026-03-19",
+      "relevance": "Default Verlet buffering is controlled by verlet-buffer-tolerance; setting it to -1 means rlist must be set manually."
+    },
+    {
+      "site": "GROMACS Manual 2024.4",
+      "title": "2024.4 Release Notes",
+      "url": "https://manual.gromacs.org/2024.4/release-notes/2024/2024.4.html",
+      "checked_date": "2026-03-19",
+      "relevance": "Manual Verlet buffer settings disable dual-list dynamic pruning."
+    }
+  ],
+  "remaining_uncertainty": "TP1.5e does not prove whether the chosen manual buffer is physically wise for the larger TP1.3 system; it only shows this omission is contract-compliant under the current manual settings.",
+  "exact_next_step_recommendation": "Do not patch production pairlist logic yet. For TP1.6, either move this fixture to auto-buffered settings when testing physics, or only patch if a later milestone proves that manual-rlist mode is required and should still guarantee stronger capture semantics."
+}

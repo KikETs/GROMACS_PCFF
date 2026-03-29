@@ -1,0 +1,55 @@
+{
+  "milestone": "TP1.5d",
+  "ranked_suspicions": [
+    {
+      "rank": 1,
+      "topic": "rebuild_cadence_with_near_cutoff_crossing",
+      "status": "confirmed_branch_difference",
+      "evidence": {
+        "first_presence_divergence_step": 171,
+        "first_target_distance_below_cutoff_step": 171
+      }
+    },
+    {
+      "rank": 2,
+      "topic": "shift_21_image_selection_during_rebuild",
+      "status": "supported_contributor",
+      "evidence": {
+        "target_shift_index": 21,
+        "n1_min_shift_indices": [
+          21,
+          21,
+          21,
+          21,
+          21,
+          21
+        ],
+        "n10_min_shift_indices": [
+          21,
+          21,
+          21,
+          21,
+          21,
+          21
+        ]
+      }
+    },
+    {
+      "rank": 3,
+      "topic": "refresh_or_pruning_logic",
+      "status": "weakened",
+      "evidence": {
+        "n1_dynamic_pruning_enabled": false,
+        "n10_dynamic_pruning_enabled": false,
+        "n1_prune_steps": [],
+        "n10_prune_steps": []
+      }
+    },
+    {
+      "rank": 4,
+      "topic": "source_level_bug_requiring_patch",
+      "status": "deferred",
+      "evidence": "TP1.5d traces the branch-level difference but does not yet prove an incorrect source-level decision."
+    }
+  ]
+}

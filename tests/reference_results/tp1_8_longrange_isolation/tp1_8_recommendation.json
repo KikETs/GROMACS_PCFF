@@ -1,0 +1,8 @@
+{
+  "milestone": "TP1.8",
+  "source_patching_now_justified": false,
+  "plain_safe_baseline_acceptable_for_later_non_rrespa_validation": "PARTIAL",
+  "tp1_4_path_status_for_authoritative_setup": "inactive",
+  "remaining_blocker_classification": "mixed_or_still_unresolved",
+  "exact_next_step_recommendation": "Keep the safe short-range baseline, but do not claim a purely PME blocker yet; the next step should be a narrower Coulomb long-range vs mixed-path audit on this same authoritative tier."
+}

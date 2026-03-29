@@ -1,0 +1,18 @@
+{
+  "snapshot_type": "prior_nonpristine_tp1_4_artifacts",
+  "snapshot_time_utc": "2026-03-18T23:50:51.678889+00:00",
+  "copied_root_artifacts": [
+    "tests/reference_results/tp1_4_pme_proof/prior_nonpristine/legacy_pme_fixture_definition.json",
+    "tests/reference_results/tp1_4_pme_proof/prior_nonpristine/legacy_pme_energy_force_scan.csv",
+    "tests/reference_results/tp1_4_pme_proof/prior_nonpristine/legacy_pme_continuity_summary.json",
+    "tests/reference_results/tp1_4_pme_proof/prior_nonpristine/legacy_tp1_4_suspicion_update.json"
+  ],
+  "copied_tool_artifacts": [
+    "tests/reference_results/tp1_4_pme_proof/prior_nonpristine/legacy_tool_pme_fixture_definition.json",
+    "tests/reference_results/tp1_4_pme_proof/prior_nonpristine/legacy_tool_pme_energy_force_scan.csv",
+    "tests/reference_results/tp1_4_pme_proof/prior_nonpristine/legacy_tool_pme_continuity_summary.json",
+    "tests/reference_results/tp1_4_pme_proof/prior_nonpristine/legacy_tool_tp1_4_suspicion_update.json",
+    "tests/reference_results/tp1_4_pme_proof/prior_nonpristine/legacy_tool_run_logs.json"
+  ],
+  "note": "These files existed before TP1.4-RR regenerated current rerun artifacts. They should not be treated as current clean-rerun provenance."
+}

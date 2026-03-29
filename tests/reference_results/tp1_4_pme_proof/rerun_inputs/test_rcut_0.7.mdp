@@ -1,0 +1,13 @@
+integrator = md
+nsteps = 0
+cutoff-scheme = Verlet
+nstlist = 1
+nstfout = 1
+rlist = 0.7
+rcoulomb = 0.7
+rvdw = 0.7
+coulombtype = Cut-off
+vdwtype = PME
+lj-pme-comb-rule = geometric
+ewald-rtol-lj = 1e-5
+pbc = xyz

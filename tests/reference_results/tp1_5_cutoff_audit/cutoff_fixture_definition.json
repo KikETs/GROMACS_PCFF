@@ -1,21 +1,33 @@
 {
-  "fixture_name": "tp1_5_ghost_energy_check",
-  "system": "2-atom test (repro_excl.py)",
-  "observations": [
+  "milestone": "TP1.5",
+  "fixtures": [
     {
-      "case": "Excluded pair, dist < rcut",
-      "expected_energy": 0.0,
-      "measured_energy": -277.87,
-      "status": "FAIL"
+      "fixture_id": "exclusion_parity_cutoff_9_6",
+      "purpose": "Exercise exclusion-sensitive listed/nonlisted cut-off-only path with repulsion power 9.",
+      "sources": {
+        "topology": "tests/reference_results/pt8_4_nonbonded_parity/exclusion_toy/system.top",
+        "coordinates": "tests/reference_results/pt8_4_nonbonded_parity/exclusion_toy/system.gro",
+        "lammps_reference": "testdata/lammps_golden/systems/exclusion_toy/lammps/system.in"
+      }
     },
     {
-      "case": "Non-excluded pair, dist > rcut",
-      "expected_energy": 0.0,
-      "measured_energy": -138.93,
-      "status": "FAIL"
+      "fixture_id": "shift_periodic_cutoff_9_6",
+      "purpose": "Exercise cut-off-only periodic image bookkeeping by comparing two PBC-equivalent frames.",
+      "system": {
+        "atoms": 2,
+        "box_nm": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "charges": [
+          1.0,
+          -1.0
+        ],
+        "repulsion_power": 9.0,
+        "coulombtype": "Cut-off",
+        "vdwtype": "Cut-off"
+      }
     }
-  ],
-  "kernel_path": "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
-  "defect_line": "vcoul = qq * (interact * rinv + reactionFieldCoefficient * rsq - reactionFieldShift);",
-  "explanation": "When interact=0, vcoul becomes qq * (0 + coeff*rsq - shift). Even though qq=skipmask*qi*qj, if the pair is within the list buffer, skipmask=1 and qi*qj is non-zero, leading to spurious energy."
+  ]
 }

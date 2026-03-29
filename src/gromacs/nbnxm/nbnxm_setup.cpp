@@ -94,6 +94,24 @@ struct gmx_wallcycle;
 
 namespace gmx
 {
+namespace
+{
+
+gmx_unused bool ljPmePairCombinationRuleMatches(LongRangeVdW ljpmeCombinationRule,
+                                                LJCombinationRule pairCombinationRule)
+{
+    switch (ljpmeCombinationRule)
+    {
+        case LongRangeVdW::Geom:
+            return pairCombinationRule == LJCombinationRule::Geometric
+                   || pairCombinationRule == LJCombinationRule::None;
+        case LongRangeVdW::LB: return pairCombinationRule == LJCombinationRule::LorentzBerthelot;
+        default: return false;
+    }
+}
+
+} // namespace
+
 class DeviceStreamManager;
 class ObservablesReducerBuilder;
 struct NbnxmGpu;
@@ -552,10 +570,8 @@ std::unique_ptr<nonbonded_verlet_t> init_nb_verlet(const gmx::MDLogger& mdlog,
     if (forcerec.ic->vdw.type == VanDerWaalsType::Pme)
     {
         GMX_RELEASE_ASSERT(
-                (forcerec.ljpme_combination_rule == LongRangeVdW::Geom
-                 && nbat->params().ljCombinationRule == LJCombinationRule::Geometric)
-                        || (forcerec.ljpme_combination_rule == LongRangeVdW::LB
-                            && nbat->params().ljCombinationRule == LJCombinationRule::LorentzBerthelot),
+                ljPmePairCombinationRuleMatches(forcerec.ljpme_combination_rule,
+                                               nbat->params().ljCombinationRule),
                 "nbat combination rule parameters should match those for LJ-PME");
     }
 

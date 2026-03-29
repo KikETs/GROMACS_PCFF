@@ -1,0 +1,9 @@
+{
+  "milestone": "TP1.7b",
+  "source_patching_now_justified": false,
+  "plain_safe_baseline_acceptable_for_future_validation": "PARTIAL",
+  "safe_run_runtime_distinct": true,
+  "runaway_effect_classification": "persists",
+  "remaining_blocker_classification": "more_strongly_long_range_or_mixed",
+  "next_step_recommendation": "If the same-build safe run still leaves early runaway, keep short-range code unchanged and isolate the surviving PME/long-range or mixed blocker on this same-build authoritative tier."
+}

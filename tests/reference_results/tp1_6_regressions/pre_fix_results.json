@@ -1,0 +1,57 @@
+{
+  "milestone": "TP1.6",
+  "results": {
+    "existing_tp1_4_split_scan": {
+      "command": "python3 tools/run_tp1_4_pme_proof/test_split.py",
+      "returncode": 0,
+      "stdout_artifact": "tests/reference_results/tp1_6_regressions/pre_fix_tp1_4_existing_split_stdout.txt",
+      "rows": [
+        {
+          "rcut": 0.7,
+          "sr": 10.554147,
+          "recip": -63.711803,
+          "potential": -53.157658,
+          "force": -13.1179
+        },
+        {
+          "rcut": 0.8,
+          "sr": 4.747749,
+          "recip": -28.932184,
+          "potential": -24.184435,
+          "force": -7.74224
+        },
+        {
+          "rcut": 0.9,
+          "sr": 2.346021,
+          "recip": -14.534739,
+          "potential": -12.188719,
+          "force": -5.77785
+        },
+        {
+          "rcut": 1.0,
+          "sr": 1.243194,
+          "recip": -7.921426,
+          "potential": -6.678232,
+          "force": -4.48335
+        },
+        {
+          "rcut": 1.1,
+          "sr": 0.691439,
+          "recip": -4.612129,
+          "potential": -3.920689,
+          "force": -3.46003
+        }
+      ],
+      "potential_span": 49.236969,
+      "force_span": 9.65787
+    },
+    "mixed_type_9_6_ljpme_startup": {
+      "command": "gmx grompp && gmx mdrun on mixed-type 9-6 LJ-PME fixture",
+      "grompp_returncode": 0,
+      "mdrun_returncode": 1,
+      "stderr_artifact": "tests/reference_results/tp1_6_regressions/pre_fix_mixed_type_9_6_mdrun_stderr.txt",
+      "failure_mode": "assertion",
+      "assertion_source": "src/gromacs/nbnxm/nbnxm_setup.cpp:554"
+    }
+  }
+}

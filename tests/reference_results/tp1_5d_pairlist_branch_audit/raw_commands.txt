@@ -1,0 +1,7 @@
+(cd /home/kiket/바탕화면/test/GROMACS_PCFF && git status --short)
+(cd /home/kiket/바탕화면/test/GROMACS_PCFF && git rev-parse HEAD)
+(cd /home/kiket/바탕화면/test/GROMACS_PCFF && build/bin/gmx --version)
+(cd /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5d_pairlist_branch_audit/work/n1_r0909 && /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx grompp -f test.mdp -c system.gro -p system.top -o topol.tpr -maxwarn 10)
+(cd /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5d_pairlist_branch_audit/work/n1_r0909 && GMX_TP15D_BRANCH_TRACE_PATH=/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/tp1_5d_pairlist_branch_audit/raw_debug_n1.log GMX_TP15D_PAIR_I=1 GMX_TP15D_PAIR_J=4 GMX_TP15D_SHIFT_INDEX=21 GMX_TP15D_STEP_END=173 GMX_TP15D_STEP_START=168 /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx mdrun -s topol.tpr -deffnm run -nt 1)
+(cd /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5d_pairlist_branch_audit/work/n10_r0909 && /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx grompp -f test.mdp -c system.gro -p system.top -o topol.tpr -maxwarn 10)
+(cd /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5d_pairlist_branch_audit/work/n10_r0909 && GMX_TP15D_BRANCH_TRACE_PATH=/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/tp1_5d_pairlist_branch_audit/raw_debug_n10.log GMX_TP15D_PAIR_I=1 GMX_TP15D_PAIR_J=4 GMX_TP15D_SHIFT_INDEX=21 GMX_TP15D_STEP_END=173 GMX_TP15D_STEP_START=168 /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx mdrun -s topol.tpr -deffnm run -nt 1)

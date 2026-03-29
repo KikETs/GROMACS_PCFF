@@ -1,27 +1,38 @@
-{
-  "milestone": "TP1.5",
-  "ranked_suspicions": [
-    {
-      "rank": 1,
-      "cause": "Reference Kernel Ghost Energy",
-      "status": "CONFIRMED",
-      "evidence": "repro_excl.py measured -277 kJ/mol for an excluded pair that should be 0.",
-      "impact": "CRITICAL. Systematic energy bias in MD."
-    },
-    {
-      "rank": 2,
-      "cause": "Reference Kernel Ghost Force (RF path)",
-      "status": "PLAUSIBLE",
-      "evidence": "Code inspection shows k_rf2 is applied via skipmask, not interact.",
-      "impact": "HIGH. Random forces on bonded atoms."
-    },
-    {
-      "rank": 3,
-      "cause": "PME Split Mismatch",
-      "status": "CONFIRMED (TP1.4)",
-      "evidence": "170% force drift across rcut.",
-      "impact": "HIGH. Long-range inaccuracies."
-    }
-  ],
-  "pme_vs_cutoff_conclusion": "The PME-only explanation is STRENGTHENED but broadened. Both paths are broken, but the cut-off path is broken in a way that creates a much larger numerical sink due to the fallback reference kernel defect."
-}
+[
+  {
+    "rank": 1,
+    "candidate": "Shared plain-C cut-off reference path in dense multi-atom application",
+    "status": "plausible contributor",
+    "basis": "Confirmed path localization: TP1.3 cut-off and PME both use plain-C-4x4 due to repulsion power 9, but only cut-off bypasses PME reciprocal correction entirely."
+  },
+  {
+    "rank": 2,
+    "candidate": "Neighbor-list buffer / dense pairlist population differences",
+    "status": "unresolved suspicion",
+    "basis": "TP1.3 keeps nstlist at 10 in both cases, but cut-off uses a slightly larger rlist/buffer. No minimal dynamic dense fixture isolated this as a defect in TP1.5."
+  },
+  {
+    "rank": 3,
+    "candidate": "Listed-vs-nonlisted split in exclusion-heavy topologies",
+    "status": "partially weakened",
+    "basis": "The exclusion-sensitive cut-off 9-6 parity fixture passes, so a blanket split bug is not supported. Dense charged topologies remain untested."
+  },
+  {
+    "rank": 4,
+    "candidate": "Exclusion mask handling in the plain-C reference loop",
+    "status": "weakened",
+    "basis": "Static inspection shows interact masking is applied to both LJ and Coulomb energies, and the executed exclusion parity fixture matches LAMMPS."
+  },
+  {
+    "rank": 5,
+    "candidate": "Shift handling / periodic image bookkeeping",
+    "status": "weakened",
+    "basis": "The executed cut-off-only PBC-equivalent frame check is invariant in energy and force."
+  },
+  {
+    "rank": 6,
+    "candidate": "PME-only explanation",
+    "status": "split",
+    "basis": "TP1.4 proves a PME split defect, but TP1.3 cut-off-only worsening runs on a path that bypasses PME reciprocal space."
+  }
+]

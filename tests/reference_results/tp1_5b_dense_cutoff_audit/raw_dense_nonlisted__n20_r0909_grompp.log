@@ -1,0 +1,54 @@
+===== dense_nonlisted__n20_r0909 grompp stdout =====
+Setting the LD random seed to 99069763
+
+Generated 1 of the 1 non-bonded parameter combinations
+
+Generated 1 of the 1 1-4 parameter combinations
+
+Excluding 0 bonded neighbours molecule type 'SYS'
+
+Velocities were taken from a Maxwell distribution at 300 K
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+This run will generate roughly 1 Mb of data
+
+===== dense_nonlisted__n20_r0909 grompp stderr =====
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5b_dense_cutoff_audit/work/dense_nonlisted/n20_r0909
+Command line:
+  gmx grompp -f test.mdp -c system.gro -p system.top -o topol.tpr -maxwarn 10
+
+
+NOTE 1 [file test.mdp]:
+  verlet-buffer-pressure-tolerance is ignored when verlet-buffer-tolerance
+  < 0
+
+Generating 1-4 interactions: fudge = 1
+
+NOTE 2 [file system.top, line 24]:
+  In moleculetype 'SYS' 4 atoms are not bound by a potential or constraint
+  to any other atom in the same moleculetype. Although technically this
+  might not cause issues in a simulation, this often means that the user
+  forgot to add a bond/potential/constraint or put multiple molecules in
+  the same moleculetype definition by mistake. Run with -v to get
+  information for each atom.
+
+Number of degrees of freedom in T-Coupling group rest is 9.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 3 [file test.mdp]:
+  You are using a plain Coulomb cut-off, which might produce artifacts.
+  You might want to consider using PME electrostatics.
+
+
+
+There were 3 NOTEs
+
+GROMACS reminds you: "Scientists do not join hands every Sunday and sing "Yes gravity is real! I know gravity is real! I will have faith! I believe in my heart that what goes up, up, up must come down, down, down. Amen!" If they did, we would think they were pretty insecure about the concept." (Dan Barker)
+
+

@@ -1,0 +1,19 @@
+[ defaults ]
+1 4 yes 1.0 1.0 9.0
+
+[ atomtypes ]
+A 12.011 0.0 A 0.34 0.20
+B 12.011 0.0 A 0.40 0.10
+
+[ moleculetype ]
+MOL 1
+
+[ atoms ]
+1 A 1 MOL A1 1 0.0 12.011
+2 B 1 MOL B1 1 0.0 12.011
+
+[ system ]
+TP1.6 mixed-type 9-6 LJ-PME
+
+[ molecules ]
+MOL 1

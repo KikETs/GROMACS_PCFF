@@ -1,0 +1,42 @@
+===== n1 mdrun stdout =====
+
+
+===== n1 mdrun stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5d_pairlist_branch_audit/work/n1_r0909
+Command line:
+  gmx mdrun -s topol.tpr -deffnm run -nt 1
+
+Reading file topol.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+starting mdrun 'tp1_5d_dense_nonlisted'
+1000 steps,      1.0 ps.
+
+Writing final coordinates.
+
+NOTE: 13 % of the run time was spent in pair search,
+      you might want to increase nstlist (this has no effect on accuracy)
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.007        0.007       99.6
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:    12304.961        0.002        0.007            0.570 
+
+GROMACS reminds you: "Science adjusts its views based on what's observed. Faith is the denial of observation so that belief can be preserved." (Tim Minchin)
+
+

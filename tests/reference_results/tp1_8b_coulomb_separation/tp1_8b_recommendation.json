@@ -1,0 +1,8 @@
+{
+  "milestone": "TP1.8b",
+  "source_patching_now_justified": false,
+  "plain_safe_baseline_acceptable_for_later_non_rrespa_validation": "PARTIAL",
+  "final_classification": "mixed_or_still_unresolved",
+  "tp1_4_lj_pme_path_status": "inactive",
+  "exact_next_step_recommendation": "Keep the safe authoritative baseline and next trace a narrower Coulomb real/reciprocal split path on this same authoritative system before any production patch."
+}

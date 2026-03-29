@@ -1,0 +1,43 @@
+{
+  "milestone": "TP1.8f",
+  "authoritative_system_id": "dense_salt_polymer",
+  "reference_run_id": "safe_pme_shift_ref",
+  "paths": [
+    {
+      "file": "src/gromacs/mdlib/force.cpp",
+      "function": "CpuPpLongRangeNonbondeds::calculate",
+      "role": "Upstream Coulomb producer boundary already separated in TP1.8c.",
+      "status": "active_upstream_reference",
+      "why": "TP1.8f reuses the established PME-vs-Ewald split and traces only around compute_globals."
+    },
+    {
+      "file": "src/gromacs/mdrun/md.cpp",
+      "function": "LegacySimulator::do_md",
+      "role": "Caller-side handoff from TP1.8e that feeds compute_globals.",
+      "status": "active_upstream_reference",
+      "why": "TP1.8e already showed the force-side difference survives to the compute_globals call boundary."
+    },
+    {
+      "file": "src/gromacs/mdlib/md_support.cpp",
+      "function": "compute_globals",
+      "role": "Adds force_vir and shake_vir, updates total_vir, and writes the scalar pressure term.",
+      "status": "active_and_traced",
+      "why": "TP1.8f records pre/post virial and pressure summaries inside compute_globals."
+    },
+    {
+      "file": "src/gromacs/mdlib/coupling.cpp",
+      "function": "calc_pres",
+      "role": "Linear pressure tensor transform from ekin and virial using the current box volume.",
+      "status": "active_formula_consumer_traced_at_caller_boundary",
+      "why": "TP1.8f checks whether the compute_globals output follows the calc_pres formula or introduces extra divergence."
+    },
+    {
+      "file": "src/gromacs/mdlib/stat.cpp",
+      "function": "global_stat",
+      "role": "Optional reduction of energies and virials before compute_globals pressure handling.",
+      "status": "inactive_effectively_single_rank",
+      "why": "These TP1.8f reruns are single-rank, so no MPI reduction path is needed to explain the observed difference."
+    }
+  ],
+  "tp1_4_lj_pme_path_status": "inactive"
+}

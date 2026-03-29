@@ -1,0 +1,9 @@
+{
+  "milestone": "TP1.8g",
+  "source_patching_now_justified": false,
+  "plain_safe_baseline_acceptable_for_later_non_rrespa_validation": "PARTIAL",
+  "consumer_boundary_classification": "aggregate_or_reporting_level_only",
+  "overall_classification": "still_unresolved",
+  "tp1_4_lj_pme_path_status": "inactive",
+  "exact_next_step_recommendation": "Stop at unresolved unless there is a concrete reason to trace beyond the immediate post-compute_globals output consumers; under pcoupl = no the pressure-control consumers are inactive here, so production patching is still not justified."
+}

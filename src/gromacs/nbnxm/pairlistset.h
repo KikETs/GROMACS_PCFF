@@ -135,6 +135,15 @@ public:
                              const nbnxn_atomdata_t& nbat,
                              ArrayRef<const int>     atomIndices);
 
+    /*! \brief Appends the contents of the active (possibly pruned) pairlists to \p plainPairlist
+     *
+     * The atom indices in the plain list are normal, not NBNxM order, atom indices.
+     */
+    void appendActivePlainPairlist(PlainPairlist*          plainPairlist,
+                                   real                    range,
+                                   const nbnxn_atomdata_t& nbat,
+                                   ArrayRef<const int>     atomIndices);
+
 private:
     //! List of pairlists in CPU layout
     std::vector<NbnxnPairlistCpu> cpuLists_;

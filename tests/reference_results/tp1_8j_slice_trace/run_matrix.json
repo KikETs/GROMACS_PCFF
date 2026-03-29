@@ -1,0 +1,40 @@
+{
+  "milestone": "TP1.8j",
+  "authoritative_system_id": "dense_salt_polymer",
+  "tp13_baseline_source": "tests/reference_results/tp1_3_stabilization/TRL-0",
+  "tp18i_baseline_source": "tests/reference_results/tp1_8i_consumer_trace",
+  "reference_run_id": "safe_pme_shift_ref",
+  "comparison_runs": [
+    {
+      "run_id": "safe_pme_shift_ref",
+      "role": "baseline_reference",
+      "trace_filename": "slice_trace_baseline.csv",
+      "coulombtype": "PME",
+      "coulomb_modifier": "Potential-shift-Verlet",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 4,
+      "fourierspacing": 0.12,
+      "ewald_rtol": 1e-05,
+      "why": "Reuses the TP1.8i authoritative safe baseline settings while isolating only the post-update compute_globals callsite.",
+      "intended_path_change": "reference"
+    },
+    {
+      "run_id": "safe_ewald_shift",
+      "role": "ewald_variant",
+      "trace_filename": "slice_trace_variant.csv",
+      "coulombtype": "Ewald",
+      "coulomb_modifier": "Potential-shift-Verlet",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 4,
+      "fourierspacing": 0.12,
+      "ewald_rtol": 1e-05,
+      "why": "Switches the Coulomb solver from PME to Ewald while keeping the same authoritative short-range baseline and isolating only the post-update compute_globals slice.",
+      "intended_path_change": "pme_vs_ewald_isolated_post_update_compute_globals_slice"
+    }
+  ],
+  "rationale_for_20ps_window": "TP1.8i used the same 20 ps authoritative window with runaway onset at 0.2 ps, so TP1.8j preserves that window while isolating only the post-update compute_globals slice."
+}

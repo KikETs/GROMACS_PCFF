@@ -51,6 +51,46 @@
 namespace gmx
 {
 
+namespace
+{
+
+const PlainPairlist& buildPlainPairlist(const real              range,
+                                        const nbnxn_atomdata_t& nbat,
+                                        ArrayRef<const int>     atomIndices,
+                                        PairlistSet*            localSet,
+                                        PairlistSet*            nonlocalSet,
+                                        PlainPairlist*          plainPairlist,
+                                        const bool              useOuterList)
+{
+    plainPairlist->pairs.clear();
+    plainPairlist->excludedPairs.clear();
+
+    if (useOuterList)
+    {
+        localSet->appendPlainPairlist(plainPairlist, range, nbat, atomIndices);
+    }
+    else
+    {
+        localSet->appendActivePlainPairlist(plainPairlist, range, nbat, atomIndices);
+    }
+
+    if (nonlocalSet)
+    {
+        if (useOuterList)
+        {
+            nonlocalSet->appendPlainPairlist(plainPairlist, range, nbat, atomIndices);
+        }
+        else
+        {
+            nonlocalSet->appendActivePlainPairlist(plainPairlist, range, nbat, atomIndices);
+        }
+    }
+
+    return *plainPairlist;
+}
+
+} // namespace
+
 const PlainPairlist& PairlistSets::plainPairlist(const real              range,
                                                  const nbnxn_atomdata_t& nbat,
                                                  ArrayRef<const int>     atomIndices)
@@ -58,17 +98,18 @@ const PlainPairlist& PairlistSets::plainPairlist(const real              range,
     GMX_RELEASE_ASSERT(includesAllPairs_ == true,
                        "We should have all pairs when getting a plain pairlist");
 
-    plainPairlist_.pairs.clear();
-    plainPairlist_.excludedPairs.clear();
+    return buildPlainPairlist(range, nbat, atomIndices, localSet_.get(), nonlocalSet_.get(), &plainPairlist_, true);
+}
 
-    localSet_->appendPlainPairlist(&plainPairlist_, range, nbat, atomIndices);
+const PlainPairlist& PairlistSets::activePlainPairlist(const real              range,
+                                                       const nbnxn_atomdata_t& nbat,
+                                                       ArrayRef<const int>     atomIndices)
+{
+    GMX_RELEASE_ASSERT(includesAllPairs_ == true,
+                       "We should have all pairs when getting a plain pairlist");
 
-    if (nonlocalSet_)
-    {
-        nonlocalSet_->appendPlainPairlist(&plainPairlist_, range, nbat, atomIndices);
-    }
-
-    return plainPairlist_;
+    return buildPlainPairlist(
+            range, nbat, atomIndices, localSet_.get(), nonlocalSet_.get(), &activePlainPairlist_, false);
 }
 
 } // namespace gmx

@@ -1,0 +1,7 @@
+{
+  "milestone": "TP1.8j",
+  "source_patching_now_justified": false,
+  "whether_tracing_should_continue_after_tp1_8j": "NO",
+  "final_classification": "still_unresolved",
+  "exact_next_step_recommendation": "Stop at unresolved unless there is a concrete, active consumer after the isolated post-update compute_globals slice that can be shown to transform the bounded PME-vs-Ewald difference."
+}

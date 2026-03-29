@@ -138,6 +138,11 @@ public:
     //! Returns a plain pairlist containing all pairs in the lists on this domain except for exclusions
     const PlainPairlist& plainPairlist(real range, const nbnxn_atomdata_t& nbat, ArrayRef<const int> atomIndices);
 
+    //! Returns a plain pairlist containing all pairs in the active (possibly pruned) lists
+    const PlainPairlist& activePlainPairlist(real                    range,
+                                             const nbnxn_atomdata_t& nbat,
+                                             ArrayRef<const int>     atomIndices);
+
 private:
     //! Returns the pair-list set for the given locality
     PairlistSet& pairlistSet(InteractionLocality iLocality)
@@ -168,6 +173,8 @@ private:
 
     //! Storage for returning a plain pairlist
     PlainPairlist plainPairlist_;
+    //! Storage for returning a plain pairlist from the active (possibly pruned) lists
+    PlainPairlist activePlainPairlist_;
 };
 
 } // namespace gmx

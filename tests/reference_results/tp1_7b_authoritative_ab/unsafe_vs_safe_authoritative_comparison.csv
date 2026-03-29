@@ -1,0 +1,3 @@
+run_id,role,runtime_pairlist_line,status,runaway_onset_ps,max_temperature_k,final_temperature_k,total_energy_range_kj,max_abs_total_energy_drift_kj,mean_pressure_bar,max_abs_pressure_bar,effect_vs_unsafe
+unsafe_n10_r0909,same_build_unsafe_reference,"updated every 10 steps, buffer 0.009 nm, rlist 0.909 nm",RUNAWAY,1.0,814.205078,683.260681,12.607422000000952,6.867187000003469,133.8566193752495,4869.487305,unsafe_reference
+safe_n10_r0911,same_build_safe_reference,"updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",RUNAWAY,1.0,801.985962,762.275391,8.535156000001734,5.792968999998266,-130.07642297804392,4817.827637,persists

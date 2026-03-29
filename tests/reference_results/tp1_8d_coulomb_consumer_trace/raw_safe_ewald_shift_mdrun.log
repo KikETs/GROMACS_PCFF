@@ -1,0 +1,37 @@
+===== safe_ewald_shift mdrun stdout =====
+
+
+===== safe_ewald_shift mdrun stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_8d_coulomb_consumer_trace/work/safe_ewald_shift
+Command line:
+  gmx mdrun -s run.tpr -deffnm run -nt 1
+
+Reading file run.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+Plain Ewald electrostatics only supports a single rank. Choosing to use only a single thread-MPI rank.
+Can not increase nstlist because an NVE ensemble is used
+
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+starting mdrun 'dense_salt_polymer'
+20000 steps,     20.0 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:      216.823      216.823      100.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:        7.970        3.011       10.841            0.025 
+
+GROMACS reminds you: "I Wonder, Should I Get Up..." (J. Lennon)
+
+

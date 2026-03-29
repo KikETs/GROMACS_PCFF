@@ -1,0 +1,12 @@
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+-------------------------------------------------------
+Program:     gmx mdrun, version 2027.0-dev-20260315-aa14b8a783-dirty-unknown
+Source file: src/gromacs/nbnxm/nbnxm_setup.cpp (line 554)
+Function:    gmx::init_nb_verlet(const MDLogger&, const t_inputrec&, const t_forcerec&, const MpiComm&, const gmx_domdec_t*, const gmx_hw_info_t&, bool, bool, const DeviceStreamManager*, const gmx_mtop_t&, bool, ObservablesReducerBuilder*, ArrayRef<const BasicVector<float> >, real (*)[3], gmx_wallcycle*)::<lambda()>
+
+Assertion failed:
+Condition: (forcerec.ljpme_combination_rule == LongRangeVdW::Geom && nbat->params().ljCombinationRule == LJCombinationRule::Geometric) || (forcerec.ljpme_combination_rule == LongRangeVdW::LB && nbat->params().ljCombinationRule == LJCombinationRule::LorentzBerthelot)
+nbat combination rule parameters should match those for LJ-PME
+-------------------------------------------------------

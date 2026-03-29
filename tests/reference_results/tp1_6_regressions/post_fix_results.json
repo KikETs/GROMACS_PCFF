@@ -1,0 +1,63 @@
+{
+  "milestone": "TP1.6",
+  "results": {
+    "existing_tp1_4_split_scan": {
+      "command": "python3 tools/run_tp1_4_pme_proof/test_split.py",
+      "returncode": 0,
+      "stdout_artifact": "tests/reference_results/tp1_6_regressions/post_fix_tp1_4_existing_split_stdout.txt",
+      "stderr_artifact": "tests/reference_results/tp1_6_regressions/post_fix_tp1_4_existing_split_stderr.txt",
+      "rows": [
+        {
+          "rcut": 0.7,
+          "sr": 10.554147,
+          "recip": -63.7118,
+          "potential": -53.157654,
+          "force": -13.1179
+        },
+        {
+          "rcut": 0.8,
+          "sr": 4.747749,
+          "recip": -28.932182,
+          "potential": -24.184433,
+          "force": -7.74225
+        },
+        {
+          "rcut": 0.9,
+          "sr": 2.346021,
+          "recip": -14.534739,
+          "potential": -12.188719,
+          "force": -5.77785
+        },
+        {
+          "rcut": 1.0,
+          "sr": 1.243194,
+          "recip": -7.921426,
+          "potential": -6.678232,
+          "force": -4.48335
+        },
+        {
+          "rcut": 1.1,
+          "sr": 0.691439,
+          "recip": -4.612128,
+          "potential": -3.920689,
+          "force": -3.46004
+        }
+      ],
+      "potential_span": 49.236965,
+      "force_span": 9.657860000000001
+    },
+    "mixed_type_9_6_ljpme_startup": {
+      "command": "gmx grompp && gmx mdrun && gmx energy on mixed-type 9-6 LJ-PME fixture",
+      "fixture_dir": "tools/run_tp1_6_regressions/work/mixed_type_9_6_ljpme",
+      "grompp_returncode": 0,
+      "mdrun_returncode": 0,
+      "energy_returncode": 0,
+      "energy_terms": {
+        "time_ps": 0.0,
+        "lj_sr": 0.819228,
+        "lj_recip": -5.205198,
+        "potential": -4.38597
+      }
+    }
+  }
+}

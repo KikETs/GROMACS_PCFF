@@ -1,0 +1,39 @@
+{
+  "milestone": "TP1.8h",
+  "title": "Integration-State Update Trace Under Fixed Safe Baseline",
+  "system": "dense_salt_polymer",
+  "reference_source": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/GROMACS_PCFF/tests/reference_results/tp1_3_stabilization/TRL-0",
+  "baseline_reused_from": "TP1.8g safe_pme_shift_ref settings",
+  "runs": [
+    {
+      "run_id": "safe_pme_shift_ref",
+      "role": "baseline_reference",
+      "trace_filename": "update_trace_baseline.csv",
+      "coulombtype": "PME",
+      "coulomb_modifier": "Potential-shift-Verlet",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 4,
+      "fourierspacing": 0.12,
+      "ewald_rtol": 1e-05,
+      "why": "Reuses the TP1.8g authoritative safe baseline settings for integration-state tracing.",
+      "intended_path_change": "reference"
+    },
+    {
+      "run_id": "safe_ewald_shift",
+      "role": "ewald_variant",
+      "trace_filename": "update_trace_variant.csv",
+      "coulombtype": "Ewald",
+      "coulomb_modifier": "Potential-shift-Verlet",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 4,
+      "fourierspacing": 0.12,
+      "ewald_rtol": 1e-05,
+      "why": "Switches the Coulomb solver from PME to Ewald while keeping the same authoritative short-range baseline and active update path.",
+      "intended_path_change": "pme_vs_ewald_integration_update_trace"
+    }
+  ]
+}

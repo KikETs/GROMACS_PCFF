@@ -1,0 +1,42 @@
+{
+  "milestone": "TP1.8i",
+  "authoritative_system_id": "dense_salt_polymer",
+  "reference_run_id": "safe_pme_shift_ref",
+  "paths": [
+    {
+      "file": "src/gromacs/mdrun/md.cpp",
+      "function": "LegacySimulator::do_md",
+      "role": "Calls compute_globals immediately after update_coords on the active authoritative path.",
+      "status": "active",
+      "why": "TP1.8h already showed the PME-vs-Ewald force-side split survives through the update boundary and reaches compute_globals."
+    },
+    {
+      "file": "src/gromacs/mdlib/md_support.cpp",
+      "function": "compute_globals",
+      "role": "Immediate post-update kinetic/temperature consumer boundary.",
+      "status": "active_and_traced",
+      "why": "TP1.8i instruments the active simulator-owned kinetic/temperature path here instead of using another proxy."
+    },
+    {
+      "file": "src/gromacs/mdlib/md_support.cpp",
+      "function": "calc_ke_part / calc_ke_part_normal",
+      "role": "Consumes post-update velocities and fills tcstat half-step/full-step kinetic tensors plus dekindl.",
+      "status": "active_and_traced",
+      "why": "This is the first active kinetic accumulation stage after Update::update_coords."
+    },
+    {
+      "file": "src/gromacs/mdlib/stat.cpp",
+      "function": "global_stat",
+      "role": "Optional rank reduction of kinetic tensors before temperature aggregation.",
+      "status": "inactive_effectively_single_rank",
+      "why": "The authoritative reruns use a single-rank execution path, so no MPI reduction explains the observed split here."
+    },
+    {
+      "file": "src/gromacs/mdlib/tgroup.cpp",
+      "function": "sum_ekin",
+      "role": "Aggregates tcstat data into system temperature and total kinetic energy.",
+      "status": "active_and_traced",
+      "why": "This is the next simulator-owned temperature/kinetic consumer after calc_ke_part on the active path."
+    }
+  ]
+}

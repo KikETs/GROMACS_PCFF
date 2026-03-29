@@ -1,0 +1,43 @@
+{
+  "milestone": "TP1.8e",
+  "authoritative_system_id": "dense_salt_polymer",
+  "reference_run_id": "safe_pme_shift_ref",
+  "paths": [
+    {
+      "file": "src/gromacs/mdlib/force.cpp",
+      "function": "CpuPpLongRangeNonbondeds::calculate",
+      "role": "Upstream Coulomb producer boundary already separated in TP1.8c.",
+      "status": "active_upstream_reference",
+      "why": "TP1.8e does not re-open this boundary; it traces later handoffs."
+    },
+    {
+      "file": "src/gromacs/mdlib/sim_util.cpp",
+      "function": "postProcessForces",
+      "role": "Immediate downstream consumer already traced in TP1.8d.",
+      "status": "active_upstream_reference",
+      "why": "TP1.8e traces the next handoff after this consumer."
+    },
+    {
+      "file": "src/gromacs/mdrun/md.cpp",
+      "function": "LegacySimulator::do_md",
+      "role": "Caller-side handoff after do_force and before/after update and compute_globals.",
+      "status": "active_and_traced",
+      "why": "TP1.8e records after_do_force_return, before_update_coords, after_update_coords, and after_compute_globals here."
+    },
+    {
+      "file": "src/gromacs/mdlib/update.cpp",
+      "function": "Update::update_coords",
+      "role": "Consumes the final force buffer for integration-relevant position/velocity propagation.",
+      "status": "active_and_traced_at_caller_boundary",
+      "why": "TP1.8e traces the force buffer passed into update_coords and the immediate post-update state."
+    },
+    {
+      "file": "src/gromacs/mdlib/md_support.cpp",
+      "function": "compute_globals",
+      "role": "Consumes force_vir and shake_vir to form total_vir and pressure observables.",
+      "status": "active_and_traced_at_caller_boundary",
+      "why": "TP1.8e records the post-compute_globals handoff state to judge virial/pressure-side survival."
+    }
+  ],
+  "tp1_4_lj_pme_path_status": "inactive"
+}

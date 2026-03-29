@@ -1,0 +1,18 @@
+Setting the LD random seed to -1320903946
+
+Generated 3 of the 3 non-bonded parameter combinations
+
+Generated 3 of the 3 1-4 parameter combinations
+
+Excluding 1 bonded neighbours molecule type 'MOL'
+
+Taking velocities from 'system.gro', all velocities are zero
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.000 nm between atom 0 and 0
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 42x42x42, spacing 0.119 0.119 0.119
+
+This run will generate roughly 0 Mb of data

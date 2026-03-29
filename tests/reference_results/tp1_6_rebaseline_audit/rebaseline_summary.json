@@ -1,0 +1,88 @@
+{
+  "milestone": "TP1.6",
+  "constraining_summary": {
+    "unsafe_regime": "TP1.5e classified n10_r0909 with manual rlist=0.909 and verlet-buffer-tolerance=-1 as ALLOWED-UNSAFE rather than a confirmed source-code bug.",
+    "why_source_patching_was_deferred": "The critical pair was outside the list at the last rebuild, so TP1.5e found no contract violation to patch.",
+    "what_tp1_6_must_establish": "Whether rerunning the same fixture under safer pairlist/buffer settings removes or materially weakens the reproduced worsening."
+  },
+  "unsafe_reference": {
+    "run_id": "n10_r0909",
+    "total_energy_range_kj": 12.57632499999994,
+    "final_total_energy_drift_kj": -4.37384099999997,
+    "runtime_pairlist_line": "updated every 10 steps, buffer 0.009 nm, rlist 0.909 nm"
+  },
+  "tight_reference": {
+    "run_id": "tight_ref_n1_r1200",
+    "total_energy_range_kj": 8.65774499999992,
+    "final_total_energy_drift_kj": 0.5415040000000317,
+    "runtime_pairlist_line": "updated every 1 steps, buffer 0.300 nm, rlist 1.200 nm"
+  },
+  "safe_candidates": [
+    {
+      "run_id": "n1_r0909",
+      "settings": {
+        "nstlist": 1,
+        "rlist": 0.909,
+        "verlet_buffer_tolerance": -1
+      },
+      "runtime_pairlist_line": "updated every 1 steps, buffer 0.009 nm, rlist 0.909 nm",
+      "total_energy_range_kj": 8.65774499999992,
+      "range_ratio_vs_tight_ref": 1.0,
+      "range_ratio_vs_unsafe_reference": 0.6884161311034791,
+      "final_total_energy_drift_kj": 0.5415040000000317,
+      "status": "worsening_removed",
+      "why_safer": "Eliminates list reuse entirely on the same manual rlist, so the critical near-cutoff pair cannot be missed between rebuilds.",
+      "intended_use": "diagnostic_control_not_preferred_baseline"
+    },
+    {
+      "run_id": "n10_r0911",
+      "settings": {
+        "nstlist": 10,
+        "rlist": 0.911,
+        "verlet_buffer_tolerance": -1
+      },
+      "runtime_pairlist_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+      "total_energy_range_kj": 8.65774499999992,
+      "range_ratio_vs_tight_ref": 1.0,
+      "range_ratio_vs_unsafe_reference": 0.6884161311034791,
+      "final_total_energy_drift_kj": 0.5397950000000264,
+      "status": "worsening_removed",
+      "why_safer": "Manual rlist exceeds the TP1.5e step-170 critical pair distance and should avoid the specific allowed-unsafe omission while keeping nstlist=10.",
+      "intended_use": "secondary_manual_safe_candidate"
+    },
+    {
+      "run_id": "auto_buffer_n10_vbt0005",
+      "settings": {
+        "nstlist": 10,
+        "rlist": null,
+        "verlet_buffer_tolerance": 0.005
+      },
+      "runtime_pairlist_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+      "total_energy_range_kj": 8.65774499999992,
+      "range_ratio_vs_tight_ref": 1.0,
+      "range_ratio_vs_unsafe_reference": 0.6884161311034791,
+      "final_total_energy_drift_kj": 0.5397950000000264,
+      "status": "worsening_removed",
+      "why_safer": "Positive verlet-buffer-tolerance re-enables automatic safe list sizing and was already known in TP1.5b to recover the tight reference.",
+      "intended_use": "preferred_validation_baseline_candidate"
+    }
+  ],
+  "tp1_5b_reference_rows": {
+    "tight_ref_n1_r1200": {
+      "total_energy_range_kj": 8.65774499999992,
+      "final_total_energy_drift_kj": 0.5415040000000317
+    },
+    "n10_r0909": {
+      "total_energy_range_kj": 12.57632499999994,
+      "final_total_energy_drift_kj": -4.37384099999997
+    },
+    "n1_r0909": {
+      "total_energy_range_kj": 8.65774499999992,
+      "final_total_energy_drift_kj": 0.5415040000000317
+    },
+    "auto_buffer_n10_vbt0005": {
+      "total_energy_range_kj": 8.65774499999992,
+      "final_total_energy_drift_kj": 0.5397950000000264
+    }
+  }
+}

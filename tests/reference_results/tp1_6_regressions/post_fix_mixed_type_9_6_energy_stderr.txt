@@ -1,0 +1,28 @@
+   :-) GROMACS - gmx energy, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_6_regressions/work/mixed_type_9_6_ljpme
+Command line:
+  gmx energy -f test.edr -o energy.xvg
+
+Opened test.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  LJ-(SR)          2  Coulomb-(SR)     3  LJ-recip.        4  Potential     
+  5  Kinetic-En.      6  Total-Energy     7  Temperature      8  Pressure      
+  9  Vir-XX          10  Vir-XY          11  Vir-XZ          12  Vir-YX        
+ 13  Vir-YY          14  Vir-YZ          15  Vir-ZX          16  Vir-ZY        
+ 17  Vir-ZZ          18  Pres-XX         19  Pres-XY         20  Pres-XZ       
+ 21  Pres-YX         22  Pres-YY         23  Pres-YZ         24  Pres-ZX       
+ 25  Pres-ZY         26  Pres-ZZ         27  #Surf*SurfTen   28  T-rest        
+
+
+Reading energy frame      0 time    0.000         
+Last energy frame read 0 time    0.000         
+
+GROMACS reminds you: "The secret to getting ahead is getting started" (Mark Twain)
+

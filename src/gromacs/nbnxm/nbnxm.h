@@ -477,6 +477,13 @@ public:
      */
     const PlainPairlist& plainPairlist(real range, ArrayRef<const RVec> shiftVectors);
 
+    /*! \brief Returns a plain pairlist from the active (possibly pruned) lists
+     *
+     * When dynamic pruning is enabled, this exposes the current inner list rather than the
+     * outer list used for list refreshes.
+     */
+    const PlainPairlist& activePlainPairlist(real range, ArrayRef<const RVec> shiftVectors);
+
 private:
     //! All data related to the pair lists
     std::unique_ptr<PairlistSets> pairlistSets_;

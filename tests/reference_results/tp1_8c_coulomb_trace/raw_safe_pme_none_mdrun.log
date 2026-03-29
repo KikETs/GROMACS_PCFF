@@ -1,0 +1,35 @@
+===== safe_pme_none mdrun stdout =====
+
+
+===== safe_pme_none mdrun stderr =====
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_8c_coulomb_trace/work/safe_pme_none
+Command line:
+  gmx mdrun -s run.tpr -deffnm run -nt 1
+
+Reading file run.tpr, VERSION 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (single precision)
+Can not increase nstlist because an NVE ensemble is used
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+NOTE: Thread affinity was not set.
+starting mdrun 'dense_salt_polymer'
+20000 steps,     20.0 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        6.306        6.306      100.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      274.028        0.088        0.315            0.856 
+
+GROMACS reminds you: "Given enough eyeballs, all bugs are shallow." (Linus Torvalds, on the power of open source)
+
+

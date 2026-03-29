@@ -35,6 +35,9 @@
 #define GMX_MDLIB_FORCE_H
 
 #include <cstdint>
+#include <string>
+
+#include <cstdint>
 #include <cstdio>
 
 #include <memory>
@@ -195,6 +198,8 @@ private:
     gmx::ArrayRef<const double> chargeC6Sum_;
     //! Cut-off treatment for Coulomb
     CoulombInteractionType coulombInteractionType_;
+    //! Coulomb interaction modifier
+    InteractionModifiers coulombModifier_;
     //! Van der Waals interaction treatment
     VanDerWaalsType vanDerWaalsType_;
     //! Ewald geometry
@@ -233,6 +238,10 @@ private:
     t_nrnb* nrnb_;
     //! Wall cycle counters
     gmx_wallcycle* wcycle_;
+    //! Optional TP1.8c trace output path, enabled only when explicitly requested
+    std::string tp18cTraceFile_;
+    //! Monotonic per-call index used as a step surrogate for TP1.8c tracing
+    int64_t tp18cTraceCallCounter_ = 0;
 };
 
 #endif

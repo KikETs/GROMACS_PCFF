@@ -1,0 +1,88 @@
+===== dense_nonlisted__n10_r0909 energy stdout =====
+
+Statistics over 1001 steps [ 0.0000 through 1.0000 ps ], 4 data sets
+All statistics are over 1001 points (frames)
+
+Energy                      Average   Err.Est.       RMSD  Tot-Drift
+-------------------------------------------------------------------------------
+Potential                  -651.534         10    75.4409   -45.0742  (kJ/mol)
+Kinetic En.                 132.469        9.9    75.1082    41.5801  (kJ/mol)
+Total Energy               -519.065       0.73    1.75017   -3.49412  (kJ/mol)
+Temperature                 3540.52        260    2007.43    1111.32  (K)
+
+===== dense_nonlisted__n10_r0909 energy stderr =====
+   :-) GROMACS - gmx energy, 2027.0-dev-20260317-3c0b91be8e-dirty-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_5b_dense_cutoff_audit/work/dense_nonlisted/n10_r0909
+Command line:
+  gmx energy -f run.edr -o energy.xvg
+
+Opened run.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  LJ-(SR)          2  Coulomb-(SR)     3  Potential        4  Kinetic-En.   
+  5  Total-Energy     6  Temperature      7  Pressure         8  Vir-XX        
+  9  Vir-XY          10  Vir-XZ          11  Vir-YX          12  Vir-YY        
+ 13  Vir-YZ          14  Vir-ZX          15  Vir-ZY          16  Vir-ZZ        
+ 17  Pres-XX         18  Pres-XY         19  Pres-XZ         20  Pres-YX       
+ 21  Pres-YY         22  Pres-YZ         23  Pres-ZX         24  Pres-ZY       
+ 25  Pres-ZZ         26  #Surf*SurfTen   27  T-rest        
+
+
+Reading energy frame      0 time    0.000         
+Reading energy frame      1 time    0.001         
+Reading energy frame      2 time    0.002         
+Reading energy frame      3 time    0.003         
+Reading energy frame      4 time    0.004         
+Reading energy frame      5 time    0.005         
+Reading energy frame      6 time    0.006         
+Reading energy frame      7 time    0.007         
+Reading energy frame      8 time    0.008         
+Reading energy frame      9 time    0.009         
+Reading energy frame     10 time    0.010         
+Reading energy frame     11 time    0.011         
+Reading energy frame     12 time    0.012         
+Reading energy frame     13 time    0.013         
+Reading energy frame     14 time    0.014         
+Reading energy frame     15 time    0.015         
+Reading energy frame     16 time    0.016         
+Reading energy frame     17 time    0.017         
+Reading energy frame     18 time    0.018         
+Reading energy frame     19 time    0.019         
+Reading energy frame     20 time    0.020         
+Reading energy frame     30 time    0.030         
+Reading energy frame     40 time    0.040         
+Reading energy frame     50 time    0.050         
+Reading energy frame     60 time    0.060         
+Reading energy frame     70 time    0.070         
+Reading energy frame     80 time    0.080         
+Reading energy frame     90 time    0.090         
+Reading energy frame    100 time    0.100         
+Reading energy frame    110 time    0.110         
+Reading energy frame    120 time    0.120         
+Reading energy frame    130 time    0.130         
+Reading energy frame    140 time    0.140         
+Reading energy frame    150 time    0.150         
+Reading energy frame    160 time    0.160         
+Reading energy frame    170 time    0.170         
+Reading energy frame    180 time    0.180         
+Reading energy frame    190 time    0.190         
+Reading energy frame    200 time    0.200         
+Reading energy frame    300 time    0.300         
+Reading energy frame    400 time    0.400         
+Reading energy frame    500 time    0.500         
+Reading energy frame    600 time    0.600         
+Reading energy frame    700 time    0.700         
+Reading energy frame    800 time    0.800         
+Reading energy frame    900 time    0.900         
+Reading energy frame   1000 time    1.000         
+Last energy frame read 1000 time    1.000         
+
+GROMACS reminds you: "Scientists do not join hands every Sunday and sing "Yes gravity is real! I know gravity is real! I will have faith! I believe in my heart that what goes up, up, up must come down, down, down. Amen!" If they did, we would think they were pretty insecure about the concept." (Dan Barker)
+
+

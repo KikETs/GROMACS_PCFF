@@ -1,0 +1,55 @@
+{
+  "milestone": "TP1.8b",
+  "reference_run_id": "safe_pme_shift_ref",
+  "reference_coulombtype": "PME",
+  "reference_coulomb_modifier": "Potential-shift-Verlet",
+  "reference_runtime_coulomb_mode": "pme_coulomb",
+  "reference_runtime_pme_banner_is_generic_for_usingPmeOrEwald": true,
+  "variant_checks": [
+    {
+      "run_id": "safe_pme_tight_mesh",
+      "role": "reciprocal_accuracy_variant",
+      "changed_coulombtype_vs_reference": false,
+      "changed_coulomb_modifier_vs_reference": false,
+      "changed_pme_mesh_controls_vs_reference": true,
+      "same_short_range_baseline_vs_reference": true,
+      "reference_runtime_coulomb_mode": "pme_coulomb",
+      "variant_runtime_coulomb_mode": "pme_coulomb",
+      "runtime_pairlist_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+      "runtime_potential_shift_line": "Potential shift: LJ r^-9: -2.581e+00 r^-6: -1.882e+00, Ewald -1.111e-06",
+      "runtime_pme_banner_is_generic_for_usingPmeOrEwald": true,
+      "intended_path_change_verified": true,
+      "path_change_statement": "PME reciprocal accuracy changed while Coulomb PME mode and direct-space family stayed in the PME/Ewald family."
+    },
+    {
+      "run_id": "safe_ewald_shift",
+      "role": "reciprocal_solver_variant",
+      "changed_coulombtype_vs_reference": true,
+      "changed_coulomb_modifier_vs_reference": false,
+      "changed_pme_mesh_controls_vs_reference": false,
+      "same_short_range_baseline_vs_reference": true,
+      "reference_runtime_coulomb_mode": "pme_coulomb",
+      "variant_runtime_coulomb_mode": "ewald_no_pme_mesh",
+      "runtime_pairlist_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+      "runtime_potential_shift_line": "Potential shift: LJ r^-9: -2.581e+00 r^-6: -1.882e+00",
+      "runtime_pme_banner_is_generic_for_usingPmeOrEwald": true,
+      "intended_path_change_verified": true,
+      "path_change_statement": "Reciprocal solver changed from PME mesh to full Ewald while the short-range baseline stayed fixed and the source path indicates the direct-space family remains Ewald-family."
+    },
+    {
+      "run_id": "safe_pme_none",
+      "role": "direct_space_modifier_variant",
+      "changed_coulombtype_vs_reference": false,
+      "changed_coulomb_modifier_vs_reference": true,
+      "changed_pme_mesh_controls_vs_reference": false,
+      "same_short_range_baseline_vs_reference": true,
+      "reference_runtime_coulomb_mode": "pme_coulomb",
+      "variant_runtime_coulomb_mode": "pme_coulomb",
+      "runtime_pairlist_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+      "runtime_potential_shift_line": "Potential shift: LJ r^-9: -2.581e+00 r^-6: -1.882e+00, Ewald -0.000e+00",
+      "runtime_pme_banner_is_generic_for_usingPmeOrEwald": true,
+      "intended_path_change_verified": true,
+      "path_change_statement": "Direct-space Coulomb modifier changed while Coulomb PME remained active and the short-range baseline stayed fixed."
+    }
+  ]
+}

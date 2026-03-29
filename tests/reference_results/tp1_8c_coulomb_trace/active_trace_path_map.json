@@ -1,0 +1,68 @@
+{
+  "milestone": "TP1.8c",
+  "authoritative_system_id": "dense_salt_polymer",
+  "reference_run_id": "safe_pme_shift_ref",
+  "paths": [
+    {
+      "file": "src/gromacs/mdlib/force.cpp",
+      "function": "CpuPpLongRangeNonbondeds::calculate",
+      "role": "Primary traced long-range Coulomb accumulation path. Emits TP1.8c per-call trace rows after reciprocal/correction accumulation.",
+      "status": "active_and_traced",
+      "why": [
+        "This function chooses PME mesh versus Ewald long-range work.",
+        "It accumulates Vlr_q, Vcorr_q and writes InteractionFunction::CoulombReciprocalSpace."
+      ]
+    },
+    {
+      "file": "src/gromacs/mdlib/force.cpp",
+      "function": "gmx_pme_do call site inside CpuPpLongRangeNonbondeds::calculate",
+      "role": "PME reciprocal accumulation call path.",
+      "status": "active_in_baseline_inactive_in_ewald_variant",
+      "why": [
+        "Baseline uses coulombtype = PME and has a Solve PME timing line.",
+        "Ewald variant has no Solve PME timing line and no PME mesh call."
+      ]
+    },
+    {
+      "file": "src/gromacs/mdlib/force.cpp",
+      "function": "do_ewald call site inside CpuPpLongRangeNonbondeds::calculate",
+      "role": "Ordinary reciprocal-space Ewald accumulation path.",
+      "status": "inactive_in_baseline_active_in_ewald_variant",
+      "why": [
+        "The Ewald variant uses coulombtype = Ewald.",
+        "The log reports 'Will do ordinary reciprocal space Ewald sum.'"
+      ]
+    },
+    {
+      "file": "src/gromacs/mdlib/forcerec.cpp",
+      "function": "init_forcerec electrostatics translation",
+      "role": "Fixes the direct-space electrostatics family and stores the Coulomb modifier.",
+      "status": "active_and_fixed_to_ewald_family_for_baseline_and_ewald_variant",
+      "why": [
+        "PME and Ewald both map to NbkernelElecType::Ewald.",
+        "This lets TP1.8c compare reciprocal solver changes while keeping the direct-space family fixed."
+      ]
+    },
+    {
+      "file": "src/gromacs/ewald/pme.cpp",
+      "function": "gmx_pme_init",
+      "role": "Activates Coulomb PME work only when usingPme(coulombtype).",
+      "status": "active_in_baseline_inactive_in_ewald_variant",
+      "why": [
+        "Baseline uses coulombtype = PME.",
+        "Ewald variant switches to coulombtype = Ewald."
+      ]
+    },
+    {
+      "file": "src/gromacs/nbnxm/nbnxm_setup.cpp",
+      "function": "chooseLJPmeCombinationRule",
+      "role": "LJ-PME gate.",
+      "status": "inactive",
+      "why": [
+        "All TP1.8c runs keep vdw-type = Cut-off.",
+        "TP1.4 LJ-PME path therefore remains inactive."
+      ]
+    }
+  ],
+  "tp1_4_lj_pme_path_status": "inactive"
+}

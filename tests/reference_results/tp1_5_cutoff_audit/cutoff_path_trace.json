@@ -1,0 +1,60 @@
+{
+  "tp1_3_cutoff_only_path": [
+    {
+      "file": "src/gromacs/mdlib/forcerec.cpp",
+      "function": "init_forcerec",
+      "physical_role": "Disables SIMD for non-12 LJ repulsion and logs the plain-C fallback.",
+      "why_suspected": "TP1.3 cut-off and PME runs both report repulsion power 9 and plain-C reference kernels.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/nbnxm_setup.cpp",
+      "function": "chooseLJCombinationRule",
+      "physical_role": "Selects full pair matrix for non-12 repulsion.",
+      "why_suspected": "PCFF 9-6 cut-off-only path uses explicit pair parameters rather than optimized combination-rule kernels.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/nbnxm_setup.cpp",
+      "function": "init_nb_verlet",
+      "physical_role": "Initializes NBNxM kernel setup and pairlist pruning.",
+      "why_suspected": "This is the cut-off-only short-range setup entrypoint used by TP1.3.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/kerneldispatch.cpp",
+      "function": "getCoulombKernelType",
+      "physical_role": "Maps Coulomb Cut-off to the ReactionField kernel family.",
+      "why_suspected": "Cut-off-only does not enter PME reciprocal-space code; it enters the RF-style direct kernel path.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/kerneldispatch.cpp",
+      "function": "getVdwKernelType",
+      "physical_role": "Selects cut-off LJ kernel variant with full combination matrix.",
+      "why_suspected": "The problematic path is cut-off LJ with repulsion power 9 and no LJ-PME.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/kerneldispatch.cpp",
+      "function": "nbnxn_kernel_cpu",
+      "physical_role": "Dispatches CPU plain-C or SIMD kernels to actual pairlists.",
+      "why_suspected": "TP1.3 logs show plain-C-4x4 dispatch for both PME and cut-off runs.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
+      "function": "reference inner nonbonded loop",
+      "physical_role": "Applies exclusions, cut-off masking, LJ 9-6 force/energy, RF-style Coulomb, and shift bookkeeping.",
+      "why_suspected": "This is the exact plain-C reference loop exercised by the cut-off-only fixture family.",
+      "evidence_strength": "strong"
+    },
+    {
+      "file": "src/gromacs/nbnxm/pairlist_tuning.cpp",
+      "function": "setupDynamicPairlistPruning",
+      "physical_role": "Chooses pairlist lifetime and inner/outer list radii under Verlet.",
+      "why_suspected": "Neighbor-list cadence was a candidate family, but TP1.3 logs keep the update period at 10 for both PME and cut-off.",
+      "evidence_strength": "moderate"
+    }
+  ]
+}

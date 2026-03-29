@@ -1,0 +1,6 @@
+fixture,metric,pre,post,status
+existing_tp1_4_split_scan,returncode,0,0,unchanged
+existing_tp1_4_split_scan,potential_span,49.236969,49.236965,unchanged_unfixed
+existing_tp1_4_split_scan,force_span,9.657870,9.657860,unchanged_unfixed
+mixed_type_9_6_ljpme_startup,mdrun_returncode,1,0,fixed
+mixed_type_9_6_ljpme_startup,potential,,-4.385970,fixed

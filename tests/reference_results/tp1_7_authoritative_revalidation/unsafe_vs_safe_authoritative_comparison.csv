@@ -1,0 +1,4 @@
+run_id,role,executed_now,comparison_type,runtime_pairlist_line,status,runaway_onset_ps,max_temperature_k,final_temperature_k,total_energy_range_kj,mean_pressure_bar,effect_vs_reference
+historical_tp1_3_reference,trusted_prior_reference,False,historical_reference,"updated every 10 steps, buffer 0.000 nm, rlist 0.900 nm",RUNAWAY,1.0,829.866333,737.177429,72.15625,221.49611303592815,reference
+safe_auto_n10_vbt0005,preferred_safe_baseline,True,safe_rerun,"updated every 10 steps, buffer 0.000 nm, rlist 0.900 nm",RUNAWAY,1.0,820.86377,732.78656,71.87695299999905,314.29123800199596,persists
+manual_safe_n10_r0911,secondary_manual_safe_candidate,True,safe_rerun,"updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",RUNAWAY,1.0,801.985962,762.275391,8.535156000001734,-130.07642297804392,persists

@@ -1,0 +1,63 @@
+{
+  "milestone": "TP1.6",
+  "fixture_reference": "tests/reference_results/tp1_5b_dense_cutoff_audit/dense_fixture_definition.json",
+  "constraining_inputs": {
+    "tp1_5b_pairlist_sweep": "tests/reference_results/tp1_5b_dense_cutoff_audit/pairlist_sweep_results.csv",
+    "tp1_5c_membership_summary": "tests/reference_results/tp1_5c_pairlist_trace_audit/membership_vs_force_summary.json",
+    "tp1_5d_decision_summary": "tests/reference_results/tp1_5d_pairlist_branch_audit/pair_1_4_decision_summary.json",
+    "tp1_5e_contract_verdict": "tests/reference_results/tp1_5e_pairlist_contract_audit/tp1_5e_contract_verdict.json"
+  },
+  "unsafe_regime_identified_in_tp1_5e": {
+    "run_id": "n10_r0909",
+    "nstlist": 10,
+    "rlist": 0.909,
+    "verlet_buffer_tolerance": -1,
+    "why_unsafe": "Manual rlist leaves the critical pair outside the list at the last rebuild and reuses the stale list until the next rebuild."
+  },
+  "candidates": [
+    {
+      "run_id": "tight_ref_n1_r1200",
+      "role": "tight_reference",
+      "nstlist": 1,
+      "rlist": 1.2,
+      "verlet_buffer_tolerance": -1,
+      "why_safer": "Large manual list margin removes near-cutoff reuse sensitivity and serves as the TP1.5b tight reference.",
+      "intended_use": "diagnostic_reference_only"
+    },
+    {
+      "run_id": "n10_r0909",
+      "role": "unsafe_reference",
+      "nstlist": 10,
+      "rlist": 0.909,
+      "verlet_buffer_tolerance": -1,
+      "why_safer": "Not safe; rerun as the TP1.5b/TP1.5e unsafe reference.",
+      "intended_use": "unsafe_reference"
+    },
+    {
+      "run_id": "n1_r0909",
+      "role": "safe_candidate",
+      "nstlist": 1,
+      "rlist": 0.909,
+      "verlet_buffer_tolerance": -1,
+      "why_safer": "Eliminates list reuse entirely on the same manual rlist, so the critical near-cutoff pair cannot be missed between rebuilds.",
+      "intended_use": "diagnostic_control_not_preferred_baseline"
+    },
+    {
+      "run_id": "n10_r0911",
+      "role": "safe_candidate",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "why_safer": "Manual rlist exceeds the TP1.5e step-170 critical pair distance and should avoid the specific allowed-unsafe omission while keeping nstlist=10.",
+      "intended_use": "secondary_manual_safe_candidate"
+    },
+    {
+      "run_id": "auto_buffer_n10_vbt0005",
+      "role": "safe_candidate",
+      "nstlist": 10,
+      "verlet_buffer_tolerance": 0.005,
+      "why_safer": "Positive verlet-buffer-tolerance re-enables automatic safe list sizing and was already known in TP1.5b to recover the tight reference.",
+      "intended_use": "preferred_validation_baseline_candidate"
+    }
+  ]
+}

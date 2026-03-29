@@ -1,11 +1,74 @@
 {
-  "summary": "The cut-off-only path regresses more severely than PME because it triggers a 'Ghost Energy' defect in the plain-C reference kernels.",
-  "defect_mechanism": {
-    "subsystem": "Non-bonded Reference Kernels (CPU)",
-    "file": "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
-    "mechanism": "The energy shift term (reactionFieldShift) is applied based on the neighbor list inclusion (skipmask) rather than the exclusion mask (interact).",
-    "result": "Excluded pairs (bonds, angles, 1-2, 1-3) contribute a massive constant energy offset that fluctuates as the neighbor list is updated."
+  "milestone": "TP1.5",
+  "observed_cutoff_only_symptom": {
+    "tp1_3_trial_id": "TRL-5",
+    "mean_temp_k": 826.8082039700599,
+    "max_temp_k": 1070.383301,
+    "final_temp_k": 1021.742188,
+    "comparison_to_pme_baseline": {
+      "pme_trial_id": "TRL-0",
+      "mean_temp_k": 738.020122257485,
+      "max_temp_k": 829.866333,
+      "final_temp_k": 737.177429
+    }
   },
-  "impact_assessment": "In a dense 270-atom system, there are hundreds of excluded pairs. A -277 kJ/mol error per pair leads to an unphysical energy well of ~50,000 kJ/mol. Fluctuation of this ghost energy causes the observed thermal runaway.",
-  "comparison_to_pme": "PME kernels (SIMD) typically handle exclusions correctly by zeroing the entire interaction or using a separate correction. The reference plain-C kernel fallback (triggered by 9-6 repulsion) lacks this robustness."
+  "why_pme_only_is_insufficient": [
+    "TRL-5 uses Coulomb Cut-off and vdw Cut-off, so it bypasses PME reciprocal electrostatics entirely.",
+    "TRL-0 and TRL-5 both report repulsion power 9 and both dispatch the same plain-C-4x4 nonbonded short-range kernels.",
+    "The cut-off-only worsening therefore cannot be explained by the TP1.4 PME split defect alone."
+  ],
+  "executed_checks": {
+    "exclusion_parity": {
+      "fixture_id": "exclusion_parity_cutoff_9_6",
+      "path_family": [
+        "exclusion mask handling",
+        "listed-vs-nonlisted split",
+        "plain-C reference cut-off path"
+      ],
+      "system_topology_source": "tests/reference_results/pt8_4_nonbonded_parity/exclusion_toy/system.top",
+      "system_coordinate_source": "tests/reference_results/pt8_4_nonbonded_parity/exclusion_toy/system.gro",
+      "lammps_source": "testdata/lammps_golden/systems/exclusion_toy/lammps/system.in",
+      "gromacs_pe_kj": -0.095356,
+      "lammps_pe_kj": -0.095356000104,
+      "difference_kj": 1.0400000305388346e-10,
+      "status": "pass"
+    },
+    "shift_periodic_invariance": {
+      "fixture_id": "shift_periodic_cutoff_9_6",
+      "path_family": [
+        "shift handling / periodic image bookkeeping",
+        "plain-C reference cut-off path"
+      ],
+      "case_a": {
+        "case_id": "across_boundary",
+        "atom2_x_nm": 1.95,
+        "lj_sr_kj": 31822.900391,
+        "coulomb_sr_kj": -1389.355225,
+        "potential_kj": 30433.544922,
+        "force_x_atom2": -2884780.0
+      },
+      "case_b": {
+        "case_id": "inside_box",
+        "atom2_x_nm": 0.15,
+        "lj_sr_kj": 31822.736328,
+        "coulomb_sr_kj": -1389.354248,
+        "potential_kj": 30433.382812,
+        "force_x_atom2": 2884760.0
+      },
+      "potential_diff_kj": 0.16211000000112108,
+      "lj_diff_kj": 0.16406300000016927,
+      "coulomb_diff_kj": 0.0009769999999207357,
+      "force_abs_magnitude_diff": 20.0,
+      "potential_relative_diff": 5.326688048224509e-06,
+      "force_relative_diff": 6.9329376936889465e-06,
+      "status": "pass"
+    }
+  },
+  "bounded_interpretation": [
+    "A blanket exclusion-mask failure is weakened: the exclusion-sensitive cut-off 9-6 parity fixture still matches LAMMPS.",
+    "A blanket shift/PBC bookkeeping failure is weakened: two PBC-equivalent cut-off frames give invariant energy and force.",
+    "Neighbor-list cadence as the sole explanation is weakened: TP1.3 PME and cut-off trials both update the pairlist every 10 steps.",
+    "The remaining suspicion is a denser multi-atom reference-loop application issue on the cut-off-only plain-C path, not a pure PME defect."
+  ],
+  "pme_only_explanation": "split"
 }

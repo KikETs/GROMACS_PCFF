@@ -1,44 +1,106 @@
 # TP1.4 — PME/SixthPower Direct Proof
 
 ## Objective
-To determine if the Particle Mesh Ewald (PME) implementation for PCFF 9-6 interactions in the GROMACS-PCFF fork is physically consistent near the real-space/reciprocal-space split point.
 
-## Methodology
-1.  **Code Inspection:** Identified the code paths for PME grid assignment (`mdatoms.cpp`), PME solving (`pme_solve.cpp`), and real-space PME correction (`simd_kernel_inner.h`).
-2.  **Fixture Building:** Constructed a 2-atom periodic system with PCFF-like dispersion parameters.
-3.  **Split Scan:** Executed multiple GROMACS runs varying the cut-off radius `rcut` from 0.7 to 1.1 nm while keeping the inter-atomic distance constant at 0.5 nm.
-4.  **Parity Analysis:** Compared the sum of short-range and reciprocal forces against analytical values and checked for invariance with respect to `rcut`.
+Directly test whether the current LJ-PME path used for PCFF-style 9-6 interactions is physically continuous across the real-space / reciprocal-space split.
 
-## Evidence of Defect
+## Why This Milestone Exists
 
-### 1. Inaccessible Path (Deadlock)
-The GROMACS-PCFF fork prevents the usage of non-12-6 potentials with PME through a hard check in `src/gromacs/mdlib/forcerec.cpp`:
-```cpp
-if (usingLJPme(interactionConst->vdw.type)) {
-    gmx_fatal(FARGS, "Only LJ repulsion power 12 is supported with LJ-PME");
-}
-```
-This forces all PCFF simulations to use `vdwtype = Cut-off`, which may be inherently less stable or require larger cut-offs than typically used.
+K1 already showed that isolated 9-6 pair mathematics is internally consistent. That shifts the burden to the PME split path:
 
-### 2. Forced Mixing Rule Mismatch
-When `vdwtype = PME` is enabled (even for 12-6), the code in `src/gromacs/nbnxm/atomdata.cpp` forces the real-space `ljCombinationRule` to `Geometric`:
-```cpp
-if (usingLJPme || ljCombinationRule) {
-    params->ljCombinationRule = (usingLJPme ? pmeLJCombinationRule : ...);
-}
-```
-For PCFF, `SixthPower` mixing is required for the $1/r^9$ repulsion term. By forcing `Geometric` mixing, the real-space forces for all mixed-type pairs become physically incorrect.
+- pair-space nonbonded evaluation
+- reciprocal-space LJ grid correction
+- their matching at the split boundary
 
-### 3. Numerical Inconsistency
-The energy/force scan for a pure dispersion system showed large fluctuations as the split point moved:
+TP1.4 therefore avoids large system reruns and instead uses the smallest periodic fixture that can expose a split inconsistency.
 
-| Cut-off (nm) | SR Force | Recip Force | Total Force |
-| :--- | :--- | :--- | :--- |
-| 0.70 | 10.554 | -10.619 | -1.669 |
-| 0.90 | 2.346 | -2.422 | -0.675 |
-| 1.10 | 0.691 | -0.769 | -0.608 |
+## Localized Path
 
-**Finding:** The total force changed by 170% across the range, proving the Ewald split is not correctly balanced. The reciprocal part is significantly weaker than the real-space correction it is supposed to match.
+The path exercised in this milestone is:
 
-## Conclusion
-The suspected PME/SixthPower defect is **DIRECTLY SUPPORTED** by numerical evidence. The implementation lacks the necessary mathematical scaling to handle the PCFF dispersion convention and incorrectly forces geometric mixing on the repulsive part of the potential. This defect is a primary candidate for the charged-system instabilities observed in TP1.3.
+- `src/gromacs/mdlib/forcerec.cpp`
+  - runtime pair prefactors are stored as `6*C6` and `repulsionPower*C_repulsive`
+  - `makeLJPmeC6GridCorrectionParameters()` builds a separate C6 grid correction table
+- `src/gromacs/nbnxm/atomdata.cpp`
+  - 9-6 LJ-PME pair parameters fall back to `LJCombinationRule::None`
+  - LJ-PME still prepares geometric C6 grid data
+- `src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h`
+  - real-space 9-6 pair interaction uses the full pair matrix
+  - LJ-Ewald correction subtracts `c6grid`-based reciprocal contribution
+- `src/gromacs/ewald/pme.cpp`
+  - non-LB LJ-PME uses one geometric LJ grid
+
+This is the precise split TP1.4 tests.
+
+## Minimal Fixture
+
+Fixture definition:
+- 2 atoms, mixed types `A` and `B`
+- cubic periodic box: `5.0 nm`
+- fixed interatomic distance: `0.5 nm`
+- topology defaults: `comb-rule = 4`, `rep-pow = 9`
+- MDP:
+  - `vdwtype = PME`
+  - `lj-pme-comb-rule = geometric`
+  - `coulombtype = Cut-off`
+  - `ewald-rtol-lj = 1e-5`
+
+Why mixed types:
+- a same-type fixture can show split drift
+- a mixed-type fixture is stricter because it directly exercises the suspected SixthPower/PME mixed-pair path
+
+## Measurement Strategy
+
+Hold the pair geometry fixed and move only the split boundary:
+
+- `rcut = 0.7, 0.8, 0.9, 1.0, 1.1 nm`
+
+For each `rcut`, record:
+
+- `LJ (SR)`
+- `LJ recip.`
+- total potential
+- force on atom 2 in `x`
+
+If the split is correct, the total force and potential should stay approximately invariant.
+
+## Results
+
+| `rcut` (nm) | LJ (SR) | LJ recip. | Potential | Force x (atom 2) |
+| :--- | :--- | :--- | :--- | :--- |
+| 0.7 | 6.943827 | -41.748489 | -34.804665 | -14.40740 |
+| 0.8 | 3.124440 | -18.999409 | -15.874969 | -6.63457 |
+| 0.9 | 1.544618 | -9.550016 | -8.005398 | -4.29121 |
+| 1.0 | 0.819228 | -5.205198 | -4.385970 | -3.14929 |
+| 1.1 | 0.456348 | -3.030363 | -2.574015 | -2.38829 |
+
+Continuity metrics:
+- `potential_span = 32.23065 kJ/mol`
+- `force_span = 12.01911`
+- `relative_span_vs_rcut_1p1 = 12.52`
+
+## Direct Conclusion
+
+The total LJ energy and force are not even approximately invariant with respect to `rcut`. That is direct evidence of a physical inconsistency in the LJ-PME split exercised by this 9-6 mixed-pair fixture.
+
+Classification:
+- **defect reproduced and plausibly large enough to matter**
+
+## Limits
+
+This milestone does **not** establish:
+
+- the single exact algebraic term at fault
+- that this is the dominant TP1.3 cause
+- that transport calculations should begin
+
+Those would require a narrower localization step first.
+
+## Preserved Outputs
+
+- `tools/run_tp1_4_pme_proof/run_pme_proof.py`
+- `tools/run_tp1_4_pme_proof/run_logs.json`
+- `tests/reference_results/tp1_4_pme_proof/pme_fixture_definition.json`
+- `tests/reference_results/tp1_4_pme_proof/pme_energy_force_scan.csv`
+- `tests/reference_results/tp1_4_pme_proof/pme_continuity_summary.json`
+- `tests/reference_results/tp1_4_pme_proof/tp1_4_suspicion_update.json`

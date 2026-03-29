@@ -1,0 +1,17 @@
+{
+  "fixture_name": "mixed_type_9_6_ljpme_startup",
+  "purpose": "Reproduce the TP1.4 mixed-type 9-6 LJ-PME pair-rule startup assert with the smallest possible system.",
+  "system": "2-atom periodic box with different atom types and repulsion power 9",
+  "topology_defaults": {
+    "comb_rule": 4,
+    "repulsion_power": 9.0
+  },
+  "mdp": {
+    "vdwtype": "PME",
+    "lj_pme_comb_rule": "geometric",
+    "rvdw": 1.0,
+    "rcoulomb": 1.0
+  },
+  "expected_pre_fix": "mdrun aborts on nbnxm_setup.cpp assertion",
+  "expected_post_fix": "mdrun completes and writes energy terms"
+}

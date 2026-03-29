@@ -1,0 +1,50 @@
+{
+  "milestone": "TP1.8",
+  "authoritative_system_id": "dense_salt_polymer",
+  "authoritative_system_source": "tests/reference_results/m10_4_charged_ensemble_gate/dense_salt_polymer",
+  "tp1_3_executed_baseline_source": "tests/reference_results/tp1_3_stabilization/TRL-0",
+  "tp1_7b_same_build_source": "tests/reference_results/tp1_7b_authoritative_ab",
+  "reference_run_id": "safe_pme_n10_r0911",
+  "comparison_runs": [
+    {
+      "run_id": "safe_pme_n10_r0911",
+      "role": "safe_baseline_reference",
+      "coulombtype": "PME",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 4,
+      "fourierspacing": 0.12,
+      "ewald_rtol": 1e-05,
+      "why": "Reuses the TP1.7b runtime-distinct safe short-range authoritative baseline without changing the short-range regime.",
+      "expected_runtime_pairlist_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+      "expected_longrange_runtime": "pme_coulomb"
+    },
+    {
+      "run_id": "safe_pme_tight_fs006_po6",
+      "role": "pme_accuracy_variant",
+      "coulombtype": "PME",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "pme_order": 6,
+      "fourierspacing": 0.06,
+      "ewald_rtol": 1e-06,
+      "why": "Tightens Coulomb PME reciprocal accuracy while holding the short-range safe baseline fixed.",
+      "expected_runtime_pairlist_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+      "expected_longrange_runtime": "pme_coulomb"
+    },
+    {
+      "run_id": "safe_cutoff_n10_r0911",
+      "role": "no_reciprocal_cutoff_variant",
+      "coulombtype": "Cut-off",
+      "nstlist": 10,
+      "rlist": 0.911,
+      "verlet_buffer_tolerance": -1,
+      "ewald_rtol": 1e-05,
+      "why": "Removes reciprocal-space Coulomb treatment while keeping the short-range safe baseline and cut-off radii fixed, to test whether the surviving runaway is strongly tied to the active PME path.",
+      "expected_runtime_pairlist_line": "updated every 10 steps, buffer 0.011 nm, rlist 0.911 nm",
+      "expected_longrange_runtime": "cutoff_no_reciprocal"
+    }
+  ]
+}
