@@ -1,0 +1,35 @@
+{
+  "verdict": "NEW_VERSIONED_OFFLINE_COMPARE_SCRIPT_ADDED",
+  "fixture": "dense_oligomer",
+  "dt_label": "dt_0p0005",
+  "current_fixture_only_rule": true,
+  "existing_generator_found": false,
+  "primary_input_boundary_table": "/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/step3_md_refresh_restore_review_summary/dense_oligomer/dt_0p0005/refresh_restore_boundary_table.tsv",
+  "primary_input_final_kick_trace": "/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/step24_final_kick_schedule_contract_trace/dense_oligomer/dt_0p0005/exact_three_level/final_kick_consumer_contract_trace.txt",
+  "primary_input_plain_stage_trace": "/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/step4_nextstep_workload_review_multistep_v2/dense_oligomer/dt_0p0005/plain_verlet/multistep_xvf_stage_trace.txt",
+  "first_wrong_action": {
+    "consumer": "refresh_restore_oracle_compare",
+    "action": "legacy offline join treated after_refresh/after_restore/after_handoff exact rows as directly comparable to plain STEP{next}_POST_FORCE_XVF",
+    "replacement_rule": "join plain post-force only against exact producer_safe_total semantic class"
+  },
+  "producer_safe_available_but_previously_ignored": true,
+  "decisive_row": {
+    "step": 1,
+    "next_step": 2,
+    "atom0": {
+      "selected_label": "producer_safe_total",
+      "absmax_selected_vs_plain": 0.0578498840332,
+      "absmax_after_restore_vs_plain": 6.154977798461898
+    },
+    "atom5": {
+      "selected_label": "producer_safe_total",
+      "absmax_selected_vs_plain": 0.02935695648193,
+      "absmax_after_restore_vs_plain": 6.17540884017944
+    }
+  },
+  "runtime_scope_touched": false,
+  "notes": [
+    "This script encodes the semantic-class rule explicitly rather than inferring it from legacy stage labels.",
+    "restored/consumed rows remain in the output as audit-only classes and are excluded from the plain-facing join."
+  ]
+}

@@ -51,6 +51,7 @@
 #include <fstream>
 #include <iomanip>
 #include <memory>
+#include <mutex>
 #include <numeric>
 #include <optional>
 #include <sstream>
@@ -242,6 +243,7 @@ gmx::ArrayRef<const gmx::RVec> forceForExactRespaKickLevel(const t_inputrec&    
 
     const int forceEvaluationStep = baseStep + ((phase == RespaKickPhase::Final) ? 1 : 0);
     const int highestActiveLevel  = gmx::highestActiveMtsLevel(inputRecord.mtsLevels, forceEvaluationStep);
+
     if (highestActiveLevel <= 0)
     {
         return gmx::makeConstArrayRef(forceView->force());
@@ -253,6 +255,7 @@ gmx::ArrayRef<const gmx::RVec> forceForExactRespaKickLevel(const t_inputrec&    
 
     const auto physicalForce = gmx::makeConstArrayRef(forceView->force());
     reconstructedLevel0Force->assign(physicalForce.begin(), physicalForce.end());
+
     for (int slowLevel = 1; slowLevel <= highestActiveLevel; slowLevel++)
     {
         const auto slowForce = gmx::makeConstArrayRef(forceView->forceForMtsLevel(slowLevel));
@@ -324,6 +327,229 @@ void maybeDumpTotalForceForDiagnostics(const t_inputrec&                 inputRe
                                      gmx::makeConstArrayRef(forceView->force()));
 }
 
+struct Tp18eTraceConfig
+{
+    bool        enabled = false;
+    std::string path;
+};
+
+std::mutex g_tp18eTraceMutex;
+
+const Tp18eTraceConfig& tp18eTraceConfig()
+{
+    static const Tp18eTraceConfig config = []()
+    {
+        Tp18eTraceConfig result;
+        if (const char* value = std::getenv("GMX_TP18E_TRACE_FILE"))
+        {
+            if (*value != '\0')
+            {
+                result.enabled = true;
+                result.path    = value;
+
+                std::filesystem::path tracePath(result.path);
+                std::filesystem::create_directories(tracePath.parent_path());
+                std::ofstream output(tracePath, std::ios::trunc);
+                GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18E_TRACE_FILE for writing");
+                output << "step,stage,using_mts_combined_force,force_l2,force_max_abs,"
+                          "state_x_l2,state_x_max_abs,state_v_l2,state_v_max_abs,"
+                          "xprime_available,xprime_l2,xprime_max_abs,"
+                          "force_vir_trace,shake_vir_trace,total_vir_trace,pres_trace,"
+                          "potential_energy_kj,kinetic_energy_kj,temperature_k\n";
+            }
+        }
+        return result;
+    }();
+
+    return config;
+}
+
+std::pair<double, double> tp18eSummarizeBuffer(gmx::ArrayRef<const gmx::RVec> values)
+{
+    double squaredNormSum = 0.0;
+    double maxAbs         = 0.0;
+
+    for (const auto& value : values)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            const double component = value[d];
+            squaredNormSum += component * component;
+            maxAbs = std::max(maxAbs, std::abs(component));
+        }
+    }
+
+    return { std::sqrt(squaredNormSum), maxAbs };
+}
+
+double tp18eTraceOfTensor(const tensor value)
+{
+    double trace = 0.0;
+    for (int d = 0; d < DIM; ++d)
+    {
+        trace += value[d][d];
+    }
+    return trace;
+}
+
+void appendTp18eTraceRow(const int64_t                   step,
+                         const char*                     stage,
+                         const gmx::ArrayRef<const gmx::RVec> force,
+                         const bool                      usingMtsCombinedForce,
+                         const gmx::ArrayRef<const gmx::RVec> stateX,
+                         const gmx::ArrayRef<const gmx::RVec> stateV,
+                         const gmx::ArrayRef<const gmx::RVec> xPrime,
+                         const bool                      haveXPrime,
+                         const tensor                    forceVir,
+                         const tensor                    shakeVir,
+                         const tensor                    totalVir,
+                         const tensor                    pres,
+                         const gmx_enerdata_t*           enerd)
+{
+    const auto& config = tp18eTraceConfig();
+    if (!config.enabled)
+    {
+        return;
+    }
+
+    const auto [forceL2, forceMaxAbs]     = tp18eSummarizeBuffer(force);
+    const auto [stateXL2, stateXMaxAbs]   = tp18eSummarizeBuffer(stateX);
+    const auto [stateVL2, stateVMaxAbs]   = tp18eSummarizeBuffer(stateV);
+    const auto [xPrimeL2, xPrimeMaxAbs]   = haveXPrime ? tp18eSummarizeBuffer(xPrime) : std::pair<double, double>{ 0.0, 0.0 };
+    const double forceVirTrace            = tp18eTraceOfTensor(forceVir);
+    const double shakeVirTrace            = tp18eTraceOfTensor(shakeVir);
+    const double totalVirTrace            = tp18eTraceOfTensor(totalVir);
+    const double presTrace                = tp18eTraceOfTensor(pres);
+    const double potentialEnergy          = (enerd != nullptr) ? enerd->term[InteractionFunction::PotentialEnergy] : 0.0;
+    const double kineticEnergy            = (enerd != nullptr) ? enerd->term[InteractionFunction::KineticEnergy] : 0.0;
+    const double temperature              = (enerd != nullptr) ? enerd->term[InteractionFunction::Temperature] : 0.0;
+
+    std::lock_guard<std::mutex> lock(g_tp18eTraceMutex);
+    std::ofstream               output(config.path, std::ios::app);
+    GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18E_TRACE_FILE for appending");
+    output << std::setprecision(17) << step << ',' << stage << ',' << static_cast<int>(usingMtsCombinedForce) << ','
+           << forceL2 << ',' << forceMaxAbs << ','
+           << stateXL2 << ',' << stateXMaxAbs << ','
+           << stateVL2 << ',' << stateVMaxAbs << ','
+           << static_cast<int>(haveXPrime) << ',' << xPrimeL2 << ',' << xPrimeMaxAbs << ','
+           << forceVirTrace << ',' << shakeVirTrace << ',' << totalVirTrace << ',' << presTrace << ','
+           << potentialEnergy << ',' << kineticEnergy << ',' << temperature << '\n';
+}
+
+struct Tp18gTraceConfig
+{
+    bool        enabled = false;
+    std::string path;
+};
+
+std::mutex g_tp18gTraceMutex;
+
+const Tp18gTraceConfig& tp18gTraceConfig()
+{
+    static const Tp18gTraceConfig config = []()
+    {
+        Tp18gTraceConfig result;
+        if (const char* value = std::getenv("GMX_TP18G_TRACE_FILE"))
+        {
+            if (*value != '\0')
+            {
+                result.enabled = true;
+                result.path    = value;
+
+                std::filesystem::path tracePath(result.path);
+                std::filesystem::create_directories(tracePath.parent_path());
+                std::ofstream output(tracePath, std::ios::trunc);
+                GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18G_TRACE_FILE for writing");
+                output << "step,time_ps,stage,b_calc_ener,b_calc_ener_step,"
+                          "pressure_coupling_is_no,pressure_coupling_consumer_active,"
+                          "has_pressure_previous,pressure_previous_copy_executed,"
+                          "energy_add_called,record_nonenergy_called,energy_print_called,"
+                          "total_vir_trace,total_vir_l2,pres_trace,pres_l2,pressure_scalar,"
+                          "potential_energy_kj,kinetic_energy_kj,temperature_k\n";
+            }
+        }
+        return result;
+    }();
+
+    return config;
+}
+
+double tp18gL2OfTensor(const tensor value)
+{
+    double squaredNormSum = 0.0;
+    for (int i = 0; i < DIM; ++i)
+    {
+        for (int j = 0; j < DIM; ++j)
+        {
+            const double component = value[i][j];
+            squaredNormSum += component * component;
+        }
+    }
+    return std::sqrt(squaredNormSum);
+}
+
+bool tp18gPressureCouplingConsumerActive(const t_inputrec* inputrec, const int64_t step)
+{
+    switch (inputrec->pressureCouplingOptions.epc)
+    {
+        case PressureCoupling::No: return false;
+        case PressureCoupling::Berendsen:
+        case PressureCoupling::CRescale:
+            return do_per_step(step, inputrec->pressureCouplingOptions.nstpcouple);
+        case PressureCoupling::ParrinelloRahman:
+            return do_per_step(step + inputrec->pressureCouplingOptions.nstpcouple - 1,
+                               inputrec->pressureCouplingOptions.nstpcouple);
+        case PressureCoupling::Mttk: return true;
+        default: return false;
+    }
+}
+
+void appendTp18gTraceRow(const int64_t         step,
+                         const double          time,
+                         const char*           stage,
+                         const bool            bCalcEner,
+                         const bool            bCalcEnerStep,
+                         const t_inputrec*     inputrec,
+                         const bool            hasPressurePrevious,
+                         const bool            pressurePreviousCopyExecuted,
+                         const bool            energyAddCalled,
+                         const bool            recordNonEnergyCalled,
+                         const bool            energyPrintCalled,
+                         const tensor          totalVir,
+                         const tensor          pres,
+                         const gmx_enerdata_t* enerd)
+{
+    const auto& config = tp18gTraceConfig();
+    if (!config.enabled)
+    {
+        return;
+    }
+
+    const bool   pressureCouplingIsNo       = (inputrec->pressureCouplingOptions.epc == PressureCoupling::No);
+    const bool   pressureCouplingActive     = tp18gPressureCouplingConsumerActive(inputrec, step);
+    const double totalVirTrace              = tp18eTraceOfTensor(totalVir);
+    const double totalVirL2                 = tp18gL2OfTensor(totalVir);
+    const double presTrace                  = tp18eTraceOfTensor(pres);
+    const double presL2                     = tp18gL2OfTensor(pres);
+    const double pressureScalar             = (enerd != nullptr) ? enerd->term[InteractionFunction::Pressure] : 0.0;
+    const double potentialEnergy            = (enerd != nullptr) ? enerd->term[InteractionFunction::PotentialEnergy] : 0.0;
+    const double kineticEnergy              = (enerd != nullptr) ? enerd->term[InteractionFunction::KineticEnergy] : 0.0;
+    const double temperature                = (enerd != nullptr) ? enerd->term[InteractionFunction::Temperature] : 0.0;
+
+    std::lock_guard<std::mutex> lock(g_tp18gTraceMutex);
+    std::ofstream               output(config.path, std::ios::app);
+    GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_TP18G_TRACE_FILE for appending");
+    output << std::setprecision(17) << step << ',' << time << ',' << stage << ','
+           << static_cast<int>(bCalcEner) << ',' << static_cast<int>(bCalcEnerStep) << ','
+           << static_cast<int>(pressureCouplingIsNo) << ',' << static_cast<int>(pressureCouplingActive) << ','
+           << static_cast<int>(hasPressurePrevious) << ',' << static_cast<int>(pressurePreviousCopyExecuted) << ','
+           << static_cast<int>(energyAddCalled) << ',' << static_cast<int>(recordNonEnergyCalled) << ','
+           << static_cast<int>(energyPrintCalled) << ','
+           << totalVirTrace << ',' << totalVirL2 << ','
+           << presTrace << ',' << presL2 << ','
+           << pressureScalar << ',' << potentialEnergy << ',' << kineticEnergy << ',' << temperature << '\n';
+}
+
 void applyRespaVelocityHalfKick(const int                               homenr,
                                 gmx::ArrayRef<const ParticleType>       ptype,
                                 gmx::ArrayRef<const gmx::RVec>          invMassPerDim,
@@ -373,347 +599,28 @@ void driftRespaPositions(const int                         homenr,
 }
 
 static const char* activeM2pTraceDirPath();
-
-static bool shouldTraceRespaStateXChainStep(const int64_t step)
-{
-    static const std::vector<int64_t> steps = []()
-    {
-        std::vector<int64_t> parsedSteps;
-        const char*          value = std::getenv("GMX_PCFF_RESPA_TRACE_MULTI_STEP_COULOMB_STEPS");
-        if (value == nullptr || *value == '\0')
-        {
-            return parsedSteps;
-        }
-
-        std::stringstream ss(value);
-        std::string       item;
-        while (std::getline(ss, item, ','))
-        {
-            if (!item.empty())
-            {
-                parsedSteps.push_back(std::stoll(item));
-            }
-        }
-        return parsedSteps;
-    }();
-
-    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_STATE_X_CHAIN");
-    return enabled != nullptr && *enabled != '\0'
-           && std::find(steps.begin(), steps.end(), step) != steps.end();
-}
-
-static bool shouldTracePositionUpdateStep(const int64_t step)
-{
-    static const std::vector<int64_t> steps = []()
-    {
-        std::vector<int64_t> parsedSteps;
-        const char*          value = std::getenv("GMX_PCFF_RESPA_TRACE_POSITION_UPDATE_STEPS");
-        if (value == nullptr || *value == '\0')
-        {
-            return parsedSteps;
-        }
-
-        std::stringstream ss(value);
-        std::string       item;
-        while (std::getline(ss, item, ','))
-        {
-            if (!item.empty())
-            {
-                parsedSteps.push_back(std::stoll(item));
-            }
-        }
-        return parsedSteps;
-    }();
-
-    const char* traceDir = activeM2pTraceDirPath();
-    return traceDir != nullptr && std::find(steps.begin(), steps.end(), step) != steps.end();
-}
-
-static bool shouldTraceXvfStageStep(const int64_t step)
-{
-    static const std::vector<int64_t> steps = []()
-    {
-        std::vector<int64_t> parsedSteps;
-        const char*          value = std::getenv("GMX_PCFF_RESPA_TRACE_XVF_STEPS");
-        if (value == nullptr || *value == '\0')
-        {
-            return parsedSteps;
-        }
-
-        std::stringstream ss(value);
-        std::string       item;
-        while (std::getline(ss, item, ','))
-        {
-            if (!item.empty())
-            {
-                parsedSteps.push_back(std::stoll(item));
-            }
-        }
-        return parsedSteps;
-    }();
-
-    const char* traceDir = activeM2pTraceDirPath();
-    return traceDir != nullptr && std::find(steps.begin(), steps.end(), step) != steps.end();
-}
-
-static const char* activeM2pTraceDirPath()
-{
-    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
-    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
-}
-
-class ScopedRespaDoForceStateXTraceSuppression
-{
-public:
-    ScopedRespaDoForceStateXTraceSuppression() : previous_(gmx::g_respaSuppressDoForceStateXChain)
-    {
-        gmx::g_respaSuppressDoForceStateXChain = true;
-    }
-
-    ~ScopedRespaDoForceStateXTraceSuppression()
-    {
-        gmx::g_respaSuppressDoForceStateXChain = previous_;
-    }
-
-private:
-    bool previous_;
-};
-
-static const char* postPositionCommitStageName(const int64_t step)
-{
-    return (step == 4) ? "STEP4_POST_POSITION_COMMIT_STATE_X"
-           : (step == 5) ? "STEP5_POST_POSITION_COMMIT_STATE_X"
-           : (step == 6) ? "STEP6_POST_POSITION_COMMIT_STATE_X"
-           : (step == 7) ? "STEP7_POST_POSITION_COMMIT_STATE_X"
-                         : "POST_POSITION_COMMIT_STATE_X";
-}
-
-static const char* postUpdateStageName(const int64_t step)
-{
-    return (step == 4) ? "STEP4_POST_UPDATE_STATE_X"
-           : (step == 5) ? "STEP5_POST_UPDATE_STATE_X"
-           : (step == 6) ? "STEP6_POST_UPDATE_STATE_X"
-           : (step == 7) ? "STEP7_POST_UPDATE_STATE_X"
-                         : "POST_UPDATE_STATE_X";
-}
-
-static const char* endStateStageName(const int64_t step)
-{
-    return (step == 4) ? "STEP4_END_STATE_X"
-           : (step == 5) ? "STEP5_END_STATE_X"
-           : (step == 6) ? "STEP6_END_STATE_X"
-           : (step == 7) ? "STEP7_END_STATE_X"
-                         : "END_STATE_X";
-}
-
-static const char* xvfLoopEntryStageName(const int64_t step)
-{
-    return (step == 0) ? "STEP0_LOOP_ENTRY_XVF"
-           : (step == 1) ? "STEP1_LOOP_ENTRY_XVF"
-           : (step == 2) ? "STEP2_LOOP_ENTRY_XVF"
-           : (step == 3) ? "STEP3_LOOP_ENTRY_XVF"
-           : (step == 4) ? "STEP4_LOOP_ENTRY_XVF"
-                         : nullptr;
-}
-
-static const char* xvfPreForceStageName(const int64_t step)
-{
-    return (step == 0) ? "STEP0_PRE_FORCE_XVF"
-           : (step == 1) ? "STEP1_PRE_FORCE_XVF"
-           : (step == 2) ? "STEP2_PRE_FORCE_XVF"
-           : (step == 3) ? "STEP3_PRE_FORCE_XVF"
-           : (step == 4) ? "STEP4_PRE_FORCE_XVF"
-                         : nullptr;
-}
-
-static const char* xvfPostForceStageName(const int64_t step)
-{
-    return (step == 0) ? "STEP0_POST_FORCE_XVF"
-           : (step == 1) ? "STEP1_POST_FORCE_XVF"
-           : (step == 2) ? "STEP2_POST_FORCE_XVF"
-           : (step == 3) ? "STEP3_POST_FORCE_XVF"
-           : (step == 4) ? "STEP4_POST_FORCE_XVF"
-                         : nullptr;
-}
-
-static const char* xvfPreUpdateStageName(const int64_t step)
-{
-    return (step == 0) ? "STEP0_PRE_UPDATE_XVF"
-           : (step == 1) ? "STEP1_PRE_UPDATE_XVF"
-           : (step == 2) ? "STEP2_PRE_UPDATE_XVF"
-           : (step == 3) ? "STEP3_PRE_UPDATE_XVF"
-           : (step == 4) ? "STEP4_PRE_UPDATE_XVF"
-                         : nullptr;
-}
-
-static const char* xvfUpdateInputStageName(const int64_t step)
-{
-    return (step == 0) ? "STEP0_UPDATE_INPUT_XVF"
-           : (step == 1) ? "STEP1_UPDATE_INPUT_XVF"
-           : (step == 2) ? "STEP2_UPDATE_INPUT_XVF"
-           : (step == 3) ? "STEP3_UPDATE_INPUT_XVF"
-           : (step == 4) ? "STEP4_UPDATE_INPUT_XVF"
-                         : nullptr;
-}
-
-static const char* xvfPostPositionCommitStageName(const int64_t step)
-{
-    return (step == 0) ? "STEP0_POST_POSITION_COMMIT_XVF"
-           : (step == 1) ? "STEP1_POST_POSITION_COMMIT_XVF"
-           : (step == 2) ? "STEP2_POST_POSITION_COMMIT_XVF"
-           : (step == 3) ? "STEP3_POST_POSITION_COMMIT_XVF"
-           : (step == 4) ? "STEP4_POST_POSITION_COMMIT_XVF"
-                         : nullptr;
-}
-
-static const char* xvfEndStageName(const int64_t step)
-{
-    return (step == 0) ? "STEP0_END_XVF"
-           : (step == 1) ? "STEP1_END_XVF"
-           : (step == 2) ? "STEP2_END_XVF"
-           : (step == 3) ? "STEP3_END_XVF"
-                         : nullptr;
-}
-
-static void appendStateXChainTraceAtom(const char*        traceDirPath,
-                                       const char*        side,
-                                       const char*        stageName,
-                                       int64_t            step,
-                                       int                atomIndex,
-                                       const gmx::RVec&   coord,
-                                       const char*        writerName,
-                                       const char*        codeLocation,
-                                       const bool         writesStateX)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
-    {
-        return;
-    }
-
-    std::filesystem::path traceDir(traceDirPath);
-    std::filesystem::create_directories(traceDir);
-    std::ofstream output(traceDir / "multistep_state_x_chain_trace.txt", std::ios::app);
-    output << "side=" << side << " step=" << step << " stage=" << stageName << " atom=" << atomIndex
-           << " x=" << std::setprecision(15) << coord[XX] << " y=" << std::setprecision(15)
-           << coord[YY] << " z=" << std::setprecision(15) << coord[ZZ] << " writer="
-           << writerName << " code_location=" << codeLocation << " writes_state_x="
-           << (writesStateX ? "true" : "false") << "\n";
-}
-
-static void appendStateXChainTracePair(const char*                  traceDirPath,
-                                       const char*                  side,
-                                       const char*                  stageName,
-                                       int64_t                      step,
-                                       gmx::ArrayRef<const gmx::RVec> coords,
-                                       const char*                  writerName,
-                                       const char*                  codeLocation,
-                                       const bool                   writesStateX)
-{
-    if (coords.size() <= 5)
-    {
-        return;
-    }
-    appendStateXChainTraceAtom(
-            traceDirPath, side, stageName, step, 0, coords[0], writerName, codeLocation, writesStateX);
-    appendStateXChainTraceAtom(
-            traceDirPath, side, stageName, step, 5, coords[5], writerName, codeLocation, writesStateX);
-}
-
-static void appendMdLoopBoundarySnapshotPair(const char*                  traceDirPath,
-                                             const char*                  side,
-                                             const char*                  stageName,
-                                             int64_t                      step,
-                                             gmx::ArrayRef<const gmx::RVec> coords,
-                                             const char*                  codeLocation)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0' || coords.size() <= 5)
-    {
-        return;
-    }
-
-    std::filesystem::path traceDir(traceDirPath);
-    std::filesystem::create_directories(traceDir);
-    std::ofstream output(traceDir / "multistep_md_loop_boundary_trace.txt", std::ios::app);
-    for (const int atomIndex : { 0, 5 })
-    {
-        output << "side=" << side << " step=" << step << " stage=" << stageName << " atom=" << atomIndex
-               << " x=" << std::setprecision(15) << coords[atomIndex][XX] << " y="
-               << std::setprecision(15) << coords[atomIndex][YY] << " z=" << std::setprecision(15)
-               << coords[atomIndex][ZZ] << " code_location=" << codeLocation
-               << " snapshot_type=md_loop_boundary\n";
-    }
-}
-
-static void appendPositionUpdateTracePair(const char*                    traceDirPath,
-                                          const char*                    side,
-                                          const char*                    rowName,
-                                          int64_t                        step,
-                                          gmx::ArrayRef<const gmx::RVec> position,
-                                          gmx::ArrayRef<const gmx::RVec> velocity,
-                                          gmx::ArrayRef<const gmx::RVec> force,
-                                          const real                     dt,
-                                          const char*                    writerName,
-                                          const char*                    codeLocation)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0' || position.ssize() <= 5 || velocity.ssize() <= 5
-        || force.ssize() <= 5)
-    {
-        return;
-    }
-
-    std::filesystem::path traceDir(traceDirPath);
-    std::filesystem::create_directories(traceDir);
-    std::ofstream output(traceDir / "multistep_position_update_contract_trace.txt", std::ios::app);
-    for (const int atomIndex : { 0, 5 })
-    {
-        output << "side=" << side << " row=" << rowName << " step=" << step << " atom=" << atomIndex
-               << " x=" << std::setprecision(15) << position[atomIndex][XX] << " y="
-               << std::setprecision(15) << position[atomIndex][YY] << " z=" << std::setprecision(15)
-               << position[atomIndex][ZZ] << " vx=" << std::setprecision(15) << velocity[atomIndex][XX]
-               << " vy=" << std::setprecision(15) << velocity[atomIndex][YY] << " vz="
-               << std::setprecision(15) << velocity[atomIndex][ZZ] << " fx="
-               << std::setprecision(15) << force[atomIndex][XX] << " fy=" << std::setprecision(15)
-               << force[atomIndex][YY] << " fz=" << std::setprecision(15) << force[atomIndex][ZZ]
-               << " dt=" << std::setprecision(15) << dt << " writer=" << writerName
-               << " code_location=" << codeLocation << "\n";
-    }
-}
-
-static void appendXvfStageTracePair(const char*                    traceDirPath,
-                                    const char*                    side,
-                                    const char*                    stageName,
-                                    int64_t                        step,
-                                    gmx::ArrayRef<const gmx::RVec> position,
-                                    gmx::ArrayRef<const gmx::RVec> velocity,
-                                    gmx::ArrayRef<const gmx::RVec> force,
-                                    const char*                    writerName,
-                                    const char*                    codeLocation,
-                                    const char*                    snapshotType,
-                                    const char*                    boundaryKind)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0' || position.ssize() <= 5 || velocity.ssize() <= 5
-        || force.ssize() <= 5)
-    {
-        return;
-    }
-
-    std::filesystem::path traceDir(traceDirPath);
-    std::filesystem::create_directories(traceDir);
-    std::ofstream output(traceDir / "multistep_xvf_stage_trace.txt", std::ios::app);
-    for (const int atomIndex : { 0, 5 })
-    {
-        output << "side=" << side << " stage=" << stageName << " step=" << step << " atom=" << atomIndex
-               << " x=" << std::setprecision(15) << position[atomIndex][XX] << " y="
-               << std::setprecision(15) << position[atomIndex][YY] << " z=" << std::setprecision(15)
-               << position[atomIndex][ZZ] << " vx=" << std::setprecision(15) << velocity[atomIndex][XX]
-               << " vy=" << std::setprecision(15) << velocity[atomIndex][YY] << " vz="
-               << std::setprecision(15) << velocity[atomIndex][ZZ] << " fx="
-               << std::setprecision(15) << force[atomIndex][XX] << " fy=" << std::setprecision(15)
-               << force[atomIndex][YY] << " fz=" << std::setprecision(15) << force[atomIndex][ZZ]
-               << " writer=" << writerName << " code_location=" << codeLocation
-               << " snapshot_type=" << snapshotType << " boundary_kind=" << boundaryKind << "\n";
-    }
-}
+static bool shouldTraceInitialKickAuditStep(const int64_t step);
+static bool shouldTraceStep1FinalPhaseAuditStep(const int64_t step);
+static void appendExactInitialKickAuditAtom(const char*      traceDirPath,
+                                            const int64_t    step,
+                                            const int        atomIndex,
+                                            const gmx::RVec& velocityBefore,
+                                            const gmx::RVec& forceUsed,
+                                            const real       dtUsed,
+                                            const gmx::RVec& velocityAfter,
+                                            const char*      forceSourceLabel,
+                                            const char*      codeLocation);
+static void appendFinalKickConsumerContractAuditPair(
+        const char*                                   traceDirPath,
+        const int64_t                                 step,
+        const t_inputrec&                             inputRecord,
+        const std::vector<int>&                       finalKickLevels,
+        gmx::ForceBuffersView&                        forceView,
+        const std::array<std::optional<gmx::RVec>, 2>& level0Used,
+        const std::array<std::optional<gmx::RVec>, 2>& level1Used,
+        const std::array<std::optional<gmx::RVec>, 2>& level2Used,
+        const std::array<gmx::RVec, 2>&               consumedTotal,
+        const char*                                   codeLocation);
 
 void applyRespaHalfKicks(const t_inputrec&                 inputRecord,
                          const int64_t                     baseStep,
@@ -724,21 +631,107 @@ void applyRespaHalfKicks(const t_inputrec&                 inputRecord,
                          gmx::ForceBuffersView*           forceView,
                          gmx::ArrayRef<gmx::RVec>         velocity)
 {
+    if (baseStep == 0 && phase == RespaKickPhase::Initial)
+    {
+        const auto physicalTotalForce = gmx::makeConstArrayRef(forceView->force());
+        std::array<gmx::RVec, 2> velocityBefore = {};
+
+        if (shouldTraceInitialKickAuditStep(baseStep))
+        {
+            copy_rvec(velocity[0], velocityBefore[0]);
+            copy_rvec(velocity[5], velocityBefore[1]);
+        }
+
+        applyRespaVelocityHalfKick(homenr,
+                                   ptype,
+                                   invMassPerDim,
+                                   physicalTotalForce,
+                                   inputRecord.delta_t,
+                                   velocity);
+
+        if (shouldTraceInitialKickAuditStep(baseStep))
+        {
+            appendExactInitialKickAuditAtom(activeM2pTraceDirPath(),
+                                            baseStep,
+                                            0,
+                                            velocityBefore[0],
+                                            physicalTotalForce[0],
+                                            inputRecord.delta_t,
+                                            velocity[0],
+                                            "startupPhysicalTotalForce",
+                                            "src/gromacs/mdrun/md.cpp:644");
+            appendExactInitialKickAuditAtom(activeM2pTraceDirPath(),
+                                            baseStep,
+                                            5,
+                                            velocityBefore[1],
+                                            physicalTotalForce[5],
+                                            inputRecord.delta_t,
+                                            velocity[5],
+                                            "startupPhysicalTotalForce",
+                                            "src/gromacs/mdrun/md.cpp:644");
+        }
+        return;
+    }
+
     const gmx::LammpsRespaBaseStepTrace trace =
             gmx::lammpsRespaBaseStepTrace(inputRecord.mtsLevels, baseStep);
     const std::vector<int>& kickLevels =
             (phase == RespaKickPhase::Initial) ? trace.initialKickLevels : trace.finalKickLevels;
     std::vector<gmx::RVec> reconstructedLevel0Force;
+    const bool traceFinalKickConsumer =
+            phase == RespaKickPhase::Final && shouldTraceStep1FinalPhaseAuditStep(baseStep);
+    std::array<std::optional<gmx::RVec>, 2> level0Used = {};
+    std::array<std::optional<gmx::RVec>, 2> level1Used = {};
+    std::array<std::optional<gmx::RVec>, 2> level2Used = {};
+    std::array<gmx::RVec, 2>               consumedTotal = {};
 
     for (const int mtsLevel : kickLevels)
     {
+        const auto forceForLevel = forceForExactRespaKickLevel(
+                inputRecord, baseStep, phase, forceView, mtsLevel, &reconstructedLevel0Force);
+
+        if (traceFinalKickConsumer && gmx::ssize(forceForLevel) > 5)
+        {
+            consumedTotal[0] += forceForLevel[0];
+            consumedTotal[1] += forceForLevel[5];
+
+            if (mtsLevel == 0)
+            {
+                level0Used[0] = forceForLevel[0];
+                level0Used[1] = forceForLevel[5];
+            }
+            else if (mtsLevel == 1)
+            {
+                level1Used[0] = forceForLevel[0];
+                level1Used[1] = forceForLevel[5];
+            }
+            else if (mtsLevel == 2)
+            {
+                level2Used[0] = forceForLevel[0];
+                level2Used[1] = forceForLevel[5];
+            }
+        }
+
         applyRespaVelocityHalfKick(homenr,
                                    ptype,
                                    invMassPerDim,
-                                   forceForExactRespaKickLevel(
-                                           inputRecord, baseStep, phase, forceView, mtsLevel, &reconstructedLevel0Force),
+                                   forceForLevel,
                                    inputRecord.delta_t * inputRecord.mtsLevels[mtsLevel].stepFactor,
                                    velocity);
+    }
+
+    if (traceFinalKickConsumer)
+    {
+        appendFinalKickConsumerContractAuditPair(activeM2pTraceDirPath(),
+                                                 baseStep,
+                                                 inputRecord,
+                                                 kickLevels,
+                                                 *forceView,
+                                                 level0Used,
+                                                 level1Used,
+                                                 level2Used,
+                                                 consumedTotal,
+                                                 "src/gromacs/mdrun/md.cpp:759");
     }
 }
 
@@ -839,6 +832,677 @@ void prepareExactLammpsRespaVelocityVerletObservables(const t_inputrec&         
 
     *savedConservedQuantity = 0;
     *lastEkin               = enerd->term[InteractionFunction::KineticEnergy];
+}
+
+static const char* activeM2pTraceDirPath()
+{
+    return std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+}
+
+static bool shouldTraceInitialKickAuditStep(const int64_t step)
+{
+    const char* traceDir = activeM2pTraceDirPath();
+    const char* value    = std::getenv("GMX_PCFF_RESPA_TRACE_INITIAL_KICK_AUDIT");
+    return step == 0 && traceDir != nullptr && value != nullptr && *value != '\0';
+}
+
+static void appendExactInitialKickAuditAtom(const char*      traceDirPath,
+                                            const int64_t    step,
+                                            const int        atomIndex,
+                                            const gmx::RVec& velocityBefore,
+                                            const gmx::RVec& forceUsed,
+                                            const real       dtUsed,
+                                            const gmx::RVec& velocityAfter,
+                                            const char*      forceSourceLabel,
+                                            const char*      codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "step0_initial_kick_audit_trace.txt", std::ios::app);
+    output << "side=PATCH step=" << step << " phase=Initial atom=" << atomIndex
+           << " kick_order=0 level_index=-1 kick_levels=startup_total force_source_label="
+           << forceSourceLabel << " dt_used=" << std::setprecision(15) << dtUsed
+           << " half_dt_used=" << std::setprecision(15) << (0.5 * dtUsed)
+           << " velocity_before_x=" << std::setprecision(15) << velocityBefore[XX]
+           << " velocity_before_y=" << std::setprecision(15) << velocityBefore[YY]
+           << " velocity_before_z=" << std::setprecision(15) << velocityBefore[ZZ]
+           << " force_x=" << std::setprecision(15) << forceUsed[XX]
+           << " force_y=" << std::setprecision(15) << forceUsed[YY]
+           << " force_z=" << std::setprecision(15) << forceUsed[ZZ]
+           << " dv_x=" << std::setprecision(15) << (velocityAfter[XX] - velocityBefore[XX])
+           << " dv_y=" << std::setprecision(15) << (velocityAfter[YY] - velocityBefore[YY])
+           << " dv_z=" << std::setprecision(15) << (velocityAfter[ZZ] - velocityBefore[ZZ])
+           << " velocity_after_x=" << std::setprecision(15) << velocityAfter[XX]
+           << " velocity_after_y=" << std::setprecision(15) << velocityAfter[YY]
+           << " velocity_after_z=" << std::setprecision(15) << velocityAfter[ZZ]
+           << " writer=applyRespaHalfKicks code_location=" << codeLocation << "\n";
+}
+
+static bool shouldTraceStep1FinalPhaseAuditStep(const int64_t step)
+{
+    static const std::vector<int64_t> steps = []() {
+        std::vector<int64_t> parsedSteps;
+        const char*          value = std::getenv("GMX_PCFF_RESPA_TRACE_STEP1_FINAL_PHASE_AUDIT_STEPS");
+        if (value == nullptr || *value == '\0')
+        {
+            return parsedSteps;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                parsedSteps.push_back(std::stoll(item));
+            }
+        }
+        return parsedSteps;
+    }();
+
+    const char* traceDir = activeM2pTraceDirPath();
+    return traceDir != nullptr && std::find(steps.begin(), steps.end(), step) != steps.end();
+}
+
+static std::string formatRefreshedForceLevels(const std::vector<int>& refreshedForceLevels)
+{
+    if (refreshedForceLevels.empty())
+    {
+        return "none";
+    }
+
+    std::ostringstream output;
+    for (size_t i = 0; i < refreshedForceLevels.size(); ++i)
+    {
+        if (i != 0)
+        {
+            output << ',';
+        }
+        output << refreshedForceLevels[i];
+    }
+    return output.str();
+}
+
+static bool containsMtsLevel(const std::vector<int>& levels, const int mtsLevel)
+{
+    return std::find(levels.begin(), levels.end(), mtsLevel) != levels.end();
+}
+
+static void appendStep1FinalPhaseAuditAtom(const char*                   traceDirPath,
+                                           const int64_t                 step,
+                                           const int                     atomIndex,
+                                           const char*                   stage,
+                                           const gmx::RVec&              sharedForce,
+                                           const std::optional<gmx::RVec>& level1Force,
+                                           const std::optional<gmx::RVec>& level2Force,
+                                           const bool                    level1RefreshedForNextStep,
+                                           const char*                   codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "step1_final_phase_audit_trace.txt", std::ios::app);
+    output << std::setprecision(15);
+    output << "step=" << step << " atom=" << atomIndex << " stage=" << stage
+           << " F_shared_x=" << sharedForce[XX] << " F_shared_y=" << sharedForce[YY]
+           << " F_shared_z=" << sharedForce[ZZ];
+    if (level1Force.has_value())
+    {
+        output << " F_slow1_x=" << (*level1Force)[XX] << " F_slow1_y=" << (*level1Force)[YY]
+               << " F_slow1_z=" << (*level1Force)[ZZ];
+    }
+    else
+    {
+        output << " F_slow1_x=NA F_slow1_y=NA F_slow1_z=NA";
+    }
+    if (level2Force.has_value())
+    {
+        output << " F_slow2_x=" << (*level2Force)[XX] << " F_slow2_y=" << (*level2Force)[YY]
+               << " F_slow2_z=" << (*level2Force)[ZZ];
+    }
+    else
+    {
+        output << " F_slow2_x=NA F_slow2_y=NA F_slow2_z=NA";
+    }
+
+    gmx::RVec f_fast_reconstructed = sharedForce;
+
+    if (level1Force.has_value())
+    {
+        f_fast_reconstructed[XX] -= (*level1Force)[XX];
+        f_fast_reconstructed[YY] -= (*level1Force)[YY];
+        f_fast_reconstructed[ZZ] -= (*level1Force)[ZZ];
+    }
+    if (level2Force.has_value())
+    {
+        f_fast_reconstructed[XX] -= (*level2Force)[XX];
+        f_fast_reconstructed[YY] -= (*level2Force)[YY];
+        f_fast_reconstructed[ZZ] -= (*level2Force)[ZZ];
+    }
+
+    output << " F_fast_reconstructed_x=" << f_fast_reconstructed[XX]
+           << " F_fast_reconstructed_y=" << f_fast_reconstructed[YY]
+           << " F_fast_reconstructed_z=" << f_fast_reconstructed[ZZ];
+
+    output << " F_shared_only_x=" << sharedForce[XX]
+           << " F_shared_only_y=" << sharedForce[YY]
+           << " F_shared_only_z=" << sharedForce[ZZ];
+
+    const bool primaryAlreadyIncludesLevel1 =
+            std::strcmp(stage, "after_refresh") == 0 && level1RefreshedForNextStep;
+
+    gmx::RVec f_buggy_total = sharedForce;
+    if (level1Force.has_value() && !primaryAlreadyIncludesLevel1)
+    {
+        f_buggy_total += *level1Force;
+    }
+    if (level2Force.has_value())
+    {
+        f_buggy_total += *level2Force;
+    }
+
+    output << " F_shared_plus_slow_levels_x=" << f_buggy_total[XX]
+           << " F_shared_plus_slow_levels_y=" << f_buggy_total[YY]
+           << " F_shared_plus_slow_levels_z=" << f_buggy_total[ZZ];
+
+    output << " code_location=" << codeLocation << "\n";
+}
+
+static void appendFinalKickConsumerContractAuditPair(
+        const char*                                   traceDirPath,
+        const int64_t                                 step,
+        const t_inputrec&                             inputRecord,
+        const std::vector<int>&                       finalKickLevels,
+        gmx::ForceBuffersView&                        forceView,
+        const std::array<std::optional<gmx::RVec>, 2>& level0Used,
+        const std::array<std::optional<gmx::RVec>, 2>& level1Used,
+        const std::array<std::optional<gmx::RVec>, 2>& level2Used,
+        const std::array<gmx::RVec, 2>&               consumedTotal,
+        const char*                                   codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0' || !shouldTraceStep1FinalPhaseAuditStep(step))
+    {
+        return;
+    }
+
+    const auto primary    = forceView.force();
+    const bool haveLevel1 = forceView.numMtsLevelForceBuffers() >= 1;
+    const bool haveLevel2 = forceView.numMtsLevelForceBuffers() >= 2;
+    const auto level1     = haveLevel1 ? gmx::makeConstArrayRef(forceView.forceForMtsLevel(1))
+                                       : gmx::ArrayRef<const gmx::RVec>();
+    const auto level2     = haveLevel2 ? gmx::makeConstArrayRef(forceView.forceForMtsLevel(2))
+                                       : gmx::ArrayRef<const gmx::RVec>();
+    const bool level1RefreshedForNextStep = containsMtsLevel(finalKickLevels, 1);
+    const int  stepPlusOne                = static_cast<int>(step + 1);
+    const int  highestFinalLevel          = gmx::highestActiveMtsLevel(inputRecord.mtsLevels, stepPlusOne);
+    const int  level1StepFactor =
+            inputRecord.mtsLevels.size() > 1 ? inputRecord.mtsLevels[1].stepFactor : -1;
+    const int  level2StepFactor =
+            inputRecord.mtsLevels.size() > 2 ? inputRecord.mtsLevels[2].stepFactor : -1;
+    const bool level1ActiveAtStepPlusOne =
+            level1StepFactor > 0 && stepPlusOne % level1StepFactor == 0;
+    const bool level2ActiveAtStepPlusOne =
+            level2StepFactor > 0 && stepPlusOne % level2StepFactor == 0;
+    const char* level2ScheduleStatus =
+            !haveLevel2 ? "absent_buffer"
+                        : containsMtsLevel(finalKickLevels, 2) ? "scheduled_now"
+                                                                : (level2ActiveAtStepPlusOne
+                                                                           ? "eligible_but_not_selected"
+                                                                           : "buffered_not_scheduled");
+    const char* level2SemanticsFlag = "none_explicit";
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "final_kick_consumer_contract_trace.txt", std::ios::app);
+    output << std::setprecision(15);
+
+    for (const int atomSlot : { 0, 1 })
+    {
+        const int atomIndex = (atomSlot == 0) ? 0 : 5;
+
+        gmx::RVec producerSafeTotal = primary[atomIndex];
+        if (haveLevel1 && !level1RefreshedForNextStep)
+        {
+            producerSafeTotal += level1[atomIndex];
+        }
+        if (haveLevel2)
+        {
+            producerSafeTotal += level2[atomIndex];
+        }
+
+        output << "step=" << step << " atom=" << atomIndex
+               << " phase=Final finalKickLevels=" << formatRefreshedForceLevels(finalKickLevels)
+               << " step_plus_one=" << stepPlusOne
+               << " highestFinalLevel=" << highestFinalLevel
+               << " level1_stepFactor=" << level1StepFactor
+               << " level2_stepFactor=" << level2StepFactor
+               << " level1_active_at_step_plus_one=" << (level1ActiveAtStepPlusOne ? "true" : "false")
+               << " level2_active_at_step_plus_one=" << (level2ActiveAtStepPlusOne ? "true" : "false")
+               << " finalKickHasLevel2=" << (containsMtsLevel(finalKickLevels, 2) ? "true" : "false")
+               << " level2_schedule_status=" << level2ScheduleStatus
+               << " level2_semantics_flag=" << level2SemanticsFlag
+               << " producer_safe_total=" << producerSafeTotal[XX] << "," << producerSafeTotal[YY] << ","
+               << producerSafeTotal[ZZ] << " consumer_base=" << primary[atomIndex][XX] << ","
+               << primary[atomIndex][YY] << "," << primary[atomIndex][ZZ];
+        if (haveLevel1)
+        {
+            output << " consumer_level1=" << level1[atomIndex][XX] << "," << level1[atomIndex][YY] << ","
+                   << level1[atomIndex][ZZ];
+        }
+        else
+        {
+            output << " consumer_level1=NA,NA,NA";
+        }
+        if (haveLevel2)
+        {
+            output << " consumer_level2=" << level2[atomIndex][XX] << "," << level2[atomIndex][YY] << ","
+                   << level2[atomIndex][ZZ];
+        }
+        else
+        {
+            output << " consumer_level2=NA,NA,NA";
+        }
+        if (level0Used[atomSlot].has_value())
+        {
+            output << " level0_used=" << (*level0Used[atomSlot])[XX] << "," << (*level0Used[atomSlot])[YY]
+                   << "," << (*level0Used[atomSlot])[ZZ];
+        }
+        else
+        {
+            output << " level0_used=NA,NA,NA";
+        }
+        if (level1Used[atomSlot].has_value())
+        {
+            output << " level1_used=" << (*level1Used[atomSlot])[XX] << "," << (*level1Used[atomSlot])[YY]
+                   << "," << (*level1Used[atomSlot])[ZZ];
+        }
+        else
+        {
+            output << " level1_used=NA,NA,NA";
+        }
+        if (level2Used[atomSlot].has_value())
+        {
+            output << " level2_used=" << (*level2Used[atomSlot])[XX] << "," << (*level2Used[atomSlot])[YY]
+                   << "," << (*level2Used[atomSlot])[ZZ];
+        }
+        else
+        {
+            output << " level2_used=NA,NA,NA";
+        }
+        output << " final_kick_consumed_total=" << consumedTotal[atomSlot][XX] << ","
+               << consumedTotal[atomSlot][YY] << "," << consumedTotal[atomSlot][ZZ]
+               << " code_location=" << codeLocation << "\n";
+    }
+}
+
+static void doStep1FinalPhaseAuditPair(const char*          traceDirPath,
+                                       const int64_t        step,
+                                       const char*          stage,
+                                       const bool           level1RefreshedForNextStep,
+                                       gmx::ForceBuffersView& forceView,
+                                       const char*          codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    const auto primary    = forceView.force();
+    const bool haveLevel1 = forceView.numMtsLevelForceBuffers() >= 1;
+    const bool haveLevel2 = forceView.numMtsLevelForceBuffers() >= 2;
+    const auto level1     = haveLevel1 ? gmx::makeConstArrayRef(forceView.forceForMtsLevel(1))
+                                   : gmx::ArrayRef<const gmx::RVec>();
+    const auto level2     = haveLevel2 ? gmx::makeConstArrayRef(forceView.forceForMtsLevel(2))
+                                   : gmx::ArrayRef<const gmx::RVec>();
+
+    for (const int atomIndex : { 0, 5 })
+    {
+        appendStep1FinalPhaseAuditAtom(traceDirPath,
+                                     step,
+                                     atomIndex,
+                                     stage,
+                                     primary[atomIndex],
+                                     haveLevel1 ? std::optional(level1[atomIndex]) : std::nullopt,
+                                     haveLevel2 ? std::optional(level2[atomIndex]) : std::nullopt,
+                                     level1RefreshedForNextStep,
+                                     codeLocation);
+    }
+}
+
+static void appendRefreshRestoreContractAuditAtom(const char*                   traceDirPath,
+                                                  const char*                   branchLabel,
+                                                  const int64_t                 step,
+                                                  const int64_t                 nextStep,
+                                                  const bool                    nextStepIsNsStep,
+                                                  const char*                   stage,
+                                                  const char*                   energySource,
+                                                  const int                     highestActiveMtsLevel,
+                                                  const std::vector<int>&       refreshedForceLevels,
+                                                  const int                     atomIndex,
+                                                  gmx::ArrayRef<const gmx::RVec> x,
+                                                  gmx::ArrayRef<const gmx::RVec> v,
+                                                  gmx::ForceBuffersView&        forceView,
+                                                  const gmx_enerdata_t*         enerd,
+                                                  const tensor                  forceVir,
+                                                  const rvec                    muTot,
+                                                  const char*                   codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    const auto primary    = forceView.force();
+    const bool haveLevel1 = forceView.numMtsLevelForceBuffers() >= 1;
+    const bool haveLevel2 = forceView.numMtsLevelForceBuffers() >= 2;
+    const auto level1     = haveLevel1 ? gmx::makeConstArrayRef(forceView.forceForMtsLevel(1))
+                                       : gmx::ArrayRef<const gmx::RVec>();
+    const auto level2     = haveLevel2 ? gmx::makeConstArrayRef(forceView.forceForMtsLevel(2))
+                                       : gmx::ArrayRef<const gmx::RVec>();
+
+    gmx::RVec reconstructedFast = primary[atomIndex];
+    if (haveLevel1)
+    {
+        reconstructedFast -= level1[atomIndex];
+    }
+    if (haveLevel2)
+    {
+        reconstructedFast -= level2[atomIndex];
+    }
+
+    const bool level1RefreshedForNextStep =
+            std::find(refreshedForceLevels.begin(), refreshedForceLevels.end(), 1) != refreshedForceLevels.end();
+    const bool primaryAlreadyIncludesLevel1 =
+            std::strcmp(stage, "after_refresh_before_restore") == 0 && level1RefreshedForNextStep;
+
+    gmx::RVec reconstructedPhysical = primary[atomIndex];
+    if (haveLevel1 && !primaryAlreadyIncludesLevel1)
+    {
+        reconstructedPhysical += level1[atomIndex];
+    }
+    if (haveLevel2)
+    {
+        reconstructedPhysical += level2[atomIndex];
+    }
+
+    const double coulombShortRange =
+            (enerd != nullptr) ? static_cast<double>(enerd->term[InteractionFunction::CoulombShortRange]) : 0.0;
+    const double potentialEnergy =
+            (enerd != nullptr) ? static_cast<double>(enerd->term[InteractionFunction::PotentialEnergy]) : 0.0;
+    const double totalEnergy =
+            (enerd != nullptr) ? static_cast<double>(enerd->term[InteractionFunction::TotalEnergy]) : 0.0;
+    const double conservedEnergy =
+            (enerd != nullptr) ? static_cast<double>(enerd->term[InteractionFunction::ConservedEnergy]) : 0.0;
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "step_refresh_restore_contract_trace.txt", std::ios::app);
+    output << std::setprecision(15);
+    output << "branch=" << branchLabel << " step=" << step << " next_step=" << nextStep
+           << " next_step_is_ns=" << (nextStepIsNsStep ? "true" : "false") << " stage=" << stage
+           << " energy_source=" << energySource << " atom=" << atomIndex
+           << " highest_active_mts_level=" << highestActiveMtsLevel
+           << " refreshed_force_levels=" << formatRefreshedForceLevels(refreshedForceLevels)
+           << " x=" << x[atomIndex][XX] << "," << x[atomIndex][YY] << "," << x[atomIndex][ZZ]
+           << " v=" << v[atomIndex][XX] << "," << v[atomIndex][YY] << "," << v[atomIndex][ZZ]
+           << " F_shared=" << primary[atomIndex][XX] << "," << primary[atomIndex][YY] << ","
+           << primary[atomIndex][ZZ];
+    if (haveLevel1)
+    {
+        output << " F_slow1=" << level1[atomIndex][XX] << "," << level1[atomIndex][YY] << ","
+               << level1[atomIndex][ZZ];
+    }
+    else
+    {
+        output << " F_slow1=NA,NA,NA";
+    }
+    if (haveLevel2)
+    {
+        output << " F_slow2=" << level2[atomIndex][XX] << "," << level2[atomIndex][YY] << ","
+               << level2[atomIndex][ZZ];
+    }
+    else
+    {
+        output << " F_slow2=NA,NA,NA";
+    }
+    output << " F_fast_reconstructed=" << reconstructedFast[XX] << "," << reconstructedFast[YY] << ","
+           << reconstructedFast[ZZ] << " F_shared_plus_slow_levels=" << reconstructedPhysical[XX] << ","
+           << reconstructedPhysical[YY] << "," << reconstructedPhysical[ZZ]
+           << " coulomb_sr=" << coulombShortRange << " potential_energy=" << potentialEnergy
+           << " total_energy=" << totalEnergy << " conserved_energy=" << conservedEnergy
+           << " force_vir_trace=" << tp18eTraceOfTensor(forceVir) << " mu_tot=" << muTot[XX] << ","
+           << muTot[YY] << "," << muTot[ZZ] << " code_location=" << codeLocation << "\n";
+}
+
+static void appendRefreshRestoreContractAuditPair(const char*                   traceDirPath,
+                                                  const char*                   branchLabel,
+                                                  const int64_t                 step,
+                                                  const int64_t                 nextStep,
+                                                  const bool                    nextStepIsNsStep,
+                                                  const char*                   stage,
+                                                  const char*                   energySource,
+                                                  const int                     highestActiveMtsLevel,
+                                                  const std::vector<int>&       refreshedForceLevels,
+                                                  gmx::ArrayRef<const gmx::RVec> x,
+                                                  gmx::ArrayRef<const gmx::RVec> v,
+                                                  gmx::ForceBuffersView&        forceView,
+                                                  const gmx_enerdata_t*         enerd,
+                                                  const tensor                  forceVir,
+                                                  const rvec                    muTot,
+                                                  const char*                   codeLocation)
+{
+    if (!shouldTraceStep1FinalPhaseAuditStep(step))
+    {
+        return;
+    }
+
+    for (const int atomIndex : { 0, 5 })
+    {
+        appendRefreshRestoreContractAuditAtom(traceDirPath,
+                                              branchLabel,
+                                              step,
+                                              nextStep,
+                                              nextStepIsNsStep,
+                                              stage,
+                                              energySource,
+                                              highestActiveMtsLevel,
+                                              refreshedForceLevels,
+                                              atomIndex,
+                                              x,
+                                              v,
+                                              forceView,
+                                              enerd,
+                                              forceVir,
+                                              muTot,
+                                              codeLocation);
+    }
+}
+
+static std::string formatSelectedForceLevels(const gmx::StepWorkload& stepWork)
+{
+    std::ostringstream output;
+    if (stepWork.highestActiveMtsLevel < 0)
+    {
+        output << "none";
+        return output.str();
+    }
+
+    for (int mtsLevel = 0; mtsLevel <= stepWork.highestActiveMtsLevel; mtsLevel++)
+    {
+        if (mtsLevel > 0)
+        {
+            output << ",";
+        }
+        output << mtsLevel;
+    }
+    return output.str();
+}
+
+static void appendNextStepRefreshWorkloadAuditAtom(const char*                          traceDirPath,
+                                                   const int64_t                        step,
+                                                   const int64_t                        nextStep,
+                                                   const char*                          stage,
+                                                   const int                            nextLegacyForceFlags,
+                                                   const gmx::StepWorkload&             currentStepWork,
+                                                   const gmx::StepWorkload&             nextStepWork,
+                                                   const gmx::LammpsRespaBaseStepTrace& nextStepTrace,
+                                                   const int                            atomIndex,
+                                                   gmx::ArrayRef<const gmx::RVec>       x,
+                                                   gmx::ArrayRef<const gmx::RVec>       v,
+                                                   gmx::ForceBuffersView&               forceView,
+                                                   const gmx_enerdata_t*                enerd,
+                                                   const tensor                         forceVir,
+                                                   const char*                          codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    const auto primary    = forceView.force();
+    const bool haveLevel1 = forceView.numMtsLevelForceBuffers() >= 1;
+    const bool haveLevel2 = forceView.numMtsLevelForceBuffers() >= 2;
+    const auto level1     = haveLevel1 ? gmx::makeConstArrayRef(forceView.forceForMtsLevel(1))
+                                       : gmx::ArrayRef<const gmx::RVec>();
+    const auto level2     = haveLevel2 ? gmx::makeConstArrayRef(forceView.forceForMtsLevel(2))
+                                       : gmx::ArrayRef<const gmx::RVec>();
+
+    const bool level1RefreshedForNextStep =
+            std::find(nextStepTrace.refreshedForceLevels.begin(), nextStepTrace.refreshedForceLevels.end(), 1)
+            != nextStepTrace.refreshedForceLevels.end();
+    const bool primaryAlreadyIncludesLevel1 =
+            std::strcmp(stage, "after_refresh_before_restore") == 0 && level1RefreshedForNextStep;
+
+    gmx::RVec reconstructedPhysical = primary[atomIndex];
+    if (haveLevel1 && !primaryAlreadyIncludesLevel1)
+    {
+        reconstructedPhysical += level1[atomIndex];
+    }
+    if (haveLevel2)
+    {
+        reconstructedPhysical += level2[atomIndex];
+    }
+
+    const double coulombShortRange =
+            (enerd != nullptr) ? static_cast<double>(enerd->term[InteractionFunction::CoulombShortRange]) : 0.0;
+    const double potentialEnergy =
+            (enerd != nullptr) ? static_cast<double>(enerd->term[InteractionFunction::PotentialEnergy]) : 0.0;
+    const double totalEnergy =
+            (enerd != nullptr) ? static_cast<double>(enerd->term[InteractionFunction::TotalEnergy]) : 0.0;
+    const double forceVirTrace = tp18eTraceOfTensor(forceVir);
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "step_nextstep_workload_refresh_trace.txt", std::ios::app);
+    output << std::setprecision(15);
+    output << "step=" << step << " next_step=" << nextStep << " stage=" << stage << " atom=" << atomIndex
+           << " next_legacy_force_flags=" << nextLegacyForceFlags
+           << " current_highest_active_mts_level=" << currentStepWork.highestActiveMtsLevel
+           << " next_highest_active_mts_level=" << nextStepWork.highestActiveMtsLevel
+           << " next_do_neighbor_search=" << (nextStepWork.doNeighborSearch ? "true" : "false")
+           << " next_compute_slow_forces=" << (nextStepWork.computeSlowForces ? "true" : "false")
+           << " next_compute_long_range_nonbonded_forces="
+           << (nextStepWork.computeLongRangeNonbondedForces ? "true" : "false")
+           << " next_compute_virial=" << (nextStepWork.computeVirial ? "true" : "false")
+           << " next_compute_energy=" << (nextStepWork.computeEnergy ? "true" : "false")
+           << " next_compute_forces=" << (nextStepWork.computeForces ? "true" : "false")
+           << " next_use_only_mts_combined_force_buffer="
+           << (nextStepWork.useOnlyMtsCombinedForceBuffer ? "true" : "false")
+           << " next_compute_nonbonded_forces=" << (nextStepWork.computeNonbondedForces ? "true" : "false")
+           << " next_compute_listed_forces=" << (nextStepWork.computeListedForces ? "true" : "false")
+           << " next_compute_dhdl=" << (nextStepWork.computeDhdl ? "true" : "false")
+           << " next_use_gpu_x_buffer_ops=" << (nextStepWork.useGpuXBufferOps ? "true" : "false")
+           << " next_use_gpu_f_buffer_ops=" << (nextStepWork.useGpuFBufferOps ? "true" : "false")
+           << " next_use_gpu_pme_f_reduction=" << (nextStepWork.useGpuPmeFReduction ? "true" : "false")
+           << " next_use_gpu_x_halo=" << (nextStepWork.useGpuXHalo ? "true" : "false")
+           << " next_use_gpu_f_halo=" << (nextStepWork.useGpuFHalo ? "true" : "false")
+           << " next_have_gpu_pme_on_this_rank=" << (nextStepWork.haveGpuPmeOnThisRank ? "true" : "false")
+           << " next_compute_pme_on_separate_rank="
+           << (nextStepWork.computePmeOnSeparateRank ? "true" : "false")
+           << " next_combine_mts_forces_before_halo_exchange="
+           << (nextStepWork.combineMtsForcesBeforeHaloExchange ? "true" : "false")
+           << " next_clear_gpu_f_buffer_early=" << (nextStepWork.clearGpuFBufferEarly ? "true" : "false")
+           << " trace_refreshed_force_levels=" << formatRefreshedForceLevels(nextStepTrace.refreshedForceLevels)
+           << " selected_force_levels=" << formatSelectedForceLevels(nextStepWork)
+           << " selection_matches_trace="
+           << ((static_cast<int>(nextStepTrace.refreshedForceLevels.size()) == nextStepWork.highestActiveMtsLevel + 1)
+                       ? "true"
+                       : "false")
+           << " x=" << x[atomIndex][XX] << "," << x[atomIndex][YY] << "," << x[atomIndex][ZZ]
+           << " v=" << v[atomIndex][XX] << "," << v[atomIndex][YY] << "," << v[atomIndex][ZZ]
+           << " F_shared=" << primary[atomIndex][XX] << "," << primary[atomIndex][YY] << ","
+           << primary[atomIndex][ZZ];
+    if (haveLevel1)
+    {
+        output << " F_slow1=" << level1[atomIndex][XX] << "," << level1[atomIndex][YY] << ","
+               << level1[atomIndex][ZZ];
+    }
+    else
+    {
+        output << " F_slow1=NA,NA,NA";
+    }
+    if (haveLevel2)
+    {
+        output << " F_slow2=" << level2[atomIndex][XX] << "," << level2[atomIndex][YY] << ","
+               << level2[atomIndex][ZZ];
+    }
+    else
+    {
+        output << " F_slow2=NA,NA,NA";
+    }
+    output << " F_shared_plus_slow_levels=" << reconstructedPhysical[XX] << "," << reconstructedPhysical[YY]
+           << "," << reconstructedPhysical[ZZ] << " coulomb_sr=" << coulombShortRange
+           << " potential_energy=" << potentialEnergy << " total_energy=" << totalEnergy
+           << " force_vir_trace=" << forceVirTrace << " code_location=" << codeLocation << "\n";
+}
+
+static void appendNextStepRefreshWorkloadAuditPair(const char*                          traceDirPath,
+                                                   const int64_t                        step,
+                                                   const int64_t                        nextStep,
+                                                   const char*                          stage,
+                                                   const int                            nextLegacyForceFlags,
+                                                   const gmx::StepWorkload&             currentStepWork,
+                                                   const gmx::StepWorkload&             nextStepWork,
+                                                   const gmx::LammpsRespaBaseStepTrace& nextStepTrace,
+                                                   gmx::ArrayRef<const gmx::RVec>       x,
+                                                   gmx::ArrayRef<const gmx::RVec>       v,
+                                                   gmx::ForceBuffersView&               forceView,
+                                                   const gmx_enerdata_t*                enerd,
+                                                   const tensor                         forceVir,
+                                                   const char*                          codeLocation)
+{
+    if (!shouldTraceStep1FinalPhaseAuditStep(step))
+    {
+        return;
+    }
+
+    for (const int atomIndex : { 0, 5 })
+    {
+        appendNextStepRefreshWorkloadAuditAtom(traceDirPath,
+                                               step,
+                                               nextStep,
+                                               stage,
+                                               nextLegacyForceFlags,
+                                               currentStepWork,
+                                               nextStepWork,
+                                               nextStepTrace,
+                                               atomIndex,
+                                               x,
+                                               v,
+                                               forceView,
+                                               enerd,
+                                               forceVir,
+                                               codeLocation);
+    }
 }
 
 } // namespace
@@ -1453,20 +2117,6 @@ void gmx::LegacySimulator::do_md()
     walltime_accounting_start_time(wallTimeAccounting_);
     wallcycle_start(wallCycleCounters_, WallCycleCounter::Run);
     print_start(fpLog_, cr_, wallTimeAccounting_, "mdrun");
-    if (shouldTraceXvfStageStep(step))
-    {
-        appendXvfStageTracePair(activeM2pTraceDirPath(),
-                                useExactVelocityVerletLammpsRespa(*ir) ? "PATCH" : "PLAIN",
-                                "INITIAL_XVF",
-                                step,
-                                state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                f.view().force(),
-                                "md-loop initial state",
-                                "src/gromacs/mdrun/md.cpp:1501",
-                                "boundary_read",
-                                "read");
-    }
 
     /***********************************************************
      *
@@ -1899,31 +2549,6 @@ void gmx::LegacySimulator::do_md()
         if (!simulationWork.useMdGpuGraph || mdGraph->graphIsCapturingThisStep()
             || !mdGraph->useGraphThisStep())
         {
-            if (const char* stageName = xvfLoopEntryStageName(step);
-                stageName != nullptr && shouldTraceXvfStageStep(step))
-            {
-                appendXvfStageTracePair(activeM2pTraceDirPath(),
-                                        useSupportedExactVelocityVerletRespa ? "PATCH" : "PLAIN",
-                                        stageName,
-                                        step,
-                                        state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                        state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                        f.view().force(),
-                                        "md-loop entry",
-                                        "src/gromacs/mdrun/md.cpp:1802",
-                                        "boundary_read",
-                                        "read");
-            }
-
-            if (step == 5)
-            {
-                appendMdLoopBoundarySnapshotPair(activeM2pTraceDirPath(),
-                                                useSupportedExactVelocityVerletRespa ? "PATCH" : "PLAIN",
-                                                "STEP5_LOOP_ENTRY_STATE_X",
-                                                step,
-                                                state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                "src/gromacs/mdrun/md.cpp:1690");
-            }
 
             if (shellfc)
             {
@@ -1963,21 +2588,6 @@ void gmx::LegacySimulator::do_md()
             }
             else
             {
-                if (const char* stageName = xvfPreForceStageName(step);
-                    stageName != nullptr && shouldTraceXvfStageStep(step))
-                {
-                    appendXvfStageTracePair(activeM2pTraceDirPath(),
-                                            useSupportedExactVelocityVerletRespa ? "PATCH" : "PLAIN",
-                                            stageName,
-                                            step,
-                                            state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                            state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                            f.view().force(),
-                                            "do_force pre-call",
-                                            "src/gromacs/mdrun/md.cpp:1864",
-                                            "boundary_read",
-                                            "read");
-                }
                 /* The AWH history need to be saved _before_ doing force calculations where the AWH bias
                    is updated (or the AWH update will be performed twice for one step when continuing).
                    It would be best to call this update function from do_md_trajectory_writing but that
@@ -2025,34 +2635,24 @@ void gmx::LegacySimulator::do_md()
                          ed ? ed->getLegacyED() : nullptr,
                          fr_->longRangeNonbondeds.get(),
                          ddBalanceRegionHandler);
-                if (const char* stageName = xvfPostForceStageName(step);
-                    stageName != nullptr && shouldTraceXvfStageStep(step))
-                {
-                    appendXvfStageTracePair(activeM2pTraceDirPath(),
-                                            useSupportedExactVelocityVerletRespa ? "PATCH" : "PLAIN",
-                                            stageName,
-                                            step,
-                                            state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                            state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                            f.view().force(),
-                                            "do_force post-call",
-                                            "src/gromacs/mdrun/md.cpp:1914",
-                                            "after_stage_snapshot",
-                                            "read");
-                }
             }
 
-            if (step == 5)
-            {
-                appendMdLoopBoundarySnapshotPair(activeM2pTraceDirPath(),
-                                                useSupportedExactVelocityVerletRespa ? "PATCH" : "PLAIN",
-                                                "STEP5_POST_FORCE_STATE_X",
-                                                step,
-                                                state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                "src/gromacs/mdrun/md.cpp:1779");
-            }
+            appendTp18eTraceRow(step,
+                                "after_do_force_return",
+                                f.view().forceWithPadding().unpaddedConstArrayRef(),
+                                false,
+                                makeConstArrayRef(state_->x),
+                                makeConstArrayRef(state_->v),
+                                gmx::ArrayRef<const gmx::RVec>{},
+                                false,
+                                force_vir,
+                                shake_vir,
+                                total_vir,
+                                pres,
+                                enerd_);
 
             maybeDumpTotalForceForDiagnostics(*ir, step, t, &f.view(), *runScheduleWork_);
+
             // VV integrators do not need the following velocity half step
             // if it is the first step after starting from a checkpoint.
             // That is, the half step is needed on all other steps, and
@@ -2327,98 +2927,12 @@ void gmx::LegacySimulator::do_md()
                                         md->invMassPerDim,
                                         &f.view(),
                                         state_->v.arrayRefWithPadding().unpaddedArrayRef());
-                    if (shouldTraceXvfStageStep(step))
-                    {
-                        if (const char* stageName = xvfPreUpdateStageName(step); stageName != nullptr)
-                        {
-                            appendXvfStageTracePair(activeM2pTraceDirPath(),
-                                                    "PATCH",
-                                                    stageName,
-                                                    step,
-                                                    state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                    state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                                    f.view().force(),
-                                                    "driftRespaPositions pre-update",
-                                                    "src/gromacs/mdrun/md.cpp:2285",
-                                                    "boundary_read",
-                                                    "read");
-                        }
-                        if (const char* stageName = xvfUpdateInputStageName(step); stageName != nullptr)
-                        {
-                            appendXvfStageTracePair(activeM2pTraceDirPath(),
-                                                    "PATCH",
-                                                    stageName,
-                                                    step,
-                                                    state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                    state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                                    f.view().force(),
-                                                    "driftRespaPositions update-input",
-                                                    "src/gromacs/mdrun/md.cpp:2297",
-                                                    "boundary_read",
-                                                    "read");
-                        }
-                    }
-                    if (shouldTracePositionUpdateStep(step))
-                    {
-                        appendPositionUpdateTracePair(activeM2pTraceDirPath(),
-                                                     "PATCH",
-                                                     "UPDATE_INPUT",
-                                                     step,
-                                                     state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                     state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                                     f.view().force(),
-                                                     ir->delta_t,
-                                                     "driftRespaPositions",
-                                                     "src/gromacs/mdrun/md.cpp:2075");
-                    }
                     driftRespaPositions(md->homenr,
                                         md->ptype,
                                         md->invMassPerDim,
                                         ir->delta_t,
                                         state_->x.arrayRefWithPadding().unpaddedArrayRef(),
                                         state_->v.arrayRefWithPadding().unpaddedArrayRef());
-                    if (shouldTraceXvfStageStep(step))
-                    {
-                        if (const char* stageName = xvfPostPositionCommitStageName(step);
-                            stageName != nullptr)
-                        {
-                            appendXvfStageTracePair(activeM2pTraceDirPath(),
-                                                    "PATCH",
-                                                    stageName,
-                                                    step,
-                                                    state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                    state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                                    f.view().force(),
-                                                    "driftRespaPositions",
-                                                    "src/gromacs/mdrun/md.cpp:2316",
-                                                    "post_write_commit",
-                                                    "write");
-                        }
-                    }
-                    if (shouldTracePositionUpdateStep(step))
-                    {
-                        appendPositionUpdateTracePair(activeM2pTraceDirPath(),
-                                                     "PATCH",
-                                                     "UPDATE_OUTPUT",
-                                                     step,
-                                                     state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                     state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                                     f.view().force(),
-                                                     ir->delta_t,
-                                                     "driftRespaPositions",
-                                                     "src/gromacs/mdrun/md.cpp:2087");
-                    }
-                    if (shouldTraceRespaStateXChainStep(step))
-                    {
-                        appendStateXChainTracePair(activeM2pTraceDirPath(),
-                                                  "PATCH",
-                                                  postPositionCommitStageName(step),
-                                                  step,
-                                                  state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                  "driftRespaPositions",
-                                                  "src/gromacs/mdrun/md.cpp:1903",
-                                                  true);
-                    }
 
                     gmx_enerdata_t savedEnerd = *enerd_;
                     tensor         savedForceVir;
@@ -2435,11 +2949,56 @@ void gmx::LegacySimulator::do_md()
                     gmx::MdrunScheduleWorkload nextRunSchedule = *runScheduleWork_;
                     nextRunSchedule.stepWork = setupStepWorkload(
                             nextLegacyForceFlags, ir->mtsLevels, nextStep, nextRunSchedule.domainWork, nextRunSchedule.simulationWork);
+                    const gmx::LammpsRespaBaseStepTrace trace =
+                            gmx::lammpsRespaBaseStepTrace(ir->mtsLevels, step);
 
                     tensor         nextForceVir = { { 0 } };
                     gmx_enerdata_t nextEnerd    = *enerd_;
                     clear_rvec(mu_tot);
-                    ScopedRespaDoForceStateXTraceSuppression suppressDoForceStateXTrace;
+
+                    if (shouldTraceStep1FinalPhaseAuditStep(step))
+                    {
+                        const bool level1RefreshedForNextStep =
+                                std::find(trace.refreshedForceLevels.begin(), trace.refreshedForceLevels.end(), 1)
+                                != trace.refreshedForceLevels.end();
+                        doStep1FinalPhaseAuditPair(activeM2pTraceDirPath(),
+                                                   step,
+                                                   "before_refresh",
+                                                   level1RefreshedForNextStep,
+                                                   f.view(),
+                                                   "src/gromacs/mdrun/md.cpp:2390");
+                    }
+                    appendRefreshRestoreContractAuditPair(activeM2pTraceDirPath(),
+                                                          "exact_vv_respa",
+                                                          step,
+                                                          nextStep,
+                                                          nextStepIsNsStep,
+                                                          "before_refresh",
+                                                          "live",
+                                                          nextRunSchedule.stepWork.highestActiveMtsLevel,
+                                                          trace.refreshedForceLevels,
+                                                          state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          f.view(),
+                                                          enerd_,
+                                                          force_vir,
+                                                          savedMuTot,
+                                                          "src/gromacs/mdrun/md.cpp:2417");
+                    appendNextStepRefreshWorkloadAuditPair(activeM2pTraceDirPath(),
+                                                          step,
+                                                          nextStep,
+                                                          "before_refresh",
+                                                          nextLegacyForceFlags,
+                                                          runScheduleWork_->stepWork,
+                                                          nextRunSchedule.stepWork,
+                                                          trace,
+                                                          state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          f.view(),
+                                                          enerd_,
+                                                          force_vir,
+                                                          "src/gromacs/mdrun/md.cpp:2418");
+
                     do_force(fpLog_,
                              cr_,
                              *ir,
@@ -2470,12 +3029,82 @@ void gmx::LegacySimulator::do_md()
                              fr_->longRangeNonbondeds.get(),
                              ddBalanceRegionHandler);
 
+                    if (shouldTraceStep1FinalPhaseAuditStep(step))
+                    {
+                        const bool level1RefreshedForNextStep =
+                                std::find(trace.refreshedForceLevels.begin(), trace.refreshedForceLevels.end(), 1)
+                                != trace.refreshedForceLevels.end();
+                        doStep1FinalPhaseAuditPair(activeM2pTraceDirPath(),
+                                                   step,
+                                                   "after_refresh",
+                                                   level1RefreshedForNextStep,
+                                                   f.view(),
+                                                   "src/gromacs/mdrun/md.cpp:2421");
+                    }
+                    appendRefreshRestoreContractAuditPair(activeM2pTraceDirPath(),
+                                                          "exact_vv_respa",
+                                                          step,
+                                                          nextStep,
+                                                          nextStepIsNsStep,
+                                                          "after_refresh_before_restore",
+                                                          "nextEnerd",
+                                                          nextRunSchedule.stepWork.highestActiveMtsLevel,
+                                                          trace.refreshedForceLevels,
+                                                          state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          f.view(),
+                                                          &nextEnerd,
+                                                          nextForceVir,
+                                                          mu_tot,
+                                                          "src/gromacs/mdrun/md.cpp:2456");
+                    appendNextStepRefreshWorkloadAuditPair(activeM2pTraceDirPath(),
+                                                          step,
+                                                          nextStep,
+                                                          "after_refresh_before_restore",
+                                                          nextLegacyForceFlags,
+                                                          runScheduleWork_->stepWork,
+                                                          nextRunSchedule.stepWork,
+                                                          trace,
+                                                          state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          f.view(),
+                                                          &nextEnerd,
+                                                          nextForceVir,
+                                                          "src/gromacs/mdrun/md.cpp:2457");
+
                     *enerd_ = std::move(savedEnerd);
                     copy_mat(savedForceVir, force_vir);
                     copy_rvec(savedMuTot, mu_tot);
-
-                    const gmx::LammpsRespaBaseStepTrace trace =
-                            gmx::lammpsRespaBaseStepTrace(ir->mtsLevels, step);
+                    appendRefreshRestoreContractAuditPair(activeM2pTraceDirPath(),
+                                                          "exact_vv_respa",
+                                                          step,
+                                                          nextStep,
+                                                          nextStepIsNsStep,
+                                                          "after_restore_before_final_kick",
+                                                          "restored_live",
+                                                          nextRunSchedule.stepWork.highestActiveMtsLevel,
+                                                          trace.refreshedForceLevels,
+                                                          state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          f.view(),
+                                                          enerd_,
+                                                          force_vir,
+                                                          mu_tot,
+                                                          "src/gromacs/mdrun/md.cpp:2465");
+                    appendNextStepRefreshWorkloadAuditPair(activeM2pTraceDirPath(),
+                                                          step,
+                                                          nextStep,
+                                                          "after_restore_before_final_kick",
+                                                          nextLegacyForceFlags,
+                                                          runScheduleWork_->stepWork,
+                                                          nextRunSchedule.stepWork,
+                                                          trace,
+                                                          state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          f.view(),
+                                                          enerd_,
+                                                          force_vir,
+                                                          "src/gromacs/mdrun/md.cpp:2466");
                     GMX_RELEASE_ASSERT(
                             static_cast<int>(trace.refreshedForceLevels.size())
                                             == nextRunSchedule.stepWork.highestActiveMtsLevel + 1,
@@ -2489,6 +3118,36 @@ void gmx::LegacySimulator::do_md()
                                         md->invMassPerDim,
                                         &f.view(),
                                         state_->v.arrayRefWithPadding().unpaddedArrayRef());
+                    appendRefreshRestoreContractAuditPair(activeM2pTraceDirPath(),
+                                                          "exact_vv_respa",
+                                                          step,
+                                                          nextStep,
+                                                          nextStepIsNsStep,
+                                                          "after_final_kick_handoff",
+                                                          "restored_live",
+                                                          nextRunSchedule.stepWork.highestActiveMtsLevel,
+                                                          trace.refreshedForceLevels,
+                                                          state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          f.view(),
+                                                          enerd_,
+                                                          force_vir,
+                                                          mu_tot,
+                                                          "src/gromacs/mdrun/md.cpp:2476");
+                    appendNextStepRefreshWorkloadAuditPair(activeM2pTraceDirPath(),
+                                                          step,
+                                                          nextStep,
+                                                          "after_final_kick_handoff",
+                                                          nextLegacyForceFlags,
+                                                          runScheduleWork_->stepWork,
+                                                          nextRunSchedule.stepWork,
+                                                          trace,
+                                                          state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                          f.view(),
+                                                          enerd_,
+                                                          force_vir,
+                                                          "src/gromacs/mdrun/md.cpp:2477");
 
                     wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
                 }
@@ -2528,17 +3187,6 @@ void gmx::LegacySimulator::do_md()
                                           trotter_seq,
                                           nrnb_,
                                           wallCycleCounters_);
-                    if (shouldTraceRespaStateXChainStep(step))
-                    {
-                        appendStateXChainTracePair(activeM2pTraceDirPath(),
-                                                  "PLAIN",
-                                                  postUpdateStageName(step),
-                                                  step,
-                                                  state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                  "integrateVVSecondStep",
-                                                  "src/gromacs/mdrun/md.cpp:1980",
-                                                  true);
-                    }
                 }
             }
             else
@@ -2621,49 +3269,12 @@ void gmx::LegacySimulator::do_md()
                                             md->invMassPerDim,
                                             &f.view(),
                                             state_->v.arrayRefWithPadding().unpaddedArrayRef());
-                        if (shouldTracePositionUpdateStep(step))
-                        {
-                            appendPositionUpdateTracePair(activeM2pTraceDirPath(),
-                                                         "PATCH",
-                                                         "UPDATE_INPUT",
-                                                         step,
-                                                         state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                         state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                                         f.view().force(),
-                                                         ir->delta_t,
-                                                         "driftRespaPositions",
-                                                         "src/gromacs/mdrun/md.cpp:2294");
-                        }
                         driftRespaPositions(md->homenr,
                                             md->ptype,
                                             md->invMassPerDim,
                                             ir->delta_t,
                                             state_->x.arrayRefWithPadding().unpaddedArrayRef(),
                                             state_->v.arrayRefWithPadding().unpaddedArrayRef());
-                        if (shouldTracePositionUpdateStep(step))
-                        {
-                            appendPositionUpdateTracePair(activeM2pTraceDirPath(),
-                                                         "PATCH",
-                                                         "UPDATE_OUTPUT",
-                                                         step,
-                                                         state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                         state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                                         f.view().force(),
-                                                         ir->delta_t,
-                                                         "driftRespaPositions",
-                                                         "src/gromacs/mdrun/md.cpp:2306");
-                        }
-                        if (shouldTraceRespaStateXChainStep(step))
-                        {
-                            appendStateXChainTracePair(activeM2pTraceDirPath(),
-                                                      "PATCH",
-                                                      postPositionCommitStageName(step),
-                                                      step,
-                                                      state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                      "driftRespaPositions",
-                                                      "src/gromacs/mdrun/md.cpp:2204",
-                                                      true);
-                        }
 
                         gmx_enerdata_t savedEnerd = *enerd_;
                         tensor         savedForceVir;
@@ -2680,11 +3291,28 @@ void gmx::LegacySimulator::do_md()
                         gmx::MdrunScheduleWorkload nextRunSchedule = *runScheduleWork_;
                         nextRunSchedule.stepWork = setupStepWorkload(
                                 nextLegacyForceFlags, ir->mtsLevels, nextStep, nextRunSchedule.domainWork, nextRunSchedule.simulationWork);
+                        const gmx::LammpsRespaBaseStepTrace trace =
+                                gmx::lammpsRespaBaseStepTrace(ir->mtsLevels, step);
 
                         tensor         nextForceVir = { { 0 } };
                         gmx_enerdata_t nextEnerd    = *enerd_;
                         clear_rvec(mu_tot);
-                        ScopedRespaDoForceStateXTraceSuppression suppressDoForceStateXTrace;
+                        appendRefreshRestoreContractAuditPair(activeM2pTraceDirPath(),
+                                                              "exact_nested_respa",
+                                                              step,
+                                                              nextStep,
+                                                              nextStepIsNsStep,
+                                                              "before_refresh",
+                                                              "live",
+                                                              nextRunSchedule.stepWork.highestActiveMtsLevel,
+                                                              trace.refreshedForceLevels,
+                                                              state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                              state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                              f.view(),
+                                                              enerd_,
+                                                              force_vir,
+                                                              savedMuTot,
+                                                              "src/gromacs/mdrun/md.cpp:2629");
                         do_force(fpLog_,
                                  cr_,
                                  *ir,
@@ -2714,12 +3342,41 @@ void gmx::LegacySimulator::do_md()
                                  ed ? ed->getLegacyED() : nullptr,
                                  fr_->longRangeNonbondeds.get(),
                                  ddBalanceRegionHandler);
+                        appendRefreshRestoreContractAuditPair(activeM2pTraceDirPath(),
+                                                              "exact_nested_respa",
+                                                              step,
+                                                              nextStep,
+                                                              nextStepIsNsStep,
+                                                              "after_refresh_before_restore",
+                                                              "nextEnerd",
+                                                              nextRunSchedule.stepWork.highestActiveMtsLevel,
+                                                              trace.refreshedForceLevels,
+                                                              state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                              state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                              f.view(),
+                                                              &nextEnerd,
+                                                              nextForceVir,
+                                                              mu_tot,
+                                                              "src/gromacs/mdrun/md.cpp:2631");
                         *enerd_ = std::move(savedEnerd);
                         copy_mat(savedForceVir, force_vir);
                         copy_rvec(savedMuTot, mu_tot);
-
-                        const gmx::LammpsRespaBaseStepTrace trace =
-                                gmx::lammpsRespaBaseStepTrace(ir->mtsLevels, step);
+                        appendRefreshRestoreContractAuditPair(activeM2pTraceDirPath(),
+                                                              "exact_nested_respa",
+                                                              step,
+                                                              nextStep,
+                                                              nextStepIsNsStep,
+                                                              "after_restore_before_final_kick",
+                                                              "restored_live",
+                                                              nextRunSchedule.stepWork.highestActiveMtsLevel,
+                                                              trace.refreshedForceLevels,
+                                                              state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                              state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                              f.view(),
+                                                              enerd_,
+                                                              force_vir,
+                                                              mu_tot,
+                                                              "src/gromacs/mdrun/md.cpp:2660");
                         GMX_RELEASE_ASSERT(
                                 static_cast<int>(trace.refreshedForceLevels.size())
                                                 == nextRunSchedule.stepWork.highestActiveMtsLevel + 1,
@@ -2733,17 +3390,22 @@ void gmx::LegacySimulator::do_md()
                                             md->invMassPerDim,
                                             &f.view(),
                                             state_->v.arrayRefWithPadding().unpaddedArrayRef());
-                        if (shouldTraceRespaStateXChainStep(step))
-                        {
-                            appendStateXChainTracePair(activeM2pTraceDirPath(),
-                                                      "PATCH",
-                                                      postUpdateStageName(step),
-                                                      step,
-                                                      state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                      "exact VV update complete",
-                                                      "src/gromacs/mdrun/md.cpp:2085",
-                                                      true);
-                        }
+                        appendRefreshRestoreContractAuditPair(activeM2pTraceDirPath(),
+                                                              "exact_nested_respa",
+                                                              step,
+                                                              nextStep,
+                                                              nextStepIsNsStep,
+                                                              "after_final_kick_handoff",
+                                                              "restored_live",
+                                                              nextRunSchedule.stepWork.highestActiveMtsLevel,
+                                                              trace.refreshedForceLevels,
+                                                              state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                              state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                              f.view(),
+                                                              enerd_,
+                                                              force_vir,
+                                                              mu_tot,
+                                                              "src/gromacs/mdrun/md.cpp:2671");
 
                         wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
                     }
@@ -2789,6 +3451,21 @@ void gmx::LegacySimulator::do_md()
                                 (simulationWork.useMts && runScheduleWork_->stepWork.computeSlowForces)
                                         ? f.view().forceMtsCombinedWithPadding()
                                         : f.view().forceWithPadding();
+                        const bool usingMtsCombinedForce =
+                                (simulationWork.useMts && runScheduleWork_->stepWork.computeSlowForces);
+                        appendTp18eTraceRow(step,
+                                            "before_update_coords",
+                                            forceCombined.unpaddedConstArrayRef(),
+                                            usingMtsCombinedForce,
+                                            makeConstArrayRef(state_->x),
+                                            makeConstArrayRef(state_->v),
+                                            gmx::ArrayRef<const gmx::RVec>{},
+                                            false,
+                                            force_vir,
+                                            shake_vir,
+                                            total_vir,
+                                            pres,
+                                            enerd_);
                         upd.update_coords(*ir,
                                           step,
                                           md->homenr,
@@ -2804,6 +3481,19 @@ void gmx::LegacySimulator::do_md()
                                           etrtPOSITION,
                                           cr_->dd,
                                           constr_ != nullptr);
+                        appendTp18eTraceRow(step,
+                                            "after_update_coords",
+                                            forceCombined.unpaddedConstArrayRef(),
+                                            usingMtsCombinedForce,
+                                            makeConstArrayRef(state_->x),
+                                            makeConstArrayRef(state_->v),
+                                            upd.xp()->arrayRefWithPadding().unpaddedConstArrayRef(),
+                                            true,
+                                            force_vir,
+                                            shake_vir,
+                                            total_vir,
+                                            pres,
+                                            enerd_);
 
                         wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
 
@@ -2835,17 +3525,6 @@ void gmx::LegacySimulator::do_md()
                                           state_,
                                           wallCycleCounters_,
                                           constr_ != nullptr);
-                        if (shouldTraceRespaStateXChainStep(step))
-                        {
-                            appendStateXChainTracePair(activeM2pTraceDirPath(),
-                                                      "PLAIN",
-                                                      postPositionCommitStageName(step),
-                                                      step,
-                                                      state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                                      "Update::Impl::finish_update",
-                                                      "src/gromacs/mdrun/md.cpp:2258",
-                                                      true);
-                        }
                     }
                 }
 
@@ -2936,6 +3615,7 @@ void gmx::LegacySimulator::do_md()
                 bool doIntraSimSignal = true;
                 SimulationSignaller signaller(&signals, cr_, ms_, doInterSimSignal, doIntraSimSignal);
 
+                // ScopedTp18jPostUpdateComputeGlobalsTrace tp18jPostUpdateComputeGlobalsTraceScope;
                 compute_globals(gstat,
                                 cr_->commMyGroup,
                                 ir,
@@ -2962,6 +3642,19 @@ void gmx::LegacySimulator::do_md()
                                         | (!EI_VV(ir->eI) ? CGLO_PRESSURE : 0) | CGLO_CONSTRAINT,
                                 step,
                                 &observablesReducer);
+                appendTp18eTraceRow(step,
+                                    "after_compute_globals",
+                                    f.view().forceWithPadding().unpaddedConstArrayRef(),
+                                    false,
+                                    makeConstArrayRef(state_->x),
+                                    makeConstArrayRef(state_->v),
+                                    gmx::ArrayRef<const gmx::RVec>{},
+                                    false,
+                                    force_vir,
+                                    shake_vir,
+                                    total_vir,
+                                    pres,
+                                    enerd_);
                 if (!EI_VV(ir->eI) && bStopCM)
                 {
                     process_and_stopcm_grp(
@@ -3023,6 +3716,23 @@ void gmx::LegacySimulator::do_md()
                                          nrnb_,
                                          upd.deform(),
                                          scaleCoordinates);
+        if (isMainRank)
+        {
+            appendTp18gTraceRow(step,
+                                t,
+                                "after_update_pcouple",
+                                bCalcEner,
+                                bCalcEnerStep,
+                                inputRec_,
+                                state_->hasEntry(StateEntry::PressurePrevious),
+                                false,
+                                false,
+                                false,
+                                false,
+                                total_vir,
+                                pres,
+                                enerd_);
+        }
 
         const bool doBerendsenPressureCoupling =
                 (inputRec_->pressureCouplingOptions.epc == PressureCoupling::Berendsen
@@ -3126,10 +3836,38 @@ void gmx::LegacySimulator::do_md()
                                                  ekind_,
                                                  mu_tot,
                                                  constr_);
+                appendTp18gTraceRow(step,
+                                    t,
+                                    "after_energy_add",
+                                    bCalcEner,
+                                    bCalcEnerStep,
+                                    inputRec_,
+                                    state_->hasEntry(StateEntry::PressurePrevious),
+                                    false,
+                                    true,
+                                    false,
+                                    false,
+                                    total_vir,
+                                    pres,
+                                    enerd_);
             }
             else
             {
                 energyOutput.recordNonEnergyStep();
+                appendTp18gTraceRow(step,
+                                    t,
+                                    "after_energy_add",
+                                    bCalcEner,
+                                    bCalcEnerStep,
+                                    inputRec_,
+                                    state_->hasEntry(StateEntry::PressurePrevious),
+                                    false,
+                                    false,
+                                    true,
+                                    false,
+                                    total_vir,
+                                    pres,
+                                    enerd_);
             }
 
             gmx_bool do_dr = do_per_step(step, ir->nstdisreout);
@@ -3152,6 +3890,20 @@ void gmx::LegacySimulator::do_md()
                                                    fr_->fcdata.get(),
                                                    awh.get());
             }
+            appendTp18gTraceRow(step,
+                                t,
+                                "after_energy_print",
+                                bCalcEner,
+                                bCalcEnerStep,
+                                inputRec_,
+                                state_->hasEntry(StateEntry::PressurePrevious),
+                                false,
+                                false,
+                                false,
+                                (do_log || do_ene || do_dr || do_or),
+                                total_vir,
+                                pres,
+                                enerd_);
             if (do_log && ((ir->bDoAwh && awh->hasFepLambdaDimension()) || ir->fepvals->delta_lambda != 0))
             {
                 const bool isInitialOutput = false;
@@ -3273,48 +4025,34 @@ void gmx::LegacySimulator::do_md()
              */
             copy_mat(pres, state_->pres_prev);
         }
+        if (isMainRank)
+        {
+            const bool pressurePreviousCopyExecuted =
+                    (state_->hasEntry(StateEntry::PressurePrevious)
+                     && (bGStatEveryStep
+                         || (ir->pressureCouplingOptions.nstpcouple > 0
+                             && step % ir->pressureCouplingOptions.nstpcouple == 0)));
+            appendTp18gTraceRow(step,
+                                t,
+                                "after_pressure_prev_handoff",
+                                bCalcEner,
+                                bCalcEnerStep,
+                                inputRec_,
+                                state_->hasEntry(StateEntry::PressurePrevious),
+                                pressurePreviousCopyExecuted,
+                                false,
+                                false,
+                                false,
+                                total_vir,
+                                pres,
+                                enerd_);
+        }
 
         /* #######  END SET VARIABLES FOR NEXT ITERATION ###### */
 
         if ((membed_ != nullptr) && (!bLastStep))
         {
             rescale_membed(step_rel, membed_, as_rvec_array(stateGlobal_->x.data()));
-        }
-
-        if (const char* stageName = xvfEndStageName(step); stageName != nullptr && shouldTraceXvfStageStep(step))
-        {
-            appendXvfStageTracePair(activeM2pTraceDirPath(),
-                                    useSupportedExactVelocityVerletRespa ? "PATCH" : "PLAIN",
-                                    stageName,
-                                    step,
-                                    state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                    state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                    f.view().force(),
-                                    "md-loop end",
-                                    "src/gromacs/mdrun/md.cpp:3104",
-                                    "boundary_read",
-                                    "read");
-        }
-
-        if (shouldTraceRespaStateXChainStep(step) && step >= 4 && step <= 7)
-        {
-            appendStateXChainTracePair(activeM2pTraceDirPath(),
-                                      useSupportedExactVelocityVerletRespa ? "PATCH" : "PLAIN",
-                                      endStateStageName(step),
-                                      step,
-                                      state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                      "md-loop end",
-                                      "src/gromacs/mdrun/md.cpp:2856",
-                                      false);
-        }
-        if (step == 4)
-        {
-            appendMdLoopBoundarySnapshotPair(activeM2pTraceDirPath(),
-                                            useSupportedExactVelocityVerletRespa ? "PATCH" : "PLAIN",
-                                            "STEP4_END_STATE_X",
-                                            step,
-                                            state_->x.arrayRefWithPadding().unpaddedArrayRef(),
-                                            "src/gromacs/mdrun/md.cpp:2918");
         }
 
         const double cycles = wallcycle_stop(wallCycleCounters_, WallCycleCounter::Step);

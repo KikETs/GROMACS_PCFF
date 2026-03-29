@@ -292,6 +292,31 @@ void resetM2pPlain4x4LjContractReplay();
 bool m2pPlain4x4LjContractReplayEnabled();
 void noteM2pPlain4x4LjContractReplayPairContribution(real vlj);
 double readM2pPlain4x4LjContractReplayTotal();
+bool m2pPlain4x4ExclusionEquivalenceTraceEnabled();
+void noteM2pPlain4x4ExclusionEquivalencePair(int         ai,
+                                             int         aj,
+                                             real        interact,
+                                             real        excludedMask,
+                                             real        skipmask,
+                                             real        qq,
+                                             int         tableIndex,
+                                             real        frac,
+                                             real        fexcl,
+                                             real        vcorr,
+                                             real        correctionScalarUnmasked,
+                                             real        correctionScalarEffective,
+                                             real        correctionForceUnmaskedFx,
+                                             real        correctionForceUnmaskedFy,
+                                             real        correctionForceUnmaskedFz,
+                                             real        correctionForceEffectiveFx,
+                                             real        correctionForceEffectiveFy,
+                                             real        correctionForceEffectiveFz,
+                                             real        combinedForceFx,
+                                             real        combinedForceFy,
+                                             real        combinedForceFz,
+                                             const char* sinkTarget,
+                                             bool        sinkWriteExecuted,
+                                             const char* codeLocation);
 
 struct M2pPlain4x4TracedForcePair
 {

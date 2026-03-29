@@ -8,11 +8,20 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REFERENCE_ROOT = REPO_ROOT / "tests" / "reference_results" / "m6_respa"
 DEFAULT_ACTUAL_ROOT = DEFAULT_REFERENCE_ROOT / "last_run_actual"
-DEFAULT_OUT = DEFAULT_REFERENCE_ROOT / "last_run_compare"
+DEFAULT_WORKFLOW_ROOT = DEFAULT_REFERENCE_ROOT / "last_run_compare"
+LEGACY_SUBDIR_NAME = "legacy_m6_parity"
+DEFAULT_OUT = DEFAULT_WORKFLOW_ROOT / LEGACY_SUBDIR_NAME
+DEFAULT_AUTHORITATIVE_POINTER = DEFAULT_WORKFLOW_ROOT / "plain_facing_truth_source.json"
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Compare GROMACS exact r-RESPA outputs against frozen LAMMPS golden data.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Compare GROMACS exact r-RESPA outputs against frozen LAMMPS golden data for the M6 parity harness. "
+            "This is not the authoritative plain-facing comparator path for dense_oligomer/dt_0p0005; "
+            "use offline_oracle_compare_v1.py for that fixture."
+        )
+    )
     parser.add_argument(
         "--reference-root",
         default=str(DEFAULT_REFERENCE_ROOT),
@@ -29,10 +38,26 @@ def parse_args() -> argparse.Namespace:
         help="Output directory for machine-readable comparison summaries.",
     )
     parser.add_argument(
+        "--authoritative-pointer",
+        default=str(DEFAULT_AUTHORITATIVE_POINTER),
+        help=(
+            "Machine-readable authoritative truth pointer for the current dense_oligomer/dt_0p0005 plain-facing comparator. "
+            "Legacy compare outputs must point at this file when available."
+        ),
+    )
+    parser.add_argument(
         "--system",
         action="append",
         dest="systems",
         help="System id to compare. Default: all systems in the reference root.",
+    )
+    parser.add_argument(
+        "--allow-non-authoritative-plain-facing-use",
+        action="store_true",
+        help=(
+            "Required override to run compare.py at all. compare.py remains valid for the M6 parity harness, "
+            "but it is not the authoritative dense_oligomer/dt_0p0005 plain-facing comparator path."
+        ),
     )
     return parser.parse_args()
 
@@ -73,7 +98,7 @@ def discover_systems(reference_root: Path, requested: list[str] | None) -> list[
     return sorted(path.name for path in reference_root.iterdir() if path.is_dir() and (path / "reference_summary.json").exists())
 
 
-def compare_system(system_id: str, reference_root: Path, actual_root: Path) -> dict:
+def compare_system(system_id: str, reference_root: Path, actual_root: Path, authoritative_pointer: str | None) -> dict:
     reference = load_json(reference_root / system_id / "reference_summary.json")
     actual = load_json(actual_root / f"{system_id}_nve.json")
     tolerances = load_tolerances(reference_root, system_id)
@@ -113,10 +138,17 @@ def compare_system(system_id: str, reference_root: Path, actual_root: Path) -> d
         "schema_version": 1,
         "system_id": system_id,
         "status": status,
+        "artifact_role": "legacy_m6_parity_system_compare",
+        "non_authoritative": True,
+        "authoritative_pointer": authoritative_pointer,
+        "plain_facing_truth_source": False,
+        "plain_facing_truth_override_required": True,
+        "plain_facing_truth_override_used": True,
         "schedule": reference["schedule"],
         "comparisons": comparisons,
         "notes": [
             "Frozen M6 3-level NVE tolerances are loaded from reference_summary.tsv and are intended to gate the exact CPU path before GPU work.",
+            "This JSON is a legacy M6 parity artifact and is not the authoritative dense_oligomer/dt_0p0005 plain-facing truth source.",
             *reference.get("unresolved_items", []),
             *actual.get("notes", []),
         ],
@@ -127,13 +159,20 @@ def compare_system(system_id: str, reference_root: Path, actual_root: Path) -> d
 
 def main() -> None:
     args = parse_args()
+    if not args.allow_non_authoritative_plain_facing_use:
+        raise SystemExit(
+            "compare.py is not the authoritative plain-facing comparator for dense_oligomer/dt_0p0005. "
+            "Use tools/pcff_respa_parity/run.py or offline_oracle_compare_v1.py. "
+            "Pass --allow-non-authoritative-plain-facing-use to run compare.py anyway for legacy M6 parity diagnostics."
+        )
     reference_root = Path(args.reference_root).resolve()
     actual_root = Path(args.actual_root).resolve()
     out_root = Path(args.out).resolve()
+    authoritative_pointer = str(Path(args.authoritative_pointer).resolve()) if args.authoritative_pointer else None
 
     results = []
     for system_id in discover_systems(reference_root, args.systems):
-        result = compare_system(system_id, reference_root, actual_root)
+        result = compare_system(system_id, reference_root, actual_root, authoritative_pointer)
         dump_json(out_root / f"{system_id}.json", result)
         results.append(result)
 
@@ -146,6 +185,17 @@ def main() -> None:
             "num_pass": sum(1 for result in results if result["status"] == "pass"),
             "num_incomplete": sum(1 for result in results if result["status"] == "incomplete"),
         },
+        "notes": [
+            "compare.py covers the M6 parity harness only.",
+            "For dense_oligomer/dt_0p0005 plain-facing comparator truth, use tools/pcff_respa_parity/offline_oracle_compare_v1.py or tools/pcff_respa_parity/run.py with --offline-oracle-mode auto|only.",
+            "This compare.py run required --allow-non-authoritative-plain-facing-use and must not be treated as the authoritative dense_oligomer plain-facing truth source.",
+        ],
+        "artifact_role": "legacy_m6_parity_aggregate_compare",
+        "non_authoritative": True,
+        "authoritative_pointer": authoritative_pointer,
+        "plain_facing_truth_source": False,
+        "plain_facing_truth_override_required": True,
+        "plain_facing_truth_override_used": True,
     }
     dump_json(out_root / "comparison_summary.json", aggregate)
 

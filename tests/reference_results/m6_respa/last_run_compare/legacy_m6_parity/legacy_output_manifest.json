@@ -1,0 +1,15 @@
+{
+  "artifact_role": "legacy_m6_parity_output_root",
+  "authoritative_pointer": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_compare/plain_facing_truth_source.json",
+  "moved_files": [
+    "comparison_summary.json",
+    "small_oligomer.json",
+    "small_salt_polymer_box.json"
+  ],
+  "non_authoritative": true,
+  "notes": [
+    "Files in this directory are legacy M6 parity outputs and are not the authoritative dense_oligomer/dt_0p0005 plain-facing truth source.",
+    "Use the authoritative pointer in the default workflow root instead."
+  ],
+  "schema_version": 1
+}

@@ -497,6 +497,120 @@ std::vector<EnergyFrame> readEnergyFrames(const std::string& filename, const std
     return frames;
 }
 
+void appendRespaObservableTraceLine(const char* fileName, const std::string& line)
+{
+    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    if (traceDir == nullptr || *traceDir == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::create_directories(traceDir);
+    const auto outputPath = std::filesystem::path(traceDir) / fileName;
+    std::ofstream output(outputPath, std::ios::app);
+    GMX_RELEASE_ASSERT(output.is_open(), "Could not open PCFF observable trace file");
+    output << line << "\n";
+}
+
+void appendStep0EdrFrameVirialVolumeObservableTrace(const std::string& runKind,
+                                                    const EnergyFrame&  frame,
+                                                    const BoxMatrix&    box)
+{
+    const char* caseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2P_CASE_LABEL");
+    const std::string caseLabel =
+            (caseLabelEnv != nullptr && *caseLabelEnv != '\0') ? caseLabelEnv : "unknown";
+    const double volumeNm3 = static_cast<double>(box[XX][XX] * box[YY][YY] * box[ZZ][ZZ]);
+    appendRespaObservableTraceLine(
+            "step0_edr_frame_virial_volume_observable_trace.txt",
+            "stage=EDR_FRAME_OBSERVABLE_VIRIAL_VOLUME code_location=src/programs/mdrun/tests/pcff_short_md.cpp:appendStep0EdrFrameVirialVolumeObservableTrace"
+                    + std::string(" case_label=") + caseLabel
+                    + " execution_path=readEnergyFrames_front_frame run_kind=" + runKind + " step=0"
+                    + " volume_nm3=" + formatString("%.15f", volumeNm3)
+                    + " vir_xx=" + formatString("%.15f", frame.at("Vir-XX"))
+                    + " vir_xy=" + formatString("%.15f", frame.at("Vir-XY"))
+                    + " vir_xz=" + formatString("%.15f", frame.at("Vir-XZ"))
+                    + " vir_yx=" + formatString("%.15f", frame.at("Vir-YX"))
+                    + " vir_yy=" + formatString("%.15f", frame.at("Vir-YY"))
+                    + " vir_yz=" + formatString("%.15f", frame.at("Vir-YZ"))
+                    + " vir_zx=" + formatString("%.15f", frame.at("Vir-ZX"))
+                    + " vir_zy=" + formatString("%.15f", frame.at("Vir-ZY"))
+                    + " vir_zz=" + formatString("%.15f", frame.at("Vir-ZZ")));
+}
+
+void appendStep0DerivedVirialPressureObservableTrace(const std::string&                    runKind,
+                                                     const std::map<std::string, double>& pressureRows)
+{
+    const char* caseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2P_CASE_LABEL");
+    const std::string caseLabel =
+            (caseLabelEnv != nullptr && *caseLabelEnv != '\0') ? caseLabelEnv : "unknown";
+    appendRespaObservableTraceLine(
+            "step0_derived_virial_pressure_observable_trace.txt",
+            "stage=DERIVED_VIRIAL_PRESSURE_OBSERVABLE code_location=src/programs/mdrun/tests/pcff_short_md.cpp:step0VirialPressureTensorAtm"
+                    + std::string(" case_label=") + caseLabel
+                    + " execution_path=step0VirialPressureTensorAtm run_kind=" + runKind + " step=0"
+                    + " step0_virial_pressure_xx_atm="
+                    + formatString("%.15f", pressureRows.at("step0_virial_pressure_xx_atm"))
+                    + " step0_virial_pressure_yy_atm="
+                    + formatString("%.15f", pressureRows.at("step0_virial_pressure_yy_atm"))
+                    + " step0_virial_pressure_zz_atm="
+                    + formatString("%.15f", pressureRows.at("step0_virial_pressure_zz_atm"))
+                    + " step0_virial_pressure_xy_atm="
+                    + formatString("%.15f", pressureRows.at("step0_virial_pressure_xy_atm"))
+                    + " step0_virial_pressure_xz_atm="
+                    + formatString("%.15f", pressureRows.at("step0_virial_pressure_xz_atm"))
+                    + " step0_virial_pressure_yz_atm="
+                    + formatString("%.15f", pressureRows.at("step0_virial_pressure_yz_atm")));
+}
+
+void appendStep0ScalarEnergyObservableTrace(const std::string& runKind, const EnergyFrame& frame)
+{
+    const char* caseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2P_CASE_LABEL");
+    const std::string caseLabel =
+            (caseLabelEnv != nullptr && *caseLabelEnv != '\0') ? caseLabelEnv : "unknown";
+    const double potentialKcalMol =
+            static_cast<double>(frame.at(interaction_function[InteractionFunction::PotentialEnergy].longname))
+            * c_kjToKcal;
+    const double initialTotalKcalMol =
+            static_cast<double>(frame.at(interaction_function[InteractionFunction::TotalEnergy].longname))
+            * c_kjToKcal;
+    const double kineticGapKcalMol = initialTotalKcalMol - potentialKcalMol;
+    appendRespaObservableTraceLine(
+            "step0_scalar_energy_observable_trace.txt",
+            "stage=SCALAR_ENERGY_OBSERVABLE code_location=src/programs/mdrun/tests/pcff_short_md.cpp:appendStep0ScalarEnergyObservableTrace"
+                    + std::string(" case_label=") + caseLabel
+                    + " execution_path=readEnergyFrames_front_frame run_kind=" + runKind + " step=0"
+                    + " step0_potential_kcal_mol=" + formatString("%.15f", potentialKcalMol)
+                    + " initial_total_kcal_mol=" + formatString("%.15f", initialTotalKcalMol)
+                    + " kinetic_gap_kcal_mol=" + formatString("%.15f", kineticGapKcalMol));
+}
+
+void appendScalarTotalObservableTrace(const std::string& runKind,
+                                      const EnergyFrame& firstFrame,
+                                      const EnergyFrame& lastFrame,
+                                      const double       totalEnergySpanKcalMol)
+{
+    const char* caseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2P_CASE_LABEL");
+    const std::string caseLabel =
+            (caseLabelEnv != nullptr && *caseLabelEnv != '\0') ? caseLabelEnv : "unknown";
+    const double initialTotalKcalMol =
+            static_cast<double>(firstFrame.at(interaction_function[InteractionFunction::TotalEnergy].longname))
+            * c_kjToKcal;
+    const double finalTotalKcalMol =
+            static_cast<double>(lastFrame.at(interaction_function[InteractionFunction::TotalEnergy].longname))
+            * c_kjToKcal;
+    const double totalEnergyDriftAbsKcalMol = std::abs(finalTotalKcalMol - initialTotalKcalMol);
+    appendRespaObservableTraceLine(
+            "scalar_total_observable_trace.txt",
+            "stage=SCALAR_TOTAL_OBSERVABLE code_location=src/programs/mdrun/tests/pcff_short_md.cpp:appendScalarTotalObservableTrace"
+                    + std::string(" case_label=") + caseLabel
+                    + " execution_path=readEnergyFrames_front_back_frame run_kind=" + runKind
+                    + " initial_total_kcal_mol=" + formatString("%.15f", initialTotalKcalMol)
+                    + " final_total_kcal_mol=" + formatString("%.15f", finalTotalKcalMol)
+                    + " total_energy_drift_abs_kcal_mol="
+                    + formatString("%.15f", totalEnergyDriftAbsKcalMol)
+                    + " total_energy_span_kcal_mol=" + formatString("%.15f", totalEnergySpanKcalMol));
+}
+
 StructuralMetrics readLastStructuralMetrics(const std::string& systemId, const std::string& filename)
 {
     TrajectoryFrameReader reader(filename);
@@ -2018,24 +2132,6 @@ TEST_P(PcffRespaObservableDumpTest, DumpsExactRespaNveObservables)
 {
     const std::string systemId(GetParam());
     const auto        fixtureRoot = repoRoot() / "tests" / "reference_results" / "m6_respa" / systemId;
-
-    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
-    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
-    runner_.useStringAsMdpFile(makeSinglePointMdp());
-    runner_.setMaxWarn(1);
-
-    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " single-time step reference";
-    ASSERT_EQ(0, runner_.callMdrun()) << "mdrun failed for " << systemId << " single-time step reference";
-    const auto unsplitBreakdown = readStep0EnergyBreakdown(runner_.edrFileName_);
-
-    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
-    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
-    runner_.useStringAsMdpFile(makeRespaNveMdp());
-    runner_.setMaxWarn(1);
-
-    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " exact respa";
-    ASSERT_EQ(0, runner_.callMdrun()) << "mdrun failed for " << systemId << " exact respa";
-
     const std::vector<std::string> energyTerms = {
         interaction_function[InteractionFunction::PotentialEnergy].longname,
         interaction_function[InteractionFunction::TotalEnergy].longname,
@@ -2049,22 +2145,65 @@ TEST_P(PcffRespaObservableDumpTest, DumpsExactRespaNveObservables)
         "Vir-ZY",
         "Vir-ZZ",
     };
-    const auto energyFrames = readEnergyFrames(runner_.edrFileName_, energyTerms);
-    ASSERT_FALSE(energyFrames.empty());
-
     const auto totalEnergyName = interaction_function[InteractionFunction::TotalEnergy].longname;
     const auto potentialName   = interaction_function[InteractionFunction::PotentialEnergy].longname;
-    const auto totalEnergyToKcal = [&totalEnergyName](const EnergyFrame& frame) { return kjToKcal(frame.at(totalEnergyName)); };
-    const auto exactBreakdown = readStep0EnergyBreakdown(runner_.edrFileName_);
-
-    double minTotal = totalEnergyToKcal(energyFrames.front());
-    double maxTotal = minTotal;
-    for (const auto& frame : energyFrames)
+    const auto totalEnergyToKcal =
+            [&totalEnergyName](const EnergyFrame& frame) { return kjToKcal(frame.at(totalEnergyName)); };
+    const auto computeTotalEnergySpanKcal = [&totalEnergyToKcal](const std::vector<EnergyFrame>& frames)
     {
-        const double total = totalEnergyToKcal(frame);
-        minTotal = std::min(minTotal, total);
-        maxTotal = std::max(maxTotal, total);
-    }
+        double minTotal = totalEnergyToKcal(frames.front());
+        double maxTotal = minTotal;
+        for (const auto& frame : frames)
+        {
+            const double total = totalEnergyToKcal(frame);
+            minTotal = std::min(minTotal, total);
+            maxTotal = std::max(maxTotal, total);
+        }
+        return maxTotal - minTotal;
+    };
+
+    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
+    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
+    runner_.useStringAsMdpFile(makeSinglePointMdp());
+    runner_.setMaxWarn(1);
+
+    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " single-time step reference";
+    ASSERT_EQ(0, runner_.callMdrun()) << "mdrun failed for " << systemId << " single-time step reference";
+    const auto unsplitEnergyFrames = readEnergyFrames(runner_.edrFileName_, energyTerms);
+    ASSERT_FALSE(unsplitEnergyFrames.empty());
+    const double unsplitTotalEnergySpanKcalMol = computeTotalEnergySpanKcal(unsplitEnergyFrames);
+    TrajectoryFrameReader unsplitTrajectoryReader(runner_.fullPrecisionTrajectoryFileName_);
+    const auto unsplitBox = unsplitTrajectoryReader.frame().box();
+    appendStep0ScalarEnergyObservableTrace("single_step", unsplitEnergyFrames.front());
+    appendScalarTotalObservableTrace(
+            "single_step",
+            unsplitEnergyFrames.front(),
+            unsplitEnergyFrames.back(),
+            unsplitTotalEnergySpanKcalMol);
+    appendStep0EdrFrameVirialVolumeObservableTrace("single_step", unsplitEnergyFrames.front(), unsplitBox);
+    const auto unsplitPressureRows = step0VirialPressureTensorAtm(unsplitEnergyFrames.front(), unsplitBox);
+    appendStep0DerivedVirialPressureObservableTrace("single_step", unsplitPressureRows);
+    const auto unsplitBreakdown = readStep0EnergyBreakdown(runner_.edrFileName_);
+
+    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
+    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
+    runner_.useStringAsMdpFile(makeRespaNveMdp());
+    runner_.setMaxWarn(1);
+
+    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " exact respa";
+    ASSERT_EQ(0, runner_.callMdrun()) << "mdrun failed for " << systemId << " exact respa";
+    const auto energyFrames = readEnergyFrames(runner_.edrFileName_, energyTerms);
+    ASSERT_FALSE(energyFrames.empty());
+    const double exactTotalEnergySpanKcalMol = computeTotalEnergySpanKcal(energyFrames);
+    TrajectoryFrameReader exactTrajectoryReader(runner_.fullPrecisionTrajectoryFileName_);
+    const auto exactBox = exactTrajectoryReader.frame().box();
+    appendScalarTotalObservableTrace(
+            "exact_respa", energyFrames.front(), energyFrames.back(), exactTotalEnergySpanKcalMol);
+    appendStep0EdrFrameVirialVolumeObservableTrace("exact_respa", energyFrames.front(), exactBox);
+    const auto exactPressureRows = step0VirialPressureTensorAtm(energyFrames.front(), exactBox);
+    appendStep0DerivedVirialPressureObservableTrace("exact_respa", exactPressureRows);
+
+    const auto exactBreakdown = readStep0EnergyBreakdown(runner_.edrFileName_);
 
     std::map<std::string, double> actualValues;
     actualValues["step0_potential_kcal_mol"] = kjToKcal(energyFrames.front().at(potentialName));
@@ -2072,10 +2211,9 @@ TEST_P(PcffRespaObservableDumpTest, DumpsExactRespaNveObservables)
     actualValues["final_total_kcal_mol"] = totalEnergyToKcal(energyFrames.back());
     actualValues["total_energy_drift_abs_kcal_mol"] =
             std::abs(actualValues["final_total_kcal_mol"] - actualValues["initial_total_kcal_mol"]);
-    actualValues["total_energy_span_kcal_mol"] = maxTotal - minTotal;
+    actualValues["total_energy_span_kcal_mol"] = exactTotalEnergySpanKcalMol;
 
-    TrajectoryFrameReader exactTrajectoryReader(runner_.fullPrecisionTrajectoryFileName_);
-    for (const auto& [name, value] : step0VirialPressureTensorAtm(energyFrames.front(), exactTrajectoryReader.frame().box()))
+    for (const auto& [name, value] : exactPressureRows)
     {
         actualValues[name] = value;
     }

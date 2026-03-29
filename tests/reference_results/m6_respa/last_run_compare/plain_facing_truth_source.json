@@ -1,0 +1,32 @@
+{
+  "authoritative_entrypoint": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/pcff_respa_parity/run.py",
+  "authoritative_generator": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/pcff_respa_parity/offline_oracle_compare_v1.py",
+  "authoritative_output_root": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_compare/authoritative_dense_oligomer_dt_0p0005",
+  "current_fixture_only_rule": true,
+  "decisive_row": {
+    "atom0": {
+      "absmax_after_restore_vs_plain": 6.154977798461898,
+      "absmax_selected_vs_plain": 0.0578498840332,
+      "selected_label": "producer_safe_total"
+    },
+    "atom5": {
+      "absmax_after_restore_vs_plain": 6.17540884017944,
+      "absmax_selected_vs_plain": 0.02935695648193,
+      "selected_label": "producer_safe_total"
+    },
+    "next_step": 2,
+    "step": 1
+  },
+  "dt_label": "dt_0p0005",
+  "fixture": "dense_oligomer",
+  "legacy_compare_blocking": {
+    "compare_py_requires_override": true,
+    "legacy_step3_step4_outputs_non_authoritative": true
+  },
+  "notes": [
+    "This file is the single machine-visible plain-facing truth source for dense_oligomer/dt_0p0005 in the default workflow root.",
+    "compare.py outputs remain valid for M6 parity diagnostics but are not the authoritative dense plain-facing comparator outputs."
+  ],
+  "schema_version": 1,
+  "truth_source_type": "authoritative_plain_facing_offline_compare"
+}

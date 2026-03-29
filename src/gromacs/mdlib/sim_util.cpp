@@ -883,6 +883,81 @@ static const std::vector<int64_t>& respaMultiStepCoulombTraceSteps()
     return steps;
 }
 
+static const std::vector<int64_t>& respaForceComponentTraceSteps()
+{
+    static const std::vector<int64_t> steps = []()
+    {
+        std::vector<int64_t> parsedSteps;
+        const char*          value = std::getenv("GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS_STEPS");
+        if (value == nullptr || *value == '\0')
+        {
+            return parsedSteps;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                parsedSteps.push_back(std::stoll(item));
+            }
+        }
+        return parsedSteps;
+    }();
+    return steps;
+}
+
+static const std::vector<int64_t>& respaRealspaceForceSubcomponentTraceSteps()
+{
+    static const std::vector<int64_t> steps = []()
+    {
+        std::vector<int64_t> parsedSteps;
+        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS_STEPS");
+        if (value == nullptr || *value == '\0')
+        {
+            return parsedSteps;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                parsedSteps.push_back(std::stoll(item));
+            }
+        }
+        return parsedSteps;
+    }();
+    return steps;
+}
+
+static const std::vector<int64_t>& respaStep1Subset01ForceGroupAuditSteps()
+{
+    static const std::vector<int64_t> steps = []()
+    {
+        std::vector<int64_t> parsedSteps;
+        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_STEP1_SUBSET01_FORCEGROUP_AUDIT_STEPS");
+        if (value == nullptr || *value == '\0')
+        {
+            return parsedSteps;
+        }
+
+        std::stringstream ss(value);
+        std::string       item;
+        while (std::getline(ss, item, ','))
+        {
+            if (!item.empty())
+            {
+                parsedSteps.push_back(std::stoll(item));
+            }
+        }
+        return parsedSteps;
+    }();
+    return steps;
+}
+
 static bool shouldTraceRespaMultiStepCoulombStep(const int64_t step)
 {
     const auto& traceSteps = respaMultiStepCoulombTraceSteps();
@@ -911,12 +986,65 @@ static const char* activeM2pTraceDirPath()
 
 static bool shouldTraceRespaForceComponentsStep(const int64_t step)
 {
-    return step == 0 && respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS");
+    if (!respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS"))
+    {
+        return false;
+    }
+
+    const auto& traceSteps = respaForceComponentTraceSteps();
+    if (!traceSteps.empty())
+    {
+        return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
+    }
+
+    return step == 0;
 }
 
 static bool shouldTraceRespaRealspaceForceSubcomponentsStep(const int64_t step)
 {
-    return step == 0 && respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS");
+    const auto& traceSteps = respaRealspaceForceSubcomponentTraceSteps();
+    if (respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS") && !traceSteps.empty())
+    {
+        return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
+    }
+
+    return (step == 0 && respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS"))
+           || (step == 2 && respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_STEP1_SUBSET01_FORCEGROUP_AUDIT")
+               && activeM2pTraceDirPath() != nullptr);
+}
+
+static bool shouldTraceRespaExclusionEquivalenceStep(const int64_t step)
+{
+    return step == 0 && respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_EXCLUSION_EQUIVALENCE");
+}
+
+static bool shouldTraceRespaExclusionEquivalencePair(const int ai, const int aj)
+{
+    return ai == 0 || ai == 5 || aj == 0 || aj == 5;
+}
+
+static bool shouldTraceBoundaryDominantPair(const int ai, const int aj)
+{
+    const int first  = std::min(ai, aj);
+    const int second = std::max(ai, aj);
+    return first == 0 && (second == 4 || second == 5 || second == 6);
+}
+
+static bool shouldTraceStep1Subset01ForceGroupAuditStep(const int64_t step)
+{
+    if (!respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_STEP1_SUBSET01_FORCEGROUP_AUDIT")
+        || activeM2pTraceDirPath() == nullptr)
+    {
+        return false;
+    }
+
+    const auto& traceSteps = respaStep1Subset01ForceGroupAuditSteps();
+    if (!traceSteps.empty())
+    {
+        return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
+    }
+
+    return step == 2;
 }
 
 struct TracedForcePair
@@ -986,6 +1114,19 @@ static TracedForcePair subtractTracedForcePairs(const TracedForcePair& after, co
     return delta;
 }
 
+static TracedForcePair addTracedForcePairs(const TracedForcePair& lhs, const TracedForcePair& rhs)
+{
+    TracedForcePair sum;
+    for (int atomIndex = 0; atomIndex < 2; ++atomIndex)
+    {
+        for (int dim = 0; dim < DIM; ++dim)
+        {
+            sum.atoms[atomIndex][dim] = lhs.atoms[atomIndex][dim] + rhs.atoms[atomIndex][dim];
+        }
+    }
+    return sum;
+}
+
 static TracedForcePair captureDistinctForceOutputs(ArrayRef<ForceOutputs*> forceOutByMtsLevel,
                                                    const int             highestActiveMtsLevel)
 {
@@ -1019,6 +1160,87 @@ static TracedForcePair captureDistinctForceOutputs(ArrayRef<ForceOutputs*> force
     }
 
     return pair;
+}
+
+static void appendStep1Subset01ForceGroupStageSnapshot(const char*                  traceDirPath,
+                                                       const char*                  side,
+                                                       const int64_t                step,
+                                                       const char*                  stage,
+                                                       const char*                  bufferRole,
+                                                       const int                    levelIndex,
+                                                       const int                    atomIndex,
+                                                       const gmx::RVec&             force,
+                                                       const char*                  codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    static std::mutex                   traceMutex;
+    static std::unordered_set<std::string> emittedRows;
+    const std::string                  row =
+            "side=" + std::string(side) + " step=" + std::to_string(step) + " stage=" + std::string(stage)
+            + " buffer_role=" + std::string(bufferRole) + " level_index=" + std::to_string(levelIndex)
+            + " atom=" + std::to_string(atomIndex) + " fx=" + formatString("%.15f", force[XX]) + " fy="
+            + formatString("%.15f", force[YY]) + " fz=" + formatString("%.15f", force[ZZ]) + " code_location="
+            + std::string(codeLocation);
+    const std::string rowKey = std::string(traceDirPath) + "/step1_subset01_forcegroup_stage_trace.txt\n" + row;
+    {
+        std::lock_guard<std::mutex> guard(traceMutex);
+        if (!emittedRows.insert(rowKey).second)
+        {
+            return;
+        }
+    }
+
+    appendRespaTraceTextLine(traceDirPath, "step1_subset01_forcegroup_stage_trace.txt", row);
+}
+
+static void appendStep1Subset01ForceGroupBufferSnapshot(const char*                traceDirPath,
+                                                        const char*                side,
+                                                        const int64_t              step,
+                                                        const char*                stage,
+                                                        ArrayRef<ForceOutputs*>    forceOutByMtsLevel,
+                                                        const int                  highestActiveMtsLevel,
+                                                        const char*                level0Role,
+                                                        const char*                codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    const auto appendBufferForAtoms = [&](const char* role, const int levelIndex, ArrayRef<const RVec> force)
+    {
+        if (force.empty() || force.ssize() <= 5)
+        {
+            return;
+        }
+        for (const int atomIndex : { 0, 5 })
+        {
+            appendStep1Subset01ForceGroupStageSnapshot(
+                    traceDirPath, side, step, stage, role, levelIndex, atomIndex, force[atomIndex], codeLocation);
+        }
+    };
+
+    if (forceOutByMtsLevel.empty() || forceOutByMtsLevel[0] == nullptr)
+    {
+        return;
+    }
+
+    appendBufferForAtoms(level0Role, 0, forceOutByMtsLevel[0]->forceWithShiftForces().force());
+    if (highestActiveMtsLevel >= 1 && forceOutByMtsLevel.ssize() > 1 && forceOutByMtsLevel[1] != nullptr)
+    {
+        appendBufferForAtoms("slow1", 1, forceOutByMtsLevel[1]->forceWithShiftForces().force());
+    }
+    if (highestActiveMtsLevel >= 2 && forceOutByMtsLevel.ssize() > 2 && forceOutByMtsLevel[2] != nullptr)
+    {
+        const auto slow2Force = forceOutByMtsLevel[2]->haveForceWithVirial()
+                                        ? forceOutByMtsLevel[2]->forceWithVirial().force_
+                                        : forceOutByMtsLevel[2]->forceWithShiftForces().force();
+        appendBufferForAtoms("slow2", 2, slow2Force);
+    }
 }
 
 static void appendForceComponentTracePairToFile(const char*                traceDirPath,
@@ -1158,6 +1380,253 @@ static void appendRealspaceForceSubcomponentUnavailablePair(const char* traceDir
                                               sourceLabel,
                                               codeLocation,
                                               reason);
+}
+
+static void appendExclusionEquivalenceTracePair(const char*        traceDirPath,
+                                                const char*        side,
+                                                const int64_t      step,
+                                                const int          pairOrdinal,
+                                                const int          ai,
+                                                const int          aj,
+                                                const char*        sourcePath,
+                                                const char*        membershipSource,
+                                                const char*        listKind,
+                                                const bool         treatedAsExclusionProducer,
+                                                const bool         includePairEffective,
+                                                const real         factorCoulomb,
+                                                const real         factorLj,
+                                                const real         qq,
+                                                const int          tableIndex,
+                                                const real         frac,
+                                                const real         fexcl,
+                                                const real         vcorr,
+                                                const real         bareCoulombScalar,
+                                                const real         correctionScalarRaw,
+                                                const real         correctionForceScalarEquivalent,
+                                                const real         effectiveOuterScalar,
+                                                const real         fullScalar,
+                                                const RVec&        correctionForceWritten,
+                                                const RVec&        combinedForceWritten,
+                                                const char*        sinkTarget,
+                                                const bool         sinkWriteExecuted,
+                                                const char*        sourceLabel,
+                                                const char*        componentKind,
+                                                const char*        codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    appendRespaTraceTextLine(
+            traceDirPath,
+            "step0_exclusion_equivalence_pair_trace.txt",
+            "side=" + std::string(side) + " step=" + std::to_string(step) + " pair_ordinal="
+                    + std::to_string(pairOrdinal) + " ai=" + std::to_string(ai) + " aj="
+                    + std::to_string(aj) + " pair_key=" + std::to_string(ai) + "_" + std::to_string(aj)
+                    + " source_path=" + std::string(sourcePath) + " membership_source="
+                    + std::string(membershipSource) + " list_kind=" + std::string(listKind)
+                    + " treated_as_exclusion_correction_producer="
+                    + std::string(treatedAsExclusionProducer ? "true" : "false")
+                    + " include_pair_effective="
+                    + std::string(includePairEffective ? "true" : "false") + " factor_coulomb="
+                    + formatString("%.15f", factorCoulomb) + " factor_lj="
+                    + formatString("%.15f", factorLj) + " qq=" + formatString("%.15f", qq)
+                    + " table_index=" + std::to_string(tableIndex) + " frac="
+                    + formatString("%.15f", frac) + " fexcl=" + formatString("%.15f", fexcl)
+                    + " vcorr=" + formatString("%.15f", vcorr) + " bare_coulomb_scalar="
+                    + formatString("%.15f", bareCoulombScalar) + " correction_scalar_raw="
+                    + formatString("%.15f", correctionScalarRaw)
+                    + " correction_force_scalar_equivalent="
+                    + formatString("%.15f", correctionForceScalarEquivalent) + " effective_outer_scalar="
+                    + formatString("%.15f", effectiveOuterScalar) + " full_scalar="
+                    + formatString("%.15f", fullScalar) + " correction_force_written_fx="
+                    + formatString("%.15f", correctionForceWritten[XX]) + " correction_force_written_fy="
+                    + formatString("%.15f", correctionForceWritten[YY]) + " correction_force_written_fz="
+                    + formatString("%.15f", correctionForceWritten[ZZ]) + " combined_force_written_fx="
+                    + formatString("%.15f", combinedForceWritten[XX]) + " combined_force_written_fy="
+                    + formatString("%.15f", combinedForceWritten[YY]) + " combined_force_written_fz="
+                    + formatString("%.15f", combinedForceWritten[ZZ]) + " sink_target="
+                    + std::string(sinkTarget) + " sink_write_executed="
+                    + std::string(sinkWriteExecuted ? "true" : "false") + " source_label="
+                    + std::string(sourceLabel) + " component_kind=" + std::string(componentKind)
+                    + " code_location=" + std::string(codeLocation));
+}
+
+static void appendStep2PairScalarAuditLine(const char* traceDirPath,
+                                           const char* side,
+                                           const int64_t step,
+                                           const char* listKind,
+                                           const int pairOrdinal,
+                                           const int ai,
+                                           const int aj,
+                                           const int atomFocus,
+                                           const real r,
+                                           const real rawLjScalar,
+                                           const real bareCoulombScalar,
+                                           const real correctionScalar,
+                                           const real splitInner,
+                                           const real splitMiddle,
+                                           const real splitOuter,
+                                           const real innerScalar,
+                                           const real middleScalar,
+                                           const real bareOuterScalar,
+                                           const real outerScalarRaw,
+                                           const real effectiveOuterScalar,
+                                           const RVec& innerForceOnFocus,
+                                           const RVec& middleForceOnFocus,
+                                           const RVec& outerForceOnFocus,
+                                           const bool contributesInner,
+                                           const bool contributesMiddle,
+                                           const char* codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    static std::mutex                   traceMutex;
+    static std::unordered_set<std::string> emittedRows;
+    const std::string                  row =
+            "side=" + std::string(side) + " step=" + std::to_string(step) + " list_kind="
+            + std::string(listKind) + " pair_ordinal=" + std::to_string(pairOrdinal) + " pair_i="
+            + std::to_string(ai) + " pair_j=" + std::to_string(aj) + " atom_focus="
+            + std::to_string(atomFocus) + " comparison_group=" + std::to_string(step) + "_"
+            + std::to_string(ai) + "_" + std::to_string(aj) + "_" + std::to_string(atomFocus) + " r="
+            + formatString("%.15f", r) + " rawLjScalar=" + formatString("%.15f", rawLjScalar)
+            + " bareCoulombScalar=" + formatString("%.15f", bareCoulombScalar) + " correctionScalar="
+            + formatString("%.15f", correctionScalar) + " split_inner=" + formatString("%.15f", splitInner)
+            + " split_middle=" + formatString("%.15f", splitMiddle) + " split_outer="
+            + formatString("%.15f", splitOuter) + " derived_inner_scalar="
+            + formatString("%.15f", innerScalar) + " derived_middle_scalar="
+            + formatString("%.15f", middleScalar) + " derived_bare_outer_scalar="
+            + formatString("%.15f", bareOuterScalar) + " derived_outer_scalar_raw="
+            + formatString("%.15f", outerScalarRaw) + " derived_effective_outer_scalar="
+            + formatString("%.15f", effectiveOuterScalar) + " contributes_inner_live="
+            + std::string(contributesInner ? "true" : "false") + " contributes_middle_live="
+            + std::string(contributesMiddle ? "true" : "false") + " inner_force_x="
+            + formatString("%.15f", innerForceOnFocus[XX]) + " inner_force_y="
+            + formatString("%.15f", innerForceOnFocus[YY]) + " inner_force_z="
+            + formatString("%.15f", innerForceOnFocus[ZZ]) + " middle_force_x="
+            + formatString("%.15f", middleForceOnFocus[XX]) + " middle_force_y="
+            + formatString("%.15f", middleForceOnFocus[YY]) + " middle_force_z="
+            + formatString("%.15f", middleForceOnFocus[ZZ]) + " outer_force_x="
+            + formatString("%.15f", outerForceOnFocus[XX]) + " outer_force_y="
+            + formatString("%.15f", outerForceOnFocus[YY]) + " outer_force_z="
+            + formatString("%.15f", outerForceOnFocus[ZZ]) + " code_location=" + std::string(codeLocation);
+    const std::string rowKey = std::string(traceDirPath) + "/step2_pair_scalar_split_trace.txt\n" + row;
+    {
+        std::lock_guard<std::mutex> guard(traceMutex);
+        if (!emittedRows.insert(rowKey).second)
+        {
+            return;
+        }
+    }
+
+    appendRespaTraceTextLine(traceDirPath, "step2_pair_scalar_split_trace.txt", row);
+}
+
+static void appendMiddlePairComponentAuditLine(const char* traceDirPath,
+                                               const char* side,
+                                               const int64_t step,
+                                               const int pairOrdinal,
+                                               const int ai,
+                                               const int aj,
+                                               const int atomFocus,
+                                               const real r,
+                                               const RVec& middleLjForceOnFocus,
+                                               const RVec& middleBareCoulombForceOnFocus,
+                                               const RVec& middleCorrectionForceOnFocus,
+                                               const RVec& middleTotalForceOnFocus,
+                                               const char* codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    static std::mutex                    traceMutex;
+    static std::unordered_set<std::string> emittedRows;
+    const std::string                   row =
+            "side=" + std::string(side) + " step=" + std::to_string(step) + " pair_ordinal="
+            + std::to_string(pairOrdinal) + " pair_i=" + std::to_string(ai) + " pair_j="
+            + std::to_string(aj) + " atom_focus=" + std::to_string(atomFocus) + " comparison_group="
+            + std::to_string(step) + "_" + std::to_string(ai) + "_" + std::to_string(aj) + "_"
+            + std::to_string(atomFocus) + " r=" + formatString("%.15f", r) + " middle_lj_fx="
+            + formatString("%.15f", middleLjForceOnFocus[XX]) + " middle_lj_fy="
+            + formatString("%.15f", middleLjForceOnFocus[YY]) + " middle_lj_fz="
+            + formatString("%.15f", middleLjForceOnFocus[ZZ]) + " middle_bare_coul_fx="
+            + formatString("%.15f", middleBareCoulombForceOnFocus[XX]) + " middle_bare_coul_fy="
+            + formatString("%.15f", middleBareCoulombForceOnFocus[YY]) + " middle_bare_coul_fz="
+            + formatString("%.15f", middleBareCoulombForceOnFocus[ZZ]) + " middle_corr_fx="
+            + formatString("%.15f", middleCorrectionForceOnFocus[XX]) + " middle_corr_fy="
+            + formatString("%.15f", middleCorrectionForceOnFocus[YY]) + " middle_corr_fz="
+            + formatString("%.15f", middleCorrectionForceOnFocus[ZZ]) + " middle_total_fx="
+            + formatString("%.15f", middleTotalForceOnFocus[XX]) + " middle_total_fy="
+            + formatString("%.15f", middleTotalForceOnFocus[YY]) + " middle_total_fz="
+            + formatString("%.15f", middleTotalForceOnFocus[ZZ]) + " code_location="
+            + std::string(codeLocation);
+    const std::string rowKey =
+            std::string(traceDirPath) + "/step1_middle_pair_component_trace.txt\n" + row;
+    {
+        std::lock_guard<std::mutex> guard(traceMutex);
+        if (!emittedRows.insert(rowKey).second)
+        {
+            return;
+        }
+    }
+
+    appendRespaTraceTextLine(traceDirPath, "step1_middle_pair_component_trace.txt", row);
+}
+
+static void appendBoundaryBookkeepingAuditLine(const char* traceDirPath,
+                                               const char* side,
+                                               const int64_t step,
+                                               const int ai,
+                                               const int aj,
+                                               const char* listKind,
+                                               const char* contribution,
+                                               const real r,
+                                               const real outerScalar,
+                                               const real effectiveOuterScalar,
+                                               const real fullCoulombEnergy,
+                                               const bool scalarIsZero,
+                                               const bool energyWriteExecuted,
+                                               const bool suppressBookkeepingEnergy,
+                                               const bool suppressExcludedPairComparableEnergy,
+                                               const int energyIndex,
+                                               const real targetBefore,
+                                               const real writeDelta,
+                                               const real targetAfter,
+                                               const char* reason,
+                                               const char* codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    appendRespaTraceTextLine(
+            traceDirPath,
+            "boundary_force_energy_crosscheck_trace.txt",
+            "side=" + std::string(side) + " step=" + std::to_string(step) + " pair_i="
+                    + std::to_string(std::min(ai, aj)) + " pair_j=" + std::to_string(std::max(ai, aj))
+                    + " list_kind=" + std::string(listKind) + " contribution=" + std::string(contribution)
+                    + " r=" + formatString("%.15f", r) + " outerScalar="
+                    + formatString("%.15f", outerScalar) + " effectiveOuterScalar="
+                    + formatString("%.15f", effectiveOuterScalar) + " fullCoulombEnergy="
+                    + formatString("%.15f", fullCoulombEnergy) + " scalar_zero="
+                    + std::string(scalarIsZero ? "true" : "false") + " energy_write_executed="
+                    + std::string(energyWriteExecuted ? "true" : "false")
+                    + " suppress_bookkeeping_energy="
+                    + std::string(suppressBookkeepingEnergy ? "true" : "false")
+                    + " suppress_excluded_pair_comparable_energy="
+                    + std::string(suppressExcludedPairComparableEnergy ? "true" : "false")
+                    + " energy_index=" + std::to_string(energyIndex) + " sink_name=coulEnergyTerms"
+                    + " target_before=" + formatString("%.15f", targetBefore) + " write_delta="
+                    + formatString("%.15f", writeDelta) + " target_after="
+                    + formatString("%.15f", targetAfter) + " reason=" + std::string(reason)
+                    + " code_location=" + std::string(codeLocation));
 }
 
 static const char* loopEntryStageName(const int64_t step)
@@ -1778,10 +2247,22 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                                            const int64_t                    step)
 {
     const bool traceRealspaceForceSubcomponents = shouldTraceRespaRealspaceForceSubcomponentsStep(step);
+    const bool traceExclusionEquivalence        = shouldTraceRespaExclusionEquivalenceStep(step);
+    const bool traceStep1Subset01ForceGroupAudit =
+            shouldTraceStep1Subset01ForceGroupAuditStep(step);
     TracedForcePair tracedPatchLjSrForce;
     TracedForcePair tracedPatchCoulombSrForce;
     TracedForcePair tracedPatchExclusionCorrectionForce;
     TracedForcePair tracedPatchCombinedRealspaceForce;
+    TracedForcePair tracedExactInnerRealspaceForce;
+    TracedForcePair tracedExactMiddleRealspaceForce;
+    TracedForcePair tracedExactOuterRealspaceForce;
+    TracedForcePair tracedExactInnerLjSrForce;
+    TracedForcePair tracedExactInnerBareCoulombSrForce;
+    TracedForcePair tracedExactInnerCorrectionForce;
+    TracedForcePair tracedExactMiddleLjSrForce;
+    TracedForcePair tracedExactMiddleBareCoulombSrForce;
+    TracedForcePair tracedExactMiddleCorrectionForce;
 
     if (shouldTraceRespaCoordHandoffStep(step))
     {
@@ -2529,6 +3010,8 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                      && isExcludedPairlist);
             const bool includePairBase      = includePair(ai, aj);
             const bool includePairEffective = includePairBase && !probeIncludePairRestricted;
+            const bool traceExclusionEquivalencePair =
+                    traceExclusionEquivalence && shouldTraceRespaExclusionEquivalencePair(ai, aj);
 
             if (isDispatchTracePair)
             {
@@ -2699,7 +3182,9 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                                                         static_cast<real>(debugStats->coulEnergy),
                                                         "src/gromacs/mdlib/sim_util.cpp:2069");
                 }
-                debugStats->coulEnergy += fullCoulombEnergy;
+                const real admittedComparableCoulombEnergy =
+                        isExcludedPairlist ? 0.0_real : fullCoulombEnergy;
+                debugStats->coulEnergy += admittedComparableCoulombEnergy;
                 debugStats->qqSum += qq;
             }
             if (dumpM2qLjSrTrace || dumpM2rLjSrTrace || dumpM2sLjSrTrace || dumpM2vLjSrTrace || dumpM2wLjSrTrace)
@@ -2707,25 +3192,144 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                 m2qEarliestRawLjTotal += rawLjEnergy * factorLj;
             }
 
-            const real innerScalar =
-                    bareCoulombScalar * splitWeights.inner + factorLj * rawLjScalar * splitWeights.inner;
-            const real middleScalar =
-                    bareCoulombScalar * splitWeights.middle + factorLj * rawLjScalar * splitWeights.middle;
+            const real innerCorrectionScalar =
+                    isExcludedPairlist ? 0.0_real : correctionScalar * splitWeights.inner;
+            const real middleCorrectionScalar =
+                    isExcludedPairlist ? 0.0_real : correctionScalar * splitWeights.middle;
+            const real outerCorrectionScalar =
+                    isExcludedPairlist ? correctionScalar : correctionScalar * splitWeights.outer;
+            const real innerScalar = bareCoulombScalar * splitWeights.inner
+                                     + factorLj * rawLjScalar * splitWeights.inner + innerCorrectionScalar;
+            const real middleScalar = bareCoulombScalar * splitWeights.middle
+                                      + factorLj * rawLjScalar * splitWeights.middle + middleCorrectionScalar;
             const real bareOuterScalar =
                     bareCoulombScalar * splitWeights.outer + factorLj * rawLjScalar * splitWeights.outer;
             const real outerScalar =
-                    (patchShapeA ? bareOuterScalar : correctionScalar + bareOuterScalar);
+                    (patchShapeA ? bareOuterScalar : outerCorrectionScalar + bareOuterScalar);
             const real fullScalar = correctionScalar + bareCoulombScalar + factorLj * rawLjScalar;
             const real effectiveOuterScalar =
                     (probeCorrectionOuterSuppressed || patchShapeB)
                             ? bareOuterScalar
                             : outerScalar;
+            if (traceStep1Subset01ForceGroupAudit)
+            {
+                const real innerLjScalar          = factorLj * rawLjScalar * splitWeights.inner;
+                const real innerBareCoulombScalar = bareCoulombScalar * splitWeights.inner;
+                const real middleLjScalar         = factorLj * rawLjScalar * splitWeights.middle;
+                const real middleBareCoulombScalar = bareCoulombScalar * splitWeights.middle;
+                const auto accumulateScalarContribution =
+                        [&](TracedForcePair* targetPair, const real scalar)
+                {
+                    if (scalar == 0.0_real)
+                    {
+                        return;
+                    }
+                    RVec force = { 0, 0, 0 };
+                    svmul(scalar * rinvsq, dx, force);
+                    addPairContributionToTracedPair(targetPair, ai, aj, force);
+                };
+
+                accumulateScalarContribution(&tracedExactInnerLjSrForce, innerLjScalar);
+                accumulateScalarContribution(&tracedExactInnerBareCoulombSrForce, innerBareCoulombScalar);
+                accumulateScalarContribution(&tracedExactInnerCorrectionForce, innerCorrectionScalar);
+                accumulateScalarContribution(&tracedExactMiddleLjSrForce, middleLjScalar);
+                accumulateScalarContribution(&tracedExactMiddleBareCoulombSrForce, middleBareCoulombScalar);
+                accumulateScalarContribution(&tracedExactMiddleCorrectionForce, middleCorrectionScalar);
+                accumulateScalarContribution(&tracedExactInnerRealspaceForce, innerScalar);
+                accumulateScalarContribution(&tracedExactMiddleRealspaceForce, middleScalar);
+                accumulateScalarContribution(&tracedExactOuterRealspaceForce, effectiveOuterScalar);
+
+                if (!isExcludedPairlist && (shouldTraceRespaExclusionEquivalencePair(ai, aj)))
+                {
+                    const auto appendScalarAuditForFocusAtom = [&](const int atomFocus)
+                    {
+                        if (atomFocus != ai && atomFocus != aj)
+                        {
+                            return;
+                        }
+
+                        const real sign = (atomFocus == ai) ? 1.0_real : -1.0_real;
+                        RVec       innerForceOnFocus  = { 0, 0, 0 };
+                        RVec       middleForceOnFocus = { 0, 0, 0 };
+                        RVec       outerForceOnFocus  = { 0, 0, 0 };
+                        RVec       middleLjForceOnFocus = { 0, 0, 0 };
+                        RVec       middleBareCoulombForceOnFocus = { 0, 0, 0 };
+                        RVec       middleCorrectionForceOnFocus = { 0, 0, 0 };
+
+                        if (innerScalar != 0.0_real)
+                        {
+                            svmul(sign * innerScalar * rinvsq, dx, innerForceOnFocus);
+                        }
+                        if (middleLjScalar != 0.0_real)
+                        {
+                            svmul(sign * middleLjScalar * rinvsq, dx, middleLjForceOnFocus);
+                        }
+                        if (middleBareCoulombScalar != 0.0_real)
+                        {
+                            svmul(sign * middleBareCoulombScalar * rinvsq, dx, middleBareCoulombForceOnFocus);
+                        }
+                        if (middleCorrectionScalar != 0.0_real)
+                        {
+                            svmul(sign * middleCorrectionScalar * rinvsq, dx, middleCorrectionForceOnFocus);
+                        }
+                        if (middleScalar != 0.0_real)
+                        {
+                            svmul(sign * middleScalar * rinvsq, dx, middleForceOnFocus);
+                        }
+                        if (effectiveOuterScalar != 0.0_real)
+                        {
+                            svmul(sign * effectiveOuterScalar * rinvsq, dx, outerForceOnFocus);
+                        }
+
+                        appendStep2PairScalarAuditLine(activeM2pTraceDirPath(),
+                                                       "PATCH",
+                                                       step,
+                                                       "pairs",
+                                                       pairOrdinal,
+                                                       ai,
+                                                       aj,
+                                                       atomFocus,
+                                                       r,
+                                                       rawLjScalar,
+                                                       bareCoulombScalar,
+                                                       correctionScalar,
+                                                       splitWeights.inner,
+                                                       splitWeights.middle,
+                                                       splitWeights.outer,
+                                                       innerScalar,
+                                                       middleScalar,
+                                                       bareOuterScalar,
+                                                       outerScalar,
+                                                       effectiveOuterScalar,
+                                                       innerForceOnFocus,
+                                                       middleForceOnFocus,
+                                                       outerForceOnFocus,
+                                                       innerScalar != 0.0_real,
+                                                       middleScalar != 0.0_real,
+                                                       "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu_pair_scalar_audit");
+                        appendMiddlePairComponentAuditLine(activeM2pTraceDirPath(),
+                                                           "PATCH",
+                                                           step,
+                                                           pairOrdinal,
+                                                           ai,
+                                                           aj,
+                                                           atomFocus,
+                                                           r,
+                                                           middleLjForceOnFocus,
+                                                           middleBareCoulombForceOnFocus,
+                                                           middleCorrectionForceOnFocus,
+                                                           middleForceOnFocus,
+                                                           "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu_middle_pair_component_audit");
+                    };
+
+                    appendScalarAuditForFocusAtom(0);
+                    appendScalarAuditForFocusAtom(5);
+                }
+            }
             if (traceRealspaceForceSubcomponents)
             {
                 RVec ljForce = { 0, 0, 0 };
                 RVec coulombSrForce = { 0, 0, 0 };
-                RVec exclusionCorrectionForce = { 0, 0, 0 };
-                RVec combinedForce = { 0, 0, 0 };
 
                 if (factorLj != 0.0_real && rawLjScalar != 0.0_real)
                 {
@@ -2735,21 +3339,9 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                 {
                     svmul(bareCoulombScalar * rinvsq, dx, coulombSrForce);
                 }
-                if (correctionScalar != 0.0_real)
-                {
-                    svmul(correctionScalar * rinvsq, dx, exclusionCorrectionForce);
-                }
-                if (fullScalar != 0.0_real)
-                {
-                    svmul(fullScalar * rinvsq, dx, combinedForce);
-                }
 
                 addPairContributionToTracedPair(&tracedPatchLjSrForce, ai, aj, ljForce);
                 addPairContributionToTracedPair(&tracedPatchCoulombSrForce, ai, aj, coulombSrForce);
-                addPairContributionToTracedPair(
-                        &tracedPatchExclusionCorrectionForce, ai, aj, exclusionCorrectionForce);
-                addPairContributionToTracedPair(
-                        &tracedPatchCombinedRealspaceForce, ai, aj, combinedForce);
             }
             const bool baselineOuterActive =
                     std::any_of(activeContributions.begin(),
@@ -2863,6 +3455,10 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
 
             bool        outerWriteExecuted = false;
             std::string outerRoutingTarget = "none";
+            bool        correctionWriteExecuted = false;
+            std::string correctionRoutingTarget = "none";
+            RVec        writtenCorrectionForce = { 0, 0, 0 };
+            RVec        writtenCombinedForce   = { 0, 0, 0 };
             for (auto& accumulator : activeContributions)
             {
                 if (probeActiveOuterNarrowed
@@ -2888,119 +3484,180 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                     default: GMX_RELEASE_ASSERT(false, "Unexpected nonbonded r-RESPA contribution");
                 }
 
-                if (scalar == 0.0_real)
+                const bool traceBoundaryBookkeepingPair =
+                        shouldTraceRespaMultiStepCoulombStep(step) && !isExcludedPairlist
+                        && shouldTraceBoundaryDominantPair(ai, aj)
+                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer;
+                const bool scalarIsZero = (scalar == 0.0_real);
+                if (scalarIsZero)
                 {
-                    continue;
+                    if (traceBoundaryBookkeepingPair && accumulator.accumulateEnergy)
+                    {
+                        const int energyIndex = energyGroupPairIndex(ai, aj, *fr, mdatoms);
+                        appendBoundaryBookkeepingAuditLine(activeM2pTraceDirPath(),
+                                                           "PATCH",
+                                                           step,
+                                                           ai,
+                                                           aj,
+                                                           isExcludedPairlist ? "excludedPairs" : "pairs",
+                                                           contributionLabel(accumulator.contribution),
+                                                           r,
+                                                           outerScalar,
+                                                           effectiveOuterScalar,
+                                                           fullCoulombEnergy,
+                                                           scalarIsZero,
+                                                           false,
+                                                           false,
+                                                           false,
+                                                           energyIndex,
+                                                           coulEnergyTerms[energyIndex],
+                                                           0.0_real,
+                                                           coulEnergyTerms[energyIndex],
+                                                           "scalar_zero_gate_pre_energy",
+                                                           "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu");
+                    }
+                    if (!accumulator.accumulateEnergy)
+                    {
+                        continue;
+                    }
                 }
 
-                RVec force;
-                svmul(scalar * rinvsq, dx, force);
+                RVec force = { 0, 0, 0 };
                 const bool suppressOuterWrite =
                         probeOuterRoutingSuppressed
                         && accumulator.contribution == MtsNonbondedRespaContribution::Outer;
-                if (accumulator.contribution == MtsNonbondedRespaContribution::Outer)
+                const bool suppressExcludedPairPhysicalWrite =
+                        isExcludedPairlist
+                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer;
+                if (!scalarIsZero)
                 {
-                    outerRoutingTarget = suppressOuterWrite
-                                                 ? "suppressed"
-                                                 : (accumulator.forceWithVirial != nullptr ? "forceWithVirial"
-                                                                                          : "none");
-                }
-                const bool shouldDumpExcludedPairWrite =
-                        dumpPairWriteProof && isExcludedPairlist
-                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer && pairOrdinal == 0;
-                const bool shouldDumpControlPairWrite =
-                        dumpPairWriteProof && !isExcludedPairlist
-                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer
-                        && pairOrdinal < c_maxControlPairWriteProofs;
-                if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
-                    && accumulator.forceWithVirial != nullptr)
-                {
-                    const std::string prefix = shouldDumpExcludedPairWrite
-                                                       ? "step0_outer_excluded_write_ord000"
-                                                       : "step0_outer_pairs_write_ord"
-                                                                 + std::to_string(pairOrdinal);
-                    const std::string header =
-                            "stage="
-                            + std::string(shouldDumpExcludedPairWrite ? "first_excluded_outer_write_boundary"
-                                                                      : "control_pairs_outer_write_boundary")
-                            + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
-                            + " ordinal=" + std::to_string(pairOrdinal) + " contribution=outer buffer=forceWithVirial"
-                            + " accumulator_ptr=" + formatPointerValue(accumulator.force.data())
-                            + " virial_ptr="
-                            + formatPointerValue(accumulator.forceWithVirial->force_.data()) + " ai="
-                            + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
-                            + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
-                            + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
-                            + gmx::toString(qq) + " r=" + gmx::toString(r);
-                    dumpRespaMergeTraceVector(pairWriteProofDirPath,
-                                              (prefix + "_before.tsv").c_str(),
-                                              header + " snapshot=before",
-                                              accumulator.force);
-                    dumpRespaTraceEvent(pairWriteProofDirPath,
-                                        (prefix + "_event.tsv").c_str(),
-                                        header + " snapshot=event",
-                                        ai,
-                                        force,
-                                        aj,
-                                        RVec(-force[XX], -force[YY], -force[ZZ]));
-                }
-                if (dumpEarlyAccumTrace && factorCoulomb == 0.0_real && factorLj == 0.0_real
-                    && accumulator.contribution == MtsNonbondedRespaContribution::Outer && !dumpedFirstExcludedWrite)
-                {
-                    dumpRespaTraceEvent(
-                            earlyAccumTraceDirPath,
-                            "step0_outer_first_excluded_write.tsv",
-                            "stage=first_excluded_outer_write pair_list=excludedPairs contribution=outer buffer=forceWithVirial alias_with_shift="
-                                    + std::string(outerAliasesShift ? "true" : "false") + " ai="
-                                    + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
-                                    + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
-                                    + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
-                                    + gmx::toString(qq) + " r=" + gmx::toString(r),
-                            ai,
-                            force,
-                            aj,
-                            RVec(-force[XX], -force[YY], -force[ZZ]));
-                    dumpedFirstExcludedWrite = true;
-                }
-                if (!suppressOuterWrite)
-                {
-                    rvec_inc(accumulator.force[ai], force);
-                    rvec_dec(accumulator.force[aj], force);
+                    svmul(scalar * rinvsq, dx, force);
                     if (accumulator.contribution == MtsNonbondedRespaContribution::Outer)
                     {
-                        outerWriteExecuted = true;
+                        outerRoutingTarget = suppressOuterWrite
+                                                     ? "suppressed"
+                                                     : (suppressExcludedPairPhysicalWrite
+                                                                ? "masked_excluded_pair"
+                                                     : (accumulator.forceWithVirial != nullptr ? "forceWithVirial"
+                                                                                              : (!accumulator.force.empty()
+                                                                                                         ? "forceWithShift"
+                                                                                                         : "none")));
                     }
-                }
-                if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
-                    && accumulator.forceWithVirial != nullptr)
-                {
-                    const std::string prefix = shouldDumpExcludedPairWrite
-                                                       ? "step0_outer_excluded_write_ord000"
-                                                       : "step0_outer_pairs_write_ord"
-                                                                 + std::to_string(pairOrdinal);
-                    const std::string header =
-                            "stage="
-                            + std::string(shouldDumpExcludedPairWrite ? "first_excluded_outer_write_boundary"
-                                                                      : "control_pairs_outer_write_boundary")
-                            + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
-                            + " ordinal=" + std::to_string(pairOrdinal) + " contribution=outer buffer=forceWithVirial"
-                            + " accumulator_ptr=" + formatPointerValue(accumulator.force.data())
-                            + " virial_ptr="
-                            + formatPointerValue(accumulator.forceWithVirial->force_.data()) + " ai="
-                            + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
-                            + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
-                            + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
-                            + gmx::toString(qq) + " r=" + gmx::toString(r);
-                    dumpRespaMergeTraceVector(pairWriteProofDirPath,
-                                              (prefix + "_after.tsv").c_str(),
-                                              header + " snapshot=after",
-                                              accumulator.force);
-                }
+                    const bool shouldDumpExcludedPairWrite =
+                            dumpPairWriteProof && isExcludedPairlist
+                            && accumulator.contribution == MtsNonbondedRespaContribution::Outer && pairOrdinal == 0;
+                    const bool shouldDumpControlPairWrite =
+                            dumpPairWriteProof && !isExcludedPairlist
+                            && accumulator.contribution == MtsNonbondedRespaContribution::Outer
+                            && pairOrdinal < c_maxControlPairWriteProofs;
+                    if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
+                        && accumulator.forceWithVirial != nullptr)
+                    {
+                        const std::string prefix = shouldDumpExcludedPairWrite
+                                                           ? "step0_outer_excluded_write_ord000"
+                                                           : "step0_outer_pairs_write_ord"
+                                                                     + std::to_string(pairOrdinal);
+                        const std::string header =
+                                "stage="
+                                + std::string(shouldDumpExcludedPairWrite ? "first_excluded_outer_write_boundary"
+                                                                          : "control_pairs_outer_write_boundary")
+                                + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
+                                + " ordinal=" + std::to_string(pairOrdinal)
+                                + " contribution=outer buffer=forceWithVirial"
+                                + " accumulator_ptr=" + formatPointerValue(accumulator.force.data())
+                                + " virial_ptr="
+                                + formatPointerValue(accumulator.forceWithVirial->force_.data()) + " ai="
+                                + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
+                                + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
+                                + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
+                                + gmx::toString(qq) + " r=" + gmx::toString(r);
+                        dumpRespaMergeTraceVector(pairWriteProofDirPath,
+                                                  (prefix + "_before.tsv").c_str(),
+                                                  header + " snapshot=before",
+                                                  accumulator.force);
+                        dumpRespaTraceEvent(pairWriteProofDirPath,
+                                            (prefix + "_event.tsv").c_str(),
+                                            header + " snapshot=event",
+                                            ai,
+                                            force,
+                                            aj,
+                                            RVec(-force[XX], -force[YY], -force[ZZ]));
+                    }
+                    if (dumpEarlyAccumTrace && factorCoulomb == 0.0_real && factorLj == 0.0_real
+                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer
+                        && !dumpedFirstExcludedWrite && !suppressExcludedPairPhysicalWrite)
+                    {
+                        dumpRespaTraceEvent(
+                                earlyAccumTraceDirPath,
+                                "step0_outer_first_excluded_write.tsv",
+                                "stage=first_excluded_outer_write pair_list=excludedPairs contribution=outer buffer=forceWithVirial alias_with_shift="
+                                        + std::string(outerAliasesShift ? "true" : "false") + " ai="
+                                        + std::to_string(ai) + " aj=" + std::to_string(aj)
+                                        + " shift_index=" + std::to_string(shiftIndex) + " scalar="
+                                        + gmx::toString(scalar) + " correction_scalar="
+                                        + gmx::toString(correctionScalar) + " qq=" + gmx::toString(qq)
+                                        + " r=" + gmx::toString(r),
+                                ai,
+                                force,
+                                aj,
+                                RVec(-force[XX], -force[YY], -force[ZZ]));
+                        dumpedFirstExcludedWrite = true;
+                    }
+                    if (!suppressOuterWrite && !suppressExcludedPairPhysicalWrite)
+                    {
+                        rvec_inc(writtenCombinedForce, force);
+                        rvec_inc(accumulator.force[ai], force);
+                        rvec_dec(accumulator.force[aj], force);
+                        if (accumulator.contribution == MtsNonbondedRespaContribution::Outer)
+                        {
+                            outerWriteExecuted = true;
+                            if (correctionScalar != 0.0_real)
+                            {
+                                RVec correctionForceOnly;
+                                svmul(correctionScalar * rinvsq, dx, correctionForceOnly);
+                                rvec_inc(writtenCorrectionForce, correctionForceOnly);
+                                correctionWriteExecuted = true;
+                            }
+                        }
+                    }
+                    if (accumulator.contribution == MtsNonbondedRespaContribution::Outer
+                        && correctionScalar != 0.0_real)
+                    {
+                        correctionRoutingTarget = outerRoutingTarget;
+                    }
+                    if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
+                        && accumulator.forceWithVirial != nullptr)
+                    {
+                        const std::string prefix = shouldDumpExcludedPairWrite
+                                                           ? "step0_outer_excluded_write_ord000"
+                                                           : "step0_outer_pairs_write_ord"
+                                                                     + std::to_string(pairOrdinal);
+                        const std::string header =
+                                "stage="
+                                + std::string(shouldDumpExcludedPairWrite ? "first_excluded_outer_write_boundary"
+                                                                          : "control_pairs_outer_write_boundary")
+                                + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
+                                + " ordinal=" + std::to_string(pairOrdinal)
+                                + " contribution=outer buffer=forceWithVirial"
+                                + " accumulator_ptr=" + formatPointerValue(accumulator.force.data())
+                                + " virial_ptr="
+                                + formatPointerValue(accumulator.forceWithVirial->force_.data()) + " ai="
+                                + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
+                                + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
+                                + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
+                                + gmx::toString(qq) + " r=" + gmx::toString(r);
+                        dumpRespaMergeTraceVector(pairWriteProofDirPath,
+                                                  (prefix + "_after.tsv").c_str(),
+                                                  header + " snapshot=after",
+                                                  accumulator.force);
+                    }
 
-                if (!suppressOuterWrite && !accumulator.shift.empty() && shiftIndex != c_centralShiftIndex)
-                {
-                    rvec_inc(accumulator.shift[shiftIndex], force);
-                    rvec_dec(accumulator.shift[c_centralShiftIndex], force);
+                    if (!suppressOuterWrite && !suppressExcludedPairPhysicalWrite && !accumulator.shift.empty()
+                        && shiftIndex != c_centralShiftIndex)
+                    {
+                        rvec_inc(accumulator.shift[shiftIndex], force);
+                        rvec_dec(accumulator.shift[c_centralShiftIndex], force);
+                    }
                 }
 
                 if (accumulator.accumulateEnergy)
@@ -3010,7 +3667,13 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                             probeBookkeepingEnergySuppressed
                             && accumulator.contribution == MtsNonbondedRespaContribution::Outer;
                     const real vdwEnergyDelta = suppressBookkeepingEnergy ? 0.0_real : factorLj * rawLjEnergy;
-                    const real coulEnergyDelta = suppressBookkeepingEnergy ? 0.0_real : fullCoulombEnergy;
+                    const bool suppressExcludedPairComparableEnergy =
+                            isExcludedPairlist
+                            && accumulator.contribution == MtsNonbondedRespaContribution::Outer;
+                    const real coulEnergyDelta =
+                            (suppressBookkeepingEnergy || suppressExcludedPairComparableEnergy)
+                                    ? 0.0_real
+                                    : fullCoulombEnergy;
                     if (isBookkeepingTracePair
                         && accumulator.contribution == MtsNonbondedRespaContribution::Outer)
                     {
@@ -3081,6 +3744,32 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                         {
                             patchPreSelfWritesForEnergyIndex0.erase(patchPreSelfWritesForEnergyIndex0.begin());
                         }
+                    }
+                    if (traceBoundaryBookkeepingPair)
+                    {
+                        const real targetBefore = coulEnergyTerms[energyIndex];
+                        const real targetAfter  = targetBefore + coulEnergyDelta;
+                        appendBoundaryBookkeepingAuditLine(activeM2pTraceDirPath(),
+                                                           "PATCH",
+                                                           step,
+                                                           ai,
+                                                           aj,
+                                                           isExcludedPairlist ? "excludedPairs" : "pairs",
+                                                           contributionLabel(accumulator.contribution),
+                                                           r,
+                                                           outerScalar,
+                                                           effectiveOuterScalar,
+                                                           fullCoulombEnergy,
+                                                           scalarIsZero,
+                                                           coulEnergyDelta != 0.0_real,
+                                                           suppressBookkeepingEnergy,
+                                                           suppressExcludedPairComparableEnergy,
+                                                           energyIndex,
+                                                           targetBefore,
+                                                           coulEnergyDelta,
+                                                           targetAfter,
+                                                           "energy_sink_write",
+                                                           "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu");
                     }
                     coulEnergyTerms[energyIndex] += coulEnergyDelta;
                     if ((dumpM2sLjSrTrace || dumpM2uLjSrTrace) && !m2sFirstWriteCaptured
@@ -3158,10 +3847,56 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                     }
                 }
 
-                if (!suppressOuterWrite && stepWork.computeVirial && accumulator.forceWithVirial != nullptr)
+                if (!suppressOuterWrite && !suppressExcludedPairPhysicalWrite && stepWork.computeVirial
+                    && accumulator.forceWithVirial != nullptr)
                 {
                     accumulatePairVirial(dx, force, accumulator.virial);
                 }
+            }
+
+            if (traceExclusionEquivalencePair)
+            {
+                appendExclusionEquivalenceTracePair(
+                        activeM2pTraceDirPath(),
+                        "PATCH",
+                        step,
+                        pairOrdinal,
+                        ai,
+                        aj,
+                        "exact_cpu_rrespa",
+                        isExcludedPairlist ? "plainPairlist.excludedPairs" : "plainPairlist.pairs",
+                        isExcludedPairlist ? "excludedPairs" : "pairs",
+                        isExcludedPairlist && correctionScalar != 0.0_real,
+                        includePairEffective,
+                        factorCoulomb,
+                        factorLj,
+                        qq,
+                        coulTableIndex,
+                        coulFrac,
+                        coulFexcl,
+                        coulVcorr,
+                        bareCoulombScalar,
+                        correctionScalar,
+                        correctionScalar * rinvsq,
+                        effectiveOuterScalar,
+                        fullScalar,
+                        writtenCorrectionForce,
+                        writtenCombinedForce,
+                        correctionRoutingTarget.c_str(),
+                        correctionWriteExecuted,
+                        isExcludedPairlist ? "excluded_pairlist_entry_promoted_to_outer_contribution"
+                                           : "pairlist_entry_outer_correction_component",
+                        isExcludedPairlist ? "excluded_pairlist_correction_candidate"
+                                           : "included_pair_outer_correction_component",
+                        "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu_exclusion_equivalence_trace");
+            }
+
+            if (traceRealspaceForceSubcomponents)
+            {
+                addPairContributionToTracedPair(
+                        &tracedPatchExclusionCorrectionForce, ai, aj, writtenCorrectionForce);
+                addPairContributionToTracedPair(
+                        &tracedPatchCombinedRealspaceForce, ai, aj, writtenCombinedForce);
             }
 
             if (isDispatchTracePair)
@@ -3309,6 +4044,152 @@ static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inpu
                                                   "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
                                                   "combined_total",
                                                   false);
+    }
+    if (traceStep1Subset01ForceGroupAudit)
+    {
+        const TracedForcePair tracedExactSubset01RealspaceForce =
+                addTracedForcePairs(tracedExactInnerRealspaceForce, tracedExactMiddleRealspaceForce);
+        const char* producerTermTraceFile = "step2_current_nonbonded_producer_term_trace.txt";
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "inner_lj_sr_force",
+                                            tracedExactInnerLjSrForce,
+                                            "computeLammpsRespaNonbondedCpu.factorLj_rawLjScalar_splitWeights.inner",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "term_component",
+                                            true);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "inner_bare_coulomb_sr_force",
+                                            tracedExactInnerBareCoulombSrForce,
+                                            "computeLammpsRespaNonbondedCpu.bareCoulombScalar_splitWeights.inner",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "term_component",
+                                            true);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "inner_correction_force",
+                                            tracedExactInnerCorrectionForce,
+                                            "computeLammpsRespaNonbondedCpu.correctionScalar_splitWeights.inner",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "term_component",
+                                            true);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "inner_total",
+                                            tracedExactInnerRealspaceForce,
+                                            "computeLammpsRespaNonbondedCpu.innerScalar",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "combined_term_total",
+                                            false);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "middle_lj_sr_force",
+                                            tracedExactMiddleLjSrForce,
+                                            "computeLammpsRespaNonbondedCpu.factorLj_rawLjScalar_splitWeights.middle",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "term_component",
+                                            true);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "middle_bare_coulomb_sr_force",
+                                            tracedExactMiddleBareCoulombSrForce,
+                                            "computeLammpsRespaNonbondedCpu.bareCoulombScalar_splitWeights.middle",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "term_component",
+                                            true);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "middle_correction_force",
+                                            tracedExactMiddleCorrectionForce,
+                                            "computeLammpsRespaNonbondedCpu.correctionScalar_splitWeights.middle",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "term_component",
+                                            true);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "middle_total",
+                                            tracedExactMiddleRealspaceForce,
+                                            "computeLammpsRespaNonbondedCpu.middleScalar",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "combined_term_total",
+                                            false);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "inner_live",
+                                            tracedExactInnerRealspaceForce,
+                                            "computeLammpsRespaNonbondedCpu.innerScalar",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "live_buffer_payload",
+                                            false);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "middle_live",
+                                            tracedExactMiddleRealspaceForce,
+                                            "computeLammpsRespaNonbondedCpu.middleScalar",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "live_buffer_payload",
+                                            false);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            producerTermTraceFile,
+                                            "PATCH",
+                                            step,
+                                            "subset01_after_nonbonded",
+                                            tracedExactSubset01RealspaceForce,
+                                            "computeLammpsRespaNonbondedCpu.inner_plus_middle_current_nonbonded",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "subset_total",
+                                            false);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            "step1_subset01_forcegroup_realspace_split_trace.txt",
+                                            "PATCH",
+                                            step,
+                                            "nonbonded_inner_live",
+                                            tracedExactInnerRealspaceForce,
+                                            "computeLammpsRespaNonbondedCpu.innerScalar",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "true_source_component",
+                                            true);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            "step1_subset01_forcegroup_realspace_split_trace.txt",
+                                            "PATCH",
+                                            step,
+                                            "nonbonded_middle_live",
+                                            tracedExactMiddleRealspaceForce,
+                                            "computeLammpsRespaNonbondedCpu.middleScalar",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "true_source_component",
+                                            true);
+        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                            "step1_subset01_forcegroup_realspace_split_trace.txt",
+                                            "PATCH",
+                                            step,
+                                            "nonbonded_outer_live",
+                                            tracedExactOuterRealspaceForce,
+                                            "computeLammpsRespaNonbondedCpu.effectiveOuterScalar",
+                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                            "true_source_component",
+                                            true);
     }
     const double patchCombinedAfterExcluded =
             (ljSrTraceDirPath != nullptr && *ljSrTraceDirPath != '\0') ? sumEnergyTermsOnce(coulEnergyTerms) : 0.0;
@@ -4994,6 +5875,8 @@ void do_force(FILE*                         fplog,
     const bool          traceForceComponents = shouldTraceRespaForceComponentsStep(step);
     const bool          traceRealspaceForceSubcomponents =
             shouldTraceRespaRealspaceForceSubcomponentsStep(step);
+    const bool          traceExclusionEquivalence =
+            shouldTraceRespaExclusionEquivalenceStep(step);
 
     if (traceForceComponents)
     {
@@ -5023,6 +5906,22 @@ void do_force(FILE*                         fplog,
             {
                 writeRespaTraceTextFile(traceDirPath, "step0_realspace_force_subcomponent_trace.txt", "");
                 clearedRealspaceTracePath = tracePath;
+            }
+        }
+    }
+    if (traceExclusionEquivalence)
+    {
+        const char* traceDirPath = activeM2pTraceDirPath();
+        if (traceDirPath != nullptr && *traceDirPath != '\0')
+        {
+            static std::string clearedExclusionEquivalenceTracePath;
+            const std::string  tracePath =
+                    (std::filesystem::path(traceDirPath) / "step0_exclusion_equivalence_pair_trace.txt")
+                            .string();
+            if (tracePath != clearedExclusionEquivalenceTracePath)
+            {
+                writeRespaTraceTextFile(traceDirPath, "step0_exclusion_equivalence_pair_trace.txt", "");
+                clearedExclusionEquivalenceTracePath = tracePath;
             }
         }
     }
@@ -5610,11 +6509,26 @@ void do_force(FILE*                         fplog,
     const bool useExactLammpsRespaNonbonded =
             stepWork.computeNonbondedForces && inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa
             && inputrec.lammpsRespa.hasPairSplitting();
+    const bool traceStep1Subset01ForceGroupAudit = shouldTraceStep1Subset01ForceGroupAuditStep(step);
+    const char* step1Subset01TraceSide          = useExactLammpsRespaNonbonded ? "PATCH" : "PLAIN";
+    const char* step1Subset01Level0Role         = useExactLammpsRespaNonbonded ? "shared" : "plain_total";
 
     GMX_RELEASE_ASSERT(!useExactLammpsRespaNonbonded || !useOrEmulateGpuNb,
                        "Exact LAMMPS-style r-RESPA is CPU-only");
     GMX_RELEASE_ASSERT(!useExactLammpsRespaNonbonded || !domainWork.haveCpuNonbondedFreeEnergyWork,
                        "Exact LAMMPS-style r-RESPA does not support nonbonded free-energy work yet");
+
+    if (traceStep1Subset01ForceGroupAudit)
+    {
+        appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
+                                                   step1Subset01TraceSide,
+                                                   step,
+                                                   "after_clear",
+                                                   forceOutByMtsLevel,
+                                                   stepWork.highestActiveMtsLevel,
+                                                   step1Subset01Level0Role,
+                                                   "src/gromacs/mdlib/sim_util.cpp:after_clear_force_outputs");
+    }
 
     if (useExactLammpsRespaNonbonded)
     {
@@ -5743,6 +6657,18 @@ void do_force(FILE*                         fplog,
         }
     }
 
+    if (traceStep1Subset01ForceGroupAudit)
+    {
+        appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
+                                                   step1Subset01TraceSide,
+                                                   step,
+                                                   "after_nonbonded",
+                                                   forceOutByMtsLevel,
+                                                   stepWork.highestActiveMtsLevel,
+                                                   step1Subset01Level0Role,
+                                                   "src/gromacs/mdlib/sim_util.cpp:after_nonbonded_stage");
+    }
+
     TracedForcePair tracedForceOutputsBeforeListed;
     if (traceForceComponents)
     {
@@ -5804,6 +6730,49 @@ void do_force(FILE*                         fplog,
                                                   "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
                                                   "combined_total",
                                                   false);
+        if (traceStep1Subset01ForceGroupAudit)
+        {
+            appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                                "step2_current_nonbonded_producer_term_trace.txt",
+                                                "PLAIN",
+                                                step,
+                                                "plain_lj_sr_force",
+                                                toTracedForcePair(readM2pPlain4x4LjSrForcePair()),
+                                                "kernel_ref_inner.frLJ_times_rinvsq",
+                                                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
+                                                "downstream_total_component",
+                                                true);
+            appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                                "step2_current_nonbonded_producer_term_trace.txt",
+                                                "PLAIN",
+                                                step,
+                                                "plain_coulomb_sr_force",
+                                                toTracedForcePair(readM2pPlain4x4CoulombSrForcePair()),
+                                                "kernel_ref_inner.interact_times_rinvsq_term",
+                                                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
+                                                "downstream_total_component",
+                                                true);
+            appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                                "step2_current_nonbonded_producer_term_trace.txt",
+                                                "PLAIN",
+                                                step,
+                                                "plain_exclusion_correction_force",
+                                                toTracedForcePair(readM2pPlain4x4ExclusionCorrectionForcePair()),
+                                                "kernel_ref_inner.fexcl_correction_term",
+                                                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
+                                                "downstream_total_component",
+                                                true);
+            appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
+                                                "step2_current_nonbonded_producer_term_trace.txt",
+                                                "PLAIN",
+                                                step,
+                                                "plain_after_nonbonded",
+                                                toTracedForcePair(readM2pPlain4x4CombinedRealspaceForcePair()),
+                                                "kernel_ref_inner.fscal_total",
+                                                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
+                                                "downstream_total",
+                                                false);
+        }
     }
 
     // Compute wall interactions, when present.
@@ -5876,6 +6845,18 @@ void do_force(FILE*                         fplog,
         }
     }
 
+    if (traceStep1Subset01ForceGroupAudit)
+    {
+        appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
+                                                   step1Subset01TraceSide,
+                                                   step,
+                                                   "after_listed",
+                                                   forceOutByMtsLevel,
+                                                   stepWork.highestActiveMtsLevel,
+                                                   step1Subset01Level0Role,
+                                                   "src/gromacs/mdlib/sim_util.cpp:after_listed_stage");
+    }
+
     TracedForcePair tracedForceOutputsBeforeLongRange;
     if (traceForceComponents)
     {
@@ -5923,6 +6904,18 @@ void do_force(FILE*                         fplog,
                             + std::string(outerAliasesShift ? "true" : "false"),
                     forceOutMtsLevel1->forceWithVirial().force_);
         }
+    }
+
+    if (traceStep1Subset01ForceGroupAudit)
+    {
+        appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
+                                                   step1Subset01TraceSide,
+                                                   step,
+                                                   "after_longrange",
+                                                   forceOutByMtsLevel,
+                                                   stepWork.highestActiveMtsLevel,
+                                                   step1Subset01Level0Role,
+                                                   "src/gromacs/mdlib/sim_util.cpp:after_longrange_stage");
     }
 
     if (traceForceComponents)
@@ -6541,6 +7534,12 @@ void do_force(FILE*                         fplog,
                     traceEnergyTermsRead(enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::LJSR]);
             const auto coulReadTrace =
                     traceEnergyTermsRead(enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR]);
+            const auto lj14ReadTrace =
+                    traceEnergyTermsRead(enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::LJ14]);
+            const auto coul14ReadTrace =
+                    traceEnergyTermsRead(enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::Coulomb14]);
+            const auto buckinghamReadTrace =
+                    traceEnergyTermsRead(enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::BuckinghamSR]);
             const std::string ljSrCaseLabel =
                     (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0') ? ljSrCaseLabelEnv : "unknown";
             const bool emitRawReadRows = (dumpM2uLjSrTrace || dumpM2sLjSrTrace) && ljSrCaseLabel != "plain_verlet";
@@ -6590,6 +7589,54 @@ void do_force(FILE*                         fplog,
                                 + ljSrCaseLabel
                                 + " execution_path=pre_sum_epot_grpp_plain plain_coulomb_sr="
                                 + formatString("%.15f", coulReadTrace.finalTotal));
+            }
+            if (step == 0)
+            {
+                const bool isExactRespaProbe =
+                        (inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa);
+                double preSumNonElectroResidual = 0.0;
+                for (int i = static_cast<int>(InteractionFunction::Bonds);
+                     i < static_cast<int>(InteractionFunction::PotentialEnergy);
+                     ++i)
+                {
+                    if (i == static_cast<int>(InteractionFunction::DistanceRestraintViolations)
+                        || i == static_cast<int>(InteractionFunction::OrientationRestraintDeviations)
+                        || i == static_cast<int>(InteractionFunction::CoulombShortRange)
+                        || i == static_cast<int>(InteractionFunction::Coulomb14)
+                        || i == static_cast<int>(InteractionFunction::CoulombReciprocalSpace)
+                        || i == static_cast<int>(InteractionFunction::LennardJonesShortRange)
+                        || i == static_cast<int>(InteractionFunction::LennardJones14)
+                        || i == static_cast<int>(InteractionFunction::BuckinghamShortRange))
+                    {
+                        continue;
+                    }
+                    preSumNonElectroResidual += static_cast<double>(enerd->term[static_cast<InteractionFunction>(i)]);
+                }
+                preSumNonElectroResidual += ljReadTrace.finalTotal + lj14ReadTrace.finalTotal
+                                            + buckinghamReadTrace.finalTotal;
+                const double preSumElectroTotal =
+                        coulReadTrace.finalTotal + coul14ReadTrace.finalTotal
+                        + static_cast<double>(enerd->term[InteractionFunction::CoulombReciprocalSpace]);
+                appendRespaTraceTextLine(
+                        ljSrTraceDirPath,
+                        "step0_pre_sum_potential_hypothesis_probe.txt",
+                        "stage=PRE_SUM_POTENTIAL_HYPOTHESIS_PROBE code_location=src/gromacs/mdlib/sim_util.cpp:before_accumulatePotentialEnergies"
+                                + std::string(" case_label=") + ljSrCaseLabel
+                                + " execution_path=step0_pre_sum_probe run_kind="
+                                + std::string(isExactRespaProbe ? "exact_respa" : "single_step")
+                                + " step=0"
+                                + " pre_sum_coulomb_sr=" + formatString("%.15f", coulReadTrace.finalTotal)
+                                + " pre_sum_coulomb14=" + formatString("%.15f", coul14ReadTrace.finalTotal)
+                                + " pre_sum_coulomb_recip="
+                                + formatString("%.15f", static_cast<double>(enerd->term[InteractionFunction::CoulombReciprocalSpace]))
+                                + " pre_sum_electro_total=" + formatString("%.15f", preSumElectroTotal)
+                                + " pre_sum_lj_sr=" + formatString("%.15f", ljReadTrace.finalTotal)
+                                + " pre_sum_lj14=" + formatString("%.15f", lj14ReadTrace.finalTotal)
+                                + " pre_sum_buckingham_sr=" + formatString("%.15f", buckinghamReadTrace.finalTotal)
+                                + " pre_sum_non_electro_residual="
+                                + formatString("%.15f", preSumNonElectroResidual)
+                                + " pre_sum_component_total="
+                                + formatString("%.15f", preSumElectroTotal + preSumNonElectroResidual));
             }
         }
 
@@ -6665,27 +7712,84 @@ void do_force(FILE*                         fplog,
                             + formatString("%.15f", static_cast<double>(enerd->term[InteractionFunction::CoulombShortRange]))
                             + " potential="
                             + formatString("%.15f", static_cast<double>(enerd->term[InteractionFunction::PotentialEnergy])));
-            appendRespaTraceTextLine(
-                    ljSrTraceDirPath,
-                    "step0_potential_ledger_trace.txt",
-                    "stage=FINAL_INTERNAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:5410 case_label="
-                            + std::string(
-                                    (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0') ? ljSrCaseLabelEnv :
-                                                                                                "unknown")
-                            + " execution_path=post_sum_epot_enerd_term bond="
-                            + formatString("%.15f", tracedBondEnergy) + " angle="
-                            + formatString("%.15f", tracedAngleEnergy) + " proper_dih="
-                            + formatString("%.15f", tracedProperDihedralEnergy) + " improper_dih="
-                            + formatString("%.15f", tracedImproperDihedralEnergy) + " lj14="
-                            + formatString("%.15f", tracedLj14Energy) + " coul14="
-                            + formatString("%.15f", tracedCoul14Energy) + " lj_sr="
-                            + formatString("%.15f", tracedLjSrEnergy) + " coul_sr="
-                            + formatString("%.15f", tracedCoulSrEnergy) + " coul_recip="
-                            + formatString("%.15f", tracedCoulRecipEnergy) + " buckingham_sr="
-                            + formatString("%.15f", tracedBuckinghamSrEnergy) + " other_terms="
-                            + formatString("%.15f", tracedOtherPotentialTerms) + " component_sum="
-                            + formatString("%.15f", static_cast<double>(tracedPotentialComponentSum)) + " potential="
-                            + formatString("%.15f", static_cast<double>(enerd->term[InteractionFunction::PotentialEnergy])));
+            if (step == 0)
+            {
+                const bool isExactRespaLedger =
+                        (inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa);
+                constexpr double c_barToAtmTrace = 0.9869232667160128;
+                const double volumeNm3 = static_cast<double>(box[XX][XX] * box[YY][YY] * box[ZZ][ZZ]);
+                const auto virialPressureAtm = [volumeNm3, c_barToAtmTrace](const double virialKjPerMol)
+                {
+                    return ((-virialKjPerMol) * (2.0 * gmx::c_presfac) / volumeNm3)
+                           * c_barToAtmTrace;
+                };
+                const double virialXx = static_cast<double>(vir_force[XX][XX]);
+                const double virialXy = static_cast<double>(vir_force[XX][YY]);
+                const double virialXz = static_cast<double>(vir_force[XX][ZZ]);
+                const double virialYx = static_cast<double>(vir_force[YY][XX]);
+                const double virialYy = static_cast<double>(vir_force[YY][YY]);
+                const double virialYz = static_cast<double>(vir_force[YY][ZZ]);
+                const double virialZx = static_cast<double>(vir_force[ZZ][XX]);
+                const double virialZy = static_cast<double>(vir_force[ZZ][YY]);
+                const double virialZz = static_cast<double>(vir_force[ZZ][ZZ]);
+                appendRespaTraceTextLine(
+                        ljSrTraceDirPath,
+                        "step0_potential_ledger_trace.txt",
+                        "stage=FINAL_INTERNAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:after_accumulatePotentialEnergies"
+                                + std::string(" case_label=")
+                                + std::string(
+                                        (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0')
+                                                ? ljSrCaseLabelEnv
+                                                : "unknown")
+                                + " execution_path=post_sum_epot_enerd_term run_kind="
+                                + std::string(isExactRespaLedger ? "exact_respa" : "single_step")
+                                + " step=0"
+                                + " bond=" + formatString("%.15f", tracedBondEnergy) + " angle="
+                                + formatString("%.15f", tracedAngleEnergy) + " proper_dih="
+                                + formatString("%.15f", tracedProperDihedralEnergy) + " improper_dih="
+                                + formatString("%.15f", tracedImproperDihedralEnergy) + " lj14="
+                                + formatString("%.15f", tracedLj14Energy) + " coul14="
+                                + formatString("%.15f", tracedCoul14Energy) + " lj_sr="
+                                + formatString("%.15f", tracedLjSrEnergy) + " coul_sr="
+                                + formatString("%.15f", tracedCoulSrEnergy) + " coul_recip="
+                                + formatString("%.15f", tracedCoulRecipEnergy) + " buckingham_sr="
+                                + formatString("%.15f", tracedBuckinghamSrEnergy) + " other_terms="
+                                + formatString("%.15f", tracedOtherPotentialTerms) + " component_sum="
+                                + formatString("%.15f", static_cast<double>(tracedPotentialComponentSum))
+                                + " potential="
+                                + formatString("%.15f", static_cast<double>(enerd->term[InteractionFunction::PotentialEnergy])));
+                appendRespaTraceTextLine(
+                        ljSrTraceDirPath,
+                        "step0_virial_pressure_ledger_trace.txt",
+                        "stage=FINAL_INTERNAL_VIRIAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:after_accumulatePotentialEnergies"
+                                + std::string(" case_label=")
+                                + std::string(
+                                        (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0')
+                                                ? ljSrCaseLabelEnv
+                                                : "unknown")
+                                + " execution_path=post_sum_virial_force_tensor run_kind="
+                                + std::string(isExactRespaLedger ? "exact_respa" : "single_step")
+                                + " step=0"
+                                + " volume_nm3=" + formatString("%.15f", volumeNm3)
+                                + " vir_xx=" + formatString("%.15f", virialXx)
+                                + " vir_xy=" + formatString("%.15f", virialXy)
+                                + " vir_xz=" + formatString("%.15f", virialXz)
+                                + " vir_yx=" + formatString("%.15f", virialYx)
+                                + " vir_yy=" + formatString("%.15f", virialYy)
+                                + " vir_yz=" + formatString("%.15f", virialYz)
+                                + " vir_zx=" + formatString("%.15f", virialZx)
+                                + " vir_zy=" + formatString("%.15f", virialZy)
+                                + " vir_zz=" + formatString("%.15f", virialZz)
+                                + " pressure_xx_atm=" + formatString("%.15f", virialPressureAtm(virialXx))
+                                + " pressure_yy_atm=" + formatString("%.15f", virialPressureAtm(virialYy))
+                                + " pressure_zz_atm=" + formatString("%.15f", virialPressureAtm(virialZz))
+                                + " pressure_xy_atm="
+                                + formatString("%.15f", 0.5 * (virialPressureAtm(virialXy) + virialPressureAtm(virialYx)))
+                                + " pressure_xz_atm="
+                                + formatString("%.15f", 0.5 * (virialPressureAtm(virialXz) + virialPressureAtm(virialZx)))
+                                + " pressure_yz_atm="
+                                + formatString("%.15f", 0.5 * (virialPressureAtm(virialYz) + virialPressureAtm(virialZy))));
+            }
         }
 
         if (!EI_TPI(inputrec.eI))
