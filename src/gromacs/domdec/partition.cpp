@@ -496,8 +496,6 @@ static void ddSetAtominfo(gmx::ArrayRef<const int> index_gl, const gmx::Range<in
                 fr->atomInfoForEachMoleculeBlock;
         gmx::ArrayRef<int32_t> atomInfo = fr->atomInfo;
 
-        const int gmx_unused numThreads = gmx_omp_nthreads_get(ModuleMultiThread::Domdec);
-#pragma omp parallel for num_threads(numThreads) schedule(static)
         for (int a = *atomRange.begin(); a < *atomRange.end(); a++)
         {
             const int globalIndex = index_gl[a];
@@ -2219,8 +2217,6 @@ static void setup_dd_communication(gmx_domdec_t* dd, matrix box, gmx_ddbox_t* dd
                 zone = (p == 0 ? 0 : nzone - 1);
                 while (zone < nzone)
                 {
-                    const int gmx_unused numThreads = gmx_omp_nthreads_get(ModuleMultiThread::Domdec);
-#pragma omp parallel for num_threads(numThreads) schedule(static)
                     for (int i = 0; i < ind->nrecv[zone]; i++)
                     {
                         int globalAtomIndex = dd->globalAtomIndices[pos_cg + i];

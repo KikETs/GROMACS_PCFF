@@ -327,7 +327,6 @@ PmeAtomComm::PmeAtomComm(MPI_Comm   PmeMpiCommunicator,
     {
         threadMap.resize(nthread);
 
-#    pragma omp parallel for num_threads(nthread) schedule(static)
         for (int thread = 0; thread < nthread; thread++)
         {
             try

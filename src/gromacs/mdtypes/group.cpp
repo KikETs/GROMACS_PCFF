@@ -81,7 +81,6 @@ gmx_ekindata_t::gmx_ekindata_t(gmx::ArrayRef<const real>        referenceTempera
         systemMomentumWork.resize(numThreads);
     }
 
-#pragma omp parallel for num_threads(nthreads_) schedule(static)
     for (int thread = 0; thread < nthreads_; thread++)
     {
         try

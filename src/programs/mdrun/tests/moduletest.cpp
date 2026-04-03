@@ -399,6 +399,25 @@ MdrunTestFixture::~MdrunTestFixture()
 #endif
 }
 
+ScopedMdrunTestOpenMPThreads::ScopedMdrunTestOpenMPThreads(const int numThreads) : previousNumThreads_(1)
+{
+    GMX_RELEASE_ASSERT(numThreads > 0, "OpenMP thread count override must be positive");
+#if GMX_OPENMP
+    previousNumThreads_ = g_numOpenMPThreads;
+    g_numOpenMPThreads  = numThreads;
+#else
+    GMX_RELEASE_ASSERT(numThreads == 1,
+                       "Cannot request more than one child mdrun OpenMP thread without OpenMP support");
+#endif
+}
+
+ScopedMdrunTestOpenMPThreads::~ScopedMdrunTestOpenMPThreads()
+{
+#if GMX_OPENMP
+    g_numOpenMPThreads = previousNumThreads_;
+#endif
+}
+
 int getNumberOfTestOpenMPThreads()
 {
 #if GMX_OPENMP

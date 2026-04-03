@@ -220,6 +220,11 @@ const char* totalForceDumpFilePath()
     return std::getenv("GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE");
 }
 
+const char* perLevelForceDumpFilePath()
+{
+    return std::getenv("GMX_EXACT_RESPA_PER_LEVEL_FORCE_DUMP_FILE");
+}
+
 enum class RespaKickPhase : int
 {
     Initial,
@@ -288,6 +293,30 @@ void appendExactRespaTotalForceRecord(const char*                        outputP
     }
 }
 
+void appendExactRespaPerLevelForceRecord(const char*                        outputPath,
+                                         const int64_t                      step,
+                                         const real                         time,
+                                         const int                          highestActiveMtsLevel,
+                                         const int                          mtsLevel,
+                                         const gmx::ArrayRef<const gmx::RVec> levelForce)
+{
+    GMX_RELEASE_ASSERT(outputPath != nullptr && *outputPath != '\0', "Need a valid per-level force dump path");
+    std::filesystem::path path(outputPath);
+    std::filesystem::create_directories(path.parent_path());
+
+    std::ofstream output(path, std::ios::app);
+    output << std::setprecision(17);
+    for (gmx::Index atom = 0; atom < gmx::ssize(levelForce); ++atom)
+    {
+        output << step << '\t' << time << '\t' << highestActiveMtsLevel << '\t' << mtsLevel << '\t' << atom;
+        for (int d = 0; d < DIM; ++d)
+        {
+            output << '\t' << levelForce[atom][d];
+        }
+        output << '\n';
+    }
+}
+
 void maybeDumpTotalForceForDiagnostics(const t_inputrec&                 inputRecord,
                                        const int64_t                     step,
                                        const real                        time,
@@ -322,6 +351,52 @@ void maybeDumpTotalForceForDiagnostics(const t_inputrec&                 inputRe
                                      time,
                                      0,
                                      gmx::makeConstArrayRef(forceView->force()));
+}
+
+void maybeDumpPerLevelForceForDiagnostics(const t_inputrec&                 inputRecord,
+                                          const int64_t                     step,
+                                          const real                        time,
+                                          gmx::ForceBuffersView*            forceView,
+                                          const gmx::MdrunScheduleWorkload& runScheduleWork)
+{
+    const char* outputPath = perLevelForceDumpFilePath();
+    if (outputPath == nullptr || *outputPath == '\0' || !do_per_step(step, inputRecord.nstenergy))
+    {
+        return;
+    }
+
+    if (!inputRecord.useMts || inputRecord.mtsMode != gmx::MtsMode::LammpsRespa)
+    {
+        return;
+    }
+
+    const int highestActiveLevel = runScheduleWork.stepWork.highestActiveMtsLevel;
+    if (highestActiveLevel <= 0)
+    {
+        return;
+    }
+
+    std::vector<gmx::RVec> reconstructedLevel0Force;
+    appendExactRespaPerLevelForceRecord(outputPath,
+                                        step,
+                                        time,
+                                        highestActiveLevel,
+                                        0,
+                                        forceForExactRespaKickLevel(inputRecord,
+                                                                    step,
+                                                                    RespaKickPhase::Initial,
+                                                                    forceView,
+                                                                    0,
+                                                                    &reconstructedLevel0Force));
+    for (int mtsLevel = 1; mtsLevel <= highestActiveLevel; ++mtsLevel)
+    {
+        appendExactRespaPerLevelForceRecord(outputPath,
+                                            step,
+                                            time,
+                                            highestActiveLevel,
+                                            mtsLevel,
+                                            gmx::makeConstArrayRef(forceView->forceForMtsLevel(mtsLevel)));
+    }
 }
 
 void applyRespaVelocityHalfKick(const int                               homenr,
@@ -2053,6 +2128,7 @@ void gmx::LegacySimulator::do_md()
             }
 
             maybeDumpTotalForceForDiagnostics(*ir, step, t, &f.view(), *runScheduleWork_);
+            maybeDumpPerLevelForceForDiagnostics(*ir, step, t, &f.view(), *runScheduleWork_);
             // VV integrators do not need the following velocity half step
             // if it is the first step after starting from a checkpoint.
             // That is, the half step is needed on all other steps, and

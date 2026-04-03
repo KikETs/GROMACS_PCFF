@@ -5506,8 +5506,10 @@ void do_force(FILE*                         fplog,
                        || forceOutMtsLevel1->haveForceWithVirial(),
                "Active long-range nonbonded work requires a force-with-virial output buffer");
 
+    const bool nonbondedAtMtsNonzeroLevel = simulationWork.nonbondedMtsLevel > 0;
+
     ForceOutputs* forceOutNonbonded = &forceOutMtsLevel0;
-    if (simulationWork.useMts && simulationWork.nonbondedMtsLevel > 0 && stepWork.computeNonbondedForces)
+    if (simulationWork.useMts && nonbondedAtMtsNonzeroLevel && stepWork.computeNonbondedForces)
     {
         forceOutNonbonded = forceOutByMtsLevel[simulationWork.nonbondedMtsLevel];
     }
@@ -6025,7 +6027,7 @@ void do_force(FILE*                         fplog,
         stateGpu->copyForcesToGpu(forceOutMtsLevel0.forceWithShiftForces().force(), AtomLocality::Local);
     }
 
-    GMX_ASSERT(!(simulationWork.nonbondedMtsLevel > 0 && stepWork.useGpuFBufferOps),
+    GMX_ASSERT(!(nonbondedAtMtsNonzeroLevel && stepWork.useGpuFBufferOps),
                "The schedule below does not allow for nonbonded MTS with GPU buffer ops");
     GMX_ASSERT(!(nonbondedAtMtsNonzeroLevel && stepWork.useGpuFHalo),
                "The schedule below does not allow for nonbonded MTS with GPU halo exchange");

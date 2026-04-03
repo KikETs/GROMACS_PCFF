@@ -252,6 +252,22 @@ class ParameterizedMdrunTestFixture :
 
 /*! \internal
  * \brief
+ * Temporarily overrides the number of OpenMP threads used by child mdrun calls.
+ */
+class ScopedMdrunTestOpenMPThreads
+{
+public:
+    explicit ScopedMdrunTestOpenMPThreads(int numThreads);
+    ~ScopedMdrunTestOpenMPThreads();
+
+    GMX_DISALLOW_COPY_AND_ASSIGN(ScopedMdrunTestOpenMPThreads);
+
+private:
+    int previousNumThreads_;
+};
+
+/*! \internal
+ * \brief
  * Returns the number of OpenMP threads to use.
  *
  * \returns the number specified using \c -ntomp option, or the default.

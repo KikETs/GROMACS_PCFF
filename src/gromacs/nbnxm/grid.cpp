@@ -1614,7 +1614,8 @@ real generateAndFill2DGrid(Grid*                  grid,
     const int nthread = gmx_omp_nthreads_get(ModuleMultiThread::Pairsearch);
     GMX_ASSERT(nthread > 0, "We expect the OpenMP thread count to be set");
 
-#pragma omp parallel for num_threads(nthread) schedule(static)
+#pragma omp parallel for num_threads(nthread) schedule(static) default(none)                              \
+        firstprivate(grid, gridWork, cells, updateGroupsCog, atomRange, x, ddZone, move, nthread)
     for (int thread = 0; thread < nthread; thread++)
     {
         try

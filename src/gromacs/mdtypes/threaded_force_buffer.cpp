@@ -236,7 +236,6 @@ ThreadedForceBuffer<ForceBufferElementType>::ThreadedForceBuffer(const int  numT
     useEnergyTerms_(useEnergyTerms)
 {
     threadForceBuffers_.resize(numThreads);
-#pragma omp parallel for num_threads(numThreads) schedule(static)
     for (int t = 0; t < numThreads; t++)
     {
         try

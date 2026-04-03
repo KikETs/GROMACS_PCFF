@@ -38,11 +38,20 @@
 #include <iomanip>
 #include <limits>
 #include <map>
+#include <memory>
 #include <optional>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <tuple>
 #include <vector>
+
+#if defined(__linux__)
+#    define GMX_TEST_HAS_PROCESS_AFFINITY 1
+#    include <sched.h>
+#else
+#    define GMX_TEST_HAS_PROCESS_AFFINITY 0
+#endif
 
 #include <gtest/gtest.h>
 
@@ -61,6 +70,7 @@
 #include "gromacs/utility/vectypes.h"
 
 #include "testutils/testfilemanager.h"
+#include "testutils/setenv.h"
 #include "testutils/trajectoryreader.h"
 
 #include "energyreader.h"
@@ -570,6 +580,47 @@ void assignRunnerOutputs(SimulationRunner* runner, TestFileManager* fileManager,
     runner->mdpOutputFileName_               = fileManager->getTemporaryFilePath(stem + ".mdout.mdp").string();
 }
 
+class ScopedEnvironmentVariable
+{
+public:
+    ScopedEnvironmentVariable(const std::string& name, const std::optional<std::string>& value) : name_(name)
+    {
+        if (const char* previousValue = std::getenv(name.c_str()))
+        {
+            previousValue_ = previousValue;
+        }
+
+        if (value.has_value())
+        {
+            GMX_RELEASE_ASSERT(gmxSetenv(name.c_str(), value->c_str(), true) == 0,
+                               "Failed to set exact r-RESPA parity environment variable");
+        }
+        else
+        {
+            GMX_RELEASE_ASSERT(gmxUnsetenv(name.c_str()) == 0,
+                               "Failed to unset exact r-RESPA parity environment variable");
+        }
+    }
+
+    ~ScopedEnvironmentVariable()
+    {
+        if (previousValue_.has_value())
+        {
+            GMX_RELEASE_ASSERT(gmxSetenv(name_.c_str(), previousValue_->c_str(), true) == 0,
+                               "Failed to restore exact r-RESPA parity environment variable");
+        }
+        else
+        {
+            GMX_RELEASE_ASSERT(gmxUnsetenv(name_.c_str()) == 0,
+                               "Failed to clear exact r-RESPA parity environment variable");
+        }
+    }
+
+private:
+    std::string               name_;
+    std::optional<std::string> previousValue_;
+};
+
 struct FinalTrajectorySnapshot
 {
     int64_t           step = -1;
@@ -978,6 +1029,264 @@ class PcffRespaObservableDumpTest : public MdrunTestFixture, public ::testing::W
 class PcffRespaRestartParityTest : public MdrunTestFixture, public ::testing::WithParamInterface<const char*>
 {
 };
+
+class PcffRespaOpenMPParityTest : public MdrunTestFixture, public ::testing::WithParamInterface<const char*>
+{
+};
+
+enum class ExactRespaPinMode
+{
+    Auto,
+    On,
+    Inherit,
+};
+
+enum class ExactRespaThreadProbe
+{
+    Small,
+    ProductionCeiling,
+};
+
+using ExactRespaAffinityParam = std::tuple<const char*, ExactRespaPinMode, ExactRespaThreadProbe>;
+
+struct ExactRespaOpenMpParityResult;
+
+bool exactRespaLogMentionsOpenMPThreads(const std::string& logContents, int numThreads);
+
+void expectExactRespaRestartParityOutputs(const std::string& systemId,
+                                          const std::string& fullEdrFileName,
+                                          const std::string& splitEdrFileName,
+                                          const std::string& fullTrrFileName,
+                                          const std::string& splitTrrFileName);
+
+class PcffRespaRestartAffinityParityTest :
+    public MdrunTestFixture,
+    public ::testing::WithParamInterface<ExactRespaAffinityParam>
+{
+};
+
+class PcffRespaOpenMPAffinityParityTest :
+    public MdrunTestFixture,
+    public ::testing::WithParamInterface<ExactRespaAffinityParam>
+{
+};
+
+const char* exactRespaPinModeCliValue(const ExactRespaPinMode pinMode)
+{
+    switch (pinMode)
+    {
+        case ExactRespaPinMode::Auto: return "auto";
+        case ExactRespaPinMode::On: return "on";
+        case ExactRespaPinMode::Inherit: return "inherit";
+    }
+    GMX_RELEASE_ASSERT(false, "Unsupported exact r-RESPA pin mode");
+    return "unsupported";
+}
+
+const char* exactRespaPinModeLabel(const ExactRespaPinMode pinMode)
+{
+    switch (pinMode)
+    {
+        case ExactRespaPinMode::Auto: return "pinAuto";
+        case ExactRespaPinMode::On: return "pinOn";
+        case ExactRespaPinMode::Inherit: return "pinInherit";
+    }
+    GMX_RELEASE_ASSERT(false, "Unsupported exact r-RESPA pin mode");
+    return "pinUnsupported";
+}
+
+const char* exactRespaThreadProbeLabel(const ExactRespaThreadProbe probe)
+{
+    switch (probe)
+    {
+        case ExactRespaThreadProbe::Small: return "ntompSmall";
+        case ExactRespaThreadProbe::ProductionCeiling: return "ntompCeiling";
+    }
+    GMX_RELEASE_ASSERT(false, "Unsupported exact r-RESPA thread probe");
+    return "ntompUnsupported";
+}
+
+#if GMX_TEST_HAS_PROCESS_AFFINITY
+std::vector<int> currentProcessAffinityCpuList()
+{
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    GMX_RELEASE_ASSERT(sched_getaffinity(0, sizeof(mask), &mask) == 0,
+                       "Could not query current process affinity mask");
+
+    std::vector<int> cpus;
+    for (int cpu = 0; cpu < CPU_SETSIZE; ++cpu)
+    {
+        if (CPU_ISSET(cpu, &mask))
+        {
+            cpus.push_back(cpu);
+        }
+    }
+    GMX_RELEASE_ASSERT(!cpus.empty(), "Current process affinity mask is empty");
+    return cpus;
+}
+
+class ScopedProcessAffinityMask
+{
+public:
+    explicit ScopedProcessAffinityMask(const std::vector<int>& cpus)
+    {
+        GMX_RELEASE_ASSERT(!cpus.empty(), "Exact r-RESPA inherited affinity mask must not be empty");
+        CPU_ZERO(&savedMask_);
+        GMX_RELEASE_ASSERT(sched_getaffinity(0, sizeof(savedMask_), &savedMask_) == 0,
+                           "Could not save current process affinity mask");
+
+        cpu_set_t mask;
+        CPU_ZERO(&mask);
+        for (const int cpu : cpus)
+        {
+            GMX_RELEASE_ASSERT(cpu >= 0 && cpu < CPU_SETSIZE, "Affinity CPU index is out of range");
+            CPU_SET(cpu, &mask);
+        }
+        GMX_RELEASE_ASSERT(sched_setaffinity(0, sizeof(mask), &mask) == 0,
+                           "Could not set exact r-RESPA inherited affinity mask");
+    }
+
+    ~ScopedProcessAffinityMask()
+    {
+        GMX_RELEASE_ASSERT(sched_setaffinity(0, sizeof(savedMask_), &savedMask_) == 0,
+                           "Could not restore process affinity mask after exact r-RESPA test");
+    }
+
+private:
+    cpu_set_t savedMask_;
+};
+
+class ScopedProcessAffinityRestorer
+{
+public:
+    ScopedProcessAffinityRestorer()
+    {
+        CPU_ZERO(&savedMask_);
+        GMX_RELEASE_ASSERT(sched_getaffinity(0, sizeof(savedMask_), &savedMask_) == 0,
+                           "Could not save current process affinity mask");
+    }
+
+    ~ScopedProcessAffinityRestorer()
+    {
+        GMX_RELEASE_ASSERT(sched_setaffinity(0, sizeof(savedMask_), &savedMask_) == 0,
+                           "Could not restore process affinity mask after exact r-RESPA run");
+    }
+
+private:
+    cpu_set_t savedMask_;
+};
+#endif
+
+int exactRespaThreadCountForProbe(const ExactRespaThreadProbe probe)
+{
+#if GMX_TEST_HAS_PROCESS_AFFINITY
+    const int availableCpus = static_cast<int>(currentProcessAffinityCpuList().size());
+#else
+    const int availableCpus = std::max(1u, std::thread::hardware_concurrency());
+#endif
+    if (availableCpus < 2)
+    {
+        return 1;
+    }
+
+    switch (probe)
+    {
+        case ExactRespaThreadProbe::Small: return std::min(2, availableCpus);
+        case ExactRespaThreadProbe::ProductionCeiling: return std::min(6, availableCpus);
+    }
+    GMX_RELEASE_ASSERT(false, "Unsupported exact r-RESPA thread probe");
+    return 1;
+}
+
+bool exactRespaThreadProbeIsRedundant(const ExactRespaThreadProbe probe)
+{
+    return probe == ExactRespaThreadProbe::ProductionCeiling
+           && exactRespaThreadCountForProbe(ExactRespaThreadProbe::ProductionCeiling)
+                      == exactRespaThreadCountForProbe(ExactRespaThreadProbe::Small);
+}
+
+bool exactRespaPinModeUsesInheritedMask(const ExactRespaPinMode pinMode)
+{
+    return pinMode == ExactRespaPinMode::Inherit;
+}
+
+std::vector<int> exactRespaInheritedAffinityCpuList(const int candidateThreads)
+{
+#if GMX_TEST_HAS_PROCESS_AFFINITY
+    auto cpus = currentProcessAffinityCpuList();
+    if (static_cast<int>(cpus.size()) <= candidateThreads)
+    {
+        return {};
+    }
+    cpus.resize(candidateThreads);
+    return cpus;
+#else
+    GMX_UNUSED_VALUE(candidateThreads);
+    return {};
+#endif
+}
+
+CommandLine makeExactRespaCpuOnlyCaller(const char* pinMode)
+{
+    CommandLine cpuOnlyCaller;
+    cpuOnlyCaller.addOption("-pin", pinMode);
+    cpuOnlyCaller.addOption("-nb", "cpu");
+    cpuOnlyCaller.addOption("-bonded", "cpu");
+    cpuOnlyCaller.addOption("-pme", "cpu");
+    cpuOnlyCaller.addOption("-update", "cpu");
+    return cpuOnlyCaller;
+}
+
+CommandLine makeExactRespaRestartCaller(const char* pinMode)
+{
+    CommandLine caller = makeExactRespaCpuOnlyCaller(pinMode);
+    caller.append("-reprod");
+    return caller;
+}
+
+bool exactRespaLogMentionsAffinityReport(const std::string& logContents)
+{
+    return logContents.find("CPU Affinity report:") != std::string::npos;
+}
+
+bool exactRespaLogMentionsExternalAffinity(const std::string& logContents)
+{
+    return logContents.find("External affinity:") != std::string::npos;
+}
+
+bool exactRespaLogMentionsThreadAffinityNotSet(const std::string& logContents)
+{
+    return logContents.find("NOTE: Thread affinity was not set.") != std::string::npos;
+}
+
+void expectExactRespaAffinityLogEvidence(const std::string&   systemId,
+                                         const std::string&   logContents,
+                                         const ExactRespaPinMode pinMode,
+                                         const int            numThreads,
+                                         const char*          runLabel)
+{
+    EXPECT_NE(logContents.find("lammps-respa"), std::string::npos)
+            << systemId << " " << runLabel << " log is missing the exact r-RESPA mode marker";
+    EXPECT_TRUE(exactRespaLogMentionsOpenMPThreads(logContents, numThreads))
+            << systemId << " " << runLabel << " log does not report ntomp=" << numThreads;
+    EXPECT_TRUE(exactRespaLogMentionsAffinityReport(logContents))
+            << systemId << " " << runLabel << " log is missing the affinity report for "
+            << exactRespaPinModeCliValue(pinMode);
+    if (pinMode != ExactRespaPinMode::Auto)
+    {
+        EXPECT_FALSE(exactRespaLogMentionsThreadAffinityNotSet(logContents))
+                << systemId << " " << runLabel << " log reports that thread affinity was not set for "
+                << exactRespaPinModeCliValue(pinMode);
+    }
+
+    if (exactRespaPinModeUsesInheritedMask(pinMode))
+    {
+        EXPECT_TRUE(exactRespaLogMentionsExternalAffinity(logContents))
+                << systemId << " " << runLabel
+                << " log is missing external affinity evidence for inherit mode";
+    }
+}
 
 std::map<std::string, double> readStep0EnergyBreakdown(const std::string& energyFileName)
 {
@@ -2145,9 +2454,7 @@ TEST_P(PcffRespaRestartParityTest, RestartFromCheckpointMatchesFullExactRun)
     const std::string fullEdrFileName = runner_.edrFileName_;
     const std::string fullTrrFileName = runner_.fullPrecisionTrajectoryFileName_;
 
-    CommandLine fullRunCaller;
-    fullRunCaller.append("mdrun");
-    fullRunCaller.append("-reprod");
+    CommandLine fullRunCaller = makeExactRespaRestartCaller("off");
     ASSERT_EQ(0, runner_.callMdrun(fullRunCaller)) << "full exact run failed for " << systemId;
 
     assignRunnerOutputs(&runner_, &fileManager_, systemId + "-exact-split");
@@ -2155,19 +2462,391 @@ TEST_P(PcffRespaRestartParityTest, RestartFromCheckpointMatchesFullExactRun)
     const std::string splitTrrFileName = runner_.fullPrecisionTrajectoryFileName_;
     const std::string splitCheckpointFileName = runner_.cptOutputFileName_;
 
-    CommandLine firstPartCaller;
-    firstPartCaller.append("mdrun");
-    firstPartCaller.append("-reprod");
+    CommandLine firstPartCaller = makeExactRespaRestartCaller("off");
     firstPartCaller.addOption("-nsteps", halfSteps);
     ASSERT_EQ(0, runner_.callMdrun(firstPartCaller)) << "first exact restart segment failed for " << systemId;
     ASSERT_TRUE(std::filesystem::exists(splitCheckpointFileName)) << "missing checkpoint after first segment";
 
-    CommandLine secondPartCaller;
-    secondPartCaller.append("mdrun");
-    secondPartCaller.append("-reprod");
+    CommandLine secondPartCaller = makeExactRespaRestartCaller("off");
     secondPartCaller.addOption("-cpi", splitCheckpointFileName);
     ASSERT_EQ(0, runner_.callMdrun(secondPartCaller)) << "restart segment failed for " << systemId;
+    expectExactRespaRestartParityOutputs(
+            systemId, fullEdrFileName, splitEdrFileName, fullTrrFileName, splitTrrFileName);
+}
 
+std::string readWholeFileForExactRespaOpenMpParity(const std::string& path)
+{
+    std::ifstream input(path);
+    GMX_RELEASE_ASSERT(input.is_open(), "Could not open exact r-RESPA OpenMP parity file");
+
+    std::ostringstream contents;
+    contents << input.rdbuf();
+    return contents.str();
+}
+
+std::vector<std::string> readLinesForExactRespaOpenMpParity(const std::string& path)
+{
+    std::ifstream input(path);
+    GMX_RELEASE_ASSERT(input.is_open(), "Could not open exact r-RESPA OpenMP parity diagnostics file");
+
+    std::vector<std::string> lines;
+    for (std::string line; std::getline(input, line);)
+    {
+        lines.push_back(line);
+    }
+    return lines;
+}
+
+std::optional<double> parseExactRespaOpenMpParityNumber(const std::string& text)
+{
+    char*        end    = nullptr;
+    const double parsed = std::strtod(text.c_str(), &end);
+    if (end == text.c_str() || *end != '\0')
+    {
+        return std::nullopt;
+    }
+    return parsed;
+}
+
+std::vector<std::pair<std::string, std::string>> parseExactRespaOpenMpParityDiagnosticLine(const std::string& line,
+                                                                                            const bool         isTsv)
+{
+    std::vector<std::pair<std::string, std::string>> fields;
+    if (isTsv)
+    {
+        std::size_t fieldIndex = 0;
+        std::size_t start      = 0;
+        while (start <= line.size())
+        {
+            const std::size_t end = line.find('\t', start);
+            fields.emplace_back(formatString("field_%zu", fieldIndex++),
+                                line.substr(start, (end == std::string::npos) ? std::string::npos : end - start));
+            if (end == std::string::npos)
+            {
+                break;
+            }
+            start = end + 1;
+        }
+        return fields;
+    }
+
+    std::istringstream input(line);
+    std::size_t        rawFieldIndex = 0;
+    for (std::string token; input >> token;)
+    {
+        const std::size_t delimiter = token.find('=');
+        if (delimiter == std::string::npos)
+        {
+            fields.emplace_back(formatString("__raw_%zu", rawFieldIndex++), token);
+        }
+        else
+        {
+            fields.emplace_back(token.substr(0, delimiter), token.substr(delimiter + 1));
+        }
+    }
+    return fields;
+}
+
+void expectExactRespaOpenMpParityDiagnosticFile(const std::string& oraclePath,
+                                                const std::string& candidatePath,
+                                                const double       numericTolerance,
+                                                const std::string& label)
+{
+    ASSERT_TRUE(std::filesystem::exists(oraclePath)) << label << " oracle diagnostics file is missing: " << oraclePath;
+    ASSERT_TRUE(std::filesystem::exists(candidatePath)) << label << " candidate diagnostics file is missing: " << candidatePath;
+
+    const auto oracleLines    = readLinesForExactRespaOpenMpParity(oraclePath);
+    const auto candidateLines = readLinesForExactRespaOpenMpParity(candidatePath);
+    ASSERT_EQ(candidateLines.size(), oracleLines.size()) << label << " line count mismatch";
+
+    const bool isTsv = std::filesystem::path(oraclePath).extension() == ".tsv";
+    double     maxAbsDifference = 0;
+    std::size_t worstLineIndex  = 0;
+    std::string worstFieldName;
+    std::string worstOracleValue;
+    std::string worstCandidateValue;
+
+    for (std::size_t lineIndex = 0; lineIndex < oracleLines.size(); ++lineIndex)
+    {
+        const auto oracleFields =
+                parseExactRespaOpenMpParityDiagnosticLine(oracleLines[lineIndex], isTsv);
+        const auto candidateFields =
+                parseExactRespaOpenMpParityDiagnosticLine(candidateLines[lineIndex], isTsv);
+        ASSERT_EQ(candidateFields.size(), oracleFields.size()) << label << " field count mismatch at line "
+                                                               << (lineIndex + 1);
+
+        for (std::size_t fieldIndex = 0; fieldIndex < oracleFields.size(); ++fieldIndex)
+        {
+            ASSERT_EQ(candidateFields[fieldIndex].first, oracleFields[fieldIndex].first)
+                    << label << " field order mismatch at line " << (lineIndex + 1);
+
+            const auto oracleNumeric = parseExactRespaOpenMpParityNumber(oracleFields[fieldIndex].second);
+            const auto candidateNumeric = parseExactRespaOpenMpParityNumber(candidateFields[fieldIndex].second);
+            if (oracleNumeric.has_value() && candidateNumeric.has_value())
+            {
+                const double difference = std::abs(candidateNumeric.value() - oracleNumeric.value());
+                if (difference > maxAbsDifference)
+                {
+                    maxAbsDifference   = difference;
+                    worstLineIndex     = lineIndex + 1;
+                    worstFieldName     = oracleFields[fieldIndex].first;
+                    worstOracleValue   = oracleFields[fieldIndex].second;
+                    worstCandidateValue = candidateFields[fieldIndex].second;
+                }
+            }
+            else
+            {
+                ASSERT_EQ(candidateFields[fieldIndex].second, oracleFields[fieldIndex].second)
+                        << label << " text mismatch at line " << (lineIndex + 1)
+                        << " field " << oracleFields[fieldIndex].first;
+            }
+        }
+    }
+
+    EXPECT_LE(maxAbsDifference, numericTolerance)
+            << label << " max_abs_diff=" << maxAbsDifference << " at line " << worstLineIndex
+            << " field " << worstFieldName << " oracle=" << worstOracleValue
+            << " candidate=" << worstCandidateValue;
+}
+
+std::vector<std::string> exactRespaOpenMpParityTraceFiles()
+{
+    return {
+        "multistep_md_loop_boundary_trace.txt",
+        "step0_force_component_trace.txt",
+        "step0_realspace_force_subcomponent_trace.txt",
+        "step0_lj_sr_internal_trace.txt",
+        "step0_coulomb_source_truth_trace.txt",
+        "step0_lj_source_truth_trace.txt",
+        "step0_coulomb_sr_component_trace.txt",
+        "step0_potential_ledger_trace.txt",
+    };
+}
+
+struct ExactRespaOpenMpParityResult
+{
+    std::map<std::string, double> observables;
+    StructuralMetrics             structural;
+    FinalTrajectorySnapshot       finalSnapshot;
+    std::string                   logContents;
+    std::map<std::string, double> breakdownKcalMol;
+    std::filesystem::path         traceDirectoryPath;
+    std::filesystem::path         totalForceDumpPath;
+    std::filesystem::path         perLevelForceDumpPath;
+};
+
+ExactRespaOpenMpParityResult runExactRespaOpenMpParitySimulation(SimulationRunner* runner,
+                                                                 TestFileManager*  fileManager,
+                                                                 const std::string& outputStem,
+                                                                 const CommandLine& caller,
+                                                                 const std::string& systemId)
+{
+    assignRunnerOutputs(runner, fileManager, outputStem);
+    const auto totalForceDumpPath    = fileManager->getTemporaryFilePath(outputStem + "-total-force.tsv");
+    const auto perLevelForceDumpPath = fileManager->getTemporaryFilePath(outputStem + "-per-level-force.tsv");
+    const auto traceDirectoryAnchor  = fileManager->getTemporaryFilePath(outputStem + "-trace-anchor.tmp");
+    const auto traceDirectory        = traceDirectoryAnchor.parent_path()
+                                / (traceDirectoryAnchor.filename().string() + "-dir");
+    std::filesystem::remove(totalForceDumpPath);
+    std::filesystem::remove(perLevelForceDumpPath);
+    std::filesystem::remove_all(traceDirectory);
+    std::filesystem::create_directories(traceDirectory);
+
+    const ScopedEnvironmentVariable totalForceDump("GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE",
+                                                   totalForceDumpPath.string());
+    const ScopedEnvironmentVariable perLevelForceDump("GMX_EXACT_RESPA_PER_LEVEL_FORCE_DUMP_FILE",
+                                                      perLevelForceDumpPath.string());
+    const ScopedEnvironmentVariable traceDirectoryOverride("GMX_PCFF_RESPA_M2P_TRACE_DIR",
+                                                           traceDirectory.string());
+    const ScopedEnvironmentVariable traceForceComponents("GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS", std::string("1"));
+    const ScopedEnvironmentVariable traceRealspaceForceSubcomponents("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS",
+                                                                     std::string("1"));
+    EXPECT_EQ(0, runner->callMdrun(caller));
+
+    const std::vector<std::string> energyTerms = {
+        interaction_function[InteractionFunction::PotentialEnergy].longname,
+        interaction_function[InteractionFunction::TotalEnergy].longname,
+    };
+    const auto energyFrames = readEnergyFrames(runner->edrFileName_, energyTerms);
+    GMX_RELEASE_ASSERT(energyFrames.size() >= 2, "Expected at least initial and final energy frames");
+
+    ExactRespaOpenMpParityResult result;
+    const auto&                  firstFrame = energyFrames.front();
+    const auto&                  lastFrame  = energyFrames.back();
+    const auto totalEnergyName = interaction_function[InteractionFunction::TotalEnergy].longname;
+    const auto totalEnergyToKcal = [&totalEnergyName](const EnergyFrame& frame) { return kjToKcal(frame.at(totalEnergyName)); };
+    double     minTotal          = totalEnergyToKcal(firstFrame);
+    double     maxTotal          = minTotal;
+    for (const auto& frame : energyFrames)
+    {
+        const double total = totalEnergyToKcal(frame);
+        minTotal = std::min(minTotal, total);
+        maxTotal = std::max(maxTotal, total);
+    }
+
+    result.observables["step0_potential_kcal_mol"] =
+            kjToKcal(firstFrame.at(interaction_function[InteractionFunction::PotentialEnergy].longname));
+    result.observables["initial_total_kcal_mol"] = totalEnergyToKcal(firstFrame);
+    result.observables["final_total_kcal_mol"]   = totalEnergyToKcal(lastFrame);
+    result.observables["total_energy_drift_abs_kcal_mol"] =
+            std::abs(result.observables["final_total_kcal_mol"] - result.observables["initial_total_kcal_mol"]);
+    result.observables["total_energy_span_kcal_mol"] = maxTotal - minTotal;
+    result.structural = readLastStructuralMetrics(systemId, runner->fullPrecisionTrajectoryFileName_);
+    result.finalSnapshot = readFinalTrajectorySnapshot(runner->fullPrecisionTrajectoryFileName_);
+    result.logContents   = readWholeFileForExactRespaOpenMpParity(runner->logFileName_);
+    result.breakdownKcalMol = readStep0EnergyBreakdown(runner->edrFileName_);
+    result.traceDirectoryPath  = traceDirectory;
+    result.totalForceDumpPath   = totalForceDumpPath;
+    result.perLevelForceDumpPath = perLevelForceDumpPath;
+    return result;
+}
+
+bool exactRespaLogMentionsOpenMPThreads(const std::string& logContents, const int numThreads)
+{
+    const std::string exactThreadString = formatString("Using %d OpenMP thread", numThreads);
+    const std::string exactThreadsRange = formatString("Using %d - %d OpenMP threads", numThreads, numThreads);
+    return logContents.find(exactThreadString) != std::string::npos
+           || logContents.find(exactThreadsRange) != std::string::npos;
+}
+
+double exactRespaCoordinateMaxDifferenceNm(const FinalTrajectorySnapshot& reference, const FinalTrajectorySnapshot& actual)
+{
+    GMX_RELEASE_ASSERT(reference.coordinates.size() == actual.coordinates.size(), "Coordinate sizes must match");
+    double maxDelta = 0;
+    for (gmx::Index atom = 0; atom < gmx::ssize(reference.coordinates); ++atom)
+    {
+        const RVec delta = minimumImageVector(reference.coordinates[atom], actual.coordinates[atom], reference.box);
+        maxDelta         = std::max(maxDelta, norm(delta));
+    }
+    return maxDelta;
+}
+
+double exactRespaCoordinateRmsDifferenceNm(const FinalTrajectorySnapshot& reference, const FinalTrajectorySnapshot& actual)
+{
+    GMX_RELEASE_ASSERT(reference.coordinates.size() == actual.coordinates.size(), "Coordinate sizes must match");
+    double sumSquared = 0;
+    for (gmx::Index atom = 0; atom < gmx::ssize(reference.coordinates); ++atom)
+    {
+        const RVec  delta     = minimumImageVector(reference.coordinates[atom], actual.coordinates[atom], reference.box);
+        const double deltaNorm = norm(delta);
+        sumSquared += deltaNorm * deltaNorm;
+    }
+    return std::sqrt(sumSquared / std::max<gmx::Index>(1, gmx::ssize(reference.coordinates)));
+}
+
+double exactRespaVelocityMaxDifferenceNmPerPs(const FinalTrajectorySnapshot& reference,
+                                              const FinalTrajectorySnapshot& actual)
+{
+    GMX_RELEASE_ASSERT(reference.velocities.size() == actual.velocities.size(), "Velocity sizes must match");
+    double maxDelta = 0;
+    for (gmx::Index atom = 0; atom < gmx::ssize(reference.velocities); ++atom)
+    {
+        const double dx = actual.velocities[atom][XX] - reference.velocities[atom][XX];
+        const double dy = actual.velocities[atom][YY] - reference.velocities[atom][YY];
+        const double dz = actual.velocities[atom][ZZ] - reference.velocities[atom][ZZ];
+        maxDelta        = std::max(maxDelta, std::sqrt(dx * dx + dy * dy + dz * dz));
+    }
+    return maxDelta;
+}
+
+double exactRespaVelocityRmsDifferenceNmPerPs(const FinalTrajectorySnapshot& reference,
+                                              const FinalTrajectorySnapshot& actual)
+{
+    GMX_RELEASE_ASSERT(reference.velocities.size() == actual.velocities.size(), "Velocity sizes must match");
+    double sumSquared = 0;
+    for (gmx::Index atom = 0; atom < gmx::ssize(reference.velocities); ++atom)
+    {
+        const double dx = actual.velocities[atom][XX] - reference.velocities[atom][XX];
+        const double dy = actual.velocities[atom][YY] - reference.velocities[atom][YY];
+        const double dz = actual.velocities[atom][ZZ] - reference.velocities[atom][ZZ];
+        sumSquared += dx * dx + dy * dy + dz * dz;
+    }
+    return std::sqrt(sumSquared / std::max<gmx::Index>(1, gmx::ssize(reference.velocities)));
+}
+
+void expectExactRespaOpenMpParityAgainstOracle(const std::string&                 systemId,
+                                               const ExactRespaOpenMpParityResult& oracleResult,
+                                               const ExactRespaOpenMpParityResult& candidateResult)
+{
+    const double diagnosticForceTolerance = 3e-3;
+    expectExactRespaOpenMpParityDiagnosticFile(oracleResult.totalForceDumpPath.string(),
+                                               candidateResult.totalForceDumpPath.string(),
+                                               diagnosticForceTolerance,
+                                               systemId + " exact total force dump");
+    expectExactRespaOpenMpParityDiagnosticFile(oracleResult.perLevelForceDumpPath.string(),
+                                               candidateResult.perLevelForceDumpPath.string(),
+                                               diagnosticForceTolerance,
+                                               systemId + " exact per-level force dump");
+    for (const auto& relativeTracePath : exactRespaOpenMpParityTraceFiles())
+    {
+        expectExactRespaOpenMpParityDiagnosticFile(
+                (oracleResult.traceDirectoryPath / relativeTracePath).string(),
+                (candidateResult.traceDirectoryPath / relativeTracePath).string(),
+                diagnosticForceTolerance,
+                systemId + " trace " + relativeTracePath);
+    }
+
+    const double breakdownToleranceKcalMol = 5e-4;
+    for (const auto& [name, oracleValue] : oracleResult.breakdownKcalMol)
+    {
+        const auto candidateIt = candidateResult.breakdownKcalMol.find(name);
+        ASSERT_NE(candidateIt, candidateResult.breakdownKcalMol.end()) << "Missing exact r-RESPA breakdown term " << name;
+        EXPECT_NEAR(candidateIt->second, oracleValue, breakdownToleranceKcalMol)
+                << systemId << " step-0 exact r-RESPA breakdown drift for " << name;
+    }
+
+    const double observableToleranceKcalMol = 1e-3;
+    for (const auto& [name, oracleValue] : oracleResult.observables)
+    {
+        const auto candidateIt = candidateResult.observables.find(name);
+        ASSERT_NE(candidateIt, candidateResult.observables.end()) << "Missing exact r-RESPA observable " << name;
+        EXPECT_NEAR(candidateIt->second, oracleValue, observableToleranceKcalMol)
+                << systemId << " exact r-RESPA OpenMP observable drift for " << name;
+    }
+
+    const double structuralToleranceNm = 1e-6;
+    EXPECT_NEAR(candidateResult.structural.polymerEndToEndNm,
+                oracleResult.structural.polymerEndToEndNm,
+                structuralToleranceNm)
+            << systemId << " polymer_end_to_end_nm";
+    EXPECT_NEAR(candidateResult.structural.polymerRgNm,
+                oracleResult.structural.polymerRgNm,
+                structuralToleranceNm)
+            << systemId << " polymer_rg_nm";
+    if (oracleResult.structural.ionDistanceNm.has_value())
+    {
+        ASSERT_TRUE(candidateResult.structural.ionDistanceNm.has_value()) << systemId;
+        EXPECT_NEAR(candidateResult.structural.ionDistanceNm.value(),
+                    oracleResult.structural.ionDistanceNm.value(),
+                    structuralToleranceNm)
+                << systemId << " ion_distance_nm";
+    }
+
+    const double coordinateRmsToleranceNm    = 1e-6;
+    const double coordinateMaxToleranceNm    = 5e-6;
+    const double velocityRmsToleranceNmPerPs = 1e-5;
+    const double velocityMaxToleranceNmPerPs = 5e-5;
+    const double coordinateRms =
+            exactRespaCoordinateRmsDifferenceNm(oracleResult.finalSnapshot, candidateResult.finalSnapshot);
+    const double coordinateMax =
+            exactRespaCoordinateMaxDifferenceNm(oracleResult.finalSnapshot, candidateResult.finalSnapshot);
+    const double velocityRms =
+            exactRespaVelocityRmsDifferenceNmPerPs(oracleResult.finalSnapshot, candidateResult.finalSnapshot);
+    const double velocityMax =
+            exactRespaVelocityMaxDifferenceNmPerPs(oracleResult.finalSnapshot, candidateResult.finalSnapshot);
+
+    EXPECT_LE(coordinateRms, coordinateRmsToleranceNm) << systemId << " exact r-RESPA coordinate RMS drift";
+    EXPECT_LE(coordinateMax, coordinateMaxToleranceNm) << systemId << " exact r-RESPA coordinate max drift";
+    EXPECT_LE(velocityRms, velocityRmsToleranceNmPerPs) << systemId << " exact r-RESPA velocity RMS drift";
+    EXPECT_LE(velocityMax, velocityMaxToleranceNmPerPs) << systemId << " exact r-RESPA velocity max drift";
+}
+
+void expectExactRespaRestartParityOutputs(const std::string& systemId,
+                                          const std::string& fullEdrFileName,
+                                          const std::string& splitEdrFileName,
+                                          const std::string& fullTrrFileName,
+                                          const std::string& splitTrrFileName)
+{
     const std::vector<std::string> energyTerms = {
         interaction_function[InteractionFunction::PotentialEnergy].longname,
         interaction_function[InteractionFunction::TotalEnergy].longname,
@@ -2211,9 +2890,261 @@ TEST_P(PcffRespaRestartParityTest, RestartFromCheckpointMatchesFullExactRun)
     }
 }
 
+TEST_P(PcffRespaOpenMPParityTest, ExactRespaCpuMatchesNtompOneOracle)
+{
+    const int candidateThreads = getNumberOfTestOpenMPThreads();
+    if (candidateThreads <= 1)
+    {
+        GTEST_SKIP() << "Exact r-RESPA OpenMP parity requires -ntomp > 1";
+    }
+
+    const std::string systemId(GetParam());
+    const auto        fixtureRoot = repoRoot() / "tests" / "reference_results" / "m6_respa" / systemId;
+
+    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
+    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
+    runner_.useStringAsMdpFile(makeRespaNveMdp());
+    runner_.setMaxWarn(1);
+    runner_.tprFileName_ = fileManager_.getTemporaryFilePath(systemId + "-exact-openmp-parity.tpr").string();
+
+    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " exact OpenMP parity";
+
+    CommandLine cpuOnlyCaller = makeExactRespaCpuOnlyCaller("off");
+
+    ExactRespaOpenMpParityResult oracleResult;
+    {
+        const ScopedMdrunTestOpenMPThreads oracleThreads(1);
+        oracleResult = runExactRespaOpenMpParitySimulation(
+                &runner_, &fileManager_, systemId + "-exact-omp-oracle", cpuOnlyCaller, systemId);
+    }
+
+    ExactRespaOpenMpParityResult candidateResult;
+    {
+        const ScopedMdrunTestOpenMPThreads candidateThreadOverride(candidateThreads);
+        candidateResult = runExactRespaOpenMpParitySimulation(
+                &runner_, &fileManager_, systemId + formatString("-exact-omp-%d", candidateThreads), cpuOnlyCaller, systemId);
+    }
+
+    EXPECT_NE(oracleResult.logContents.find("lammps-respa"), std::string::npos)
+            << systemId << " oracle log is missing the exact r-RESPA mode marker";
+    EXPECT_NE(candidateResult.logContents.find("lammps-respa"), std::string::npos)
+            << systemId << " candidate log is missing the exact r-RESPA mode marker";
+    EXPECT_TRUE(exactRespaLogMentionsOpenMPThreads(oracleResult.logContents, 1))
+            << systemId << " oracle log does not report ntomp=1";
+    EXPECT_TRUE(exactRespaLogMentionsOpenMPThreads(candidateResult.logContents, candidateThreads))
+            << systemId << " candidate log does not report ntomp=" << candidateThreads;
+
+    expectExactRespaOpenMpParityAgainstOracle(systemId, oracleResult, candidateResult);
+}
+
+TEST_P(PcffRespaRestartAffinityParityTest, RestartFromCheckpointMatchesFullExactRunWithAffinity)
+{
+    const auto [systemIdParam, pinMode, threadProbe] = GetParam();
+    if (exactRespaThreadProbeIsRedundant(threadProbe))
+    {
+        GTEST_SKIP() << "Exact r-RESPA affinity validation already covers this thread-count bucket";
+    }
+
+    const int candidateThreads = exactRespaThreadCountForProbe(threadProbe);
+    if (candidateThreads <= 1)
+    {
+        GTEST_SKIP() << "Exact r-RESPA affinity restart parity requires at least two OpenMP threads";
+    }
+
+    const std::string systemId(systemIdParam);
+    const auto        fixtureRoot = repoRoot() / "tests" / "reference_results" / "m6_respa" / systemId;
+    const int         halfOuterSteps = std::max(1, respaOuterSteps() / 2);
+    const int         halfSteps      = halfOuterSteps * c_respaEnergyInterval;
+    ASSERT_EQ(0, halfSteps % c_respaEnergyInterval)
+            << "exact r-RESPA affinity restart smoke should split on an outer-step boundary";
+
+    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
+    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
+    runner_.useStringAsMdpFile(makeRespaNveMdp());
+    runner_.setMaxWarn(1);
+
+    runner_.tprFileName_ =
+            fileManager_.getTemporaryFilePath(systemId + "-exact-affinity-restart.tpr").string();
+    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " exact affinity restart smoke";
+
+    const ScopedEnvironmentVariable affinityReport("GMX_REPORT_CPU_AFFINITY", std::string("1"));
+
+#if GMX_TEST_HAS_PROCESS_AFFINITY
+    std::unique_ptr<ScopedProcessAffinityMask> inheritedAffinityMask;
+    if (exactRespaPinModeUsesInheritedMask(pinMode))
+    {
+        const auto inheritedCpus = exactRespaInheritedAffinityCpuList(candidateThreads);
+        if (inheritedCpus.empty())
+        {
+            GTEST_SKIP() << "Need spare CPUs to construct a non-default inherited affinity mask";
+        }
+        inheritedAffinityMask = std::make_unique<ScopedProcessAffinityMask>(inheritedCpus);
+    }
+#else
+    if (exactRespaPinModeUsesInheritedMask(pinMode))
+    {
+        GTEST_SKIP() << "Inherited affinity validation requires sched affinity support";
+    }
+#endif
+
+    const char*       pinModeValue = exactRespaPinModeCliValue(pinMode);
+    const std::string stemPrefix =
+            systemId + "-" + exactRespaPinModeLabel(pinMode) + "-" + exactRespaThreadProbeLabel(threadProbe);
+
+    assignRunnerOutputs(&runner_, &fileManager_, stemPrefix + "-exact-full");
+    const std::string fullEdrFileName = runner_.edrFileName_;
+    const std::string fullTrrFileName = runner_.fullPrecisionTrajectoryFileName_;
+
+    CommandLine fullRunCaller = makeExactRespaRestartCaller(pinModeValue);
+    {
+        ScopedProcessAffinityRestorer runAffinityRestorer;
+        const ScopedMdrunTestOpenMPThreads threadOverride(candidateThreads);
+        ASSERT_EQ(0, runner_.callMdrun(fullRunCaller))
+                << "full exact affinity run failed for " << systemId << " with "
+                << exactRespaPinModeCliValue(pinMode) << " ntomp=" << candidateThreads;
+    }
+    const std::string fullLogContents = readWholeFileForExactRespaOpenMpParity(runner_.logFileName_);
+    expectExactRespaAffinityLogEvidence(systemId,
+                                        fullLogContents,
+                                        pinMode,
+                                        candidateThreads,
+                                        "full affinity restart reference");
+
+    assignRunnerOutputs(&runner_, &fileManager_, stemPrefix + "-exact-split");
+    const std::string splitEdrFileName        = runner_.edrFileName_;
+    const std::string splitTrrFileName        = runner_.fullPrecisionTrajectoryFileName_;
+    const std::string splitCheckpointFileName = runner_.cptOutputFileName_;
+
+    CommandLine firstPartCaller = makeExactRespaRestartCaller(pinModeValue);
+    firstPartCaller.addOption("-nsteps", halfSteps);
+    {
+        ScopedProcessAffinityRestorer runAffinityRestorer;
+        const ScopedMdrunTestOpenMPThreads threadOverride(candidateThreads);
+        ASSERT_EQ(0, runner_.callMdrun(firstPartCaller))
+                << "first exact affinity restart segment failed for " << systemId << " with "
+                << exactRespaPinModeCliValue(pinMode) << " ntomp=" << candidateThreads;
+    }
+    ASSERT_TRUE(std::filesystem::exists(splitCheckpointFileName)) << "missing checkpoint after first segment";
+    expectExactRespaAffinityLogEvidence(systemId,
+                                        readWholeFileForExactRespaOpenMpParity(runner_.logFileName_),
+                                        pinMode,
+                                        candidateThreads,
+                                        "first affinity restart segment");
+
+    CommandLine secondPartCaller = makeExactRespaRestartCaller(pinModeValue);
+    secondPartCaller.addOption("-cpi", splitCheckpointFileName);
+    {
+        ScopedProcessAffinityRestorer runAffinityRestorer;
+        const ScopedMdrunTestOpenMPThreads threadOverride(candidateThreads);
+        ASSERT_EQ(0, runner_.callMdrun(secondPartCaller))
+                << "second exact affinity restart segment failed for " << systemId << " with "
+                << exactRespaPinModeCliValue(pinMode) << " ntomp=" << candidateThreads;
+    }
+    expectExactRespaAffinityLogEvidence(systemId,
+                                        readWholeFileForExactRespaOpenMpParity(runner_.logFileName_),
+                                        pinMode,
+                                        candidateThreads,
+                                        "second affinity restart segment");
+
+    expectExactRespaRestartParityOutputs(
+            systemId, fullEdrFileName, splitEdrFileName, fullTrrFileName, splitTrrFileName);
+}
+
+TEST_P(PcffRespaOpenMPAffinityParityTest, ExactRespaCpuMatchesNtompOneOracleWithAffinity)
+{
+    const auto [systemIdParam, pinMode, threadProbe] = GetParam();
+    if (exactRespaThreadProbeIsRedundant(threadProbe))
+    {
+        GTEST_SKIP() << "Exact r-RESPA affinity validation already covers this thread-count bucket";
+    }
+
+    const int candidateThreads = exactRespaThreadCountForProbe(threadProbe);
+    if (candidateThreads <= 1)
+    {
+        GTEST_SKIP() << "Exact r-RESPA affinity parity requires -ntomp > 1";
+    }
+
+    const std::string systemId(systemIdParam);
+    const auto        fixtureRoot = repoRoot() / "tests" / "reference_results" / "m6_respa" / systemId;
+
+    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
+    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
+    runner_.useStringAsMdpFile(makeRespaNveMdp());
+    runner_.setMaxWarn(1);
+    runner_.tprFileName_ =
+            fileManager_.getTemporaryFilePath(systemId + "-exact-affinity-openmp-parity.tpr").string();
+
+    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " exact affinity OpenMP parity";
+
+    const ScopedEnvironmentVariable affinityReport("GMX_REPORT_CPU_AFFINITY", std::string("1"));
+
+#if GMX_TEST_HAS_PROCESS_AFFINITY
+    std::unique_ptr<ScopedProcessAffinityMask> inheritedAffinityMask;
+    if (exactRespaPinModeUsesInheritedMask(pinMode))
+    {
+        const auto inheritedCpus = exactRespaInheritedAffinityCpuList(candidateThreads);
+        if (inheritedCpus.empty())
+        {
+            GTEST_SKIP() << "Need spare CPUs to construct a non-default inherited affinity mask";
+        }
+        inheritedAffinityMask = std::make_unique<ScopedProcessAffinityMask>(inheritedCpus);
+    }
+#else
+    if (exactRespaPinModeUsesInheritedMask(pinMode))
+    {
+        GTEST_SKIP() << "Inherited affinity validation requires sched affinity support";
+    }
+#endif
+
+    const char*       pinModeValue = exactRespaPinModeCliValue(pinMode);
+    CommandLine       cpuOnlyCaller = makeExactRespaCpuOnlyCaller(pinModeValue);
+    const std::string stemPrefix =
+            systemId + "-" + exactRespaPinModeLabel(pinMode) + "-" + exactRespaThreadProbeLabel(threadProbe);
+
+    ExactRespaOpenMpParityResult oracleResult;
+    {
+        ScopedProcessAffinityRestorer runAffinityRestorer;
+        const ScopedMdrunTestOpenMPThreads oracleThreads(1);
+        oracleResult = runExactRespaOpenMpParitySimulation(
+                &runner_, &fileManager_, stemPrefix + "-exact-omp-oracle", cpuOnlyCaller, systemId);
+    }
+
+    ExactRespaOpenMpParityResult candidateResult;
+    {
+        ScopedProcessAffinityRestorer runAffinityRestorer;
+        const ScopedMdrunTestOpenMPThreads candidateThreadOverride(candidateThreads);
+        candidateResult = runExactRespaOpenMpParitySimulation(
+                &runner_,
+                &fileManager_,
+                stemPrefix + formatString("-exact-omp-%d", candidateThreads),
+                cpuOnlyCaller,
+                systemId);
+    }
+
+    expectExactRespaAffinityLogEvidence(systemId,
+                                        oracleResult.logContents,
+                                        pinMode,
+                                        1,
+                                        "affinity oracle");
+    expectExactRespaAffinityLogEvidence(systemId,
+                                        candidateResult.logContents,
+                                        pinMode,
+                                        candidateThreads,
+                                        "affinity candidate");
+    expectExactRespaOpenMpParityAgainstOracle(systemId, oracleResult, candidateResult);
+}
+
 std::string shortMdCaseName(const testing::TestParamInfo<std::tuple<const char*, const char*>>& info)
 {
     return formatString("%s_%s", std::get<0>(info.param), std::get<1>(info.param));
+}
+
+std::string exactRespaAffinityCaseName(const testing::TestParamInfo<ExactRespaAffinityParam>& info)
+{
+    return formatString("%s_%s_%s",
+                        std::get<0>(info.param),
+                        exactRespaPinModeLabel(std::get<1>(info.param)),
+                        exactRespaThreadProbeLabel(std::get<2>(info.param)));
 }
 
 INSTANTIATE_TEST_SUITE_P(PcffShortMdParity,
@@ -2243,6 +3174,30 @@ INSTANTIATE_TEST_SUITE_P(PcffRespaObservableDump,
 INSTANTIATE_TEST_SUITE_P(PcffRespaRestartParity,
                          PcffRespaRestartParityTest,
                          ::testing::Values("small_oligomer", "small_salt_polymer_box"));
+
+INSTANTIATE_TEST_SUITE_P(PcffRespaOpenMPParity,
+                         PcffRespaOpenMPParityTest,
+                         ::testing::Values("small_oligomer", "small_salt_polymer_box"));
+
+INSTANTIATE_TEST_SUITE_P(PcffRespaRestartAffinityParity,
+                         PcffRespaRestartAffinityParityTest,
+                         ::testing::Combine(::testing::Values("small_oligomer", "small_salt_polymer_box"),
+                                            ::testing::Values(ExactRespaPinMode::Auto,
+                                                              ExactRespaPinMode::On,
+                                                              ExactRespaPinMode::Inherit),
+                                            ::testing::Values(ExactRespaThreadProbe::Small,
+                                                              ExactRespaThreadProbe::ProductionCeiling)),
+                         exactRespaAffinityCaseName);
+
+INSTANTIATE_TEST_SUITE_P(PcffRespaOpenMPAffinityParity,
+                         PcffRespaOpenMPAffinityParityTest,
+                         ::testing::Combine(::testing::Values("small_oligomer", "small_salt_polymer_box"),
+                                            ::testing::Values(ExactRespaPinMode::Auto,
+                                                              ExactRespaPinMode::On,
+                                                              ExactRespaPinMode::Inherit),
+                                            ::testing::Values(ExactRespaThreadProbe::Small,
+                                                              ExactRespaThreadProbe::ProductionCeiling)),
+                         exactRespaAffinityCaseName);
 
 } // namespace
 } // namespace test

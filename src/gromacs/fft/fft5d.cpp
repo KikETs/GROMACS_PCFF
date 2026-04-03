@@ -626,38 +626,34 @@ fft5d_plan fft5d_plan_3d(int                NG,
             }
             plan->p1d[s] = static_cast<gmx_fft_t*>(std::malloc(sizeof(gmx_fft_t) * nthreads));
 
-            /* Make sure that the init routines are only called by one thread at a time and in order
-               (later is only important to not confuse valgrind)
+            /* Keep plan initialization serialized; this is a one-time setup path,
+             * and preserving a strict order avoids sanitizer noise and init races.
              */
-#pragma omp parallel for num_threads(nthreads) schedule(static) ordered
             for (int t = 0; t < nthreads; t++)
             {
-#pragma omp ordered
+                try
                 {
-                    try
-                    {
-                        int tsize = ((t + 1) * pM[s] * pK[s] / nthreads) - (t * pM[s] * pK[s] / nthreads);
+                    int tsize = ((t + 1) * pM[s] * pK[s] / nthreads) - (t * pM[s] * pK[s] / nthreads);
 
-                        if ((flags & FFT5D_REALCOMPLEX)
-                            && ((!(flags & FFT5D_BACKWARD) && s == 0)
-                                || ((flags & FFT5D_BACKWARD) && s == 2)))
-                        {
-                            gmx_fft_init_many_1d_real(
-                                    &plan->p1d[s][t],
-                                    rC[s],
-                                    tsize,
-                                    (flags & FFT5D_NOMEASURE) ? GMX_FFT_FLAG_CONSERVATIVE : 0);
-                        }
-                        else
-                        {
-                            gmx_fft_init_many_1d(&plan->p1d[s][t],
-                                                 C[s],
-                                                 tsize,
-                                                 (flags & FFT5D_NOMEASURE) ? GMX_FFT_FLAG_CONSERVATIVE : 0);
-                        }
+                    if ((flags & FFT5D_REALCOMPLEX)
+                        && ((!(flags & FFT5D_BACKWARD) && s == 0)
+                            || ((flags & FFT5D_BACKWARD) && s == 2)))
+                    {
+                        gmx_fft_init_many_1d_real(
+                                &plan->p1d[s][t],
+                                rC[s],
+                                tsize,
+                                (flags & FFT5D_NOMEASURE) ? GMX_FFT_FLAG_CONSERVATIVE : 0);
                     }
-                    GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
+                    else
+                    {
+                        gmx_fft_init_many_1d(&plan->p1d[s][t],
+                                             C[s],
+                                             tsize,
+                                             (flags & FFT5D_NOMEASURE) ? GMX_FFT_FLAG_CONSERVATIVE : 0);
+                    }
                 }
+                GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
             }
         }
 

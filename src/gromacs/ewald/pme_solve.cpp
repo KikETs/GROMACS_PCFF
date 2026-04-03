@@ -115,7 +115,6 @@ PmeSolve::PmeSolve(const int numThreads, const int nkx)
 
     workData_.resize(numThreads);
     /* Allocate the work arrays thread local to optimize memory access */
-#pragma omp parallel for num_threads(numThreads) schedule(static)
     for (int thread = 0; thread < numThreads; thread++)
     {
         try

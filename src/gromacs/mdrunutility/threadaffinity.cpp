@@ -673,8 +673,9 @@ void gmx_set_thread_affinity(const gmx::MDLogger&                 mdlog,
 {
     if (hw_opt->threadAffinity == ThreadAffinity::Off)
     {
-        /* Nothing to do */
-        logAffinitySettingResults(mdlog, hwTop, mpiCommMySim);
+        /* Nothing to do. Keep the disabled path free of affinity probing/logging
+         * so validation runs can exclude the affinity subsystem completely.
+         */
         return;
     }
 
