@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from collect_host_report import derive_host_local_rule
+
 
 REQUIRED_CLASSES = {
     "low-core-workstation",
@@ -68,6 +70,13 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
     derived_candidates = []
     for report in reports:
         derived = report.get("derived_host_local_rule", {})
+        if not derived.get("rule_ready_for_cross_host_aggregation"):
+            derived = derive_host_local_rule(
+                report["host"]["topology"],
+                report.get("benchmark"),
+                report["mechanics"].get("release_suite"),
+                report["mechanics"].get("tsan_suite"),
+            )
         if not derived.get("rule_ready_for_cross_host_aggregation"):
             blockers.append(
                 f"{report['host']['label']}: no cross-host-ready locality rule candidate "

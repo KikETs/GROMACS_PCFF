@@ -566,6 +566,35 @@ def max_run(shape: dict[str, Any]) -> dict[str, Any] | None:
     return max(successful, key=lambda run: float(run["ns_per_day"]))
 
 
+def larger_shape_runs_above_threshold(
+    benchmark: dict[str, Any],
+    reference_shape_size: int,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    larger_shapes = [
+        shape
+        for shape in benchmark["shapes"]
+        if len(shape["cpus"]) > reference_shape_size
+    ]
+    above_threshold_runs = []
+    for shape in larger_shapes:
+        for run in shape["runs"]:
+            if (
+                run["ok"]
+                and run["ns_per_day"] is not None
+                and run["ntomp"] > reference_shape_size
+                and run["log_mentions_exact_mode"]
+            ):
+                above_threshold_runs.append(
+                    {
+                        "shape_name": shape["name"],
+                        "shape_size": len(shape["cpus"]),
+                        "ntomp": run["ntomp"],
+                        "ns_per_day": run["ns_per_day"],
+                    }
+                )
+    return larger_shapes, above_threshold_runs
+
+
 def derive_host_local_rule(
     topology: dict[str, Any],
     benchmark: dict[str, Any] | None,
@@ -598,20 +627,41 @@ def derive_host_local_rule(
     one_l3_phys = shapes.get("one_l3_phys")
     if one_l3_phys is not None:
         one_l3_best = max_run(one_l3_phys)
-        full_host = shapes.get("full_host")
-        full_host_above = []
-        if full_host is not None:
-            l3_size = len(one_l3_phys["cpus"])
-            full_host_above = [
-                run
-                for run in full_host["runs"]
-                if run["ok"] and run["ns_per_day"] is not None and run["ntomp"] > l3_size
-            ]
+        l3_size = len(one_l3_phys["cpus"])
+        larger_shapes, larger_shape_above = larger_shape_runs_above_threshold(benchmark, l3_size)
+        if not larger_shapes:
+            return {
+                "rule_ready_for_cross_host_aggregation": False,
+                "reason": (
+                    "No larger-than-one_l3 locality shape was observed on this host, so the "
+                    "one-L3 physical-core ceiling cannot be stress-tested."
+                ),
+                "host_local_observation": {
+                    "global_best_shape": global_best_shape,
+                    "global_best_ntomp": global_best["ntomp"],
+                    "global_best_ns_per_day": global_best["ns_per_day"],
+                },
+            }
+        if not larger_shape_above:
+            return {
+                "rule_ready_for_cross_host_aggregation": False,
+                "reason": (
+                    "Larger locality shapes exist on this host, but no runs above the one-L3 "
+                    "physical-core size were collected."
+                ),
+                "host_local_observation": {
+                    "global_best_shape": global_best_shape,
+                    "global_best_ntomp": global_best["ntomp"],
+                    "global_best_ns_per_day": global_best["ns_per_day"],
+                },
+            }
         if (
             one_l3_best is not None
             and float(one_l3_best["ns_per_day"]) >= 0.95 * float(global_best["ns_per_day"])
-            and full_host_above
-            and all(float(run["ns_per_day"]) <= 0.8 * float(global_best["ns_per_day"]) for run in full_host_above)
+            and all(
+                float(run["ns_per_day"]) <= 0.8 * float(global_best["ns_per_day"])
+                for run in larger_shape_above
+            )
         ):
             return {
                 "rule_ready_for_cross_host_aggregation": True,
@@ -644,8 +694,8 @@ def derive_host_local_rule(
     return {
         "rule_ready_for_cross_host_aggregation": False,
         "reason": (
-            "This host does not yet show a stable locality-group breakpoint that can be "
-            "promoted into a cross-host production-rule candidate."
+            "This host does not yet show a stable performance drop on larger locality shapes "
+            "beyond the one-L3 physical-core size."
         ),
         "host_local_observation": {
             "global_best_shape": global_best_shape,
