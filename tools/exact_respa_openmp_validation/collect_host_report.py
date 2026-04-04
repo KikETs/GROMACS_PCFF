@@ -190,6 +190,14 @@ def parse_args() -> argparse.Namespace:
         dest="benchmark_shapes",
         help="Restrict benchmark collection to named shapes discovered on this host.",
     )
+    parser.add_argument(
+        "--expected-git-commit",
+        default="",
+        help=(
+            "Require the collecting repo to be at this exact commit before emitting a report. "
+            "Used by recurring backends so fresh evidence cannot be collected from the wrong SHA."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -902,6 +910,11 @@ def main() -> None:
         )
 
     git_revision = current_git_revision()
+    if args.expected_git_commit and git_revision["commit"] != args.expected_git_commit:
+        raise SystemExit(
+            "Refusing to emit a host report from the wrong repo revision. "
+            f"Expected {args.expected_git_commit}, got {git_revision['commit']}."
+        )
     release_suite = None
     tsan_suite = None
     benchmark = None
@@ -955,6 +968,7 @@ def main() -> None:
             "collection_mode": args.collection_mode,
             "collected_at_utc": datetime.now(timezone.utc).isoformat(),
             "git_revision": git_revision,
+            "expected_git_commit": args.expected_git_commit or None,
             "report_filename_policy_version": REPORT_FILENAME_POLICY_VERSION,
             "report_filename": out_path.name,
             "canonical_report_filename": expected_filename,

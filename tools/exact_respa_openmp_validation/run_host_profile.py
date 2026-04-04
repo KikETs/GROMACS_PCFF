@@ -43,11 +43,27 @@ def parse_args() -> argparse.Namespace:
         choices=("manual", "manual-host", "ci", "scheduled"),
         help="Override the manifest collection mode for this run.",
     )
+    parser.add_argument(
+        "--expected-git-commit",
+        default="",
+        help="Require the collecting repo to already be at this commit before running the profile.",
+    )
     return parser.parse_args()
 
 
 def load_manifest(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def current_repo_commit() -> str:
+    completed = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    return completed.stdout.strip()
 
 
 def profile_output_path(manifest: dict[str, Any], profile: dict[str, Any]) -> Path:
@@ -155,6 +171,14 @@ def main() -> None:
             f"current host canonical filename '{expected_filename}'."
         )
 
+    if args.expected_git_commit:
+        current_commit = current_repo_commit()
+        if current_commit != args.expected_git_commit:
+            raise SystemExit(
+                "Refusing to run host profile from the wrong repo revision. "
+                f"Expected {args.expected_git_commit}, got {current_commit}."
+            )
+
     output_path = profile_output_path(manifest, profile)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     collection_mode = resolve_collection_mode(profile, args.collection_mode_override)
@@ -165,6 +189,8 @@ def main() -> None:
         output_path,
         collection_mode,
     )
+    if args.expected_git_commit:
+        cmd.extend(["--expected-git-commit", args.expected_git_commit])
 
     completed = subprocess.run(
         cmd,

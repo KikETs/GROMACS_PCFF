@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -62,12 +63,24 @@ def known_report_filenames(manifest: dict[str, Any]) -> set[str]:
     }
 
 
+def current_repo_commit() -> str:
+    completed = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    return completed.stdout.strip()
+
+
 def main() -> None:
     args = parse_args()
     manifest_path = Path(args.manifest).resolve()
     manifest = load_manifest(manifest_path)
     out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
+    expected_commit = current_repo_commit()
 
     profiles = manifest["profiles"]
     active_ids = manifest.get("active_host_profiles", [])
@@ -95,6 +108,13 @@ def main() -> None:
                 f"{profile_id}: active host profile is missing its report file {path.name}"
             )
             continue
+        report = json.loads(path.read_text(encoding="utf-8"))
+        actual_commit = report.get("infra", {}).get("git_revision", {}).get("commit")
+        if actual_commit != expected_commit:
+            active_inventory_errors.append(
+                f"{profile_id}: report was collected from commit {actual_commit or 'unknown'}, "
+                f"expected current repo HEAD {expected_commit}"
+            )
         active_paths.append(path)
 
     pending_profiles: list[dict[str, Any]] = []
@@ -147,6 +167,7 @@ def main() -> None:
     validation_summary = {
         "schema_version": 1,
         "report_semantics_version": manifest["report_semantics_version"],
+        "expected_git_commit": expected_commit,
         "validation_mode": "strict" if args.strict else "relaxed",
         "active_host_profiles": active_profiles,
         "pending_host_profiles": pending_profiles,
