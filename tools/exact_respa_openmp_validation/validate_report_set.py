@@ -74,9 +74,31 @@ def current_repo_commit() -> str:
     return completed.stdout.strip()
 
 
+def ensure_commit_available(commit: str) -> None:
+    if not commit:
+        return
+    present = subprocess.run(
+        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+    )
+    if present.returncode == 0:
+        return
+    subprocess.run(
+        ["git", "fetch", "--no-tags", "--depth=64", "origin", commit],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+
 def changed_paths_between(base_commit: str, head_commit: str) -> list[str]:
     if not base_commit or base_commit == head_commit:
         return []
+    ensure_commit_available(base_commit)
+    ensure_commit_available(head_commit)
     completed = subprocess.run(
         ["git", "diff", "--name-only", f"{base_commit}..{head_commit}"],
         cwd=REPO_ROOT,
