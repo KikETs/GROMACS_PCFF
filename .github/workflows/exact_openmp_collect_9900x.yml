@@ -10,23 +10,29 @@ jobs:
       - linux
       - x64
       - exact-openmp-9900x
+    env:
+      EXACT_OPENMP_REPO_ROOT: /home/kiket/Desktop/test/ab_worktrees/GROMACS_PCFF_9900x_runner
     steps:
-      - uses: actions/checkout@v4
-        with:
-          show-progress: false
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
+      - name: Sync dedicated runner repo to workflow ref
+        run: |
+          test -n "${EXACT_OPENMP_REPO_ROOT}"
+          test -d "${EXACT_OPENMP_REPO_ROOT}/.git"
+          git -C "${EXACT_OPENMP_REPO_ROOT}" fetch --no-tags origin "${GITHUB_REF_NAME}"
+          git -C "${EXACT_OPENMP_REPO_ROOT}" checkout --detach "${GITHUB_SHA}"
+
       - name: Verify local build prerequisites
         run: |
-          test -x build-worktree/bin/mdrun-non-integrator-test
-          test -x build-clang-tsan-o2/bin/mdrun-non-integrator-test
-          test -x build-worktree/bin/gmx
+          test -x "${EXACT_OPENMP_REPO_ROOT}/build-worktree/bin/mdrun-non-integrator-test"
+          test -x "${EXACT_OPENMP_REPO_ROOT}/build-clang-tsan-o2/bin/mdrun-non-integrator-test"
+          test -x "${EXACT_OPENMP_REPO_ROOT}/build-worktree/bin/gmx"
 
       - name: Run recurring desktop backend recollection
         run: |
+          cd "${EXACT_OPENMP_REPO_ROOT}"
           python3 tools/exact_respa_openmp_validation/run_recurring_backend.py \
             --manifest tests/reference_results/exact_respa_openmp_validation/report_set_manifest.json \
             --collection-mode ci \
