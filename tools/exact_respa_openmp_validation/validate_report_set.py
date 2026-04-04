@@ -74,6 +74,19 @@ def current_repo_commit() -> str:
     return completed.stdout.strip()
 
 
+def changed_paths_between(base_commit: str, head_commit: str) -> list[str]:
+    if not base_commit or base_commit == head_commit:
+        return []
+    completed = subprocess.run(
+        ["git", "diff", "--name-only", f"{base_commit}..{head_commit}"],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    return [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+
+
 def main() -> None:
     args = parse_args()
     manifest_path = Path(args.manifest).resolve()
@@ -87,6 +100,10 @@ def main() -> None:
     pending_ids = manifest.get("pending_host_profiles", [])
     host_report_dir = REPO_ROOT / manifest["host_report_dir"]
     stale_host_report_dir = REPO_ROOT / manifest["stale_host_report_dir"]
+    allowed_report_refresh_paths = {
+        str(Path(manifest["host_report_dir"]) / profiles[profile_id]["report_filename"])
+        for profile_id in active_ids
+    }
 
     active_paths: list[Path] = []
     active_inventory_errors: list[str] = []
@@ -110,7 +127,13 @@ def main() -> None:
             continue
         report = json.loads(path.read_text(encoding="utf-8"))
         actual_commit = report.get("infra", {}).get("git_revision", {}).get("commit")
-        if actual_commit != expected_commit:
+        changed_paths = changed_paths_between(actual_commit or "", expected_commit)
+        is_report_refresh_only = (
+            actual_commit != expected_commit
+            and changed_paths
+            and all(path in allowed_report_refresh_paths for path in changed_paths)
+        )
+        if actual_commit != expected_commit and not is_report_refresh_only:
             active_inventory_errors.append(
                 f"{profile_id}: report was collected from commit {actual_commit or 'unknown'}, "
                 f"expected current repo HEAD {expected_commit}"
@@ -137,7 +160,6 @@ def main() -> None:
         if path.name not in known_report_filenames(manifest)
     )
     stale_files = sorted(path.name for path in stale_host_report_dir.glob("*.json"))
-
     relaxed_aggregate_summary = (
         summarize_reports_from_paths(active_paths, allow_missing_tsan=True)
         if active_paths
