@@ -1,0 +1,40 @@
+name: Exact OpenMP Desktop Recurring Backend
+
+on:
+  workflow_dispatch:
+
+jobs:
+  collect-desktop-backend:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - exact-openmp-9900x
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify local build prerequisites
+        run: |
+          test -x build-worktree/bin/mdrun-non-integrator-test
+          test -x build-clang-tsan-o2/bin/mdrun-non-integrator-test
+          test -x build-worktree/bin/gmx
+
+      - name: Run recurring desktop backend recollection
+        run: |
+          python3 tools/exact_respa_openmp_validation/run_recurring_backend.py \
+            --manifest tests/reference_results/exact_respa_openmp_validation/report_set_manifest.json \
+            --collection-mode ci \
+            --strict \
+            --out-dir /tmp/exact-openmp-desktop-recurring
+
+      - name: Upload backend validation summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-openmp-desktop-recurring
+          path: /tmp/exact-openmp-desktop-recurring
