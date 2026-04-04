@@ -11,7 +11,7 @@ from collect_host_report import derive_host_local_rule
 
 REQUIRED_CLASSES = {
     "low-core-workstation",
-    "mid-core-server",
+    "mid-core-hybrid-desktop",
     "numa-or-chiplet",
 }
 
@@ -20,7 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Aggregate multiple host-local exact r-RESPA CPU OpenMP validation reports "
-            "and decide whether a broader CPU support claim is defensible."
+            "and decide whether a broader desktop-class CPU support claim is defensible."
         )
     )
     parser.add_argument(
@@ -46,11 +46,12 @@ def load_report(path: Path) -> dict[str, Any]:
 
 
 def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -> dict[str, Any]:
-    blockers: list[str] = []
+    mechanics_blockers: list[str] = []
+    production_rule_blockers: list[str] = []
     classes_present = {report["host"]["topology_class"] for report in reports}
     missing_classes = sorted(REQUIRED_CLASSES - classes_present)
     if missing_classes:
-        blockers.append(
+        mechanics_blockers.append(
             "Missing required topology classes: " + ", ".join(missing_classes)
         )
 
@@ -58,14 +59,14 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
         host_label = report["host"]["label"]
         release_ok = bool(report["mechanics"]["release_suite"] and report["mechanics"]["release_suite"]["ok"])
         if not release_ok:
-            blockers.append(f"{host_label}: release exact suite did not pass")
+            mechanics_blockers.append(f"{host_label}: release exact suite did not pass")
         tsan_suite = report["mechanics"]["tsan_suite"]
         tsan_ok = bool(tsan_suite and tsan_suite["ok"])
         if not tsan_ok and not allow_missing_tsan:
-            blockers.append(f"{host_label}: TSAN exact suite did not pass")
+            mechanics_blockers.append(f"{host_label}: TSAN exact suite did not pass")
         benchmark = report["benchmark"]
         if not benchmark or not benchmark.get("ok"):
-            blockers.append(f"{host_label}: locality benchmark evidence is missing")
+            mechanics_blockers.append(f"{host_label}: locality benchmark evidence is missing")
 
     derived_candidates = []
     for report in reports:
@@ -76,9 +77,9 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
                 report.get("benchmark"),
                 report["mechanics"].get("release_suite"),
                 report["mechanics"].get("tsan_suite"),
-            )
+        )
         if not derived.get("rule_ready_for_cross_host_aggregation"):
-            blockers.append(
+            production_rule_blockers.append(
                 f"{report['host']['label']}: no cross-host-ready locality rule candidate "
                 f"({derived.get('reason', 'missing reason')})"
             )
@@ -97,7 +98,7 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
     if derived_candidates:
         unique_bases = {candidate[2] for candidate in derived_candidates}
         if len(unique_bases) != 1:
-            blockers.append(
+            production_rule_blockers.append(
                 "No common production locality basis across reports: "
                 + ", ".join(sorted(unique_bases))
             )
@@ -105,10 +106,18 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
             common_basis = next(iter(unique_bases))
             common_rule_text = derived_candidates[0][3]
 
-    pass_allowed = not blockers and common_basis is not None and common_rule_text is not None
+    mechanics_claim_allowed = not mechanics_blockers
+    production_rule_allowed = (
+        mechanics_claim_allowed
+        and not production_rule_blockers
+        and common_basis is not None
+        and common_rule_text is not None
+    )
     summary = {
         "schema_version": 1,
-        "pass": pass_allowed,
+        "pass": production_rule_allowed,
+        "mechanics_claim_allowed": mechanics_claim_allowed,
+        "production_rule_allowed": production_rule_allowed,
         "reports": [
             {
                 "host_label": report["host"]["label"],
@@ -131,11 +140,30 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
             }
             for report in reports
         ],
-        "blockers": blockers,
+        "blockers": mechanics_blockers + production_rule_blockers,
+        "mechanics_blockers": mechanics_blockers,
+        "production_rule_blockers": production_rule_blockers,
         "final_allowed_claim": (
-            "Broader CPU OpenMP claim allowed"
-            if pass_allowed
-            else "Keep the claim host-local until the blockers are closed"
+            "Broader desktop-class CPU OpenMP mechanics claim allowed, with a shared production envelope; server CPUs remain unvalidated"
+            if production_rule_allowed
+            else (
+                "Broader desktop-class CPU OpenMP mechanics claim allowed, but keep the production envelope host-local; server CPUs remain unvalidated"
+                if mechanics_claim_allowed
+                else "Keep the claim host-local until the blockers are closed"
+            )
+        ),
+        "desktop_mechanics_claim": (
+            {
+                "rule_text": (
+                    "Across the tested desktop/workstation topology classes, single-rank CPU-only "
+                    "exact r-RESPA preserved exact mechanical checks on every host. This does not "
+                    "authorize a shared production thread envelope."
+                ),
+                "server_cpu_status": "unvalidated",
+                "tsan_requirement_relaxed": bool(allow_missing_tsan),
+            }
+            if mechanics_claim_allowed
+            else None
         ),
         "aggregated_rule": (
             {
@@ -146,11 +174,11 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
                     "thread counts on each tested host"
                 ),
                 "unsupported_or_unproven_rule": (
-                    "Untested topology classes, unvalidated affinity/runtime shapes, or "
-                    "thread counts beyond measured host limits"
+                    "Server CPUs, untested topology classes, unvalidated affinity/runtime "
+                    "shapes, or thread counts beyond measured host limits"
                 ),
             }
-            if pass_allowed
+            if production_rule_allowed
             else None
         ),
     }

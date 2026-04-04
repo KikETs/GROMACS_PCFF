@@ -62,7 +62,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Collect one host-local exact r-RESPA CPU OpenMP validation report "
-            "that can later be aggregated into a broader CPU support claim."
+            "that can later be aggregated into a broader desktop-class CPU support claim."
         )
     )
     parser.add_argument(
@@ -73,7 +73,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--topology-class",
         required=True,
-        choices=("low-core-workstation", "mid-core-server", "numa-or-chiplet"),
+        choices=("low-core-workstation", "mid-core-hybrid-desktop", "numa-or-chiplet"),
         help="Human-audited topology class label for this host report.",
     )
     parser.add_argument(

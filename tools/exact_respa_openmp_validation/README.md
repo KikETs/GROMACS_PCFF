@@ -3,7 +3,7 @@
 This toolchain exists for one job only:
 
 - turn host-local exact `r-RESPA` CPU OpenMP evidence into structured reports
-- refuse a broader CPU OpenMP claim until enough topology-diverse reports exist
+- refuse a broader desktop-class CPU OpenMP claim until enough topology-diverse reports exist
 
 It does not replace the in-tree exact OpenMP regression tests.
 It orchestrates them, adds host-topology evidence, and aggregates multiple host reports into a claim decision.
@@ -18,7 +18,7 @@ The exact standalone `mts-mode = lammps-respa` path already has strong in-tree m
 - affinity-on exact parity for `-pin auto`, `-pin on`, and `-pin inherit`
 - TSAN exact subset support where a TSAN build exists
 
-That is still not enough for a broader CPU OpenMP claim.
+That is still not enough for a broader desktop-class CPU OpenMP claim.
 
 The remaining gaps are:
 
@@ -37,17 +37,18 @@ The remaining gaps are:
   - loads multiple host reports
   - checks the required topology classes
   - checks exact mechanical evidence on every host
-  - refuses a broader claim unless the reports share a common locality-based production rule
+  - separates a broader desktop/workstation mechanics claim from a shared production-envelope claim
+  - refuses a shared production-envelope claim unless the reports share a common locality-based production rule
 
 ## Required host classes
 
 `aggregate_reports.py` will not pass unless the input reports cover all three classes:
 
 - `low-core-workstation`
-- `mid-core-server`
+- `mid-core-hybrid-desktop`
 - `numa-or-chiplet`
 
-One more host is not enough.
+Server CPU support is out of scope for this aggregate. One more host is not enough.
 
 ## Example: collect one host report
 
@@ -66,7 +67,7 @@ Important:
 
 - `--topology-class` is a human-audited label. The tool records raw topology evidence, but it does not guess your claim class for you.
 - the host-local rule that `collect_host_report.py` emits is only a candidate
-- it is not a broader support claim by itself
+- it is not a broader desktop/workstation support claim by itself
 
 ## Example: aggregate multiple host reports
 
@@ -78,7 +79,13 @@ python3 tools/exact_respa_openmp_validation/aggregate_reports.py \
   /tmp/exact-openmp-numa.json
 ```
 
-The aggregator exits nonzero when:
+The aggregator exits nonzero when the shared production-envelope claim is not earned.
+
+This is stricter than the mechanics claim. A summary can still report that a broader
+desktop/workstation mechanics claim is allowed while the process exits nonzero because
+the production envelope remains host-local.
+
+The aggregator fails the production-envelope step when:
 
 - any required topology class is missing
 - any host lacks release exact-suite evidence
@@ -96,8 +103,10 @@ Each host report separates:
 
 The aggregate summary separates:
 
+- broader desktop/workstation mechanics claim
 - production rule
 - correctness-only rule
 - unsupported or unproven region
 
-If the aggregate step fails, the broader CPU OpenMP claim is not earned.
+If the aggregate step fails, the broader desktop/workstation production-envelope claim is not earned.
+That does not automatically mean the broader mechanics claim failed; check the summary fields.

@@ -632,7 +632,7 @@
       "threads_per_core": 2,
       "vendor": "GenuineIntel"
     },
-    "topology_class": "mid-core-server"
+    "topology_class": "mid-core-hybrid-desktop"
   },
   "mechanics": {
     "release_suite": {
