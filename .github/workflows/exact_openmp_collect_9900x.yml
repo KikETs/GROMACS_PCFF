@@ -20,7 +20,7 @@ jobs:
       - name: Sync dedicated runner repo to workflow ref
         run: |
           test -n "${EXACT_OPENMP_REPO_ROOT}"
-          test -d "${EXACT_OPENMP_REPO_ROOT}/.git"
+          test -e "${EXACT_OPENMP_REPO_ROOT}/.git"
           git -C "${EXACT_OPENMP_REPO_ROOT}" fetch --no-tags origin "${GITHUB_REF_NAME}"
           git -C "${EXACT_OPENMP_REPO_ROOT}" checkout --detach "${GITHUB_SHA}"
 
