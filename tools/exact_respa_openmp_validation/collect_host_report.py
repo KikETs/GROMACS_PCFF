@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 import platform
@@ -29,6 +30,8 @@ DEFAULT_TSAN_FILTER = (
 )
 DEFAULT_BENCH_COUNTS = (1, 2, 4, 6, 8, 12, 16, 24)
 DEFAULT_SYSTEM = "small_salt_polymer_box"
+REPORT_SCHEMA_VERSION = 3
+REPORT_FILENAME_POLICY_VERSION = 1
 
 
 def pick_existing_path(candidates: list[Path]) -> Path | None:
@@ -58,6 +61,25 @@ DEFAULT_GMX_BINARY = pick_existing_path(
 )
 
 
+def recurring_backend_attestation(collection_mode: str) -> dict[str, Any]:
+    backend_attestation = os.getenv("EXACT_OPENMP_RECURRING_BACKEND")
+    github_actions = os.getenv("GITHUB_ACTIONS") == "true"
+
+    if collection_mode == "ci":
+        if backend_attestation == "ci":
+            return {"required": True, "attested": True, "source": "env"}
+        if github_actions:
+            return {"required": True, "attested": True, "source": "github_actions"}
+        return {"required": True, "attested": False, "source": "missing"}
+
+    if collection_mode == "scheduled":
+        if backend_attestation == "scheduled":
+            return {"required": True, "attested": True, "source": "env"}
+        return {"required": True, "attested": False, "source": "missing"}
+
+    return {"required": False, "attested": False, "source": "not-required"}
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -80,6 +102,17 @@ def parse_args() -> argparse.Namespace:
         "--host-label",
         default=platform.node() or "unknown-host",
         help="Human-readable host label stored in the report.",
+    )
+    parser.add_argument(
+        "--collection-mode",
+        choices=("manual", "manual-host", "ci", "scheduled"),
+        default="ci" if os.getenv("GITHUB_ACTIONS") == "true" else "manual",
+        help="How this report was collected for infrastructure-quality accounting.",
+    )
+    parser.add_argument(
+        "--filename-host-suffix",
+        default="",
+        help="Optional host-distinguishing suffix appended to the canonical report filename.",
     )
     parser.add_argument(
         "--release-binary",
@@ -203,6 +236,94 @@ def parse_tsan_env(pairs: list[str]) -> dict[str, str]:
             raise ValueError(f"Invalid --tsan-env entry: {pair!r}")
         env[key] = value
     return env
+
+
+def slugify(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
+    return re.sub(r"_+", "_", slug) or "unknown"
+
+
+def cpu_model_slug(topology: dict[str, Any]) -> str:
+    model_name = (topology.get("model_name") or "").lower()
+    vendor = slugify(topology.get("vendor") or "")
+
+    ryzen_match = re.search(r"ryzen\s+(\d+)\s+([0-9]{4,5}[a-z]*)", model_name)
+    if ryzen_match:
+        return f"amd_ryzen_{ryzen_match.group(1)}_{ryzen_match.group(2)}"
+
+    intel_match = re.search(r"\b(i[3579])[- ]?([0-9]{4,5}[a-z]*)\b", model_name)
+    if intel_match:
+        return f"intel_{intel_match.group(1)}_{intel_match.group(2)}"
+
+    if vendor and model_name:
+        return f"{vendor}_{slugify(model_name)}"
+    if model_name:
+        return slugify(model_name)
+    return "unknown_cpu"
+
+
+def canonical_report_filename(
+    topology: dict[str, Any],
+    topology_class: str,
+    host_suffix: str = "",
+) -> str:
+    model_slug = cpu_model_slug(topology)
+    class_slug = slugify(topology_class)
+    base = f"{model_slug}_{class_slug}"
+    if host_suffix:
+        base = f"{base}_{slugify(host_suffix)}"
+    return f"{base}.json"
+
+
+def current_git_revision() -> dict[str, Any]:
+    head = run_command(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT)
+    status = run_command(["git", "status", "--short"], cwd=REPO_ROOT)
+    return {
+        "commit": head.stdout.strip(),
+        "dirty": bool(status.stdout.strip()),
+    }
+
+
+def summarize_tsan_status(
+    *,
+    skip_tsan_gtests: bool,
+    tsan_binary: str,
+    tsan_suite: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if tsan_suite is not None:
+        return {
+            "status": "backed" if tsan_suite.get("ok") else "failed",
+            "reason": (
+                "TSAN exact suite completed successfully."
+                if tsan_suite.get("ok")
+                else "TSAN exact suite executed but did not pass."
+            ),
+            "binary_supplied": bool(tsan_binary),
+            "suite_requested": True,
+        }
+
+    if skip_tsan_gtests and not tsan_binary:
+        return {
+            "status": "infra-limited",
+            "reason": "TSAN exact suite was skipped because no TSAN binary/build was supplied.",
+            "binary_supplied": False,
+            "suite_requested": False,
+        }
+
+    if skip_tsan_gtests:
+        return {
+            "status": "missing",
+            "reason": "TSAN exact suite was skipped even though a TSAN binary path was supplied.",
+            "binary_supplied": bool(tsan_binary),
+            "suite_requested": False,
+        }
+
+    return {
+        "status": "missing",
+        "reason": "TSAN exact suite status could not be determined.",
+        "binary_supplied": bool(tsan_binary),
+        "suite_requested": True,
+    }
 
 
 def parse_lscpu_kv() -> dict[str, str]:
@@ -595,6 +716,14 @@ def larger_shape_runs_above_threshold(
     return larger_shapes, above_threshold_runs
 
 
+def successful_exact_runs(shape: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        run
+        for run in shape["runs"]
+        if run["ok"] and run["ns_per_day"] is not None and run["log_mentions_exact_mode"]
+    ]
+
+
 def derive_host_local_rule(
     topology: dict[str, Any],
     benchmark: dict[str, Any] | None,
@@ -625,77 +754,127 @@ def derive_host_local_rule(
         }
 
     one_l3_phys = shapes.get("one_l3_phys")
-    if one_l3_phys is not None:
-        one_l3_best = max_run(one_l3_phys)
-        l3_size = len(one_l3_phys["cpus"])
-        larger_shapes, larger_shape_above = larger_shape_runs_above_threshold(benchmark, l3_size)
-        if not larger_shapes:
+    locality_shapes = [
+        shape
+        for shape in benchmark["shapes"]
+        if shape["name"].startswith("one_l3_")
+    ]
+    if one_l3_phys is not None and locality_shapes:
+        locality_runs: list[dict[str, Any]] = []
+        for shape in locality_shapes:
+            for run in successful_exact_runs(shape):
+                locality_runs.append(
+                    {
+                        "shape_name": shape["name"],
+                        "shape_size": len(shape["cpus"]),
+                        "ntomp": run["ntomp"],
+                        "ns_per_day": run["ns_per_day"],
+                    }
+                )
+
+        if not locality_runs:
+            return {
+                "rule_ready_for_cross_host_aggregation": False,
+                "reason": "No successful exact locality-group runs were collected on this host.",
+                "host_local_observation": {
+                    "global_best_shape": global_best_shape,
+                    "global_best_ntomp": global_best["ntomp"],
+                    "global_best_ns_per_day": global_best["ns_per_day"],
+                },
+            }
+
+        locality_best = max(locality_runs, key=lambda run: float(run["ns_per_day"]))
+        plateau_threshold = 0.95 * float(locality_best["ns_per_day"])
+        plateau_runs = [
+            run for run in locality_runs if float(run["ns_per_day"]) >= plateau_threshold
+        ]
+        plateau_ceiling = max(run["ntomp"] for run in plateau_runs)
+        post_plateau_runs = [
+            run for run in locality_runs if run["ntomp"] > plateau_ceiling
+        ]
+        if not post_plateau_runs:
             return {
                 "rule_ready_for_cross_host_aggregation": False,
                 "reason": (
-                    "No larger-than-one_l3 locality shape was observed on this host, so the "
-                    "one-L3 physical-core ceiling cannot be stress-tested."
+                    "No successful locality-group runs were collected above the plateau "
+                    "candidate, so the host-local production knee cannot be demonstrated."
                 ),
                 "host_local_observation": {
                     "global_best_shape": global_best_shape,
                     "global_best_ntomp": global_best["ntomp"],
                     "global_best_ns_per_day": global_best["ns_per_day"],
+                    "locality_best_shape": locality_best["shape_name"],
+                    "locality_best_ntomp": locality_best["ntomp"],
+                    "locality_best_ns_per_day": locality_best["ns_per_day"],
                 },
             }
-        if not larger_shape_above:
+
+        meaningful_drop_threshold = 0.90 * float(locality_best["ns_per_day"])
+        meaningful_drop_runs = [
+            run
+            for run in post_plateau_runs
+            if float(run["ns_per_day"]) <= meaningful_drop_threshold
+        ]
+        if not meaningful_drop_runs:
             return {
                 "rule_ready_for_cross_host_aggregation": False,
                 "reason": (
-                    "Larger locality shapes exist on this host, but no runs above the one-L3 "
-                    "physical-core size were collected."
+                    "Locality-group runs above the candidate ceiling were collected, but they "
+                    "do not yet show a meaningful throughput drop beyond the plateau."
                 ),
                 "host_local_observation": {
                     "global_best_shape": global_best_shape,
                     "global_best_ntomp": global_best["ntomp"],
                     "global_best_ns_per_day": global_best["ns_per_day"],
+                    "locality_best_shape": locality_best["shape_name"],
+                    "locality_best_ntomp": locality_best["ntomp"],
+                    "locality_best_ns_per_day": locality_best["ns_per_day"],
                 },
             }
-        if (
-            one_l3_best is not None
-            and float(one_l3_best["ns_per_day"]) >= 0.95 * float(global_best["ns_per_day"])
-            and all(
-                float(run["ns_per_day"]) <= 0.8 * float(global_best["ns_per_day"])
-                for run in larger_shape_above
-            )
-        ):
-            return {
-                "rule_ready_for_cross_host_aggregation": True,
-                "production_candidate": {
-                    "rule_text": "Up to one L3 or CCD-equivalent locality group using one hardware thread per physical core",
-                    "basis": "one_l3_group_physical_threads",
-                    "ceiling_threads_on_this_host": len(one_l3_phys["cpus"]),
-                    "best_shape": "one_l3_phys",
-                    "best_ntomp": one_l3_best["ntomp"],
-                    "best_ns_per_day": one_l3_best["ns_per_day"],
-                },
-                "correctness_only_candidate": {
-                    "rule_text": "Above the production locality ceiling but within mechanically validated thread counts on this host",
-                    "max_mechanically_validated_threads_on_this_host": topology["logical_cpus"],
-                },
-                "unsupported_or_unproven": {
-                    "rule_text": "Beyond tested thread counts or on hosts whose locality groups have not been benchmarked",
-                },
-                "host_local_observation": {
-                    "global_best_shape": global_best_shape,
-                    "global_best_ntomp": global_best["ntomp"],
-                    "global_best_ns_per_day": global_best["ns_per_day"],
-                },
-                "mechanics_preconditions": {
-                    "release_exact_suite_ok": bool(release_suite and release_suite.get("ok")),
-                    "tsan_exact_suite_ok": bool(tsan_suite and tsan_suite.get("ok")),
-                },
-            }
+
+        return {
+            "rule_ready_for_cross_host_aggregation": True,
+            "production_candidate": {
+                "rule_text": (
+                    "Within one L3 or CCD-equivalent locality group, production-supported "
+                    "ntomp extends up to the host-local throughput plateau knee, defined as "
+                    "the highest tested thread count still within 95% of the best exact rate "
+                    "observed in that locality group"
+                ),
+                "basis": "one_l3_group_plateau_95pct",
+                "ceiling_threads_on_this_host": plateau_ceiling,
+                "best_shape": locality_best["shape_name"],
+                "best_ntomp": locality_best["ntomp"],
+                "best_ns_per_day": locality_best["ns_per_day"],
+                "plateau_threshold_ns_per_day": plateau_threshold,
+            },
+            "correctness_only_candidate": {
+                "rule_text": "Above the production locality plateau but within mechanically validated thread counts on this host",
+                "max_mechanically_validated_threads_on_this_host": topology["logical_cpus"],
+            },
+            "unsupported_or_unproven": {
+                "rule_text": "Beyond tested thread counts or on hosts whose locality groups have not been benchmarked",
+            },
+            "host_local_observation": {
+                "global_best_shape": global_best_shape,
+                "global_best_ntomp": global_best["ntomp"],
+                "global_best_ns_per_day": global_best["ns_per_day"],
+                "locality_best_shape": locality_best["shape_name"],
+                "locality_best_ntomp": locality_best["ntomp"],
+                "locality_best_ns_per_day": locality_best["ns_per_day"],
+                "meaningful_drop_ntomps": [run["ntomp"] for run in meaningful_drop_runs],
+            },
+            "mechanics_preconditions": {
+                "release_exact_suite_ok": bool(release_suite and release_suite.get("ok")),
+                "tsan_exact_suite_ok": bool(tsan_suite and tsan_suite.get("ok")),
+            },
+        }
 
     return {
         "rule_ready_for_cross_host_aggregation": False,
         "reason": (
-            "This host does not yet show a stable performance drop on larger locality shapes "
-            "beyond the one-L3 physical-core size."
+            "This host does not expose enough one-L3 locality-group evidence to derive a "
+            "plateau-based production envelope."
         ),
         "host_local_observation": {
             "global_best_shape": global_best_shape,
@@ -711,6 +890,18 @@ def main() -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     topology = inspect_topology()
+    expected_filename = canonical_report_filename(
+        topology,
+        args.topology_class,
+        args.filename_host_suffix,
+    )
+    if out_path.name != expected_filename:
+        raise ValueError(
+            "Non-canonical host report filename. "
+            f"Expected '{expected_filename}', got '{out_path.name}'."
+        )
+
+    git_revision = current_git_revision()
     release_suite = None
     tsan_suite = None
     benchmark = None
@@ -747,12 +938,37 @@ def main() -> None:
             args.benchmark_steps,
         )
 
+    tsan_status = summarize_tsan_status(
+        skip_tsan_gtests=args.skip_tsan_gtests,
+        tsan_binary=args.tsan_binary,
+        tsan_suite=tsan_suite,
+    )
+
     report = {
-        "schema_version": 1,
+        "schema_version": REPORT_SCHEMA_VERSION,
         "host": {
             "label": args.host_label,
             "topology_class": args.topology_class,
             "topology": topology,
+        },
+        "infra": {
+            "collection_mode": args.collection_mode,
+            "collected_at_utc": datetime.now(timezone.utc).isoformat(),
+            "git_revision": git_revision,
+            "report_filename_policy_version": REPORT_FILENAME_POLICY_VERSION,
+            "report_filename": out_path.name,
+            "canonical_report_filename": expected_filename,
+            "report_filename_matches_canonical": out_path.name == expected_filename,
+            "cpu_model_slug": cpu_model_slug(topology),
+            "filename_host_suffix": slugify(args.filename_host_suffix) if args.filename_host_suffix else "",
+            "recurring_backend_attestation": recurring_backend_attestation(args.collection_mode),
+            "ci_context": {
+                "github_actions": os.getenv("GITHUB_ACTIONS") == "true",
+                "github_run_id": os.getenv("GITHUB_RUN_ID"),
+                "github_job": os.getenv("GITHUB_JOB"),
+                "github_workflow": os.getenv("GITHUB_WORKFLOW"),
+            },
+            "tsan": tsan_status,
         },
         "mechanics": {
             "release_suite": release_suite,

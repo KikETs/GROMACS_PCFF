@@ -6,7 +6,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from collect_host_report import derive_host_local_rule
+from collect_host_report import (
+    REPORT_SCHEMA_VERSION,
+    canonical_report_filename,
+    derive_host_local_rule,
+)
 
 
 REQUIRED_CLASSES = {
@@ -45,9 +49,55 @@ def load_report(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def validate_report_identity(path: Path, report: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    schema_version = int(report.get("schema_version", 0))
+    if schema_version < REPORT_SCHEMA_VERSION:
+        blockers.append(
+            f"{path.name}: legacy host report schema v{schema_version}; regenerate under schema v{REPORT_SCHEMA_VERSION}"
+        )
+        return blockers
+
+    infra = report.get("infra")
+    if not isinstance(infra, dict):
+        blockers.append(f"{path.name}: missing infra metadata block")
+        return blockers
+
+    topology = report.get("host", {}).get("topology", {})
+    topology_class = report.get("host", {}).get("topology_class")
+    expected_filename = canonical_report_filename(
+        topology,
+        topology_class,
+        infra.get("filename_host_suffix", ""),
+    )
+    if path.name != expected_filename:
+        blockers.append(
+            f"{path.name}: non-canonical host report filename; expected {expected_filename}"
+        )
+
+    if infra.get("report_filename") != path.name:
+        blockers.append(
+            f"{path.name}: stored report filename metadata does not match the tracked filename"
+        )
+
+    if not infra.get("report_filename_matches_canonical", False):
+        blockers.append(f"{path.name}: report declares a non-canonical filename")
+
+    collection_mode = infra.get("collection_mode")
+    recurring_attestation = infra.get("recurring_backend_attestation", {})
+    if collection_mode in {"ci", "scheduled"} and not recurring_attestation.get("attested", False):
+        blockers.append(
+            f"{path.name}: {collection_mode} report lacks recurring-backend attestation under schema v{REPORT_SCHEMA_VERSION}"
+        )
+
+    return blockers
+
+
 def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -> dict[str, Any]:
     mechanics_blockers: list[str] = []
     production_rule_blockers: list[str] = []
+    infra_blockers: list[str] = []
+    recomputed_rules: list[dict[str, Any]] = []
     classes_present = {report["host"]["topology_class"] for report in reports}
     missing_classes = sorted(REQUIRED_CLASSES - classes_present)
     if missing_classes:
@@ -67,17 +117,27 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
         benchmark = report["benchmark"]
         if not benchmark or not benchmark.get("ok"):
             mechanics_blockers.append(f"{host_label}: locality benchmark evidence is missing")
+        infra = report.get("infra", {})
+        tsan_status = infra.get("tsan", {}).get("status")
+        if tsan_status != "backed":
+            infra_blockers.append(
+                f"{host_label}: multi-host TSAN-backed race evidence is not complete ({tsan_status or 'missing-status'})"
+            )
+        collection_mode = infra.get("collection_mode")
+        if collection_mode not in {"ci", "scheduled"}:
+            infra_blockers.append(
+                f"{host_label}: report was collected in {collection_mode or 'unknown'} mode, not recurring CI/scheduled infra"
+            )
 
     derived_candidates = []
     for report in reports:
-        derived = report.get("derived_host_local_rule", {})
-        if not derived.get("rule_ready_for_cross_host_aggregation"):
-            derived = derive_host_local_rule(
-                report["host"]["topology"],
-                report.get("benchmark"),
-                report["mechanics"].get("release_suite"),
-                report["mechanics"].get("tsan_suite"),
+        derived = derive_host_local_rule(
+            report["host"]["topology"],
+            report.get("benchmark"),
+            report["mechanics"].get("release_suite"),
+            report["mechanics"].get("tsan_suite"),
         )
+        recomputed_rules.append(derived)
         if not derived.get("rule_ready_for_cross_host_aggregation"):
             production_rule_blockers.append(
                 f"{report['host']['label']}: no cross-host-ready locality rule candidate "
@@ -113,11 +173,19 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
         and common_basis is not None
         and common_rule_text is not None
     )
+    g1_infra_allowed = not any(
+        "TSAN-backed race evidence" in blocker for blocker in infra_blockers
+    )
+    g4_infra_allowed = not any(
+        "recurring CI/scheduled infra" in blocker for blocker in infra_blockers
+    )
     summary = {
-        "schema_version": 1,
-        "pass": production_rule_allowed,
+        "schema_version": 2,
+        "pass": production_rule_allowed and g1_infra_allowed and g4_infra_allowed,
         "mechanics_claim_allowed": mechanics_claim_allowed,
         "production_rule_allowed": production_rule_allowed,
+        "g1_infra_allowed": g1_infra_allowed,
+        "g4_infra_allowed": g4_infra_allowed,
         "reports": [
             {
                 "host_label": report["host"]["label"],
@@ -134,30 +202,45 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
                     report["mechanics"]["tsan_suite"]
                     and report["mechanics"]["tsan_suite"]["ok"]
                 ),
+                "tsan_status": report.get("infra", {}).get("tsan", {}).get("status"),
+                "collection_mode": report.get("infra", {}).get("collection_mode"),
+                "recurring_backend_attested": bool(
+                    report.get("infra", {}).get("recurring_backend_attestation", {}).get("attested")
+                ),
+                "report_filename": report.get("infra", {}).get("report_filename"),
+                "canonical_filename_ok": bool(
+                    report.get("infra", {}).get("report_filename_matches_canonical")
+                ),
                 "rule_candidate_ready": bool(
-                    report.get("derived_host_local_rule", {}).get("rule_ready_for_cross_host_aggregation")
+                    derived["rule_ready_for_cross_host_aggregation"]
                 ),
             }
-            for report in reports
+            for report, derived in zip(reports, recomputed_rules, strict=True)
         ],
-        "blockers": mechanics_blockers + production_rule_blockers,
+        "blockers": mechanics_blockers + production_rule_blockers + infra_blockers,
         "mechanics_blockers": mechanics_blockers,
         "production_rule_blockers": production_rule_blockers,
+        "infra_blockers": infra_blockers,
         "final_allowed_claim": (
-            "Broader desktop-class CPU OpenMP mechanics claim allowed, with a shared production envelope; server CPUs remain unvalidated"
-            if production_rule_allowed
+            "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed and a shared one-L3 plateau-knee production envelope is allowed across the tested hosts. This statement does not cover server CPUs and does not imply MPI or GPU coexistence support."
+            if production_rule_allowed and g1_infra_allowed and g4_infra_allowed
             else (
-                "Broader desktop-class CPU OpenMP mechanics claim allowed, but keep the production envelope host-local; server CPUs remain unvalidated"
-                if mechanics_claim_allowed
-                else "Keep the claim host-local until the blockers are closed"
+                "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed and a shared one-L3 plateau-knee production envelope is allowed across the tested hosts, but multi-host TSAN-backed race evidence or recurring automation infrastructure is still incomplete. This statement does not cover server CPUs and does not imply MPI or GPU coexistence support."
+                if production_rule_allowed
+                else (
+                    "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed, but the production envelope remains host-local. This statement does not cover server CPUs and does not imply MPI or GPU coexistence support, and multi-host TSAN-backed race evidence is still incomplete."
+                    if mechanics_claim_allowed
+                    else "Keep the claim host-local until the blockers are closed"
+                )
             )
         ),
         "desktop_mechanics_claim": (
             {
                 "rule_text": (
                     "Across the tested desktop/workstation topology classes, single-rank CPU-only "
-                    "exact r-RESPA preserved exact mechanical checks on every host. This does not "
-                    "authorize a shared production thread envelope."
+                    "standalone exact r-RESPA preserved exact affinity-enabled mechanical checks on every host. "
+                    "This mechanics claim is separate from the shared production-envelope decision, "
+                    "does not cover server CPUs, and does not imply MPI or GPU coexistence support."
                 ),
                 "server_cpu_status": "unvalidated",
                 "tsan_requirement_relaxed": bool(allow_missing_tsan),
@@ -165,6 +248,12 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
             if mechanics_claim_allowed
             else None
         ),
+        "infrastructure_status": {
+            "g1_infra_allowed": g1_infra_allowed,
+            "g4_infra_allowed": g4_infra_allowed,
+            "tsan_requirement_relaxed": bool(allow_missing_tsan),
+            "recurring_automation_required": True,
+        },
         "aggregated_rule": (
             {
                 "production_rule": common_rule_text,
@@ -185,11 +274,33 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
     return summary
 
 
+def summarize_reports_from_paths(report_paths: list[Path], allow_missing_tsan: bool) -> dict[str, Any]:
+    reports = []
+    identity_blockers: list[str] = []
+    for path in report_paths:
+        report = load_report(path)
+        identity_blockers.extend(validate_report_identity(path, report))
+        reports.append(report)
+
+    summary = summarize_reports(reports, allow_missing_tsan)
+    if identity_blockers:
+        summary["pass"] = False
+        summary["mechanics_claim_allowed"] = False
+        summary["production_rule_allowed"] = False
+        summary["g1_infra_allowed"] = False
+        summary["g4_infra_allowed"] = False
+        summary["blockers"] = identity_blockers + summary["blockers"]
+        summary["mechanics_blockers"] = identity_blockers + summary["mechanics_blockers"]
+        summary["desktop_mechanics_claim"] = None
+        summary["aggregated_rule"] = None
+        summary["final_allowed_claim"] = "Keep the claim host-local until stale or non-canonical reports are regenerated"
+    return summary
+
+
 def main() -> None:
     args = parse_args()
     report_paths = [Path(path).resolve() for path in args.reports]
-    reports = [load_report(path) for path in report_paths]
-    summary = summarize_reports(reports, args.allow_missing_tsan)
+    summary = summarize_reports_from_paths(report_paths, args.allow_missing_tsan)
 
     out_path = Path(args.out).resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)

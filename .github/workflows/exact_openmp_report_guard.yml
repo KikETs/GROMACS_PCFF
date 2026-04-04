@@ -1,0 +1,33 @@
+name: Exact OpenMP Report Guard
+
+on:
+  push:
+    paths:
+      - ".github/workflows/exact_openmp_report_guard.yml"
+      - "tools/exact_respa_openmp_validation/**"
+      - "tests/reference_results/exact_respa_openmp_validation/**"
+  pull_request:
+    paths:
+      - ".github/workflows/exact_openmp_report_guard.yml"
+      - "tools/exact_respa_openmp_validation/**"
+      - "tests/reference_results/exact_respa_openmp_validation/**"
+  workflow_dispatch:
+
+jobs:
+  validate-checked-in-reports:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate exact OpenMP report set backend
+        run: |
+          python3 tools/exact_respa_openmp_validation/validate_report_set.py \
+            --manifest tests/reference_results/exact_respa_openmp_validation/report_set_manifest.json \
+            --out-dir /tmp/exact-openmp-report-guard \
+            --strict
