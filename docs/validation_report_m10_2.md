@@ -10,6 +10,11 @@ The gate is now split into:
 This change is explicit in the machine-readable decision artifact:
 - [m10_2_gate_decision.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json)
 
+## Execution Prerequisite
+- runner: [run_m10_2.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_ensemble_gate/run_m10_2.py)
+- required interpreter: `/home/kiket/anaconda3/envs/MD/bin/python3`
+- reason: the runner imports `numpy`; validation was performed in the `MD` conda environment
+
 ## Result
 - `small_oligomer_medium.nvt_parity`: `pass`
 - `small_oligomer_medium.npt_stability`: `partial`

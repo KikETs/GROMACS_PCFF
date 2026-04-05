@@ -11,6 +11,11 @@ After aligning the runner with the current `M10.2` semantics:
 
 the longer 100 ps NPT run still does **not** support conductivity handoff.
 
+## Execution Prerequisite
+- runner: [run_m10_2_1.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_1_convergence_gate/run_m10_2_1.py)
+- required interpreter: `/home/kiket/anaconda3/envs/MD/bin/python3`
+- reason: this runner imports `numpy` and was validated in the `MD` conda environment, not bare system `python3`
+
 ## System & Runtime
 - `small_oligomer_medium_100ps`
 - 384 atoms

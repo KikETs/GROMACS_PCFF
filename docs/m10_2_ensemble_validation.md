@@ -9,6 +9,11 @@ The updated gate separates two different questions:
 
 Only the first question is blocking for `M10.2`.
 
+## Execution Prerequisite
+- runner: [run_m10_2.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_ensemble_gate/run_m10_2.py)
+- required interpreter: `/home/kiket/anaconda3/envs/MD/bin/python3`
+- reason: this runner imports `numpy` and was validated in the `MD` conda environment, not bare system `python3`
+
 ## System
 - `small_oligomer_medium`
 - 64 replicated oligomers

@@ -13,6 +13,11 @@ Its purpose is narrower than a transport-production claim:
 - artifact: [m10_2_1_summary.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_1_convergence_gate/m10_2_1_summary.json)
 - gate decision: [m10_2_1_gate_decision.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_1_convergence_gate/m10_2_1_gate_decision.json)
 
+## Execution Prerequisite
+- runner: [run_m10_2_1.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_1_convergence_gate/run_m10_2_1.py)
+- required interpreter: `/home/kiket/anaconda3/envs/MD/bin/python3`
+- reason: the runner imports `numpy`; validation was performed in the `MD` conda environment
+
 ## Protocol
 - system: `small_oligomer_medium_100ps`
 - 64 replicated oligomers, 384 atoms
