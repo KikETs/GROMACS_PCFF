@@ -7,10 +7,16 @@ from itertools import combinations_with_replacement
 from pathlib import Path
 
 from atom_typing import dumps_typing_report, type_ir, validate_typing_report
+from chem_perception import perceive_ir
 from parameter_assignment import (
     assign_ir as assign_bonded_ir,
     dumps_assignment_report as dumps_bonded_report,
     validate_assignment_report as validate_bonded_report,
+)
+from pcff_frc import (
+    build_phase1_pcff_atom_index,
+    resolve_nonbonded_atom_from_frc,
+    resolve_phase1_bond_increment_charges,
 )
 from typing_ir import dumps_ir, parse_file, validate_ir
 
@@ -88,12 +94,26 @@ def assign_ir(
     ir_component = ir["components"][0]
     typing_component = typing_report["components"][0]
     bonded_component = bonded_report["components"][0]
+    perception_report = perceive_ir(ir)
 
     typed_atoms = {atom["canonical_index"]: atom for atom in typing_component["atoms"]}
     ir_atoms = {atom["canonical_index"]: atom for atom in ir_component["atoms"]}
+    pcff_atom_index = build_phase1_pcff_atom_index(
+        ir_component,
+        perception_report["components"][0],
+        typing_component,
+    )
+    charge_assignments, charge_diagnostics = resolve_phase1_bond_increment_charges(ir_component, pcff_atom_index)
     atom_rule_index, pair_override_index = _index_rules(active_ruleset)
 
-    atom_records, atom_diagnostics = _assign_atoms(ir_atoms, typed_atoms, atom_rule_index, active_ruleset["ruleset_id"])
+    atom_records, atom_diagnostics = _assign_atoms(
+        ir_atoms,
+        typed_atoms,
+        atom_rule_index,
+        active_ruleset["ruleset_id"],
+        pcff_atom_index=pcff_atom_index,
+        charge_assignments=charge_assignments,
+    )
     atom_records_by_index = {record["canonical_index"]: record for record in atom_records}
 
     pair_style_kind = _pair_style_kind(atom_records, active_ruleset)
@@ -121,7 +141,7 @@ def assign_ir(
         ruleset=active_ruleset,
     )
 
-    diagnostics = [*atom_diagnostics, *pair_diagnostics, *pair14_diagnostics]
+    diagnostics = [*charge_diagnostics, *atom_diagnostics, *pair_diagnostics, *pair14_diagnostics]
     status = "missing_parameters" if diagnostics else "assigned"
 
     export_metadata = {
@@ -277,6 +297,9 @@ def _assign_atoms(
     typed_atoms: dict[int, dict],
     atom_rule_index: dict[str, dict],
     ruleset_id: str,
+    *,
+    pcff_atom_index: dict[int, dict],
+    charge_assignments: dict[int, dict] | None,
 ) -> tuple[list[dict], list[dict]]:
     records = []
     diagnostics = []
@@ -285,7 +308,11 @@ def _assign_atoms(
         typed_atom = typed_atoms[canonical_index]
         family = typed_atom["assigned_family"]
         rule = atom_rule_index.get(family)
-        charge_source, charge_value = _resolve_charge(ir_atom)
+        charge_source, charge_value, charge_provenance = _resolve_charge(
+            ir_atom,
+            canonical_index=canonical_index,
+            charge_assignments=charge_assignments,
+        )
 
         record = {
             "canonical_index": canonical_index,
@@ -296,24 +323,62 @@ def _assign_atoms(
             "charge_assignment": {
                 "source": charge_source,
                 "value": charge_value,
+                "provenance": charge_provenance,
             },
         }
 
         if rule is None:
-            record["status"] = "missing_parameter"
-            record["nonbonded_type"] = None
-            record["self_parameters"] = None
-            record["provenance"] = None
-            diagnostics.append(
-                {
-                    "scope": "atom",
-                    "code": "missing_nonbonded_atom_type",
-                    "atom_index": canonical_index,
-                    "source_index": ir_atom["source_index"],
-                    "family": family,
-                    "message": f"No nonbonded rule matched atom family {family!r}",
-                }
-            )
+            pcff_payload = pcff_atom_index.get(canonical_index)
+            if pcff_payload is None:
+                record["status"] = "missing_parameter"
+                record["nonbonded_type"] = None
+                record["self_parameters"] = None
+                record["provenance"] = None
+                diagnostics.append(
+                    {
+                        "scope": "atom",
+                        "code": "missing_nonbonded_atom_type",
+                        "atom_index": canonical_index,
+                        "source_index": ir_atom["source_index"],
+                        "family": family,
+                        "message": f"No nonbonded rule matched atom family {family!r}",
+                    }
+                )
+            else:
+                frc_params, frc_provenance = resolve_nonbonded_atom_from_frc(pcff_payload["pcff_type"])
+                if frc_params is None or frc_provenance is None:
+                    record["status"] = "missing_parameter"
+                    record["nonbonded_type"] = None
+                    record["self_parameters"] = None
+                    record["provenance"] = None
+                    diagnostics.append(
+                        {
+                            "scope": "atom",
+                            "code": "missing_nonbonded_atom_type",
+                            "atom_index": canonical_index,
+                            "source_index": ir_atom["source_index"],
+                            "family": family,
+                            "pcff_type": pcff_payload["pcff_type"],
+                            "message": f"No PCFF nonbonded term matched atom family {family!r}",
+                        }
+                    )
+                else:
+                    sigma = float(frc_params["sigma_angstrom"])
+                    epsilon = float(frc_params["epsilon_kcal_mol"])
+                    resolved_type = frc_provenance["resolved_key"][0]
+                    record["status"] = "assigned"
+                    record["nonbonded_type"] = resolved_type
+                    record["self_parameters"] = {
+                        "sigma_angstrom": sigma,
+                        "epsilon_kcal_mol": epsilon,
+                        "normal_coefficients": class2_normal_coefficients(epsilon, sigma),
+                    }
+                    record["provenance"] = {
+                        "ruleset_id": ruleset_id,
+                        "rule_id": None,
+                        "rule_provenance": copy.deepcopy(frc_provenance),
+                        "pcff_atom_type": pcff_payload["pcff_type"],
+                    }
         else:
             sigma = float(rule["self_parameters"]["sigma_angstrom"])
             epsilon = float(rule["self_parameters"]["epsilon_kcal_mol"])
@@ -333,11 +398,19 @@ def _assign_atoms(
     return records, diagnostics
 
 
-def _resolve_charge(ir_atom: dict) -> tuple[str, float]:
+def _resolve_charge(
+    ir_atom: dict,
+    *,
+    canonical_index: int,
+    charge_assignments: dict[int, dict] | None,
+) -> tuple[str, float, dict | None]:
+    if charge_assignments is not None and canonical_index in charge_assignments:
+        charge_record = charge_assignments[canonical_index]
+        return charge_record["source"], float(charge_record["value"]), copy.deepcopy(charge_record["provenance"])
     if ir_atom["partial_charge"] is not None:
-        return "partial_charge", float(ir_atom["partial_charge"])
+        return "partial_charge", float(ir_atom["partial_charge"]), None
     if ir_atom["formal_charge"] is not None:
-        return "formal_charge", float(ir_atom["formal_charge"])
+        return "formal_charge", float(ir_atom["formal_charge"]), None
     raise NonbondedAssignmentError(
         "missing_charge",
         f"Atom {ir_atom['canonical_index']} does not declare partial_charge or formal_charge",

@@ -16,6 +16,11 @@ from chem_perception import (
     perceive_ir,
     validate_report as validate_perception_report,
 )
+from pcff_frc import (
+    build_phase1_pcff_atom_index,
+    resolve_bonded_atom_types_from_frc,
+    resolve_bonded_interaction_from_frc,
+)
 from typing_ir import dumps_ir, parse_file, validate_ir
 
 from .errors import AssignmentReportError, ParameterAssignmentError
@@ -30,6 +35,16 @@ from .signatures import (
 
 SCHEMA_NAME = "pcff_parameter_assignment_report"
 SCHEMA_VERSION = 1
+
+PHASE1_REPOSITORY_TUPLE_BACKFILL_RULE_IDS = {
+    ("angle", ("h", "c", "h")): "angle_alkane_hc_h",
+    ("dihedral", ("h", "c", "c", "h")): "dihedral_alkane_hcch",
+    ("improper", ("c_1", "c", "n", "o_1")): "ap5_import_improper_c_1_c_n_o_1_v1_6mBN",
+}
+
+PHASE1_PCFF_TUPLE_REMAPS = {
+    ("angle", ("n_2", "c_2", "oz")): ("n_2", "c_2", "o_2"),
+}
 
 
 def assign_file(
@@ -86,7 +101,15 @@ def assign_ir(
 
     typed_atoms = _build_typed_atom_index(typing_component)
     rules_by_kind = _index_rules(active_ruleset)
+    rules_by_id = _index_rules_by_id(active_ruleset)
+    pcff_atom_index = build_phase1_pcff_atom_index(ir_component, perception_component, typing_component)
     interactions = _build_interactions(ir_component, perception_component, typed_atoms)
+    for kind in INTERACTION_KINDS:
+        for record in interactions[kind]:
+            record["pcff_atom_types"] = [
+                pcff_atom_index[index]["pcff_type"] if index in pcff_atom_index else None
+                for index in record["atom_indices"]
+            ]
 
     diagnostics = []
     assigned_interactions: dict[str, list[dict]] = {}
@@ -96,6 +119,8 @@ def assign_ir(
             interactions[kind],
             rules_by_kind[kind],
             ruleset_id=active_ruleset["ruleset_id"],
+            pcff_atom_index=pcff_atom_index,
+            rules_by_id=rules_by_id,
         )
         diagnostics.extend(kind_diagnostics)
 
@@ -249,6 +274,14 @@ def _index_rules(ruleset: dict) -> dict[str, dict[str, dict]]:
     return indexed
 
 
+def _index_rules_by_id(ruleset: dict) -> dict[str, dict]:
+    indexed = {}
+    for kind in INTERACTION_KINDS:
+        for rule in ruleset["interaction_rules"][kind]:
+            indexed[rule["rule_id"]] = rule
+    return indexed
+
+
 def _build_interactions(ir_component: dict, perception_component: dict, typed_atoms: dict[int, dict]) -> dict[str, list[dict]]:
     ir_atoms = {atom["canonical_index"]: atom for atom in ir_component["atoms"]}
     adjacency = {
@@ -399,6 +432,8 @@ def _assign_interactions(
     rules_by_signature: dict[str, dict],
     *,
     ruleset_id: str,
+    pcff_atom_index: dict[int, dict],
+    rules_by_id: dict[str, dict],
 ) -> tuple[list[dict], list[dict]]:
     assignments = []
     diagnostics = []
@@ -407,20 +442,71 @@ def _assign_interactions(
         assignment["assignment_id"] = f"{kind}_{len(assignments) + 1}"
         rule = rules_by_signature.get(record["canonical_signature"])
         if rule is None:
-            assignment["status"] = "missing_parameter"
-            assignment["parameter_rule_id"] = None
-            assignment["parameters"] = None
-            assignment["provenance"] = None
-            diagnostics.append(
-                {
-                    "scope": kind,
-                    "code": "missing_parameter",
-                    "atom_indices": record["atom_indices"],
-                    "source_atom_indices": record["source_atom_indices"],
-                    "canonical_signature": record["canonical_signature"],
-                    "message": f"No {kind} parameter rule matched {record['canonical_signature']}",
-                }
+            frc_parameters, frc_provenance = resolve_bonded_interaction_from_frc(
+                kind,
+                record["atom_indices"],
+                pcff_atom_index,
             )
+            if frc_parameters is not None and frc_provenance is not None:
+                assignment["status"] = "assigned"
+                assignment["parameter_rule_id"] = None
+                assignment["parameters"] = frc_parameters
+                assignment["provenance"] = {
+                    "ruleset_id": ruleset_id,
+                    "rule_id": None,
+                    "canonical_signature": record["canonical_signature"],
+                    "rule_provenance": frc_provenance,
+                }
+            else:
+                remapped_parameters, remapped_provenance = _resolve_phase1_pcff_tuple_remap(
+                    kind,
+                    record.get("pcff_atom_types"),
+                )
+                if remapped_parameters is not None and remapped_provenance is not None:
+                    assignment["status"] = "assigned"
+                    assignment["parameter_rule_id"] = None
+                    assignment["parameters"] = remapped_parameters
+                    assignment["provenance"] = {
+                        "ruleset_id": ruleset_id,
+                        "rule_id": None,
+                        "canonical_signature": record["canonical_signature"],
+                        "rule_provenance": remapped_provenance,
+                    }
+                else:
+                    backfill_rule = _resolve_phase1_repository_tuple_backfill(
+                        kind,
+                        record.get("pcff_atom_types"),
+                        rules_by_id,
+                    )
+                    if backfill_rule is not None:
+                        assignment["status"] = "assigned"
+                        assignment["parameter_rule_id"] = backfill_rule["rule_id"]
+                        assignment["parameters"] = copy.deepcopy(backfill_rule["parameters"])
+                        assignment["provenance"] = {
+                            "ruleset_id": ruleset_id,
+                            "rule_id": backfill_rule["rule_id"],
+                            "canonical_signature": record["canonical_signature"],
+                            "rule_provenance": _phase1_repository_tuple_backfill_provenance(
+                                record["pcff_atom_types"],
+                                backfill_rule,
+                            ),
+                        }
+                    else:
+                        assignment["status"] = "missing_parameter"
+                        assignment["parameter_rule_id"] = None
+                        assignment["parameters"] = None
+                        assignment["provenance"] = None
+                        diagnostics.append(
+                            {
+                                "scope": kind,
+                                "code": "missing_parameter",
+                                "atom_indices": record["atom_indices"],
+                                "source_atom_indices": record["source_atom_indices"],
+                                "canonical_signature": record["canonical_signature"],
+                                "pcff_atom_types": record.get("pcff_atom_types"),
+                                "message": f"No {kind} parameter rule matched {record['canonical_signature']}",
+                            }
+                        )
         else:
             assignment["status"] = "assigned"
             assignment["parameter_rule_id"] = rule["rule_id"]
@@ -433,3 +519,54 @@ def _assign_interactions(
             }
         assignments.append(assignment)
     return assignments, diagnostics
+
+
+def _resolve_phase1_pcff_tuple_remap(
+    kind: str,
+    pcff_atom_types: list[str] | None,
+) -> tuple[dict | None, dict | None]:
+    if pcff_atom_types is None:
+        return None, None
+    matched_tuple = tuple(pcff_atom_types)
+    remapped_tuple = PHASE1_PCFF_TUPLE_REMAPS.get((kind, matched_tuple))
+    if remapped_tuple is None:
+        return None, None
+    parameters, base_provenance = resolve_bonded_atom_types_from_frc(kind, list(remapped_tuple))
+    if parameters is None or base_provenance is None:
+        return None, None
+    return (
+        parameters,
+        {
+            "source_kind": "phase1_pcff_tuple_remap",
+            "source_file": "frc_file/pcff.frc",
+            "source_resolution": "phase1_tuple_remap",
+            "matched_pcff_types": list(matched_tuple),
+            "remapped_pcff_types": list(remapped_tuple),
+            "base_provenance": copy.deepcopy(base_provenance),
+        },
+    )
+
+
+def _resolve_phase1_repository_tuple_backfill(
+    kind: str,
+    pcff_atom_types: list[str] | None,
+    rules_by_id: dict[str, dict],
+) -> dict | None:
+    if pcff_atom_types is None:
+        return None
+    rule_id = PHASE1_REPOSITORY_TUPLE_BACKFILL_RULE_IDS.get((kind, tuple(pcff_atom_types)))
+    if rule_id is None:
+        return None
+    return rules_by_id.get(rule_id)
+
+
+def _phase1_repository_tuple_backfill_provenance(pcff_atom_types: list[str], source_rule: dict) -> dict:
+    return {
+        "source_kind": "repository_tuple_backfill_rule",
+        "source_file": "rules/pcff_parameters.json",
+        "source_resolution": "phase1_exact_pcff_tuple_backfill",
+        "matched_pcff_types": list(pcff_atom_types),
+        "source_rule_id": source_rule["rule_id"],
+        "source_rule_canonical_signature": source_rule["canonical_signature"],
+        "base_provenance": copy.deepcopy(source_rule["provenance"]),
+    }

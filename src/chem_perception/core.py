@@ -853,13 +853,32 @@ def _ordered_neighbors_for_center(graph: dict, atom_index: int) -> list[int]:
     return [
         neighbor_index
         for _, neighbor_index in sorted(
-            (
-                _substituent_signature(graph, atom_index, neighbor_index, depth=3),
-                neighbor_index,
-            )
-            for neighbor_index in graph["adjacency"][atom_index]
+            [
+                (
+                    _substituent_signature(graph, atom_index, neighbor_index, depth=3),
+                    neighbor_index,
+                )
+                for neighbor_index in graph["adjacency"][atom_index]
+            ],
+            key=lambda item: (_signature_sort_key(item[0]), item[1]),
         )
     ]
+
+
+def _signature_sort_key(value: object) -> tuple:
+    if isinstance(value, tuple):
+        return (0, tuple(_signature_sort_key(item) for item in value))
+    if value is None:
+        return (1, "")
+    if isinstance(value, bool):
+        return (2, int(value))
+    if isinstance(value, int):
+        return (3, value)
+    if isinstance(value, float):
+        return (4, value)
+    if isinstance(value, str):
+        return (5, value)
+    return (6, repr(value))
 
 
 def _substituent_signature(
@@ -893,7 +912,7 @@ def _substituent_signature(
     return (
         atom["element"],
         atom["formal_charge"],
-        tuple(sorted(children)),
+        tuple(sorted(children, key=_signature_sort_key)),
     )
 
 

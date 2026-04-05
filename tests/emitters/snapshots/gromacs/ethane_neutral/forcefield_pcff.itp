@@ -1,8 +1,8 @@
 ; deterministic PT6 GROMACS emitter output
 ; component_family=acyclic_alkane
 ; typed_ir_sha256=3607fffae4e02959fed94b4ceddb2eda2e9ff872ee67c7a28de6a7a4431dd2c0
-; typing_report_sha256=b2eecd3a86021b73c1331ddea0026cbec2497c8e816fd93ce288226df9920523
-; bonded_assignment_sha256=99affc1bb786a7f2bded07b4b0fc82462ea4a03bb7c836391cacdf992144c562
+; typing_report_sha256=09a6db315ab696f4a7fc7b59d72287ff7f834f9ebfa8424a8d5eb95cb32d8c73
+; bonded_assignment_sha256=51d5fc918438ca3385c67cd1655d0a03ecfcbe03180eb9f100b18e98662b862f
 
 [ defaults ]
 ; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow

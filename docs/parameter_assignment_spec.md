@@ -23,8 +23,10 @@ PT4는 다음을 구현하지 않습니다.
 
 - 이 저장소에는 현재 외부 배포형 PCFF parameter library가 포함되어 있지 않습니다.
 - 따라서 [rules/pcff_parameters.json](/home/kiket/바탕화면/test/GROMACS_PCFF/rules/pcff_parameters.json)은 **repository-local frozen Class2 coefficients**를 담습니다.
+- phase1 bridge가 활성화되더라도 runtime lookup은 저장소 내부 [frc_file/pcff.frc](/home/kiket/Desktop/test/GROMACS_PCFF/frc_file/pcff.frc) 와 repository-local rules만 사용합니다.
 - provenance는 규칙 파일 경로, `ruleset_id`, `rule_id`, `canonical_signature`로 추적됩니다.
 - CSV scope용으로 추가된 carbonyl subset 계수는 `LUNAR all2lmp + pcff.frc` 대표 추출값을 repository-local rule로 동결한 것입니다.
+- 즉 `LUNAR` 경로는 실행 의존성이 아니라 historical provenance입니다.
 - 중요한 제약:
   - bond / angle / improper 일부만 동결했습니다.
   - dihedral cross-term은 여전히 비어 있는 경우가 많고, 이 저장소는 그 구멍을 0으로 메우지 않습니다.
@@ -50,6 +52,7 @@ PT4는 다음을 구현하지 않습니다.
 규칙 파일:
 
 - [rules/pcff_parameters.json](/home/kiket/바탕화면/test/GROMACS_PCFF/rules/pcff_parameters.json)
+- [frc_file/pcff.frc](/home/kiket/Desktop/test/GROMACS_PCFF/frc_file/pcff.frc)
 
 ## Input Contract
 

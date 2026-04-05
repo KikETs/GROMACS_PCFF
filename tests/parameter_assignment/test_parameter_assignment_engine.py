@@ -19,6 +19,13 @@ from parameter_assignment import (  # noqa: E402
     loads_assignment_report,
     validate_rules,
 )
+from parameter_assignment.engine import (  # noqa: E402
+    _index_rules_by_id,
+    _phase1_repository_tuple_backfill_provenance,
+    _resolve_phase1_pcff_tuple_remap,
+    _resolve_phase1_repository_tuple_backfill,
+)
+from pcff_frc import _lookup_term, load_pcff_frc  # noqa: E402
 
 
 ETHANE_PATH = REPO_ROOT / "testdata" / "typing_golden" / "cases" / "ethane_neutral" / "inputs" / "structure.mol"
@@ -107,3 +114,60 @@ def test_rule_validation_rejects_duplicate_signature_within_kind() -> None:
         assert "duplicate" in str(error).lower()
     else:
         raise AssertionError("validate_rules should reject duplicate canonical signatures")
+
+
+def test_pcff_frc_improper_lookup_uses_center_atom_consistently() -> None:
+    load_pcff_frc.cache_clear()
+    reference = load_pcff_frc()
+    record, provenance = _lookup_term(reference, "improper_main", ["cz", "oo", "oz", "oz"])
+    assert record is not None
+    assert provenance is not None
+    assert provenance["resolved_key"] == ["cz", "oo", "oz", "oz"]
+    assert provenance["line_number"] == 3210
+
+
+def test_pcff_frc_wildcard_torsion_lookup_is_traceable() -> None:
+    load_pcff_frc.cache_clear()
+    reference = load_pcff_frc()
+    record, provenance = _lookup_term(reference, "dihedral_main", ["c", "c_1", "o_2", "cp"])
+    assert record is not None
+    assert provenance is not None
+    assert provenance["resolved_key"] == ["*", "c_1", "o_2", "*"]
+    assert provenance["used_wildcard"] is True
+
+
+def test_phase1_pcff_tuple_remap_surfaces_traceable_angle_bridge_fix() -> None:
+    parameters, provenance = _resolve_phase1_pcff_tuple_remap("angle", ["n_2", "c_2", "oz"])
+    assert parameters is not None
+    assert provenance is not None
+    assert parameters["main"]["theta0_deg"] == 108.44
+    assert provenance["matched_pcff_types"] == ["n_2", "c_2", "oz"]
+    assert provenance["remapped_pcff_types"] == ["n_2", "c_2", "o_2"]
+    assert provenance["source_resolution"] == "phase1_tuple_remap"
+
+
+def test_phase1_repository_tuple_backfill_is_exact_pcff_tuple_scoped() -> None:
+    ruleset = load_rules()
+    rules_by_id = _index_rules_by_id(ruleset)
+
+    angle_rule = _resolve_phase1_repository_tuple_backfill("angle", ["h", "c", "h"], rules_by_id)
+    assert angle_rule is not None
+    assert angle_rule["rule_id"] == "angle_alkane_hc_h"
+
+    dihedral_rule = _resolve_phase1_repository_tuple_backfill("dihedral", ["h", "c", "c", "h"], rules_by_id)
+    assert dihedral_rule is not None
+    assert dihedral_rule["rule_id"] == "dihedral_alkane_hcch"
+
+    improper_rule = _resolve_phase1_repository_tuple_backfill("improper", ["c_1", "c", "n", "o_1"], rules_by_id)
+    assert improper_rule is not None
+    assert improper_rule["rule_id"] == "ap5_import_improper_c_1_c_n_o_1_v1_6mBN"
+
+    assert _resolve_phase1_repository_tuple_backfill("dihedral", ["n", "c", "c", "h"], rules_by_id) is None
+
+    provenance = _phase1_repository_tuple_backfill_provenance(["h", "c", "c", "h"], dihedral_rule)
+    assert provenance["source_resolution"] == "phase1_exact_pcff_tuple_backfill"
+    assert provenance["source_rule_id"] == "dihedral_alkane_hcch"
+
+    improper_provenance = _phase1_repository_tuple_backfill_provenance(["c_1", "c", "n", "o_1"], improper_rule)
+    assert improper_provenance["source_resolution"] == "phase1_exact_pcff_tuple_backfill"
+    assert improper_provenance["source_rule_id"] == "ap5_import_improper_c_1_c_n_o_1_v1_6mBN"

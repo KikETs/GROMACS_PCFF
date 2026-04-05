@@ -52,12 +52,14 @@ PT5는 다음을 구현하지 않습니다.
 규칙 파일:
 
 - [rules/pcff_nonbonded.json](/home/kiket/바탕화면/test/GROMACS_PCFF/rules/pcff_nonbonded.json)
+- phase1 bridge lookup source: [frc_file/pcff.frc](/home/kiket/Desktop/test/GROMACS_PCFF/frc_file/pcff.frc)
 
 중요한 제약:
 
 - CSV-scoped carbonyl subset용 self nonbonded rule은 추가됐습니다.
 - 하지만 PT5는 여전히 `parameter_assignment.status = assigned`를 요구합니다.
 - 따라서 PT4에서 dihedral / angle gap이 남아 있으면 PT5까지 도달하지 못합니다.
+- `LUNAR` 경로가 provenance에 남아 있어도 runtime lookup은 저장소 내부 frozen files만 사용합니다.
 
 ## Input Contract
 

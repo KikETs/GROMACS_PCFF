@@ -1,0 +1,2856 @@
+{
+  "atom_type_rules": [
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "carbonate_carbonyl_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_carbonyl_carbon"
+          },
+          {
+            "in": [
+              1,
+              2
+            ],
+            "path": "single_bond_neighbor_element_counts.O"
+          },
+          {
+            "equals": null,
+            "path": "single_bond_neighbor_element_counts.N"
+          }
+        ]
+      },
+      "precedence": 1,
+      "rule_id": "carbonate_like_carbonyl_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "carbamate_like_carbonyl_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_carbonyl_carbon"
+          },
+          {
+            "equals": 1,
+            "path": "single_bond_neighbor_element_counts.N"
+          },
+          {
+            "equals": 1,
+            "path": "single_bond_neighbor_element_counts.O"
+          }
+        ]
+      },
+      "precedence": 3,
+      "rule_id": "carbonate_like_carbamate_carbonyl_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "amide_carbonyl_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_carbonyl_carbon"
+          },
+          {
+            "equals": 1,
+            "path": "single_bond_neighbor_element_counts.N"
+          },
+          {
+            "in": [
+              1,
+              2
+            ],
+            "path": "single_bond_neighbor_element_counts.C"
+          }
+        ]
+      },
+      "precedence": 1,
+      "rule_id": "amide_like_carbonyl_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "imide_like_carbonyl_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_carbonyl_carbon"
+          },
+          {
+            "equals": 2,
+            "path": "single_bond_neighbor_element_counts.N"
+          }
+        ]
+      },
+      "precedence": 2,
+      "rule_id": "amide_like_imide_carbonyl_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "carbamate_like_carbonyl_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_carbonyl_carbon"
+          },
+          {
+            "equals": 1,
+            "path": "single_bond_neighbor_element_counts.N"
+          },
+          {
+            "equals": 1,
+            "path": "single_bond_neighbor_element_counts.O"
+          }
+        ]
+      },
+      "precedence": 3,
+      "rule_id": "amide_like_carbamate_carbonyl_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "amide_like_terminal_carbonyl_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_carbonyl_carbon"
+          },
+          {
+            "equals": 1,
+            "path": "single_bond_neighbor_element_counts.N"
+          },
+          {
+            "equals": 1,
+            "path": "single_bond_neighbor_element_counts.H"
+          }
+        ]
+      },
+      "precedence": 4,
+      "rule_id": "amide_like_formamide_carbonyl_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "amide_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "in": [
+              1,
+              2
+            ],
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          }
+        ]
+      },
+      "precedence": 5,
+      "rule_id": "amide_like_amide_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "amide_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "in": [
+              1,
+              2
+            ],
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          }
+        ]
+      },
+      "precedence": 5,
+      "rule_id": "carbonate_like_amide_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "carbonyl_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_carbonyl_oxygen"
+          }
+        ]
+      },
+      "precedence": 10,
+      "rule_id": "carbonate_like_carbonyl_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "carbonyl_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_carbonyl_oxygen"
+          }
+        ]
+      },
+      "precedence": 10,
+      "rule_id": "amide_like_carbonyl_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydroxyl_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 11,
+      "rule_id": "carbonate_like_hydroxyl_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydroxyl_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 11,
+      "rule_id": "amide_like_hydroxyl_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_hydroxyl_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "O",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 12,
+      "rule_id": "carbonate_like_hydrogen_on_hydroxyl",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_hydroxyl_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "O",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 12,
+      "rule_id": "amide_like_hydrogen_on_hydroxyl",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_carbonyl_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": true,
+            "path": "attached_atom.is_carbonyl_carbon"
+          },
+          {
+            "equals": 1,
+            "path": "attached_atom.neighbor_element_counts.H"
+          }
+        ]
+      },
+      "precedence": 12,
+      "rule_id": "carbonate_like_hydrogen_on_carbonyl_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_carbonyl_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": true,
+            "path": "attached_atom.is_carbonyl_carbon"
+          },
+          {
+            "equals": 1,
+            "path": "attached_atom.neighbor_element_counts.H"
+          }
+        ]
+      },
+      "precedence": 12,
+      "rule_id": "amide_like_hydrogen_on_carbonyl_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "carbonyl_bridging_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 1,
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          }
+        ]
+      },
+      "precedence": 13,
+      "rule_id": "carbonate_like_carbonyl_bridging_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "carbonyl_bridging_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 1,
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          }
+        ]
+      },
+      "precedence": 13,
+      "rule_id": "amide_like_carbonyl_bridging_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "ether_oxygen_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 0,
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          }
+        ]
+      },
+      "precedence": 14,
+      "rule_id": "carbonate_like_ether_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "ether_oxygen_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "O",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2
+            },
+            "path": "neighbor_element_counts"
+          },
+          {
+            "equals": 0,
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          }
+        ]
+      },
+      "precedence": 14,
+      "rule_id": "amide_like_ether_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "nitrile_carbon_sp",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_nitrile_carbon"
+          }
+        ]
+      },
+      "precedence": 15,
+      "rule_id": "carbonate_like_nitrile_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "nitrile_carbon_sp",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_nitrile_carbon"
+          }
+        ]
+      },
+      "precedence": 15,
+      "rule_id": "amide_like_nitrile_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "nitrile_nitrogen_sp",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_nitrile_nitrogen"
+          }
+        ]
+      },
+      "precedence": 16,
+      "rule_id": "carbonate_like_nitrile_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "nitrile_nitrogen_sp",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": true,
+            "path": "is_nitrile_nitrogen"
+          }
+        ]
+      },
+      "precedence": 16,
+      "rule_id": "amide_like_nitrile_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "fluorinated_sp3_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "in": [
+              1,
+              2,
+              3
+            ],
+            "path": "single_bond_neighbor_element_counts.F"
+          }
+        ]
+      },
+      "precedence": 17,
+      "rule_id": "carbonate_like_fluorinated_sp3_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "fluorinated_sp3_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "in": [
+              1,
+              2,
+              3
+            ],
+            "path": "single_bond_neighbor_element_counts.F"
+          }
+        ]
+      },
+      "precedence": 17,
+      "rule_id": "amide_like_fluorinated_sp3_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "fluorine_on_sp3_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "F",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": 4,
+            "path": "attached_atom.coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 18,
+      "rule_id": "carbonate_like_fluorine_on_sp3_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "fluorine_on_sp3_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "F",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": 4,
+            "path": "attached_atom.coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 18,
+      "rule_id": "amide_like_fluorine_on_sp3_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "thioether_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "S",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 19,
+      "rule_id": "carbonate_like_thioether_sulfur_dialkyl",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "thioether_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "S",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 19,
+      "rule_id": "amide_like_thioether_sulfur_dialkyl",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "thioether_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "S",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 20,
+      "rule_id": "carbonate_like_thioether_sulfur_thiol",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "thioether_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "S",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 20,
+      "rule_id": "amide_like_thioether_sulfur_thiol",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_thiol_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "S",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 20,
+      "rule_id": "carbonate_like_hydrogen_on_thiol_sulfur",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_thiol_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "S",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 20,
+      "rule_id": "amide_like_hydrogen_on_thiol_sulfur",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "amine_nitrogen_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 0,
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 21,
+      "rule_id": "carbonate_like_amine_nitrogen_secondary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "amine_nitrogen_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 0,
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 21,
+      "rule_id": "amide_like_amine_nitrogen_secondary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "amine_nitrogen_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 0,
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          },
+          {
+            "equals": {
+              "C": 3
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 22,
+      "rule_id": "carbonate_like_amine_nitrogen_tertiary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "amine_nitrogen_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 0,
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          },
+          {
+            "equals": {
+              "C": 3
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 22,
+      "rule_id": "amide_like_amine_nitrogen_tertiary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "amine_nitrogen_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 0,
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 23,
+      "rule_id": "carbonate_like_amine_nitrogen_primary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "amine_nitrogen_sp3",
+      "match": {
+        "conditions": [
+          {
+            "equals": "N",
+            "path": "element"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 0,
+            "path": "single_bond_neighbor_carbonyl_carbon_count"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 23,
+      "rule_id": "amide_like_amine_nitrogen_primary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkene_carbon_sp2",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 1,
+            "path": "double_bond_neighbor_element_counts.C"
+          },
+          {
+            "equals": false,
+            "path": "is_carbonyl_carbon"
+          }
+        ]
+      },
+      "precedence": 24,
+      "rule_id": "carbonate_like_alkene_carbon_sp2",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkene_carbon_sp2",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 3,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 1,
+            "path": "double_bond_neighbor_element_counts.C"
+          },
+          {
+            "equals": false,
+            "path": "is_carbonyl_carbon"
+          }
+        ]
+      },
+      "precedence": 24,
+      "rule_id": "amide_like_alkene_carbon_sp2",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyne_carbon_sp",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 1,
+            "path": "triple_bond_neighbor_element_counts.C"
+          },
+          {
+            "equals": false,
+            "path": "is_nitrile_carbon"
+          }
+        ]
+      },
+      "precedence": 25,
+      "rule_id": "carbonate_like_alkyne_carbon_sp",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyne_carbon_sp",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 2,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": 1,
+            "path": "triple_bond_neighbor_element_counts.C"
+          },
+          {
+            "equals": false,
+            "path": "is_nitrile_carbon"
+          }
+        ]
+      },
+      "precedence": 25,
+      "rule_id": "amide_like_alkyne_carbon_sp",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_methyl",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 3
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 30,
+      "rule_id": "carbonate_like_alkyl_methyl",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_methyl",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 3
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 30,
+      "rule_id": "amide_like_alkyl_methyl",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_nitrogen_methyl",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "H": 3,
+              "N": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 31,
+      "rule_id": "carbonate_like_alkyl_methyl_amino",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_nitrogen_methyl",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "H": 3,
+              "N": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 31,
+      "rule_id": "amide_like_alkyl_methyl_amino",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "O": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 32,
+      "rule_id": "carbonate_like_alkyl_ch2_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "O": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 32,
+      "rule_id": "amide_like_alkyl_ch2_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "N": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 33,
+      "rule_id": "carbonate_like_alkyl_ch2_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "N": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 33,
+      "rule_id": "amide_like_alkyl_ch2_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "S": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 34,
+      "rule_id": "carbonate_like_alkyl_ch2_sulfur",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "S": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 34,
+      "rule_id": "amide_like_alkyl_ch2_sulfur",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_methylene",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 2
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 35,
+      "rule_id": "carbonate_like_alkyl_ch2_dialkyl",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_methylene",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 2
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 35,
+      "rule_id": "amide_like_alkyl_ch2_dialkyl",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_oxygen_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "O": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 36,
+      "rule_id": "carbonate_like_alkyl_ch_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_oxygen_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "O": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 36,
+      "rule_id": "amide_like_alkyl_ch_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_nitrogen_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "N": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 37,
+      "rule_id": "carbonate_like_alkyl_ch_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_nitrogen_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "N": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 37,
+      "rule_id": "amide_like_alkyl_ch_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_quaternary_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 3,
+              "O": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 38,
+      "rule_id": "carbonate_like_alkyl_c_quaternary_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_quaternary_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 3,
+              "O": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 38,
+      "rule_id": "amide_like_alkyl_c_quaternary_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_quaternary_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 3,
+              "N": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 39,
+      "rule_id": "carbonate_like_alkyl_c_quaternary_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_quaternary_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 3,
+              "N": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 39,
+      "rule_id": "amide_like_alkyl_c_quaternary_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_sulfur_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "S": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 40,
+      "rule_id": "carbonate_like_alkyl_ch_sulfur",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_alpha_sulfur_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "S": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 40,
+      "rule_id": "amide_like_alkyl_ch_sulfur",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_quaternary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 4
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 40,
+      "rule_id": "carbonate_like_alkyl_c_quaternary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_quaternary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 4
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 40,
+      "rule_id": "amide_like_alkyl_c_quaternary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 3,
+              "H": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 40,
+      "rule_id": "carbonate_like_alkyl_ch_tertiary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "alkyl_carbon_sp3_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "C",
+            "path": "element"
+          },
+          {
+            "equals": 4,
+            "path": "coordination.coordination_number"
+          },
+          {
+            "equals": {
+              "C": 3,
+              "H": 1
+            },
+            "path": "neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 40,
+      "rule_id": "amide_like_alkyl_ch_tertiary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_nitrogen_methyl",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "H": 3,
+              "N": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 41,
+      "rule_id": "carbonate_like_hydrogen_on_h3n1_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_nitrogen_methyl",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "H": 3,
+              "N": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 41,
+      "rule_id": "amide_like_hydrogen_on_h3n1_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "O": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 42,
+      "rule_id": "carbonate_like_hydrogen_on_sp3_alpha_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_oxygen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "O": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 42,
+      "rule_id": "amide_like_hydrogen_on_sp3_alpha_oxygen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "N": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 43,
+      "rule_id": "carbonate_like_hydrogen_on_sp3_alpha_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "N": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 43,
+      "rule_id": "amide_like_hydrogen_on_sp3_alpha_nitrogen",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "S": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 44,
+      "rule_id": "carbonate_like_hydrogen_on_sp3_alpha_sulfur",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_sulfur",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 2,
+              "S": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 44,
+      "rule_id": "amide_like_hydrogen_on_sp3_alpha_sulfur",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_methyl",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 3
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 45,
+      "rule_id": "carbonate_like_hydrogen_on_sp3_methyl",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_methyl",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 1,
+              "H": 3
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 45,
+      "rule_id": "amide_like_hydrogen_on_sp3_methyl",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_methylene",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 2
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 46,
+      "rule_id": "carbonate_like_hydrogen_on_sp3_methylene",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_methylene",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 2
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 46,
+      "rule_id": "amide_like_hydrogen_on_sp3_methylene",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_tertiary_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 3,
+              "H": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 47,
+      "rule_id": "carbonate_like_hydrogen_on_sp3_tertiary_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_tertiary_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 3,
+              "H": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 47,
+      "rule_id": "amide_like_hydrogen_on_sp3_tertiary_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_oxygen_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "O": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 48,
+      "rule_id": "carbonate_like_hydrogen_on_sp3_alpha_oxygen_tertiary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_oxygen_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "O": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 48,
+      "rule_id": "amide_like_hydrogen_on_sp3_alpha_oxygen_tertiary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_nitrogen_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "N": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 49,
+      "rule_id": "carbonate_like_hydrogen_on_sp3_alpha_nitrogen_tertiary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_nitrogen_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "N": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 49,
+      "rule_id": "amide_like_hydrogen_on_sp3_alpha_nitrogen_tertiary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_sulfur_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "S": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 50,
+      "rule_id": "carbonate_like_hydrogen_on_sp3_alpha_sulfur_tertiary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_sp3_alpha_sulfur_tertiary",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": {
+              "C": 2,
+              "H": 1,
+              "S": 1
+            },
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 50,
+      "rule_id": "amide_like_hydrogen_on_sp3_alpha_sulfur_tertiary",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_amine_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "N",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": 0,
+            "path": "attached_atom.single_bond_neighbor_carbonyl_carbon_count"
+          },
+          {
+            "in": [
+              {
+                "C": 2,
+                "H": 1
+              },
+              {
+                "C": 1,
+                "H": 2
+              }
+            ],
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 50,
+      "rule_id": "carbonate_like_hydrogen_on_amine_n",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_amine_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "N",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": 0,
+            "path": "attached_atom.single_bond_neighbor_carbonyl_carbon_count"
+          },
+          {
+            "in": [
+              {
+                "C": 2,
+                "H": 1
+              },
+              {
+                "C": 1,
+                "H": 2
+              }
+            ],
+            "path": "attached_atom.neighbor_element_counts"
+          }
+        ]
+      },
+      "precedence": 50,
+      "rule_id": "amide_like_hydrogen_on_amine_n",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_amide_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "N",
+            "path": "attached_atom.element"
+          },
+          {
+            "in": [
+              1,
+              2
+            ],
+            "path": "attached_atom.single_bond_neighbor_carbonyl_carbon_count"
+          }
+        ]
+      },
+      "precedence": 51,
+      "rule_id": "carbonate_like_hydrogen_on_amide_n",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_amide_nitrogen",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "N",
+            "path": "attached_atom.element"
+          },
+          {
+            "in": [
+              1,
+              2
+            ],
+            "path": "attached_atom.single_bond_neighbor_carbonyl_carbon_count"
+          }
+        ]
+      },
+      "precedence": 51,
+      "rule_id": "amide_like_hydrogen_on_amide_n",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_fluorinated_sp3_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "in": [
+              1,
+              2,
+              3
+            ],
+            "path": "attached_atom.single_bond_neighbor_element_counts.F"
+          }
+        ]
+      },
+      "precedence": 52,
+      "rule_id": "carbonate_like_hydrogen_on_fluorinated_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_fluorinated_sp3_carbon",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "in": [
+              1,
+              2,
+              3
+            ],
+            "path": "attached_atom.single_bond_neighbor_element_counts.F"
+          }
+        ]
+      },
+      "precedence": 52,
+      "rule_id": "amide_like_hydrogen_on_fluorinated_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_alkene_carbon_sp2",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": 1,
+            "path": "attached_atom.double_bond_neighbor_element_counts.C"
+          },
+          {
+            "equals": 3,
+            "path": "attached_atom.coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 53,
+      "rule_id": "carbonate_like_hydrogen_on_vinylic_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_alkene_carbon_sp2",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": 1,
+            "path": "attached_atom.double_bond_neighbor_element_counts.C"
+          },
+          {
+            "equals": 3,
+            "path": "attached_atom.coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 53,
+      "rule_id": "amide_like_hydrogen_on_vinylic_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "carbonate_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_alkyne_carbon_sp",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": 1,
+            "path": "attached_atom.triple_bond_neighbor_element_counts.C"
+          },
+          {
+            "equals": 2,
+            "path": "attached_atom.coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 54,
+      "rule_id": "carbonate_like_hydrogen_on_alkynyl_carbon",
+      "typing_mode": "exact"
+    },
+    {
+      "component_family": "amide_like",
+      "failure_reason": "phase1_rule_bundle_exhausted",
+      "fallback_behavior": "continue_to_lower_priority_rules",
+      "family": "hydrogen_on_alkyne_carbon_sp",
+      "match": {
+        "conditions": [
+          {
+            "equals": "H",
+            "path": "element"
+          },
+          {
+            "equals": "C",
+            "path": "attached_atom.element"
+          },
+          {
+            "equals": 1,
+            "path": "attached_atom.triple_bond_neighbor_element_counts.C"
+          },
+          {
+            "equals": 2,
+            "path": "attached_atom.coordination.coordination_number"
+          }
+        ]
+      },
+      "precedence": 54,
+      "rule_id": "amide_like_hydrogen_on_alkynyl_carbon",
+      "typing_mode": "exact"
+    }
+  ],
+  "bundle_id": "phase1_supported_families_v1",
+  "description": "AP_4 Phase 1 family-scoped atom typing bundle for carbonate_like and amide_like.",
+  "schema_name": "pcff_atom_type_rule_bundle",
+  "schema_version": 1
+}

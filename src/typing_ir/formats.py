@@ -402,6 +402,8 @@ def _parse_optional_mol2_charge(
 def _normalize_mol2_bond_order(bond_code: str) -> int | None:
     if bond_code.isdigit():
         return int(bond_code)
+    if bond_code == "am":
+        return 1
     return None
 
 

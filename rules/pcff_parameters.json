@@ -1855,10 +1855,33 @@
           "source_kind": "csv_scope_reference_extract"
         },
         "rule_id": "csv_improper_c_1_c2_o_1_o_2"
+      },
+      {
+        "canonical_signature": "improper(c_1|c|n|o_1)",
+        "parameters": {
+          "aa": {
+            "k1_kcal_mol": 0.0,
+            "k2_kcal_mol": 0.0,
+            "k3_kcal_mol": 0.0,
+            "theta0_1_deg": 116.9257,
+            "theta0_2_deg": 123.1451,
+            "theta0_3_deg": 125.542
+          },
+          "main": {
+            "chi0_deg": 0.0,
+            "k0_kcal_mol": 24.3329
+          }
+        },
+        "provenance": {
+          "note": "Frozen AP_5 exact PCFF tuple backfill imported from local LUNAR pcff_interface_v1_6mBN.frc after blocked-tuple inventory confirmed full-bundle closure for this improper only. Partial-only hits were not imported.",
+          "source_file": "../LAMMPS_NEW/extern/LUNAR/frc_files/pcff_interface_v1_6mBN.frc",
+          "source_kind": "local_authoritative_frc_extract"
+        },
+        "rule_id": "ap5_import_improper_c_1_c_n_o_1_v1_6mBN"
       }
     ]
   },
-  "ruleset_id": "pcff_parameters_pt4_v2",
+  "ruleset_id": "pcff_parameters_pt4_v3",
   "schema_name": "pcff_bonded_parameter_rules",
   "schema_version": 1,
   "term_model": "class2_repository_local_v1"
