@@ -1,36 +1,41 @@
 # M10.1 — Trajectory Parity, Integration Convergence & NPT Stability Validation Report
 
 ## Overview
-This report documents the validation of trajectory-level consistency, integration convergence, and barostat stability for the GROMACS-PCFF bridge.
+This report documents the validation scope of M10.1 after the gate definition was tightened.
+
+M10.1 is not a general cross-engine ensemble-parity milestone. It is a short-time handoff gate with the following ownership:
+- deterministic parity: neutral and charged NVE only
+- short-time stability/trend diagnostics: NVT and NPT
+- ensemble-level parity: deferred to M10.2
 
 ## Validated Outcomes
-1.  **Timestep Convergence:**
-    - Established that end-state parity between LAMMPS and GROMACS improves as the timestep is reduced (from 0.5 fs to 0.1 fs).
-    - Status: PASS
-2.  **Short-Time Trajectory Consistency:**
-    - Verified stable energy trends for NVE and NVT protocols on neutral systems.
-    - Status: PASS
-3.  **NPT Stability Gate:**
-    - Completed a 0.1 ps NPT sanity run without numerical blow-up or fatal errors.
-    - Status: PASS
-4.  **Charged System Dynamical Sanity:**
-    - Verified stable NVT execution for a salt-containing polymer box using PME.
-    - Status: PASS
+1.  **Deterministic NVE parity**
+    - `small_oligomer_nve_dt0.0001`: PASS
+    - `small_oligomer_nve_dt0.0005`: PASS
+    - `small_salt_polymer_box_nve_dt0.0001`: PASS
+2.  **NVT/NPT short-time diagnostics**
+    - `small_oligomer_nvt_dt0.001`: diagnostic only
+    - `small_oligomer_npt_dt0.001`: diagnostic only
+    - `small_salt_polymer_box_nvt_dt0.001`: diagnostic only
+3.  **Handoff decision**
+    - M10.1 gate status is determined by deterministic NVE passes only.
+    - Ensemble parity remains owned by M10.2.
 
 ## Technical Details
-- **NVE Protocol:** Deterministic comparison without thermostats.
-- **NVT Protocol:** V-rescale thermostat (GMX) vs. Nose-Hoover (LAMMPS).
-- **NPT Protocol:** Berendsen barostat (GMX) for short-time stability.
-- **Observables:** Potential Energy, Temperature, Volume.
+- **NVE Protocol:** deterministic parity gate.
+- **NVT Protocol:** short-time thermostat diagnostic only.
+- **NPT Protocol:** short-time barostat stability diagnostic only.
+- **Observables used for NVE gating:** PE delta and pressure delta, not absolute PE offsets.
 
 ## Remaining Gaps / Not Validated
-- **Long-Timescale Equivalence:** Thermodynamic averages (e.g. density, specific heat) require much longer runs.
-- **Barostat Parity:** Quantitative agreement between GROMACS Parrinello-Rahman and LAMMPS barostats was not tested.
-- **System Size Scale-up:** Only small systems (6-10 atoms) were used.
+- **Long-timescale equivalence:** not covered here.
+- **Thermostat/barostat parity:** not covered here and should not be inferred from M10.1.
+- **Charged ensemble behavior:** still requires M10.2/M10.x follow-up.
 
 ## Artifacts Produced
-- `tools/run_m10_1_trajectory_gate/run_m10_1.py`: Trajectory parity runner.
+- `tools/run_m10_1_trajectory_gate/run_m10_1.py`: deterministic/stability gate runner.
 - `tests/reference_results/m10_1_trajectory_gate/`: Directory containing per-protocol comparison reports and logs.
+- `tests/reference_results/m10_1_trajectory_gate/m10_1_gate_decision.json`: explicit handoff decision artifact.
 
 ## Conclusion
-Milestone M10.1 is successfully completed. The GROMACS-PCFF bridge is dynamically consistent and stable under pressure coupling for small supported systems. PT8.3 is officially considered PASS.
+M10.1 is complete only as a deterministic handoff gate. It should not be cited as proof of NVT/NPT ensemble parity. Any claim about ensemble-level transport readiness must be based on M10.2 or later milestones.

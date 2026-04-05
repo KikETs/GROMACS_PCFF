@@ -1,27 +1,75 @@
-# M10.2 — Medium-Scale Ensemble Validation Findings
+# M10.2 — Medium-Scale Ensemble Gate Findings
 
 ## Overview
-This document summarizes the ensemble-level statistical verification for the GROMACS-PCFF bridge. A medium-scale oligomer system (384 atoms) was simulated under NPT conditions to evaluate statistical consistency between LAMMPS and GROMACS.
+The original short-horizon `NPT vs NPT` parity interpretation was too weak.
 
-## System & Protocol
-- **System:** `small_oligomer_medium` (64 replicated molecules, 384 atoms)
-- **Engine Path:** 2 ps NPT Equilibration -> 8 ps NPT Production
-- **Ensemble:** NPT (300K, 1 bar)
-- **Barostat:** Berendsen (GMX) vs. Nose-Hoover/Berendsen style NPT (LAMMPS)
+The updated gate separates two different questions:
+- **Can both engines maintain medium-scale thermal behavior under the same fixed-volume setup?**
+- **Do short NPT runs remain numerically stable enough to justify longer convergence work?**
 
-## Statistical Results Summary
-Averages calculated over the 8 ps production window:
+Only the first question is blocking for `M10.2`.
 
-| Observable | GROMACS (Avg) | LAMMPS (Avg) | Rel. Diff / Delta | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| Potential Energy (kJ/mol) | -2256.87 | -1862.30 | 17.48% | Stable |
-| Temperature (K) | 299.33 | 302.51 | 3.18 K | PASS |
-| Density (kg/m³) | 16.21 | 19.50 | 20.30% | Stable |
+## System
+- `small_oligomer_medium`
+- 64 replicated oligomers
+- 384 atoms
+- total mass: `4995.456 amu`
 
-## Observations
-1.  **Thermal Stability:** Both engines successfully maintained the target temperature within a 3.2 K delta, demonstrating robust thermostat coupling for PCFF interactions.
-2.  **Density & Volume:** The density discrepancy (20%) is attributed to the short production duration (8 ps), which is insufficient for full volume relaxation in an oligomer system. However, both systems show a stable density trend without numerical blow-up.
-3.  **Statistical finite-ness:** All ensemble averages remained finite and sensible. No NaN/Inf errors were encountered during the nanosecond-class gate attempts.
+## NVT Parity Findings
+Protocol:
+- shared initial velocities generated once in LAMMPS and injected into both engines
+- 2 ps equilibration + 8 ps production
+- fixed volume
 
-## Conclusion
-The GROMACS-PCFF bridge is statistically stable for medium-scale systems. While full thermodynamic convergence was not achieved due to runtime constraints, the trend agreement and thermal stability satisfy the M10.2 gate criteria for production handoff.
+Results:
+- GROMACS temperature mean: `301.13 K`
+- LAMMPS temperature mean: `298.50 K`
+- temperature delta: `2.63 K`
+- GROMACS recomputed density: `16.2015 kg/m^3`
+- LAMMPS recomputed density: `16.2015 kg/m^3`
+- parity status: `pass`
+
+Meaning:
+- once barostat-driven volume relaxation is removed, the medium-scale bridge behaves consistently enough for a thermal parity gate
+
+## NPT Stability Findings
+Protocol:
+- shared initial velocities
+- 5 ps equilibration + 15 ps production
+- isotropic NPT
+
+Results:
+- GROMACS NPT stability: `partial`
+- LAMMPS NPT stability: `partial`
+- GROMACS recomputed density drift: `0.00030`
+- LAMMPS recomputed density drift: `0.14667`
+
+Meaning:
+- the short NPT runs do not blow up
+- but they are still relaxing, especially on the LAMMPS side
+- this is a stability/trend diagnostic, not convergence proof
+
+## Gate Decision
+Blocking:
+- `small_oligomer_medium.nvt_parity`
+
+Non-blocking:
+- `small_oligomer_medium.npt_stability`
+
+Final machine-readable decision:
+- [m10_2_gate_decision.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json)
+- overall status: `pass`
+
+## Limits
+- This gate does not justify conductivity production by itself.
+- Density/volume convergence still belongs to `M10.2.1` or a later long-horizon convergence gate.
+- Absolute cross-engine potential energy remains diagnostic only because the bridge already showed a constant-offset problem in earlier parity audits.
+
+## Practical Interpretation
+`M10.2` now means:
+- medium-scale NVT parity is acceptable
+- short NPT runs are stable enough to continue diagnostics
+
+It does **not** mean:
+- NPT parity is solved
+- transport-production readiness is established

@@ -1,41 +1,50 @@
-# M10.1 — Trajectory Parity, Integration Convergence & NPT Stability Findings
+# M10.1 — Deterministic NVE Gate and Short-Time Ensemble Diagnostics
 
 ## Overview
-This document summarizes the validation of short-time trajectory consistency, timestep convergence, and barostat stability for the GROMACS-PCFF bridge.
+M10.1 is not a general ensemble-parity milestone.
+
+Its corrected scope is:
+- deterministic NVE parity
+- timestep convergence on deterministic paths
+- short-time NVT/NPT diagnostics
+
+Ensemble-level parity remains owned by M10.2.
 
 ## Protocol & Systems
-- **Neutral System:** `small_oligomer` (6 atoms)
-- **Charged System:** `small_salt_polymer_box` (10 atoms)
+- **Neutral system:** `small_oligomer` (6 atoms)
+- **Charged system:** `small_salt_polymer_box` (10 atoms)
 - **Protocols:**
-    - NVE: Deteminstic trajectory comparison and timestep convergence (0.1 fs vs 0.5 fs).
-    - NVT: Trajectory trend comparison at 1.0 fs.
-    - NPT: Barostat stability sanity check.
+  - `NVE`: deterministic comparison and timestep convergence
+  - `NVT`: short-time thermostat diagnostic only
+  - `NPT`: short-time barostat diagnostic only
 
-## Timestep Convergence (NVE)
-Using `small_oligomer`, the end-state Potential Energy (PE) difference between LAMMPS and GROMACS was tracked as a function of the timestep (dt).
+## Deterministic NVE Gate
+M10.1 now uses PE and pressure deltas rather than absolute PE offsets.
 
-| Timestep (fs) | End PE Diff (kJ/mol) | Convergence Status |
+| System | Timestep (fs) | PE Delta Diff (kJ/mol) | Pressure Delta Diff | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `small_oligomer` | 0.1 | 2.0723 | 43.4710 | PASS |
+| `small_oligomer` | 0.5 | 0.8554 | 95.5157 | PASS |
+| `small_salt_polymer_box` | 0.1 | 3.2372 | 56.0051 | PASS |
+
+These are the only blocking gates in M10.1.
+
+## NVT/NPT Diagnostics
+These runs are useful for triage, but they are not blocking parity gates because the engines use different thermostat/barostat families.
+
+| System | Protocol | Current status |
 | :--- | :--- | :--- |
-| 0.1 | 0.0040 | PASS |
-| 0.5 | 1.4829 | PASS |
+| `small_oligomer` | NVT 1.0 fs | diagnostic fail |
+| `small_oligomer` | NPT 1.0 fs | diagnostic fail |
+| `small_salt_polymer_box` | NVT 1.0 fs | diagnostic fail |
 
-As expected, the discrepancy decreases significantly as the timestep is refined, proving that the integration paths are converging to the same physics.
+The charged-system NVT path remains the strongest non-deterministic blocker before conductivity handoff.
 
-## Trajectory Consistency (NVT)
-Short NVT runs (0.1 ps) show that both engines maintain stable potential energy trends.
-
-| System | dt (fs) | PE Start Diff (kJ/mol) | PE End Diff (kJ/mol) |
-| :--- | :--- | :--- | :--- |
-| `small_oligomer` | 1.0 | 0.0181 | 3.7015 |
-| `small_salt_polymer_box` | 1.0 | 0.3456 | 121.64 |
-
-Note: Exact frame-by-frame identity is not expected due to differences in thermostat implementations (V-rescale vs LAMMPS NVT) and internal precision.
-
-## NPT Stability
-A short NPT sanity run on `small_oligomer` was completed without numerical blow-up.
-- **Initial Volume:** 8.000 nm³
-- **Final Volume:** 7.989 nm³
-- **Status:** Stable
+## Interpretation
+- M10.1 can justify deterministic dynamic handoff only.
+- M10.1 cannot justify NVT/NPT ensemble parity.
+- Conductivity production should not start until the charged ensemble path is acceptable in M10.2 or a later gate.
 
 ## Conclusion
-The GROMACS-PCFF bridge demonstrated consistent dynamical behavior across multiple integrators and timesteps. Timestep convergence is verified, and the NPT path is stable for short runs.
+M10.1 should be read as `deterministic NVE pass, ensemble diagnostics pending`.
+Any stronger conclusion is not supported by the current evidence.

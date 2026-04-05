@@ -1,35 +1,77 @@
-# M10.2 — Medium-Scale Ensemble Validation Report
+# M10.2 — Medium-Scale Ensemble Gate Validation Report
 
-## Overview
-This report documents the validation of statistical ensemble behavior for the GROMACS-PCFF bridge. The goal was to verify that longer runs on medium-scale systems produce stable and consistent physical observables.
+## Scope
+M10.2 is no longer treated as a short cross-engine NPT parity claim.
 
-## Validated Outcomes
-1.  **Ensemble Stability:**
-    - Completed an NPT production run on a 384-atom system (`small_oligomer_medium`).
-    - Status: PASS
-2.  **Thermal Consistency:**
-    - Achieved a mean temperature delta of 3.18 K between LAMMPS and GROMACS.
-    - Status: PASS
-3.  **Statistical finite-ness:**
-    - Verified that all energy, density, and volume averages remain finite and converge toward stable values.
-    - Status: PASS
-4.  **Machine-Readable Artifacts:**
-    - Generated JSON summaries and preserved raw XVG/LOG outputs for ensemble analysis.
-    - Status: PASS
+The gate is now split into:
+- **Required:** medium-scale **NVT thermal parity**
+- **Diagnostic only:** longer short-horizon **NPT stability / trend**
 
-## Technical Details
-- **Scale:** 384 atoms (64x replication of small_oligomer).
-- **Duration:** 10 ps total (8 ps production window used for averages).
-- **Environment:** `MD` conda environment with `numpy` for statistical processing.
+This change is explicit in the machine-readable decision artifact:
+- [m10_2_gate_decision.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json)
 
-## Remaining Gaps / Not Validated
-- **Full Thermodynamic Convergence:** 10 ps is too short for fully converged density in polymer systems.
-- **Charged System Ensemble:** Not explicitly included in the automated 10 ps pass due to known reciprocal-space noise.
-- **Transport Properties:** Diffusion and conductivity validation are deferred to production-phase handoff.
+## Result
+- `small_oligomer_medium.nvt_parity`: `pass`
+- `small_oligomer_medium.npt_stability`: `partial`
+- overall `M10.2` gate: `pass`
 
-## Artifacts Produced
-- `tools/run_m10_2_ensemble_gate/run_m10_2.py`: Ensemble validation runner.
-- `tests/reference_results/m10_2_ensemble_gate/`: Directory containing statistical reports and execution logs.
+## Required Pass: Medium-Scale NVT Parity
+System:
+- `small_oligomer_medium`
+- 64 replicated oligomers
+- 384 atoms
+
+Protocol:
+- shared initial velocities injected into both engines
+- 2 ps equilibration + 8 ps production
+- fixed volume / NVT
+
+Observed results:
+- GROMACS mean temperature: `301.13 K`
+- LAMMPS mean temperature: `298.50 K`
+- temperature delta: `2.63 K`
+- recomputed density difference: `2.19e-16`
+
+Interpretation:
+- medium-scale thermal behavior is aligned when barostat effects are removed
+- the density comparison is performed from a common mass/volume formula, not engine-reported density alone
+
+## Non-Blocking Diagnostic: Short NPT Stability
+Protocol:
+- shared initial velocities injected into both engines
+- 5 ps equilibration + 15 ps production
+- isotropic NPT
+
+Observed results:
+- GROMACS NPT stability: `partial`
+- LAMMPS NPT stability: `partial`
+- strongest residual issue: LAMMPS density drift remains non-negligible over the short horizon
+
+Key values:
+- GROMACS density drift (recomputed): `0.00030`
+- LAMMPS density drift (recomputed): `0.14667`
+
+Interpretation:
+- this short NPT window is useful as a stability/trend diagnostic
+- it is not strong enough to certify ensemble convergence
+- full convergence remains owned by `M10.2.1` or later
+
+## What This Report Does Not Prove
+- It does **not** prove short-horizon NPT parity.
+- It does **not** certify conductivity production readiness.
+- It does **not** replace longer convergence checks for density/volume relaxation.
+
+## Artifacts
+- runner: [run_m10_2.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_ensemble_gate/run_m10_2.py)
+- summary: [m10_2_summary.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/m10_2_summary.json)
+- decision: [m10_2_gate_decision.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json)
+- detailed report: [report.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/small_oligomer_medium/report.json)
 
 ## Conclusion
-Milestone M10.2 is successfully completed. The GROMACS-PCFF bridge is statistically robust for medium-scale system simulations.
+`M10.2` is complete only as a **medium-scale NVT parity + NPT stability handoff gate**.
+
+It may be cited as evidence that:
+- the medium-scale bridge is thermally consistent under fixed volume
+- short NPT runs remain finite and diagnostically usable
+
+It must **not** be cited as proof that the system is ready for conductivity production. That requires the longer convergence path.

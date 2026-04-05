@@ -1,29 +1,55 @@
-# M10.2.1 — Duration & Convergence Recovery Findings
+# M10.2.1 — Longer NPT Convergence Findings
 
 ## Overview
-This document summarizes the results of the extended ensemble validation for the GROMACS-PCFF bridge. A medium-scale neutral oligomer system (384 atoms) was simulated for 100 ps production to improve statistical confidence and evaluate convergence.
+The original `M10.2.1` interpretation was too optimistic.
 
-## Protocol
-- **System:** `small_oligomer_medium_100ps` (384 atoms, replicated 4x4x4)
-- **Duration:** 10 ps NPT Equilibration + 100 ps NPT Production (110 ps total)
-- **Timestep:** 2.0 fs (verified stable for this system)
-- **Electrostatics:** PME (GMX) and PPPM (LAMMPS) with 1e-4 accuracy
-- **Analysis:** Block-based statistics (5 blocks) and standard error of the mean (SEM)
+After aligning the runner with the current `M10.2` semantics:
+- shared initial velocities
+- molecule-local atom naming
+- checkpoint-based GROMACS restart
+- common density recomputation from mass and volume
 
-## Convergence Results Summary
-Averages and uncertainties calculated over 100 ps:
+the longer 100 ps NPT run still does **not** support conductivity handoff.
 
-| Observable | GROMACS (Avg +/- SEM) | LAMMPS (Avg +/- SEM) | Convergence Status |
-| :--- | :--- | :--- | :--- |
-| Potential Energy (kJ/mol) | -2326.94 +/- 14.22 | -2225.24 +/- 85.43 | Trending / Converged |
-| Temperature (K) | 298.49 +/- 0.59 | 300.92 +/- 1.82 | Converged |
-| Density (kg/m³) | 16.29 +/- 0.03 | 42.51 +/- 18.02 | Unstable / Trending |
+## System & Runtime
+- `small_oligomer_medium_100ps`
+- 384 atoms
+- 10 ps NPT equilibration
+- 100 ps NPT production
+- `dt = 2 fs`
 
-## Observations
-1.  **Thermal Stability:** Both engines show excellent temperature convergence and parity (~2.4 K delta), confirming that thermostats are well-behaved for combined PCFF terms.
-2.  **Density Convergence:** The system is extremely dilute (~16 kg/m³), effectively in the gas phase. At 1 bar, large volume fluctuations are inherent to this state, leading to "failed / unstable" or "trending" classifications for density within 100 ps. However, no numerical blow-up occurred.
-3.  **Timestep Robustness:** Increasing the timestep from 1.0 fs to 2.0 fs did not compromise stability, significantly accelerating the validation path.
-4.  **Integration Convergence:** Potential energy agreement (~4%) is consistent with the established static parity from prior milestones.
+## Main Findings
+### Temperature
+- GROMACS mean: `299.92 K`
+- LAMMPS mean: `298.64 K`
+- delta: `1.28 K`
+- both engines are thermally well behaved
 
-## Conclusion
-The GROMACS-PCFF bridge survives nanosecond-class duration (0.1 ns) on a medium-scale system. Statistical summaries now include explicit uncertainty estimates. While the dilute nature of the test fixture makes density convergence slow, the overall physical behavior is stable and consistent between engines.
+### Density / Volume
+- GROMACS density mean: `16.41 kg/m^3`
+- LAMMPS density mean: `11.53 kg/m^3`
+- cross-engine density gap: `29.74%`
+- GROMACS density drift: `0.00170`
+- LAMMPS density drift: `1.91332`
+
+This is the real blocker.
+
+## Interpretation
+The 100 ps run changed the diagnosis:
+- it did **not** reveal an exact r-RESPA runtime failure
+- it did **not** reveal a temperature-control failure
+- it **did** show that density/volume relaxation is still not converged strongly enough
+
+So the method is not ready for conductivity production.
+
+## Machine-Readable Artifacts
+- [m10_2_1_summary.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_1_convergence_gate/m10_2_1_summary.json)
+- [m10_2_1_gate_decision.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_1_convergence_gate/m10_2_1_gate_decision.json)
+- [report.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_1_convergence_gate/small_oligomer_medium_100ps/report.json)
+
+## Bottom Line
+`M10.2.1` is currently a `partial` result.
+
+That is enough to say:
+- do not start conductivity production yet
+- the next work should target density/volume relaxation, not transport analysis itself
