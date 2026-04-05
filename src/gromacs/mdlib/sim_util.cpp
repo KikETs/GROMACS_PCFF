@@ -2468,132 +2468,6 @@ static void appendExclusionEquivalenceTracePair(const char*        traceDirPath,
                     + " code_location=" + std::string(codeLocation));
 }
 
-static void appendStep2PairScalarAuditLine(const char* traceDirPath,
-                                           const char* side,
-                                           const int64_t step,
-                                           const char* listKind,
-                                           const int pairOrdinal,
-                                           const int ai,
-                                           const int aj,
-                                           const int atomFocus,
-                                           const real r,
-                                           const real rawLjScalar,
-                                           const real bareCoulombScalar,
-                                           const real correctionScalar,
-                                           const real splitInner,
-                                           const real splitMiddle,
-                                           const real splitOuter,
-                                           const real innerScalar,
-                                           const real middleScalar,
-                                           const real bareOuterScalar,
-                                           const real outerScalarRaw,
-                                           const real effectiveOuterScalar,
-                                           const RVec& innerForceOnFocus,
-                                           const RVec& middleForceOnFocus,
-                                           const RVec& outerForceOnFocus,
-                                           const bool contributesInner,
-                                           const bool contributesMiddle,
-                                           const char* codeLocation)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
-    {
-        return;
-    }
-
-    static std::mutex                   traceMutex;
-    static std::unordered_set<std::string> emittedRows;
-    const std::string                  row =
-            "side=" + std::string(side) + " step=" + std::to_string(step) + " list_kind="
-            + std::string(listKind) + " pair_ordinal=" + std::to_string(pairOrdinal) + " pair_i="
-            + std::to_string(ai) + " pair_j=" + std::to_string(aj) + " atom_focus="
-            + std::to_string(atomFocus) + " comparison_group=" + std::to_string(step) + "_"
-            + std::to_string(ai) + "_" + std::to_string(aj) + "_" + std::to_string(atomFocus) + " r="
-            + formatString("%.15f", r) + " rawLjScalar=" + formatString("%.15f", rawLjScalar)
-            + " bareCoulombScalar=" + formatString("%.15f", bareCoulombScalar) + " correctionScalar="
-            + formatString("%.15f", correctionScalar) + " split_inner=" + formatString("%.15f", splitInner)
-            + " split_middle=" + formatString("%.15f", splitMiddle) + " split_outer="
-            + formatString("%.15f", splitOuter) + " derived_inner_scalar="
-            + formatString("%.15f", innerScalar) + " derived_middle_scalar="
-            + formatString("%.15f", middleScalar) + " derived_bare_outer_scalar="
-            + formatString("%.15f", bareOuterScalar) + " derived_outer_scalar_raw="
-            + formatString("%.15f", outerScalarRaw) + " derived_effective_outer_scalar="
-            + formatString("%.15f", effectiveOuterScalar) + " contributes_inner_live="
-            + std::string(contributesInner ? "true" : "false") + " contributes_middle_live="
-            + std::string(contributesMiddle ? "true" : "false") + " inner_force_x="
-            + formatString("%.15f", innerForceOnFocus[XX]) + " inner_force_y="
-            + formatString("%.15f", innerForceOnFocus[YY]) + " inner_force_z="
-            + formatString("%.15f", innerForceOnFocus[ZZ]) + " middle_force_x="
-            + formatString("%.15f", middleForceOnFocus[XX]) + " middle_force_y="
-            + formatString("%.15f", middleForceOnFocus[YY]) + " middle_force_z="
-            + formatString("%.15f", middleForceOnFocus[ZZ]) + " outer_force_x="
-            + formatString("%.15f", outerForceOnFocus[XX]) + " outer_force_y="
-            + formatString("%.15f", outerForceOnFocus[YY]) + " outer_force_z="
-            + formatString("%.15f", outerForceOnFocus[ZZ]) + " code_location=" + std::string(codeLocation);
-    const std::string rowKey = std::string(traceDirPath) + "/step2_pair_scalar_split_trace.txt\n" + row;
-    {
-        std::lock_guard<std::mutex> guard(traceMutex);
-        if (!emittedRows.insert(rowKey).second)
-        {
-            return;
-        }
-    }
-
-    appendRespaTraceTextLine(traceDirPath, "step2_pair_scalar_split_trace.txt", row);
-}
-
-static void appendMiddlePairComponentAuditLine(const char* traceDirPath,
-                                               const char* side,
-                                               const int64_t step,
-                                               const int pairOrdinal,
-                                               const int ai,
-                                               const int aj,
-                                               const int atomFocus,
-                                               const real r,
-                                               const RVec& middleLjForceOnFocus,
-                                               const RVec& middleBareCoulombForceOnFocus,
-                                               const RVec& middleCorrectionForceOnFocus,
-                                               const RVec& middleTotalForceOnFocus,
-                                               const char* codeLocation)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
-    {
-        return;
-    }
-
-    static std::mutex                    traceMutex;
-    static std::unordered_set<std::string> emittedRows;
-    const std::string                   row =
-            "side=" + std::string(side) + " step=" + std::to_string(step) + " pair_ordinal="
-            + std::to_string(pairOrdinal) + " pair_i=" + std::to_string(ai) + " pair_j="
-            + std::to_string(aj) + " atom_focus=" + std::to_string(atomFocus) + " comparison_group="
-            + std::to_string(step) + "_" + std::to_string(ai) + "_" + std::to_string(aj) + "_"
-            + std::to_string(atomFocus) + " r=" + formatString("%.15f", r) + " middle_lj_fx="
-            + formatString("%.15f", middleLjForceOnFocus[XX]) + " middle_lj_fy="
-            + formatString("%.15f", middleLjForceOnFocus[YY]) + " middle_lj_fz="
-            + formatString("%.15f", middleLjForceOnFocus[ZZ]) + " middle_bare_coul_fx="
-            + formatString("%.15f", middleBareCoulombForceOnFocus[XX]) + " middle_bare_coul_fy="
-            + formatString("%.15f", middleBareCoulombForceOnFocus[YY]) + " middle_bare_coul_fz="
-            + formatString("%.15f", middleBareCoulombForceOnFocus[ZZ]) + " middle_corr_fx="
-            + formatString("%.15f", middleCorrectionForceOnFocus[XX]) + " middle_corr_fy="
-            + formatString("%.15f", middleCorrectionForceOnFocus[YY]) + " middle_corr_fz="
-            + formatString("%.15f", middleCorrectionForceOnFocus[ZZ]) + " middle_total_fx="
-            + formatString("%.15f", middleTotalForceOnFocus[XX]) + " middle_total_fy="
-            + formatString("%.15f", middleTotalForceOnFocus[YY]) + " middle_total_fz="
-            + formatString("%.15f", middleTotalForceOnFocus[ZZ]) + " code_location="
-            + std::string(codeLocation);
-    const std::string rowKey =
-            std::string(traceDirPath) + "/step1_middle_pair_component_trace.txt\n" + row;
-    {
-        std::lock_guard<std::mutex> guard(traceMutex);
-        if (!emittedRows.insert(rowKey).second)
-        {
-            return;
-        }
-    }
-
-    appendRespaTraceTextLine(traceDirPath, "step1_middle_pair_component_trace.txt", row);
-}
-
 static void appendBoundaryBookkeepingAuditLine(const char* traceDirPath,
                                                const char* side,
                                                const int64_t step,
@@ -4233,16 +4107,13 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                 m2qEarliestRawLjTotal += rawLjEnergy * factorLj;
             }
 
-            const real innerCorrectionScalar =
-                    isExcludedPairlist ? 0.0_real : correctionScalar * splitWeights.inner;
-            const real middleCorrectionScalar =
-                    isExcludedPairlist ? 0.0_real : correctionScalar * splitWeights.middle;
-            const real outerCorrectionScalar =
-                    isExcludedPairlist ? correctionScalar : correctionScalar * splitWeights.outer;
+            const real innerCorrectionScalar  = 0.0_real;
+            const real middleCorrectionScalar = 0.0_real;
+            const real outerCorrectionScalar  = correctionScalar;
             const real innerScalar = bareCoulombScalar * splitWeights.inner
-                                     + factorLj * rawLjScalar * splitWeights.inner + innerCorrectionScalar;
+                                     + factorLj * rawLjScalar * splitWeights.inner;
             const real middleScalar = bareCoulombScalar * splitWeights.middle
-                                      + factorLj * rawLjScalar * splitWeights.middle + middleCorrectionScalar;
+                                      + factorLj * rawLjScalar * splitWeights.middle;
             const real bareOuterScalar =
                     bareCoulombScalar * splitWeights.outer + factorLj * rawLjScalar * splitWeights.outer;
             const real outerScalar =
@@ -4280,92 +4151,6 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                 accumulateScalarContribution(&tracedExactMiddleRealspaceForce, middleScalar);
                 accumulateScalarContribution(&tracedExactOuterRealspaceForce, effectiveOuterScalar);
 
-                if (!isExcludedPairlist && (shouldTraceRespaExclusionEquivalencePair(ai, aj)))
-                {
-                    const auto appendScalarAuditForFocusAtom = [&](const int atomFocus)
-                    {
-                        if (atomFocus != ai && atomFocus != aj)
-                        {
-                            return;
-                        }
-
-                        const real sign = (atomFocus == ai) ? 1.0_real : -1.0_real;
-                        RVec       innerForceOnFocus  = { 0, 0, 0 };
-                        RVec       middleForceOnFocus = { 0, 0, 0 };
-                        RVec       outerForceOnFocus  = { 0, 0, 0 };
-                        RVec       middleLjForceOnFocus = { 0, 0, 0 };
-                        RVec       middleBareCoulombForceOnFocus = { 0, 0, 0 };
-                        RVec       middleCorrectionForceOnFocus = { 0, 0, 0 };
-
-                        if (innerScalar != 0.0_real)
-                        {
-                            svmul(sign * innerScalar * rinvsq, dx, innerForceOnFocus);
-                        }
-                        if (middleLjScalar != 0.0_real)
-                        {
-                            svmul(sign * middleLjScalar * rinvsq, dx, middleLjForceOnFocus);
-                        }
-                        if (middleBareCoulombScalar != 0.0_real)
-                        {
-                            svmul(sign * middleBareCoulombScalar * rinvsq, dx, middleBareCoulombForceOnFocus);
-                        }
-                        if (middleCorrectionScalar != 0.0_real)
-                        {
-                            svmul(sign * middleCorrectionScalar * rinvsq, dx, middleCorrectionForceOnFocus);
-                        }
-                        if (middleScalar != 0.0_real)
-                        {
-                            svmul(sign * middleScalar * rinvsq, dx, middleForceOnFocus);
-                        }
-                        if (effectiveOuterScalar != 0.0_real)
-                        {
-                            svmul(sign * effectiveOuterScalar * rinvsq, dx, outerForceOnFocus);
-                        }
-
-                        appendStep2PairScalarAuditLine(activeM2pTraceDirPath(),
-                                                       "PATCH",
-                                                       step,
-                                                       "pairs",
-                                                       pairOrdinal,
-                                                       ai,
-                                                       aj,
-                                                       atomFocus,
-                                                       r,
-                                                       rawLjScalar,
-                                                       bareCoulombScalar,
-                                                       correctionScalar,
-                                                       splitWeights.inner,
-                                                       splitWeights.middle,
-                                                       splitWeights.outer,
-                                                       innerScalar,
-                                                       middleScalar,
-                                                       bareOuterScalar,
-                                                       outerScalar,
-                                                       effectiveOuterScalar,
-                                                       innerForceOnFocus,
-                                                       middleForceOnFocus,
-                                                       outerForceOnFocus,
-                                                       innerScalar != 0.0_real,
-                                                       middleScalar != 0.0_real,
-                                                       "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu_pair_scalar_audit");
-                        appendMiddlePairComponentAuditLine(activeM2pTraceDirPath(),
-                                                           "PATCH",
-                                                           step,
-                                                           pairOrdinal,
-                                                           ai,
-                                                           aj,
-                                                           atomFocus,
-                                                           r,
-                                                           middleLjForceOnFocus,
-                                                           middleBareCoulombForceOnFocus,
-                                                           middleCorrectionForceOnFocus,
-                                                           middleForceOnFocus,
-                                                           "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu_middle_pair_component_audit");
-                    };
-
-                    appendScalarAuditForFocusAtom(0);
-                    appendScalarAuditForFocusAtom(5);
-                }
             }
             if (traceRealspaceForceSubcomponents)
             {
@@ -9514,7 +9299,6 @@ void do_force(FILE*                         fplog,
                 {
                     slowForce = exactRespaForceStore->levelTotal(mtsLevel);
                 }
-
                 if (!slowForce.empty())
                 {
                     slowLevelForces.push_back(slowForce);
