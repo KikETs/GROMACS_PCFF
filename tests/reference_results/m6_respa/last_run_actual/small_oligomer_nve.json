@@ -2,7 +2,7 @@
   "schema_version": 1,
   "system_id": "small_oligomer",
   "engine": "gromacs",
-  "mode": "lammps-respa",
+  "mode": "standalone_exact_respa",
   "schedule": {
     "outer_steps": 5,
     "pair14_level": 1
@@ -30,12 +30,12 @@
       "bond_kcal_mol": 0,
       "coul14_kcal_mol": 0,
       "coul_recip_kcal_mol": 0,
-      "coulsr_kcal_mol": -6.83800896084e-06,
+      "coulsr_kcal_mol": 4.55867263938e-07,
       "dihedral_kcal_mol": 0,
-      "electro_total_kcal_mol": -6.83800896084e-06,
+      "electro_total_kcal_mol": 4.55867262161e-07,
       "lj14_kcal_mol": 0,
       "ljsr_kcal_mol": 0,
-      "potential_total_kcal_mol": -5.47040716725e-06,
+      "potential_total_kcal_mol": 0,
       "vdw_total_kcal_mol": 0
     },
     "exact_step0_breakdown": {
@@ -43,9 +43,9 @@
       "bond_kcal_mol": 24.8716784709,
       "coul14_kcal_mol": -15.0060188702,
       "coul_recip_kcal_mol": 3.32412391502,
-      "coulsr_kcal_mol": 1.15504456296,
+      "coulsr_kcal_mol": 1.15504638643,
       "dihedral_kcal_mol": 9.73829666925,
-      "electro_total_kcal_mol": -10.5268503922,
+      "electro_total_kcal_mol": -10.5268485687,
       "lj14_kcal_mol": -0.125712093614,
       "ljsr_kcal_mol": -0.0275183935609,
       "potential_total_kcal_mol": 25.3174947735,
@@ -56,12 +56,12 @@
       "bond_kcal_mol": 24.8716784709,
       "coul14_kcal_mol": -15.0060188702,
       "coul_recip_kcal_mol": 3.32412391502,
-      "coulsr_kcal_mol": 1.15505140097,
+      "coulsr_kcal_mol": 1.15504593056,
       "dihedral_kcal_mol": 9.73829666925,
-      "electro_total_kcal_mol": -10.5268435542,
+      "electro_total_kcal_mol": -10.5268490246,
       "lj14_kcal_mol": -0.125712093614,
       "ljsr_kcal_mol": -0.0275183935609,
-      "potential_total_kcal_mol": 25.3175002439,
+      "potential_total_kcal_mol": 25.3174947735,
       "vdw_total_kcal_mol": -0.153230487175
     }
   },

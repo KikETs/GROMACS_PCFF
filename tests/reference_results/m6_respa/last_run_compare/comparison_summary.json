@@ -243,9 +243,9 @@
           "within_tolerance": true
         },
         {
-          "abs_delta": 0.0009466329999980871,
-          "actual": 114.344246633,
-          "delta": 0.0009466329999980871,
+          "abs_delta": 0.000969244000003755,
+          "actual": 114.344269244,
+          "delta": 0.000969244000003755,
           "name": "nve:step0_virial_pressure_xy_atm",
           "present_in_actual": true,
           "reference": 114.3433,
@@ -253,9 +253,9 @@
           "within_tolerance": true
         },
         {
-          "abs_delta": 0.0004288949999988745,
-          "actual": 140.295051105,
-          "delta": -0.0004288949999988745,
+          "abs_delta": 0.0004243729999870993,
+          "actual": 140.295055627,
+          "delta": -0.0004243729999870993,
           "name": "nve:step0_virial_pressure_xz_atm",
           "present_in_actual": true,
           "reference": 140.29548,

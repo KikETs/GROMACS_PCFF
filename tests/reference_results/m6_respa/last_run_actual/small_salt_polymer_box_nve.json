@@ -2,7 +2,7 @@
   "schema_version": 1,
   "system_id": "small_salt_polymer_box",
   "engine": "gromacs",
-  "mode": "lammps-respa",
+  "mode": "standalone_exact_respa",
   "schedule": {
     "outer_steps": 5,
     "pair14_level": 1
@@ -16,8 +16,8 @@
       "polymer_rg_nm": 0.319536352608,
       "step0_potential_kcal_mol": 92.0987247737,
       "step0_virial_pressure_xx_atm": -4307.80995413,
-      "step0_virial_pressure_xy_atm": 114.344246633,
-      "step0_virial_pressure_xz_atm": 140.295051105,
+      "step0_virial_pressure_xy_atm": 114.344269244,
+      "step0_virial_pressure_xz_atm": 140.295055627,
       "step0_virial_pressure_yy_atm": -2822.49525447,
       "step0_virial_pressure_yz_atm": -923.37809633,
       "step0_virial_pressure_zz_atm": -426.242891433,
