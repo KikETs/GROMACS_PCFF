@@ -54,6 +54,8 @@
 namespace gmx
 {
 
+class UpdateConstrainGpu;
+
 //! Function type for simulator code.
 using SimulatorFunctionType = void();
 
@@ -74,6 +76,8 @@ using SimulatorFunctionType = void();
 class LegacySimulator : public ISimulator, private LegacySimulatorData
 {
 private:
+    UpdateConstrainGpu* exactRespaGpuUpdater_ = nullptr;
+
     void prepareExactRespaVelocityVerletObservablesForStep(const t_inputrec& inputRecord,
                                                            int64_t           step,
                                                            const MpiComm&    mpiComm,

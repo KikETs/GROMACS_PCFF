@@ -1,0 +1,263 @@
+gmx dump: /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/restart_full/exact_full.edr
+energy components:
+    0  Class2 Bond              (kJ/mol)
+    1  Class2 Angle             (kJ/mol)
+    2  Class2 Dih.              (kJ/mol)
+    3  LJ-14                    (kJ/mol)
+    4  Coulomb-14               (kJ/mol)
+    5  LJ (SR)                  (kJ/mol)
+    6  Coulomb (SR)             (kJ/mol)
+    7  Coul. recip.             (kJ/mol)
+    8  Potential                (kJ/mol)
+    9  Kinetic En.              (kJ/mol)
+   10  Total Energy             (kJ/mol)
+   11  Temperature              (K)
+   12  Pressure                 (bar)
+   13  Vir-XX                   (kJ/mol)
+   14  Vir-XY                   (kJ/mol)
+   15  Vir-XZ                   (kJ/mol)
+   16  Vir-YX                   (kJ/mol)
+   17  Vir-YY                   (kJ/mol)
+   18  Vir-YZ                   (kJ/mol)
+   19  Vir-ZX                   (kJ/mol)
+   20  Vir-ZY                   (kJ/mol)
+   21  Vir-ZZ                   (kJ/mol)
+   22  Pres-XX                  (bar)
+   23  Pres-XY                  (bar)
+   24  Pres-XZ                  (bar)
+   25  Pres-YX                  (bar)
+   26  Pres-YY                  (bar)
+   27  Pres-YZ                  (bar)
+   28  Pres-ZX                  (bar)
+   29  Pres-ZY                  (bar)
+   30  Pres-ZZ                  (bar)
+   31  #Surf*SurfTen            (bar nm)
+   32  T-rest                   (K)
+
+                   time:   0.00000e+00         step:             0
+                                             nsteps:             1
+                delta_t:   5.00000e-04    sum steps:             0
+               Component        Energy    Av. Energy    Sum Energy
+             Class2 Bond   5.25940e+02
+            Class2 Angle   3.09649e+01
+             Class2 Dih.   7.26327e+01
+                   LJ-14  -7.62341e-01
+              Coulomb-14  -6.42455e+01
+                 LJ (SR)  -6.51378e-01
+            Coulomb (SR)  -5.94463e+02
+            Coul. recip.   4.15925e+02
+               Potential   3.85341e+02
+             Kinetic En.   3.36736e+01
+            Total Energy   4.19015e+02
+             Temperature   2.70000e+02
+                Pressure  -2.52526e+03
+                  Vir-XX   1.81689e+03
+                  Vir-XY  -4.82261e+01
+                  Vir-XZ  -5.91714e+01
+                  Vir-YX  -4.82269e+01
+                  Vir-YY   1.19043e+03
+                  Vir-YZ   3.89449e+02
+                  Vir-ZX  -5.91719e+01
+                  Vir-ZY   3.89450e+02
+                  Vir-ZZ   1.79775e+02
+                 Pres-XX  -4.33954e+03
+                 Pres-XY   1.05473e+02
+                 Pres-XZ   1.53257e+02
+                 Pres-YX   1.05475e+02
+                 Pres-YY  -2.82198e+03
+                 Pres-YZ  -9.39749e+02
+                 Pres-ZX   1.53258e+02
+                 Pres-ZY  -9.39752e+02
+                 Pres-ZZ  -4.14258e+02
+           #Surf*SurfTen   7.59960e+03
+                  T-rest   2.70000e+02
+
+                   time:   2.00000e-03         step:             4
+                                             nsteps:             4
+                delta_t:   5.00000e-04    sum steps:             0
+               Component        Energy    Av. Energy    Sum Energy
+             Class2 Bond   4.93272e+02
+            Class2 Angle   2.89039e+01
+             Class2 Dih.   7.26997e+01
+                   LJ-14  -7.64425e-01
+              Coulomb-14  -6.42847e+01
+                 LJ (SR)  -6.50813e-01
+            Coulomb (SR)  -5.94218e+02
+            Coul. recip.   4.16374e+02
+               Potential   3.51331e+02
+             Kinetic En.   6.76176e+01
+            Total Energy   4.18949e+02
+             Temperature   5.42169e+02
+                Pressure  -2.42625e+03
+                  Vir-XX   1.79597e+03
+                  Vir-XY  -1.62893e+01
+                  Vir-XZ  -4.57557e+01
+                  Vir-YX  -1.62900e+01
+                  Vir-YY   1.13033e+03
+                  Vir-YZ   3.65697e+02
+                  Vir-ZX  -4.57559e+01
+                  Vir-ZY   3.65698e+02
+                  Vir-ZZ   1.71104e+02
+                 Pres-XX  -4.28997e+03
+                 Pres-XY   4.26489e+00
+                 Pres-XZ   1.11230e+02
+                 Pres-YX   4.26674e+00
+                 Pres-YY  -2.60436e+03
+                 Pres-YZ  -8.54760e+02
+                 Pres-ZX   1.11230e+02
+                 Pres-ZY  -8.54762e+02
+                 Pres-ZZ  -3.84435e+02
+           #Surf*SurfTen   7.35055e+03
+                  T-rest   5.42169e+02
+
+                   time:   4.00000e-03         step:             8
+                                             nsteps:             4
+                delta_t:   5.00000e-04    sum steps:             0
+               Component        Energy    Av. Energy    Sum Energy
+             Class2 Bond   3.79371e+02
+            Class2 Angle   2.09065e+01
+             Class2 Dih.   7.30062e+01
+                   LJ-14  -7.78098e-01
+              Coulomb-14  -6.45292e+01
+                 LJ (SR)  -6.47458e-01
+            Coulomb (SR)  -5.93313e+02
+            Coul. recip.   4.18011e+02
+               Potential   2.32027e+02
+             Kinetic En.   1.86714e+02
+            Total Energy   4.18741e+02
+             Temperature   1.49710e+03
+                Pressure  -2.02270e+03
+                  Vir-XX   1.66340e+03
+                  Vir-XY   1.52953e+01
+                  Vir-XZ  -2.87463e+01
+                  Vir-YX   1.52970e+01
+                  Vir-YY   9.06403e+02
+                  Vir-YZ   2.89254e+02
+                  Vir-ZX  -2.87464e+01
+                  Vir-ZY   2.89254e+02
+                  Vir-ZZ   1.42762e+02
+                 Pres-XX  -3.96239e+03
+                 Pres-XY  -9.05965e+01
+                 Pres-XZ   6.08181e+01
+                 Pres-YX  -9.06007e+01
+                 Pres-YY  -1.81825e+03
+                 Pres-YZ  -5.86355e+02
+                 Pres-ZX   6.08181e+01
+                 Pres-ZY  -5.86353e+02
+                 Pres-ZZ  -2.87464e+02
+           #Surf*SurfTen   6.24686e+03
+                  T-rest   1.49710e+03
+
+                   time:   6.00000e-03         step:            12
+                                             nsteps:             4
+                delta_t:   5.00000e-04    sum steps:             0
+               Component        Energy    Av. Energy    Sum Energy
+             Class2 Bond   2.33436e+02
+            Class2 Angle   1.52282e+01
+             Class2 Dih.   7.34270e+01
+                   LJ-14  -8.01577e-01
+              Coulomb-14  -6.49414e+01
+                 LJ (SR)  -6.42637e-01
+            Coulomb (SR)  -5.91922e+02
+            Coul. recip.   4.20686e+02
+               Potential   8.44698e+01
+             Kinetic En.   3.34045e+02
+            Total Energy   4.18515e+02
+             Temperature   2.67842e+03
+                Pressure  -1.43384e+03
+                  Vir-XX   1.42942e+03
+                  Vir-XY   4.03416e+01
+                  Vir-XZ  -1.10723e+01
+                  Vir-YX   4.03424e+01
+                  Vir-YY   5.91594e+02
+                  Vir-YZ   1.85058e+02
+                  Vir-ZX  -1.10718e+01
+                  Vir-ZY   1.85058e+02
+                  Vir-ZZ   1.03542e+02
+                 Pres-XX  -3.38579e+03
+                 Pres-XY  -1.54146e+02
+                 Pres-XZ   1.34159e+01
+                 Pres-YX  -1.54148e+02
+                 Pres-YY  -7.56851e+02
+                 Pres-YZ  -2.35273e+02
+                 Pres-ZX   1.34147e+01
+                 Pres-ZY  -2.35272e+02
+                 Pres-ZZ  -1.58878e+02
+           #Surf*SurfTen   4.58986e+03
+                  T-rest   2.67842e+03
+
+                   time:   8.00000e-03         step:            16
+                                             nsteps:             4
+                delta_t:   5.00000e-04    sum steps:             0
+               Component        Energy    Av. Energy    Sum Energy
+             Class2 Bond   1.09632e+02
+            Class2 Angle   2.39594e+01
+             Class2 Dih.   7.37677e+01
+                   LJ-14  -8.31955e-01
+              Coulomb-14  -6.54648e+01
+                 LJ (SR)  -6.38055e-01
+            Coulomb (SR)  -5.90298e+02
+            Coul. recip.   4.24155e+02
+               Potential  -2.57188e+01
+             Kinetic En.   4.44123e+02
+            Total Energy   4.18404e+02
+             Temperature   3.56104e+03
+                Pressure  -8.10825e+02
+                  Vir-XX   1.11458e+03
+                  Vir-XY   5.38809e+01
+                  Vir-XZ   4.21562e+00
+                  Vir-YX   5.38811e+01
+                  Vir-YY   2.77789e+02
+                  Vir-YZ   8.36462e+01
+                  Vir-ZX   4.21542e+00
+                  Vir-ZY   8.36463e+01
+                  Vir-ZZ   6.42721e+01
+                 Pres-XX  -2.61410e+03
+                 Pres-XY  -1.70950e+02
+                 Pres-XZ  -2.14724e+01
+                 Pres-YX  -1.70951e+02
+                 Pres-YY   2.22375e+02
+                 Pres-YZ   7.93720e+01
+                 Pres-ZX  -2.14720e+01
+                 Pres-ZY   7.93717e+01
+                 Pres-ZZ  -4.07524e+01
+           #Surf*SurfTen   2.77226e+03
+                  T-rest   3.56104e+03
+
+                   time:   1.00000e-02         step:            20
+                                             nsteps:             4
+                delta_t:   5.00000e-04    sum steps:             0
+               Component        Energy    Av. Energy    Sum Energy
+             Class2 Bond   3.82071e+01
+            Class2 Angle   5.85812e+01
+             Class2 Dih.   7.38175e+01
+                   LJ-14  -8.65789e-01
+              Coulomb-14  -6.60377e+01
+                 LJ (SR)  -6.35160e-01
+            Coulomb (SR)  -5.88692e+02
+            Coul. recip.   4.28087e+02
+               Potential  -5.75381e+01
+             Kinetic En.   4.75999e+02
+            Total Energy   4.18461e+02
+             Temperature   3.81664e+03
+                Pressure  -2.76235e+02
+                  Vir-XX   7.51723e+02
+                  Vir-XY   5.30113e+01
+                  Vir-XZ   1.43864e+01
+                  Vir-YX   5.30113e+01
+                  Vir-YY   3.61312e+01
+                  Vir-YZ   7.87147e+00
+                  Vir-ZX   1.43865e+01
+                  Vir-ZY   7.87156e+00
+                  Vir-ZZ   3.30940e+01
+                 Pres-XX  -1.72875e+03
+                 Pres-XY  -1.39374e+02
+                 Pres-XZ  -3.86193e+01
+                 Pres-YX  -1.39374e+02
+                 Pres-YY   8.62150e+02
+                 Pres-YZ   2.75269e+02
+                 Pres-ZX  -3.86195e+01
+                 Pres-ZY   2.75269e+02
+                 Pres-ZZ   3.78932e+01
+           #Surf*SurfTen   1.13086e+03
+                  T-rest   3.81664e+03

@@ -153,6 +153,23 @@ __launch_bounds__(c_maxThreadsPerBlock) __global__
     }
 }
 
+__launch_bounds__(c_maxThreadsPerBlock) __global__
+        void leapFrogDriftOnlyKernel(const int numAtoms,
+                                     float3* __restrict__ gm_x,
+                                     const float3* __restrict__ gm_v,
+                                     const float dt)
+{
+    int threadIndex = blockIdx.x * blockDim.x + threadIdx.x;
+    if (threadIndex < numAtoms)
+    {
+        const float3 x = gm_x[threadIndex];
+        const float3 v = gm_v[threadIndex];
+        gm_x[threadIndex] = make_float3(__fadd_rn(x.x, __fmul_rn(v.x, dt)),
+                                        __fadd_rn(x.y, __fmul_rn(v.y, dt)),
+                                        __fadd_rn(x.z, __fmul_rn(v.z, dt)));
+    }
+}
+
 void launchLeapFrogKernel(const int                             numAtoms,
                           DeviceBuffer<Float3>                  d_x,
                           DeviceBuffer<Float3>                  d_xp,
@@ -201,6 +218,34 @@ void launchLeapFrogKernel(const int                             numAtoms,
             },
             getTempScalingType(doTemperatureScaling, numTempScaleValues),
             parrinelloRahmanVelocityScaling);
+}
+
+void launchLeapFrogDriftOnlyKernel(const int        numAtoms,
+                                   DeviceBuffer<Float3> d_x,
+                                   DeviceBuffer<Float3> d_v,
+                                   const float      dt,
+                                   const DeviceStream& deviceStream)
+{
+    KernelLaunchConfig kernelLaunchConfig;
+
+    kernelLaunchConfig.gridSize[0]      = divideRoundUp(numAtoms, c_threadsPerBlock);
+    kernelLaunchConfig.blockSize[0]     = c_threadsPerBlock;
+    kernelLaunchConfig.blockSize[1]     = 1;
+    kernelLaunchConfig.blockSize[2]     = 1;
+    kernelLaunchConfig.sharedMemorySize = 0;
+
+    const auto kernelArgs = prepareGpuKernelArguments(leapFrogDriftOnlyKernel,
+                                                      kernelLaunchConfig,
+                                                      &numAtoms,
+                                                      asFloat3Pointer(&d_x),
+                                                      asFloat3Pointer(&d_v),
+                                                      &dt);
+    launchGpuKernel(leapFrogDriftOnlyKernel,
+                    kernelLaunchConfig,
+                    deviceStream,
+                    nullptr,
+                    "leapfrog_drift_only_kernel",
+                    kernelArgs);
 }
 
 } // namespace gmx

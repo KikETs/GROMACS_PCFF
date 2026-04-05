@@ -1,0 +1,661 @@
+{
+  "artifacts": {
+    "manifest_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/gate_h_manifest.json",
+    "manifest_md": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/gate_h_manifest.md",
+    "root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation"
+  },
+  "coord_stride_ps": 1.0,
+  "dlb": "no",
+  "energy_stride_ps": 1.0,
+  "equil_ps": 200.0,
+  "first_failure": {
+    "observable": "oligomer_diffusivity_cm2_s",
+    "system_id": "small_oligomer"
+  },
+  "gpu_support": "CUDA",
+  "mechanical_prerequisites": {
+    "gate_a_status": "PASS",
+    "gate_e_status": "PASS",
+    "gate_f_status": "PASS",
+    "gate_g_status": "PASS"
+  },
+  "precision_mode": "mixed",
+  "prod_ps": 500.0,
+  "production_recommendation": "NO-GO",
+  "protocol_caveat": "Gate H reuses the mechanically validated exact-r-RESPA NVT path, but the current small fixtures sit outside the frozen TP0 transport scope (size/box/duration, and charged transport also lacks TP0-style long NPT conditioning).",
+  "replicas": 3,
+  "single_rank": true,
+  "status": "FAIL",
+  "systems": [
+    {
+      "analysis_settings": {
+        "block_count": 5,
+        "coord_stride_ps": 1.0,
+        "energy_stride_ps": 1.0,
+        "equil_ps": 200.0,
+        "estimator": "Einstein MSD with COM-drift removal; conductivity from cNE; transference from NE ratio.",
+        "fit_window_ratio": [
+          0.2,
+          0.8
+        ],
+        "prod_ps": 500.0,
+        "replicas": 3
+      },
+      "artifacts": {
+        "system_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer",
+        "transport_comparison_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/summaries/transport_comparison.tsv"
+      },
+      "failure_reasons": [
+        "oligomer_diffusivity_cm2_s is missing.",
+        "oligomer_diffusivity_cm2_s is not measurable here: the selected group equals the full system, so mandatory COM-drift removal collapses the MSD to zero.",
+        "Fixture size is out of TP0 scope: 6 atoms < 1000 atom minimum.",
+        "Fixture box is out of TP0 scope: min box 2.000 nm <= 3.000 nm.",
+        "Production duration 500.0 ps is below the TP0 minimum 10000.0 ps."
+      ],
+      "first_failing_observable": "oligomer_diffusivity_cm2_s",
+      "fixture_metadata": {
+        "box_nm": [
+          2.0,
+          2.0,
+          2.0
+        ],
+        "min_box_nm": 2.0,
+        "natoms": 6,
+        "volume_nm3": 8.0
+      },
+      "observable_comparisons": {
+        "oligomer_diffusivity_cm2_s": {
+          "available": false
+        }
+      },
+      "per_layout_aggregates": {
+        "cpu": {
+          "oligomer_diffusivity_cm2_s": {
+            "available": false
+          }
+        },
+        "gpu": {
+          "oligomer_diffusivity_cm2_s": {
+            "available": false
+          }
+        }
+      },
+      "replica_variability": {
+        "cpu": {},
+        "gpu": {}
+      },
+      "status": "FAIL",
+      "system_class": "neutral_dense",
+      "system_id": "small_oligomer",
+      "tp0_protocol_expectation": {
+        "meets_minimum": false,
+        "minimum_prod_ps": 10000.0
+      },
+      "tp0_scope_issues": [
+        "Fixture size is out of TP0 scope: 6 atoms < 1000 atom minimum.",
+        "Fixture box is out of TP0 scope: min box 2.000 nm <= 3.000 nm.",
+        "Production duration 500.0 ps is below the TP0 minimum 10000.0 ps."
+      ]
+    },
+    {
+      "analysis_settings": {
+        "block_count": 5,
+        "coord_stride_ps": 1.0,
+        "energy_stride_ps": 1.0,
+        "equil_ps": 200.0,
+        "estimator": "Einstein MSD with COM-drift removal; conductivity from cNE; transference from NE ratio.",
+        "fit_window_ratio": [
+          0.2,
+          0.8
+        ],
+        "prod_ps": 500.0,
+        "replicas": 3
+      },
+      "artifacts": {
+        "system_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box",
+        "transport_comparison_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/summaries/transport_comparison.tsv"
+      },
+      "failure_reasons": [
+        "polymer_diffusivity_cm2_s MSD linearity is weak (R^2=0.000334).",
+        "polymer_diffusivity_cm2_s 5-block relative uncertainty is 65.169, above the 0.10 frozen target.",
+        "cation_diffusivity_cm2_s MSD linearity is weak (R^2=0.002032).",
+        "cation_diffusivity_cm2_s 5-block relative uncertainty is 12.014, above the 0.10 frozen target.",
+        "anion_diffusivity_cm2_s MSD linearity is weak (R^2=0.001986).",
+        "anion_diffusivity_cm2_s 5-block relative uncertainty is 5.251, above the 0.10 frozen target.",
+        "polymer_diffusivity_cm2_s MSD linearity is weak (R^2=0.049276).",
+        "polymer_diffusivity_cm2_s 5-block relative uncertainty is 2.254, above the 0.10 frozen target.",
+        "cation_diffusivity_cm2_s MSD linearity is weak (R^2=0.019840).",
+        "cation_diffusivity_cm2_s 5-block relative uncertainty is 7.689, above the 0.10 frozen target.",
+        "anion_diffusivity_cm2_s MSD linearity is weak (R^2=0.035090).",
+        "anion_diffusivity_cm2_s 5-block relative uncertainty is 1.801, above the 0.10 frozen target.",
+        "polymer_diffusivity_cm2_s MSD linearity is weak (R^2=0.051930).",
+        "polymer_diffusivity_cm2_s 5-block relative uncertainty is 0.577, above the 0.10 frozen target.",
+        "cation_diffusivity_cm2_s MSD linearity is weak (R^2=0.414520).",
+        "cation_diffusivity_cm2_s 5-block relative uncertainty is 0.515, above the 0.10 frozen target.",
+        "anion_diffusivity_cm2_s MSD linearity is weak (R^2=0.004320).",
+        "anion_diffusivity_cm2_s 5-block relative uncertainty is 0.918, above the 0.10 frozen target.",
+        "polymer_diffusivity_cm2_s MSD linearity is weak (R^2=0.020862).",
+        "polymer_diffusivity_cm2_s 5-block relative uncertainty is 0.813, above the 0.10 frozen target.",
+        "cation_diffusivity_cm2_s MSD linearity is weak (R^2=0.010293).",
+        "cation_diffusivity_cm2_s 5-block relative uncertainty is 0.783, above the 0.10 frozen target.",
+        "anion_diffusivity_cm2_s MSD linearity is weak (R^2=0.021338).",
+        "anion_diffusivity_cm2_s 5-block relative uncertainty is 0.886, above the 0.10 frozen target.",
+        "polymer_diffusivity_cm2_s MSD linearity is weak (R^2=0.017163).",
+        "polymer_diffusivity_cm2_s 5-block relative uncertainty is 2.589, above the 0.10 frozen target.",
+        "cation_diffusivity_cm2_s MSD linearity is weak (R^2=0.093640).",
+        "cation_diffusivity_cm2_s 5-block relative uncertainty is 4.621, above the 0.10 frozen target.",
+        "anion_diffusivity_cm2_s MSD linearity is weak (R^2=0.018624).",
+        "anion_diffusivity_cm2_s 5-block relative uncertainty is 0.910, above the 0.10 frozen target.",
+        "polymer_diffusivity_cm2_s MSD linearity is weak (R^2=0.000114).",
+        "polymer_diffusivity_cm2_s 5-block relative uncertainty is 1.663, above the 0.10 frozen target.",
+        "cation_diffusivity_cm2_s MSD linearity is weak (R^2=0.001366).",
+        "cation_diffusivity_cm2_s 5-block relative uncertainty is 46.963, above the 0.10 frozen target.",
+        "anion_diffusivity_cm2_s MSD linearity is weak (R^2=0.000052).",
+        "anion_diffusivity_cm2_s 5-block relative uncertainty is 1.296, above the 0.10 frozen target.",
+        "Fixture size is out of TP0 scope: 10 atoms < 1000 atom minimum.",
+        "Fixture box is out of TP0 scope: min box 2.400 nm <= 3.000 nm.",
+        "Production duration 500.0 ps is below the TP0 minimum 20000.0 ps.",
+        "Charged-system TP0 freeze expects long NPT density conditioning and larger boxes; this Gate H run stays on the already validated NVT exact-r-RESPA path instead."
+      ],
+      "first_failing_observable": "finite_sampling",
+      "fixture_metadata": {
+        "box_nm": [
+          2.4,
+          2.4,
+          2.4
+        ],
+        "min_box_nm": 2.4,
+        "natoms": 10,
+        "volume_nm3": 13.824
+      },
+      "observable_comparisons": {
+        "anion_diffusivity_cm2_s": {
+          "available": true,
+          "classification": "stochastic",
+          "combined_uncertainty": 2.2371712229313005e-07,
+          "cpu_mean": 1.3448352958533923e-08,
+          "cpu_uncertainty": 1.5444229379189166e-07,
+          "gpu_mean": -3.2298059879339995e-10,
+          "gpu_uncertainty": 1.6185465299279577e-07,
+          "mean_diff": -1.3771333557327322e-08,
+          "passes": true,
+          "replica_diffs": [
+            -3.737124373502795e-08,
+            1.8332982226128247e-08,
+            -2.227573916308226e-08
+          ]
+        },
+        "cation_diffusivity_cm2_s": {
+          "available": true,
+          "classification": "stochastic",
+          "combined_uncertainty": 1.1796804628974772e-07,
+          "cpu_mean": -1.1061874825869308e-08,
+          "cpu_uncertainty": 8.74488023550183e-08,
+          "gpu_mean": -5.5684420985318935e-09,
+          "gpu_uncertainty": 7.917807090408939e-08,
+          "mean_diff": 5.493432727337414e-09,
+          "passes": true,
+          "replica_diffs": [
+            -7.0151516141433846e-09,
+            4.1958877098388756e-08,
+            -1.846342730223313e-08
+          ]
+        },
+        "conductivity_cne_s_cm": {
+          "available": true,
+          "classification": "stochastic",
+          "combined_uncertainty": 1.3705436415448755e-05,
+          "cpu_mean": 1.1072689531319081e-06,
+          "cpu_uncertainty": 1.1095160581123593e-05,
+          "gpu_mean": -2.744345025112933e-06,
+          "gpu_uncertainty": 8.045893301367476e-06,
+          "mean_diff": -3.851613978244841e-06,
+          "passes": true,
+          "replica_diffs": [
+            -2.0177112521790042e-05,
+            2.6925367787773456e-05,
+            -1.8303097200717938e-05
+          ]
+        },
+        "polymer_diffusivity_cm2_s": {
+          "available": true,
+          "classification": "stochastic",
+          "combined_uncertainty": 4.505886346720394e-08,
+          "cpu_mean": -4.888305399523386e-10,
+          "cpu_uncertainty": 2.815681553503104e-08,
+          "gpu_mean": -6.54603750277288e-10,
+          "gpu_uncertainty": 3.517804593609998e-08,
+          "mean_diff": -1.657732103249494e-10,
+          "passes": true,
+          "replica_diffs": [
+            -7.621623500250663e-09,
+            1.1838724776813283e-08,
+            -4.714420907537467e-09
+          ]
+        },
+        "transference_ne": {
+          "available": true,
+          "classification": "stochastic",
+          "combined_uncertainty": 0.707165428969947,
+          "cpu_mean": 0.24284401034013073,
+          "cpu_uncertainty": 0.635786208412969,
+          "gpu_mean": 0.15355705442777604,
+          "gpu_uncertainty": 0.309610789737874,
+          "mean_diff": -0.08928695591235469,
+          "passes": true,
+          "replica_diffs": [
+            1.2215178739477681,
+            -1.6452257129852241,
+            0.1558469713003921
+          ]
+        }
+      },
+      "per_layout_aggregates": {
+        "cpu": {
+          "anion_diffusivity_cm2_s": {
+            "available": true,
+            "mean": 1.3448352958533923e-08,
+            "mean_block_sem": 1.5444229379189166e-07,
+            "replica_count": 3,
+            "replicas": [
+              {
+                "block_sem": 1.6603286334585323e-07,
+                "r_squared": 0.001986333489971681,
+                "replica_index": 1,
+                "value": 7.817057052384044e-09
+              },
+              {
+                "block_sem": 1.4567652960371964e-07,
+                "r_squared": 0.004319665187080157,
+                "replica_index": 2,
+                "value": 8.855523582095408e-09
+              },
+              {
+                "block_sem": 1.5161748842610212e-07,
+                "r_squared": 0.018624275826488623,
+                "replica_index": 3,
+                "value": 2.3672478241122313e-08
+              }
+            ],
+            "sem": 5.1208448693837e-09,
+            "std": 8.869563491450978e-09
+          },
+          "cation_diffusivity_cm2_s": {
+            "available": true,
+            "mean": -1.1061874825869308e-08,
+            "mean_block_sem": 8.74488023550183e-08,
+            "replica_count": 3,
+            "replicas": [
+              {
+                "block_sem": 6.770774002714941e-08,
+                "r_squared": 0.002032003606417754,
+                "replica_index": 1,
+                "value": -3.8151601672108165e-09
+              },
+              {
+                "block_sem": 9.097518225743333e-08,
+                "r_squared": 0.41451961163798545,
+                "replica_index": 2,
+                "value": -5.014438744637288e-08
+              },
+              {
+                "block_sem": 1.0366348478047217e-07,
+                "r_squared": 0.0936396692785525,
+                "replica_index": 3,
+                "value": 2.0773923135975774e-08
+              }
+            ],
+            "sem": 2.07905254781405e-08,
+            "std": 3.6010246444194575e-08
+          },
+          "conductivity_cne_s_cm": {
+            "available": true,
+            "mean": 1.1072689531319081e-06,
+            "mean_block_sem": 0.0,
+            "replica_count": 3,
+            "replicas": [
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 1,
+                "value": 1.8292905163455506e-06
+              },
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 2,
+                "value": -1.8460948252352578e-05
+              },
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 3,
+                "value": 1.995346459540275e-05
+              }
+            ],
+            "sem": 1.1095160581123593e-05,
+            "std": 1.9217381844641493e-05
+          },
+          "polymer_diffusivity_cm2_s": {
+            "available": true,
+            "mean": -4.888305399523386e-10,
+            "mean_block_sem": 2.815681553503104e-08,
+            "replica_count": 3,
+            "replicas": [
+              {
+                "block_sem": 2.1181162565418757e-08,
+                "r_squared": 0.00033397369818910505,
+                "replica_index": 1,
+                "value": 6.631652938883343e-10
+              },
+              {
+                "block_sem": 2.6942342252283457e-08,
+                "r_squared": 0.05193048336218087,
+                "replica_index": 2,
+                "value": -6.468863432533089e-09
+              },
+              {
+                "block_sem": 3.63469417873909e-08,
+                "r_squared": 0.017163097710076403,
+                "replica_index": 3,
+                "value": 4.339206518787739e-09
+              }
+            ],
+            "sem": 3.1727440709397885e-09,
+            "std": 5.495353930280628e-09
+          },
+          "transference_ne": {
+            "available": true,
+            "mean": 0.24284401034013073,
+            "mean_block_sem": 0.0,
+            "replica_count": 3,
+            "replicas": [
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 1,
+                "value": -0.9533379486477378
+              },
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 2,
+                "value": 1.2144772888690958
+              },
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 3,
+                "value": 0.46739269079903417
+              }
+            ],
+            "sem": 0.635786208412969,
+            "std": 1.1012140157228374
+          }
+        },
+        "gpu": {
+          "anion_diffusivity_cm2_s": {
+            "available": true,
+            "mean": -3.2298059879339995e-10,
+            "mean_block_sem": 1.6185465299279577e-07,
+            "replica_count": 3,
+            "replicas": [
+              {
+                "block_sem": 8.719971690059988e-08,
+                "r_squared": 0.03508973937160276,
+                "replica_index": 1,
+                "value": -2.9554186682643907e-08
+              },
+              {
+                "block_sem": 1.7307530369523153e-07,
+                "r_squared": 0.021337660727967944,
+                "replica_index": 2,
+                "value": 2.7188505808223655e-08
+              },
+              {
+                "block_sem": 2.252889383825559e-07,
+                "r_squared": 5.247030452804058e-05,
+                "replica_index": 3,
+                "value": 1.3967390780400523e-09
+              }
+            ],
+            "sem": 1.6402757538530482e-08,
+            "std": 2.841040944096821e-08
+          },
+          "cation_diffusivity_cm2_s": {
+            "available": true,
+            "mean": -5.5684420985318935e-09,
+            "mean_block_sem": 7.917807090408939e-08,
+            "replica_count": 3,
+            "replicas": [
+              {
+                "block_sem": 4.636461438601186e-08,
+                "r_squared": 0.019840091924166137,
+                "replica_index": 1,
+                "value": -1.0830311781354201e-08
+              },
+              {
+                "block_sem": 5.581052573945349e-08,
+                "r_squared": 0.01029270925887893,
+                "replica_index": 2,
+                "value": -8.185510347984121e-09
+              },
+              {
+                "block_sem": 1.353590725868028e-07,
+                "r_squared": 0.001366290766824596,
+                "replica_index": 3,
+                "value": 2.310495833742644e-09
+              }
+            ],
+            "sem": 4.012770898891232e-09,
+            "std": 6.950323076013448e-09
+          },
+          "conductivity_cne_s_cm": {
+            "available": true,
+            "mean": -2.744345025112933e-06,
+            "mean_block_sem": 0.0,
+            "replica_count": 3,
+            "replicas": [
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 1,
+                "value": -1.834782200544449e-05
+              },
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 2,
+                "value": 8.464419535420878e-06
+              },
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 3,
+                "value": 1.6503673946848143e-06
+              }
+            ],
+            "sem": 8.045893301367476e-06,
+            "std": 1.3935895990246557e-05
+          },
+          "polymer_diffusivity_cm2_s": {
+            "available": true,
+            "mean": -6.54603750277288e-10,
+            "mean_block_sem": 3.517804593609998e-08,
+            "replica_count": 3,
+            "replicas": [
+              {
+                "block_sem": 1.9824809163449237e-08,
+                "r_squared": 0.049275719554619624,
+                "replica_index": 1,
+                "value": -6.95845820636233e-09
+              },
+              {
+                "block_sem": 2.97643120912236e-08,
+                "r_squared": 0.020862336830521966,
+                "replica_index": 2,
+                "value": 5.369861344280194e-09
+              },
+              {
+                "block_sem": 5.5945016553627095e-08,
+                "r_squared": 0.00011421180097026529,
+                "replica_index": 3,
+                "value": -3.752143887497281e-10
+              }
+            ],
+            "sem": 3.561619928590068e-09,
+            "std": 6.168906673567834e-09
+          },
+          "transference_ne": {
+            "available": true,
+            "mean": 0.15355705442777604,
+            "mean_block_sem": 0.0,
+            "replica_count": 3,
+            "replicas": [
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 1,
+                "value": 0.26817992530003026
+              },
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 2,
+                "value": -0.4307484241161284
+              },
+              {
+                "block_sem": 0.0,
+                "r_squared": null,
+                "replica_index": 3,
+                "value": 0.6232396620994263
+              }
+            ],
+            "sem": 0.309610789737874,
+            "std": 0.5362616183975225
+          }
+        }
+      },
+      "replica_variability": {
+        "cpu": {
+          "anion_diffusivity_cm2_s": {
+            "mean_block_sem": 1.5444229379189166e-07,
+            "sem": 5.1208448693837e-09,
+            "std": 8.869563491450978e-09
+          },
+          "cation_diffusivity_cm2_s": {
+            "mean_block_sem": 8.74488023550183e-08,
+            "sem": 2.07905254781405e-08,
+            "std": 3.6010246444194575e-08
+          },
+          "conductivity_cne_s_cm": {
+            "mean_block_sem": 0.0,
+            "sem": 1.1095160581123593e-05,
+            "std": 1.9217381844641493e-05
+          },
+          "polymer_diffusivity_cm2_s": {
+            "mean_block_sem": 2.815681553503104e-08,
+            "sem": 3.1727440709397885e-09,
+            "std": 5.495353930280628e-09
+          },
+          "transference_ne": {
+            "mean_block_sem": 0.0,
+            "sem": 0.635786208412969,
+            "std": 1.1012140157228374
+          }
+        },
+        "gpu": {
+          "anion_diffusivity_cm2_s": {
+            "mean_block_sem": 1.6185465299279577e-07,
+            "sem": 1.6402757538530482e-08,
+            "std": 2.841040944096821e-08
+          },
+          "cation_diffusivity_cm2_s": {
+            "mean_block_sem": 7.917807090408939e-08,
+            "sem": 4.012770898891232e-09,
+            "std": 6.950323076013448e-09
+          },
+          "conductivity_cne_s_cm": {
+            "mean_block_sem": 0.0,
+            "sem": 8.045893301367476e-06,
+            "std": 1.3935895990246557e-05
+          },
+          "polymer_diffusivity_cm2_s": {
+            "mean_block_sem": 3.517804593609998e-08,
+            "sem": 3.561619928590068e-09,
+            "std": 6.168906673567834e-09
+          },
+          "transference_ne": {
+            "mean_block_sem": 0.0,
+            "sem": 0.309610789737874,
+            "std": 0.5362616183975225
+          }
+        }
+      },
+      "status": "FAIL",
+      "system_class": "charged_salt_polymer",
+      "system_id": "small_salt_polymer_box",
+      "tp0_protocol_expectation": {
+        "meets_minimum": false,
+        "minimum_prod_ps": 20000.0
+      },
+      "tp0_scope_issues": [
+        "Fixture size is out of TP0 scope: 10 atoms < 1000 atom minimum.",
+        "Fixture box is out of TP0 scope: min box 2.400 nm <= 3.000 nm.",
+        "Production duration 500.0 ps is below the TP0 minimum 20000.0 ps.",
+        "Charged-system TP0 freeze expects long NPT density conditioning and larger boxes; this Gate H run stays on the already validated NVT exact-r-RESPA path instead."
+      ]
+    }
+  ],
+  "tp0_metadata": {
+    "acceptance_criteria": {
+      "charged_conductivity_rel_err_max": 0.25,
+      "charged_diffusion_rel_err_max": 0.2,
+      "charged_transference_abs_err_max": 0.05,
+      "neutral_diffusion_rel_err_max": 0.15
+    },
+    "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/transport_protocol_metadata/tp0.json",
+    "protocol": {
+      "analysis": {
+        "block_averaging_count": 5,
+        "com_drift_removal": true,
+        "fitting_window_ratio": [
+          0.2,
+          0.8
+        ],
+        "unwrapping": true
+      },
+      "electrostatics": {
+        "ewald_rtol": 1e-05,
+        "fourierspacing_nm": 0.12,
+        "method": "PME",
+        "rcoulomb_nm": 0.9,
+        "rvdw_nm": 0.9
+      },
+      "estimators": {
+        "conductivity": "nernst_einstein_cNE",
+        "diffusion": "einstein_msd",
+        "transference_number": "nernst_einstein_ratio"
+      },
+      "workflow": {
+        "ensemble": "NVT",
+        "equilibration_min_ns": {
+          "charged": 5.0,
+          "neutral": 2.0
+        },
+        "production_min_ns": {
+          "charged": 20.0,
+          "neutral": 10.0
+        },
+        "tau_t_ps": 0.5,
+        "thermostat": "v-rescale",
+        "timestep_ps": 0.001
+      }
+    }
+  },
+  "tp1_status": {
+    "audit_reason": "TP1.2 rerun completed but failed at 3ns due to thermal runaway (T > 500K).",
+    "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/transport_protocol_metadata/tp1_status.json",
+    "status": "FAIL (Physical Failure)"
+  }
+}

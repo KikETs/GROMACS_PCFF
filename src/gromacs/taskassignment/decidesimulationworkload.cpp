@@ -99,8 +99,13 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     SimulationWorkload simulationWorkload;
     const bool         useExactLammpsRespa = useExactRespa(inputrec);
     const bool         useAnySubsteps      = useMtsSubstepping(inputrec) || useExactLammpsRespa;
-    const bool disableGpuForExactLammpsRespa = useExactLammpsRespa;
     const bool exactLammpsRespaHasPairSplitting = exactRespaHasPairSplitting(inputrec);
+    const bool allowGpuNonbondedForExactLammpsRespa =
+            useExactLammpsRespa && exactLammpsRespaHasPairSplitting && GMX_GPU_CUDA;
+    const bool allowGpuPmeForExactLammpsRespa = allowGpuNonbondedForExactLammpsRespa;
+    const bool allowGpuUpdateForExactLammpsRespa =
+            allowGpuPmeForExactLammpsRespa && useGpuForBonded;
+    const bool disableGpuForExactLammpsRespa = useExactLammpsRespa;
 
     simulationWorkload.computeNonbonded = !disableNonbondedCalculation;
     simulationWorkload.nonbondedSubstepLevel =
@@ -113,20 +118,27 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
                     : 0;
     simulationWorkload.computeMuTot      = inputrecNeedMutot(&inputrec);
     simulationWorkload.haveDynamicBox    = haveDynamicBox;
-    simulationWorkload.useCpuNonbonded   = disableGpuForExactLammpsRespa || !useGpuForNonbonded;
-    simulationWorkload.useGpuNonbonded   = !disableGpuForExactLammpsRespa && useGpuForNonbonded;
+    simulationWorkload.useCpuNonbonded =
+            (useExactLammpsRespa && !allowGpuNonbondedForExactLammpsRespa) || !useGpuForNonbonded;
+    simulationWorkload.useGpuNonbonded =
+            (allowGpuNonbondedForExactLammpsRespa || !useExactLammpsRespa) && useGpuForNonbonded;
     simulationWorkload.useCpuNonbondedFE = disableGpuForExactLammpsRespa || !useGpuForNonbondedFE;
     simulationWorkload.useGpuNonbondedFE = !disableGpuForExactLammpsRespa && useGpuForNonbondedFE;
     simulationWorkload.useGpuForeignNonbondedFE =
             !disableGpuForExactLammpsRespa && useGpuForNonbondedFE && inputrec.fepvals->n_lambda > 0
             && inputrec.fepvals->softcoreFunction == SoftcoreType::Beutler
             && inputrec.fepvals->sc_alpha != 0;
-    simulationWorkload.useCpuPme = disableGpuForExactLammpsRespa || (pmeRunMode == PmeRunMode::CPU);
+    simulationWorkload.useCpuPme =
+            (useExactLammpsRespa && !allowGpuPmeForExactLammpsRespa) || (pmeRunMode == PmeRunMode::CPU);
     simulationWorkload.useGpuPme =
-            !disableGpuForExactLammpsRespa && (pmeRunMode == PmeRunMode::GPU || pmeRunMode == PmeRunMode::Mixed);
-    simulationWorkload.useGpuPmeFft = !disableGpuForExactLammpsRespa && (pmeRunMode == PmeRunMode::GPU);
-    simulationWorkload.useGpuBonded = !disableGpuForExactLammpsRespa && useGpuForBonded;
-    simulationWorkload.useGpuUpdate = !disableGpuForExactLammpsRespa && useGpuForUpdate;
+            (allowGpuPmeForExactLammpsRespa || !useExactLammpsRespa)
+            && (pmeRunMode == PmeRunMode::GPU || pmeRunMode == PmeRunMode::Mixed);
+    simulationWorkload.useGpuPmeFft =
+            (allowGpuPmeForExactLammpsRespa || !useExactLammpsRespa) && (pmeRunMode == PmeRunMode::GPU);
+    simulationWorkload.useGpuBonded =
+            (allowGpuNonbondedForExactLammpsRespa || !useExactLammpsRespa) && useGpuForBonded;
+    simulationWorkload.useGpuUpdate =
+            (allowGpuUpdateForExactLammpsRespa || !disableGpuForExactLammpsRespa) && useGpuForUpdate;
     simulationWorkload.haveFillerParticlesInLocalState = haveFillerParticlesInLocalState;
     simulationWorkload.havePpDomainDecomposition       = havePpDomainDecomposition;
     simulationWorkload.useCpuHaloExchange =
@@ -138,7 +150,7 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     }
     simulationWorkload.haveSeparatePmeRank = haveSeparatePmeRank;
     simulationWorkload.useGpuPmePpCommunication =
-            !disableGpuForExactLammpsRespa && haveSeparatePmeRank && canUseDirectGpuComm
+            (allowGpuPmeForExactLammpsRespa || !useExactLammpsRespa) && haveSeparatePmeRank && canUseDirectGpuComm
             && (pmeRunMode == PmeRunMode::GPU || pmeRunMode == PmeRunMode::Mixed);
     simulationWorkload.useCpuPmePpCommunication =
             haveSeparatePmeRank && !simulationWorkload.useGpuPmePpCommunication;
@@ -151,7 +163,10 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     simulationWorkload.haveEwaldSurfaceContribution = haveEwaldSurfaceContribution(inputrec);
     simulationWorkload.useMts                       = inputrec.useMts;
     simulationWorkload.useExactRespa               = useExactLammpsRespa;
-    const bool featuresRequireGpuBufferOps = useGpuForUpdate || simulationWorkload.useGpuDirectCommunication;
+    const bool featuresRequireGpuBufferOps =
+            simulationWorkload.useGpuUpdate || simulationWorkload.useGpuDirectCommunication;
+    const bool exactRespaGpuUpdateUsesOnlyXBufferOps =
+            simulationWorkload.useExactRespa && simulationWorkload.useGpuUpdate;
 
     const bool disableGpuBufferOps = (getenv("GMX_GPU_DISABLE_BUFFER_OPS") != nullptr);
     if (disableGpuBufferOps)
@@ -164,16 +179,20 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     }
     // x/f transform is done on GPU by default unless it is not unsupported (with MTS) or disabled (with the env. var.)
     simulationWorkload.useGpuXBufferOpsWhenAllowed =
-            GpuConfigurationCapabilities::BufferOps && useGpuForNonbonded && !useAnySubsteps
+            GpuConfigurationCapabilities::BufferOps && useGpuForNonbonded
+            && (!useAnySubsteps || allowGpuUpdateForExactLammpsRespa)
             && !(useReplicaExchange && !useGpuForUpdate) && !disableGpuBufferOps;
     simulationWorkload.useGpuFBufferOpsWhenAllowed =
-            GpuConfigurationCapabilities::BufferOps && useGpuForNonbonded && !useAnySubsteps
+            GpuConfigurationCapabilities::BufferOps && useGpuForNonbonded
+            && (!useAnySubsteps)
             && !(useReplicaExchange && !useGpuForUpdate) && !disableGpuBufferOps;
     if (featuresRequireGpuBufferOps)
     {
         GMX_RELEASE_ASSERT(simulationWorkload.useGpuXBufferOpsWhenAllowed
-                                   && simulationWorkload.useGpuFBufferOpsWhenAllowed,
-                           "Offload features enabled require X/F buffer ops");
+                                   && (simulationWorkload.useGpuFBufferOpsWhenAllowed
+                                       || exactRespaGpuUpdateUsesOnlyXBufferOps),
+                           "Offload features enabled require X/F buffer ops, except standalone exact "
+                           "r-RESPA update-gpu which uses only X buffer ops.");
     }
     // SYCL Graph API only captures work submitted to the SYCL queue.
     // Disallow use of native FFT libraries until ext_codeplay_enqueue_native_command is used.

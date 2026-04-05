@@ -142,6 +142,18 @@ __global__ void bonded_kernel_gpu(BondedGpuKernelParameters kernelParams,
                                                  kernelParams.pbcAiuc,
                                                  threadIdx.x);
                     break;
+                case InteractionFunction::BondClass2:
+                    bond_class2_gpu<calcVir, calcEner>(fTypeTid,
+                                                       &vtot_loc,
+                                                       iatoms,
+                                                       kernelBuffers.d_forceParams,
+                                                       gm_xq,
+                                                       gm_f,
+                                                       sm_fShiftLoc,
+                                                       kernelParams.pbcAiuc,
+                                                       kernelParams.pcffClass2DebugMode,
+                                                       threadIdx.x);
+                    break;
                 case InteractionFunction::Angles:
                     angles_gpu<calcVir, calcEner>(fTypeTid,
                                                   &vtot_loc,
@@ -162,6 +174,18 @@ __global__ void bonded_kernel_gpu(BondedGpuKernelParameters kernelParams,
                                                         gm_f,
                                                         sm_fShiftLoc,
                                                         kernelParams.pbcAiuc,
+                                                        threadIdx.x);
+                    break;
+                case InteractionFunction::AngleClass2:
+                    angle_class2_gpu<calcVir, calcEner>(fTypeTid,
+                                                        &vtot_loc,
+                                                        iatoms,
+                                                        kernelBuffers.d_forceParams,
+                                                        gm_xq,
+                                                        gm_f,
+                                                        sm_fShiftLoc,
+                                                        kernelParams.pbcAiuc,
+                                                        kernelParams.pcffClass2DebugMode,
                                                         threadIdx.x);
                     break;
                 case InteractionFunction::ProperDihedrals:
@@ -187,6 +211,17 @@ __global__ void bonded_kernel_gpu(BondedGpuKernelParameters kernelParams,
                                                   kernelParams.pbcAiuc,
                                                   threadIdx.x);
                     break;
+                case InteractionFunction::DihedralClass2:
+                    dihedral_class2_gpu<calcVir, calcEner>(fTypeTid,
+                                                           &vtot_loc,
+                                                           iatoms,
+                                                           kernelBuffers.d_forceParams,
+                                                           gm_xq,
+                                                           gm_f,
+                                                           sm_fShiftLoc,
+                                                           kernelParams.pbcAiuc,
+                                                           threadIdx.x);
+                    break;
                 case InteractionFunction::ImproperDihedrals:
                     idihs_gpu<calcVir, calcEner>(fTypeTid,
                                                  &vtot_loc,
@@ -198,6 +233,17 @@ __global__ void bonded_kernel_gpu(BondedGpuKernelParameters kernelParams,
                                                  kernelParams.pbcAiuc,
                                                  threadIdx.x);
                     break;
+                case InteractionFunction::ImproperClass2:
+                    improper_class2_gpu<calcVir, calcEner>(fTypeTid,
+                                                           &vtot_loc,
+                                                           iatoms,
+                                                           kernelBuffers.d_forceParams,
+                                                           gm_xq,
+                                                           gm_f,
+                                                           sm_fShiftLoc,
+                                                           kernelParams.pbcAiuc,
+                                                           threadIdx.x);
+                    break;
                 case InteractionFunction::LennardJones14:
                     pairs_gpu<calcVir, calcEner>(fTypeTid,
                                                  iatoms,
@@ -206,6 +252,7 @@ __global__ void bonded_kernel_gpu(BondedGpuKernelParameters kernelParams,
                                                  gm_f,
                                                  sm_fShiftLoc,
                                                  kernelParams.pbcAiuc,
+                                                 kernelParams.repulsionPower,
                                                  kernelParams.electrostaticsScaleFactor,
                                                  &vtot_loc,
                                                  &vtotElec_loc,

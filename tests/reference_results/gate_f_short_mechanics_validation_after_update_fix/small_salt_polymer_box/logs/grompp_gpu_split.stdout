@@ -1,0 +1,24 @@
+Setting the LD random seed to 627022656
+
+Generated 10 of the 10 non-bonded parameter combinations
+
+Generated 10 of the 10 1-4 parameter combinations
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Taking velocities from '/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro'
+Analysing residue names:
+There are:     3      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.436 nm between atom 2 and 5
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 32x32x32, spacing 0.075 0.075 0.075
+
+Estimate for the relative computational load of the PME mesh part: 0.99
+
+This run will generate roughly 0 Mb of data

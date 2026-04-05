@@ -148,6 +148,15 @@ auto leapFrogKernel(Float3* __restrict__ gm_x,
     };
 }
 
+class LeapFrogDriftOnlyKernel;
+
+auto leapFrogDriftOnlyKernel(Float3* __restrict__ gm_x,
+                             const Float3* __restrict__ gm_v,
+                             float dt)
+{
+    return [=](sycl::id<1> itemIdx) { gm_x[itemIdx] += gm_v[itemIdx] * dt; };
+}
+
 //! \brief Leap Frog SYCL kernel launch code.
 template<NumTempScaleValues numTempScaleValues, ParrinelloRahmanVelocityScaling parrinelloRahmanVelocityScaling, class... Args>
 static void launchLeapFrogKernel(const DeviceStream& deviceStream, int numAtoms, Args&&... args)
@@ -212,6 +221,22 @@ void launchLeapFrogKernel(int                                   numAtoms,
                          d_lambdas.get_pointer(),
                          d_tempScaleGroups.get_pointer(),
                          prVelocityScalingMatrixDiagonal);
+}
+
+void launchLeapFrogDriftOnlyKernel(int                  numAtoms,
+                                   DeviceBuffer<Float3> d_x,
+                                   DeviceBuffer<Float3> d_v,
+                                   float                dt,
+                                   const DeviceStream&  deviceStream)
+{
+    const sycl::range<1> rangeAllAtoms(numAtoms);
+    syclSubmitWithoutCghOrEvent<LeapFrogDriftOnlyKernel>(
+            deviceStream.stream(),
+            leapFrogDriftOnlyKernel,
+            rangeAllAtoms,
+            d_x.get_pointer(),
+            d_v.get_pointer(),
+            dt);
 }
 
 } // namespace gmx

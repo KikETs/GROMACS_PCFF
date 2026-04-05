@@ -41,6 +41,8 @@
 #include "gmxpre.h"
 
 #include <cassert>
+#include <cstdint>
+#include <cstdlib>
 
 #include "gromacs/gpu_utils/cuda_kernel_utils.cuh"
 #include "gromacs/gpu_utils/gputraits.cuh"
@@ -51,6 +53,51 @@
 #if GMX_NVSHMEM
 #    include <nvshmemx.h>
 #endif
+
+namespace
+{
+
+bool shouldTracePmeGatherPartials()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_GATHER_PARTIALS");
+    return enabled != nullptr && *enabled != '\0';
+}
+
+int readPmeGatherDebugEnvInt(const char* name, const int fallback)
+{
+    if (const char* value = std::getenv(name))
+    {
+        return std::atoi(value);
+    }
+    return fallback;
+}
+
+} // namespace
+
+__device__ __managed__ int64_t            g_pmeGatherDebugCurrentStep   = -1;
+__device__ __managed__ int                g_pmeGatherDebugTargetStep    = -1;
+__device__ __managed__ int                g_pmeGatherDebugTargetAtom    = -1;
+__device__ __managed__ unsigned long long g_pmeGatherDebugLaunchCounter = 0;
+
+void pme_gpu_prepare_gather_debug_launch(const int64_t step)
+{
+    if (!shouldTracePmeGatherPartials())
+    {
+        return;
+    }
+
+    static bool initialized = false;
+    if (!initialized)
+    {
+        g_pmeGatherDebugTargetStep = readPmeGatherDebugEnvInt(
+                "GMX_PCFF_RESPA_TRACE_PME_GATHER_PARTIALS_STEP", -1);
+        g_pmeGatherDebugTargetAtom = readPmeGatherDebugEnvInt(
+                "GMX_PCFF_RESPA_TRACE_PME_GATHER_PARTIALS_ATOM", -1);
+        initialized = true;
+    }
+
+    g_pmeGatherDebugCurrentStep = step;
+}
 
 /*! \brief
  * An inline CUDA function: unroll the dynamic index accesses to the constant grid sizes to avoid local memory operations.
@@ -65,6 +112,13 @@ __device__ __forceinline__ float read_grid_size(const float* realGridSizeFP, con
     }
     GMX_DEVICE_ASSERT(false);
     return 0.0F;
+}
+
+__device__ __forceinline__ bool shouldTracePmeGatherTargetAtom(const int atomIndexGlobal)
+{
+    return g_pmeGatherDebugTargetStep >= 0 && g_pmeGatherDebugTargetAtom >= 0
+           && g_pmeGatherDebugCurrentStep == g_pmeGatherDebugTargetStep
+           && atomIndexGlobal == g_pmeGatherDebugTargetAtom;
 }
 
 /*! \brief Reduce the partial force contributions.
@@ -261,7 +315,11 @@ __device__ __forceinline__ void sumForceComponents(float* __restrict__ fx,
                                                    const int* __restrict__ sm_gridlineIndices,
                                                    const float* __restrict__ sm_theta,
                                                    const float* __restrict__ sm_dtheta,
-                                                   const float* __restrict__ gm_grid)
+                                                   const float* __restrict__ gm_grid,
+                                                   const bool traceTargetAtom,
+                                                   const int atomIndexGlobal,
+                                                   const int threadLocalId,
+                                                   const unsigned long long debugLaunchIndex)
 {
 #pragma unroll
     for (int ithy = ithyMin; ithy < ithyMax; ithy++)
@@ -292,9 +350,44 @@ __device__ __forceinline__ void sumForceComponents(float* __restrict__ fx,
             const float2 tdx  = make_float2(sm_theta[splineIndexX], sm_dtheta[splineIndexX]);
             const float  fxy1 = sm_theta[splineIndexZ] * gridValue;
             const float  fz1  = sm_dtheta[splineIndexZ] * gridValue;
-            *fx += tdx.y * tdy.x * fxy1;
-            *fy += tdx.x * tdy.y * fxy1;
-            *fz += tdx.x * tdy.x * fz1;
+            const float addFx = tdx.y * tdy.x * fxy1;
+            const float addFy = tdx.x * tdy.y * fxy1;
+            const float addFz = tdx.x * tdy.x * fz1;
+            *fx += addFx;
+            *fy += addFy;
+            *fz += addFz;
+            if (traceTargetAtom)
+            {
+                printf("PME_GATHER_DEBUG step=%lld launch=%llu stage=contrib atom=%d threadLocalId=%d "
+                       "ithx=%d ithy=%d ix=%d iy=%d iz=%d gridIndex=%d "
+                       "grid_bits=%08x thetaX_bits=%08x dthetaX_bits=%08x "
+                       "thetaY_bits=%08x dthetaY_bits=%08x thetaZ_bits=%08x dthetaZ_bits=%08x "
+                       "addFx_bits=%08x addFy_bits=%08x addFz_bits=%08x "
+                       "accFx_bits=%08x accFy_bits=%08x accFz_bits=%08x\n",
+                       static_cast<long long>(g_pmeGatherDebugCurrentStep),
+                       debugLaunchIndex,
+                       atomIndexGlobal,
+                       threadLocalId,
+                       ithx,
+                       ithy,
+                       ix,
+                       iy,
+                       iz,
+                       gridIndexGlobal,
+                       __float_as_uint(gridValue),
+                       __float_as_uint(tdx.x),
+                       __float_as_uint(tdx.y),
+                       __float_as_uint(tdy.x),
+                       __float_as_uint(tdy.y),
+                       __float_as_uint(sm_theta[splineIndexZ]),
+                       __float_as_uint(sm_dtheta[splineIndexZ]),
+                       __float_as_uint(addFx),
+                       __float_as_uint(addFy),
+                       __float_as_uint(addFz),
+                       __float_as_uint(*fx),
+                       __float_as_uint(*fy),
+                       __float_as_uint(*fz));
+            }
         }
     }
 }
@@ -461,6 +554,12 @@ __launch_bounds__(c_gatherMaxThreadsPerBlock, c_gatherMinBlocksPerMP) __global__
         void pme_gather_kernel(const PmeGpuKernelParams kernelParams)
 {
     GMX_DEVICE_ASSERT(numGrids == 1 || numGrids == 2);
+    __shared__ unsigned long long debugLaunchIndex;
+    if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0)
+    {
+        debugLaunchIndex = atomicAdd(&g_pmeGatherDebugLaunchCounter, 1ULL);
+    }
+    __syncthreads();
 
     /* Global memory pointers */
     const float* __restrict__ gm_coefficientsA = kernelParams.atoms.d_coefficients[0];
@@ -492,6 +591,7 @@ __launch_bounds__(c_gatherMaxThreadsPerBlock, c_gatherMinBlocksPerMP) __global__
     const int atomIndexLocal  = threadIdx.z;
     const int atomIndexOffset = blockIndex * atomsPerBlock;
     const int atomIndexGlobal = atomIndexOffset + atomIndexLocal;
+    const bool traceTargetAtom = shouldTracePmeGatherTargetAtom(atomIndexGlobal);
 
     /* Early return for fully empty blocks at the end
      * (should only happen for billions of input atoms)
@@ -626,13 +726,47 @@ __launch_bounds__(c_gatherMaxThreadsPerBlock, c_gatherMinBlocksPerMP) __global__
                                                               sm_gridlineIndices,
                                                               sm_theta,
                                                               sm_dtheta,
-                                                              gm_gridA);
+                                                              gm_gridA,
+                                                              traceTargetAtom,
+                                                              atomIndexGlobal,
+                                                              threadLocalId,
+                                                              debugLaunchIndex);
+    }
+    if (traceTargetAtom)
+    {
+        printf("PME_GATHER_DEBUG step=%lld launch=%llu stage=post_sum atom=%d atomLocal=%d "
+               "threadLocalId=%d splineIndex=%d ixBase=%d iz=%d fx_bits=%08x fy_bits=%08x "
+               "fz_bits=%08x\n",
+               static_cast<long long>(g_pmeGatherDebugCurrentStep),
+               debugLaunchIndex,
+               atomIndexGlobal,
+               atomIndexLocal,
+               threadLocalId,
+               splineIndex,
+               ixBase,
+               iz,
+               __float_as_uint(fx),
+               __float_as_uint(fy),
+               __float_as_uint(fz));
     }
     // Reduction of partial force contributions
     __shared__ float3 sm_forces[atomsPerBlock];
     reduce_atom_forces<order, atomDataSize, blockSize>(
             sm_forces, atomIndexLocal, splineIndex, lineIndex, kernelParams.grid.realGridSizeFP, fx, fy, fz);
     __syncthreads();
+    if (traceTargetAtom && threadIdx.x == 0 && threadIdx.y == 0)
+    {
+        const float3 reducedForce = sm_forces[atomIndexLocal];
+        printf("PME_GATHER_DEBUG step=%lld launch=%llu stage=post_reduce atom=%d atomLocal=%d "
+               "fx_bits=%08x fy_bits=%08x fz_bits=%08x\n",
+               static_cast<long long>(g_pmeGatherDebugCurrentStep),
+               debugLaunchIndex,
+               atomIndexGlobal,
+               atomIndexLocal,
+               __float_as_uint(reducedForce.x),
+               __float_as_uint(reducedForce.y),
+               __float_as_uint(reducedForce.z));
+    }
 
     /* Calculating the final forces with no component branching, atomsPerBlock threads */
     const int   forceIndexLocal  = threadLocalId;
@@ -642,6 +776,21 @@ __launch_bounds__(c_gatherMaxThreadsPerBlock, c_gatherMinBlocksPerMP) __global__
     {
         calculateAndStoreGridForces(
                 sm_forces, forceIndexLocal, forceIndexGlobal, kernelParams.current.recipBox, scale, gm_coefficientsA);
+        if (forceIndexGlobal == g_pmeGatherDebugTargetAtom)
+        {
+            const float3 storedForce = sm_forces[forceIndexLocal];
+            printf("PME_GATHER_DEBUG step=%lld launch=%llu stage=post_store atom=%d forceIndexLocal=%d "
+                   "scale_bits=%08x coeff_bits=%08x fx_bits=%08x fy_bits=%08x fz_bits=%08x\n",
+                   static_cast<long long>(g_pmeGatherDebugCurrentStep),
+                   debugLaunchIndex,
+                   forceIndexGlobal,
+                   forceIndexLocal,
+                   __float_as_uint(scale),
+                   __float_as_uint(gm_coefficientsA[forceIndexGlobal]),
+                   __float_as_uint(storedForce.x),
+                   __float_as_uint(storedForce.y),
+                   __float_as_uint(storedForce.z));
+        }
     }
 
     __syncwarp();
@@ -683,7 +832,11 @@ __launch_bounds__(c_gatherMaxThreadsPerBlock, c_gatherMinBlocksPerMP) __global__
                                                                   sm_gridlineIndices,
                                                                   sm_theta,
                                                                   sm_dtheta,
-                                                                  gm_gridB);
+                                                                  gm_gridB,
+                                                                  traceTargetAtom,
+                                                                  atomIndexGlobal,
+                                                                  threadLocalId,
+                                                                  debugLaunchIndex);
         }
         // Reduction of partial force contributions
         reduce_atom_forces<order, atomDataSize, blockSize>(sm_forces_numGrids2,

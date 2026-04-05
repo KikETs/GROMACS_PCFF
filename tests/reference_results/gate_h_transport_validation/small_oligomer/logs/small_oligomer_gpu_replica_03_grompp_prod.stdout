@@ -1,0 +1,28 @@
+Setting the LD random seed to -435590359
+
+Generated 3 of the 3 non-bonded parameter combinations
+
+Generated 3 of the 3 1-4 parameter combinations
+
+Excluding 3 bonded neighbours molecule type 'OLI'
+
+Taking velocities from '/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_03/gpu/equil.gro'
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.339 nm between atom 2 and 5
+
+Reading Coordinates, Velocities and Box size from old trajectory
+
+Will read whole trajectory
+
+Using frame at t = 200 ps
+
+Starting time for run is 0 ps
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 25x25x25, spacing 0.080 0.080 0.080
+
+Estimate for the relative computational load of the PME mesh part: 0.99
+
+This run will generate roughly 2 Mb of data

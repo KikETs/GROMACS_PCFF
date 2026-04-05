@@ -1,0 +1,69 @@
+{
+  "analysis_settings": {
+    "estimator": "gmx msd -mol on the all-oligomer atom group, split into molecules by topology.",
+    "fit_window_ratio": [
+      0.1,
+      0.9
+    ],
+    "r_squared_threshold": 0.98,
+    "relative_uncertainty_threshold": 0.5
+  },
+  "comparison": {
+    "available": true,
+    "classification": "stochastic",
+    "combined_uncertainty": 1.1366514538186129e-05,
+    "cpu_mean": 0.00011545650000000001,
+    "cpu_uncertainty": 1.0800000000000002e-05,
+    "gpu_mean": 0.000113118,
+    "gpu_uncertainty": 3.54367785595652e-06,
+    "mean_diff": -2.3385000000000116e-06,
+    "passes": true,
+    "replica_diffs": [
+      -4.102000000000023e-06,
+      -5.750000000000004e-07
+    ]
+  },
+  "full_gate_h_status": "FAIL",
+  "limitations": [
+    "This manifest does not close charged transport, conductivity, or cNE.",
+    "This manifest does not override the official full Gate H FAIL/NO-GO result.",
+    "This manifest is limited to the large-neutral scaffold and molecule-wise MSD/diffusivity only."
+  ],
+  "observable": "oligomer_diffusivity_cm2_s",
+  "overall_transport_production_recommendation": "NO-GO",
+  "run_settings": {
+    "coord_stride_ps": 0.5,
+    "cpu_shape": "nb cpu / bonded cpu / pme cpu / update cpu",
+    "dlb": "no",
+    "energy_stride_ps": 1.0,
+    "equil_ps": 10.0,
+    "gpu_shape": "nb gpu / bonded gpu / pme gpu / update gpu",
+    "maxtau_ps": 50.0,
+    "ntmpi": 1,
+    "ntomp": 1,
+    "prod_ps": 100.0,
+    "replicas": 2,
+    "tau_t_ps": 0.5,
+    "temperature_k": 300.0,
+    "trestart_ps": 2.0
+  },
+  "scaffold": {
+    "box_nm": [
+      4.4,
+      4.4,
+      4.4
+    ],
+    "derived_system": "gate_h_dense_oligomer_2x2x2",
+    "natoms": 3072
+  },
+  "schema_version": 1,
+  "scope": "Official Gate H-neutral only: large-neutral scaffold self-diffusion on the standalone exact r-RESPA full-GPU path.",
+  "scope_limited_recommendation": "GO",
+  "source_artifacts": {
+    "entry_result": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/summaries/entry_result.json",
+    "pilot_result": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/summaries/pilot_result.json",
+    "pilot_transport_table": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/summaries/transport_comparison.tsv",
+    "scaffold_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/fixture_manifest.json"
+  },
+  "status": "PASS"
+}

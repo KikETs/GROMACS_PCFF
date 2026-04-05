@@ -79,7 +79,12 @@
 #include <algorithm>
 #include <array>
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <list>
+#include <mutex>
+#include <sstream>
+#include <string>
 #include <tuple>
 #include <utility>
 
@@ -118,6 +123,351 @@
 #include "gromacs/utility/gmxassert.h"
 #include "gromacs/utility/gmxmpi.h"
 #include "gromacs/utility/gmxomp.h"
+
+namespace gmx
+{
+extern thread_local int64_t g_respaCurrentDoForceStep;
+}
+
+namespace
+{
+
+const char* activeRespaTraceDirPath()
+{
+    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
+}
+
+bool shouldTracePmeComplexGrid()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_COMPLEX_GRID");
+    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+}
+
+bool shouldTracePmeRealGrid()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_REAL_GRID");
+    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+}
+
+bool shouldTracePmeFftRealGrid()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_FFT_REAL_GRID");
+    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+}
+
+bool shouldTracePmePreFftRealGrid()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_PRE_FFT_REAL_GRID");
+    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+}
+
+int targetPmeComplexGridTraceStep()
+{
+    static const int step = []()
+    {
+        if (const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_COMPLEX_GRID_STEP"))
+        {
+            return std::atoi(value);
+        }
+        return -1;
+    }();
+    return step;
+}
+
+int targetPmeRealGridTraceStep()
+{
+    static const int step = []()
+    {
+        if (const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_REAL_GRID_STEP"))
+        {
+            return std::atoi(value);
+        }
+        return -1;
+    }();
+    return step;
+}
+
+int targetPmeFftRealGridTraceStep()
+{
+    static const int step = []()
+    {
+        if (const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_FFT_REAL_GRID_STEP"))
+        {
+            return std::atoi(value);
+        }
+        return -1;
+    }();
+    return step;
+}
+
+int targetPmePreFftRealGridTraceStep()
+{
+    static const int step = []()
+    {
+        if (const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_PRE_FFT_REAL_GRID_STEP"))
+        {
+            return std::atoi(value);
+        }
+        return -1;
+    }();
+    return step;
+}
+
+bool shouldTraceCurrentPmeComplexGridStep()
+{
+    return shouldTracePmeComplexGrid() && gmx::g_respaCurrentDoForceStep == targetPmeComplexGridTraceStep();
+}
+
+bool shouldTraceCurrentPmeRealGridStep()
+{
+    return shouldTracePmeRealGrid() && gmx::g_respaCurrentDoForceStep == targetPmeRealGridTraceStep();
+}
+
+bool shouldTraceCurrentPmeFftRealGridStep()
+{
+    return shouldTracePmeFftRealGrid()
+           && gmx::g_respaCurrentDoForceStep == targetPmeFftRealGridTraceStep();
+}
+
+bool shouldTraceCurrentPmePreFftRealGridStep()
+{
+    return shouldTracePmePreFftRealGrid()
+           && gmx::g_respaCurrentDoForceStep == targetPmePreFftRealGridTraceStep();
+}
+
+void appendCpuPmeComplexGridTrace(gmx_parallel_3dfft_t pfft_setup, const t_complex* cfftgrid)
+{
+    if (!shouldTraceCurrentPmeComplexGridStep())
+    {
+        return;
+    }
+
+    ivec complexOrder, localNData, localOffset, localSize;
+    gmx_parallel_3dfft_complex_limits(pfft_setup, complexOrder, localNData, localOffset, localSize);
+
+    const char* traceDirPath = activeRespaTraceDirPath();
+    if (traceDirPath == nullptr)
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath =
+            std::filesystem::path(traceDirPath) / "cpu_pme_complex_grid_trace.tsv";
+    static std::string clearedTracePath;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+    }
+
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << std::setprecision(17);
+    for (int ix = 0; ix < localNData[XX]; ix++)
+    {
+        for (int iy = 0; iy < localNData[YY]; iy++)
+        {
+            const int baseIndex = (ix * localSize[YY] + iy) * localSize[ZZ];
+            for (int iz = 0; iz < localNData[ZZ]; iz++)
+            {
+                const int       index = baseIndex + iz;
+                const t_complex value = cfftgrid[index];
+                stream << "step=" << gmx::g_respaCurrentDoForceStep << " ix=" << (localOffset[XX] + ix)
+                       << " iy=" << (localOffset[YY] + iy) << " iz=" << (localOffset[ZZ] + iz)
+                       << " re=" << value.re << " im=" << value.im << '\n';
+            }
+        }
+    }
+}
+
+void appendCpuPmeComplexGridPreSolveTrace(gmx_parallel_3dfft_t pfft_setup, const t_complex* cfftgrid)
+{
+    if (!shouldTraceCurrentPmeComplexGridStep())
+    {
+        return;
+    }
+
+    ivec complexOrder, localNData, localOffset, localSize;
+    gmx_parallel_3dfft_complex_limits(pfft_setup, complexOrder, localNData, localOffset, localSize);
+
+    const char* traceDirPath = activeRespaTraceDirPath();
+    if (traceDirPath == nullptr)
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath =
+            std::filesystem::path(traceDirPath) / "cpu_pme_complex_grid_pre_solve_trace.tsv";
+    static std::string clearedTracePath;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+    }
+
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << std::setprecision(17);
+    for (int ix = 0; ix < localNData[XX]; ix++)
+    {
+        for (int iy = 0; iy < localNData[YY]; iy++)
+        {
+            const int baseIndex = (ix * localSize[YY] + iy) * localSize[ZZ];
+            for (int iz = 0; iz < localNData[ZZ]; iz++)
+            {
+                const int       index = baseIndex + iz;
+                const t_complex value = cfftgrid[index];
+                stream << "step=" << gmx::g_respaCurrentDoForceStep << " ix=" << (localOffset[XX] + ix)
+                       << " iy=" << (localOffset[YY] + iy) << " iz=" << (localOffset[ZZ] + iz)
+                       << " re=" << value.re << " im=" << value.im << '\n';
+            }
+        }
+    }
+}
+
+void appendCpuPmeRealGridTrace(gmx::ArrayRef<const real> grid, int nx, int ny, int nz)
+{
+    if (!shouldTraceCurrentPmeRealGridStep())
+    {
+        return;
+    }
+
+    const char* traceDirPath = activeRespaTraceDirPath();
+    if (traceDirPath == nullptr)
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath = std::filesystem::path(traceDirPath) / "cpu_pme_real_grid_trace.tsv";
+    static std::string          clearedTracePath;
+    static int                  nextCallIndex = 0;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+        nextCallIndex    = 0;
+    }
+
+    const int callIndex = nextCallIndex++;
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << std::setprecision(17);
+    for (int ix = 0; ix < nx; ix++)
+    {
+        for (int iy = 0; iy < ny; iy++)
+        {
+            const int baseIndex = (ix * ny + iy) * nz;
+            for (int iz = 0; iz < nz; iz++)
+            {
+                stream << "call_index=" << callIndex << " step=" << gmx::g_respaCurrentDoForceStep
+                       << " ix=" << ix << " iy=" << iy << " iz=" << iz << " value="
+                       << grid[baseIndex + iz] << '\n';
+            }
+        }
+    }
+}
+
+void appendCpuPmeFftRealGridTrace(gmx_parallel_3dfft_t pfft_setup, const real* fftgrid)
+{
+    if (!shouldTraceCurrentPmeFftRealGridStep())
+    {
+        return;
+    }
+
+    ivec localFftNData, localFftOffset, localFftSize;
+    gmx_parallel_3dfft_real_limits(pfft_setup, localFftNData, localFftOffset, localFftSize);
+
+    const char* traceDirPath = activeRespaTraceDirPath();
+    if (traceDirPath == nullptr)
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath =
+            std::filesystem::path(traceDirPath) / "cpu_pme_fft_real_grid_trace.tsv";
+    static std::string clearedTracePath;
+    static int         nextCallIndex = 0;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+        nextCallIndex    = 0;
+    }
+
+    const int callIndex = nextCallIndex++;
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << std::setprecision(17);
+    for (int ix = 0; ix < localFftNData[XX]; ix++)
+    {
+        for (int iy = 0; iy < localFftNData[YY]; iy++)
+        {
+            const int baseIndex = (ix * localFftSize[YY] + iy) * localFftSize[ZZ];
+            for (int iz = 0; iz < localFftNData[ZZ]; iz++)
+            {
+                stream << "call_index=" << callIndex << " step=" << gmx::g_respaCurrentDoForceStep
+                       << " ix=" << (localFftOffset[XX] + ix) << " iy=" << (localFftOffset[YY] + iy)
+                       << " iz=" << (localFftOffset[ZZ] + iz) << " value=" << fftgrid[baseIndex + iz]
+                       << '\n';
+            }
+        }
+    }
+}
+
+void appendCpuPmePreFftRealGridTrace(gmx_parallel_3dfft_t pfft_setup, const real* fftgrid)
+{
+    if (!shouldTraceCurrentPmePreFftRealGridStep())
+    {
+        return;
+    }
+
+    ivec localFftNData, localFftOffset, localFftSize;
+    gmx_parallel_3dfft_real_limits(pfft_setup, localFftNData, localFftOffset, localFftSize);
+
+    const char* traceDirPath = activeRespaTraceDirPath();
+    if (traceDirPath == nullptr)
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath =
+            std::filesystem::path(traceDirPath) / "cpu_pme_real_grid_pre_fft_trace.tsv";
+    static std::string clearedTracePath;
+    static int         nextCallIndex = 0;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+        nextCallIndex    = 0;
+    }
+
+    const int callIndex = nextCallIndex++;
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << std::setprecision(17);
+    for (int ix = 0; ix < localFftNData[XX]; ix++)
+    {
+        for (int iy = 0; iy < localFftNData[YY]; iy++)
+        {
+            const int baseIndex = (ix * localFftSize[YY] + iy) * localFftSize[ZZ];
+            for (int iz = 0; iz < localFftNData[ZZ]; iz++)
+            {
+                stream << "call_index=" << callIndex << " step=" << gmx::g_respaCurrentDoForceStep
+                       << " ix=" << (localFftOffset[XX] + ix) << " iy=" << (localFftOffset[YY] + iy)
+                       << " iz=" << (localFftOffset[ZZ] + iz) << " value=" << fftgrid[baseIndex + iz]
+                       << '\n';
+            }
+        }
+    }
+}
+
+} // namespace
 #include "gromacs/utility/logger.h"
 #include "gromacs/utility/message_string_collector.h"
 #include "gromacs/utility/real.h"
@@ -1327,12 +1677,22 @@ int gmx_pme_do(struct gmx_pme_t*              pme,
                 /* do 3d-fft */
                 if (thread == 0)
                 {
+                    if (gridsRef.isCoulomb && shouldTraceCurrentPmePreFftRealGridStep())
+                    {
+                        appendCpuPmePreFftRealGridTrace(pfft_setup, gridsRef.grids.fftgrid);
+                    }
+
                     wallcycle_start(wcycle, WallCycleCounter::PmeFft);
                 }
                 gmx_parallel_3dfft_execute(pfft_setup, GMX_FFT_REAL_TO_COMPLEX, thread, wcycle);
                 if (thread == 0)
                 {
                     wallcycle_stop(wcycle, WallCycleCounter::PmeFft);
+
+                    if (gridsRef.isCoulomb && shouldTraceCurrentPmeComplexGridStep())
+                    {
+                        appendCpuPmeComplexGridPreSolveTrace(pfft_setup, cfftgrid);
+                    }
                 }
 
                 /* solve in k-space for our local cells */
@@ -1371,6 +1731,16 @@ int gmx_pme_do(struct gmx_pme_t*              pme,
                     inc_nrnb(nrnb, eNR_SOLVEPME, loop_count);
                 }
 
+                if (gridsRef.isCoulomb && shouldTraceCurrentPmeComplexGridStep())
+                {
+#pragma omp barrier
+                    if (thread == 0)
+                    {
+                        appendCpuPmeComplexGridTrace(pfft_setup, cfftgrid);
+                    }
+#pragma omp barrier
+                }
+
                 /* do 3d-invfft */
                 if (thread == 0)
                 {
@@ -1379,6 +1749,11 @@ int gmx_pme_do(struct gmx_pme_t*              pme,
                 gmx_parallel_3dfft_execute(pfft_setup, GMX_FFT_COMPLEX_TO_REAL, thread, wcycle);
                 if (thread == 0)
                 {
+                    if (gridsRef.isCoulomb && shouldTraceCurrentPmeFftRealGridStep())
+                    {
+                        appendCpuPmeFftRealGridTrace(pfft_setup, gridsRef.grids.fftgrid);
+                    }
+
                     wallcycle_stop(wcycle, WallCycleCounter::PmeFft);
 
 
@@ -1410,6 +1785,11 @@ int gmx_pme_do(struct gmx_pme_t*              pme,
         }
 
         unwrap_periodic_pmegrid(pme, grid);
+
+        if (gridsRef.isCoulomb && shouldTraceCurrentPmeRealGridStep())
+        {
+            appendCpuPmeRealGridTrace(grid, pme->pmegrid_nx, pme->pmegrid_ny, pme->pmegrid_nz);
+        }
 
         if (stepWork.computeForces)
         {

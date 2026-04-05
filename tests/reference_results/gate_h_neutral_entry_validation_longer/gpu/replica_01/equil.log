@@ -1,0 +1,1121 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Copyright 1991-2027 The GROMACS Authors.
+GROMACS is free software; you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1
+of the License, or (at your option) any later version.
+
+                         Current GROMACS contributors:
+       Mark Abraham           Andrey Alekseenko           Brian Andrews       
+        Paul Bauer              Cathrine Bergh              Hugh Bird         
+      Eliane Briand               Ania Brown                Yiqi Chen         
+      Mahesh Doijade            Giacomo Fiorin          Stefan Fleischmann    
+      Sergey Gorelov         Gilles Gouaillardet            Alan Gray         
+   Farzaneh Jalalypour         Petter Johansson          Carsten Kutzner      
+    Grzegorz Łazarski         Justin A. Lemkul          Magnus Lundborg      
+        Julio Maia               Pascal Merz             Vedran Miletić      
+      Dmitry Morozov           Lukas Müllender           Szilárd Páll      
+ Andrea Pasquadibisceglie     Michele Pellegrino         Nicola Piasentin     
+     Daniele Rapetti         Muhammad Umair Sadiq         Hubert Santuz       
+      Michael Shirts           Tatiana Shugaeva          Alexey Shvetsov      
+     Bálint Soproni            Philip Turner            Alessandra Villa     
+        Yang Zhang        
+
+                         Previous GROMACS contributors:
+        Emile Apol             Rossen Apostolov           James Barnett       
+      Vladimir Basov        Herman J.C. Berendsen         Pär Bjelkmar       
+      Christian Blau          Viacheslav Bolnykh            Kevin Boyd        
+    Aldert van Buuren          Carlo Camilloni           Rudi van Drunen      
+      Anton Feenstra           Oliver Fleetwood            Vytas Gapsys       
+       Gaurav Garg             Gerrit Groenhof            Bert de Groot       
+      Anca Hamuraru           Vincent Hindriksen          Victor Holanda      
+     M. Eric Irrgang           Aleksei Iupinov              Joe Jordan        
+    Christoph Junghans        Prashanth Kanduri        Dimitrios Karkoulis    
+       Peter Kasson             Sebastian Kehl           Sebastian Keller     
+        Jiri Kraus               Per Larsson              Viveca Lindahl      
+      Erik Marklund           Pieter Meulenhoff           Teemu Murtola       
+       Julien Nabet              Sander Pronk             Roland Schulz       
+      Alfons Sijbers         David van der Spoel          Peter Tieleman      
+      Carsten Uphoff             Jon Vincent             Teemu Virolainen     
+    Christian Wennberg     Sebastian Wingbermühle         Maarten Wolf       
+      Artem Zhmurov       
+
+                  Coordinated by the GROMACS project leaders:
+                           Berk Hess and Erik Lindahl
+
+GROMACS:      gmx mdrun, version 2027.0-dev-20260329-1811cfe56e-dirty-unknown
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
+Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Process ID:   285491
+Command line:
+  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_01/equil.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_01/equil -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme gpu -bonded gpu -update gpu -pin off
+
+GROMACS version:     2027.0-dev-20260329-1811cfe56e-dirty-unknown
+GIT SHA1 hash:       1811cfe56e5b4eaa9dc80a68ea138318fec38459 (dirty)
+Branched from:       unknown
+Precision:           mixed
+Memory model:        64 bit
+MPI library:         thread_mpi
+MPI version:         built in
+OpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)
+GPU support:         CUDA
+NBNxM GPU setup:     super-cluster 2x2x2 / cluster 8 (cluster-pair splitting on)
+SIMD instructions:   AVX_512
+CPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512
+GPU FFT library:     cuFFT
+Multi-GPU FFT:       none
+RDTSCP:              enabled
+TNG support:         enabled
+Hwloc support:       disabled
+Tracing support:     disabled
+Colvars support:     enabled (version 2025-10-13)
+CP2K support:        disabled
+Torch support:       disabled
+Plumed support:      enabled
+C compiler:          /usr/bin/cc GNU 13.3.0
+C compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG
+C++ compiler:        /usr/bin/c++ GNU 13.3.0
+C++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG
+BLAS library:        Internal
+LAPACK library:      Internal
+CUDA compiler:       /usr/local/cuda-12.8/bin/nvcc (NVIDIA 12.8.93)
+CUDA compiler flags:  -O2 -g -DNDEBUG -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -O2 -g -DNDEBUG
+CUDA targets:        50;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;100-real;120
+CUDA driver:         12.80
+CUDA runtime:        12.80
+NVSHMEM:             disabled
+
+
+Running on 1 node with total 12 cores, 24 processing units, 1 compatible GPU
+Hardware detected on host KikET:
+  CPU info:
+    Vendor: AMD
+    Brand:  AMD Ryzen 9 9900X 12-Core Processor            
+    Family: 26   Model: 68   Stepping: 0
+    Features: aes amd apic avx avx2 avx512f avx512cd avx512bw avx512vl avx512bf16 avx512secondFMA clfsh cmov cx8 cx16 f16c fma htt lahf misalignsse mmx msr nonstop_tsc pclmuldq pdpe1gb popcnt pse rdrnd rdtscp sha sse2 sse3 sse4a sse4.1 sse4.2 ssse3
+  Hardware topology: Basic
+    Packages, cores, and logical processors:
+    [indices refer to OS logical processors]
+      Package  0: [   0  12] [   1  13] [   2  14] [   3  15] [   4  16] [   5  17] [   6  18] [   7  19] [   8  20] [   9  21] [  10  22] [  11  23]
+    CPU limit set by OS: -1   Recommended max number of threads: 24
+  GPU info:
+    Number of GPUs detected: 1
+    #0: NVIDIA NVIDIA GeForce RTX 5070 Ti, compute cap.: 12.0, ECC:  no, stat: compatible
+
+
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+M. J. Abraham, T. Murtola, R. Schulz, S. Páll, J. C. Smith, B. Hess, E.
+Lindahl
+GROMACS: High performance molecular simulations through multi-level
+parallelism from laptops to supercomputers
+SoftwareX (2015)
+https://doi.org/10.1016/j.softx.2015.06.001
+-------- -------- --- Thank You --- -------- --------
+
+
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+S. Páll, M. J. Abraham, C. Kutzner, B. Hess, E. Lindahl
+Tackling Exascale Software Challenges in Molecular Dynamics Simulations with
+GROMACS
+In S. Markidis & E. Laure (Eds.), Solving Software Challenges for Exascale (2015)
+https://doi.org/10.1007/978-3-319-15976-8_1
+-------- -------- --- Thank You --- -------- --------
+
+
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+S. Pronk, S. Páll, R. Schulz, P. Larsson, P. Bjelkmar, R. Apostolov, M. R.
+Shirts, J. C. Smith, P. M. Kasson, D. van der Spoel, B. Hess, E. Lindahl
+GROMACS 4.5: a high-throughput and highly parallel open source molecular
+simulation toolkit
+Bioinformatics (2013)
+https://doi.org/10.1093/bioinformatics/btt055
+-------- -------- --- Thank You --- -------- --------
+
+
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+B. Hess, C. Kutzner, D. van der Spoel, E. Lindahl
+GROMACS 4: Algorithms for highly efficient, load-balanced, and scalable
+molecular simulation
+J. Chem. Theory Comput. (2008)
+https://doi.org/10.1021/ct700301q
+-------- -------- --- Thank You --- -------- --------
+
+
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+D. van der Spoel, E. Lindahl, B. Hess, G. Groenhof, A. E. Mark, H. J. C.
+Berendsen
+GROMACS: Fast, Flexible and Free
+J. Comp. Chem. (2005)
+https://doi.org/10.1002/jcc.20291
+-------- -------- --- Thank You --- -------- --------
+
+
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+E. Lindahl, B. Hess, D. van der Spoel
+GROMACS 3.0: A package for molecular simulation and trajectory analysis
+J. Mol. Mod. (2001)
+https://doi.org/10.1007/s008940100045
+-------- -------- --- Thank You --- -------- --------
+
+
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+H. J. C. Berendsen, D. van der Spoel and R. van Drunen
+GROMACS: A message-passing parallel molecular dynamics implementation
+Comp. Phys. Comm. (1995)
+https://doi.org/10.1016/0010-4655(95)00042-E
+-------- -------- --- Thank You --- -------- --------
+
+
+The number of OpenMP threads was set by environment variable OMP_NUM_THREADS to 1 (and the command-line setting agreed with that)
+
+Input Parameters:
+   integrator                     = md-vv
+   tinit                          = 0
+   dt                             = 0.0005
+   nsteps                         = 10000
+   init-step                      = 0
+   simulation-part                = 1
+   mts                            = false
+   exact-respa                    = true
+   exact-respa-levels             = 3
+   exact-respa-level1-factor      = 1
+   exact-respa-level2-factor      = 2
+   exact-respa-level3-factor      = 4
+   exact-respa-bond-level         = 1
+   exact-respa-angle-level        = 1
+   exact-respa-dihedral-level     = 1
+   exact-respa-improper-level     = 1
+   exact-respa-pair14-level       = 1
+   exact-respa-pair-level         = 3
+   exact-respa-kspace-level       = 3
+   exact-respa-inner-level        = 1
+   exact-respa-middle-level       = 2
+   exact-respa-outer-level        = 3
+   exact-respa-inner-off          = 0.3
+   exact-respa-inner-on           = 0.45
+   exact-respa-outer-on           = 0.6
+   exact-respa-outer-off          = 0.8
+   mass-repartition-factor        = 1
+   comm-mode                      = None
+   nstcomm                        = 0
+   bd-fric                        = 0
+   ld-seed                        = 875274856
+   emtol                          = 10
+   emstep                         = 0.01
+   niter                          = 20
+   fcstep                         = 0
+   nstcgsteep                     = 1000
+   nbfgscorr                      = 10
+   rtpi                           = 0.05
+   nstxout                        = 0
+   nstvout                        = 0
+   nstfout                        = 0
+   nstlog                         = 200
+   nstcalcenergy                  = 200
+   nstenergy                      = 200
+   nstxout-compressed             = 0
+   compressed-x-precision         = 1000
+   cutoff-scheme                  = Verlet
+   nstlist                        = 4
+   pbc                            = xyz
+   periodic-molecules             = false
+   verlet-buffer-tolerance        = -1
+   verlet-buffer-pressure-tolerance = -1
+   rlist                          = 0.99
+   coulombtype                    = PME
+   coulomb-modifier               = None
+   rcoulomb-switch                = 0
+   rcoulomb                       = 0.9
+   epsilon-r                      = 1
+   epsilon-rf                     = inf
+   vdw-type                       = Cut-off
+   vdw-modifier                   = None
+   rvdw-switch                    = 0
+   rvdw                           = 0.9
+   DispCorr                       = No
+   table-extension                = 1
+   fourierspacing                 = 0.08
+   fourier-nx                     = 56
+   fourier-ny                     = 56
+   fourier-nz                     = 56
+   pme-order                      = 4
+   ewald-rtol                     = 1e-06
+   ewald-rtol-lj                  = 0.001
+   lj-pme-comb-rule               = Geometric
+   ewald-geometry                 = 3d
+   epsilon-surface                = 0
+   ensemble-temperature-setting   = constant
+   ensemble-temperature           = 300
+   tcoupl                         = V-rescale
+   nsttcouple                     = 4
+   nh-chain-length                = 0
+   print-nose-hoover-chain-variables = false
+   pcoupl                         = No
+   refcoord-scaling               = No
+   posres-com: not available
+   posres-comB: not available
+   QMMM                           = false
+qm-opts:
+   ngQM                           = 0
+   constraint-algorithm           = Lincs
+   continuation                   = false
+   Shake-SOR                      = false
+   shake-tol                      = 0.0001
+   lincs-order                    = 4
+   lincs-iter                     = 1
+   lincs-warnangle                = 30
+   nwall                          = 0
+   wall-type                      = 9-3
+   wall-r-linpot                  = -1
+   wall-atomtype[0]               = -1
+   wall-atomtype[1]               = -1
+   wall-density[0]                = 0
+   wall-density[1]                = 0
+   wall-ewald-zfac                = 3
+   pull                           = false
+   awh                            = false
+   rotation                       = false
+   interactiveMD                  = false
+   disre                          = No
+   disre-weighting                = Conservative
+   disre-mixed                    = false
+   dr-fc                          = 1000
+   dr-tau                         = 0
+   nstdisreout                    = 100
+   orire-fc                       = 0
+   orire-tau                      = 0
+   nstorireout                    = 100
+   free-energy                    = no
+   cos-acceleration               = 0
+   deform (3x3):
+      deform[    0]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+      deform[    1]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+      deform[    2]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   simulated-tempering            = false
+   swapcoords                     = no
+   userint1                       = 0
+   userint2                       = 0
+   userint3                       = 0
+   userint4                       = 0
+   userreal1                      = 0
+   userreal2                      = 0
+   userreal3                      = 0
+   userreal4                      = 0
+   applied-forces:
+     electric-field:
+       x:
+         E0                       = 0
+         omega                    = 0
+         t0                       = 0
+         sigma                    = 0
+       y:
+         E0                       = 0
+         omega                    = 0
+         t0                       = 0
+         sigma                    = 0
+       z:
+         E0                       = 0
+         omega                    = 0
+         t0                       = 0
+         sigma                    = 0
+     density-guided-simulation:
+       active                     = false
+       group                      = protein
+       similarity-measure         = inner-product
+       atom-spreading-weight      = unity
+       force-constant             = 1e+09
+       gaussian-transform-spreading-width = 0.2
+       gaussian-transform-spreading-range-in-multiples-of-width = 4
+       reference-density-filename = reference.mrc
+       nst                        = 1
+       normalize-densities        = true
+       adaptive-force-scaling     = false
+       adaptive-force-scaling-time-constant = 4
+       shift-vector               = 
+       transformation-matrix      = 
+     qmmm-cp2k:
+       active                     = false
+       qmgroup                    = System
+       qmmethod                   = PBE
+       qmfilenames                = 
+       qmcharge                   = 0
+       qmmultiplicity             = 1
+     colvars:
+       active                     = false
+       configfile                 = 
+       seed                       = -1
+     nnpot:
+       active                     = false
+       modelfile                  = model.pt
+       input-group                = System
+       link-type                  = H
+       link-distance              = 0.1
+       pair-cutoff                = 0
+       embedding                  = mechanical
+       nnp-charge                 = 0
+       model-input1               = 
+       model-input2               = 
+       model-input3               = 
+       model-input4               = 
+       model-input5               = 
+       model-input6               = 
+       model-input7               = 
+       model-input8               = 
+       model-input9               = 
+   fast-multipole-method:
+     fmm:
+       backend                    = inactive
+       exafmm-order               = 6
+       exafmm-direct-range        = 2
+       exafmm-direct-provider     = GROMACS
+       exafmm-tree-type           = uniform
+       exafmm-tree-depth          = 0
+       exafmm-max-particles-per-cell = 0
+       fmsolvr-order              = 8
+       fmsolvr-direct-range       = 1
+       fmsolvr-direct-provider    = FMM
+       fmsolvr-dipole-compensation = true
+       fmsolvr-tree-depth         = 3
+       fmsolvr-sparse             = false
+grpopts:
+   nrdf:        9216
+   ref-t:         300
+   tau-t:         0.5
+annealing:          No
+annealing-npoints:           0
+   acc:	           0           0           0
+   nfreeze:           N           N           N
+   energygrp-flags[  0]: 0
+
+When checking whether update groups are usable:
+  Domain decomposition is not active, so there is no need for update groups
+  No constraints or virtual sites are in use, so it is best not to use update groups
+
+Local state does not use filler particles
+
+1 GPU selected for this run.
+Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:
+  PP:0,PME:0
+PP tasks will do non-perturbed short-ranged and most bonded interactions on the GPU
+PP task will update and constrain coordinates on the GPU
+PME tasks will do all aspects on the GPU
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+System total charge: 0.000
+Will do PME sum in reciprocal space for electrostatic interactions.
+
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+U. Essmann, L. Perera, M. L. Berkowitz, T. Darden, H. Lee, L. G. Pedersen 
+A smooth particle mesh Ewald method
+J. Chem. Phys. (1995)
+https://doi.org/10.1063/1.470117
+-------- -------- --- Thank You --- -------- --------
+
+Using a Gaussian width (1/beta) of 0.260197 nm for Ewald
+Potential shift: LJ r^-9: 0.000e+00 r^-6: 0.000e+00, Ewald -0.000e+00
+Initialized non-bonded Coulomb Ewald tables, spacing: 8.41e-04 size: 1071
+
+
+Detected LJ repulsion power 9.
+Disabling SIMD non-bonded kernels and using plain-C reference kernels.
+
+Generated table with 995 data points for 1-4 COUL.
+Tabscale = 500 points/nm
+Generated table with 995 data points for 1-4 LJ6.
+Tabscale = 500 points/nm
+Generated table with 995 data points for 1-4 LJ12.
+Tabscale = 500 points/nm
+
+
+Using GPU 8x4 nonbonded short-range kernels
+
+NBNxM GPU setup: super-cluster 2x2x2
+
+Using a 8x8 pair-list setup:
+  updated every 4 steps, buffer 0.090 nm, rlist 0.990 nm
+
+The average pressure is off by at most 0.00 bar due to missing LJ interactions
+Removing pbc first time
+
+++++ PLEASE READ AND CITE THE FOLLOWING REFERENCE ++++
+G. Bussi, D. Donadio, M. Parrinello
+Canonical sampling through velocity rescaling
+J. Chem. Phys. (2007)
+https://doi.org/10.1063/1.2408420
+-------- -------- --- Thank You --- -------- --------
+
+There are: 3072 Atoms
+
+Updating coordinates on the GPU.
+Initial temperature: 299.918 K
+
+Started mdrun on rank 0 Thu Apr  2 00:48:56 2026
+
+           Step           Time
+              0        0.00000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    3.85885e+01    5.09882e+01    7.57257e+03    7.03216e+02   -4.73296e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.31848e+03    1.13670e+04    9.90383e+02   -3.19253e+04    1.14908e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -2.04345e+04   -2.04345e+04    2.99918e+02   -3.40815e+02
+
+           Step           Time
+            200        0.10000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    1.41226e+03    1.24976e+03    7.92379e+03    6.51137e+02   -4.66161e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -4.91625e+03    1.10160e+04    1.39874e+03   -2.78807e+04    8.14702e+03
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.97336e+04   -1.97336e+04    2.12644e+02   -2.71953e+03
+
+           Step           Time
+            400        0.20000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.31732e+03    1.41623e+03    7.88200e+03    7.19169e+02   -4.62432e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -4.97051e+03    1.03828e+04    1.44459e+03   -2.70516e+04    7.92893e+03
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.91227e+04   -1.91227e+04    2.06951e+02    5.56586e+02
+
+
+step  584: timed with pme grid 56 56 56, coulomb cutoff 0.900: 143.9 M-cycles
+step  592: timed with pme grid 48 48 48, coulomb cutoff 1.031: 161.9 M-cycles
+step  600: timed with pme grid 52 52 52, coulomb cutoff 0.952: 153.2 M-cycles
+           Step           Time
+            600        0.30000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    1.56823e+03    1.43945e+03    8.03921e+03    4.21028e+02   -4.56609e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -4.77823e+03    9.69893e+03    1.38785e+03   -2.78844e+04    9.25679e+03
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.86276e+04   -1.86276e+04    2.41609e+02    2.48302e+02
+
+step  608: timed with pme grid 56 56 56, coulomb cutoff 0.900: 148.4 M-cycles
+              optimal pme grid 56 56 56, coulomb cutoff 0.900
+           Step           Time
+            800        0.40000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    1.70804e+03    1.67801e+03    8.15954e+03    4.73301e+02   -4.54833e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -4.87055e+03    9.33668e+03    1.43499e+03   -2.75633e+04    9.24151e+03
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.83218e+04   -1.83218e+04    2.41211e+02   -1.59158e+03
+
+           Step           Time
+           1000        0.50000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    1.88735e+03    1.54628e+03    8.25107e+03    3.50835e+02   -4.50069e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.04332e+03    9.00389e+03    1.44491e+03   -2.75659e+04    9.67250e+03
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.78934e+04   -1.78934e+04    2.52460e+02    1.63071e+03
+
+           Step           Time
+           1200        0.60000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.00862e+03    1.67365e+03    8.29193e+03    4.01102e+02   -4.50407e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.08176e+03    8.93718e+03    1.50801e+03   -2.73019e+04    9.86731e+03
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.74346e+04   -1.74346e+04    2.57544e+02   -2.25539e+03
+
+           Step           Time
+           1400        0.70000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.02844e+03    1.59692e+03    8.34683e+03    3.50218e+02   -4.49485e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.13582e+03    8.92156e+03    1.53199e+03   -2.73083e+04    1.02020e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.71063e+04   -1.71063e+04    2.66281e+02    6.59299e+02
+
+           Step           Time
+           1600        0.80000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    1.71287e+03    1.80459e+03    8.28924e+03    3.68398e+02   -4.48831e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.11531e+03    8.85788e+03    1.52440e+03   -2.74410e+04    1.06482e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.67928e+04   -1.67928e+04    2.77927e+02    1.55926e+02
+
+           Step           Time
+           1800        0.90000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.10220e+03    1.69984e+03    8.41742e+03    4.71152e+02   -4.50910e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.19206e+03    9.00792e+03    1.52196e+03   -2.70626e+04    1.03636e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.66990e+04   -1.66990e+04    2.70499e+02   -9.03129e+02
+
+           Step           Time
+           2000        1.00000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.44568e+03    1.76063e+03    8.40214e+03    3.38910e+02   -4.49213e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.36594e+03    9.02582e+03    1.52852e+03   -2.67856e+04    1.01862e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.65993e+04   -1.65993e+04    2.65869e+02    8.18386e+02
+
+           Step           Time
+           2200        1.10000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.34438e+03    1.89714e+03    8.37176e+03    4.63078e+02   -4.51000e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.28593e+03    9.06214e+03    1.56904e+03   -2.66784e+04    1.02618e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.64165e+04   -1.64165e+04    2.67841e+02   -1.23584e+03
+
+           Step           Time
+           2400        1.20000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.18489e+03    1.99590e+03    8.37211e+03    4.20373e+02   -4.50294e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.36947e+03    8.97252e+03    1.55099e+03   -2.69021e+04    1.06137e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.62884e+04   -1.62884e+04    2.77026e+02    3.99454e+01
+
+           Step           Time
+           2600        1.30000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.16976e+03    2.01825e+03    8.41262e+03    3.55187e+02   -4.48876e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.25908e+03    8.86216e+03    1.50883e+03   -2.68198e+04    1.07250e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.60949e+04   -1.60949e+04    2.79929e+02    3.83308e+02
+
+           Step           Time
+           2800        1.40000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.45942e+03    1.99627e+03    8.44080e+03    3.78642e+02   -4.49516e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.22978e+03    8.84123e+03    1.56824e+03   -2.64967e+04    1.04939e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.60028e+04   -1.60028e+04    2.73899e+02   -5.67451e+02
+
+           Step           Time
+           3000        1.50000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.37540e+03    1.97693e+03    8.43330e+03    3.47055e+02   -4.48224e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.41954e+03    8.80746e+03    1.57442e+03   -2.67273e+04    1.08627e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.58646e+04   -1.58646e+04    2.83526e+02    4.85481e+02
+
+           Step           Time
+           3200        1.60000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.32065e+03    2.29431e+03    8.46961e+03    3.79483e+02   -4.47830e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.33091e+03    8.76752e+03    1.55037e+03   -2.63319e+04    1.06479e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.56841e+04   -1.56841e+04    2.77918e+02   -5.04601e+02
+
+           Step           Time
+           3400        1.70000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.36478e+03    2.21463e+03    8.43137e+03    3.23651e+02   -4.47006e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.35359e+03    8.75483e+03    1.56591e+03   -2.63990e+04    1.08321e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.55669e+04   -1.55669e+04    2.82726e+02    1.98671e+02
+
+           Step           Time
+           3600        1.80000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.33495e+03    2.22864e+03    8.38872e+03    4.23836e+02   -4.49412e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.42951e+03    8.90991e+03    1.55106e+03   -2.65336e+04    1.11123e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.54213e+04   -1.54213e+04    2.90040e+02   -2.88946e+02
+
+           Step           Time
+           3800        1.90000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.38261e+03    2.21918e+03    8.41614e+03    3.21128e+02   -4.47491e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.46918e+03    8.85495e+03    1.56209e+03   -2.64622e+04    1.09978e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.54644e+04   -1.54644e+04    2.87051e+02   -1.28220e+02
+
+           Step           Time
+           4000        2.00000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.29030e+03    2.20015e+03    8.39862e+03    3.78836e+02   -4.48311e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.38176e+03    8.82684e+03    1.59377e+03   -2.65243e+04    1.10210e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.55034e+04   -1.55034e+04    2.87655e+02    4.82388e+01
+
+           Step           Time
+           4200        2.10000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.37178e+03    2.34347e+03    8.38215e+03    3.26246e+02   -4.48314e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.47292e+03    8.77505e+03    1.55888e+03   -2.65468e+04    1.10956e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.54512e+04   -1.54512e+04    2.89604e+02   -4.53353e+02
+
+           Step           Time
+           4400        2.20000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.43152e+03    2.34367e+03    8.45187e+03    4.30695e+02   -4.49440e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.46453e+03    8.87588e+03    1.56822e+03   -2.63067e+04    1.09420e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.53648e+04   -1.53648e+04    2.85594e+02    4.03311e+02
+
+           Step           Time
+           4600        2.30000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.36602e+03    2.29660e+03    8.41944e+03    3.78788e+02   -4.48946e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.44055e+03    8.81594e+03    1.55617e+03   -2.65022e+04    1.11804e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.53218e+04   -1.53218e+04    2.91818e+02   -4.48400e+02
+
+           Step           Time
+           4800        2.40000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.32381e+03    2.36671e+03    8.43161e+03    3.64370e+02   -4.48824e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.50736e+03    8.88898e+03    1.55314e+03   -2.64612e+04    1.11547e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.53064e+04   -1.53064e+04    2.91147e+02    6.42155e+02
+
+           Step           Time
+           5000        2.50000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.24147e+03    2.46903e+03    8.48744e+03    3.76568e+02   -4.47857e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.44996e+03    8.77055e+03    1.57667e+03   -2.63140e+04    1.11969e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.51170e+04   -1.51170e+04    2.92249e+02   -7.47018e+01
+
+           Step           Time
+           5200        2.60000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.35525e+03    2.22236e+03    8.52858e+03    3.38899e+02   -4.47750e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.47566e+03    8.82385e+03    1.58022e+03   -2.64015e+04    1.13792e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.50223e+04   -1.50223e+04    2.97007e+02   -3.73717e+02
+
+           Step           Time
+           5400        2.70000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.43184e+03    2.40865e+03    8.46909e+03    3.87471e+02   -4.48125e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.46443e+03    8.77539e+03    1.50431e+03   -2.63002e+04    1.13978e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.49024e+04   -1.49024e+04    2.97491e+02    2.95128e+01
+
+           Step           Time
+           5600        2.80000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.32572e+03    2.34679e+03    8.46176e+03    3.64345e+02   -4.47669e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.36788e+03    8.69887e+03    1.53628e+03   -2.64011e+04    1.15721e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.48290e+04   -1.48290e+04    3.02040e+02   -8.29612e+01
+
+           Step           Time
+           5800        2.90000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.40616e+03    2.35445e+03    8.39592e+03    2.78412e+02   -4.45997e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.46521e+03    8.71462e+03    1.61736e+03   -2.62980e+04    1.13816e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.49164e+04   -1.49164e+04    2.97069e+02   -2.18806e+02
+
+           Step           Time
+           6000        3.00000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.30335e+03    2.57009e+03    8.39327e+03    3.70283e+02   -4.49062e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.33233e+03    8.79688e+03    1.53598e+03   -2.62687e+04    1.11298e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.51389e+04   -1.51389e+04    2.90496e+02    5.82262e+02
+
+           Step           Time
+           6200        3.10000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.26429e+03    2.51585e+03    8.37516e+03    3.54995e+02   -4.48658e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.42975e+03    8.91458e+03    1.54829e+03   -2.63224e+04    1.13008e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.50216e+04   -1.50216e+04    2.94959e+02   -5.76642e+02
+
+           Step           Time
+           6400        3.20000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.39529e+03    2.43380e+03    8.35931e+03    3.29476e+02   -4.47840e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.42531e+03    8.92315e+03    1.52978e+03   -2.62385e+04    1.13856e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.48529e+04   -1.48529e+04    2.97173e+02   -2.91720e+02
+
+           Step           Time
+           6600        3.30000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.53782e+03    2.50228e+03    8.35136e+03    4.39190e+02   -4.49858e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.49590e+03    8.98412e+03    1.52394e+03   -2.61430e+04    1.13505e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.47925e+04   -1.47925e+04    2.96256e+02   -2.98401e+02
+
+           Step           Time
+           6800        3.40000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.48072e+03    2.46542e+03    8.31695e+03    3.75693e+02   -4.48246e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.38757e+03    8.89859e+03    1.49362e+03   -2.61811e+04    1.13892e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.47919e+04   -1.47919e+04    2.97267e+02   -1.68495e+02
+
+           Step           Time
+           7000        3.50000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.34802e+03    2.55512e+03    8.36242e+03    3.84411e+02   -4.48434e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.43969e+03    8.85182e+03    1.48787e+03   -2.62934e+04    1.13335e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.49600e+04   -1.49600e+04    2.95812e+02   -2.57018e+02
+
+           Step           Time
+           7200        3.60000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.46582e+03    2.55571e+03    8.45426e+03    3.41186e+02   -4.47610e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.44316e+03    8.75394e+03    1.54587e+03   -2.60874e+04    1.12763e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.48111e+04   -1.48111e+04    2.94319e+02    7.66237e+01
+
+           Step           Time
+           7400        3.70000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.45381e+03    2.44092e+03    8.44344e+03    4.12813e+02   -4.48038e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.58580e+03    8.79257e+03    1.53875e+03   -2.63073e+04    1.15290e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.47783e+04   -1.47783e+04    3.00917e+02   -7.59999e+02
+
+           Step           Time
+           7600        3.80000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.48616e+03    2.45425e+03    8.38825e+03    4.13557e+02   -4.49775e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.51867e+03    8.94272e+03    1.56888e+03   -2.62424e+04    1.13587e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.48837e+04   -1.48837e+04    2.96470e+02    1.81204e+02
+
+           Step           Time
+           7800        3.90000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.38638e+03    2.55796e+03    8.36201e+03    3.66564e+02   -4.48776e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.48163e+03    8.85197e+03    1.47113e+03   -2.63632e+04    1.14890e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.48742e+04   -1.48742e+04    2.99872e+02   -4.73621e+02
+
+           Step           Time
+           8000        4.00000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.44828e+03    2.42406e+03    8.36571e+03    4.43704e+02   -4.49599e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.43343e+03    8.82547e+03    1.45847e+03   -2.64276e+04    1.14900e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.49376e+04   -1.49376e+04    2.99899e+02    2.84372e+02
+
+           Step           Time
+           8200        4.10000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.51116e+03    2.57656e+03    8.40670e+03    3.59083e+02   -4.47984e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.51266e+03    8.75236e+03    1.47077e+03   -2.62344e+04    1.13673e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.48671e+04   -1.48671e+04    2.96696e+02   -2.85860e+02
+
+           Step           Time
+           8400        4.20000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.44689e+03    2.58997e+03    8.44482e+03    4.48537e+02   -4.50316e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.47888e+03    8.87696e+03    1.48895e+03   -2.62143e+04    1.12832e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.49311e+04   -1.49311e+04    2.94500e+02   -8.26352e+01
+
+           Step           Time
+           8600        4.30000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.41232e+03    2.46796e+03    8.40437e+03    3.52997e+02   -4.47992e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.44152e+03    8.75141e+03    1.51110e+03   -2.63406e+04    1.13297e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.50109e+04   -1.50109e+04    2.95714e+02   -2.23905e+02
+
+           Step           Time
+           8800        4.40000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.46831e+03    2.56858e+03    8.45536e+03    3.80992e+02   -4.48166e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.58534e+03    8.75195e+03    1.51594e+03   -2.62608e+04    1.13348e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.49259e+04   -1.49259e+04    2.95848e+02    1.43654e+01
+
+           Step           Time
+           9000        4.50000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.44411e+03    2.54719e+03    8.36984e+03    3.95211e+02   -4.48103e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.52022e+03    8.74590e+03    1.52634e+03   -2.63019e+04    1.14056e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.48963e+04   -1.48963e+04    2.97696e+02    3.35126e+01
+
+           Step           Time
+           9200        4.60000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.52313e+03    2.49205e+03    8.26089e+03    4.10790e+02   -4.49843e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.42308e+03    8.79267e+03    1.47897e+03   -2.64488e+04    1.14282e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.50207e+04   -1.50207e+04    2.98284e+02    2.11809e+02
+
+           Step           Time
+           9400        4.70000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.44971e+03    2.47754e+03    8.32508e+03    4.32606e+02   -4.48553e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.53944e+03    8.70716e+03    1.42927e+03   -2.65734e+04    1.15352e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.50382e+04   -1.50382e+04    3.01078e+02   -4.04459e+01
+
+           Step           Time
+           9600        4.80000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.50719e+03    2.51090e+03    8.43720e+03    4.32566e+02   -4.48756e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.57552e+03    8.71779e+03    1.44153e+03   -2.64039e+04    1.13606e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.50434e+04   -1.50434e+04    2.96520e+02   -5.04526e+02
+
+           Step           Time
+           9800        4.90000
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.51696e+03    2.52466e+03    8.37609e+03    3.50473e+02   -4.48844e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.67797e+03    8.80752e+03    1.45795e+03   -2.65287e+04    1.14050e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.51237e+04   -1.51237e+04    2.97678e+02    5.69614e+02
+
+           Step           Time
+          10000        5.00000
+
+Writing checkpoint, step 10000 at Thu Apr  2 00:50:21 2026
+
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.44298e+03    2.52398e+03    8.35594e+03    4.03360e+02   -4.49749e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.50897e+03    8.85670e+03    1.51505e+03   -2.63858e+04    1.12313e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.51545e+04   -1.51545e+04    2.93146e+02   -1.54991e+02
+
+
+Energy conservation over simulation part #1 of length 5 ps, time 0 to 5 ps
+  Conserved energy drift: 3.44e-01 kJ/mol/ps per atom
+
+
+	<======  ###############  ==>
+	<====  A V E R A G E S  ====>
+	<==  ###############  ======>
+
+	Statistics over 10001 steps using 51 frames
+
+   Energies (kJ/mol)
+    Class2 Bond   Class2 Angle    Class2 Dih.          LJ-14     Coulomb-14
+    2.25496e+03    2.17381e+03    8.34798e+03    4.01647e+02   -4.50144e+04
+        LJ (SR)   Coulomb (SR)   Coul. recip.      Potential    Kinetic En.
+   -5.36593e+03    8.99315e+03    1.50786e+03   -2.67009e+04    1.08742e+04
+   Total Energy  Conserved En.    Temperature Pressure (bar)
+   -1.58266e+04   -1.58266e+04    2.83826e+02   -1.57884e+02
+
+   Total Virial (kJ/mol)
+    4.22691e+03   -1.66888e+02   -5.05767e+01
+   -1.66890e+02    3.86226e+03   -1.31443e+02
+   -5.05756e+01   -1.31441e+02    3.99998e+03
+
+   Pressure (bar)
+   -2.38230e+02    6.85145e+01    1.03221e+01
+    6.85153e+01   -7.30680e+01    5.66159e+01
+    1.03217e+01    5.66152e+01   -1.62355e+02
+
+
+       P P   -   P M E   L O A D   B A L A N C I N G
+
+ PP/PME load balancing changed the cut-off and PME settings:
+           particle-particle                    PME
+            rcoulomb  rlist            grid      spacing   1/beta
+   initial  0.900 nm  0.990 nm      56  56  56   0.079 nm  0.260 nm
+   final    0.900 nm  0.990 nm      56  56  56   0.079 nm  0.260 nm
+ cost-ratio           1.00             1.00
+ (note that these numbers concern only part of the total PP and PME load)
+
+
+	M E G A - F L O P S   A C C O U N T I N G
+
+ NB=Group-cutoff nonbonded kernels    NxN=N-by-N cluster Verlet kernels
+ RF=Reaction-Field  VdW=Van der Waals  QSTab=quadratic-spline table
+ W3=SPC/TIP3p  W4=TIP4p (single or pairs)
+ V&F=Potential and force  V=Potential only  F=Force only
+
+ Computing:                               M-Number         M-Flops  % Flops
+-----------------------------------------------------------------------------
+ Pair Search distance check             689.886224        6208.976    87.0
+ Shift-X                                 15.363072          92.178     1.3
+ Virial                                   0.476901           8.584     0.1
+ Calc-Ekin                               30.726144         829.606    11.6
+-----------------------------------------------------------------------------
+ Total                                                    7139.345   100.0
+-----------------------------------------------------------------------------
+
+
+      R E A L   C Y C L E   A N D   T I M E   A C C O U N T I N G
+
+On 1 MPI rank
+
+ Activity:              Num   Num      Call    Wall time         Giga-Cycles
+                        Ranks Threads  Count      (s)         total sum    %
+--------------------------------------------------------------------------------
+ Neighbor search           1    1       5001       2.902         12.768   3.4
+ Launch PP GPU ops.        1    1      20002       0.655          2.880   0.8
+ Force                     1    1      20002      68.460        301.221  80.6
+ PME GPU mesh              1    1       5001       0.218          0.959   0.3
+ PME wait for PP                                  84.759        372.939  99.7
+ Wait Bonded GPU           1    1        102       0.000          0.000   0.0
+ Wait GPU NB local         1    1      20002       0.410          1.805   0.5
+ Wait GPU state copy       1    1      20002       0.012          0.055   0.0
+ NB X/F buffer ops.        1    1      20002       0.187          0.821   0.2
+ Write traj.               1    1          1       0.007          0.030   0.0
+ Update                    1    1      10001  603909805.102 2657186887.544 710670142.9
+ GPU constr. setup         1    1          1       0.000          0.000   0.0
+ Kinetic energy            1    1      10001       0.090          0.394   0.1
+--------------------------------------------------------------------------------
+ Total                                            84.978        373.899 100.0
+--------------------------------------------------------------------------------
+ Breakdown of PME mesh activities
+--------------------------------------------------------------------------------
+ Wait PME GPU gather       1    1       5001       0.004          0.018   0.0
+ Reduce GPU PME F          1    1       5001       0.015          0.066   0.0
+ Launch PME GPU ops.       1    1      40008       0.179          0.787   0.2
+--------------------------------------------------------------------------------
+
+               Core t (s)   Wall t (s)        (%)
+       Time:       84.977       84.978      100.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:        5.084        4.721        8.497            0.362 
+Finished mdrun on rank 0 Thu Apr  2 00:50:21 2026
+

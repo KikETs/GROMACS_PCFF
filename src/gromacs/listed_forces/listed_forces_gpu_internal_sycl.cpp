@@ -159,6 +159,19 @@ auto bondedKernel(CommandGroupHandler              cgh,
                         bonds_gpu<calcVir, calcEner>(
                                 fTypeTid, &vtot_loc, iatoms, gm_forceParams, gm_xq, gm_f, sm_fShiftLoc, pbcAiuc, localId);
                         break;
+                    case InteractionFunction::BondClass2:
+                        bond_class2_gpu<calcVir, calcEner>(
+                                fTypeTid,
+                                &vtot_loc,
+                                iatoms,
+                                gm_forceParams,
+                                gm_xq,
+                                gm_f,
+                                sm_fShiftLoc,
+                                pbcAiuc,
+                                kernelParams_.pcffClass2DebugMode,
+                                localId);
+                        break;
                     case InteractionFunction::Angles:
                         angles_gpu<calcVir, calcEner>(
                                 fTypeTid, &vtot_loc, iatoms, gm_forceParams, gm_xq, gm_f, sm_fShiftLoc, pbcAiuc, localId);
@@ -166,6 +179,19 @@ auto bondedKernel(CommandGroupHandler              cgh,
                     case InteractionFunction::UreyBradleyPotential:
                         urey_bradley_gpu<calcVir, calcEner>(
                                 fTypeTid, &vtot_loc, iatoms, gm_forceParams, gm_xq, gm_f, sm_fShiftLoc, pbcAiuc, localId);
+                        break;
+                    case InteractionFunction::AngleClass2:
+                        angle_class2_gpu<calcVir, calcEner>(
+                                fTypeTid,
+                                &vtot_loc,
+                                iatoms,
+                                gm_forceParams,
+                                gm_xq,
+                                gm_f,
+                                sm_fShiftLoc,
+                                pbcAiuc,
+                                kernelParams_.pcffClass2DebugMode,
+                                localId);
                         break;
                     case InteractionFunction::ProperDihedrals:
                     case InteractionFunction::PeriodicImproperDihedrals:
@@ -176,8 +202,16 @@ auto bondedKernel(CommandGroupHandler              cgh,
                         rbdihs_gpu<calcVir, calcEner>(
                                 fTypeTid, &vtot_loc, iatoms, gm_forceParams, gm_xq, gm_f, sm_fShiftLoc, pbcAiuc, localId);
                         break;
+                    case InteractionFunction::DihedralClass2:
+                        dihedral_class2_gpu<calcVir, calcEner>(
+                                fTypeTid, &vtot_loc, iatoms, gm_forceParams, gm_xq, gm_f, sm_fShiftLoc, pbcAiuc, localId);
+                        break;
                     case InteractionFunction::ImproperDihedrals:
                         idihs_gpu<calcVir, calcEner>(
+                                fTypeTid, &vtot_loc, iatoms, gm_forceParams, gm_xq, gm_f, sm_fShiftLoc, pbcAiuc, localId);
+                        break;
+                    case InteractionFunction::ImproperClass2:
+                        improper_class2_gpu<calcVir, calcEner>(
                                 fTypeTid, &vtot_loc, iatoms, gm_forceParams, gm_xq, gm_f, sm_fShiftLoc, pbcAiuc, localId);
                         break;
                     case InteractionFunction::LennardJones14:
@@ -188,6 +222,7 @@ auto bondedKernel(CommandGroupHandler              cgh,
                                                      gm_f,
                                                      sm_fShiftLoc,
                                                      pbcAiuc,
+                                                     kernelParams_.repulsionPower,
                                                      electrostaticsScaleFactor,
                                                      &vtot_loc,
                                                      &vtotElec_loc,

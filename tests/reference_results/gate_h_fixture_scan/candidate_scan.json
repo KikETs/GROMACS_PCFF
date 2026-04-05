@@ -1,0 +1,122 @@
+{
+  "date": "2026-04-01",
+  "objective": "Gate H in-repo fixture scan for exact-r-RESPA transport validation",
+  "repo_scan_summary": {
+    "available_system_ids_under_testdata_lammps_golden": [
+      "angle_toy",
+      "bond_toy",
+      "coulomb_toy",
+      "dense_oligomer",
+      "dense_salt_polymer",
+      "dihedral_toy",
+      "exclusion_toy",
+      "improper_toy",
+      "lj96_toy",
+      "mixing_toy",
+      "small_oligomer",
+      "small_salt_polymer_box"
+    ],
+    "transport_scale_candidates_found": [
+      "dense_oligomer",
+      "dense_salt_polymer"
+    ],
+    "tp0_frozen_constraints": {
+      "minimum_atoms": 1000,
+      "minimum_box_dimension_nm": 3.0,
+      "neutral_equilibration_min_ns": 2.0,
+      "charged_equilibration_min_ns": 5.0,
+      "neutral_production_min_ns": 10.0,
+      "charged_production_min_ns": 20.0,
+      "respa_status": "deferred"
+    }
+  },
+  "candidates": [
+    {
+      "system_id": "dense_oligomer",
+      "role": "best neutral in-repo seed only",
+      "category": "neutral_dense",
+      "evidence": {
+        "source_manifest": "testdata/lammps_golden/systems/dense_oligomer/system.json",
+        "reference_results_root": "tests/reference_results/m10_3_dense_ensemble_gate/dense_oligomer",
+        "atoms": 384,
+        "box_nm": [
+          2.2,
+          2.2,
+          2.2
+        ],
+        "molecules": {
+          "MOL1": 64
+        },
+        "constraints": "none",
+        "electrostatics": "PME",
+        "existing_long_run_protocol": "20 ps NPT equilibration + 100 ps NPT production with integrator=md",
+        "existing_status": "ensemble parity pass for M10.3, but trending/not converged on some observables"
+      },
+      "gate_h_assessment": {
+        "exact_respa_structural_compatibility": "likely_yes",
+        "tp0_size_scope_fit": "fail",
+        "tp0_duration_fit": "fail",
+        "tp0_transport_signoff_fit": "fail",
+        "blocking_reasons": [
+          "384 atoms is below the TP0 minimum of 1000 atoms",
+          "2.2 nm box is below the TP0 minimum box dimension of 3.0 nm",
+          "existing protocol is 20 ps + 100 ps, far below TP0 2 ns + 10 ns",
+          "TP0 documents RESPA as deferred, so existing TP artifacts are not direct exact-r-RESPA transport signoff evidence"
+        ]
+      }
+    },
+    {
+      "system_id": "dense_salt_polymer",
+      "role": "charged seed blocked by physical instability",
+      "category": "charged_salt_polymer",
+      "evidence": {
+        "source_manifest": "testdata/lammps_golden/systems/dense_salt_polymer/system.json",
+        "reference_results_root": "tests/reference_results/m10_4_charged_ensemble_gate/dense_salt_polymer",
+        "tp1_root": "tests/reference_results/tp1_charged_recovery/dense_salt_polymer",
+        "atoms": 270,
+        "box_nm": [
+          2.2,
+          2.2,
+          2.2
+        ],
+        "molecules": {
+          "POL": 12,
+          "CAT": 27,
+          "ANI": 27,
+          "POL10": 9,
+          "POL28": 6
+        },
+        "constraints": "none",
+        "electrostatics": "PME",
+        "existing_long_run_protocol": "20 ps NPT equilibration + 100 ps NPT production with integrator=md",
+        "existing_status": "M10.4 partial/caveated; TP1 fail due to thermal runaway at 3.017 ns"
+      },
+      "gate_h_assessment": {
+        "exact_respa_structural_compatibility": "likely_yes",
+        "tp0_size_scope_fit": "fail",
+        "tp0_duration_fit": "fail",
+        "tp0_transport_signoff_fit": "fail",
+        "blocking_reasons": [
+          "270 atoms is below the TP0 minimum of 1000 atoms",
+          "2.2 nm box is below the TP0 minimum box dimension of 3.0 nm",
+          "charged-system TP1 is currently FAIL due to thermal runaway before 5 ns equilibration completes",
+          "existing protocol is 20 ps + 100 ps, far below TP0 5 ns + 20 ns",
+          "TP0 documents RESPA as deferred, so existing TP artifacts are not direct exact-r-RESPA transport signoff evidence"
+        ]
+      }
+    }
+  ],
+  "shortlist": {
+    "neutral_best_available": "dense_oligomer",
+    "charged_best_available": "none",
+    "repo_contains_tp0_ready_exact_respa_transport_fixture": false
+  },
+  "recommendation": {
+    "status": "new_fixture_required",
+    "priority_order": [
+      "Use dense_oligomer only as a neutral scaffold and upscale/repack it to >=1000 atoms and >3.0 nm before reopening Gate H-neutral",
+      "Do not scale dense_salt_polymer into a production transport fixture until the 270-atom charged stability thread (TP1/PME-path issues) is physically resolved",
+      "Freeze a Gate H-specific protocol addendum if exact-r-RESPA transport validation will continue, because current TP0 marks RESPA as deferred"
+    ]
+  }
+}

@@ -163,6 +163,18 @@ public:
                    float                             dtPressureCouple,
                    const Matrix3x3&                  prVelocityScalingMatrix);
 
+    /*! \brief Drift coordinates on the GPU without modifying velocities.
+     *
+     * This is a dedicated path for exact r-RESPA GPU update, where host-side half-kicks remain
+     * authoritative and the GPU only needs to advance coordinates using the current half-step
+     * velocities.
+     *
+     * \param[in,out] d_x Coordinates to update.
+     * \param[in]     d_v Velocities to read.
+     * \param[in]     dt  Timestep.
+     */
+    void driftOnly(DeviceBuffer<Float3> d_x, DeviceBuffer<Float3> d_v, float dt);
+
     /*! \brief Set the integrator
      *
      * Allocates memory for inverse masses, and, if needed for temperature scaling factor(s)

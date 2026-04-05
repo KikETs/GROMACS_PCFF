@@ -1,0 +1,6 @@
+observable	cpu_mean	gpu_mean	mean_diff	combined_uncertainty	classification	passes
+polymer_diffusivity_cm2_s	0.0001558035	0.0001413695	-1.4434e-05	2.096836904e-05	stochastic	True
+cation_diffusivity_cm2_s	5.5153e-05	5.217e-05	-2.983e-06	1.553515047e-05	stochastic	True
+anion_diffusivity_cm2_s	5.50395e-05	5.22905e-05	-2.749e-06	1.628241537e-05	stochastic	True
+conductivity_cne_s_cm	1.669103444	1.582948886	-0.0861545579	0.3996554285	stochastic	True
+transference_ne	0.5016095018	0.4994650021	-0.002144499699	0.005250719933	stochastic	True

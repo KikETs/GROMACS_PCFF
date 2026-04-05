@@ -1,0 +1,189 @@
+{
+  "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle",
+  "dlb": "no",
+  "gate": "Gate A",
+  "gmx": "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+  "gmx_version": ":-) GROMACS - gmx, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:\n\nExecutable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx\nData prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)\nWorking dir:  /home/kiket/Desktop/test/GROMACS_PCFF\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260329-1811cfe56e-dirty-unknown\nGIT SHA1 hash:       1811cfe56e5b4eaa9dc80a68ea138318fec38459 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         CUDA\nNBNxM GPU setup:     super-cluster 2x2x2 / cluster 8 (cluster-pair splitting on)\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     cuFFT\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\nCUDA compiler:       /usr/local/cuda-12.8/bin/nvcc (NVIDIA 12.8.93)\nCUDA compiler flags:  -O2 -g -DNDEBUG -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -O2 -g -DNDEBUG\nCUDA targets:        50;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;100-real;120\nCUDA driver:         12.80\nCUDA runtime:        12.80\nNVSHMEM:             disabled",
+  "known_limitations": [
+    "The standalone exact r-RESPA path is frozen from the direct CLI mdrun path, but it still executes inside the legacy simulator container; the trace itself comes from exactrespastepper.cpp standalone exact-r-RESPA entrypoints.",
+    "The direct CLI path has a bootstrap step-0 event pattern that differs from the older LAMMPS-style recursive test harness; Gate A freezes the actual CLI behavior rather than forcing the older wrapper-derived reference.",
+    "Per-term virial contributors are not frozen individually; the oracle freezes EDR virial and pressure tensor components plus raw per-level merge-trace virial-related buffers.",
+    "PCFF class2 subterm visibility is frozen from a host-side diagnostic rescan of the exact-r-RESPA level interaction lists and coordinates; it is an ownership/debug oracle, not a raw GPU accumulator dump.",
+    "CPU reciprocal/self/exclusion electrostatics are frozen from runtime split traces written by the exact standalone path; they are later comparison oracles, not standalone user-facing EDR terms.",
+    "No GPU-path comparison is performed here; Gate A only freezes the CPU oracle and validates its internal consistency."
+  ],
+  "normal_md_used": true,
+  "ntmpi": 1,
+  "ntomp": 1,
+  "objective": "Freeze a CPU-only oracle for the standalone exact r-RESPA path before GPU validation.",
+  "pme_rank_count": 0,
+  "precision_mode": "mixed",
+  "recommended_comparison_fields_gates_b_h": [
+    "event_trace.actual_event_trace[].base_step",
+    "event_trace.actual_event_trace[].event",
+    "event_trace.actual_event_trace[].level",
+    "per_level_force_totals.entries[].relative_path",
+    "per_level_force_totals.entries[].vector_sum",
+    "class2_subterm_energy_trace.entries[].step",
+    "class2_subterm_energy_trace.entries[].level",
+    "class2_subterm_energy_trace.entries[].terms_kj_mol.*",
+    "class2_subterm_energy_trace.entries[].interaction_counts.*",
+    "cpu_correction_energy_trace.entries[].step",
+    "cpu_correction_energy_trace.entries[].level",
+    "cpu_correction_energy_trace.entries[].terms_kj_mol.*",
+    "cpu_correction_energy_trace.entries[].interaction_counts.*",
+    "total_force_summary.entries[].step",
+    "total_force_summary.entries[].highest_active_level",
+    "total_force_summary.entries[].force",
+    "energy_terms.step0_terms_kj_mol.*",
+    "energy_terms.derived_terms_step0_kj_mol.*",
+    "energy_terms.frames[].terms[Potential]",
+    "energy_terms.frames[].terms[Total Energy]",
+    "energy_terms.frames[].terms[Vir-XX]",
+    "energy_terms.frames[].terms[Vir-YY]",
+    "energy_terms.frames[].terms[Vir-ZZ]",
+    "energy_terms.frames[].terms[Pres-XX]",
+    "energy_terms.frames[].terms[Pres-YY]",
+    "energy_terms.frames[].terms[Pres-ZZ]",
+    "m2p_trace/step0_force_component_trace.txt",
+    "m2p_trace/step0_potential_ledger_trace.txt",
+    "m2p_trace/step0_virial_pressure_ledger_trace.txt",
+    "m2p_trace/step0_realspace_force_subcomponent_trace.txt",
+    "restart_summary.potential_abs_delta_kj_mol",
+    "restart_summary.total_abs_delta_kj_mol",
+    "restart_summary.max_coordinate_abs_delta_nm",
+    "restart_summary.max_velocity_abs_delta_nm_ps"
+  ],
+  "reproducibility_flags": [
+    "-reprod",
+    "-dlb no",
+    "-pin off",
+    "-nb cpu",
+    "-pme cpu",
+    "-bonded cpu",
+    "-update cpu",
+    "GMX_DISABLE_MODULAR_SIMULATOR=1"
+  ],
+  "rerun_used": false,
+  "schedule": {
+    "level_step_factors": [
+      1,
+      2,
+      4
+    ],
+    "outer_steps": 5,
+    "pair14_level": 1
+  },
+  "schema_version": 1,
+  "status": "PASS",
+  "systems": [
+    {
+      "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer",
+      "class2_subterm_energy_trace": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/class2_subterm_energy_trace.json",
+      "commands_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/commands.json",
+      "commands_sh": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/run_commands.sh",
+      "cpu_correction_energy_trace": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/cpu_correction_energy_trace.json",
+      "energy_terms": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/energy_terms.json",
+      "event_trace": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/event_trace.json",
+      "full_run_outputs": {
+        "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.cpt",
+        "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.edr",
+        "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/event_trace.tsv",
+        "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.gro",
+        "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.log",
+        "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr",
+        "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.trr"
+      },
+      "logs": {
+        "grompp_full_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/grompp_full.stderr",
+        "grompp_full_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/grompp_full.stdout",
+        "grompp_restart_full_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/grompp_restart_full.stderr",
+        "grompp_restart_full_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/grompp_restart_full.stdout",
+        "grompp_restart_split_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/grompp_restart_split.stderr",
+        "grompp_restart_split_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/grompp_restart_split.stdout",
+        "mdrun_full_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/mdrun_full.stderr",
+        "mdrun_full_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/mdrun_full.stdout",
+        "mdrun_restart_full_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/mdrun_restart_full.stderr",
+        "mdrun_restart_full_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/mdrun_restart_full.stdout",
+        "mdrun_restart_split_first_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/mdrun_restart_split_first.stderr",
+        "mdrun_restart_split_first_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/mdrun_restart_split_first.stdout",
+        "mdrun_restart_split_second_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/mdrun_restart_split_second.stderr",
+        "mdrun_restart_split_second_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/logs/mdrun_restart_split_second.stdout"
+      },
+      "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/m2p_trace",
+      "mdp": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/inputs/exact_respa.mdp",
+      "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/merge_trace",
+      "per_level_force_totals": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/per_level_force_totals.json",
+      "restart_outputs": {
+        "full": {
+          "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/restart_full/exact_full.cpt",
+          "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/restart_full/exact_full.edr",
+          "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/restart_full/exact_full.trr"
+        },
+        "split": {
+          "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/restart_split/exact_split.cpt",
+          "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/restart_split/exact_split.edr",
+          "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/restart_split/exact_split.trr"
+        }
+      },
+      "restart_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/restart_summary.json",
+      "system_id": "small_oligomer",
+      "total_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/total_force.tsv",
+      "total_force_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/total_force_summary.json"
+    },
+    {
+      "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box",
+      "class2_subterm_energy_trace": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/class2_subterm_energy_trace.json",
+      "commands_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/commands.json",
+      "commands_sh": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/run_commands.sh",
+      "cpu_correction_energy_trace": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/cpu_correction_energy_trace.json",
+      "energy_terms": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/energy_terms.json",
+      "event_trace": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/event_trace.json",
+      "full_run_outputs": {
+        "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/full/exact_full.cpt",
+        "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/full/exact_full.edr",
+        "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/full/event_trace.tsv",
+        "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/full/exact_full.gro",
+        "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/full/exact_full.log",
+        "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/full/exact_full.tpr",
+        "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/full/exact_full.trr"
+      },
+      "logs": {
+        "grompp_full_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/grompp_full.stderr",
+        "grompp_full_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/grompp_full.stdout",
+        "grompp_restart_full_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/grompp_restart_full.stderr",
+        "grompp_restart_full_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/grompp_restart_full.stdout",
+        "grompp_restart_split_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/grompp_restart_split.stderr",
+        "grompp_restart_split_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/grompp_restart_split.stdout",
+        "mdrun_full_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/mdrun_full.stderr",
+        "mdrun_full_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/mdrun_full.stdout",
+        "mdrun_restart_full_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/mdrun_restart_full.stderr",
+        "mdrun_restart_full_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/mdrun_restart_full.stdout",
+        "mdrun_restart_split_first_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/mdrun_restart_split_first.stderr",
+        "mdrun_restart_split_first_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/mdrun_restart_split_first.stdout",
+        "mdrun_restart_split_second_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/mdrun_restart_split_second.stderr",
+        "mdrun_restart_split_second_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/logs/mdrun_restart_split_second.stdout"
+      },
+      "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/full/m2p_trace",
+      "mdp": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/inputs/exact_respa.mdp",
+      "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/full/merge_trace",
+      "per_level_force_totals": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/per_level_force_totals.json",
+      "restart_outputs": {
+        "full": {
+          "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/restart_full/exact_full.cpt",
+          "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/restart_full/exact_full.edr",
+          "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/restart_full/exact_full.trr"
+        },
+        "split": {
+          "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/restart_split/exact_split.cpt",
+          "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/restart_split/exact_split.edr",
+          "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/restart_split/exact_split.trr"
+        }
+      },
+      "restart_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/restart_summary.json",
+      "system_id": "small_salt_polymer_box",
+      "total_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/full/total_force.tsv",
+      "total_force_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/total_force_summary.json"
+    }
+  ]
+}

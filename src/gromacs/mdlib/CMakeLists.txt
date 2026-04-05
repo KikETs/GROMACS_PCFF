@@ -56,8 +56,11 @@ list(REMOVE_ITEM MDLIB_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/update_constrain_gpu_internal_hip.cpp)
 set(MDLIB_SOURCES ${MDLIB_SOURCES} PARENT_SCOPE)
 
+gmx_add_libgromacs_sources(exactrespa_nonbonded_gpu.cpp)
+
 if(GMX_GPU_CUDA)
     gmx_add_libgromacs_sources(
+       exactrespa_nonbonded_gpu_internal.cu
        gpuforcereduction_impl.cpp
        gpuforcereduction_impl_internal.cu
        leapfrog_gpu.cpp
@@ -75,6 +78,7 @@ if(GMX_GPU_CUDA)
        gmx_add_libgromacs_sources(lincs_gpu_internal.cu)
     endif()
     _gmx_add_files_to_property(CUDA_SOURCES
+       exactrespa_nonbonded_gpu.cpp
        gpuforcereduction_impl.cpp
        leapfrog_gpu.cpp
        lincs_gpu.cpp

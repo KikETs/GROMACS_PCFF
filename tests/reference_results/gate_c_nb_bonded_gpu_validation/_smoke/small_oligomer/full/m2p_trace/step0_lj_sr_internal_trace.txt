@@ -1,0 +1,12 @@
+stage=SR_ACCUMULATION code_location=src/gromacs/mdlib/sim_util.cpp:4284 case_label=full execution_path=pre_sum_epot_grpp lj_sr=-0.115136951208115 coulomb_sr=4.832714080810547
+stage=FINAL_INTERNAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:4298 case_label=full execution_path=post_sum_epot_enerd_term lj_sr=-0.115136951208115 coulomb_sr=4.832714080810547 potential=18.625713348388672
+stage=SR_ACCUMULATION code_location=src/gromacs/mdlib/sim_util.cpp:4284 case_label=full execution_path=pre_sum_epot_grpp lj_sr=-0.116950601339340 coulomb_sr=4.833522796630859
+stage=FINAL_INTERNAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:4298 case_label=full execution_path=post_sum_epot_enerd_term lj_sr=-0.116950601339340 coulomb_sr=4.833522796630859 potential=18.662216186523438
+stage=SR_ACCUMULATION code_location=src/gromacs/mdlib/sim_util.cpp:4284 case_label=full execution_path=pre_sum_epot_grpp lj_sr=-0.118778571486473 coulomb_sr=4.831256866455078
+stage=FINAL_INTERNAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:4298 case_label=full execution_path=post_sum_epot_enerd_term lj_sr=-0.118778571486473 coulomb_sr=4.831256866455078 potential=18.697765350341797
+stage=SR_ACCUMULATION code_location=src/gromacs/mdlib/sim_util.cpp:4284 case_label=full execution_path=pre_sum_epot_grpp lj_sr=-0.120620489120483 coulomb_sr=4.825939178466797
+stage=FINAL_INTERNAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:4298 case_label=full execution_path=post_sum_epot_enerd_term lj_sr=-0.120620489120483 coulomb_sr=4.825939178466797 potential=18.732471466064453
+stage=SR_ACCUMULATION code_location=src/gromacs/mdlib/sim_util.cpp:4284 case_label=full execution_path=pre_sum_epot_grpp lj_sr=-0.122476324439049 coulomb_sr=4.817531585693359
+stage=FINAL_INTERNAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:4298 case_label=full execution_path=post_sum_epot_enerd_term lj_sr=-0.122476324439049 coulomb_sr=4.817531585693359 potential=18.766216278076172
+stage=SR_ACCUMULATION code_location=src/gromacs/mdlib/sim_util.cpp:4284 case_label=full execution_path=pre_sum_epot_grpp lj_sr=-0.124345600605011 coulomb_sr=4.806056976318359
+stage=FINAL_INTERNAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:4298 case_label=full execution_path=post_sum_epot_enerd_term lj_sr=-0.124345600605011 coulomb_sr=4.806056976318359 potential=18.799018859863281

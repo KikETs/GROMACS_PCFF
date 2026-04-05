@@ -1,0 +1,572 @@
+/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr:
+inputrec:
+   integrator                     = md-vv
+   tinit                          = 0
+   dt                             = 0.0005
+   nsteps                         = 20
+   init-step                      = 0
+   simulation-part                = 1
+   mts                            = false
+   exact-respa                    = true
+   exact-respa-levels             = 3
+   exact-respa-level1-factor      = 1
+   exact-respa-level2-factor      = 2
+   exact-respa-level3-factor      = 4
+   exact-respa-bond-level         = 1
+   exact-respa-angle-level        = 1
+   exact-respa-dihedral-level     = 1
+   exact-respa-improper-level     = 1
+   exact-respa-pair14-level       = 1
+   exact-respa-pair-level         = 3
+   exact-respa-kspace-level       = 3
+   exact-respa-inner-level        = 1
+   exact-respa-middle-level       = 2
+   exact-respa-outer-level        = 3
+   exact-respa-inner-off          = 0.3
+   exact-respa-inner-on           = 0.45
+   exact-respa-outer-on           = 0.6
+   exact-respa-outer-off          = 0.8
+   mass-repartition-factor        = 1
+   comm-mode                      = None
+   nstcomm                        = 0
+   bd-fric                        = 0
+   ld-seed                        = 1862052657
+   emtol                          = 10
+   emstep                         = 0.01
+   niter                          = 20
+   fcstep                         = 0
+   nstcgsteep                     = 1000
+   nbfgscorr                      = 10
+   rtpi                           = 0.05
+   nstxout                        = 4
+   nstvout                        = 4
+   nstfout                        = 0
+   nstlog                         = 4
+   nstcalcenergy                  = 4
+   nstenergy                      = 4
+   nstxout-compressed             = 0
+   compressed-x-precision         = 1000
+   cutoff-scheme                  = Verlet
+   nstlist                        = 4
+   pbc                            = xyz
+   periodic-molecules             = false
+   verlet-buffer-tolerance        = -1
+   verlet-buffer-pressure-tolerance = -1
+   rlist                          = 0.99
+   coulombtype                    = PME
+   coulomb-modifier               = None
+   rcoulomb-switch                = 0
+   rcoulomb                       = 0.9
+   epsilon-r                      = 1
+   epsilon-rf                     = inf
+   vdw-type                       = Cut-off
+   vdw-modifier                   = None
+   rvdw-switch                    = 0
+   rvdw                           = 0.9
+   DispCorr                       = No
+   table-extension                = 1
+   fourierspacing                 = 0.08
+   fourier-nx                     = 25
+   fourier-ny                     = 25
+   fourier-nz                     = 25
+   pme-order                      = 4
+   ewald-rtol                     = 1e-06
+   ewald-rtol-lj                  = 0.001
+   lj-pme-comb-rule               = Geometric
+   ewald-geometry                 = 3d
+   epsilon-surface                = 0
+   ensemble-temperature-setting   = not available
+   tcoupl                         = No
+   nsttcouple                     = -1
+   nh-chain-length                = 0
+   print-nose-hoover-chain-variables = false
+   pcoupl                         = No
+   refcoord-scaling               = No
+   posres-com: not available
+   posres-comB: not available
+   QMMM                           = false
+qm-opts:
+   ngQM                           = 0
+   constraint-algorithm           = Lincs
+   continuation                   = false
+   Shake-SOR                      = false
+   shake-tol                      = 0.0001
+   lincs-order                    = 4
+   lincs-iter                     = 1
+   lincs-warnangle                = 30
+   nwall                          = 0
+   wall-type                      = 9-3
+   wall-r-linpot                  = -1
+   wall-atomtype[0]               = -1
+   wall-atomtype[1]               = -1
+   wall-density[0]                = 0
+   wall-density[1]                = 0
+   wall-ewald-zfac                = 3
+   pull                           = false
+   awh                            = false
+   rotation                       = false
+   interactiveMD                  = false
+   disre                          = No
+   disre-weighting                = Conservative
+   disre-mixed                    = false
+   dr-fc                          = 1000
+   dr-tau                         = 0
+   nstdisreout                    = 100
+   orire-fc                       = 0
+   orire-tau                      = 0
+   nstorireout                    = 100
+   free-energy                    = no
+   cos-acceleration               = 0
+   deform (3x3):
+      deform[    0]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+      deform[    1]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+      deform[    2]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   simulated-tempering            = false
+   swapcoords                     = no
+   userint1                       = 0
+   userint2                       = 0
+   userint3                       = 0
+   userint4                       = 0
+   userreal1                      = 0
+   userreal2                      = 0
+   userreal3                      = 0
+   userreal4                      = 0
+   applied-forces:
+     electric-field:
+       x:
+         E0                       = 0
+         omega                    = 0
+         t0                       = 0
+         sigma                    = 0
+       y:
+         E0                       = 0
+         omega                    = 0
+         t0                       = 0
+         sigma                    = 0
+       z:
+         E0                       = 0
+         omega                    = 0
+         t0                       = 0
+         sigma                    = 0
+     density-guided-simulation:
+       active                     = false
+       group                      = protein
+       similarity-measure         = inner-product
+       atom-spreading-weight      = unity
+       force-constant             = 1e+09
+       gaussian-transform-spreading-width = 0.2
+       gaussian-transform-spreading-range-in-multiples-of-width = 4
+       reference-density-filename = reference.mrc
+       nst                        = 1
+       normalize-densities        = true
+       adaptive-force-scaling     = false
+       adaptive-force-scaling-time-constant = 4
+       shift-vector               = 
+       transformation-matrix      = 
+     qmmm-cp2k:
+       active                     = false
+       qmgroup                    = System
+       qmmethod                   = PBE
+       qmfilenames                = 
+       qmcharge                   = 0
+       qmmultiplicity             = 1
+     colvars:
+       active                     = false
+       configfile                 = 
+       seed                       = -1
+     nnpot:
+       active                     = false
+       modelfile                  = model.pt
+       input-group                = System
+       link-type                  = H
+       link-distance              = 0.1
+       pair-cutoff                = 0
+       embedding                  = mechanical
+       nnp-charge                 = 0
+       model-input1               = 
+       model-input2               = 
+       model-input3               = 
+       model-input4               = 
+       model-input5               = 
+       model-input6               = 
+       model-input7               = 
+       model-input8               = 
+       model-input9               = 
+   fast-multipole-method:
+     fmm:
+       backend                    = inactive
+       exafmm-order               = 6
+       exafmm-direct-range        = 2
+       exafmm-direct-provider     = GROMACS
+       exafmm-tree-type           = uniform
+       exafmm-tree-depth          = 0
+       exafmm-max-particles-per-cell = 0
+       fmsolvr-order              = 8
+       fmsolvr-direct-range       = 1
+       fmsolvr-direct-provider    = FMM
+       fmsolvr-dipole-compensation = true
+       fmsolvr-tree-depth         = 3
+       fmsolvr-sparse             = false
+grpopts:
+   nrdf:          18
+   ref-t:           0
+   tau-t:           0
+annealing:          No
+annealing-npoints:           0
+   acc:	           0           0           0
+   nfreeze:           N           N           N
+   energygrp-flags[  0]: 0
+header:
+   bIr    = present
+   bBox   = present
+   bTop   = present
+   bX     = present
+   bV     = present
+   bF     = not present
+   natoms = 6
+   lambda = 0.000000e+00
+   buffer size = 4936
+topology:
+   name="small_oligomer"
+   #atoms                         = 6
+   #molblock                      = 1
+   molblock (0):
+      moltype              = 0 "OLI"
+      #molecules                     = 1
+      #posres_xA                     = 0
+      #posres_xB                     = 0
+   bIntermolecularInteractions    = false
+   ffparams:
+      atnr=2
+      ntypes=8
+         functype[0]=LJ_SR, c6= 2.32684636e-03, c12= 6.09695853e-05
+         functype[1]=LJ_SR, c6= 1.30511553e-03, c12= 2.93372341e-05
+         functype[2]=LJ_SR, c6= 1.30511553e-03, c12= 2.93372341e-05
+         functype[3]=LJ_SR, c6= 7.32032757e-04, c12= 1.31765919e-05
+         functype[4]=BOND_CLASS2, r0= 1.48000002e-01, k2= 9.62320000e+04, k3=-1.33888000e+05, k4= 2.92880000e+05
+         functype[5]=ANGLE_CLASS2, theta0= 1.11000000e+02 deg, k2= 1.33888000e+02, k3=-1.50623999e+01, k4= 4.18400002e+00, bb_k= 2.09200000e+03, bb_r1= 1.48000002e-01, bb_r2= 1.48000002e-01, ba_k1= 7.11279984e+01, ba_k2= 5.85760002e+01, ba_r1= 1.48000002e-01, ba_r2= 1.48000002e-01
+         functype[6]=DIHEDRAL_CLASS2, k1= 3.76559997e+00, phi1= 0.00000000e+00 deg, k2= 2.09200001e+00, phi2= 1.80000005e+02 deg, k3= 1.25520003e+00, phi3= 0.00000000e+00 deg, mbt_f1= 5.85760021e+00, mbt_f2=-3.76559997e+00, mbt_f3= 2.09200001e+00, mbt_r0= 1.48000002e-01, ebt_f1_1= 5.02080011e+00, ebt_f2_1=-2.51040006e+00, ebt_f3_1= 1.25520003e+00, ebt_f1_2= 4.18400002e+00, ebt_f2_2=-1.67359996e+00, ebt_f3_2= 8.36799979e-01, ebt_r0_1= 1.48000002e-01, ebt_r0_2= 1.48000002e-01, at_f1_1= 2.09199995e-01, at_f2_1=-1.25520006e-01, at_f3_1= 8.36799964e-02, at_f1_2= 1.67359993e-01, at_f2_2=-8.36799964e-02, at_f3_2= 4.18399982e-02, at_theta0_1= 1.11000000e+02 deg, at_theta0_2= 1.11000000e+02 deg, aat_k= 9.20480013e-01, aat_theta0_1= 1.11000000e+02 deg, aat_theta0_2= 1.11000000e+02 deg, bb13t_k= 6.69440002e+01, bb13t_r10= 1.48000002e-01, bb13t_r30= 1.48000002e-01
+         functype[7]=LJ14, c6A= 1.30511553e-03, c12A= 2.93372341e-05, c6B= 1.30511553e-03, c12B= 2.93372341e-05
+      reppow                         = 9
+      fudgeQQ                        = 1
+cmap
+   moltype (0):
+      name="OLI"
+      atoms:
+         atom (6):
+            atom[     0]={type=  0, typeB=  0, ptype=    Atom, m= 1.20110e+01, q= 2.50000e-01, mB= 1.20110e+01, qB= 2.50000e-01, resind=    0, atomnumber= -1}
+            atom[     1]={type=  1, typeB=  1, ptype=    Atom, m= 1.40070e+01, q=-2.50000e-01, mB= 1.40070e+01, qB=-2.50000e-01, resind=    0, atomnumber= -1}
+            atom[     2]={type=  0, typeB=  0, ptype=    Atom, m= 1.20110e+01, q= 2.50000e-01, mB= 1.20110e+01, qB= 2.50000e-01, resind=    0, atomnumber= -1}
+            atom[     3]={type=  1, typeB=  1, ptype=    Atom, m= 1.40070e+01, q=-2.50000e-01, mB= 1.40070e+01, qB=-2.50000e-01, resind=    0, atomnumber= -1}
+            atom[     4]={type=  0, typeB=  0, ptype=    Atom, m= 1.20110e+01, q= 2.50000e-01, mB= 1.20110e+01, qB= 2.50000e-01, resind=    0, atomnumber= -1}
+            atom[     5]={type=  1, typeB=  1, ptype=    Atom, m= 1.40070e+01, q=-2.50000e-01, mB= 1.40070e+01, qB=-2.50000e-01, resind=    0, atomnumber= -1}
+         atom (6):
+            atom[0]={name="A1"}
+            atom[1]={name="A2"}
+            atom[2]={name="A3"}
+            atom[3]={name="A4"}
+            atom[4]={name="A5"}
+            atom[5]={name="A6"}
+         type (6):
+            type[0]={name="T1",nameB="T1"}
+            type[1]={name="T2",nameB="T2"}
+            type[2]={name="T1",nameB="T1"}
+            type[3]={name="T2",nameB="T2"}
+            type[4]={name="T1",nameB="T1"}
+            type[5]={name="T2",nameB="T2"}
+         residue (1):
+            residue[0]={name="OLI", nr=1, ic=' '}
+      excls:
+         numLists=6
+         numElements=30
+         excls[0][num=4]={0, 1, 2, 3}
+         excls[1][num=5]={0, 1, 2, 3, 4}
+         excls[2][num=6]={0, 1, 2, 3, 4, 5}
+         excls[3][num=6]={0, 1, 2, 3, 4, 5}
+         excls[4][num=5]={1, 2, 3, 4, 5}
+         excls[5][num=4]={2, 3, 4, 5}
+      Bond:
+         nr: 0
+      G96Bond:
+         nr: 0
+      Morse:
+         nr: 0
+      Cubic Bonds:
+         nr: 0
+      Class2 Bond:
+         nr: 15
+         iatoms:
+            0 type=4 (BOND_CLASS2)   0   1
+            1 type=4 (BOND_CLASS2)   1   2
+            2 type=4 (BOND_CLASS2)   2   3
+            3 type=4 (BOND_CLASS2)   3   4
+            4 type=4 (BOND_CLASS2)   4   5
+      Connect Bonds:
+         nr: 0
+      Harmonic Pot.:
+         nr: 0
+      FENE Bonds:
+         nr: 0
+      Tab. Bonds:
+         nr: 0
+      Tab. Bonds NC:
+         nr: 0
+      Restraint Pot.:
+         nr: 0
+      Angle:
+         nr: 0
+      G96Angle:
+         nr: 0
+      Restr. Angles:
+         nr: 0
+      Lin. Angle:
+         nr: 0
+      Bond-Cross:
+         nr: 0
+      BA-Cross:
+         nr: 0
+      U-B:
+         nr: 0
+      Quartic Angles:
+         nr: 0
+      Class2 Angle:
+         nr: 16
+         iatoms:
+            0 type=5 (ANGLE_CLASS2)   0   1   2
+            1 type=5 (ANGLE_CLASS2)   1   2   3
+            2 type=5 (ANGLE_CLASS2)   2   3   4
+            3 type=5 (ANGLE_CLASS2)   3   4   5
+      Tab. Angles:
+         nr: 0
+      Proper Dih.:
+         nr: 0
+      Ryckaert-Bell.:
+         nr: 0
+      Restr. Dih.:
+         nr: 0
+      CBT Dih.:
+         nr: 0
+      Fourier Dih.:
+         nr: 0
+      Class2 Dih.:
+         nr: 15
+         iatoms:
+            0 type=6 (DIHEDRAL_CLASS2)   0   1   2   3
+            1 type=6 (DIHEDRAL_CLASS2)   1   2   3   4
+            2 type=6 (DIHEDRAL_CLASS2)   2   3   4   5
+      Improper Dih.:
+         nr: 0
+      Class2 Impr.:
+         nr: 0
+      Per. Imp. Dih.:
+         nr: 0
+      Tab. Dih.:
+         nr: 0
+      CMAP Dih.:
+         nr: 0
+      GB 1-2 Pol.:
+         nr: 0
+      GB 1-3 Pol.:
+         nr: 0
+      GB 1-4 Pol.:
+         nr: 0
+      GB Polariz.:
+         nr: 0
+      Nonpolar Sol.:
+         nr: 0
+      LJ-14:
+         nr: 9
+         iatoms:
+            0 type=7 (LJ14)   0   3
+            1 type=7 (LJ14)   1   4
+            2 type=7 (LJ14)   2   5
+      Coulomb-14:
+         nr: 0
+      LJC-14 q:
+         nr: 0
+      LJC Pairs NB:
+         nr: 0
+      LJ (SR):
+         nr: 0
+      Buck.ham (SR):
+         nr: 0
+      LJ:
+         nr: 0
+      B.ham:
+         nr: 0
+      Disper. corr.:
+         nr: 0
+      Coulomb (SR):
+         nr: 0
+      Coul:
+         nr: 0
+      RF excl.:
+         nr: 0
+      Coul. recip.:
+         nr: 0
+      LJ recip.:
+         nr: 0
+      DPD:
+         nr: 0
+      Polarization:
+         nr: 0
+      Water Pol.:
+         nr: 0
+      Thole Pol.:
+         nr: 0
+      Anharm. Pol.:
+         nr: 0
+      Position Rest.:
+         nr: 0
+      Flat-b. P-R.:
+         nr: 0
+      Dis. Rest.:
+         nr: 0
+      D.R.Viol. (nm):
+         nr: 0
+      Orient. Rest.:
+         nr: 0
+      Ori. R. RMSD:
+         nr: 0
+      Angle Rest.:
+         nr: 0
+      Angle Rest. Z:
+         nr: 0
+      Dih. Rest.:
+         nr: 0
+      Dih. Rest. Vi.:
+         nr: 0
+      Constraint:
+         nr: 0
+      Constr. No Co.:
+         nr: 0
+      Settle:
+         nr: 0
+      Virtual site 1:
+         nr: 0
+      Virtual site 2:
+         nr: 0
+      Virt. site 2fd:
+         nr: 0
+      Virtual site 3:
+         nr: 0
+      Virt. site 3fd:
+         nr: 0
+      Vir. site 3fad:
+         nr: 0
+      Vir. site 3out:
+         nr: 0
+      Virt. site 4fd:
+         nr: 0
+      Vir. site 4fdn:
+         nr: 0
+      Virtual site N:
+         nr: 0
+      COM Pull En.:
+         nr: 0
+      Dens. fitting:
+         nr: 0
+      Quantum En.:
+         nr: 0
+      NN Potential:
+         nr: 0
+      Potential:
+         nr: 0
+      Kinetic En.:
+         nr: 0
+      Total Energy:
+         nr: 0
+      Conserved En.:
+         nr: 0
+      Temperature:
+         nr: 0
+      Vir. Temp.:
+         nr: 0
+      Pres. DC:
+         nr: 0
+      Pressure:
+         nr: 0
+      dH/dl constr.:
+         nr: 0
+      dVremain/dl:
+         nr: 0
+      dEkin/dl:
+         nr: 0
+      dVcoul/dl:
+         nr: 0
+      dVvdw/dl:
+         nr: 0
+      dVbonded/dl:
+         nr: 0
+      dVrestraint/dl:
+         nr: 0
+      dVtemp/dl:
+         nr: 0
+grp[T-Coupling  ] nr=1, name=[ rest]
+grp[Energy Mon. ] nr=1, name=[ rest]
+grp[Acc. not used] nr=1, name=[ rest]
+grp[Freeze      ] nr=1, name=[ rest]
+grp[User1       ] nr=1, name=[ rest]
+grp[User2       ] nr=1, name=[ rest]
+grp[VCM         ] nr=1, name=[ rest]
+grp[Compressed X] nr=1, name=[ rest]
+grp[Or. Res. Fit] nr=1, name=[ rest]
+grp[QMMM        ] nr=1, name=[ rest]
+   grpname (4):
+      grpname[0]={name="System"}
+      grpname[1]={name="Other"}
+      grpname[2]={name="OLI"}
+      grpname[3]={name="rest"}
+   groups           T-Cou Energ Acc.  Freez User1 User2   VCM Compr Or. R  QMMM
+   allocated            0     0     0     0     0     0     0     0     0     0
+   groupnr[    *] =    0     0     0     0     0     0     0     0     0     0 
+box (3x3):
+   box[    0]={ 2.00000e+00,  0.00000e+00,  0.00000e+00}
+   box[    1]={ 0.00000e+00,  2.00000e+00,  0.00000e+00}
+   box[    2]={ 0.00000e+00,  0.00000e+00,  2.00000e+00}
+box_rel (3x3):
+   box_rel[    0]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   box_rel[    1]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   box_rel[    2]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+boxv (3x3):
+   boxv[    0]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   boxv[    1]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   boxv[    2]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+pres_prev (3x3):
+   pres_prev[    0]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   pres_prev[    1]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   pres_prev[    2]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+svir_prev (3x3):
+   svir_prev[    0]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   svir_prev[    1]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   svir_prev[    2]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+fvir_prev (3x3):
+   fvir_prev[    0]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   fvir_prev[    1]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+   fvir_prev[    2]={ 0.00000e+00,  0.00000e+00,  0.00000e+00}
+nosehoover_xi: not available
+x (6x3):
+   x[    0]={ 6.50000e-01,  1.02000e+00,  1.00000e+00}
+   x[    1]={ 7.90000e-01,  9.60000e-01,  1.01000e+00}
+   x[    2]={ 9.20000e-01,  1.05000e+00,  9.80000e-01}
+   x[    3]={ 1.06000e+00,  9.70000e-01,  1.03000e+00}
+   x[    4]={ 1.19000e+00,  1.06000e+00,  9.90000e-01}
+   x[    5]={ 1.33000e+00,  9.80000e-01,  1.02000e+00}
+v (6x3):
+   v[    0]={ 7.55503e-01,  1.52399e-01, -1.12219e-01}
+   v[    1]={ 2.99392e-02, -7.10467e-03,  1.26952e-01}
+   v[    2]={-3.53508e-02, -4.66391e-01, -4.88364e-01}
+   v[    3]={ 9.08201e-02, -1.12771e-01,  4.46354e-01}
+   v[    4]={ 3.98889e-02,  7.02797e-01,  5.01650e-01}
+   v[    5]={-7.72495e-01, -2.13525e-01, -4.88471e-01}
+Group statistics
+T-Coupling  :       6  (total 6 atoms)
+Energy Mon. :       6  (total 6 atoms)
+Acc. not used:       6  (total 6 atoms)
+Freeze      :       6  (total 6 atoms)
+User1       :       6  (total 6 atoms)
+User2       :       6  (total 6 atoms)
+VCM         :       6  (total 6 atoms)
+Compressed X:       6  (total 6 atoms)
+Or. Res. Fit:       6  (total 6 atoms)
+QMMM        :       6  (total 6 atoms)

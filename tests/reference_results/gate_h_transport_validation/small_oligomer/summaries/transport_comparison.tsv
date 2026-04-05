@@ -1,0 +1,2 @@
+observable	cpu_mean	gpu_mean	mean_diff	combined_uncertainty	classification	passes
+oligomer_diffusivity_cm2_s	NA	NA	NA	NA	missing	False

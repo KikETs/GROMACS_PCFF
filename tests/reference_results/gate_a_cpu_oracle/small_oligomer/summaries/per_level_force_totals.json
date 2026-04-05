@@ -1,0 +1,1565 @@
+{
+  "entries": [
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=0",
+      "level": null,
+      "relative_path": "merge_trace/step0_impulse_postcombine.tsv",
+      "step": 0,
+      "vector_sum": [
+        -0.428466796875,
+        0.424652099609375,
+        -0.058475494384765625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=0 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step0_level0_post_postprocess_shift.tsv",
+      "step": 0,
+      "vector_sum": [
+        0.000152587890625,
+        7.62939453125e-06,
+        -2.288818359375e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=0 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step0_level0_pre_postprocess_shift.tsv",
+      "step": 0,
+      "vector_sum": [
+        0.000152587890625,
+        7.62939453125e-06,
+        -2.288818359375e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=0 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step0_level1_post_postprocess_shift.tsv",
+      "step": 0,
+      "vector_sum": [
+        1.4901161193847656e-08,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=0 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step0_level1_pre_postprocess_shift.tsv",
+      "step": 0,
+      "vector_sum": [
+        1.4901161193847656e-08,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=0 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step0_level2_post_postprocess_shift.tsv",
+      "step": 0,
+      "vector_sum": [
+        -0.10716438293457031,
+        0.10614013671875,
+        -0.014652252197265625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=0 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step0_level2_post_postprocess_virial.tsv",
+      "step": 0,
+      "vector_sum": [
+        -0.10716438293457031,
+        0.10614013671875,
+        -0.014652252197265625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=0 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step0_level2_pre_postprocess_shift.tsv",
+      "step": 0,
+      "vector_sum": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=0 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step0_level2_pre_postprocess_virial.tsv",
+      "step": 0,
+      "vector_sum": [
+        -0.10716438293457031,
+        0.10614013671875,
+        -0.014652252197265625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=0",
+      "level": null,
+      "relative_path": "merge_trace/step0_physical_postcombine.tsv",
+      "step": 0,
+      "vector_sum": [
+        -0.107147216796875,
+        0.1064453125,
+        -0.014705657958984375
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=10",
+      "level": null,
+      "relative_path": "merge_trace/step10_impulse_postcombine.tsv",
+      "step": 10,
+      "vector_sum": [
+        -0.302093505859375,
+        0.422027587890625,
+        -0.033588409423828125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=10 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step10_level0_post_postprocess_shift.tsv",
+      "step": 10,
+      "vector_sum": [
+        -0.00018310546875,
+        -0.0001983642578125,
+        -1.52587890625e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=10 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step10_level0_pre_postprocess_shift.tsv",
+      "step": 10,
+      "vector_sum": [
+        -0.00018310546875,
+        -0.0001983642578125,
+        -1.52587890625e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=10 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step10_level1_post_postprocess_shift.tsv",
+      "step": 10,
+      "vector_sum": [
+        -1.4901161193847656e-08,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=10 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step10_level1_pre_postprocess_shift.tsv",
+      "step": 10,
+      "vector_sum": [
+        -1.4901161193847656e-08,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=10",
+      "level": null,
+      "relative_path": "merge_trace/step10_physical_postcombine.tsv",
+      "step": 10,
+      "vector_sum": [
+        -0.07562255859375,
+        0.10528564453125,
+        -0.00852203369140625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=11",
+      "level": null,
+      "relative_path": "merge_trace/step11_impulse_postcombine.tsv",
+      "step": 11,
+      "vector_sum": [
+        -0.301910400390625,
+        0.421966552734375,
+        -0.0335845947265625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=11 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step11_level0_post_postprocess_shift.tsv",
+      "step": 11,
+      "vector_sum": [
+        0.0,
+        -0.0002593994140625,
+        -1.1444091796875e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=11 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step11_level0_pre_postprocess_shift.tsv",
+      "step": 11,
+      "vector_sum": [
+        0.0,
+        -0.0002593994140625,
+        -1.1444091796875e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=11",
+      "level": null,
+      "relative_path": "merge_trace/step11_physical_postcombine.tsv",
+      "step": 11,
+      "vector_sum": [
+        -0.075439453125,
+        0.105255126953125,
+        -0.008518218994140625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=12",
+      "level": null,
+      "relative_path": "merge_trace/step12_impulse_postcombine.tsv",
+      "step": 12,
+      "vector_sum": [
+        -0.221588134765625,
+        0.421417236328125,
+        -0.026348114013671875
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=12 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step12_level0_post_postprocess_shift.tsv",
+      "step": 12,
+      "vector_sum": [
+        -0.000152587890625,
+        0.0002288818359375,
+        -8.0108642578125e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=12 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step12_level0_pre_postprocess_shift.tsv",
+      "step": 12,
+      "vector_sum": [
+        -0.000152587890625,
+        0.0002288818359375,
+        -8.0108642578125e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=12 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step12_level1_post_postprocess_shift.tsv",
+      "step": 12,
+      "vector_sum": [
+        2.9802322387695312e-08,
+        1.862645149230957e-09,
+        4.656612873077393e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=12 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step12_level1_pre_postprocess_shift.tsv",
+      "step": 12,
+      "vector_sum": [
+        2.9802322387695312e-08,
+        1.862645149230957e-09,
+        4.656612873077393e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=12 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step12_level2_post_postprocess_shift.tsv",
+      "step": 12,
+      "vector_sum": [
+        -0.055382728576660156,
+        0.105255126953125,
+        -0.0065555572509765625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=12 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step12_level2_post_postprocess_virial.tsv",
+      "step": 12,
+      "vector_sum": [
+        -0.055382728576660156,
+        0.105255126953125,
+        -0.0065555572509765625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=12 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step12_level2_pre_postprocess_shift.tsv",
+      "step": 12,
+      "vector_sum": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=12 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step12_level2_pre_postprocess_virial.tsv",
+      "step": 12,
+      "vector_sum": [
+        -0.055382728576660156,
+        0.105255126953125,
+        -0.0065555572509765625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=12",
+      "level": null,
+      "relative_path": "merge_trace/step12_physical_postcombine.tsv",
+      "step": 12,
+      "vector_sum": [
+        -0.0555419921875,
+        0.1053924560546875,
+        -0.006679534912109375
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=13",
+      "level": null,
+      "relative_path": "merge_trace/step13_impulse_postcombine.tsv",
+      "step": 13,
+      "vector_sum": [
+        -0.22137451171875,
+        0.421112060546875,
+        -0.026233673095703125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=13 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step13_level0_post_postprocess_shift.tsv",
+      "step": 13,
+      "vector_sum": [
+        6.103515625e-05,
+        -6.103515625e-05,
+        2.6702880859375e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=13 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step13_level0_pre_postprocess_shift.tsv",
+      "step": 13,
+      "vector_sum": [
+        6.103515625e-05,
+        -6.103515625e-05,
+        2.6702880859375e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=13",
+      "level": null,
+      "relative_path": "merge_trace/step13_physical_postcombine.tsv",
+      "step": 13,
+      "vector_sum": [
+        -0.055267333984375,
+        0.1051025390625,
+        -0.006580352783203125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=14",
+      "level": null,
+      "relative_path": "merge_trace/step14_impulse_postcombine.tsv",
+      "step": 14,
+      "vector_sum": [
+        -0.221588134765625,
+        0.4211692810058594,
+        -0.0263671875
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=14 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step14_level0_post_postprocess_shift.tsv",
+      "step": 14,
+      "vector_sum": [
+        6.103515625e-05,
+        0.000141143798828125,
+        -0.000141143798828125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=14 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step14_level0_pre_postprocess_shift.tsv",
+      "step": 14,
+      "vector_sum": [
+        6.103515625e-05,
+        0.000141143798828125,
+        -0.000141143798828125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=14 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step14_level1_post_postprocess_shift.tsv",
+      "step": 14,
+      "vector_sum": [
+        1.4901161193847656e-08,
+        0.0,
+        -4.656612873077393e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=14 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step14_level1_pre_postprocess_shift.tsv",
+      "step": 14,
+      "vector_sum": [
+        1.4901161193847656e-08,
+        0.0,
+        -4.656612873077393e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=14",
+      "level": null,
+      "relative_path": "merge_trace/step14_physical_postcombine.tsv",
+      "step": 14,
+      "vector_sum": [
+        -0.055206298828125,
+        0.10549163818359375,
+        -0.006748199462890625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=15",
+      "level": null,
+      "relative_path": "merge_trace/step15_impulse_postcombine.tsv",
+      "step": 15,
+      "vector_sum": [
+        -0.22149658203125,
+        0.42089080810546875,
+        -0.026332855224609375
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=15 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step15_level0_post_postprocess_shift.tsv",
+      "step": 15,
+      "vector_sum": [
+        9.1552734375e-05,
+        -0.0001373291015625,
+        -7.62939453125e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=15 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step15_level0_pre_postprocess_shift.tsv",
+      "step": 15,
+      "vector_sum": [
+        9.1552734375e-05,
+        -0.0001373291015625,
+        -7.62939453125e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=15",
+      "level": null,
+      "relative_path": "merge_trace/step15_physical_postcombine.tsv",
+      "step": 15,
+      "vector_sum": [
+        -0.05511474609375,
+        0.1052093505859375,
+        -0.00666046142578125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=16",
+      "level": null,
+      "relative_path": "merge_trace/step16_impulse_postcombine.tsv",
+      "step": 16,
+      "vector_sum": [
+        -0.1339874267578125,
+        0.3863372802734375,
+        -0.019671916961669922
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=16 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step16_level0_post_postprocess_shift.tsv",
+      "step": 16,
+      "vector_sum": [
+        -0.000152587890625,
+        -4.57763671875e-05,
+        4.76837158203125e-07
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=16 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step16_level0_pre_postprocess_shift.tsv",
+      "step": 16,
+      "vector_sum": [
+        -0.000152587890625,
+        -4.57763671875e-05,
+        4.76837158203125e-07
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=16 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step16_level1_post_postprocess_shift.tsv",
+      "step": 16,
+      "vector_sum": [
+        -2.9802322387695312e-08,
+        1.862645149230957e-09,
+        -1.1641532182693481e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=16 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step16_level1_pre_postprocess_shift.tsv",
+      "step": 16,
+      "vector_sum": [
+        -2.9802322387695312e-08,
+        1.862645149230957e-09,
+        -1.1641532182693481e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=16 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step16_level2_post_postprocess_shift.tsv",
+      "step": 16,
+      "vector_sum": [
+        -0.03347301483154297,
+        0.09659576416015625,
+        -0.0049152374267578125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=16 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step16_level2_post_postprocess_virial.tsv",
+      "step": 16,
+      "vector_sum": [
+        -0.03347301483154297,
+        0.09659576416015625,
+        -0.0049152374267578125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=16 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step16_level2_pre_postprocess_shift.tsv",
+      "step": 16,
+      "vector_sum": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=16 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step16_level2_pre_postprocess_virial.tsv",
+      "step": 16,
+      "vector_sum": [
+        -0.03347301483154297,
+        0.09659576416015625,
+        -0.0049152374267578125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=16",
+      "level": null,
+      "relative_path": "merge_trace/step16_physical_postcombine.tsv",
+      "step": 16,
+      "vector_sum": [
+        -0.0336456298828125,
+        0.0965118408203125,
+        -0.004933834075927734
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=17",
+      "level": null,
+      "relative_path": "merge_trace/step17_impulse_postcombine.tsv",
+      "step": 17,
+      "vector_sum": [
+        -0.13388824462890625,
+        0.386138916015625,
+        -0.0195770263671875
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=17 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step17_level0_post_postprocess_shift.tsv",
+      "step": 17,
+      "vector_sum": [
+        -2.288818359375e-05,
+        -0.00018310546875,
+        9.1552734375e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=17 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step17_level0_pre_postprocess_shift.tsv",
+      "step": 17,
+      "vector_sum": [
+        -2.288818359375e-05,
+        -0.00018310546875,
+        9.1552734375e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=17",
+      "level": null,
+      "relative_path": "merge_trace/step17_physical_postcombine.tsv",
+      "step": 17,
+      "vector_sum": [
+        -0.033416748046875,
+        0.09642791748046875,
+        -0.00484466552734375
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=18",
+      "level": null,
+      "relative_path": "merge_trace/step18_impulse_postcombine.tsv",
+      "step": 18,
+      "vector_sum": [
+        -0.13384246826171875,
+        0.3863039016723633,
+        -0.019655227661132812
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=18 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step18_level0_post_postprocess_shift.tsv",
+      "step": 18,
+      "vector_sum": [
+        3.814697265625e-05,
+        -0.00013256072998046875,
+        -1.1444091796875e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=18 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step18_level0_pre_postprocess_shift.tsv",
+      "step": 18,
+      "vector_sum": [
+        3.814697265625e-05,
+        -0.00013256072998046875,
+        -1.1444091796875e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=18 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step18_level1_post_postprocess_shift.tsv",
+      "step": 18,
+      "vector_sum": [
+        1.4901161193847656e-08,
+        1.862645149230957e-09,
+        1.1641532182693481e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=18 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step18_level1_pre_postprocess_shift.tsv",
+      "step": 18,
+      "vector_sum": [
+        1.4901161193847656e-08,
+        1.862645149230957e-09,
+        1.1641532182693481e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=18",
+      "level": null,
+      "relative_path": "merge_trace/step18_physical_postcombine.tsv",
+      "step": 18,
+      "vector_sum": [
+        -0.033355712890625,
+        0.09643077850341797,
+        -0.0049114227294921875
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=19",
+      "level": null,
+      "relative_path": "merge_trace/step19_impulse_postcombine.tsv",
+      "step": 19,
+      "vector_sum": [
+        -0.134063720703125,
+        0.3864459991455078,
+        -0.01966381072998047
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=19 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step19_level0_post_postprocess_shift.tsv",
+      "step": 19,
+      "vector_sum": [
+        -3.0517578125e-05,
+        7.05718994140625e-05,
+        2.574920654296875e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=19 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step19_level0_pre_postprocess_shift.tsv",
+      "step": 19,
+      "vector_sum": [
+        -3.0517578125e-05,
+        7.05718994140625e-05,
+        2.574920654296875e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=19",
+      "level": null,
+      "relative_path": "merge_trace/step19_physical_postcombine.tsv",
+      "step": 19,
+      "vector_sum": [
+        -0.03342437744140625,
+        0.09663581848144531,
+        -0.0048980712890625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=1",
+      "level": null,
+      "relative_path": "merge_trace/step1_impulse_postcombine.tsv",
+      "step": 1,
+      "vector_sum": [
+        -0.4287109375,
+        0.425262451171875,
+        -0.058658599853515625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=1 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step1_level0_post_postprocess_shift.tsv",
+      "step": 1,
+      "vector_sum": [
+        -0.0001068115234375,
+        0.00049591064453125,
+        -0.00020599365234375
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=1 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step1_level0_pre_postprocess_shift.tsv",
+      "step": 1,
+      "vector_sum": [
+        -0.0001068115234375,
+        0.00049591064453125,
+        -0.00020599365234375
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=1",
+      "level": null,
+      "relative_path": "merge_trace/step1_physical_postcombine.tsv",
+      "step": 1,
+      "vector_sum": [
+        -0.107421875,
+        0.10693359375,
+        -0.014888763427734375
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=20",
+      "level": null,
+      "relative_path": "merge_trace/step20_impulse_postcombine.tsv",
+      "step": 20,
+      "vector_sum": [
+        -0.04302215576171875,
+        0.3355369567871094,
+        -0.011266708374023438
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=20 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step20_level0_post_postprocess_shift.tsv",
+      "step": 20,
+      "vector_sum": [
+        5.340576171875e-05,
+        3.0517578125e-05,
+        2.09808349609375e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=20 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step20_level0_pre_postprocess_shift.tsv",
+      "step": 20,
+      "vector_sum": [
+        5.340576171875e-05,
+        3.0517578125e-05,
+        2.09808349609375e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=20 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step20_level1_post_postprocess_shift.tsv",
+      "step": 20,
+      "vector_sum": [
+        -1.4901161193847656e-08,
+        1.862645149230957e-09,
+        -1.7462298274040222e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=20 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step20_level1_pre_postprocess_shift.tsv",
+      "step": 20,
+      "vector_sum": [
+        -1.4901161193847656e-08,
+        1.862645149230957e-09,
+        -1.7462298274040222e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=20 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step20_level2_post_postprocess_shift.tsv",
+      "step": 20,
+      "vector_sum": [
+        -0.010766029357910156,
+        0.08388519287109375,
+        -0.0028228759765625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=20 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step20_level2_post_postprocess_virial.tsv",
+      "step": 20,
+      "vector_sum": [
+        -0.010766029357910156,
+        0.08388519287109375,
+        -0.0028228759765625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=20 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step20_level2_pre_postprocess_shift.tsv",
+      "step": 20,
+      "vector_sum": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=20 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step20_level2_pre_postprocess_virial.tsv",
+      "step": 20,
+      "vector_sum": [
+        -0.010766029357910156,
+        0.08388519287109375,
+        -0.0028228759765625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=20",
+      "level": null,
+      "relative_path": "merge_trace/step20_physical_postcombine.tsv",
+      "step": 20,
+      "vector_sum": [
+        -0.010700225830078125,
+        0.0839385986328125,
+        -0.002803802490234375
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=2",
+      "level": null,
+      "relative_path": "merge_trace/step2_impulse_postcombine.tsv",
+      "step": 2,
+      "vector_sum": [
+        -0.428741455078125,
+        0.42504119873046875,
+        -0.058612823486328125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=2 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step2_level0_post_postprocess_shift.tsv",
+      "step": 2,
+      "vector_sum": [
+        -3.0517578125e-05,
+        0.000476837158203125,
+        -0.0001621246337890625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=2 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step2_level0_pre_postprocess_shift.tsv",
+      "step": 2,
+      "vector_sum": [
+        -3.0517578125e-05,
+        0.000476837158203125,
+        -0.0001621246337890625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=2 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step2_level1_post_postprocess_shift.tsv",
+      "step": 2,
+      "vector_sum": [
+        1.4901161193847656e-08,
+        -1.862645149230957e-09,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=2 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step2_level1_pre_postprocess_shift.tsv",
+      "step": 2,
+      "vector_sum": [
+        1.4901161193847656e-08,
+        -1.862645149230957e-09,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=2",
+      "level": null,
+      "relative_path": "merge_trace/step2_physical_postcombine.tsv",
+      "step": 2,
+      "vector_sum": [
+        -0.10723876953125,
+        0.10680770874023438,
+        -0.014873504638671875
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=3",
+      "level": null,
+      "relative_path": "merge_trace/step3_impulse_postcombine.tsv",
+      "step": 3,
+      "vector_sum": [
+        -0.428802490234375,
+        0.4252433776855469,
+        -0.058373451232910156
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=3 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step3_level0_post_postprocess_shift.tsv",
+      "step": 3,
+      "vector_sum": [
+        -9.1552734375e-05,
+        0.00055694580078125,
+        0.0001087188720703125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=3 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step3_level0_pre_postprocess_shift.tsv",
+      "step": 3,
+      "vector_sum": [
+        -9.1552734375e-05,
+        0.00055694580078125,
+        0.0001087188720703125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=3",
+      "level": null,
+      "relative_path": "merge_trace/step3_physical_postcombine.tsv",
+      "step": 3,
+      "vector_sum": [
+        -0.10730743408203125,
+        0.1068878173828125,
+        -0.0146026611328125
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=4",
+      "level": null,
+      "relative_path": "merge_trace/step4_impulse_postcombine.tsv",
+      "step": 4,
+      "vector_sum": [
+        -0.3719635009765625,
+        0.41596221923828125,
+        -0.04365825653076172
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=4 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step4_level0_post_postprocess_shift.tsv",
+      "step": 4,
+      "vector_sum": [
+        5.340576171875e-05,
+        0.0005779266357421875,
+        0.000194549560546875
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=4 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step4_level0_pre_postprocess_shift.tsv",
+      "step": 4,
+      "vector_sum": [
+        5.340576171875e-05,
+        0.0005779266357421875,
+        0.000194549560546875
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=4 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step4_level1_post_postprocess_shift.tsv",
+      "step": 4,
+      "vector_sum": [
+        0.0,
+        -1.862645149230957e-09,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=4 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step4_level1_pre_postprocess_shift.tsv",
+      "step": 4,
+      "vector_sum": [
+        0.0,
+        -1.862645149230957e-09,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=4 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step4_level2_post_postprocess_shift.tsv",
+      "step": 4,
+      "vector_sum": [
+        -0.09296703338623047,
+        0.10374259948730469,
+        -0.010959625244140625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=4 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step4_level2_post_postprocess_virial.tsv",
+      "step": 4,
+      "vector_sum": [
+        -0.09296703338623047,
+        0.10374259948730469,
+        -0.010959625244140625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=4 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step4_level2_pre_postprocess_shift.tsv",
+      "step": 4,
+      "vector_sum": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=4 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step4_level2_pre_postprocess_virial.tsv",
+      "step": 4,
+      "vector_sum": [
+        -0.09296703338623047,
+        0.10374259948730469,
+        -0.010959625244140625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=4",
+      "level": null,
+      "relative_path": "merge_trace/step4_physical_postcombine.tsv",
+      "step": 4,
+      "vector_sum": [
+        -0.09282684326171875,
+        0.1042490005493164,
+        -0.010732650756835938
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=5",
+      "level": null,
+      "relative_path": "merge_trace/step5_impulse_postcombine.tsv",
+      "step": 5,
+      "vector_sum": [
+        -0.37204742431640625,
+        0.41471385955810547,
+        -0.04395771026611328
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=5 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step5_level0_post_postprocess_shift.tsv",
+      "step": 5,
+      "vector_sum": [
+        -3.0517578125e-05,
+        -0.00042629241943359375,
+        -0.00013518333435058594
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=5 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step5_level0_pre_postprocess_shift.tsv",
+      "step": 5,
+      "vector_sum": [
+        -3.0517578125e-05,
+        -0.00042629241943359375,
+        -0.00013518333435058594
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=5",
+      "level": null,
+      "relative_path": "merge_trace/step5_physical_postcombine.tsv",
+      "step": 5,
+      "vector_sum": [
+        -0.0929107666015625,
+        0.10318374633789062,
+        -0.011061906814575195
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=6",
+      "level": null,
+      "relative_path": "merge_trace/step6_impulse_postcombine.tsv",
+      "step": 6,
+      "vector_sum": [
+        -0.371795654296875,
+        0.4153861999511719,
+        -0.043854713439941406
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=6 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step6_level0_post_postprocess_shift.tsv",
+      "step": 6,
+      "vector_sum": [
+        0.0001678466796875,
+        0.00019073486328125,
+        -8.916854858398438e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=6 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step6_level0_pre_postprocess_shift.tsv",
+      "step": 6,
+      "vector_sum": [
+        0.0001678466796875,
+        0.00019073486328125,
+        -8.916854858398438e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=6 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step6_level1_post_postprocess_shift.tsv",
+      "step": 6,
+      "vector_sum": [
+        2.9802322387695312e-08,
+        0.0,
+        -6.984919309616089e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=6 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step6_level1_pre_postprocess_shift.tsv",
+      "step": 6,
+      "vector_sum": [
+        2.9802322387695312e-08,
+        0.0,
+        -6.984919309616089e-10
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=6",
+      "level": null,
+      "relative_path": "merge_trace/step6_physical_postcombine.tsv",
+      "step": 6,
+      "vector_sum": [
+        -0.092620849609375,
+        0.10391998291015625,
+        -0.011063814163208008
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=7",
+      "level": null,
+      "relative_path": "merge_trace/step7_impulse_postcombine.tsv",
+      "step": 7,
+      "vector_sum": [
+        -0.3720550537109375,
+        0.4150390625,
+        -0.04374837875366211
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=7 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step7_level0_post_postprocess_shift.tsv",
+      "step": 7,
+      "vector_sum": [
+        -0.000213623046875,
+        0.00020599365234375,
+        1.71661376953125e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=7 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step7_level0_pre_postprocess_shift.tsv",
+      "step": 7,
+      "vector_sum": [
+        -0.000213623046875,
+        0.00020599365234375,
+        1.71661376953125e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=7",
+      "level": null,
+      "relative_path": "merge_trace/step7_physical_postcombine.tsv",
+      "step": 7,
+      "vector_sum": [
+        -0.093017578125,
+        0.10393524169921875,
+        -0.01095724105834961
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=8",
+      "level": null,
+      "relative_path": "merge_trace/step8_impulse_postcombine.tsv",
+      "step": 8,
+      "vector_sum": [
+        -0.3021240234375,
+        0.421722412109375,
+        -0.033576011657714844
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=8 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step8_level0_post_postprocess_shift.tsv",
+      "step": 8,
+      "vector_sum": [
+        -0.000152587890625,
+        -0.00030517578125,
+        -3.814697265625e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=8 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step8_level0_pre_postprocess_shift.tsv",
+      "step": 8,
+      "vector_sum": [
+        -0.000152587890625,
+        -0.00030517578125,
+        -3.814697265625e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=1 mts_user=2 step=8 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step8_level1_post_postprocess_shift.tsv",
+      "step": 8,
+      "vector_sum": [
+        -2.9802322387695312e-08,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=1 mts_user=2 step=8 buffer=forceWithShiftForces",
+      "level": 1,
+      "relative_path": "merge_trace/step8_level1_pre_postprocess_shift.tsv",
+      "step": 8,
+      "vector_sum": [
+        -2.9802322387695312e-08,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=8 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step8_level2_post_postprocess_shift.tsv",
+      "step": 8,
+      "vector_sum": [
+        -0.0754995346069336,
+        0.10549736022949219,
+        -0.008389472961425781
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=2 mts_user=3 step=8 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step8_level2_post_postprocess_virial.tsv",
+      "step": 8,
+      "vector_sum": [
+        -0.0754995346069336,
+        0.10549736022949219,
+        -0.008389472961425781
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=8 buffer=forceWithShiftForces",
+      "level": 2,
+      "relative_path": "merge_trace/step8_level2_pre_postprocess_shift.tsv",
+      "step": 8,
+      "vector_sum": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=2 mts_user=3 step=8 buffer=forceWithVirial",
+      "level": 2,
+      "relative_path": "merge_trace/step8_level2_pre_postprocess_virial.tsv",
+      "step": 8,
+      "vector_sum": [
+        -0.0754995346069336,
+        0.10549736022949219,
+        -0.008389472961425781
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=8",
+      "level": null,
+      "relative_path": "merge_trace/step8_physical_postcombine.tsv",
+      "step": 8,
+      "vector_sum": [
+        -0.075714111328125,
+        0.10511016845703125,
+        -0.008390426635742188
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=impulse_total step=9",
+      "level": null,
+      "relative_path": "merge_trace/step9_impulse_postcombine.tsv",
+      "step": 9,
+      "vector_sum": [
+        -0.302032470703125,
+        0.42232513427734375,
+        -0.033451080322265625
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_postprocess mts_index=0 mts_user=1 step=9 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step9_level0_post_postprocess_shift.tsv",
+      "step": 9,
+      "vector_sum": [
+        -3.0517578125e-05,
+        0.0002288818359375,
+        8.7738037109375e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=pre_postprocess mts_index=0 mts_user=1 step=9 buffer=forceWithShiftForces",
+      "level": 0,
+      "relative_path": "merge_trace/step9_level0_pre_postprocess_shift.tsv",
+      "step": 9,
+      "vector_sum": [
+        -3.0517578125e-05,
+        0.0002288818359375,
+        8.7738037109375e-05
+      ]
+    },
+    {
+      "atom_count": 6,
+      "header": "stage=post_combine buffer=physical_total step=9",
+      "level": null,
+      "relative_path": "merge_trace/step9_physical_postcombine.tsv",
+      "step": 9,
+      "vector_sum": [
+        -0.075592041015625,
+        0.10564422607421875,
+        -0.008264541625976562
+      ]
+    }
+  ],
+  "schema_version": 1
+}

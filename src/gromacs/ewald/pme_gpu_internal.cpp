@@ -50,8 +50,15 @@
 
 #include "config.h"
 
+#include <atomic>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <list>
 #include <memory>
+#include <mutex>
+#include <sstream>
 #include <string>
 
 #include "gromacs/ewald/ewald_utils.h"
@@ -68,6 +75,7 @@
 #include "gromacs/ewald/pme_coordinate_receiver_gpu.h"
 #include "gromacs/hardware/device_information.h"
 #include "gromacs/math/boxmatrix.h"
+#include "gromacs/math/gmxcomplex.h"
 #include "gromacs/math/units.h"
 #include "gromacs/timing/gpu_timing.h"
 #include "gromacs/timing/wallcycle.h"
@@ -90,6 +98,13 @@
 #include "pme_internal.h"
 #include "pme_solve.h"
 
+namespace gmx
+{
+extern thread_local int64_t g_respaCurrentDoForceStep;
+}
+
+void pme_gpu_prepare_gather_debug_launch(int64_t step);
+
 /*! \internal \brief
  * Wrapper for getting a pointer to the plain C++ part of the GPU kernel parameters structure.
  *
@@ -101,6 +116,517 @@ static PmeGpuKernelParams* pme_gpu_get_kernel_params_ptr(const PmeGpu* pmeGpu)
     // reinterpret_cast is needed because the derived CUDA structure is not known in this file
     auto* kernelParamsPtr = reinterpret_cast<PmeGpuKernelParams*>(pmeGpu->kernelParams.get());
     return kernelParamsPtr;
+}
+
+static const char* activeRespaTraceDirPath()
+{
+    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
+}
+
+static bool shouldTracePmeGpuInputCoordinates()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_GPU_INPUT_COORDINATES");
+    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+}
+
+static bool shouldTracePmeGpuOutputForces()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_GPU_OUTPUT_FORCES");
+    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+}
+
+static bool shouldTracePmeComplexGrid()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_COMPLEX_GRID");
+    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+}
+
+static bool shouldTracePmeRealGrid()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_REAL_GRID");
+    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+}
+
+static bool shouldTracePmePreFftRealGrid()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_PRE_FFT_REAL_GRID");
+    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+}
+
+static int targetPmeComplexGridTraceStep()
+{
+    static const int step = []()
+    {
+        if (const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_COMPLEX_GRID_STEP"))
+        {
+            return std::atoi(value);
+        }
+        return -1;
+    }();
+    return step;
+}
+
+static int targetPmeRealGridTraceStep()
+{
+    static const int step = []()
+    {
+        if (const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_REAL_GRID_STEP"))
+        {
+            return std::atoi(value);
+        }
+        return -1;
+    }();
+    return step;
+}
+
+static int targetPmePreFftRealGridTraceStep()
+{
+    static const int step = []()
+    {
+        if (const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_PRE_FFT_REAL_GRID_STEP"))
+        {
+            return std::atoi(value);
+        }
+        return -1;
+    }();
+    return step;
+}
+
+static int64_t currentRespaTraceStep()
+{
+    return gmx::g_respaCurrentDoForceStep;
+}
+
+static const std::vector<int>& pmeGpuTraceAtomIndices()
+{
+    static const std::vector<int> atomIndices = []()
+    {
+        std::vector<int> parsedAtomIndices;
+        if (const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_ATOMS"))
+        {
+            std::stringstream stream(value);
+            std::string       item;
+            while (std::getline(stream, item, ','))
+            {
+                if (!item.empty())
+                {
+                    parsedAtomIndices.push_back(std::stoi(item));
+                }
+            }
+        }
+        if (parsedAtomIndices.empty())
+        {
+            parsedAtomIndices = { 0, 5 };
+        }
+        return parsedAtomIndices;
+    }();
+    return atomIndices;
+}
+
+static void appendPmeGpuInputCoordinateTraceLine(const char* traceDirPath, const std::string& line)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath =
+            std::filesystem::path(traceDirPath) / "pme_gpu_input_coordinate_trace.tsv";
+    static std::string clearedTracePath;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+    }
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << line << '\n';
+}
+
+static void appendPmeGpuOutputForceTraceLine(const char* traceDirPath, const std::string& line)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath =
+            std::filesystem::path(traceDirPath) / "pme_gpu_output_force_trace.tsv";
+    static std::string clearedTracePath;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+    }
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << line << '\n';
+}
+
+static void appendPmeGpuComplexGridTrace(const PmeGpu* pmeGpu, const int gridIndex)
+{
+    if (!shouldTracePmeComplexGrid() || currentRespaTraceStep() != targetPmeComplexGridTraceStep())
+    {
+        return;
+    }
+
+    auto* kernelParamsPtr = pme_gpu_get_kernel_params_ptr(pmeGpu);
+    const int nx          = kernelParamsPtr->grid.localComplexGridSize[XX];
+    const int ny          = kernelParamsPtr->grid.localComplexGridSize[YY];
+    const int nz          = kernelParamsPtr->grid.localComplexGridSize[ZZ];
+    const int py          = kernelParamsPtr->grid.localComplexGridSizePadded[YY];
+    const int pz          = kernelParamsPtr->grid.localComplexGridSizePadded[ZZ];
+    const int floatCount  = kernelParamsPtr->grid.localComplexGridSizePadded[XX] * py * pz * 2;
+    if (floatCount <= 0)
+    {
+        return;
+    }
+
+    gmx::HostVector<float> hComplexGrid;
+    gmx::changePinningPolicy(&hComplexGrid, gmx::PinningPolicy::PinnedIfSupported);
+    hComplexGrid.resize(floatCount);
+    copyFromDeviceBuffer(hComplexGrid.data(),
+                         &kernelParamsPtr->grid.d_fftComplexGrid[gridIndex],
+                         0,
+                         floatCount,
+                         pmeGpu->archSpecific->pmeStream_,
+                         pmeGpu->settings.transferKind,
+                         nullptr);
+    pmeGpu->archSpecific->pmeStream_.synchronize();
+
+    const char* traceDirPath = activeRespaTraceDirPath();
+    if (traceDirPath == nullptr)
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath =
+            std::filesystem::path(traceDirPath) / "gpu_pme_complex_grid_trace.tsv";
+    static std::string clearedTracePath;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+    }
+
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << std::setprecision(17);
+    const auto* complexGrid = reinterpret_cast<const t_complex*>(hComplexGrid.data());
+    for (int ix = 0; ix < nx; ix++)
+    {
+        for (int iy = 0; iy < ny; iy++)
+        {
+            const int baseIndex = (ix * py + iy) * pz;
+            for (int iz = 0; iz < nz; iz++)
+            {
+                const t_complex value = complexGrid[baseIndex + iz];
+                stream << "step=" << currentRespaTraceStep() << " ix=" << ix << " iy=" << iy
+                       << " iz=" << iz << " re=" << value.re << " im=" << value.im << '\n';
+            }
+        }
+    }
+}
+
+void pme_gpu_trace_complex_grid_pre_solve(const PmeGpu* pmeGpu, const int gridIndex)
+{
+    if (!shouldTracePmeComplexGrid() || currentRespaTraceStep() != targetPmeComplexGridTraceStep())
+    {
+        return;
+    }
+
+    auto* kernelParamsPtr = pme_gpu_get_kernel_params_ptr(pmeGpu);
+    const int nx          = kernelParamsPtr->grid.localComplexGridSize[XX];
+    const int ny          = kernelParamsPtr->grid.localComplexGridSize[YY];
+    const int nz          = kernelParamsPtr->grid.localComplexGridSize[ZZ];
+    const int py          = kernelParamsPtr->grid.localComplexGridSizePadded[YY];
+    const int pz          = kernelParamsPtr->grid.localComplexGridSizePadded[ZZ];
+    const int floatCount  = kernelParamsPtr->grid.localComplexGridSizePadded[XX] * py * pz * 2;
+    if (floatCount <= 0)
+    {
+        return;
+    }
+
+    gmx::HostVector<float> hComplexGrid;
+    gmx::changePinningPolicy(&hComplexGrid, gmx::PinningPolicy::PinnedIfSupported);
+    hComplexGrid.resize(floatCount);
+    copyFromDeviceBuffer(hComplexGrid.data(),
+                         &kernelParamsPtr->grid.d_fftComplexGrid[gridIndex],
+                         0,
+                         floatCount,
+                         pmeGpu->archSpecific->pmeStream_,
+                         pmeGpu->settings.transferKind,
+                         nullptr);
+    pmeGpu->archSpecific->pmeStream_.synchronize();
+
+    const auto* values = reinterpret_cast<const t_complex*>(hComplexGrid.data());
+
+    const char* traceDirPath = activeRespaTraceDirPath();
+    if (traceDirPath == nullptr)
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath =
+            std::filesystem::path(traceDirPath) / "gpu_pme_complex_grid_pre_solve_trace.tsv";
+    static std::string clearedTracePath;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+    }
+
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << std::setprecision(17);
+    for (int ix = 0; ix < nx; ix++)
+    {
+        for (int iy = 0; iy < ny; iy++)
+        {
+            const int baseIndex = (ix * py + iy) * pz;
+            for (int iz = 0; iz < nz; iz++)
+            {
+                const t_complex value = values[baseIndex + iz];
+                stream << "step=" << currentRespaTraceStep() << " ix=" << ix << " iy=" << iy << " iz=" << iz
+                       << " re=" << value.re << " im=" << value.im << '\n';
+            }
+        }
+    }
+}
+
+static void appendPmeGpuRealGridTrace(const PmeGpu* pmeGpu, const int gridIndex)
+{
+    if (!shouldTracePmeRealGrid() || currentRespaTraceStep() != targetPmeRealGridTraceStep())
+    {
+        return;
+    }
+
+    auto* kernelParamsPtr = pme_gpu_get_kernel_params_ptr(pmeGpu);
+    const int nx          = kernelParamsPtr->grid.realGridSize[XX];
+    const int ny          = kernelParamsPtr->grid.realGridSize[YY];
+    const int nz          = kernelParamsPtr->grid.realGridSize[ZZ];
+    const int floatCount  = nx * ny * nz;
+    if (floatCount <= 0)
+    {
+        return;
+    }
+
+    gmx::HostVector<float> hRealGrid;
+    gmx::changePinningPolicy(&hRealGrid, gmx::PinningPolicy::PinnedIfSupported);
+    hRealGrid.resize(floatCount);
+    copyFromDeviceBuffer(hRealGrid.data(),
+                         &kernelParamsPtr->grid.d_realGrid[gridIndex],
+                         0,
+                         floatCount,
+                         pmeGpu->archSpecific->pmeStream_,
+                         pmeGpu->settings.transferKind,
+                         nullptr);
+    pmeGpu->archSpecific->pmeStream_.synchronize();
+
+    const char* traceDirPath = activeRespaTraceDirPath();
+    if (traceDirPath == nullptr)
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath = std::filesystem::path(traceDirPath) / "gpu_pme_real_grid_trace.tsv";
+    static std::string          clearedTracePath;
+    static int                  nextCallIndex = 0;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+        nextCallIndex    = 0;
+    }
+
+    const int callIndex = nextCallIndex++;
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << std::setprecision(17);
+    for (int ix = 0; ix < nx; ix++)
+    {
+        for (int iy = 0; iy < ny; iy++)
+        {
+            const int baseIndex = (ix * ny + iy) * nz;
+            for (int iz = 0; iz < nz; iz++)
+            {
+                stream << "call_index=" << callIndex << " step=" << currentRespaTraceStep() << " ix=" << ix
+                       << " iy=" << iy << " iz=" << iz << " value=" << hRealGrid[baseIndex + iz] << '\n';
+            }
+        }
+    }
+}
+
+void pme_gpu_trace_real_grid_pre_fft(const PmeGpu* pmeGpu, const int gridIndex)
+{
+    if (!shouldTracePmePreFftRealGrid() || currentRespaTraceStep() != targetPmePreFftRealGridTraceStep())
+    {
+        return;
+    }
+
+    auto* kernelParamsPtr = pme_gpu_get_kernel_params_ptr(pmeGpu);
+    const int nx          = kernelParamsPtr->grid.realGridSize[XX];
+    const int ny          = kernelParamsPtr->grid.realGridSize[YY];
+    const int nz          = kernelParamsPtr->grid.realGridSize[ZZ];
+    const int floatCount  = nx * ny * nz;
+    if (floatCount <= 0)
+    {
+        return;
+    }
+
+    gmx::HostVector<float> hRealGrid;
+    gmx::changePinningPolicy(&hRealGrid, gmx::PinningPolicy::PinnedIfSupported);
+    hRealGrid.resize(floatCount);
+    copyFromDeviceBuffer(hRealGrid.data(),
+                         &kernelParamsPtr->grid.d_realGrid[gridIndex],
+                         0,
+                         floatCount,
+                         pmeGpu->archSpecific->pmeStream_,
+                         pmeGpu->settings.transferKind,
+                         nullptr);
+    pmeGpu->archSpecific->pmeStream_.synchronize();
+
+    const char* traceDirPath = activeRespaTraceDirPath();
+    if (traceDirPath == nullptr)
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath =
+            std::filesystem::path(traceDirPath) / "gpu_pme_real_grid_pre_fft_trace.tsv";
+    static std::string clearedTracePath;
+    static int         nextCallIndex = 0;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+        nextCallIndex    = 0;
+    }
+
+    const int callIndex = nextCallIndex++;
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << std::setprecision(17);
+    for (int ix = 0; ix < nx; ix++)
+    {
+        for (int iy = 0; iy < ny; iy++)
+        {
+            const int baseIndex = (ix * ny + iy) * nz;
+            for (int iz = 0; iz < nz; iz++)
+            {
+                stream << "call_index=" << callIndex << " step=" << currentRespaTraceStep() << " ix=" << ix
+                       << " iy=" << iy << " iz=" << iz << " value=" << hRealGrid[baseIndex + iz] << '\n';
+            }
+        }
+    }
+}
+
+static void appendPmeGpuInputCoordinateTrace(const PmeGpu* pmeGpu, const char* stage)
+{
+    if (!shouldTracePmeGpuInputCoordinates())
+    {
+        return;
+    }
+
+    auto* kernelParamsPtr = pme_gpu_get_kernel_params_ptr(pmeGpu);
+    const int nAtoms      = kernelParamsPtr->atoms.nAtoms;
+    if (nAtoms <= 0)
+    {
+        return;
+    }
+
+    int maxTraceAtomIndex = -1;
+    for (const int atomIndex : pmeGpuTraceAtomIndices())
+    {
+        maxTraceAtomIndex = std::max(maxTraceAtomIndex, atomIndex);
+    }
+    if (maxTraceAtomIndex < 0)
+    {
+        return;
+    }
+
+    const int atomsToCopy = std::min(nAtoms, maxTraceAtomIndex + 1);
+    gmx::HostVector<gmx::RVec> hCoordinates;
+    gmx::changePinningPolicy(&hCoordinates, gmx::PinningPolicy::PinnedIfSupported);
+    hCoordinates.resize(atomsToCopy);
+    copyFromDeviceBuffer(hCoordinates.data(),
+                         &kernelParamsPtr->atoms.d_coordinates,
+                         0,
+                         atomsToCopy,
+                         pmeGpu->archSpecific->pmeStream_,
+                         pmeGpu->settings.transferKind,
+                         nullptr);
+    pmeGpu->archSpecific->pmeStream_.synchronize();
+
+    for (const int atomIndex : pmeGpuTraceAtomIndices())
+    {
+        if (atomIndex < 0 || atomIndex >= atomsToCopy)
+        {
+            appendPmeGpuInputCoordinateTraceLine(
+                    activeRespaTraceDirPath(),
+                    "step=" + std::to_string(currentRespaTraceStep()) + " stage=" + std::string(stage)
+                            + " atom=" + std::to_string(atomIndex)
+                            + " available=false");
+            continue;
+        }
+
+        appendPmeGpuInputCoordinateTraceLine(
+                activeRespaTraceDirPath(),
+                "step=" + std::to_string(currentRespaTraceStep()) + " stage=" + std::string(stage)
+                        + " atom=" + std::to_string(atomIndex)
+                        + " available=true x="
+                        + gmx::formatString("%.15f", hCoordinates[atomIndex][XX]) + " y="
+                        + gmx::formatString("%.15f", hCoordinates[atomIndex][YY]) + " z="
+                        + gmx::formatString("%.15f", hCoordinates[atomIndex][ZZ]));
+    }
+}
+
+static void appendPmeGpuOutputForceTrace(const PmeGpu* pmeGpu, const char* stage)
+{
+    if (!shouldTracePmeGpuOutputForces())
+    {
+        return;
+    }
+
+    auto* kernelParamsPtr = pme_gpu_get_kernel_params_ptr(pmeGpu);
+    const int nAtoms      = kernelParamsPtr->atoms.nAtoms;
+    if (nAtoms <= 0)
+    {
+        return;
+    }
+
+    static std::atomic<std::uint64_t> traceCallCounter = 0;
+    const std::uint64_t               callIndex        = traceCallCounter.fetch_add(1);
+    const char*                       traceDirPath     = activeRespaTraceDirPath();
+    for (const int atomIndex : pmeGpuTraceAtomIndices())
+    {
+        if (atomIndex < 0 || atomIndex >= nAtoms
+            || atomIndex >= static_cast<int>(pmeGpu->staging.h_forces.size()))
+        {
+            appendPmeGpuOutputForceTraceLine(
+                    traceDirPath,
+                    "step=" + std::to_string(currentRespaTraceStep()) + " call_index="
+                            + std::to_string(callIndex) + " stage=" + std::string(stage) + " atom="
+                            + std::to_string(atomIndex) + " available=false");
+            continue;
+        }
+
+        appendPmeGpuOutputForceTraceLine(
+                traceDirPath,
+                "step=" + std::to_string(currentRespaTraceStep()) + " call_index="
+                        + std::to_string(callIndex) + " stage=" + std::string(stage) + " atom="
+                        + std::to_string(atomIndex) + " available=true fx="
+                        + gmx::formatString("%.15f", pmeGpu->staging.h_forces[atomIndex][XX]) + " fy="
+                        + gmx::formatString("%.15f", pmeGpu->staging.h_forces[atomIndex][YY]) + " fz="
+                        + gmx::formatString("%.15f", pmeGpu->staging.h_forces[atomIndex][ZZ]));
+    }
 }
 
 /*! \brief
@@ -283,6 +809,7 @@ void pme_gpu_copy_output_forces(PmeGpu* pmeGpu)
                          pmeGpu->archSpecific->pmeStream_,
                          pmeGpu->settings.transferKind,
                          nullptr);
+    appendPmeGpuOutputForceTrace(pmeGpu, "post_copy_output_forces");
 }
 
 void pme_gpu_realloc_and_copy_input_coefficients(const PmeGpu* pmeGpu,
@@ -2350,6 +2877,8 @@ void pme_gpu_solve(PmeGpu* pmeGpu, const int gridIndex, t_complex* h_grid, GridO
     launchGpuKernel(kernelPtr, config, pmeGpu->archSpecific->pmeStream_, timingEvent, "PME solve", kernelArgs);
     pme_gpu_stop_timing(pmeGpu, timingId);
 
+    appendPmeGpuComplexGridTrace(pmeGpu, gridIndex);
+
     if (computeEnergyAndVirial)
     {
         copyFromDeviceBuffer(pmeGpu->staging.h_virialAndEnergy[gridIndex].data(),
@@ -2510,6 +3039,11 @@ void pme_gpu_gather(PmeGpu*                       pmeGpu,
         pmeGpuGridHaloExchangeReverse(pmeGpu, wcycle);
     }
 
+    for (int gridIndex = 0; gridIndex < pmeGpu->common->ngrids; gridIndex++)
+    {
+        appendPmeGpuRealGridTrace(pmeGpu, gridIndex);
+    }
+
     wallcycle_start(wcycle, WallCycleCounter::LaunchGpuPme);
 
     /* Set if we have unit tests */
@@ -2564,6 +3098,9 @@ void pme_gpu_gather(PmeGpu*                       pmeGpu,
         {
             kernelParamsPtr->current.scale = 1.0 - lambda;
         }
+
+        appendPmeGpuInputCoordinateTrace(pmeGpu, "pre_gather_launch");
+        pme_gpu_prepare_gather_debug_launch(gmx::g_respaCurrentDoForceStep);
 
 #if GMX_NVSHMEM
         kernelParamsPtr->isVirialStep = computeVirial;

@@ -1,0 +1,9 @@
+observable	cpu_mean	gpu_mean	mean_diff	combined_uncertainty	z_like_ratio	cpu_mean_abs_block_drift	gpu_mean_abs_block_drift	block_drift_delta	combined_block_drift_uncertainty	ks_distance	classification	passes
+Temperature	298.4861071	300.2240839	1.737976733	12.28137015	0.1415132605	30.37620318	32.16624101	1.790037834	15.18422765	0.02148925537	stochastic	True
+Pressure	-0.1179331196	-0.2572538762	-0.1393207566	0.3758324629	0.3706991023	0.7819518175	0.55410031	-0.2278515075	0.4265012059	0.02298850575	stochastic	True
+Potential	-30.85902192	-30.53771942	0.3213024981	1.609395692	0.1996417038	2.325070162	2.446607148	0.1215369867	1.559448933	0.02082292187	stochastic	True
+Volume	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	missing	False
+Density	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	missing	False
+Box-X	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	missing	False
+Box-Y	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	missing	False
+Box-Z	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	missing	False

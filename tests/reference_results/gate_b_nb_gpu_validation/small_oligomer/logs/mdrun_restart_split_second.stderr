@@ -1,0 +1,31 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
+Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Command line:
+  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme cpu -bonded cpu -update cpu -pin off -cpi /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.cpt
+
+Reading file /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+1 GPU selected for this run.
+Mapping of GPU IDs to the 1 GPU task in the 1 rank on this node:
+  PP:0
+PP tasks will do non-perturbed short-ranged interactions on the GPU
+PP task will update and constrain coordinates on the CPU
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+starting mdrun 'small_oligomer'
+20 steps,      0.0 ps (continuing from step 8,      0.0 ps).
+
+Writing final coordinates.
+
+Back Off! I just backed up /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.gro to /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/#exact_split.gro.1#
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.171        0.171      100.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:        3.292        7.290       13.122            0.000 
+
+GROMACS reminds you: "Consistently separating words by spaces became a general custom about the tenth century A.D., and lasted until about 1957, when FORTRAN abandoned the practice." (Sun FORTRAN Reference Manual)
+

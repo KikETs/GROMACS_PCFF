@@ -1,0 +1,63 @@
+LAMMPS (10 Sep 2025 - Development - patch_10Sep2025-660-g792d014343)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+units real
+atom_style full
+read_data orig.data
+Reading data file ...
+  orthogonal box = (-11 -11 -11) to (11 11 11)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  270 atoms
+  reading velocities ...
+  270 velocities
+  scanning bonds ...
+  1 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  scanning dihedrals ...
+  1 = max dihedrals/atom
+  orthogonal box = (-11 -11 -11) to (11 11 11)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  189 bonds
+  reading angles ...
+  162 angles
+  reading dihedrals ...
+  135 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     2 = max # of 1-2 neighbors
+     2 = max # of 1-3 neighbors
+     4 = max # of 1-4 neighbors
+     6 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.002 seconds
+replicate 2 2 2
+Replication is creating a 2x2x2 = 8 times larger system...
+  orthogonal box = (-11 -11 -11) to (33 33 33)
+  1 by 1 by 1 MPI processor grid
+  2160 atoms
+  1512 bonds
+  1296 angles
+  1080 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     2 = max # of 1-2 neighbors
+     2 = max # of 1-3 neighbors
+     4 = max # of 1-4 neighbors
+     6 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  replicate CPU = 0.001 seconds
+write_data system.data nocoeff
+System init for write_data ...
+WARNING: Bonds are defined but no bond style is set (src/lammps/src/force.cpp:198)
+WARNING: Likewise 1-2 special neighbor interactions != 1.0 (src/lammps/src/force.cpp:200)
+WARNING: Angles are defined but no angle style is set (src/lammps/src/force.cpp:203)
+WARNING: Likewise 1-3 special neighbor interactions != 1.0 (src/lammps/src/force.cpp:205)
+WARNING: Dihedrals are defined but no dihedral style is set (src/lammps/src/force.cpp:208)
+WARNING: Likewise 1-4 special neighbor interactions != 1.0 (src/lammps/src/force.cpp:210)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Energies and forces may be wrong and atoms may get lost. (src/lammps/src/comm_brick.cpp:188)
+Total wall time: 0:00:00

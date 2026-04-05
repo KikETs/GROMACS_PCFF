@@ -873,6 +873,16 @@ std::string makeRespaNveMdp()
     return mdp.str();
 }
 
+CommandLine reproducibleOracleMdrunCaller()
+{
+    CommandLine caller;
+    caller.append("mdrun");
+    caller.append("-reprod");
+    caller.addOption("-dlb", "no");
+    caller.addOption("-pin", "off");
+    return caller;
+}
+
 std::vector<MetricComparison> compareMetrics(const ReferenceContract& contract,
                                              const std::string&       section,
                                              const std::map<std::string, double>& actualValues)
@@ -1001,7 +1011,7 @@ void writeRespaActualSummary(const std::string&               systemId,
            << "  \"schema_version\": 1,\n"
            << "  \"system_id\": \"" << systemId << "\",\n"
            << "  \"engine\": \"gromacs\",\n"
-           << "  \"mode\": \"lammps-respa\",\n"
+           << "  \"mode\": \"standalone_exact_respa\",\n"
            << "  \"schedule\": {\n"
            << "    \"outer_steps\": " << respaOuterSteps() << ",\n"
            << "    \"pair14_level\": " << respaPair14Level() << "\n"
@@ -1052,6 +1062,48 @@ void writeRespaActualSummary(const std::string&               systemId,
         output << "    \"" << notes[index] << "\"" << (index + 1 == gmx::ssize(notes) ? "\n" : ",\n");
     }
     output << "  ]\n"
+           << "}\n";
+
+    TextWriter::writeFileFromString(outputPath.string(), output.str());
+}
+
+void maybeWriteRespaRestartSummary(const std::string& systemId,
+                                   const int         splitOuterSteps,
+                                   const double      fullPotentialEnergy,
+                                   const double      splitPotentialEnergy,
+                                   const double      fullTotalEnergy,
+                                   const double      splitTotalEnergy,
+                                   const int64_t     finalStep,
+                                   const double      finalTime,
+                                   const double      maxCoordinateDelta,
+                                   const double      maxVelocityDelta)
+{
+    const char* summaryDir = std::getenv("GMX_PCFF_RESPA_RESTART_SUMMARY_DIR");
+    if (summaryDir == nullptr || std::string(summaryDir).empty())
+    {
+        return;
+    }
+
+    const std::filesystem::path outputPath =
+            std::filesystem::path(summaryDir) / formatString("%s_restart.json", systemId.c_str());
+    std::filesystem::create_directories(outputPath.parent_path());
+
+    std::ostringstream output;
+    output << "{\n"
+           << "  \"schema_version\": 1,\n"
+           << "  \"system_id\": \"" << systemId << "\",\n"
+           << "  \"mode\": \"standalone_exact_respa\",\n"
+           << "  \"split_outer_steps\": " << splitOuterSteps << ",\n"
+           << "  \"final_step\": " << finalStep << ",\n"
+           << "  \"final_time_ps\": " << std::setprecision(15) << finalTime << ",\n"
+           << "  \"full_final_potential_kj_mol\": " << fullPotentialEnergy << ",\n"
+           << "  \"restart_final_potential_kj_mol\": " << splitPotentialEnergy << ",\n"
+           << "  \"full_final_total_kj_mol\": " << fullTotalEnergy << ",\n"
+           << "  \"restart_final_total_kj_mol\": " << splitTotalEnergy << ",\n"
+           << "  \"potential_abs_delta_kj_mol\": " << std::abs(fullPotentialEnergy - splitPotentialEnergy) << ",\n"
+           << "  \"total_abs_delta_kj_mol\": " << std::abs(fullTotalEnergy - splitTotalEnergy) << ",\n"
+           << "  \"max_coordinate_abs_delta_nm\": " << maxCoordinateDelta << ",\n"
+           << "  \"max_velocity_abs_delta_nm_ps\": " << maxVelocityDelta << "\n"
            << "}\n";
 
     TextWriter::writeFileFromString(outputPath.string(), output.str());
@@ -2168,7 +2220,8 @@ TEST_P(PcffRespaObservableDumpTest, DumpsExactRespaNveObservables)
     runner_.setMaxWarn(1);
 
     ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " single-time step reference";
-    ASSERT_EQ(0, runner_.callMdrun()) << "mdrun failed for " << systemId << " single-time step reference";
+    ASSERT_EQ(0, runner_.callMdrun(reproducibleOracleMdrunCaller()))
+            << "mdrun failed for " << systemId << " single-time step reference";
     const auto unsplitEnergyFrames = readEnergyFrames(runner_.edrFileName_, energyTerms);
     ASSERT_FALSE(unsplitEnergyFrames.empty());
     const double unsplitTotalEnergySpanKcalMol = computeTotalEnergySpanKcal(unsplitEnergyFrames);
@@ -2191,7 +2244,8 @@ TEST_P(PcffRespaObservableDumpTest, DumpsExactRespaNveObservables)
     runner_.setMaxWarn(1);
 
     ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " exact respa";
-    ASSERT_EQ(0, runner_.callMdrun()) << "mdrun failed for " << systemId << " exact respa";
+    ASSERT_EQ(0, runner_.callMdrun(reproducibleOracleMdrunCaller()))
+            << "mdrun failed for " << systemId << " exact respa";
     const auto energyFrames = readEnergyFrames(runner_.edrFileName_, energyTerms);
     ASSERT_FALSE(energyFrames.empty());
     const double exactTotalEnergySpanKcalMol = computeTotalEnergySpanKcal(energyFrames);
@@ -2283,9 +2337,7 @@ TEST_P(PcffRespaRestartParityTest, RestartFromCheckpointMatchesFullExactRun)
     const std::string fullEdrFileName = runner_.edrFileName_;
     const std::string fullTrrFileName = runner_.fullPrecisionTrajectoryFileName_;
 
-    CommandLine fullRunCaller;
-    fullRunCaller.append("mdrun");
-    fullRunCaller.append("-reprod");
+    CommandLine fullRunCaller = reproducibleOracleMdrunCaller();
     ASSERT_EQ(0, runner_.callMdrun(fullRunCaller)) << "full exact run failed for " << systemId;
 
     assignRunnerOutputs(&runner_, &fileManager_, systemId + "-exact-split");
@@ -2293,16 +2345,12 @@ TEST_P(PcffRespaRestartParityTest, RestartFromCheckpointMatchesFullExactRun)
     const std::string splitTrrFileName = runner_.fullPrecisionTrajectoryFileName_;
     const std::string splitCheckpointFileName = runner_.cptOutputFileName_;
 
-    CommandLine firstPartCaller;
-    firstPartCaller.append("mdrun");
-    firstPartCaller.append("-reprod");
+    CommandLine firstPartCaller = reproducibleOracleMdrunCaller();
     firstPartCaller.addOption("-nsteps", halfSteps);
     ASSERT_EQ(0, runner_.callMdrun(firstPartCaller)) << "first exact restart segment failed for " << systemId;
     ASSERT_TRUE(std::filesystem::exists(splitCheckpointFileName)) << "missing checkpoint after first segment";
 
-    CommandLine secondPartCaller;
-    secondPartCaller.append("mdrun");
-    secondPartCaller.append("-reprod");
+    CommandLine secondPartCaller = reproducibleOracleMdrunCaller();
     secondPartCaller.addOption("-cpi", splitCheckpointFileName);
     ASSERT_EQ(0, runner_.callMdrun(secondPartCaller)) << "restart segment failed for " << systemId;
 
@@ -2337,16 +2385,37 @@ TEST_P(PcffRespaRestartParityTest, RestartFromCheckpointMatchesFullExactRun)
 
     const double coordinateTolerance = 1e-7;
     const double velocityTolerance   = 1e-7;
+    double       maxCoordinateDelta  = 0.0;
+    double       maxVelocityDelta    = 0.0;
     for (Index atom = 0; atom < ssize(fullSnapshot.coordinates); ++atom)
     {
         for (int d = 0; d < DIM; ++d)
         {
+            maxCoordinateDelta =
+                    std::max(maxCoordinateDelta,
+                             static_cast<double>(std::abs(fullSnapshot.coordinates[atom][d]
+                                                          - splitSnapshot.coordinates[atom][d])));
+            maxVelocityDelta =
+                    std::max(maxVelocityDelta,
+                             static_cast<double>(std::abs(fullSnapshot.velocities[atom][d]
+                                                          - splitSnapshot.velocities[atom][d])));
             EXPECT_NEAR(fullSnapshot.coordinates[atom][d], splitSnapshot.coordinates[atom][d], coordinateTolerance)
                     << systemId << " atom=" << atom << " dim=" << d << " coordinate restart mismatch";
             EXPECT_NEAR(fullSnapshot.velocities[atom][d], splitSnapshot.velocities[atom][d], velocityTolerance)
                     << systemId << " atom=" << atom << " dim=" << d << " velocity restart mismatch";
         }
     }
+
+    maybeWriteRespaRestartSummary(systemId,
+                                  halfOuterSteps,
+                                  fullFinalEnergy.at(interaction_function[InteractionFunction::PotentialEnergy].longname),
+                                  splitFinalEnergy.at(interaction_function[InteractionFunction::PotentialEnergy].longname),
+                                  fullFinalEnergy.at(interaction_function[InteractionFunction::TotalEnergy].longname),
+                                  splitFinalEnergy.at(interaction_function[InteractionFunction::TotalEnergy].longname),
+                                  fullSnapshot.step,
+                                  fullSnapshot.time,
+                                  maxCoordinateDelta,
+                                  maxVelocityDelta);
 }
 
 std::string shortMdCaseName(const testing::TestParamInfo<std::tuple<const char*, const char*>>& info)

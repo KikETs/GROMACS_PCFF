@@ -1,0 +1,404 @@
+{
+  "entries": [
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "interaction_counts": {
+        "coulomb_excluded_correction": 18,
+        "coulomb_pairs_short_range": 25,
+        "coulomb_reciprocal": 1,
+        "coulomb_self": 10,
+        "coulomb_short_range_total": 53
+      },
+      "level": 2,
+      "step": 0,
+      "terms_kj_mol": {
+        "coulomb_excluded_correction": 105.79744625091553,
+        "coulomb_pairs_short_range": -1.3471880950237392,
+        "coulomb_reciprocal": 0.0,
+        "coulomb_self": -698.9128189086914,
+        "coulomb_short_range_total": -594.4625854492188
+      }
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "interaction_counts": {
+        "coulomb_excluded_correction": 18,
+        "coulomb_pairs_short_range": 25,
+        "coulomb_reciprocal": 1,
+        "coulomb_self": 10,
+        "coulomb_short_range_total": 53
+      },
+      "level": 2,
+      "step": 4,
+      "terms_kj_mol": {
+        "coulomb_excluded_correction": 106.00877666473389,
+        "coulomb_pairs_short_range": -1.3142872009775601,
+        "coulomb_reciprocal": 0.0,
+        "coulomb_self": -698.9128189086914,
+        "coulomb_short_range_total": -594.2183837890625
+      }
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "interaction_counts": {
+        "coulomb_excluded_correction": 18,
+        "coulomb_pairs_short_range": 25,
+        "coulomb_reciprocal": 1,
+        "coulomb_self": 10,
+        "coulomb_short_range_total": 53
+      },
+      "level": 2,
+      "step": 8,
+      "terms_kj_mol": {
+        "coulomb_excluded_correction": 106.80951976776123,
+        "coulomb_pairs_short_range": -1.2092974613078695,
+        "coulomb_reciprocal": 0.0,
+        "coulomb_self": -698.9128189086914,
+        "coulomb_short_range_total": -593.3126220703125
+      }
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "interaction_counts": {
+        "coulomb_excluded_correction": 18,
+        "coulomb_pairs_short_range": 25,
+        "coulomb_reciprocal": 1,
+        "coulomb_self": 10,
+        "coulomb_short_range_total": 53
+      },
+      "level": 2,
+      "step": 12,
+      "terms_kj_mol": {
+        "coulomb_excluded_correction": 108.04284858703613,
+        "coulomb_pairs_short_range": -1.0519626480454463,
+        "coulomb_reciprocal": 0.0,
+        "coulomb_self": -698.9128189086914,
+        "coulomb_short_range_total": -591.9219360351562
+      }
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "interaction_counts": {
+        "coulomb_excluded_correction": 18,
+        "coulomb_pairs_short_range": 25,
+        "coulomb_reciprocal": 1,
+        "coulomb_self": 10,
+        "coulomb_short_range_total": 53
+      },
+      "level": 2,
+      "step": 16,
+      "terms_kj_mol": {
+        "coulomb_excluded_correction": 109.48255157470703,
+        "coulomb_pairs_short_range": -0.867578123943531,
+        "coulomb_reciprocal": 0.0,
+        "coulomb_self": -698.9128189086914,
+        "coulomb_short_range_total": -590.2978515625
+      }
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "interaction_counts": {
+        "coulomb_excluded_correction": 18,
+        "coulomb_pairs_short_range": 25,
+        "coulomb_reciprocal": 1,
+        "coulomb_self": 10,
+        "coulomb_short_range_total": 53
+      },
+      "level": 2,
+      "step": 20,
+      "terms_kj_mol": {
+        "coulomb_excluded_correction": 110.90004920959473,
+        "coulomb_pairs_short_range": -0.6792358399361547,
+        "coulomb_reciprocal": 0.0,
+        "coulomb_self": -698.9128189086914,
+        "coulomb_short_range_total": -588.6920166015625
+      }
+    }
+  ],
+  "rows": [
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -1.3471880950237392,
+      "interaction_count": 25,
+      "level": 2,
+      "step": 0,
+      "term": "coulomb_pairs_short_range"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 105.79744625091553,
+      "interaction_count": 18,
+      "level": 2,
+      "step": 0,
+      "term": "coulomb_excluded_correction"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -698.9128189086914,
+      "interaction_count": 10,
+      "level": 2,
+      "step": 0,
+      "term": "coulomb_self"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -594.4625854492188,
+      "interaction_count": 53,
+      "level": 2,
+      "step": 0,
+      "term": "coulomb_short_range_total"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 0.0,
+      "interaction_count": 1,
+      "level": 2,
+      "step": 0,
+      "term": "coulomb_reciprocal"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -1.3142872009775601,
+      "interaction_count": 25,
+      "level": 2,
+      "step": 4,
+      "term": "coulomb_pairs_short_range"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 106.00877666473389,
+      "interaction_count": 18,
+      "level": 2,
+      "step": 4,
+      "term": "coulomb_excluded_correction"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -698.9128189086914,
+      "interaction_count": 10,
+      "level": 2,
+      "step": 4,
+      "term": "coulomb_self"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -594.2183837890625,
+      "interaction_count": 53,
+      "level": 2,
+      "step": 4,
+      "term": "coulomb_short_range_total"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 0.0,
+      "interaction_count": 1,
+      "level": 2,
+      "step": 4,
+      "term": "coulomb_reciprocal"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -1.2092974613078695,
+      "interaction_count": 25,
+      "level": 2,
+      "step": 8,
+      "term": "coulomb_pairs_short_range"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 106.80951976776123,
+      "interaction_count": 18,
+      "level": 2,
+      "step": 8,
+      "term": "coulomb_excluded_correction"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -698.9128189086914,
+      "interaction_count": 10,
+      "level": 2,
+      "step": 8,
+      "term": "coulomb_self"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -593.3126220703125,
+      "interaction_count": 53,
+      "level": 2,
+      "step": 8,
+      "term": "coulomb_short_range_total"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 0.0,
+      "interaction_count": 1,
+      "level": 2,
+      "step": 8,
+      "term": "coulomb_reciprocal"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -1.0519626480454463,
+      "interaction_count": 25,
+      "level": 2,
+      "step": 12,
+      "term": "coulomb_pairs_short_range"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 108.04284858703613,
+      "interaction_count": 18,
+      "level": 2,
+      "step": 12,
+      "term": "coulomb_excluded_correction"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -698.9128189086914,
+      "interaction_count": 10,
+      "level": 2,
+      "step": 12,
+      "term": "coulomb_self"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -591.9219360351562,
+      "interaction_count": 53,
+      "level": 2,
+      "step": 12,
+      "term": "coulomb_short_range_total"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 0.0,
+      "interaction_count": 1,
+      "level": 2,
+      "step": 12,
+      "term": "coulomb_reciprocal"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -0.867578123943531,
+      "interaction_count": 25,
+      "level": 2,
+      "step": 16,
+      "term": "coulomb_pairs_short_range"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 109.48255157470703,
+      "interaction_count": 18,
+      "level": 2,
+      "step": 16,
+      "term": "coulomb_excluded_correction"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -698.9128189086914,
+      "interaction_count": 10,
+      "level": 2,
+      "step": 16,
+      "term": "coulomb_self"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -590.2978515625,
+      "interaction_count": 53,
+      "level": 2,
+      "step": 16,
+      "term": "coulomb_short_range_total"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 0.0,
+      "interaction_count": 1,
+      "level": 2,
+      "step": 16,
+      "term": "coulomb_reciprocal"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -0.6792358399361547,
+      "interaction_count": 25,
+      "level": 2,
+      "step": 20,
+      "term": "coulomb_pairs_short_range"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 110.90004920959473,
+      "interaction_count": 18,
+      "level": 2,
+      "step": 20,
+      "term": "coulomb_excluded_correction"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -698.9128189086914,
+      "interaction_count": 10,
+      "level": 2,
+      "step": 20,
+      "term": "coulomb_self"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": -588.6920166015625,
+      "interaction_count": 53,
+      "level": 2,
+      "step": 20,
+      "term": "coulomb_short_range_total"
+    },
+    {
+      "actual_backend": "cpu_only",
+      "diagnostic_origin": "runtime_energy_split",
+      "energy_kj_mol": 0.0,
+      "interaction_count": 1,
+      "level": 2,
+      "step": 20,
+      "term": "coulomb_reciprocal"
+    }
+  ],
+  "schema_version": 1,
+  "term_order": [
+    "coulomb_pairs_short_range",
+    "coulomb_excluded_correction",
+    "coulomb_self",
+    "coulomb_short_range_total",
+    "coulomb_reciprocal"
+  ]
+}

@@ -2448,6 +2448,11 @@ static inline real pcffClass2Dot(const real a[DIM], const real b[DIM])
     return a[XX] * b[XX] + a[YY] * b[YY] + a[ZZ] * b[ZZ];
 }
 
+static inline real clampedAcos(const real value)
+{
+    return std::acos(std::clamp(value, -1.0_real, 1.0_real));
+}
+
 template<BondedKernelFlavor flavor>
 real dihedral_class2(int             nbonds,
                      const t_iatom   forceatoms[],
@@ -3224,6 +3229,202 @@ real improper_class2(int             nbonds,
 
     return vtot;
 }
+
+} // namespace
+
+PcffClass2SubtermEnergies evaluatePcffClass2SubtermEnergies(const InteractionDefinitions& idef,
+                                                            ArrayRef<const RVec>         x,
+                                                            const t_pbc*                 pbc,
+                                                            int*                         globalAtomIndex)
+{
+    PcffClass2SubtermEnergies result;
+    const rvec*               coordinates = as_rvec_array(x.data());
+    (void)globalAtomIndex;
+
+    const InteractionList& bondList = idef.il[InteractionFunction::BondClass2];
+    for (int n = 0; n < bondList.size();)
+    {
+        const int type = bondList.iatoms[n++];
+        const int ai   = bondList.iatoms[n++];
+        const int aj   = bondList.iatoms[n++];
+
+        rvec dx;
+        pbc_rvec_sub(pbc, coordinates[ai], coordinates[aj], dx);
+        const real r   = norm(dx);
+        const real dr  = r - idef.iparams[type].bond_class2.r0;
+        const real dr2 = dr * dr;
+        const real dr3 = dr2 * dr;
+        const real dr4 = dr3 * dr;
+
+        result.bondClass2Main += idef.iparams[type].bond_class2.k2 * dr2
+                                 + idef.iparams[type].bond_class2.k3 * dr3
+                                 + idef.iparams[type].bond_class2.k4 * dr4;
+        result.bondClass2Count++;
+    }
+
+    const InteractionList& angleList = idef.il[InteractionFunction::AngleClass2];
+    for (int n = 0; n < angleList.size();)
+    {
+        const int type = angleList.iatoms[n++];
+        const int ai   = angleList.iatoms[n++];
+        const int aj   = angleList.iatoms[n++];
+        const int ak   = angleList.iatoms[n++];
+
+        rvec del1;
+        rvec del2;
+        pbc_rvec_sub(pbc, coordinates[ai], coordinates[aj], del1);
+        pbc_rvec_sub(pbc, coordinates[ak], coordinates[aj], del2);
+
+        const real r1     = norm(del1);
+        const real r2     = norm(del2);
+        const real theta  = clampedAcos(iprod(del1, del2) / (r1 * r2));
+        const auto& params = idef.iparams[type].angle_class2;
+        const real dtheta = theta - params.theta0;
+        const real dtheta2 = dtheta * dtheta;
+        const real dtheta3 = dtheta2 * dtheta;
+        const real dtheta4 = dtheta3 * dtheta;
+        const real drBb1   = r1 - params.bb_r1;
+        const real drBb2   = r2 - params.bb_r2;
+        const real drBa1   = r1 - params.ba_r1;
+        const real drBa2   = r2 - params.ba_r2;
+
+        result.angleClass2Main += params.k2 * dtheta2 + params.k3 * dtheta3 + params.k4 * dtheta4;
+        result.angleClass2BondBond += params.bb_k * drBb1 * drBb2;
+        result.angleClass2BondAngle1 += params.ba_k1 * drBa1 * dtheta;
+        result.angleClass2BondAngle2 += params.ba_k2 * drBa2 * dtheta;
+        result.angleClass2Count++;
+    }
+
+    const InteractionList& dihedralList = idef.il[InteractionFunction::DihedralClass2];
+    for (int n = 0; n < dihedralList.size();)
+    {
+        const int type = dihedralList.iatoms[n++];
+        const int ai   = dihedralList.iatoms[n++];
+        const int aj   = dihedralList.iatoms[n++];
+        const int ak   = dihedralList.iatoms[n++];
+        const int al   = dihedralList.iatoms[n++];
+        const auto& params = idef.iparams[type].dihedral_class2;
+
+        rvec vb1;
+        rvec vb2;
+        rvec vb3;
+        rvec m;
+        rvec nvec;
+        int  t1;
+        int  t2;
+        int  t3;
+        const real phi = dih_angle(
+                coordinates[ai], coordinates[aj], coordinates[ak], coordinates[al], pbc, vb1, vb2, vb3, m, nvec, &t1, &t2, &t3);
+
+        const real r1 = std::sqrt(pcffClass2Dot(vb1, vb1));
+        const real r2 = std::sqrt(pcffClass2Dot(vb2, vb2));
+        const real r3 = std::sqrt(pcffClass2Dot(vb3, vb3));
+
+        const real costh12 = std::clamp(pcffClass2Dot(vb1, vb2) / (r1 * r2), -1.0_real, 1.0_real);
+        const real costh23 = std::clamp((-pcffClass2Dot(vb2, vb3)) / (r2 * r3), -1.0_real, 1.0_real);
+        const real theta12 = std::acos(costh12);
+        const real theta23 = std::acos(costh23);
+        const real cosphi  = std::cos(phi);
+        const real cos2phi = std::cos(2.0_real * phi);
+        const real cos3phi = std::cos(3.0_real * phi);
+
+        result.dihedralClass2Main += params.k1 * (1.0_real - std::cos(phi - params.phi1))
+                                     + params.k2 * (1.0_real - std::cos(2.0_real * phi - params.phi2))
+                                     + params.k3 * (1.0_real - std::cos(3.0_real * phi - params.phi3));
+        result.dihedralClass2MiddleBondTorsion +=
+                (r2 - params.mbt_r0) * (params.mbt_f1 * cosphi + params.mbt_f2 * cos2phi + params.mbt_f3 * cos3phi);
+        result.dihedralClass2EndBondTorsion1 +=
+                (r1 - params.ebt_r0_1)
+                * (params.ebt_f1_1 * cosphi + params.ebt_f2_1 * cos2phi + params.ebt_f3_1 * cos3phi);
+        result.dihedralClass2EndBondTorsion2 +=
+                (r3 - params.ebt_r0_2)
+                * (params.ebt_f1_2 * cosphi + params.ebt_f2_2 * cos2phi + params.ebt_f3_2 * cos3phi);
+        result.dihedralClass2AngleTorsion1 +=
+                (theta12 - params.at_theta0_1)
+                * (params.at_f1_1 * cosphi + params.at_f2_1 * cos2phi + params.at_f3_1 * cos3phi);
+        result.dihedralClass2AngleTorsion2 +=
+                (theta23 - params.at_theta0_2)
+                * (params.at_f1_2 * cosphi + params.at_f2_2 * cos2phi + params.at_f3_2 * cos3phi);
+        result.dihedralClass2AngleAngleTorsion +=
+                params.aat_k * (theta12 - params.aat_theta0_1) * (theta23 - params.aat_theta0_2) * cosphi;
+        result.dihedralClass2BondBond13Torsion +=
+                params.bb13t_k * (r1 - params.bb13t_r10) * (r3 - params.bb13t_r30);
+        result.dihedralClass2Count++;
+    }
+
+    const InteractionList& improperList = idef.il[InteractionFunction::ImproperClass2];
+    for (int n = 0; n < improperList.size();)
+    {
+        const int type = improperList.iatoms[n++];
+        const int ai   = improperList.iatoms[n++];
+        const int aj   = improperList.iatoms[n++];
+        const int ak   = improperList.iatoms[n++];
+        const int al   = improperList.iatoms[n++];
+        const auto& params = idef.iparams[type].improper_class2;
+
+        rvec delr[3];
+        pbc_rvec_sub(pbc, coordinates[ai], coordinates[aj], delr[0]);
+        pbc_rvec_sub(pbc, coordinates[ak], coordinates[aj], delr[1]);
+        pbc_rvec_sub(pbc, coordinates[al], coordinates[aj], delr[2]);
+
+        real rmag[3];
+        for (int i = 0; i < 3; ++i)
+        {
+            rmag[i] = std::sqrt(pcffClass2Dot(delr[i], delr[i]));
+        }
+
+        real costheta[3];
+        costheta[0] = std::clamp(pcffClass2Dot(delr[0], delr[1]) / (rmag[0] * rmag[1]), -1.0_real, 1.0_real);
+        costheta[1] = std::clamp(pcffClass2Dot(delr[1], delr[2]) / (rmag[1] * rmag[2]), -1.0_real, 1.0_real);
+        costheta[2] = std::clamp(pcffClass2Dot(delr[0], delr[2]) / (rmag[0] * rmag[2]), -1.0_real, 1.0_real);
+
+        real theta[3];
+        real invstheta[3];
+        for (int i = 0; i < 3; ++i)
+        {
+            theta[i]     = std::acos(costheta[i]);
+            invstheta[i] = 1.0_real / std::sin(theta[i]);
+        }
+
+        rvec rABxrCB;
+        rvec rDBxrAB;
+        rvec rCBxrDB;
+        pcffClass2Cross(delr[0], delr[1], rABxrCB);
+        pcffClass2Cross(delr[2], delr[0], rDBxrAB);
+        pcffClass2Cross(delr[1], delr[2], rCBxrDB);
+
+        const real inv3r = 1.0_real / (rmag[0] * rmag[1] * rmag[2]);
+        const real chiABCD = std::asin(std::clamp(pcffClass2Dot(rCBxrDB, delr[0]) * invstheta[1] * inv3r,
+                                                  -1.0_real,
+                                                  1.0_real));
+        const real chiCBDA = std::asin(std::clamp(pcffClass2Dot(rDBxrAB, delr[1]) * invstheta[2] * inv3r,
+                                                  -1.0_real,
+                                                  1.0_real));
+        const real chiDBAC = std::asin(std::clamp(pcffClass2Dot(rABxrCB, delr[2]) * invstheta[0] * inv3r,
+                                                  -1.0_real,
+                                                  1.0_real));
+        const real chi = (chiABCD + chiCBDA + chiDBAC) / 3.0_real;
+
+        if (params.k0 != 0)
+        {
+            const real dchi = chi - params.chi0;
+            result.improperClass2Main += params.k0 * dchi * dchi;
+        }
+
+        const real dthABC = theta[0] - params.aa_theta0_1;
+        const real dthCBD = theta[1] - params.aa_theta0_3;
+        const real dthABD = theta[2] - params.aa_theta0_2;
+        result.improperClass2AngleAngle1 += params.aa_k1 * dthABC * dthCBD;
+        result.improperClass2AngleAngle2 += params.aa_k2 * dthABC * dthABD;
+        result.improperClass2AngleAngle3 += params.aa_k3 * dthABD * dthCBD;
+        result.improperClass2Count++;
+    }
+
+    return result;
+}
+
+namespace
+{
 
 template<BondedKernelFlavor flavor>
 real idihs(int             nbonds,

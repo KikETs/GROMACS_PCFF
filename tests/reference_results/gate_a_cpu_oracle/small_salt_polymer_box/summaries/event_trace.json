@@ -1,0 +1,1312 @@
+{
+  "actual_event_trace": [
+    {
+      "base_step": 0,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 0,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 0,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 0,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 1,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 1,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 1,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 1,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 1,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 1,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 2,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 2,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 2,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 2,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 2,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 3,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 3,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 3,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 3,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 3,
+      "event": "force",
+      "level": 2
+    },
+    {
+      "base_step": 3,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 3,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 3,
+      "event": "final_kick",
+      "level": 2
+    },
+    {
+      "base_step": 4,
+      "event": "kick",
+      "level": 2
+    },
+    {
+      "base_step": 4,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 4,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 4,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 4,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 4,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 5,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 5,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 5,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 5,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 5,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 5,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 6,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 6,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 6,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 6,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 6,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 7,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 7,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 7,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 7,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 7,
+      "event": "force",
+      "level": 2
+    },
+    {
+      "base_step": 7,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 7,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 7,
+      "event": "final_kick",
+      "level": 2
+    },
+    {
+      "base_step": 8,
+      "event": "kick",
+      "level": 2
+    },
+    {
+      "base_step": 8,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 8,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 8,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 8,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 8,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 9,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 9,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 9,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 9,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 9,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 9,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 10,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 10,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 10,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 10,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 10,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 11,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 11,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 11,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 11,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 11,
+      "event": "force",
+      "level": 2
+    },
+    {
+      "base_step": 11,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 11,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 11,
+      "event": "final_kick",
+      "level": 2
+    },
+    {
+      "base_step": 12,
+      "event": "kick",
+      "level": 2
+    },
+    {
+      "base_step": 12,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 12,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 12,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 12,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 12,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 13,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 13,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 13,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 13,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 13,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 13,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 14,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 14,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 14,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 14,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 14,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 15,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 15,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 15,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 15,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 15,
+      "event": "force",
+      "level": 2
+    },
+    {
+      "base_step": 15,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 15,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 15,
+      "event": "final_kick",
+      "level": 2
+    },
+    {
+      "base_step": 16,
+      "event": "kick",
+      "level": 2
+    },
+    {
+      "base_step": 16,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 16,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 16,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 16,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 16,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 17,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 17,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 17,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 17,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 17,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 17,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 18,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 18,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 18,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 18,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 18,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 19,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 19,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 19,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 19,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 19,
+      "event": "force",
+      "level": 2
+    },
+    {
+      "base_step": 19,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 19,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 19,
+      "event": "final_kick",
+      "level": 2
+    },
+    {
+      "base_step": 20,
+      "event": "kick",
+      "level": 2
+    },
+    {
+      "base_step": 20,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 20,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 20,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 20,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 20,
+      "event": "final_kick",
+      "level": 0
+    }
+  ],
+  "mode": "standalone_exact_respa",
+  "notes": [
+    "The direct CLI standalone exact-r-RESPA path starts from a bootstrap base step that applies only the level-0 initial kick before the first drift.",
+    "Subsequent base steps follow the standalone exact-r-RESPA schedule frozen here for later GPU-gate comparisons."
+  ],
+  "reference_event_trace": [
+    {
+      "base_step": 0,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 0,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 0,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 0,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 1,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 1,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 1,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 1,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 1,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 1,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 2,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 2,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 2,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 2,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 2,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 3,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 3,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 3,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 3,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 3,
+      "event": "force",
+      "level": 2
+    },
+    {
+      "base_step": 3,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 3,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 3,
+      "event": "final_kick",
+      "level": 2
+    },
+    {
+      "base_step": 4,
+      "event": "kick",
+      "level": 2
+    },
+    {
+      "base_step": 4,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 4,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 4,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 4,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 4,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 5,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 5,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 5,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 5,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 5,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 5,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 6,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 6,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 6,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 6,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 6,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 7,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 7,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 7,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 7,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 7,
+      "event": "force",
+      "level": 2
+    },
+    {
+      "base_step": 7,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 7,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 7,
+      "event": "final_kick",
+      "level": 2
+    },
+    {
+      "base_step": 8,
+      "event": "kick",
+      "level": 2
+    },
+    {
+      "base_step": 8,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 8,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 8,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 8,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 8,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 9,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 9,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 9,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 9,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 9,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 9,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 10,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 10,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 10,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 10,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 10,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 11,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 11,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 11,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 11,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 11,
+      "event": "force",
+      "level": 2
+    },
+    {
+      "base_step": 11,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 11,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 11,
+      "event": "final_kick",
+      "level": 2
+    },
+    {
+      "base_step": 12,
+      "event": "kick",
+      "level": 2
+    },
+    {
+      "base_step": 12,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 12,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 12,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 12,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 12,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 13,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 13,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 13,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 13,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 13,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 13,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 14,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 14,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 14,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 14,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 14,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 15,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 15,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 15,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 15,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 15,
+      "event": "force",
+      "level": 2
+    },
+    {
+      "base_step": 15,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 15,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 15,
+      "event": "final_kick",
+      "level": 2
+    },
+    {
+      "base_step": 16,
+      "event": "kick",
+      "level": 2
+    },
+    {
+      "base_step": 16,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 16,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 16,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 16,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 16,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 17,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 17,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 17,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 17,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 17,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 17,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 18,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 18,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 18,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 18,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 18,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 19,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 19,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 19,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 19,
+      "event": "force",
+      "level": 1
+    },
+    {
+      "base_step": 19,
+      "event": "force",
+      "level": 2
+    },
+    {
+      "base_step": 19,
+      "event": "final_kick",
+      "level": 0
+    },
+    {
+      "base_step": 19,
+      "event": "final_kick",
+      "level": 1
+    },
+    {
+      "base_step": 19,
+      "event": "final_kick",
+      "level": 2
+    },
+    {
+      "base_step": 20,
+      "event": "kick",
+      "level": 2
+    },
+    {
+      "base_step": 20,
+      "event": "kick",
+      "level": 1
+    },
+    {
+      "base_step": 20,
+      "event": "kick",
+      "level": 0
+    },
+    {
+      "base_step": 20,
+      "event": "drift",
+      "level": 0
+    },
+    {
+      "base_step": 20,
+      "event": "force",
+      "level": 0
+    },
+    {
+      "base_step": 20,
+      "event": "final_kick",
+      "level": 0
+    }
+  ],
+  "schedule": {
+    "level_step_factors": [
+      1,
+      2,
+      4
+    ],
+    "outer_steps": 5,
+    "pair14_level": 1
+  },
+  "schema_version": 1,
+  "system_id": "small_salt_polymer_box"
+}

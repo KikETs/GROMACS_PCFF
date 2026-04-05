@@ -415,6 +415,9 @@ GPU_FUNC_QUALIFIER void pme_gpu_solve(PmeGpu*      GPU_FUNC_ARGUMENT(pmeGpu),
                                       GridOrdering GPU_FUNC_ARGUMENT(gridOrdering),
                                       bool GPU_FUNC_ARGUMENT(computeEnergyAndVirial)) GPU_FUNC_TERM;
 
+void pme_gpu_trace_complex_grid_pre_solve(const PmeGpu* pmeGpu, int gridIndex);
+void pme_gpu_trace_real_grid_pre_fft(const PmeGpu* pmeGpu, int gridIndex);
+
 /*! \libinternal \brief
  * A GPU force gathering function.
  *

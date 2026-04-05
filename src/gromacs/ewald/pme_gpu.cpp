@@ -43,7 +43,13 @@
 
 #include "config.h"
 
+#include <atomic>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <mutex>
 #include <list>
+#include <sstream>
 
 #include "gromacs/ewald/ewald_utils.h"
 #include "gromacs/ewald/pme.h"
@@ -69,6 +75,11 @@
 #include "pme_internal.h"
 #include "pme_solve.h"
 
+namespace gmx
+{
+extern thread_local int64_t g_respaCurrentDoForceStep;
+}
+
 /*! \brief
  * Finds out if PME is currently running on GPU.
  *
@@ -82,6 +93,102 @@
 static inline bool pme_gpu_active(const gmx_pme_t* pme)
 {
     return (pme != nullptr) && (pme->runMode != PmeRunMode::CPU);
+}
+
+static const char* activeRespaTraceDirPath()
+{
+    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
+}
+
+static bool shouldTracePmeGpuReduceForces()
+{
+    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_GPU_REDUCE_FORCE");
+    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+}
+
+static int64_t currentRespaTraceStep()
+{
+    return gmx::g_respaCurrentDoForceStep;
+}
+
+static const std::vector<int>& pmeGpuReduceTraceAtomIndices()
+{
+    static const std::vector<int> atomIndices = []()
+    {
+        std::vector<int> parsedAtomIndices;
+        if (const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_ATOMS"))
+        {
+            std::stringstream stream(value);
+            std::string       item;
+            while (std::getline(stream, item, ','))
+            {
+                if (!item.empty())
+                {
+                    parsedAtomIndices.push_back(std::stoi(item));
+                }
+            }
+        }
+        if (parsedAtomIndices.empty())
+        {
+            parsedAtomIndices = { 0, 5 };
+        }
+        return parsedAtomIndices;
+    }();
+    return atomIndices;
+}
+
+static void appendPmeGpuReduceForceTraceLine(const char* traceDirPath, const std::string& line)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> guard(traceMutex);
+    const std::filesystem::path tracePath = std::filesystem::path(traceDirPath) / "pme_gpu_reduce_force_trace.tsv";
+    static std::string          clearedTracePath;
+    if (tracePath.string() != clearedTracePath)
+    {
+        std::ofstream clearStream(tracePath, std::ios::trunc);
+        clearedTracePath = tracePath.string();
+    }
+    std::ofstream stream(tracePath, std::ios::app);
+    stream << line << '\n';
+}
+
+static void appendPmeGpuReduceForceTrace(const char*                    stage,
+                                         const std::uint64_t            callIndex,
+                                         gmx::ArrayRef<const gmx::RVec> force)
+{
+    if (!shouldTracePmeGpuReduceForces())
+    {
+        return;
+    }
+
+    const char* traceDirPath = activeRespaTraceDirPath();
+    for (const int atomIndex : pmeGpuReduceTraceAtomIndices())
+    {
+        if (atomIndex < 0 || atomIndex >= force.ssize())
+        {
+            appendPmeGpuReduceForceTraceLine(
+                    traceDirPath,
+                    "step=" + std::to_string(currentRespaTraceStep()) + " call_index="
+                            + std::to_string(callIndex) + " stage=" + std::string(stage) + " atom="
+                            + std::to_string(atomIndex) + " available=false");
+            continue;
+        }
+
+        appendPmeGpuReduceForceTraceLine(
+                traceDirPath,
+                "step=" + std::to_string(currentRespaTraceStep()) + " call_index="
+                        + std::to_string(callIndex) + " stage=" + std::string(stage) + " atom="
+                        + std::to_string(atomIndex) + " available=true fx="
+                        + gmx::formatString("%.15f", force[atomIndex][XX]) + " fy="
+                        + gmx::formatString("%.15f", force[atomIndex][YY]) + " fz="
+                        + gmx::formatString("%.15f", force[atomIndex][ZZ]));
+    }
 }
 
 void pme_gpu_reset_timings(const gmx_pme_t* pme)
@@ -225,7 +332,10 @@ void pme_gpu_launch_complex_transforms(gmx_pme_t* pme, gmx_wallcycle* wcycle, co
         {
             /* do R2C 3D-FFT */
             t_complex* cfftgrid = pme->gridsCoulomb[gridIndex].cfftgrid;
+            pme_gpu_trace_real_grid_pre_fft(pmeGpu, gridIndex);
             parallel_3dfft_execute_gpu_wrapper(pme, gridIndex, GMX_FFT_REAL_TO_COMPLEX, wcycle);
+
+            pme_gpu_trace_complex_grid_pre_solve(pmeGpu, gridIndex);
 
             /* solve in k-space for our local cells */
             if (settings.performGPUSolve)
@@ -287,6 +397,8 @@ static void pme_gpu_reduce_outputs(const bool            computeEnergyAndVirial,
 {
     wallcycle_start(wcycle, WallCycleCounter::PmeGpuFReduction);
     GMX_ASSERT(forceWithVirial, "Invalid force pointer");
+    static std::atomic<std::uint64_t> reductionCallCounter = 0;
+    const std::uint64_t               reductionCallIndex   = reductionCallCounter.fetch_add(1);
 
     if (computeEnergyAndVirial)
     {
@@ -297,7 +409,10 @@ static void pme_gpu_reduce_outputs(const bool            computeEnergyAndVirial,
     }
     if (output.haveForceOutput_)
     {
+        appendPmeGpuReduceForceTrace("output_forces", reductionCallIndex, output.forces_);
+        appendPmeGpuReduceForceTrace("destination_before_reduce", reductionCallIndex, forceWithVirial->force_);
         sum_forces(forceWithVirial->force_, output.forces_);
+        appendPmeGpuReduceForceTrace("destination_after_reduce", reductionCallIndex, forceWithVirial->force_);
     }
     wallcycle_stop(wcycle, WallCycleCounter::PmeGpuFReduction);
 }

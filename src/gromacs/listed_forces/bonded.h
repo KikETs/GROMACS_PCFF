@@ -58,6 +58,7 @@ struct t_nrnb;
 struct t_pbc;
 struct t_disresdata;
 struct t_oriresdata;
+class InteractionDefinitions;
 union t_iparams;
 
 namespace gmx
@@ -189,5 +190,36 @@ real calculateSimpleBond(InteractionFunction       ftype,
 
 //! Getter for finding the flop count for an \c ftype interaction.
 int nrnbIndex(int ftype);
+
+struct PcffClass2SubtermEnergies
+{
+    double bondClass2Main              = 0.0;
+    double angleClass2Main             = 0.0;
+    double angleClass2BondBond         = 0.0;
+    double angleClass2BondAngle1       = 0.0;
+    double angleClass2BondAngle2       = 0.0;
+    double dihedralClass2Main          = 0.0;
+    double dihedralClass2MiddleBondTorsion = 0.0;
+    double dihedralClass2EndBondTorsion1   = 0.0;
+    double dihedralClass2EndBondTorsion2   = 0.0;
+    double dihedralClass2AngleTorsion1     = 0.0;
+    double dihedralClass2AngleTorsion2     = 0.0;
+    double dihedralClass2AngleAngleTorsion = 0.0;
+    double dihedralClass2BondBond13Torsion = 0.0;
+    double improperClass2Main              = 0.0;
+    double improperClass2AngleAngle1       = 0.0;
+    double improperClass2AngleAngle2       = 0.0;
+    double improperClass2AngleAngle3       = 0.0;
+    int    bondClass2Count                 = 0;
+    int    angleClass2Count                = 0;
+    int    dihedralClass2Count             = 0;
+    int    improperClass2Count             = 0;
+};
+
+LIBGROMACS_EXPORT PcffClass2SubtermEnergies evaluatePcffClass2SubtermEnergies(
+        const InteractionDefinitions& idef,
+        gmx::ArrayRef<const gmx::RVec> x,
+        const struct t_pbc*            pbc,
+        int*                           globalAtomIndex);
 
 #endif

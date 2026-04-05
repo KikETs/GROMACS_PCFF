@@ -200,6 +200,9 @@ public:
     //! Returns whether bonded interactions are assigned to the CPU
     bool haveCpuBondeds() const;
 
+    //! Returns the interaction definitions selected for this listed-force partition.
+    const InteractionDefinitions& interactionDefinitions() const { return *idef_; }
+
     /*! \brief Returns whether listed forces are computed on the CPU
      *
      * NOTE: the current implementation returns true if there are position restraints

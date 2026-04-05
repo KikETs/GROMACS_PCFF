@@ -1,0 +1,139 @@
+{
+  "first_insufficient_bucket": null,
+  "has_insufficient_visibility": false,
+  "required_bucket_order": [
+    "bond",
+    "angle",
+    "dihedral",
+    "improper",
+    "class2_cross_terms",
+    "lj_sr",
+    "coul_sr",
+    "lj_14",
+    "coul_14",
+    "cpu_reciprocal_self_exclusion_corrections"
+  ],
+  "rows": [
+    {
+      "bucket": "bond",
+      "gate_a_terms": [
+        "Class2 Bond"
+      ],
+      "note": "Gate A freezes the aggregate class2 bond energy as a dedicated term.",
+      "status": "EXPLICIT",
+      "topology_counts": {
+        "Class2 Bond": 21
+      }
+    },
+    {
+      "bucket": "angle",
+      "gate_a_terms": [
+        "Class2 Angle"
+      ],
+      "note": "Gate A freezes the aggregate class2 angle energy, but not its embedded cross subcomponents separately.",
+      "status": "EXPLICIT",
+      "topology_counts": {
+        "Class2 Angle": 24
+      }
+    },
+    {
+      "bucket": "dihedral",
+      "gate_a_terms": [
+        "Class2 Dih."
+      ],
+      "note": "Gate A freezes the aggregate class2 dihedral energy, but not its embedded cross subcomponents separately.",
+      "status": "EXPLICIT",
+      "topology_counts": {
+        "Class2 Dih.": 25
+      }
+    },
+    {
+      "bucket": "improper",
+      "gate_a_terms": [],
+      "note": "No class2 improper interactions are present in this fixture topology.",
+      "status": "NOT_PRESENT_IN_FIXTURE",
+      "topology_counts": {
+        "Class2 Impr.": 0
+      }
+    },
+    {
+      "bucket": "class2_cross_terms",
+      "gate_a_terms": [
+        "angle_class2_bond_bond",
+        "angle_class2_bond_angle_1",
+        "angle_class2_bond_angle_2",
+        "dihedral_class2_middle_bond_torsion",
+        "dihedral_class2_end_bond_torsion_1",
+        "dihedral_class2_end_bond_torsion_2",
+        "dihedral_class2_angle_torsion_1",
+        "dihedral_class2_angle_torsion_2",
+        "dihedral_class2_angle_angle_torsion",
+        "dihedral_class2_bond_bond_13_torsion",
+        "improper_class2_angle_angle_1",
+        "improper_class2_angle_angle_2",
+        "improper_class2_angle_angle_3"
+      ],
+      "note": "Gate A exposes embedded PCFF class2 cross components through the host-diagnostic class2 subterm trace.",
+      "status": "EXPLICIT",
+      "topology_counts": {
+        "BA-Cross": 0,
+        "Bond-Cross": 0,
+        "Class2 Angle": 24,
+        "Class2 Dih.": 25
+      }
+    },
+    {
+      "bucket": "lj_sr",
+      "gate_a_terms": [
+        "LJ (SR)"
+      ],
+      "note": "Short-range Lennard-Jones is explicit in Gate A step-0 energy terms.",
+      "status": "EXPLICIT",
+      "topology_counts": {}
+    },
+    {
+      "bucket": "coul_sr",
+      "gate_a_terms": [
+        "Coulomb (SR)"
+      ],
+      "note": "Short-range Coulomb is explicit in Gate A step-0 energy terms.",
+      "status": "EXPLICIT",
+      "topology_counts": {}
+    },
+    {
+      "bucket": "lj_14",
+      "gate_a_terms": [
+        "LJ-14"
+      ],
+      "note": "Listed 1-4 Lennard-Jones is explicit in Gate A step-0 energy terms.",
+      "status": "EXPLICIT",
+      "topology_counts": {
+        "LJ-14": 15
+      }
+    },
+    {
+      "bucket": "coul_14",
+      "gate_a_terms": [
+        "Coulomb-14"
+      ],
+      "note": "Listed 1-4 Coulomb is explicit in Gate A step-0 energy terms.",
+      "status": "EXPLICIT",
+      "topology_counts": {
+        "Coulomb-14": 0
+      }
+    },
+    {
+      "bucket": "cpu_reciprocal_self_exclusion_corrections",
+      "gate_a_terms": [
+        "coulomb_reciprocal",
+        "coulomb_self",
+        "coulomb_excluded_correction"
+      ],
+      "note": "Gate A exposes reciprocal/self/exclusion electrostatic ownership through the runtime cpu-correction energy split trace.",
+      "status": "EXPLICIT",
+      "topology_counts": {
+        "Coul. recip.": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "analysis_settings": {
+    "block_count": 5,
+    "coord_stride_ps": 1.0,
+    "energy_stride_ps": 1.0,
+    "equil_ps": 200.0,
+    "estimator": "Einstein MSD with COM-drift removal; conductivity from cNE; transference from NE ratio.",
+    "fit_window_ratio": [
+      0.2,
+      0.8
+    ],
+    "prod_ps": 500.0,
+    "replicas": 3
+  },
+  "artifacts": {
+    "system_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer",
+    "transport_comparison_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/summaries/transport_comparison.tsv"
+  },
+  "failure_reasons": [
+    "oligomer_diffusivity_cm2_s is missing.",
+    "oligomer_diffusivity_cm2_s is not measurable here: the selected group equals the full system, so mandatory COM-drift removal collapses the MSD to zero.",
+    "Fixture size is out of TP0 scope: 6 atoms < 1000 atom minimum.",
+    "Fixture box is out of TP0 scope: min box 2.000 nm <= 3.000 nm.",
+    "Production duration 500.0 ps is below the TP0 minimum 10000.0 ps."
+  ],
+  "first_failing_observable": "oligomer_diffusivity_cm2_s",
+  "fixture_metadata": {
+    "box_nm": [
+      2.0,
+      2.0,
+      2.0
+    ],
+    "min_box_nm": 2.0,
+    "natoms": 6,
+    "volume_nm3": 8.0
+  },
+  "observable_comparisons": {
+    "oligomer_diffusivity_cm2_s": {
+      "available": false
+    }
+  },
+  "per_layout_aggregates": {
+    "cpu": {
+      "oligomer_diffusivity_cm2_s": {
+        "available": false
+      }
+    },
+    "gpu": {
+      "oligomer_diffusivity_cm2_s": {
+        "available": false
+      }
+    }
+  },
+  "replica_variability": {
+    "cpu": {},
+    "gpu": {}
+  },
+  "status": "FAIL",
+  "system_class": "neutral_dense",
+  "system_id": "small_oligomer",
+  "tp0_protocol_expectation": {
+    "meets_minimum": false,
+    "minimum_prod_ps": 10000.0
+  },
+  "tp0_scope_issues": [
+    "Fixture size is out of TP0 scope: 6 atoms < 1000 atom minimum.",
+    "Fixture box is out of TP0 scope: min box 2.000 nm <= 3.000 nm.",
+    "Production duration 500.0 ps is below the TP0 minimum 10000.0 ps."
+  ]
+}

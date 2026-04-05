@@ -193,6 +193,9 @@ namespace gmx
 {
 thread_local bool g_respaSuppressDoForceStateXChain = false;
 thread_local const char* g_respaDoForceContextLabel = nullptr;
+thread_local int64_t g_respaCurrentDoForceStep = -1;
+thread_local const int* g_respaCurrentGlobalAtomIndices = nullptr;
+thread_local int g_respaCurrentGlobalAtomIndexCount = 0;
 }
 
 namespace
@@ -532,12 +535,32 @@ bool canUseExactLammpsRespaVelocityVerlet(const t_inputrec&                  inp
                                           const gmx::VirtualSitesHandler*    virtualSites,
                                           const bool                         useReplicaExchange)
 {
-    return inputRecord.eI == IntegrationAlgorithm::VV && inputRecord.etc == TemperatureCoupling::No
-           && inputRecord.pressureCouplingOptions.epc == PressureCoupling::No
-           && inputRecord.comm_mode == ComRemovalAlgorithm::No
+    const bool usesSupportedExactRespaTemperatureCoupling =
+            inputRecord.etc == TemperatureCoupling::No
+            || inputRecord.etc == TemperatureCoupling::Berendsen
+            || inputRecord.etc == TemperatureCoupling::VRescale;
+    const bool usesSupportedExactRespaPressureCoupling =
+            inputRecord.pressureCouplingOptions.epc == PressureCoupling::No
+            || inputRecord.pressureCouplingOptions.epc == PressureCoupling::Berendsen
+            || inputRecord.pressureCouplingOptions.epc == PressureCoupling::CRescale;
+    const bool usesSupportedExactRespaGpuForces =
+            (!simulationWork.useGpuBonded || simulationWork.useGpuNonbonded)
+            && (!simulationWork.useGpuPme
+                || (simulationWork.useGpuNonbonded && simulationWork.useGpuBonded))
+            && (!simulationWork.useGpuNonbonded
+                || (!simulationWork.useGpuPme && !simulationWork.useGpuBonded)
+                || (simulationWork.useGpuBonded && !simulationWork.useGpuPme)
+                || (simulationWork.useGpuBonded && simulationWork.useGpuPme));
+    const bool usesSupportedExactRespaGpuUpdate =
+            !simulationWork.useGpuUpdate
+            || (simulationWork.useGpuNonbonded && simulationWork.useGpuBonded
+                && simulationWork.useGpuPme && !simulationWork.useMdGpuGraph);
+
+    return inputRecord.eI == IntegrationAlgorithm::VV && usesSupportedExactRespaTemperatureCoupling
+           && usesSupportedExactRespaPressureCoupling && inputRecord.comm_mode == ComRemovalAlgorithm::No
            && (constr == nullptr || constr->numConstraintsTotal() == 0)
-           && !simulationWork.havePpDomainDecomposition && !simulationWork.useGpuUpdate
-           && !simulationWork.useGpuNonbonded && !simulationWork.useGpuPme && shellfc == nullptr
+           && !simulationWork.havePpDomainDecomposition && usesSupportedExactRespaGpuForces
+           && usesSupportedExactRespaGpuUpdate && shellfc == nullptr
            && virtualSites == nullptr && !domainWork.haveSpecialForces && !useReplicaExchange
            && inputRecord.cos_accel == 0.0 && !inputRecord.useConstantAcceleration;
 }
@@ -633,6 +656,61 @@ static void appendPreDoForceStateTrace(const char*                   traceDirPat
                << gmx::formatString("%.15f", velocities[atomIndex][XX]) << " vy="
                << gmx::formatString("%.15f", velocities[atomIndex][YY]) << " vz="
                << gmx::formatString("%.15f", velocities[atomIndex][ZZ]) << " code_location="
+               << codeLocation << '\n';
+    }
+}
+
+static void appendLocalGlobalStateAliasTrace(const char* traceDirPath,
+                                             const int64_t step,
+                                             const char* contextLabel,
+                                             const t_state* localState,
+                                             const t_state* globalState,
+                                             const char* codeLocation)
+{
+    if (traceDirPath == nullptr || *traceDirPath == '\0' || localState == nullptr || globalState == nullptr)
+    {
+        return;
+    }
+
+    std::filesystem::path traceDir(traceDirPath);
+    std::filesystem::create_directories(traceDir);
+    std::ofstream output(traceDir / "local_global_state_alias_trace.txt", std::ios::app);
+    output << "step=" << step << " context_label="
+           << ((contextLabel != nullptr && *contextLabel != '\0') ? contextLabel : "unspecified")
+           << " local_state_ptr=" << static_cast<const void*>(localState)
+           << " global_state_ptr=" << static_cast<const void*>(globalState)
+           << " local_x_ptr=" << static_cast<const void*>(localState->x.data())
+           << " global_x_ptr=" << static_cast<const void*>(globalState->x.data())
+           << " local_v_ptr=" << static_cast<const void*>(localState->v.data())
+           << " global_v_ptr=" << static_cast<const void*>(globalState->v.data())
+           << " local_atoms=" << localState->numAtoms() << " global_atoms=" << globalState->numAtoms()
+           << " code_location=" << codeLocation << '\n';
+
+    const auto localCoords  = localState->x.constArrayRefWithPadding().unpaddedConstArrayRef();
+    const auto localVels    = localState->v.constArrayRefWithPadding().unpaddedConstArrayRef();
+    const auto globalCoords = globalState->x.constArrayRefWithPadding().unpaddedConstArrayRef();
+    const auto globalVels   = globalState->v.constArrayRefWithPadding().unpaddedConstArrayRef();
+    const int availableAtoms =
+            std::min<int>(std::min(localCoords.ssize(), globalCoords.ssize()),
+                          std::min(localVels.ssize(), globalVels.ssize()));
+    const auto filteredAtoms = filteredM2pTraceAtomIndices(availableAtoms);
+    for (const int atomIndex : filteredAtoms)
+    {
+        output << "step=" << step << " context_label="
+               << ((contextLabel != nullptr && *contextLabel != '\0') ? contextLabel : "unspecified")
+               << " atom=" << atomIndex << " local_px="
+               << gmx::formatString("%.15f", localCoords[atomIndex][XX]) << " local_py="
+               << gmx::formatString("%.15f", localCoords[atomIndex][YY]) << " local_pz="
+               << gmx::formatString("%.15f", localCoords[atomIndex][ZZ]) << " local_vx="
+               << gmx::formatString("%.15f", localVels[atomIndex][XX]) << " local_vy="
+               << gmx::formatString("%.15f", localVels[atomIndex][YY]) << " local_vz="
+               << gmx::formatString("%.15f", localVels[atomIndex][ZZ]) << " global_px="
+               << gmx::formatString("%.15f", globalCoords[atomIndex][XX]) << " global_py="
+               << gmx::formatString("%.15f", globalCoords[atomIndex][YY]) << " global_pz="
+               << gmx::formatString("%.15f", globalCoords[atomIndex][ZZ]) << " global_vx="
+               << gmx::formatString("%.15f", globalVels[atomIndex][XX]) << " global_vy="
+               << gmx::formatString("%.15f", globalVels[atomIndex][YY]) << " global_vz="
+               << gmx::formatString("%.15f", globalVels[atomIndex][ZZ]) << " code_location="
                << codeLocation << '\n';
     }
 }
@@ -914,12 +992,14 @@ void gmx::LegacySimulator::do_md()
                           &pressureCouplingMu);
 
     std::unique_ptr<UpdateConstrainGpu> integrator;
+    exactRespaGpuUpdater_ = nullptr;
 
     StatePropagatorDataGpu* stateGpu = fr_->stateGpu;
 
     // TODO: the assertions below should be handled by UpdateConstraintsBuilder.
     if (useGpuForUpdate)
     {
+        const bool exactRespaGpuUpdate = useExactRespa(*ir) && ir->eI == IntegrationAlgorithm::VV;
         GMX_RELEASE_ASSERT(!haveDDAtomOrdering(*cr_) || ddUsesUpdateGroups(*cr_->dd)
                                    || constr_ == nullptr || constr_->numConstraintsTotal() == 0,
                            "Constraints in domain decomposition are only supported with update "
@@ -930,8 +1010,11 @@ void gmx::LegacySimulator::do_md()
         GMX_RELEASE_ASSERT(useGpuForPme || (useGpuForNonbonded && simulationWork.useGpuXBufferOpsWhenAllowed),
                            "Either PME or short-ranged non-bonded interaction tasks must run on "
                            "the GPU to use GPU update.\n");
-        GMX_RELEASE_ASSERT(ir->eI == IntegrationAlgorithm::MD,
-                           "Only the md integrator is supported with the GPU update.\n");
+        GMX_RELEASE_ASSERT(ir->eI == IntegrationAlgorithm::MD || exactRespaGpuUpdate,
+                           "Only the md integrator and standalone exact r-RESPA md-vv are "
+                           "supported with the GPU update.\n");
+        GMX_RELEASE_ASSERT(!exactRespaGpuUpdate || constr_ == nullptr || constr_->numConstraintsTotal() == 0,
+                           "Standalone exact r-RESPA GPU update currently supports unconstrained systems only.\n");
         GMX_RELEASE_ASSERT(
                 ir->etc != TemperatureCoupling::NoseHoover,
                 "Nose-Hoover temperature coupling is not supported with the GPU update.\n");
@@ -980,6 +1063,7 @@ void gmx::LegacySimulator::do_md()
                 fr_->deviceStreamManager->context(),
                 fr_->deviceStreamManager->stream(gmx::DeviceStreamType::UpdateAndConstraints),
                 wallCycleCounters_);
+        exactRespaGpuUpdater_ = integrator.get();
 
         stateGpu->setXUpdatedOnDeviceEvent(integrator->xUpdatedOnDeviceEvent());
 
@@ -1632,8 +1716,20 @@ void gmx::LegacySimulator::do_md()
                 return ir->pressureCouplingOptions.epc != PressureCoupling::No
                        && do_per_step(s, ir->pressureCouplingOptions.nstpcouple);
             };
+            const bool exactRespaOuterBoundaryPressureCoupling =
+                    useExactVelocityVerletLammpsRespa(*ir)
+                    && (ir->pressureCouplingOptions.epc == PressureCoupling::Berendsen
+                        || ir->pressureCouplingOptions.epc == PressureCoupling::CRescale);
             if (EI_VV(ir->eI) && (!bInitStep))
             {
+                if (exactRespaOuterBoundaryPressureCoupling)
+                {
+                    // Standalone exact r-RESPA carries virial-producing long-range work only on
+                    // outer-force boundaries. Requiring an extra pressure-coupling virial on the
+                    // immediately following inner-only step would force non-outer semantics and
+                    // reject every NPT setup with nstpcouple aligned to the outer cadence.
+                    return bCalcEnerStep || needEnergyAndVirial || doPressureCoupling(step);
+                }
                 return bCalcEnerStep || needEnergyAndVirial || doPressureCoupling(step)
                        || doPressureCoupling(step - 1);
             }
@@ -1714,8 +1810,13 @@ void gmx::LegacySimulator::do_md()
         {
             gmx_fatal(FARGS,
                       "Exact LAMMPS-style r-RESPA with integrator = %s currently only supports "
-                      "CPU-only NVE runs without constraints, COM removal, domain decomposition, "
-                      "GPU offload, virtual sites, replica exchange, or other special-force modules.",
+                      "NVE/NVT/NPT runs without constraints, COM removal, domain decomposition, virtual "
+                      "sites, replica exchange, or other special-force modules, with either "
+                      "CPU-only execution or the canonical GPU milestone layouts "
+                      "(nb gpu; nb gpu + bonded gpu; nb gpu + bonded gpu + pme gpu; "
+                      "nb gpu + bonded gpu + pme gpu + update gpu). "
+                      "The supported thermostat/barostat subset is tcoupl = no/berendsen/v-rescale "
+                      "and pcoupl = no/berendsen/c-rescale.",
                       enumValueToString(IntegrationAlgorithm::VV));
         }
         if (gmx::useExactRespa(*ir) && bCalcVir)
@@ -2076,6 +2177,12 @@ void gmx::LegacySimulator::do_md()
                                      bLastStep,
                                      mdrunOptions_.writeConfout,
                                      ekindataState);
+            appendLocalGlobalStateAliasTrace(activeM2pTraceDirPath(),
+                                             step,
+                                             "after_trajectory_writing",
+                                             state_,
+                                             stateGlobal_,
+                                             "src/gromacs/mdrun/md.cpp:after_trajectory_writing");
             appendPreDoForceStateTrace(activeM2pTraceDirPath(),
                                        step,
                                        "after_trajectory_writing",
@@ -2175,9 +2282,33 @@ void gmx::LegacySimulator::do_md()
 
             if (EI_VV(ir->eI))
             {
-                GMX_ASSERT(!useGpuForUpdate, "GPU update is not supported with VVAK integrator.");
                 if (useSupportedExactVelocityVerletRespa)
                 {
+                    if (useGpuForUpdate)
+                    {
+                        GMX_RELEASE_ASSERT(
+                                integrator != nullptr && stateGpu != nullptr,
+                                "Exact r-RESPA GPU update requires initialized GPU state.");
+                        if (bNS && (bFirstStep || haveDDAtomOrdering(*cr_) || bExchanged))
+                        {
+                            integrator->set(stateGpu->getCoordinates(),
+                                            stateGpu->getVelocities(),
+                                            stateGpu->getForces(),
+                                            top_->idef,
+                                            *md);
+
+                            // Search steps may reallocate GPU state buffers; velocities must be
+                            // recopied so the half-kick starts from the current host state.
+                            stateGpu->copyVelocitiesToGpu(state_->v, AtomLocality::Local);
+
+                            if (!(runScheduleWork_->stepWork.haveGpuPmeOnThisRank
+                                  || runScheduleWork_->stepWork.useGpuXBufferOps))
+                            {
+                                stateGpu->copyCoordinatesToGpu(state_->x, AtomLocality::Local);
+                                stateGpu->consumeCoordinatesCopiedToDeviceEvent(AtomLocality::Local);
+                            }
+                        }
+                    }
                     dispatchExactRespaVelocityVerletStep(*ir,
                                                          step,
                                                          t,
@@ -2673,6 +2804,19 @@ void gmx::LegacySimulator::do_md()
                 integrator->scaleVelocities(invertBoxMatrix(pressureCouplingMu));
             }
             integrator->setPbc(PbcType::Xyz, state_->box);
+            if (useSupportedExactVelocityVerletRespa)
+            {
+                // Exact r-RESPA re-enters host-side kicks and force refresh on every base step,
+                // so any GPU-only box/velocity scaling has to be materialized on the host
+                // before the next exact-respa substep.
+                stateGpu->copyCoordinatesFromGpu(state_->x, AtomLocality::Local);
+                stateGpu->waitCoordinatesReadyOnHost(AtomLocality::Local);
+                if (doCRescalePressureCoupling)
+                {
+                    stateGpu->copyVelocitiesFromGpu(state_->v, AtomLocality::Local);
+                    stateGpu->waitVelocitiesReadyOnHost(AtomLocality::Local);
+                }
+            }
         }
 
         /* ################# END UPDATE STEP 2 ################# */

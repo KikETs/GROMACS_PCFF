@@ -1,0 +1,60 @@
+{
+  "class2_parameter_evidence": {
+    "angle_class2_parameter_lines": [
+      "functype[5]=ANGLE_CLASS2, theta0= 1.11000000e+02 deg, k2= 1.33888000e+02, k3=-1.50623999e+01, k4= 4.18400002e+00, bb_k= 2.09200000e+03, bb_r1= 1.48000002e-01, bb_r2= 1.48000002e-01, ba_k1= 7.11279984e+01, ba_k2= 5.85760002e+01, ba_r1= 1.48000002e-01, ba_r2= 1.48000002e-01"
+    ],
+    "angle_cross_component_tokens": [
+      "bb_k=",
+      "ba_k1=",
+      "ba_k2="
+    ],
+    "dihedral_class2_parameter_lines": [
+      "functype[6]=DIHEDRAL_CLASS2, k1= 3.76559997e+00, phi1= 0.00000000e+00 deg, k2= 2.09200001e+00, phi2= 1.80000005e+02 deg, k3= 1.25520003e+00, phi3= 0.00000000e+00 deg, mbt_f1= 5.85760021e+00, mbt_f2=-3.76559997e+00, mbt_f3= 2.09200001e+00, mbt_r0= 1.48000002e-01, ebt_f1_1= 5.02080011e+00, ebt_f2_1=-2.51040006e+00, ebt_f3_1= 1.25520003e+00, ebt_f1_2= 4.18400002e+00, ebt_f2_2=-1.67359996e+00, ebt_f3_2= 8.36799979e-01, ebt_r0_1= 1.48000002e-01, ebt_r0_2= 1.48000002e-01, at_f1_1= 2.09199995e-01, at_f2_1=-1.25520006e-01, at_f3_1= 8.36799964e-02, at_f1_2= 1.67359993e-01, at_f2_2=-8.36799964e-02, at_f3_2= 4.18399982e-02, at_theta0_1= 1.11000000e+02 deg, at_theta0_2= 1.11000000e+02 deg, aat_k= 9.20480013e-01, aat_theta0_1= 1.11000000e+02 deg, aat_theta0_2= 1.11000000e+02 deg, bb13t_k= 6.69440002e+01, bb13t_r10= 1.48000002e-01, bb13t_r30= 1.48000002e-01"
+    ],
+    "dihedral_cross_component_tokens": [
+      "mbt_f1=",
+      "ebt_f1_1=",
+      "at_f1_1=",
+      "aat_k=",
+      "bb13t_k="
+    ],
+    "improper_class2_parameter_lines": []
+  },
+  "exact_respa": true,
+  "exact_respa_kspace_level": 3,
+  "exact_respa_pair14_level": 1,
+  "present_nonzero_counts": {
+    "Class2 Angle": 16,
+    "Class2 Bond": 15,
+    "Class2 Dih.": 15,
+    "LJ-14": 9
+  },
+  "reppow": 9.0,
+  "supported_gpu_terms_present": {
+    "LJ-14": 9
+  },
+  "term_counts": {
+    "Angle": 0,
+    "BA-Cross": 0,
+    "Bond": 0,
+    "Bond-Cross": 0,
+    "Class2 Angle": 16,
+    "Class2 Bond": 15,
+    "Class2 Dih.": 15,
+    "Class2 Impr.": 0,
+    "Coulomb-14": 0,
+    "Improper Dih.": 0,
+    "LJ-14": 9,
+    "LJC Pairs NB": 0,
+    "LJC-14 q": 0,
+    "Per. Imp. Dih.": 0,
+    "Proper Dih.": 0,
+    "Ryckaert-Bell.": 0,
+    "U-B": 0
+  },
+  "unsupported_terms_present": {
+    "Class2 Angle": 16,
+    "Class2 Bond": 15,
+    "Class2 Dih.": 15
+  }
+}

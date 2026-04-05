@@ -1,0 +1,125 @@
+# This file was created Thu Apr  2 09:38:51 2026
+# Created by:
+#    :-) GROMACS - gmx msd, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+# 
+# Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
+# Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+# Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+# Command line:
+#   gmx msd -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/prod.xtc -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/prod.tpr -n /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/transport_molecules.ndx -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/msdout.xvg -mol /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/diff_mol.xvg -trestart 2.0 -maxtau 50.0
+# gmx msd is part of G R O M A C S:
+#
+# Good gRace! Old Maple Actually Chews Slate
+#
+@    title "Mean Squared Displacement"
+@    xaxis  label "tau (ps)"
+@    yaxis  label "MSD (nm\\S2\\N)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "D[       OLI] = 11.6559 (+/- 1.05) (1e-5 cm^2/s)"
+      0.000          0
+      0.500  0.0154009
+      1.000  0.0422065
+      1.500  0.0721459
+      2.000   0.103464
+      2.500   0.135845
+      3.000   0.169721
+      3.500   0.203644
+      4.000    0.23786
+      4.500   0.272822
+      5.000   0.308555
+      5.500    0.34354
+      6.000   0.378483
+      6.500    0.41384
+      7.000   0.449969
+      7.500   0.485412
+      8.000   0.520777
+      8.500   0.556616
+      9.000   0.592905
+      9.500   0.628378
+     10.000   0.664039
+     10.500   0.700152
+     11.000   0.736199
+     11.500   0.771893
+     12.000   0.807792
+     12.500   0.844497
+     13.000   0.880388
+     13.500   0.916325
+     14.000   0.952438
+     14.500   0.990544
+     15.000     1.0259
+     15.500     1.0617
+     16.000      1.098
+     16.500     1.1367
+     17.000    1.17201
+     17.500    1.20807
+     18.000    1.24474
+     18.500    1.28473
+     19.000    1.31991
+     19.500    1.35612
+     20.000    1.39314
+     20.500    1.43376
+     21.000    1.46888
+     21.500    1.50436
+     22.000    1.54059
+     22.500    1.58029
+     23.000    1.61484
+     23.500    1.65024
+     24.000    1.68593
+     24.500    1.72481
+     25.000     1.7582
+     25.500    1.79299
+     26.000    1.82756
+     26.500     1.8644
+     27.000    1.89657
+     27.500    1.93096
+     28.000    1.96484
+     28.500    2.00017
+     29.000    2.03166
+     29.500    2.06556
+     30.000    2.09944
+     30.500    2.13475
+     31.000    2.16615
+     31.500    2.19937
+     32.000    2.23278
+     32.500    2.26823
+     33.000    2.29922
+     33.500    2.33201
+     34.000    2.36448
+     34.500    2.39981
+     35.000    2.43086
+     35.500    2.46439
+     36.000    2.49635
+     36.500    2.53141
+     37.000    2.56271
+     37.500    2.59604
+     38.000    2.62789
+     38.500    2.66332
+     39.000    2.69475
+     39.500    2.72838
+     40.000    2.76063
+     40.500    2.79516
+     41.000    2.82627
+     41.500    2.86057
+     42.000     2.8932
+     42.500    2.92858
+     43.000    2.96027
+     43.500    2.99561
+     44.000    3.02883
+     44.500    3.06383
+     45.000    3.09593
+     45.500    3.13043
+     46.000    3.16325
+     46.500    3.19786
+     47.000    3.22961
+     47.500    3.26386
+     48.000    3.29663
+     48.500    3.33138
+     49.000    3.36375
+     49.500    3.39703
+     50.000    3.42933

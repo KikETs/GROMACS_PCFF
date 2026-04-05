@@ -63,6 +63,7 @@
 #include "gromacs/mdlib/gmx_omp_nthreads.h"
 #include "gromacs/mdlib/update_constrain_gpu.h"
 #include "gromacs/mdtypes/commrec.h"
+#include "gromacs/mdtypes/exactrespaschedule.h"
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/md_enums.h"
 #include "gromacs/mdtypes/mdrunoptions.h"
@@ -204,7 +205,12 @@ bool canUseGpusForNonbonded(const t_inputrec& ir, const bool doRerun, std::strin
         mtsLevelOnlyPme.forceGroups.set(static_cast<int>(MtsForceGroups::LongrangeNonbonded));
         if (useExactRespa(ir))
         {
-            errorReasons.append("Standalone exact r-RESPA is not supported on GPUs.");
+#if GMX_GPU_CUDA
+            errorReasons.appendIf(!exactRespaHasPairSplitting(ir),
+                                  "Standalone exact r-RESPA GPU offload currently requires pair splitting.");
+#else
+            errorReasons.append("Standalone exact r-RESPA GPU offload is only implemented in CUDA builds.");
+#endif
         }
         else if (useMtsSubstepping(ir)
                  && !(ir.mtsLevels.size() == 2
@@ -729,6 +735,21 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
 
     const bool hasAnyConstraints      = gmx_mtop_interaction_count(mtop, IF_CONSTRAINT) > 0;
     const bool pmeSpreadGatherUsesCpu = (pmeRunMode == PmeRunMode::CPU);
+    const bool exactRespaSupportedTemperatureCoupling =
+            inputrec.etc == TemperatureCoupling::No || inputrec.etc == TemperatureCoupling::Berendsen
+            || inputrec.etc == TemperatureCoupling::VRescale;
+    const bool exactRespaSupportedPressureCoupling =
+            inputrec.pressureCouplingOptions.epc == PressureCoupling::No
+            || inputrec.pressureCouplingOptions.epc == PressureCoupling::Berendsen
+            || inputrec.pressureCouplingOptions.epc == PressureCoupling::CRescale;
+    const bool exactRespaGpuUpdateSupportedConfiguration =
+            useExactRespa(inputrec) && !isDomainDecomposition
+            && inputrec.eI == IntegrationAlgorithm::VV && exactRespaSupportedTemperatureCoupling
+            && exactRespaSupportedPressureCoupling
+            && inputrec.comm_mode == ComRemovalAlgorithm::No && !hasAnyConstraints
+            && !useEssentialDynamics && !doOrientationRestraints && !haveFrozenAtoms
+            && !useModularSimulator && !doRerun && useGpuForNonbonded
+            && pmeRunMode == PmeRunMode::GPU;
 
     gmx::MessageStringCollector errorReasons;
     errorReasons.startContext(
@@ -755,7 +776,10 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
                               "With separate PME rank(s), PME must run on the GPU.");
     }
 
-    errorReasons.appendIf(useExactRespa(inputrec), "Standalone exact r-RESPA is not supported.");
+    errorReasons.appendIf(useExactRespa(inputrec) && !exactRespaGpuUpdateSupportedConfiguration,
+                          "Standalone exact r-RESPA GPU update is only supported for single-rank, "
+                          "unconstrained md-vv with GPU non-bonded and GPU PME, using "
+                          "tcoupl = no/berendsen/v-rescale and pcoupl = no/berendsen/c-rescale.");
     errorReasons.appendIf(useMtsSubstepping(inputrec), "Multiple time stepping is not supported.");
 
     errorReasons.appendIf((inputrec.eConstrAlg == ConstraintAlgorithm::Shake && hasAnyConstraints
@@ -782,7 +806,7 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
         GMX_UNUSED_VALUE(silenceWarningMessageWithUpdateAuto);
         silenceWarningMessageWithUpdateAuto = true;
     }
-    errorReasons.appendIf((inputrec.eI != IntegrationAlgorithm::MD),
+    errorReasons.appendIf((inputrec.eI != IntegrationAlgorithm::MD) && !exactRespaGpuUpdateSupportedConfiguration,
                           "Only the md integrator is supported.");
     errorReasons.appendIf((inputrec.etc == TemperatureCoupling::NoseHoover),
                           "Nose-Hoover temperature coupling is not supported.");

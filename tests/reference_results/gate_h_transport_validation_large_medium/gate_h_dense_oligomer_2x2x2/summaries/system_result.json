@@ -1,0 +1,127 @@
+{
+  "analysis_settings": {
+    "block_count": 5,
+    "coord_stride_ps": 0.5,
+    "energy_stride_ps": 0.1,
+    "equil_ps": 100.0,
+    "estimator": "Einstein MSD with COM-drift removal; conductivity from cNE; transference from NE ratio.",
+    "fit_window_ratio": [
+      0.2,
+      0.8
+    ],
+    "prod_ps": 500.0,
+    "replicas": 2
+  },
+  "artifacts": {
+    "scaffold_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/fixture_manifest.json",
+    "system_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2",
+    "transport_comparison_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/summaries/transport_comparison.tsv"
+  },
+  "failure_reasons": [
+    "Production duration 500.0 ps is below the TP0 minimum 10000.0 ps."
+  ],
+  "first_failing_observable": "protocol_scope",
+  "fixture_metadata": {
+    "box_nm": [
+      4.4,
+      4.4,
+      4.4
+    ],
+    "min_box_nm": 4.4,
+    "natoms": 3072,
+    "volume_nm3": 85.18400000000003
+  },
+  "observable_comparisons": {
+    "oligomer_diffusivity_cm2_s": {
+      "available": true,
+      "classification": "stochastic",
+      "combined_uncertainty": 3.302143266961197e-06,
+      "cpu_mean": 0.00010664250000000001,
+      "cpu_uncertainty": 2.395273869711462e-06,
+      "gpu_mean": 0.00010347749999999999,
+      "gpu_uncertainty": 2.2730625254520926e-06,
+      "mean_diff": -3.1650000000000146e-06,
+      "passes": true,
+      "replica_diffs": [
+        -3.0550000000000038e-06,
+        -3.275000000000012e-06
+      ]
+    }
+  },
+  "per_layout_aggregates": {
+    "cpu": {
+      "oligomer_diffusivity_cm2_s": {
+        "available": true,
+        "mean": 0.00010664250000000001,
+        "mean_block_sem": 2.395273869711462e-06,
+        "replica_count": 2,
+        "replicas": [
+          {
+            "block_sem": 2.6477717195174184e-06,
+            "r_squared": 0.9999936075244218,
+            "replica_index": 1,
+            "value": 0.000105959
+          },
+          {
+            "block_sem": 2.1427760199055057e-06,
+            "r_squared": 0.9999988178599292,
+            "replica_index": 2,
+            "value": 0.00010732600000000001
+          }
+        ],
+        "sem": 6.835000000000012e-07,
+        "std": 9.666149698820122e-07
+      }
+    },
+    "gpu": {
+      "oligomer_diffusivity_cm2_s": {
+        "available": true,
+        "mean": 0.00010347749999999999,
+        "mean_block_sem": 2.2730625254520926e-06,
+        "replica_count": 2,
+        "replicas": [
+          {
+            "block_sem": 1.918812468306217e-06,
+            "r_squared": 0.9999990165261864,
+            "replica_index": 1,
+            "value": 0.000102904
+          },
+          {
+            "block_sem": 2.627312582597968e-06,
+            "r_squared": 0.9999943272291404,
+            "replica_index": 2,
+            "value": 0.000104051
+          }
+        ],
+        "sem": 5.734999999999971e-07,
+        "std": 8.11051478020966e-07
+      }
+    }
+  },
+  "replica_variability": {
+    "cpu": {
+      "oligomer_diffusivity_cm2_s": {
+        "mean_block_sem": 2.395273869711462e-06,
+        "sem": 6.835000000000012e-07,
+        "std": 9.666149698820122e-07
+      }
+    },
+    "gpu": {
+      "oligomer_diffusivity_cm2_s": {
+        "mean_block_sem": 2.2730625254520926e-06,
+        "sem": 5.734999999999971e-07,
+        "std": 8.11051478020966e-07
+      }
+    }
+  },
+  "status": "FAIL",
+  "system_class": "neutral_dense",
+  "system_id": "gate_h_dense_oligomer_2x2x2",
+  "tp0_protocol_expectation": {
+    "meets_minimum": false,
+    "minimum_prod_ps": 10000.0
+  },
+  "tp0_scope_issues": [
+    "Production duration 500.0 ps is below the TP0 minimum 10000.0 ps."
+  ]
+}

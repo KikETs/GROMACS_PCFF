@@ -1,0 +1,61 @@
+{
+  "all_pass": true,
+  "box_reason": "Pressure coupling is off, so the box is fixed and box state continuity is not a differentiating Gate E signal.",
+  "box_relevant": false,
+  "checks": [
+    {
+      "actual": "ntmpi=1",
+      "expected": "ntmpi=1",
+      "field": "single_rank",
+      "passes": true
+    },
+    {
+      "actual": "omitted",
+      "expected": "npme omitted",
+      "field": "npme_unused",
+      "passes": true
+    },
+    {
+      "actual": "md-vv",
+      "expected": "md-vv",
+      "field": "integrator",
+      "passes": true
+    },
+    {
+      "actual": "yes",
+      "expected": "yes",
+      "field": "exact_respa",
+      "passes": true
+    },
+    {
+      "actual": "none",
+      "expected": "none",
+      "field": "constraints",
+      "passes": true
+    },
+    {
+      "actual": "no",
+      "expected": "no",
+      "field": "tcoupl",
+      "passes": true
+    },
+    {
+      "actual": "no",
+      "expected": "no",
+      "field": "pcoupl",
+      "passes": true
+    },
+    {
+      "actual": "none",
+      "expected": "none",
+      "field": "comm-mode",
+      "passes": true
+    },
+    {
+      "actual": "no",
+      "expected": "no",
+      "field": "dlb",
+      "passes": true
+    }
+  ]
+}

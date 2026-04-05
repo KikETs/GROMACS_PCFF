@@ -1,0 +1,2 @@
+observable	cpu_mean	gpu_mean	mean_diff	combined_uncertainty	classification	passes
+oligomer_diffusivity_cm2_s	0.0001154565	0.000113118	-2.3385e-06	1.136651454e-05	stochastic	True

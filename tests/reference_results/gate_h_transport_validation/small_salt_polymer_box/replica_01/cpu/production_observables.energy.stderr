@@ -1,0 +1,33 @@
+   :-) GROMACS - gmx energy, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
+Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Command line:
+  gmx energy -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_01/cpu/prod.edr -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_01/cpu/production_observables.xvg
+
+Opened /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_01/cpu/prod.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  Class2-Bond      2  Class2-Angle     3  Class2-Dih.      4  LJ-14         
+  5  Coulomb-14       6  LJ-(SR)          7  Coulomb-(SR)     8  Coul.-recip.  
+  9  Potential       10  Kinetic-En.     11  Total-Energy    12  Conserved-En. 
+ 13  Temperature     14  Pressure        15  Vir-XX          16  Vir-XY        
+ 17  Vir-XZ          18  Vir-YX          19  Vir-YY          20  Vir-YZ        
+ 21  Vir-ZX          22  Vir-ZY          23  Vir-ZZ          24  Pres-XX       
+ 25  Pres-XY         26  Pres-XZ         27  Pres-YX         28  Pres-YY       
+ 29  Pres-YZ         30  Pres-ZX         31  Pres-ZY         32  Pres-ZZ       
+ 33  #Surf*SurfTen   34  T-System        35  Lamb-System   
+
+String 'Volume' does not match anything
+String 'Density' does not match anything
+String 'Box-X' does not match anything
+String 'Box-Y' does not match anything
+String 'Box-Z' does not match anything
+Reading energy frame      0 time    0.000         Reading energy frame      1 time    1.000         Reading energy frame      2 time    2.000         Reading energy frame      3 time    3.000         Reading energy frame      4 time    4.000         Reading energy frame      5 time    5.000         Reading energy frame      6 time    6.000         Reading energy frame      7 time    7.000         Reading energy frame      8 time    8.000         Reading energy frame      9 time    9.000         Reading energy frame     10 time   10.000         Reading energy frame     11 time   11.000         Reading energy frame     12 time   12.000         Reading energy frame     13 time   13.000         Reading energy frame     14 time   14.000         Reading energy frame     15 time   15.000         Reading energy frame     16 time   16.000         Reading energy frame     17 time   17.000         Reading energy frame     18 time   18.000         Reading energy frame     19 time   19.000         Reading energy frame     20 time   20.000         Reading energy frame     30 time   30.000         Reading energy frame     40 time   40.000         Reading energy frame     50 time   50.000         Reading energy frame     60 time   60.000         Reading energy frame     70 time   70.000         Reading energy frame     80 time   80.000         Reading energy frame     90 time   90.000         Reading energy frame    100 time  100.000         Reading energy frame    110 time  110.000         Reading energy frame    120 time  120.000         Reading energy frame    130 time  130.000         Reading energy frame    140 time  140.000         Reading energy frame    150 time  150.000         Reading energy frame    160 time  160.000         Reading energy frame    170 time  170.000         Reading energy frame    180 time  180.000         Reading energy frame    190 time  190.000         Reading energy frame    200 time  200.000         Reading energy frame    300 time  300.000         Reading energy frame    400 time  400.000         Reading energy frame    500 time  500.000         Last energy frame read 500 time  500.000         
+
+GROMACS reminds you: "Everything He Lacks, He Makes Up In Denial" (Offspring)
+

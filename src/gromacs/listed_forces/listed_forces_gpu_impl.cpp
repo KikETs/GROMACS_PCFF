@@ -139,14 +139,13 @@ bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, 
             "Cannot compute bonded interactions on a GPU, because GPU implementation requires "
             "a dynamical integrator (md, sd, etc).");
     errorReasons.appendIf(EI_MIMIC(ir.eI), "MiMiC");
-    errorReasons.appendIf(gmx::useExactRespa(ir), "Cannot run with standalone exact r-RESPA");
     errorReasons.appendIf(gmx::useMtsSubstepping(ir), "Cannot run with multiple time stepping");
     // There is one energy group for each wall and those are not used for 1-4 interactions
     errorReasons.appendIf((ir.opts.ngener - ir.nwall > 1), "Cannot run with multiple energy groups");
-    errorReasons.appendIf(std::abs(mtop.ffparams.reppow - 12.0) > 10 * GMX_DOUBLE_EPS,
-                          "The current bonded GPU path assumes 12-6 listed 1-4 Lennard-Jones "
-                          "semantics. PCFF/class2 uses 9-6 listed 1-4 interactions, so -bonded gpu "
-                          "is rejected until the GPU pairs path is generalized to repulsion power 9.");
+    errorReasons.appendIf(std::abs(mtop.ffparams.reppow - 9.0) > 10 * GMX_DOUBLE_EPS
+                                  && std::abs(mtop.ffparams.reppow - 12.0) > 10 * GMX_DOUBLE_EPS,
+                          "Bonded GPU offload currently supports only 12-6 and 9-6 listed 1-4 "
+                          "Lennard-Jones semantics.");
     errorReasons.finishContext();
     if (error != nullptr)
     {
@@ -204,6 +203,10 @@ void ListedForcesGpu::launchEnergyTransfer() {}
 void ListedForcesGpu::waitAccumulateEnergyTerms(gmx_enerdata_t* /* enerd */) {}
 
 void ListedForcesGpu::clearEnergies() {}
+
+void ListedForcesGpu::setPcffClass2DebugMode(PcffClass2DebugMode /* mode */) {}
+
+void ListedForcesGpu::clearPcffClass2DebugMode() {}
 
 #endif // !GMX_GPU || GMX_GPU_OPENCL
 

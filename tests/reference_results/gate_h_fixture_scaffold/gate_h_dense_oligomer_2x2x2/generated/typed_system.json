@@ -1,0 +1,5731 @@
+{
+  "angle_types": [
+    {
+      "ba": {
+        "k1_kcal_mol_per_a": 1.7,
+        "k2_kcal_mol_per_a": 1.4,
+        "r1_angstrom": 1.48,
+        "r2_angstrom": 1.48,
+        "source": {
+          "file": "system.in",
+          "line": 21,
+          "text": "angle_coeff 1 ba 1.7 1.4 1.48 1.48"
+        }
+      },
+      "bb": {
+        "k_kcal_mol_per_a2": 5.0,
+        "r1_angstrom": 1.48,
+        "r2_angstrom": 1.48,
+        "source": {
+          "file": "system.in",
+          "line": 20,
+          "text": "angle_coeff 1 bb 5.0 1.48 1.48"
+        }
+      },
+      "main": {
+        "k2_kcal_mol": 32.0,
+        "k3_kcal_mol": -3.6,
+        "k4_kcal_mol": 1.0,
+        "source": {
+          "file": "system.in",
+          "line": 19,
+          "text": "angle_coeff 1 111.0 32.0 -3.6 1.0"
+        },
+        "theta0_deg": 111.0
+      },
+      "type_id": 1
+    }
+  ],
+  "atom_types": [
+    {
+      "id": 1,
+      "label": "T1",
+      "mass_amu": 12.011,
+      "mass_source": {
+        "file": "system.data",
+        "line": 18,
+        "text": "1 12.011"
+      },
+      "pair_coeff": {
+        "epsilon_kcal_mol": 0.12,
+        "sigma_angstrom": 3.4,
+        "source": {
+          "file": "system.in",
+          "line": 16,
+          "text": "pair_coeff 1 1 0.12 3.40"
+        },
+        "type_id": 1
+      }
+    },
+    {
+      "id": 2,
+      "label": "T2",
+      "mass_amu": 14.007,
+      "mass_source": {
+        "file": "system.data",
+        "line": 19,
+        "text": "2 14.007"
+      },
+      "pair_coeff": {
+        "epsilon_kcal_mol": 0.08,
+        "sigma_angstrom": 3.0,
+        "source": {
+          "file": "system.in",
+          "line": 17,
+          "text": "pair_coeff 2 2 0.08 3.00"
+        },
+        "type_id": 2
+      }
+    }
+  ],
+  "bond_types": [
+    {
+      "k2_kcal_mol_per_a2": 230.0,
+      "k3_kcal_mol_per_a3": -32.0,
+      "k4_kcal_mol_per_a4": 7.0,
+      "r0_angstrom": 1.48,
+      "source": {
+        "file": "system.in",
+        "line": 18,
+        "text": "bond_coeff 1 1.48 230.0 -32.0 7.0"
+      },
+      "type_id": 1
+    }
+  ],
+  "box_angstrom": {
+    "x": {
+      "hi": 33.0,
+      "lo": -11.0,
+      "source": {
+        "file": "system.data",
+        "line": 12,
+        "text": "-11 33 xlo xhi"
+      }
+    },
+    "y": {
+      "hi": 33.0,
+      "lo": -11.0,
+      "source": {
+        "file": "system.data",
+        "line": 13,
+        "text": "-11 33 ylo yhi"
+      }
+    },
+    "z": {
+      "hi": 33.0,
+      "lo": -11.0,
+      "source": {
+        "file": "system.data",
+        "line": 14,
+        "text": "-11 33 zlo zhi"
+      }
+    }
+  },
+  "category": "polymer",
+  "description": "Derived from dense_oligomer via LAMMPS replicate 2x2x2 for Gate H transport-scope scaffolding.",
+  "diagnostics": {
+    "generated_pair_rule": "Each unique 1-4 pair is derived from the first and fourth atom of each Class2 dihedral because special_bonds is 0 0 1 and GROMACS needs explicit [ pairs ].",
+    "notes": [
+      "This IR is frozen in LAMMPS real units and retains source line provenance for every typed record.",
+      "The current exporter supports only the repository fixture style subset and fails on any unsupported command or missing coefficient family."
+    ],
+    "supported_gromacs_export": true
+  },
+  "dihedral_types": [
+    {
+      "aat": {
+        "k_kcal_mol": 0.22,
+        "source": {
+          "file": "system.in",
+          "line": 26,
+          "text": "dihedral_coeff 1 aat 0.22 111.0 111.0"
+        },
+        "theta0_1_deg": 111.0,
+        "theta0_2_deg": 111.0
+      },
+      "at": {
+        "f1_1_kcal_mol": 0.05,
+        "f1_2_kcal_mol": 0.04,
+        "f2_1_kcal_mol": -0.03,
+        "f2_2_kcal_mol": -0.02,
+        "f3_1_kcal_mol": 0.02,
+        "f3_2_kcal_mol": 0.01,
+        "source": {
+          "file": "system.in",
+          "line": 25,
+          "text": "dihedral_coeff 1 at 0.05 -0.03 0.02 0.04 -0.02 0.01 111.0 111.0"
+        },
+        "theta0_1_deg": 111.0,
+        "theta0_2_deg": 111.0
+      },
+      "bb13": {
+        "k_kcal_mol_per_a2": 0.16,
+        "r1_angstrom": 1.48,
+        "r3_angstrom": 1.48,
+        "source": {
+          "file": "system.in",
+          "line": 27,
+          "text": "dihedral_coeff 1 bb13 0.16 1.48 1.48"
+        }
+      },
+      "ebt": {
+        "f1_1_kcal_mol_per_a": 0.12,
+        "f1_2_kcal_mol_per_a": 0.1,
+        "f2_1_kcal_mol_per_a": -0.06,
+        "f2_2_kcal_mol_per_a": -0.04,
+        "f3_1_kcal_mol_per_a": 0.03,
+        "f3_2_kcal_mol_per_a": 0.02,
+        "r0_1_angstrom": 1.48,
+        "r0_2_angstrom": 1.48,
+        "source": {
+          "file": "system.in",
+          "line": 24,
+          "text": "dihedral_coeff 1 ebt 0.12 -0.06 0.03 0.10 -0.04 0.02 1.48 1.48"
+        }
+      },
+      "main": {
+        "k1_kcal_mol": 0.9,
+        "k2_kcal_mol": 0.5,
+        "k3_kcal_mol": 0.3,
+        "phi1_deg": 0.0,
+        "phi2_deg": 180.0,
+        "phi3_deg": 0.0,
+        "source": {
+          "file": "system.in",
+          "line": 22,
+          "text": "dihedral_coeff 1 0.9 0.0 0.5 180.0 0.3 0.0"
+        }
+      },
+      "mbt": {
+        "f1_kcal_mol_per_a": 0.14,
+        "f2_kcal_mol_per_a": -0.09,
+        "f3_kcal_mol_per_a": 0.05,
+        "r0_angstrom": 1.48,
+        "source": {
+          "file": "system.in",
+          "line": 23,
+          "text": "dihedral_coeff 1 mbt 0.14 -0.09 0.05 1.48"
+        }
+      },
+      "type_id": 1
+    }
+  ],
+  "display_name": "dense oligomer transport scaffold",
+  "improper_types": [],
+  "molecule_instances": [
+    {
+      "molecule_id": 1,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 23,
+        "text": "1 1 1 0.25 -9.370408619409552 -6.971679679113406 -6.853699624631505 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 2,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 29,
+        "text": "7 2 1 0.25 -3.8704086194095586 -6.971679679113393 -6.853699624631522 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 3,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 35,
+        "text": "13 3 1 0.25 1.629591380590418 -6.971679679113373 -6.853699624631519 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 4,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 41,
+        "text": "19 4 1 0.25 7.12959138059044 -6.971679679113388 -6.85369962463152 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 5,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 47,
+        "text": "25 5 1 0.25 -9.370408619409536 -1.471679679113362 -6.853699624631507 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 6,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 53,
+        "text": "31 6 1 0.25 -3.8704086194095524 -1.4716796791133415 -6.853699624631521 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 7,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 59,
+        "text": "37 7 1 0.25 1.629591380590404 -1.4716796791133426 -6.853699624631525 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 8,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 65,
+        "text": "43 8 1 0.25 7.129591380590453 -1.4716796791133862 -6.853699624631527 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 9,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 71,
+        "text": "49 9 1 0.25 -9.370408619409508 4.028320320886591 -6.85369962463151 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 10,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 77,
+        "text": "55 10 1 0.25 -3.8704086194095195 4.028320320886612 -6.853699624631508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 11,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 83,
+        "text": "61 11 1 0.25 1.6295913805904634 4.028320320886626 -6.853699624631499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 12,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 89,
+        "text": "67 12 1 0.25 7.12959138059046 4.028320320886554 -6.853699624631513 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 13,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 95,
+        "text": "73 13 1 0.25 -9.370408619409515 9.528320320886648 -6.853699624631511 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 14,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 101,
+        "text": "79 14 1 0.25 -3.870408619409561 9.528320320886598 -6.853699624631523 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 15,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 107,
+        "text": "85 15 1 0.25 1.6295913805904545 9.528320320886582 -6.853699624631522 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 16,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 113,
+        "text": "91 16 1 0.25 7.129591380590476 9.528320320886602 -6.853699624631526 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 17,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 119,
+        "text": "97 17 1 0.25 -9.370408619409519 -6.97167967911345 -1.3536996246315176 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 18,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 125,
+        "text": "103 18 1 0.25 -3.8704086194095284 -6.9716796791133975 -1.3536996246315154 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 19,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 131,
+        "text": "109 19 1 0.25 1.6295913805904247 -6.971679679113411 -1.353699624631527 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 20,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 137,
+        "text": "115 20 1 0.25 7.129591380590464 -6.97167967911343 -1.3536996246315354 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 21,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 143,
+        "text": "121 21 1 0.25 -9.370408619409497 -1.471679679113415 -1.3536996246315163 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 22,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 149,
+        "text": "127 22 1 0.25 -3.870408619409517 -1.4716796791134157 -1.353699624631513 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 23,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 155,
+        "text": "133 23 1 0.25 1.629591380590442 -1.4716796791133713 -1.3536996246315118 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 24,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 161,
+        "text": "139 24 1 0.25 7.129591380590473 -1.4716796791134483 -1.3536996246315334 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 25,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 167,
+        "text": "145 25 1 0.25 -9.37040861940948 4.028320320886568 -1.3536996246315003 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 26,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 173,
+        "text": "151 26 1 0.25 -3.8704086194095297 4.028320320886532 -1.3536996246315096 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 27,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 179,
+        "text": "157 27 1 0.25 1.6295913805904731 4.028320320886561 -1.353699624631508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 28,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 185,
+        "text": "163 28 1 0.25 7.129591380590512 4.028320320886511 -1.3536996246315163 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 29,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 191,
+        "text": "169 29 1 0.25 -9.370408619409483 9.528320320886559 -1.3536996246315252 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 30,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 197,
+        "text": "175 30 1 0.25 -3.870408619409526 9.528320320886623 -1.3536996246315147 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 31,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 203,
+        "text": "181 31 1 0.25 1.6295913805904279 9.52832032088661 -1.353699624631535 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 32,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 209,
+        "text": "187 32 1 0.25 7.129591380590479 9.528320320886529 -1.3536996246315462 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 33,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 215,
+        "text": "193 33 1 0.25 -9.370408619409597 -6.971679679113377 4.146300375368456 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 34,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 221,
+        "text": "199 34 1 0.25 -3.8704086194095835 -6.971679679113292 4.146300375368442 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 35,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 227,
+        "text": "205 35 1 0.25 1.6295913805903857 -6.971679679113309 4.146300375368454 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 36,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 233,
+        "text": "211 36 1 0.25 7.129591380590402 -6.971679679113353 4.146300375368448 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 37,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 239,
+        "text": "217 37 1 0.25 -9.370408619409547 -1.4716796791133266 4.146300375368466 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 38,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 245,
+        "text": "223 38 1 0.25 -3.870408619409568 -1.4716796791133648 4.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 39,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 251,
+        "text": "229 39 1 0.25 1.6295913805903839 -1.4716796791133215 4.146300375368469 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 40,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 257,
+        "text": "235 40 1 0.25 7.129591380590426 -1.471679679113393 4.14630037536845 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 41,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 263,
+        "text": "241 41 1 0.25 -9.370408619409536 4.02832032088664 4.146300375368482 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 42,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 269,
+        "text": "247 42 1 0.25 -3.8704086194095755 4.02832032088664 4.146300375368463 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 43,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 275,
+        "text": "253 43 1 0.25 1.6295913805904056 4.028320320886662 4.146300375368474 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 44,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 281,
+        "text": "259 44 1 0.25 7.129591380590449 4.028320320886584 4.1463003753684555 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 45,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 287,
+        "text": "265 45 1 0.25 -9.370408619409526 9.52832032088667 4.146300375368484 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 46,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 293,
+        "text": "271 46 1 0.25 -3.870408619409596 9.528320320886646 4.146300375368468 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 47,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 299,
+        "text": "277 47 1 0.25 1.6295913805903932 9.528320320886705 4.1463003753684555 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 48,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 305,
+        "text": "283 48 1 0.25 7.1295913805903925 9.528320320886628 4.146300375368415 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 49,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 311,
+        "text": "289 49 1 0.25 -9.370408619409597 -6.971679679113327 9.646300375368458 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 50,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 317,
+        "text": "295 50 1 0.25 -3.8704086194095693 -6.971679679113232 9.646300375368495 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 51,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 323,
+        "text": "301 51 1 0.25 1.6295913805903048 -6.971679679113348 9.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 52,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 329,
+        "text": "307 52 1 0.25 7.129591380590403 -6.971679679113293 9.64630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 53,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 335,
+        "text": "313 53 1 0.25 -9.370408619409572 -1.471679679113365 9.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 54,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 341,
+        "text": "319 54 1 0.25 -3.870408619409575 -1.4716796791134408 9.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 55,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 347,
+        "text": "325 55 1 0.25 1.6295913805904139 -1.4716796791133062 9.646300375368524 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 56,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 353,
+        "text": "331 56 1 0.25 7.129591380590376 -1.471679679113407 9.646300375368485 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 57,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 359,
+        "text": "337 57 1 0.25 -9.370408619409528 4.028320320886645 9.646300375368499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 58,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 365,
+        "text": "343 58 1 0.25 -3.8704086194095657 4.028320320886643 9.646300375368508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 59,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 371,
+        "text": "349 59 1 0.25 1.6295913805903774 4.0283203208866585 9.646300375368519 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 60,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 377,
+        "text": "355 60 1 0.25 7.129591380590376 4.028320320886575 9.646300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 61,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 383,
+        "text": "361 61 1 0.25 -9.370408619409625 9.528320320886609 9.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 62,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 389,
+        "text": "367 62 1 0.25 -3.8704086194095733 9.528320320886639 9.646300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 63,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 395,
+        "text": "373 63 1 0.25 1.6295913805904332 9.528320320886678 9.646300375368499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 64,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 401,
+        "text": "379 64 1 0.25 7.129591380590386 9.528320320886705 9.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 65,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1559,
+        "text": "385 65 1 0.25 12.629591380590448 -6.971679679113406 -6.853699624631505 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 66,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1565,
+        "text": "391 66 1 0.25 18.12959138059044 -6.971679679113393 -6.853699624631522 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 67,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1571,
+        "text": "397 67 1 0.25 23.62959138059042 -6.971679679113373 -6.853699624631519 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 68,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1577,
+        "text": "403 68 1 0.25 29.12959138059044 -6.971679679113388 -6.85369962463152 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 69,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1583,
+        "text": "409 69 1 0.25 12.629591380590464 -1.471679679113362 -6.853699624631507 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 70,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1589,
+        "text": "415 70 1 0.25 18.129591380590448 -1.4716796791133415 -6.853699624631521 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 71,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1595,
+        "text": "421 71 1 0.25 23.629591380590405 -1.4716796791133426 -6.853699624631525 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 72,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1601,
+        "text": "427 72 1 0.25 29.129591380590455 -1.4716796791133862 -6.853699624631527 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 73,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1607,
+        "text": "433 73 1 0.25 12.629591380590492 4.028320320886591 -6.85369962463151 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 74,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1613,
+        "text": "439 74 1 0.25 18.12959138059048 4.028320320886612 -6.853699624631508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 75,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1619,
+        "text": "445 75 1 0.25 23.629591380590462 4.028320320886626 -6.853699624631499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 76,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1625,
+        "text": "451 76 1 0.25 29.129591380590462 4.028320320886554 -6.853699624631513 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 77,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1631,
+        "text": "457 77 1 0.25 12.629591380590485 9.528320320886648 -6.853699624631511 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 78,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1637,
+        "text": "463 78 1 0.25 18.12959138059044 9.528320320886598 -6.853699624631523 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 79,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1643,
+        "text": "469 79 1 0.25 23.629591380590455 9.528320320886582 -6.853699624631522 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 80,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1649,
+        "text": "475 80 1 0.25 29.129591380590476 9.528320320886602 -6.853699624631526 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 81,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1655,
+        "text": "481 81 1 0.25 12.629591380590481 -6.97167967911345 -1.3536996246315176 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 82,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1661,
+        "text": "487 82 1 0.25 18.129591380590472 -6.9716796791133975 -1.3536996246315154 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 83,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1667,
+        "text": "493 83 1 0.25 23.629591380590426 -6.971679679113411 -1.353699624631527 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 84,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1673,
+        "text": "499 84 1 0.25 29.129591380590462 -6.97167967911343 -1.3536996246315354 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 85,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1679,
+        "text": "505 85 1 0.25 12.629591380590503 -1.471679679113415 -1.3536996246315163 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 86,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1685,
+        "text": "511 86 1 0.25 18.129591380590483 -1.4716796791134157 -1.353699624631513 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 87,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1691,
+        "text": "517 87 1 0.25 23.62959138059044 -1.4716796791133713 -1.3536996246315118 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 88,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1697,
+        "text": "523 88 1 0.25 29.129591380590472 -1.4716796791134483 -1.3536996246315334 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 89,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1703,
+        "text": "529 89 1 0.25 12.62959138059052 4.028320320886568 -1.3536996246315003 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 90,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1709,
+        "text": "535 90 1 0.25 18.12959138059047 4.028320320886532 -1.3536996246315096 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 91,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1715,
+        "text": "541 91 1 0.25 23.629591380590472 4.028320320886561 -1.353699624631508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 92,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1721,
+        "text": "547 92 1 0.25 29.12959138059051 4.028320320886511 -1.3536996246315163 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 93,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1727,
+        "text": "553 93 1 0.25 12.629591380590517 9.528320320886559 -1.3536996246315252 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 94,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1733,
+        "text": "559 94 1 0.25 18.129591380590472 9.528320320886623 -1.3536996246315147 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 95,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1739,
+        "text": "565 95 1 0.25 23.629591380590426 9.52832032088661 -1.353699624631535 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 96,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1745,
+        "text": "571 96 1 0.25 29.12959138059048 9.528320320886529 -1.3536996246315462 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 97,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1751,
+        "text": "577 97 1 0.25 12.629591380590403 -6.971679679113377 4.146300375368456 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 98,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1757,
+        "text": "583 98 1 0.25 18.129591380590416 -6.971679679113292 4.146300375368442 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 99,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1763,
+        "text": "589 99 1 0.25 23.629591380590387 -6.971679679113309 4.146300375368454 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 100,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1769,
+        "text": "595 100 1 0.25 29.1295913805904 -6.971679679113353 4.146300375368448 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 101,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1775,
+        "text": "601 101 1 0.25 12.629591380590453 -1.4716796791133266 4.146300375368466 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 102,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1781,
+        "text": "607 102 1 0.25 18.129591380590433 -1.4716796791133648 4.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 103,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1787,
+        "text": "613 103 1 0.25 23.629591380590384 -1.4716796791133215 4.146300375368469 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 104,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1793,
+        "text": "619 104 1 0.25 29.129591380590426 -1.471679679113393 4.14630037536845 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 105,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1799,
+        "text": "625 105 1 0.25 12.629591380590464 4.02832032088664 4.146300375368482 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 106,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1805,
+        "text": "631 106 1 0.25 18.129591380590426 4.02832032088664 4.146300375368463 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 107,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1811,
+        "text": "637 107 1 0.25 23.629591380590405 4.028320320886662 4.146300375368474 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 108,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1817,
+        "text": "643 108 1 0.25 29.129591380590448 4.028320320886584 4.1463003753684555 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 109,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1823,
+        "text": "649 109 1 0.25 12.629591380590474 9.52832032088667 4.146300375368484 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 110,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1829,
+        "text": "655 110 1 0.25 18.129591380590405 9.528320320886646 4.146300375368468 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 111,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1835,
+        "text": "661 111 1 0.25 23.629591380590394 9.528320320886705 4.1463003753684555 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 112,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1841,
+        "text": "667 112 1 0.25 29.12959138059039 9.528320320886628 4.146300375368415 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 113,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1847,
+        "text": "673 113 1 0.25 12.629591380590403 -6.971679679113327 9.646300375368458 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 114,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1853,
+        "text": "679 114 1 0.25 18.12959138059043 -6.971679679113232 9.646300375368495 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 115,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1859,
+        "text": "685 115 1 0.25 23.629591380590306 -6.971679679113348 9.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 116,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1865,
+        "text": "691 116 1 0.25 29.129591380590405 -6.971679679113293 9.64630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 117,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1871,
+        "text": "697 117 1 0.25 12.629591380590428 -1.471679679113365 9.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 118,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1877,
+        "text": "703 118 1 0.25 18.129591380590426 -1.4716796791134408 9.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 119,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1883,
+        "text": "709 119 1 0.25 23.629591380590412 -1.4716796791133062 9.646300375368524 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 120,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1889,
+        "text": "715 120 1 0.25 29.129591380590377 -1.471679679113407 9.646300375368485 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 121,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1895,
+        "text": "721 121 1 0.25 12.629591380590472 4.028320320886645 9.646300375368499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 122,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1901,
+        "text": "727 122 1 0.25 18.129591380590433 4.028320320886643 9.646300375368508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 123,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1907,
+        "text": "733 123 1 0.25 23.629591380590377 4.0283203208866585 9.646300375368519 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 124,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1913,
+        "text": "739 124 1 0.25 29.129591380590377 4.028320320886575 9.646300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 125,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1919,
+        "text": "745 125 1 0.25 12.629591380590375 9.528320320886609 9.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 126,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1925,
+        "text": "751 126 1 0.25 18.129591380590426 9.528320320886639 9.646300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 127,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1931,
+        "text": "757 127 1 0.25 23.629591380590433 9.528320320886678 9.646300375368499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 128,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1937,
+        "text": "763 128 1 0.25 29.129591380590387 9.528320320886705 9.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 129,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 791,
+        "text": "769 129 1 0.25 -9.370408619409552 15.028320320886593 -6.853699624631505 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 130,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 797,
+        "text": "775 130 1 0.25 -3.8704086194095586 15.028320320886607 -6.853699624631522 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 131,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 803,
+        "text": "781 131 1 0.25 1.629591380590418 15.028320320886628 -6.853699624631519 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 132,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 809,
+        "text": "787 132 1 0.25 7.12959138059044 15.028320320886612 -6.85369962463152 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 133,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 815,
+        "text": "793 133 1 0.25 -9.370408619409536 20.52832032088664 -6.853699624631507 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 134,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 821,
+        "text": "799 134 1 0.25 -3.8704086194095524 20.528320320886657 -6.853699624631521 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 135,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 827,
+        "text": "805 135 1 0.25 1.629591380590404 20.528320320886657 -6.853699624631525 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 136,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 833,
+        "text": "811 136 1 0.25 7.129591380590453 20.528320320886614 -6.853699624631527 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 137,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 839,
+        "text": "817 137 1 0.25 -9.370408619409508 26.028320320886593 -6.85369962463151 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 138,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 845,
+        "text": "823 138 1 0.25 -3.8704086194095195 26.028320320886614 -6.853699624631508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 139,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 851,
+        "text": "829 139 1 0.25 1.6295913805904634 26.028320320886625 -6.853699624631499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 140,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 857,
+        "text": "835 140 1 0.25 7.12959138059046 26.028320320886554 -6.853699624631513 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 141,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 863,
+        "text": "841 141 1 0.25 -9.370408619409515 31.52832032088665 -6.853699624631511 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 142,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 869,
+        "text": "847 142 1 0.25 -3.870408619409561 31.5283203208866 -6.853699624631523 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 143,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 875,
+        "text": "853 143 1 0.25 1.6295913805904545 31.528320320886582 -6.853699624631522 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 144,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 881,
+        "text": "859 144 1 0.25 7.129591380590476 31.5283203208866 -6.853699624631526 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 145,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 887,
+        "text": "865 145 1 0.25 -9.370408619409519 15.02832032088655 -1.3536996246315176 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 146,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 893,
+        "text": "871 146 1 0.25 -3.8704086194095284 15.028320320886603 -1.3536996246315154 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 147,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 899,
+        "text": "877 147 1 0.25 1.6295913805904247 15.02832032088659 -1.353699624631527 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 148,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 905,
+        "text": "883 148 1 0.25 7.129591380590464 15.02832032088657 -1.3536996246315354 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 149,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 911,
+        "text": "889 149 1 0.25 -9.370408619409497 20.528320320886586 -1.3536996246315163 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 150,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 917,
+        "text": "895 150 1 0.25 -3.870408619409517 20.528320320886586 -1.353699624631513 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 151,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 923,
+        "text": "901 151 1 0.25 1.629591380590442 20.52832032088663 -1.3536996246315118 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 152,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 929,
+        "text": "907 152 1 0.25 7.129591380590473 20.52832032088655 -1.3536996246315334 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 153,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 935,
+        "text": "913 153 1 0.25 -9.37040861940948 26.028320320886568 -1.3536996246315003 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 154,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 941,
+        "text": "919 154 1 0.25 -3.8704086194095297 26.028320320886532 -1.3536996246315096 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 155,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 947,
+        "text": "925 155 1 0.25 1.6295913805904731 26.02832032088656 -1.353699624631508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 156,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 953,
+        "text": "931 156 1 0.25 7.129591380590512 26.02832032088651 -1.3536996246315163 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 157,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 959,
+        "text": "937 157 1 0.25 -9.370408619409483 31.528320320886557 -1.3536996246315252 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 158,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 965,
+        "text": "943 158 1 0.25 -3.870408619409526 31.52832032088662 -1.3536996246315147 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 159,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 971,
+        "text": "949 159 1 0.25 1.6295913805904279 31.52832032088661 -1.353699624631535 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 160,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 977,
+        "text": "955 160 1 0.25 7.129591380590479 31.52832032088653 -1.3536996246315462 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 161,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 983,
+        "text": "961 161 1 0.25 -9.370408619409597 15.028320320886623 4.146300375368456 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 162,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 989,
+        "text": "967 162 1 0.25 -3.8704086194095835 15.028320320886708 4.146300375368442 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 163,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 995,
+        "text": "973 163 1 0.25 1.6295913805903857 15.028320320886692 4.146300375368454 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 164,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1001,
+        "text": "979 164 1 0.25 7.129591380590402 15.028320320886646 4.146300375368448 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 165,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1007,
+        "text": "985 165 1 0.25 -9.370408619409547 20.528320320886674 4.146300375368466 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 166,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1013,
+        "text": "991 166 1 0.25 -3.870408619409568 20.528320320886635 4.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 167,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1019,
+        "text": "997 167 1 0.25 1.6295913805903839 20.528320320886678 4.146300375368469 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 168,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1025,
+        "text": "1003 168 1 0.25 7.129591380590426 20.528320320886607 4.14630037536845 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 169,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1031,
+        "text": "1009 169 1 0.25 -9.370408619409536 26.02832032088664 4.146300375368482 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 170,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1037,
+        "text": "1015 170 1 0.25 -3.8704086194095755 26.02832032088664 4.146300375368463 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 171,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1043,
+        "text": "1021 171 1 0.25 1.6295913805904056 26.028320320886664 4.146300375368474 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 172,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1049,
+        "text": "1027 172 1 0.25 7.129591380590449 26.028320320886586 4.1463003753684555 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 173,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1055,
+        "text": "1033 173 1 0.25 -9.370408619409526 31.52832032088667 4.146300375368484 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 174,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1061,
+        "text": "1039 174 1 0.25 -3.870408619409596 31.528320320886646 4.146300375368468 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 175,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1067,
+        "text": "1045 175 1 0.25 1.6295913805903932 31.528320320886706 4.1463003753684555 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 176,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1073,
+        "text": "1051 176 1 0.25 7.1295913805903925 31.52832032088663 4.146300375368415 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 177,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1079,
+        "text": "1057 177 1 0.25 -9.370408619409597 15.028320320886673 9.646300375368458 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 178,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1085,
+        "text": "1063 178 1 0.25 -3.8704086194095693 15.028320320886767 9.646300375368495 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 179,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1091,
+        "text": "1069 179 1 0.25 1.6295913805903048 15.028320320886653 9.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 180,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1097,
+        "text": "1075 180 1 0.25 7.129591380590403 15.028320320886706 9.64630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 181,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1103,
+        "text": "1081 181 1 0.25 -9.370408619409572 20.528320320886635 9.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 182,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1109,
+        "text": "1087 182 1 0.25 -3.870408619409575 20.52832032088656 9.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 183,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1115,
+        "text": "1093 183 1 0.25 1.6295913805904139 20.528320320886692 9.646300375368524 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 184,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1121,
+        "text": "1099 184 1 0.25 7.129591380590376 20.528320320886593 9.646300375368485 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 185,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1127,
+        "text": "1105 185 1 0.25 -9.370408619409528 26.028320320886646 9.646300375368499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 186,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1133,
+        "text": "1111 186 1 0.25 -3.8704086194095657 26.028320320886642 9.646300375368508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 187,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1139,
+        "text": "1117 187 1 0.25 1.6295913805903774 26.028320320886657 9.646300375368519 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 188,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1145,
+        "text": "1123 188 1 0.25 7.129591380590376 26.028320320886575 9.646300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 189,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1151,
+        "text": "1129 189 1 0.25 -9.370408619409625 31.528320320886607 9.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 190,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1157,
+        "text": "1135 190 1 0.25 -3.8704086194095733 31.52832032088664 9.646300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 191,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1163,
+        "text": "1141 191 1 0.25 1.6295913805904332 31.528320320886678 9.646300375368499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 192,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1169,
+        "text": "1147 192 1 0.25 7.129591380590386 31.528320320886706 9.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 193,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2327,
+        "text": "1153 193 1 0.25 12.629591380590448 15.028320320886593 -6.853699624631505 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 194,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2333,
+        "text": "1159 194 1 0.25 18.12959138059044 15.028320320886607 -6.853699624631522 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 195,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2339,
+        "text": "1165 195 1 0.25 23.62959138059042 15.028320320886628 -6.853699624631519 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 196,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2345,
+        "text": "1171 196 1 0.25 29.12959138059044 15.028320320886612 -6.85369962463152 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 197,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2351,
+        "text": "1177 197 1 0.25 12.629591380590464 20.52832032088664 -6.853699624631507 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 198,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2357,
+        "text": "1183 198 1 0.25 18.129591380590448 20.528320320886657 -6.853699624631521 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 199,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2363,
+        "text": "1189 199 1 0.25 23.629591380590405 20.528320320886657 -6.853699624631525 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 200,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2369,
+        "text": "1195 200 1 0.25 29.129591380590455 20.528320320886614 -6.853699624631527 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 201,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2375,
+        "text": "1201 201 1 0.25 12.629591380590492 26.028320320886593 -6.85369962463151 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 202,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2381,
+        "text": "1207 202 1 0.25 18.12959138059048 26.028320320886614 -6.853699624631508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 203,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2387,
+        "text": "1213 203 1 0.25 23.629591380590462 26.028320320886625 -6.853699624631499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 204,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2393,
+        "text": "1219 204 1 0.25 29.129591380590462 26.028320320886554 -6.853699624631513 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 205,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2399,
+        "text": "1225 205 1 0.25 12.629591380590485 31.52832032088665 -6.853699624631511 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 206,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2405,
+        "text": "1231 206 1 0.25 18.12959138059044 31.5283203208866 -6.853699624631523 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 207,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2411,
+        "text": "1237 207 1 0.25 23.629591380590455 31.528320320886582 -6.853699624631522 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 208,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2417,
+        "text": "1243 208 1 0.25 29.129591380590476 31.5283203208866 -6.853699624631526 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 209,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2423,
+        "text": "1249 209 1 0.25 12.629591380590481 15.02832032088655 -1.3536996246315176 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 210,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2429,
+        "text": "1255 210 1 0.25 18.129591380590472 15.028320320886603 -1.3536996246315154 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 211,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2435,
+        "text": "1261 211 1 0.25 23.629591380590426 15.02832032088659 -1.353699624631527 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 212,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2441,
+        "text": "1267 212 1 0.25 29.129591380590462 15.02832032088657 -1.3536996246315354 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 213,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2447,
+        "text": "1273 213 1 0.25 12.629591380590503 20.528320320886586 -1.3536996246315163 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 214,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2453,
+        "text": "1279 214 1 0.25 18.129591380590483 20.528320320886586 -1.353699624631513 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 215,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2459,
+        "text": "1285 215 1 0.25 23.62959138059044 20.52832032088663 -1.3536996246315118 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 216,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2465,
+        "text": "1291 216 1 0.25 29.129591380590472 20.52832032088655 -1.3536996246315334 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 217,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2471,
+        "text": "1297 217 1 0.25 12.62959138059052 26.028320320886568 -1.3536996246315003 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 218,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2477,
+        "text": "1303 218 1 0.25 18.12959138059047 26.028320320886532 -1.3536996246315096 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 219,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2483,
+        "text": "1309 219 1 0.25 23.629591380590472 26.02832032088656 -1.353699624631508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 220,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2489,
+        "text": "1315 220 1 0.25 29.12959138059051 26.02832032088651 -1.3536996246315163 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 221,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2495,
+        "text": "1321 221 1 0.25 12.629591380590517 31.528320320886557 -1.3536996246315252 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 222,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2501,
+        "text": "1327 222 1 0.25 18.129591380590472 31.52832032088662 -1.3536996246315147 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 223,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2507,
+        "text": "1333 223 1 0.25 23.629591380590426 31.52832032088661 -1.353699624631535 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 224,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2513,
+        "text": "1339 224 1 0.25 29.12959138059048 31.52832032088653 -1.3536996246315462 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 225,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2519,
+        "text": "1345 225 1 0.25 12.629591380590403 15.028320320886623 4.146300375368456 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 226,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2525,
+        "text": "1351 226 1 0.25 18.129591380590416 15.028320320886708 4.146300375368442 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 227,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2531,
+        "text": "1357 227 1 0.25 23.629591380590387 15.028320320886692 4.146300375368454 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 228,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2537,
+        "text": "1363 228 1 0.25 29.1295913805904 15.028320320886646 4.146300375368448 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 229,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2543,
+        "text": "1369 229 1 0.25 12.629591380590453 20.528320320886674 4.146300375368466 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 230,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2549,
+        "text": "1375 230 1 0.25 18.129591380590433 20.528320320886635 4.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 231,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2555,
+        "text": "1381 231 1 0.25 23.629591380590384 20.528320320886678 4.146300375368469 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 232,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2561,
+        "text": "1387 232 1 0.25 29.129591380590426 20.528320320886607 4.14630037536845 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 233,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2567,
+        "text": "1393 233 1 0.25 12.629591380590464 26.02832032088664 4.146300375368482 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 234,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2573,
+        "text": "1399 234 1 0.25 18.129591380590426 26.02832032088664 4.146300375368463 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 235,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2579,
+        "text": "1405 235 1 0.25 23.629591380590405 26.028320320886664 4.146300375368474 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 236,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2585,
+        "text": "1411 236 1 0.25 29.129591380590448 26.028320320886586 4.1463003753684555 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 237,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2591,
+        "text": "1417 237 1 0.25 12.629591380590474 31.52832032088667 4.146300375368484 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 238,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2597,
+        "text": "1423 238 1 0.25 18.129591380590405 31.528320320886646 4.146300375368468 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 239,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2603,
+        "text": "1429 239 1 0.25 23.629591380590394 31.528320320886706 4.1463003753684555 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 240,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2609,
+        "text": "1435 240 1 0.25 29.12959138059039 31.52832032088663 4.146300375368415 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 241,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2615,
+        "text": "1441 241 1 0.25 12.629591380590403 15.028320320886673 9.646300375368458 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 242,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2621,
+        "text": "1447 242 1 0.25 18.12959138059043 15.028320320886767 9.646300375368495 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 243,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2627,
+        "text": "1453 243 1 0.25 23.629591380590306 15.028320320886653 9.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 244,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2633,
+        "text": "1459 244 1 0.25 29.129591380590405 15.028320320886706 9.64630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 245,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2639,
+        "text": "1465 245 1 0.25 12.629591380590428 20.528320320886635 9.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 246,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2645,
+        "text": "1471 246 1 0.25 18.129591380590426 20.52832032088656 9.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 247,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2651,
+        "text": "1477 247 1 0.25 23.629591380590412 20.528320320886692 9.646300375368524 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 248,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2657,
+        "text": "1483 248 1 0.25 29.129591380590377 20.528320320886593 9.646300375368485 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 249,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2663,
+        "text": "1489 249 1 0.25 12.629591380590472 26.028320320886646 9.646300375368499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 250,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2669,
+        "text": "1495 250 1 0.25 18.129591380590433 26.028320320886642 9.646300375368508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 251,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2675,
+        "text": "1501 251 1 0.25 23.629591380590377 26.028320320886657 9.646300375368519 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 252,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2681,
+        "text": "1507 252 1 0.25 29.129591380590377 26.028320320886575 9.646300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 253,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2687,
+        "text": "1513 253 1 0.25 12.629591380590375 31.528320320886607 9.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 254,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2693,
+        "text": "1519 254 1 0.25 18.129591380590426 31.52832032088664 9.646300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 255,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2699,
+        "text": "1525 255 1 0.25 23.629591380590433 31.528320320886678 9.646300375368499 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 256,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2705,
+        "text": "1531 256 1 0.25 29.129591380590387 31.528320320886706 9.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 257,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 407,
+        "text": "1537 257 1 0.25 -9.370408619409552 -6.971679679113406 15.146300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 258,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 413,
+        "text": "1543 258 1 0.25 -3.8704086194095586 -6.971679679113393 15.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 259,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 419,
+        "text": "1549 259 1 0.25 1.629591380590418 -6.971679679113373 15.146300375368481 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 260,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 425,
+        "text": "1555 260 1 0.25 7.12959138059044 -6.971679679113388 15.14630037536848 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 261,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 431,
+        "text": "1561 261 1 0.25 -9.370408619409536 -1.471679679113362 15.146300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 262,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 437,
+        "text": "1567 262 1 0.25 -3.8704086194095524 -1.4716796791133415 15.14630037536848 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 263,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 443,
+        "text": "1573 263 1 0.25 1.629591380590404 -1.4716796791133426 15.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 264,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 449,
+        "text": "1579 264 1 0.25 7.129591380590453 -1.4716796791133862 15.146300375368472 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 265,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 455,
+        "text": "1585 265 1 0.25 -9.370408619409508 4.028320320886591 15.14630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 266,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 461,
+        "text": "1591 266 1 0.25 -3.8704086194095195 4.028320320886612 15.146300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 267,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 467,
+        "text": "1597 267 1 0.25 1.6295913805904634 4.028320320886626 15.1463003753685 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 268,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 473,
+        "text": "1603 268 1 0.25 7.12959138059046 4.028320320886554 15.146300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 269,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 479,
+        "text": "1609 269 1 0.25 -9.370408619409515 9.528320320886648 15.14630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 270,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 485,
+        "text": "1615 270 1 0.25 -3.870408619409561 9.528320320886598 15.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 271,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 491,
+        "text": "1621 271 1 0.25 1.6295913805904545 9.528320320886582 15.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 272,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 497,
+        "text": "1627 272 1 0.25 7.129591380590476 9.528320320886602 15.146300375368474 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 273,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 503,
+        "text": "1633 273 1 0.25 -9.370408619409519 -6.97167967911345 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 274,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 509,
+        "text": "1639 274 1 0.25 -3.8704086194095284 -6.9716796791133975 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 275,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 515,
+        "text": "1645 275 1 0.25 1.6295913805904247 -6.971679679113411 20.646300375368472 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 276,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 521,
+        "text": "1651 276 1 0.25 7.129591380590464 -6.97167967911343 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 277,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 527,
+        "text": "1657 277 1 0.25 -9.370408619409497 -1.471679679113415 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 278,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 533,
+        "text": "1663 278 1 0.25 -3.870408619409517 -1.4716796791134157 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 279,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 539,
+        "text": "1669 279 1 0.25 1.629591380590442 -1.4716796791133713 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 280,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 545,
+        "text": "1675 280 1 0.25 7.129591380590473 -1.4716796791134483 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 281,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 551,
+        "text": "1681 281 1 0.25 -9.37040861940948 4.028320320886568 20.6463003753685 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 282,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 557,
+        "text": "1687 282 1 0.25 -3.8704086194095297 4.028320320886532 20.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 283,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 563,
+        "text": "1693 283 1 0.25 1.6295913805904731 4.028320320886561 20.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 284,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 569,
+        "text": "1699 284 1 0.25 7.129591380590512 4.028320320886511 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 285,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 575,
+        "text": "1705 285 1 0.25 -9.370408619409483 9.528320320886559 20.646300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 286,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 581,
+        "text": "1711 286 1 0.25 -3.870408619409526 9.528320320886623 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 287,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 587,
+        "text": "1717 287 1 0.25 1.6295913805904279 9.52832032088661 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 288,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 593,
+        "text": "1723 288 1 0.25 7.129591380590479 9.528320320886529 20.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 289,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 599,
+        "text": "1729 289 1 0.25 -9.370408619409597 -6.971679679113377 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 290,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 605,
+        "text": "1735 290 1 0.25 -3.8704086194095835 -6.971679679113292 26.14630037536844 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 291,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 611,
+        "text": "1741 291 1 0.25 1.6295913805903857 -6.971679679113309 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 292,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 617,
+        "text": "1747 292 1 0.25 7.129591380590402 -6.971679679113353 26.146300375368448 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 293,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 623,
+        "text": "1753 293 1 0.25 -9.370408619409547 -1.4716796791133266 26.146300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 294,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 629,
+        "text": "1759 294 1 0.25 -3.870408619409568 -1.4716796791133648 26.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 295,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 635,
+        "text": "1765 295 1 0.25 1.6295913805903839 -1.4716796791133215 26.14630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 296,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 641,
+        "text": "1771 296 1 0.25 7.129591380590426 -1.471679679113393 26.14630037536845 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 297,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 647,
+        "text": "1777 297 1 0.25 -9.370408619409536 4.02832032088664 26.146300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 298,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 653,
+        "text": "1783 298 1 0.25 -3.8704086194095755 4.02832032088664 26.14630037536846 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 299,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 659,
+        "text": "1789 299 1 0.25 1.6295913805904056 4.028320320886662 26.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 300,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 665,
+        "text": "1795 300 1 0.25 7.129591380590449 4.028320320886584 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 301,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 671,
+        "text": "1801 301 1 0.25 -9.370408619409526 9.52832032088667 26.146300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 302,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 677,
+        "text": "1807 302 1 0.25 -3.870408619409596 9.528320320886646 26.14630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 303,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 683,
+        "text": "1813 303 1 0.25 1.6295913805903932 9.528320320886705 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 304,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 689,
+        "text": "1819 304 1 0.25 7.1295913805903925 9.528320320886628 26.146300375368416 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 305,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 695,
+        "text": "1825 305 1 0.25 -9.370408619409597 -6.971679679113327 31.646300375368458 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 306,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 701,
+        "text": "1831 306 1 0.25 -3.8704086194095693 -6.971679679113232 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 307,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 707,
+        "text": "1837 307 1 0.25 1.6295913805903048 -6.971679679113348 31.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 308,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 713,
+        "text": "1843 308 1 0.25 7.129591380590403 -6.971679679113293 31.64630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 309,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 719,
+        "text": "1849 309 1 0.25 -9.370408619409572 -1.471679679113365 31.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 310,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 725,
+        "text": "1855 310 1 0.25 -3.870408619409575 -1.4716796791134408 31.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 311,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 731,
+        "text": "1861 311 1 0.25 1.6295913805904139 -1.4716796791133062 31.646300375368526 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 312,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 737,
+        "text": "1867 312 1 0.25 7.129591380590376 -1.471679679113407 31.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 313,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 743,
+        "text": "1873 313 1 0.25 -9.370408619409528 4.028320320886645 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 314,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 749,
+        "text": "1879 314 1 0.25 -3.8704086194095657 4.028320320886643 31.646300375368508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 315,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 755,
+        "text": "1885 315 1 0.25 1.6295913805903774 4.0283203208866585 31.64630037536852 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 316,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 761,
+        "text": "1891 316 1 0.25 7.129591380590376 4.028320320886575 31.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 317,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 767,
+        "text": "1897 317 1 0.25 -9.370408619409625 9.528320320886609 31.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 318,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 773,
+        "text": "1903 318 1 0.25 -3.8704086194095733 9.528320320886639 31.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 319,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 779,
+        "text": "1909 319 1 0.25 1.6295913805904332 9.528320320886678 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 320,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 785,
+        "text": "1915 320 1 0.25 7.129591380590386 9.528320320886705 31.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 321,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1943,
+        "text": "1921 321 1 0.25 12.629591380590448 -6.971679679113406 15.146300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 322,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1949,
+        "text": "1927 322 1 0.25 18.12959138059044 -6.971679679113393 15.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 323,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1955,
+        "text": "1933 323 1 0.25 23.62959138059042 -6.971679679113373 15.146300375368481 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 324,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1961,
+        "text": "1939 324 1 0.25 29.12959138059044 -6.971679679113388 15.14630037536848 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 325,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1967,
+        "text": "1945 325 1 0.25 12.629591380590464 -1.471679679113362 15.146300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 326,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1973,
+        "text": "1951 326 1 0.25 18.129591380590448 -1.4716796791133415 15.14630037536848 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 327,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1979,
+        "text": "1957 327 1 0.25 23.629591380590405 -1.4716796791133426 15.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 328,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1985,
+        "text": "1963 328 1 0.25 29.129591380590455 -1.4716796791133862 15.146300375368472 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 329,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1991,
+        "text": "1969 329 1 0.25 12.629591380590492 4.028320320886591 15.14630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 330,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1997,
+        "text": "1975 330 1 0.25 18.12959138059048 4.028320320886612 15.146300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 331,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2003,
+        "text": "1981 331 1 0.25 23.629591380590462 4.028320320886626 15.1463003753685 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 332,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2009,
+        "text": "1987 332 1 0.25 29.129591380590462 4.028320320886554 15.146300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 333,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2015,
+        "text": "1993 333 1 0.25 12.629591380590485 9.528320320886648 15.14630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 334,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2021,
+        "text": "1999 334 1 0.25 18.12959138059044 9.528320320886598 15.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 335,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2027,
+        "text": "2005 335 1 0.25 23.629591380590455 9.528320320886582 15.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 336,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2033,
+        "text": "2011 336 1 0.25 29.129591380590476 9.528320320886602 15.146300375368474 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 337,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2039,
+        "text": "2017 337 1 0.25 12.629591380590481 -6.97167967911345 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 338,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2045,
+        "text": "2023 338 1 0.25 18.129591380590472 -6.9716796791133975 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 339,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2051,
+        "text": "2029 339 1 0.25 23.629591380590426 -6.971679679113411 20.646300375368472 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 340,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2057,
+        "text": "2035 340 1 0.25 29.129591380590462 -6.97167967911343 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 341,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2063,
+        "text": "2041 341 1 0.25 12.629591380590503 -1.471679679113415 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 342,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2069,
+        "text": "2047 342 1 0.25 18.129591380590483 -1.4716796791134157 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 343,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2075,
+        "text": "2053 343 1 0.25 23.62959138059044 -1.4716796791133713 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 344,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2081,
+        "text": "2059 344 1 0.25 29.129591380590472 -1.4716796791134483 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 345,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2087,
+        "text": "2065 345 1 0.25 12.62959138059052 4.028320320886568 20.6463003753685 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 346,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2093,
+        "text": "2071 346 1 0.25 18.12959138059047 4.028320320886532 20.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 347,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2099,
+        "text": "2077 347 1 0.25 23.629591380590472 4.028320320886561 20.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 348,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2105,
+        "text": "2083 348 1 0.25 29.12959138059051 4.028320320886511 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 349,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2111,
+        "text": "2089 349 1 0.25 12.629591380590517 9.528320320886559 20.646300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 350,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2117,
+        "text": "2095 350 1 0.25 18.129591380590472 9.528320320886623 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 351,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2123,
+        "text": "2101 351 1 0.25 23.629591380590426 9.52832032088661 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 352,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2129,
+        "text": "2107 352 1 0.25 29.12959138059048 9.528320320886529 20.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 353,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2135,
+        "text": "2113 353 1 0.25 12.629591380590403 -6.971679679113377 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 354,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2141,
+        "text": "2119 354 1 0.25 18.129591380590416 -6.971679679113292 26.14630037536844 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 355,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2147,
+        "text": "2125 355 1 0.25 23.629591380590387 -6.971679679113309 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 356,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2153,
+        "text": "2131 356 1 0.25 29.1295913805904 -6.971679679113353 26.146300375368448 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 357,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2159,
+        "text": "2137 357 1 0.25 12.629591380590453 -1.4716796791133266 26.146300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 358,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2165,
+        "text": "2143 358 1 0.25 18.129591380590433 -1.4716796791133648 26.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 359,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2171,
+        "text": "2149 359 1 0.25 23.629591380590384 -1.4716796791133215 26.14630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 360,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2177,
+        "text": "2155 360 1 0.25 29.129591380590426 -1.471679679113393 26.14630037536845 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 361,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2183,
+        "text": "2161 361 1 0.25 12.629591380590464 4.02832032088664 26.146300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 362,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2189,
+        "text": "2167 362 1 0.25 18.129591380590426 4.02832032088664 26.14630037536846 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 363,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2195,
+        "text": "2173 363 1 0.25 23.629591380590405 4.028320320886662 26.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 364,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2201,
+        "text": "2179 364 1 0.25 29.129591380590448 4.028320320886584 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 365,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2207,
+        "text": "2185 365 1 0.25 12.629591380590474 9.52832032088667 26.146300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 366,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2213,
+        "text": "2191 366 1 0.25 18.129591380590405 9.528320320886646 26.14630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 367,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2219,
+        "text": "2197 367 1 0.25 23.629591380590394 9.528320320886705 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 368,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2225,
+        "text": "2203 368 1 0.25 29.12959138059039 9.528320320886628 26.146300375368416 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 369,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2231,
+        "text": "2209 369 1 0.25 12.629591380590403 -6.971679679113327 31.646300375368458 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 370,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2237,
+        "text": "2215 370 1 0.25 18.12959138059043 -6.971679679113232 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 371,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2243,
+        "text": "2221 371 1 0.25 23.629591380590306 -6.971679679113348 31.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 372,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2249,
+        "text": "2227 372 1 0.25 29.129591380590405 -6.971679679113293 31.64630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 373,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2255,
+        "text": "2233 373 1 0.25 12.629591380590428 -1.471679679113365 31.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 374,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2261,
+        "text": "2239 374 1 0.25 18.129591380590426 -1.4716796791134408 31.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 375,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2267,
+        "text": "2245 375 1 0.25 23.629591380590412 -1.4716796791133062 31.646300375368526 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 376,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2273,
+        "text": "2251 376 1 0.25 29.129591380590377 -1.471679679113407 31.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 377,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2279,
+        "text": "2257 377 1 0.25 12.629591380590472 4.028320320886645 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 378,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2285,
+        "text": "2263 378 1 0.25 18.129591380590433 4.028320320886643 31.646300375368508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 379,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2291,
+        "text": "2269 379 1 0.25 23.629591380590377 4.0283203208866585 31.64630037536852 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 380,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2297,
+        "text": "2275 380 1 0.25 29.129591380590377 4.028320320886575 31.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 381,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2303,
+        "text": "2281 381 1 0.25 12.629591380590375 9.528320320886609 31.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 382,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2309,
+        "text": "2287 382 1 0.25 18.129591380590426 9.528320320886639 31.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 383,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2315,
+        "text": "2293 383 1 0.25 23.629591380590433 9.528320320886678 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 384,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2321,
+        "text": "2299 384 1 0.25 29.129591380590387 9.528320320886705 31.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 385,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1175,
+        "text": "2305 385 1 0.25 -9.370408619409552 15.028320320886593 15.146300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 386,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1181,
+        "text": "2311 386 1 0.25 -3.8704086194095586 15.028320320886607 15.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 387,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1187,
+        "text": "2317 387 1 0.25 1.629591380590418 15.028320320886628 15.146300375368481 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 388,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1193,
+        "text": "2323 388 1 0.25 7.12959138059044 15.028320320886612 15.14630037536848 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 389,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1199,
+        "text": "2329 389 1 0.25 -9.370408619409536 20.52832032088664 15.146300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 390,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1205,
+        "text": "2335 390 1 0.25 -3.8704086194095524 20.528320320886657 15.14630037536848 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 391,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1211,
+        "text": "2341 391 1 0.25 1.629591380590404 20.528320320886657 15.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 392,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1217,
+        "text": "2347 392 1 0.25 7.129591380590453 20.528320320886614 15.146300375368472 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 393,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1223,
+        "text": "2353 393 1 0.25 -9.370408619409508 26.028320320886593 15.14630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 394,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1229,
+        "text": "2359 394 1 0.25 -3.8704086194095195 26.028320320886614 15.146300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 395,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1235,
+        "text": "2365 395 1 0.25 1.6295913805904634 26.028320320886625 15.1463003753685 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 396,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1241,
+        "text": "2371 396 1 0.25 7.12959138059046 26.028320320886554 15.146300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 397,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1247,
+        "text": "2377 397 1 0.25 -9.370408619409515 31.52832032088665 15.14630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 398,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1253,
+        "text": "2383 398 1 0.25 -3.870408619409561 31.5283203208866 15.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 399,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1259,
+        "text": "2389 399 1 0.25 1.6295913805904545 31.528320320886582 15.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 400,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1265,
+        "text": "2395 400 1 0.25 7.129591380590476 31.5283203208866 15.146300375368474 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 401,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1271,
+        "text": "2401 401 1 0.25 -9.370408619409519 15.02832032088655 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 402,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1277,
+        "text": "2407 402 1 0.25 -3.8704086194095284 15.028320320886603 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 403,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1283,
+        "text": "2413 403 1 0.25 1.6295913805904247 15.02832032088659 20.646300375368472 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 404,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1289,
+        "text": "2419 404 1 0.25 7.129591380590464 15.02832032088657 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 405,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1295,
+        "text": "2425 405 1 0.25 -9.370408619409497 20.528320320886586 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 406,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1301,
+        "text": "2431 406 1 0.25 -3.870408619409517 20.528320320886586 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 407,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1307,
+        "text": "2437 407 1 0.25 1.629591380590442 20.52832032088663 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 408,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1313,
+        "text": "2443 408 1 0.25 7.129591380590473 20.52832032088655 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 409,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1319,
+        "text": "2449 409 1 0.25 -9.37040861940948 26.028320320886568 20.6463003753685 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 410,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1325,
+        "text": "2455 410 1 0.25 -3.8704086194095297 26.028320320886532 20.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 411,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1331,
+        "text": "2461 411 1 0.25 1.6295913805904731 26.02832032088656 20.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 412,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1337,
+        "text": "2467 412 1 0.25 7.129591380590512 26.02832032088651 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 413,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1343,
+        "text": "2473 413 1 0.25 -9.370408619409483 31.528320320886557 20.646300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 414,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1349,
+        "text": "2479 414 1 0.25 -3.870408619409526 31.52832032088662 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 415,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1355,
+        "text": "2485 415 1 0.25 1.6295913805904279 31.52832032088661 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 416,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1361,
+        "text": "2491 416 1 0.25 7.129591380590479 31.52832032088653 20.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 417,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1367,
+        "text": "2497 417 1 0.25 -9.370408619409597 15.028320320886623 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 418,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1373,
+        "text": "2503 418 1 0.25 -3.8704086194095835 15.028320320886708 26.14630037536844 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 419,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1379,
+        "text": "2509 419 1 0.25 1.6295913805903857 15.028320320886692 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 420,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1385,
+        "text": "2515 420 1 0.25 7.129591380590402 15.028320320886646 26.146300375368448 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 421,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1391,
+        "text": "2521 421 1 0.25 -9.370408619409547 20.528320320886674 26.146300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 422,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1397,
+        "text": "2527 422 1 0.25 -3.870408619409568 20.528320320886635 26.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 423,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1403,
+        "text": "2533 423 1 0.25 1.6295913805903839 20.528320320886678 26.14630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 424,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1409,
+        "text": "2539 424 1 0.25 7.129591380590426 20.528320320886607 26.14630037536845 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 425,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1415,
+        "text": "2545 425 1 0.25 -9.370408619409536 26.02832032088664 26.146300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 426,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1421,
+        "text": "2551 426 1 0.25 -3.8704086194095755 26.02832032088664 26.14630037536846 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 427,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1427,
+        "text": "2557 427 1 0.25 1.6295913805904056 26.028320320886664 26.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 428,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1433,
+        "text": "2563 428 1 0.25 7.129591380590449 26.028320320886586 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 429,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1439,
+        "text": "2569 429 1 0.25 -9.370408619409526 31.52832032088667 26.146300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 430,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1445,
+        "text": "2575 430 1 0.25 -3.870408619409596 31.528320320886646 26.14630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 431,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1451,
+        "text": "2581 431 1 0.25 1.6295913805903932 31.528320320886706 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 432,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1457,
+        "text": "2587 432 1 0.25 7.1295913805903925 31.52832032088663 26.146300375368416 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 433,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1463,
+        "text": "2593 433 1 0.25 -9.370408619409597 15.028320320886673 31.646300375368458 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 434,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1469,
+        "text": "2599 434 1 0.25 -3.8704086194095693 15.028320320886767 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 435,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1475,
+        "text": "2605 435 1 0.25 1.6295913805903048 15.028320320886653 31.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 436,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1481,
+        "text": "2611 436 1 0.25 7.129591380590403 15.028320320886706 31.64630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 437,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1487,
+        "text": "2617 437 1 0.25 -9.370408619409572 20.528320320886635 31.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 438,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1493,
+        "text": "2623 438 1 0.25 -3.870408619409575 20.52832032088656 31.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 439,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1499,
+        "text": "2629 439 1 0.25 1.6295913805904139 20.528320320886692 31.646300375368526 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 440,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1505,
+        "text": "2635 440 1 0.25 7.129591380590376 20.528320320886593 31.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 441,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1511,
+        "text": "2641 441 1 0.25 -9.370408619409528 26.028320320886646 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 442,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1517,
+        "text": "2647 442 1 0.25 -3.8704086194095657 26.028320320886642 31.646300375368508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 443,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1523,
+        "text": "2653 443 1 0.25 1.6295913805903774 26.028320320886657 31.64630037536852 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 444,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1529,
+        "text": "2659 444 1 0.25 7.129591380590376 26.028320320886575 31.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 445,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1535,
+        "text": "2665 445 1 0.25 -9.370408619409625 31.528320320886607 31.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 446,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1541,
+        "text": "2671 446 1 0.25 -3.8704086194095733 31.52832032088664 31.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 447,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1547,
+        "text": "2677 447 1 0.25 1.6295913805904332 31.528320320886678 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 448,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 1553,
+        "text": "2683 448 1 0.25 7.129591380590386 31.528320320886706 31.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 449,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2711,
+        "text": "2689 449 1 0.25 12.629591380590448 15.028320320886593 15.146300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 450,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2717,
+        "text": "2695 450 1 0.25 18.12959138059044 15.028320320886607 15.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 451,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2723,
+        "text": "2701 451 1 0.25 23.62959138059042 15.028320320886628 15.146300375368481 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 452,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2729,
+        "text": "2707 452 1 0.25 29.12959138059044 15.028320320886612 15.14630037536848 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 453,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2735,
+        "text": "2713 453 1 0.25 12.629591380590464 20.52832032088664 15.146300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 454,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2741,
+        "text": "2719 454 1 0.25 18.129591380590448 20.528320320886657 15.14630037536848 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 455,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2747,
+        "text": "2725 455 1 0.25 23.629591380590405 20.528320320886657 15.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 456,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2753,
+        "text": "2731 456 1 0.25 29.129591380590455 20.528320320886614 15.146300375368472 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 457,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2759,
+        "text": "2737 457 1 0.25 12.629591380590492 26.028320320886593 15.14630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 458,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2765,
+        "text": "2743 458 1 0.25 18.12959138059048 26.028320320886614 15.146300375368492 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 459,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2771,
+        "text": "2749 459 1 0.25 23.629591380590462 26.028320320886625 15.1463003753685 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 460,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2777,
+        "text": "2755 460 1 0.25 29.129591380590462 26.028320320886554 15.146300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 461,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2783,
+        "text": "2761 461 1 0.25 12.629591380590485 31.52832032088665 15.14630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 462,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2789,
+        "text": "2767 462 1 0.25 18.12959138059044 31.5283203208866 15.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 463,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2795,
+        "text": "2773 463 1 0.25 23.629591380590455 31.528320320886582 15.146300375368478 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 464,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2801,
+        "text": "2779 464 1 0.25 29.129591380590476 31.5283203208866 15.146300375368474 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 465,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2807,
+        "text": "2785 465 1 0.25 12.629591380590481 15.02832032088655 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 466,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2813,
+        "text": "2791 466 1 0.25 18.129591380590472 15.028320320886603 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 467,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2819,
+        "text": "2797 467 1 0.25 23.629591380590426 15.02832032088659 20.646300375368472 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 468,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2825,
+        "text": "2803 468 1 0.25 29.129591380590462 15.02832032088657 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 469,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2831,
+        "text": "2809 469 1 0.25 12.629591380590503 20.528320320886586 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 470,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2837,
+        "text": "2815 470 1 0.25 18.129591380590483 20.528320320886586 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 471,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2843,
+        "text": "2821 471 1 0.25 23.62959138059044 20.52832032088663 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 472,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2849,
+        "text": "2827 472 1 0.25 29.129591380590472 20.52832032088655 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 473,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2855,
+        "text": "2833 473 1 0.25 12.62959138059052 26.028320320886568 20.6463003753685 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 474,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2861,
+        "text": "2839 474 1 0.25 18.12959138059047 26.028320320886532 20.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 475,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2867,
+        "text": "2845 475 1 0.25 23.629591380590472 26.02832032088656 20.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 476,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2873,
+        "text": "2851 476 1 0.25 29.12959138059051 26.02832032088651 20.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 477,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2879,
+        "text": "2857 477 1 0.25 12.629591380590517 31.528320320886557 20.646300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 478,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2885,
+        "text": "2863 478 1 0.25 18.129591380590472 31.52832032088662 20.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 479,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2891,
+        "text": "2869 479 1 0.25 23.629591380590426 31.52832032088661 20.646300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 480,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2897,
+        "text": "2875 480 1 0.25 29.12959138059048 31.52832032088653 20.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 481,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2903,
+        "text": "2881 481 1 0.25 12.629591380590403 15.028320320886623 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 482,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2909,
+        "text": "2887 482 1 0.25 18.129591380590416 15.028320320886708 26.14630037536844 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 483,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2915,
+        "text": "2893 483 1 0.25 23.629591380590387 15.028320320886692 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 484,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2921,
+        "text": "2899 484 1 0.25 29.1295913805904 15.028320320886646 26.146300375368448 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 485,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2927,
+        "text": "2905 485 1 0.25 12.629591380590453 20.528320320886674 26.146300375368465 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 486,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2933,
+        "text": "2911 486 1 0.25 18.129591380590433 20.528320320886635 26.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 487,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2939,
+        "text": "2917 487 1 0.25 23.629591380590384 20.528320320886678 26.14630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 488,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2945,
+        "text": "2923 488 1 0.25 29.129591380590426 20.528320320886607 26.14630037536845 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 489,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2951,
+        "text": "2929 489 1 0.25 12.629591380590464 26.02832032088664 26.146300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 490,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2957,
+        "text": "2935 490 1 0.25 18.129591380590426 26.02832032088664 26.14630037536846 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 491,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2963,
+        "text": "2941 491 1 0.25 23.629591380590405 26.028320320886664 26.146300375368476 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 492,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2969,
+        "text": "2947 492 1 0.25 29.129591380590448 26.028320320886586 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 493,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2975,
+        "text": "2953 493 1 0.25 12.629591380590474 31.52832032088667 26.146300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 494,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2981,
+        "text": "2959 494 1 0.25 18.129591380590405 31.528320320886646 26.14630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 495,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2987,
+        "text": "2965 495 1 0.25 23.629591380590394 31.528320320886706 26.146300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 496,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2993,
+        "text": "2971 496 1 0.25 29.12959138059039 31.52832032088663 26.146300375368416 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 497,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 2999,
+        "text": "2977 497 1 0.25 12.629591380590403 15.028320320886673 31.646300375368458 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 498,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3005,
+        "text": "2983 498 1 0.25 18.12959138059043 15.028320320886767 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 499,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3011,
+        "text": "2989 499 1 0.25 23.629591380590306 15.028320320886653 31.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 500,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3017,
+        "text": "2995 500 1 0.25 29.129591380590405 15.028320320886706 31.64630037536847 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 501,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3023,
+        "text": "3001 501 1 0.25 12.629591380590428 20.528320320886635 31.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 502,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3029,
+        "text": "3007 502 1 0.25 18.129591380590426 20.52832032088656 31.646300375368494 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 503,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3035,
+        "text": "3013 503 1 0.25 23.629591380590412 20.528320320886692 31.646300375368526 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 504,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3041,
+        "text": "3019 504 1 0.25 29.129591380590377 20.528320320886593 31.646300375368483 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 505,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3047,
+        "text": "3025 505 1 0.25 12.629591380590472 26.028320320886646 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 506,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3053,
+        "text": "3031 506 1 0.25 18.129591380590433 26.028320320886642 31.646300375368508 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 507,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3059,
+        "text": "3037 507 1 0.25 23.629591380590377 26.028320320886657 31.64630037536852 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 508,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3065,
+        "text": "3043 508 1 0.25 29.129591380590377 26.028320320886575 31.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 509,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3071,
+        "text": "3049 509 1 0.25 12.629591380590375 31.528320320886607 31.646300375368455 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 510,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3077,
+        "text": "3055 510 1 0.25 18.129591380590426 31.52832032088664 31.64630037536849 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 511,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3083,
+        "text": "3061 511 1 0.25 23.629591380590433 31.528320320886678 31.646300375368497 0 0 0"
+      },
+      "template_name": "MOL1"
+    },
+    {
+      "molecule_id": 512,
+      "num_atoms": 6,
+      "source": {
+        "file": "system.data",
+        "line": 3089,
+        "text": "3067 512 1 0.25 29.129591380590387 31.528320320886706 31.646300375368487 0 0 0"
+      },
+      "template_name": "MOL1"
+    }
+  ],
+  "molecule_templates": [
+    {
+      "angles": [
+        {
+          "atoms": [
+            1,
+            2,
+            3
+          ],
+          "id": 1,
+          "source": {
+            "file": "system.data",
+            "line": 8736,
+            "text": "1 1 1 2 3"
+          },
+          "type_id": 1
+        },
+        {
+          "atoms": [
+            2,
+            3,
+            4
+          ],
+          "id": 2,
+          "source": {
+            "file": "system.data",
+            "line": 8737,
+            "text": "2 1 2 3 4"
+          },
+          "type_id": 1
+        },
+        {
+          "atoms": [
+            3,
+            4,
+            5
+          ],
+          "id": 3,
+          "source": {
+            "file": "system.data",
+            "line": 8738,
+            "text": "3 1 3 4 5"
+          },
+          "type_id": 1
+        },
+        {
+          "atoms": [
+            4,
+            5,
+            6
+          ],
+          "id": 4,
+          "source": {
+            "file": "system.data",
+            "line": 8739,
+            "text": "4 1 4 5 6"
+          },
+          "type_id": 1
+        }
+      ],
+      "atoms": [
+        {
+          "atom_name": "A1",
+          "charge_e": 0.25,
+          "coordinates_angstrom": {
+            "x": -9.370408619409552,
+            "y": -6.971679679113406,
+            "z": -6.853699624631505
+          },
+          "global_id": 1,
+          "id": 1,
+          "mass_amu": 12.011,
+          "source": {
+            "file": "system.data",
+            "line": 23,
+            "text": "1 1 1 0.25 -9.370408619409552 -6.971679679113406 -6.853699624631505 0 0 0"
+          },
+          "type_id": 1,
+          "type_label": "T1"
+        },
+        {
+          "atom_name": "A2",
+          "charge_e": -0.25,
+          "coordinates_angstrom": {
+            "x": -9.623722075761599,
+            "y": -8.390232823794223,
+            "z": -7.190293124813282
+          },
+          "global_id": 2,
+          "id": 2,
+          "mass_amu": 14.007,
+          "source": {
+            "file": "system.data",
+            "line": 24,
+            "text": "2 1 2 -0.25 -9.623722075761599 -8.390232823794223 -7.190293124813282 0 0 0"
+          },
+          "type_id": 2,
+          "type_label": "T2"
+        },
+        {
+          "atom_name": "A3",
+          "charge_e": 0.25,
+          "coordinates_angstrom": {
+            "x": -9.116192152859568,
+            "y": -8.734272957943052,
+            "z": -8.535721408272167
+          },
+          "global_id": 3,
+          "id": 3,
+          "mass_amu": 12.011,
+          "source": {
+            "file": "system.data",
+            "line": 25,
+            "text": "3 1 1 0.25 -9.116192152859568 -8.734272957943052 -8.535721408272167 0 0 0"
+          },
+          "type_id": 1,
+          "type_label": "T1"
+        },
+        {
+          "atom_name": "A4",
+          "charge_e": -0.25,
+          "coordinates_angstrom": {
+            "x": -8.186380109757398,
+            "y": -7.696653371668405,
+            "z": -9.027394576825374
+          },
+          "global_id": 4,
+          "id": 4,
+          "mass_amu": 14.007,
+          "source": {
+            "file": "system.data",
+            "line": 26,
+            "text": "4 1 2 -0.25 -8.186380109757398 -7.696653371668405 -9.027394576825374 0 0 0"
+          },
+          "type_id": 2,
+          "type_label": "T2"
+        },
+        {
+          "atom_name": "A5",
+          "charge_e": 0.25,
+          "coordinates_angstrom": {
+            "x": -6.789882360486237,
+            "y": -8.084025251045155,
+            "z": -8.744460168439097
+          },
+          "global_id": 5,
+          "id": 5,
+          "mass_amu": 12.011,
+          "source": {
+            "file": "system.data",
+            "line": 27,
+            "text": "5 1 1 0.25 -6.789882360486237 -8.084025251045155 -8.744460168439097 0 0 0"
+          },
+          "type_id": 1,
+          "type_label": "T1"
+        },
+        {
+          "atom_name": "A6",
+          "charge_e": -0.25,
+          "coordinates_angstrom": {
+            "x": -6.5784146817256435,
+            "y": -9.51313591643582,
+            "z": -9.065931097018554
+          },
+          "global_id": 6,
+          "id": 6,
+          "mass_amu": 14.007,
+          "source": {
+            "file": "system.data",
+            "line": 28,
+            "text": "6 1 2 -0.25 -6.5784146817256435 -9.51313591643582 -9.065931097018554 0 0 0"
+          },
+          "type_id": 2,
+          "type_label": "T2"
+        }
+      ],
+      "bonds": [
+        {
+          "atoms": [
+            1,
+            2
+          ],
+          "id": 1,
+          "source": {
+            "file": "system.data",
+            "line": 6173,
+            "text": "1 1 1 2"
+          },
+          "type_id": 1
+        },
+        {
+          "atoms": [
+            2,
+            3
+          ],
+          "id": 2,
+          "source": {
+            "file": "system.data",
+            "line": 6174,
+            "text": "2 1 2 3"
+          },
+          "type_id": 1
+        },
+        {
+          "atoms": [
+            3,
+            4
+          ],
+          "id": 3,
+          "source": {
+            "file": "system.data",
+            "line": 6175,
+            "text": "3 1 3 4"
+          },
+          "type_id": 1
+        },
+        {
+          "atoms": [
+            4,
+            5
+          ],
+          "id": 4,
+          "source": {
+            "file": "system.data",
+            "line": 6176,
+            "text": "4 1 4 5"
+          },
+          "type_id": 1
+        },
+        {
+          "atoms": [
+            5,
+            6
+          ],
+          "id": 5,
+          "source": {
+            "file": "system.data",
+            "line": 6177,
+            "text": "5 1 5 6"
+          },
+          "type_id": 1
+        }
+      ],
+      "dihedrals": [
+        {
+          "atoms": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "id": 1,
+          "source": {
+            "file": "system.data",
+            "line": 10787,
+            "text": "1 1 1 2 3 4"
+          },
+          "type_id": 1
+        },
+        {
+          "atoms": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "id": 2,
+          "source": {
+            "file": "system.data",
+            "line": 10788,
+            "text": "2 1 2 3 4 5"
+          },
+          "type_id": 1
+        },
+        {
+          "atoms": [
+            3,
+            4,
+            5,
+            6
+          ],
+          "id": 3,
+          "source": {
+            "file": "system.data",
+            "line": 10789,
+            "text": "3 1 3 4 5 6"
+          },
+          "type_id": 1
+        }
+      ],
+      "generated_pairs": [
+        {
+          "ai": 1,
+          "aj": 4,
+          "derived_from_dihedral_id": 1,
+          "funct": 1,
+          "source": {
+            "file": "system.data",
+            "line": 10787,
+            "text": "1 1 1 2 3 4"
+          }
+        },
+        {
+          "ai": 2,
+          "aj": 5,
+          "derived_from_dihedral_id": 2,
+          "funct": 1,
+          "source": {
+            "file": "system.data",
+            "line": 10788,
+            "text": "2 1 2 3 4 5"
+          }
+        },
+        {
+          "ai": 3,
+          "aj": 6,
+          "derived_from_dihedral_id": 3,
+          "funct": 1,
+          "source": {
+            "file": "system.data",
+            "line": 10789,
+            "text": "3 1 3 4 5 6"
+          }
+        }
+      ],
+      "impropers": [],
+      "name": "MOL1",
+      "nrexcl": 3,
+      "residue_name": "MOL1"
+    }
+  ],
+  "reference_terms": [
+    "pair_style lj/class2/coul/long",
+    "bond_style class2",
+    "angle_style class2",
+    "dihedral_style class2"
+  ],
+  "schema_version": 1,
+  "source_files": {
+    "system_data": "system.data",
+    "system_in": "system.in",
+    "system_json": "system.json"
+  },
+  "styles": {
+    "angle_style": "class2",
+    "atom_style": "full",
+    "bond_style": "class2",
+    "dihedral_style": "class2",
+    "improper_style": "none",
+    "kspace_style": {
+      "source": {
+        "file": "system.in",
+        "line": 11,
+        "text": "kspace_style pppm 1.0e-4"
+      },
+      "value": "pppm 1.0e-4"
+    },
+    "pair_modify": {
+      "source": {
+        "file": "system.in",
+        "line": 6,
+        "text": "pair_modify mix sixthpower"
+      },
+      "value": "mix sixthpower"
+    },
+    "pair_style": {
+      "args": [
+        "9.0",
+        "9.0"
+      ],
+      "kind": "lj/class2/coul/long",
+      "source": {
+        "file": "system.in",
+        "line": 5,
+        "text": "pair_style lj/class2/coul/long 9.0 9.0"
+      }
+    },
+    "special_bonds": {
+      "source": {
+        "file": "system.in",
+        "line": 12,
+        "text": "special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no"
+      },
+      "value": "lj/coul 0.0 0.0 1.0 angle no dihedral no"
+    },
+    "units": "real"
+  },
+  "system_id": "gate_h_dense_oligomer_2x2x2",
+  "units": {
+    "charge": "e",
+    "distance": "angstrom",
+    "energy": "kcal/mol",
+    "mass": "amu"
+  }
+}

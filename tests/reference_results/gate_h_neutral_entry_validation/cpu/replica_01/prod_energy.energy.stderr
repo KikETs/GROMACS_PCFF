@@ -1,0 +1,35 @@
+   :-) GROMACS - gmx energy, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
+Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Command line:
+  gmx energy -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation/cpu/replica_01/prod.edr -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation/cpu/replica_01/prod_energy.xvg
+
+Opened /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation/cpu/replica_01/prod.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  Class2-Bond      2  Class2-Angle     3  Class2-Dih.      4  LJ-14         
+  5  Coulomb-14       6  LJ-(SR)          7  Coulomb-(SR)     8  Coul.-recip.  
+  9  Potential       10  Kinetic-En.     11  Total-Energy    12  Conserved-En. 
+ 13  Temperature     14  Pressure        15  Vir-XX          16  Vir-XY        
+ 17  Vir-XZ          18  Vir-YX          19  Vir-YY          20  Vir-YZ        
+ 21  Vir-ZX          22  Vir-ZY          23  Vir-ZZ          24  Pres-XX       
+ 25  Pres-XY         26  Pres-XZ         27  Pres-YX         28  Pres-YY       
+ 29  Pres-YZ         30  Pres-ZX         31  Pres-ZY         32  Pres-ZZ       
+ 33  #Surf*SurfTen   34  T-System        35  Lamb-System   
+
+String 'Volume' does not match anything
+String 'Density' does not match anything
+String 'Box-X' does not match anything
+String 'Box-Y' does not match anything
+String 'Box-Z' does not match anything
+
+Back Off! I just backed up /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation/cpu/replica_01/prod_energy.xvg to /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation/cpu/replica_01/#prod_energy.xvg.1#
+Reading energy frame      0 time    0.000         Reading energy frame      1 time    0.100         Reading energy frame      2 time    0.200         Reading energy frame      3 time    0.300         Reading energy frame      4 time    0.400         Reading energy frame      5 time    0.500         Reading energy frame      6 time    0.600         Reading energy frame      7 time    0.700         Reading energy frame      8 time    0.800         Reading energy frame      9 time    0.900         Reading energy frame     10 time    1.000         Reading energy frame     11 time    1.100         Reading energy frame     12 time    1.200         Reading energy frame     13 time    1.300         Reading energy frame     14 time    1.400         Reading energy frame     15 time    1.500         Reading energy frame     16 time    1.600         Reading energy frame     17 time    1.700         Reading energy frame     18 time    1.800         Reading energy frame     19 time    1.900         Reading energy frame     20 time    2.000         Reading energy frame     30 time    3.000         Reading energy frame     40 time    4.000         Reading energy frame     50 time    5.000         Reading energy frame     60 time    6.000         Reading energy frame     70 time    7.000         Reading energy frame     80 time    8.000         Last energy frame read 80 time    8.000         
+
+GROMACS reminds you: "Carbohydrates is all they groove" (Frank Zappa)
+

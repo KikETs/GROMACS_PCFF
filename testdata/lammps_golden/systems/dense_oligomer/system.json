@@ -2,7 +2,7 @@
   "id": "dense_oligomer",
   "display_name": "dense oligomer",
   "category": "polymer",
-  "description": "48-atom neutral oligomer fixture with liquid-like density (~1g/cm3)",
+  "description": "384-atom neutral oligomer fixture with liquid-like density (~1g/cm3), replicated and pre-compressed for dense ensemble validation.",
   "reference_terms": [
     "pair_style lj/class2/coul/long",
     "bond_style class2",

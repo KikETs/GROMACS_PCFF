@@ -120,6 +120,22 @@ void UpdateConstrainGpu::Impl::integrate(GpuEventSynchronizer*             fRead
     wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
 }
 
+void UpdateConstrainGpu::Impl::driftOnly(const real dt)
+{
+    wallcycle_start_nocount(wcycle_, WallCycleCounter::LaunchGpuPp);
+    wallcycle_sub_start(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+
+    if (numAtoms_ != 0)
+    {
+        integrator_->driftOnly(d_x_, d_v_, dt);
+    }
+
+    xUpdatedOnDeviceEvent_.markEvent(deviceStream_);
+
+    wallcycle_sub_stop(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+    wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
+}
+
 void UpdateConstrainGpu::Impl::scaleCoordinates(const Matrix3x3& scalingMatrix)
 {
     if (numAtoms_ == 0)
@@ -272,6 +288,11 @@ void UpdateConstrainGpu::integrate(GpuEventSynchronizer*             fReadyOnDev
                      doParrinelloRahman,
                      dtPressureCouple,
                      prVelocityScalingMatrix);
+}
+
+void UpdateConstrainGpu::driftOnly(const real dt)
+{
+    impl_->driftOnly(dt);
 }
 
 void UpdateConstrainGpu::scaleCoordinates(const gmx::Matrix3x3& scalingMatrix)

@@ -81,6 +81,20 @@ void launchLeapFrogKernel(int                             numAtoms,
                           Float3                          prVelocityScalingMatrixDiagonal,
                           const DeviceStream&             deviceStream);
 
+/*! \brief Backend-specific function to launch a drift-only GPU kernel.
+ *
+ * \param numAtoms Total number of atoms.
+ * \param[in,out] d_x Buffer containing initial coordinates, and where the updated ones will be written.
+ * \param[in] d_v Buffer containing the current half-step velocities.
+ * \param dt Timestep.
+ * \param deviceStream Device stream for kernel launch.
+ */
+void launchLeapFrogDriftOnlyKernel(int                  numAtoms,
+                                   DeviceBuffer<Float3> d_x,
+                                   DeviceBuffer<Float3> d_v,
+                                   float                dt,
+                                   const DeviceStream&  deviceStream);
+
 
 } // namespace gmx
 

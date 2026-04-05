@@ -72,7 +72,7 @@ class ArrayRef;
 class StepWorkload;
 
 /*! \brief The number on bonded function types supported on GPUs */
-static constexpr int numFTypesOnGpu = 8;
+static constexpr int numFTypesOnGpu = 12;
 
 /*! \brief List of all bonded function types supported on GPUs
  *
@@ -83,13 +83,29 @@ static constexpr int numFTypesOnGpu = 8;
  */
 constexpr std::array<InteractionFunction, numFTypesOnGpu> fTypesOnGpu = {
     InteractionFunction::Bonds,
+    InteractionFunction::BondClass2,
     InteractionFunction::Angles,
     InteractionFunction::UreyBradleyPotential,
+    InteractionFunction::AngleClass2,
     InteractionFunction::ProperDihedrals,
     InteractionFunction::RyckaertBellemansDihedrals,
+    InteractionFunction::DihedralClass2,
     InteractionFunction::ImproperDihedrals,
+    InteractionFunction::ImproperClass2,
     InteractionFunction::PeriodicImproperDihedrals,
     InteractionFunction::LennardJones14
+};
+
+enum class PcffClass2DebugMode : int
+{
+    None = 0,
+    BondClass2K2Only,
+    BondClass2K3Only,
+    BondClass2K4Only,
+    AngleClass2MainOnly,
+    AngleClass2BondBondOnly,
+    AngleClass2BondAngle1Only,
+    AngleClass2BondAngle2Only,
 };
 
 /*! \brief Checks whether the GROMACS build allows to compute bonded interactions on a GPU.
@@ -207,6 +223,12 @@ public:
     /*! \brief Clears the device side energy buffer
      */
     void clearEnergies();
+
+    /*! \brief Restricts PCFF/class2 GPU kernels to a debug-only subterm mode. */
+    void setPcffClass2DebugMode(PcffClass2DebugMode mode);
+
+    /*! \brief Restores normal PCFF/class2 GPU kernel behavior after debug tracing. */
+    void clearPcffClass2DebugMode();
 
 private:
     class Impl;

@@ -1,0 +1,125 @@
+# This file was created Fri Apr  3 02:33:25 2026
+# Created by:
+#    :-) GROMACS - gmx msd, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+# 
+# Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
+# Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+# Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+# Command line:
+#   gmx msd -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_01/prod.xtc -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_01/prod.tpr -n /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_01/anion.ndx -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_01/anion_msdout.xvg -mol /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_01/anion_diff_mol.xvg -trestart 1.0 -maxtau 10.0
+# gmx msd is part of G R O M A C S:
+#
+# GROwing Monsters And Cloning Shrimps
+#
+@    title "Mean Squared Displacement"
+@    xaxis  label "tau (ps)"
+@    yaxis  label "MSD (nm\\S2\\N)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "D[     ANION] = 6.7090 (+/- 1.33) (1e-5 cm^2/s)"
+      0.000          0
+      0.100 0.00148551
+      0.200 0.00359877
+      0.300 0.00598411
+      0.400 0.00836795
+      0.500  0.0107936
+      0.600   0.013297
+      0.700  0.0159309
+      0.800  0.0186169
+      0.900  0.0214584
+      1.000  0.0243068
+      1.100  0.0277243
+      1.200  0.0306137
+      1.300  0.0335109
+      1.400  0.0364777
+      1.500  0.0394517
+      1.600  0.0424646
+      1.700  0.0453998
+      1.800  0.0482887
+      1.900  0.0513713
+      2.000  0.0543439
+      2.100  0.0590162
+      2.200   0.062039
+      2.300  0.0652397
+      2.400  0.0685306
+      2.500  0.0718727
+      2.600  0.0752464
+      2.700  0.0786397
+      2.800  0.0819263
+      2.900  0.0854104
+      3.000  0.0886331
+      3.100  0.0948421
+      3.200  0.0979501
+      3.300   0.101569
+      3.400   0.104956
+      3.500   0.108564
+      3.600   0.112107
+      3.700   0.115379
+      3.800   0.118605
+      3.900    0.12199
+      4.000   0.125299
+      4.100   0.132489
+      4.200   0.135518
+      4.300   0.139334
+      4.400   0.142797
+      4.500   0.146583
+      4.600   0.150383
+      4.700   0.153841
+      4.800    0.15755
+      4.900   0.161489
+      5.000   0.165046
+      5.100   0.173653
+      5.200   0.176875
+      5.300   0.180793
+      5.400   0.184592
+      5.500   0.188494
+      5.600   0.192404
+      5.700   0.196044
+      5.800   0.199879
+      5.900   0.203818
+      6.000   0.207349
+      6.100   0.217156
+      6.200    0.22026
+      6.300    0.22411
+      6.400     0.2279
+      6.500   0.231798
+      6.600   0.235804
+      6.700   0.239498
+      6.800   0.243457
+      6.900   0.247439
+      7.000   0.250973
+      7.100   0.262026
+      7.200   0.264905
+      7.300   0.268529
+      7.400   0.271914
+      7.500   0.275643
+      7.600   0.279674
+      7.700    0.28315
+      7.800   0.286864
+      7.900   0.290844
+      8.000   0.294578
+      8.100   0.305686
+      8.200   0.308541
+      8.300   0.311749
+      8.400    0.31528
+      8.500   0.319215
+      8.600   0.323525
+      8.700   0.327078
+      8.800   0.330843
+      8.900   0.334931
+      9.000   0.338612
+      9.100   0.350709
+      9.200   0.353341
+      9.300   0.356223
+      9.400   0.359799
+      9.500   0.363507
+      9.600   0.367854
+      9.700   0.371558
+      9.800   0.375158
+      9.900   0.378682
+     10.000    0.38205

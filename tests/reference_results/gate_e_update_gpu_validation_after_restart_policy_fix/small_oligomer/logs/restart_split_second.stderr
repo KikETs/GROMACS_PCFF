@@ -1,0 +1,32 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
+Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Command line:
+  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_e_update_gpu_validation_after_restart_policy_fix/small_oligomer/restart_split/exact_split -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme gpu -bonded gpu -update gpu -pin off -cpi /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_e_update_gpu_validation_after_restart_policy_fix/small_oligomer/restart_split/exact_split.cpt
+
+Reading file /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+1 GPU selected for this run.
+Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:
+  PP:0,PME:0
+PP tasks will do non-perturbed short-ranged and most bonded interactions on the GPU
+PP task will update and constrain coordinates on the GPU
+PME tasks will do all aspects on the GPU
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+starting mdrun 'small_oligomer'
+20 steps,      0.0 ps (continuing from step 8,      0.0 ps).
+
+Writing final coordinates.
+
+Back Off! I just backed up /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_e_update_gpu_validation_after_restart_policy_fix/small_oligomer/restart_split/exact_split.gro to /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_e_update_gpu_validation_after_restart_policy_fix/small_oligomer/restart_split/#exact_split.gro.1#
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.012        0.012       99.2
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:       46.806        0.513        0.923            0.007 
+
+GROMACS reminds you: "Studying expands knowledge. Knowledge is power. Power corrupts. Corruption is a crime. Crime doesn't pay." (Anonymous)
+

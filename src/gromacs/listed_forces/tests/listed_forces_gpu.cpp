@@ -56,7 +56,7 @@ void initializeListedPairTopology(gmx_mtop_t* mtop, const double repulsionPower)
     mtop->moltype[0].ilist[InteractionFunction::LennardJones14].iatoms = { 0, 0, 1 };
 }
 
-TEST(ListedForcesGpuInputSupportTest, RejectsSixthPowerRepulsionForBondedGpu)
+TEST(ListedForcesGpuInputSupportTest, AcceptsSixthPowerRepulsionForBondedGpu)
 {
     t_inputrec  ir;
     gmx_mtop_t  mtop;
@@ -64,8 +64,7 @@ TEST(ListedForcesGpuInputSupportTest, RejectsSixthPowerRepulsionForBondedGpu)
     initializeDynamicsInputrec(&ir);
     initializeListedPairTopology(&mtop, 9.0);
 
-    EXPECT_FALSE(inputSupportsListedForcesGpu(ir, mtop, &error));
-    EXPECT_NE(error.find("PCFF/class2 uses 9-6 listed 1-4 interactions"), std::string::npos);
+    EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
 }
 
 TEST(ListedForcesGpuInputSupportTest, AcceptsTwelveSixListedPairsForBondedGpu)

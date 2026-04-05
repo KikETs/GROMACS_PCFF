@@ -1,0 +1,16 @@
+side=PATCH step=2 stage=after_clear buffer_role=shared level_index=0 atom=0 fx=0.000000000000000 fy=0.000000000000000 fz=0.000000000000000 code_location=src/gromacs/mdlib/sim_util.cpp:after_clear_force_outputs
+side=PATCH step=2 stage=after_clear buffer_role=shared level_index=0 atom=5 fx=0.000000000000000 fy=0.000000000000000 fz=0.000000000000000 code_location=src/gromacs/mdlib/sim_util.cpp:after_clear_force_outputs
+side=PATCH step=2 stage=after_clear buffer_role=slow1 level_index=1 atom=0 fx=0.000000000000000 fy=0.000000000000000 fz=0.000000000000000 code_location=src/gromacs/mdlib/sim_util.cpp:after_clear_force_outputs
+side=PATCH step=2 stage=after_clear buffer_role=slow1 level_index=1 atom=5 fx=0.000000000000000 fy=0.000000000000000 fz=0.000000000000000 code_location=src/gromacs/mdlib/sim_util.cpp:after_clear_force_outputs
+side=PATCH step=2 stage=after_nonbonded buffer_role=shared level_index=0 atom=0 fx=0.000000000000000 fy=0.000000000000000 fz=0.000000000000000 code_location=src/gromacs/mdlib/sim_util.cpp:after_nonbonded_stage
+side=PATCH step=2 stage=after_nonbonded buffer_role=shared level_index=0 atom=5 fx=0.000000000000000 fy=0.000000000000000 fz=0.000000000000000 code_location=src/gromacs/mdlib/sim_util.cpp:after_nonbonded_stage
+side=PATCH step=2 stage=after_nonbonded buffer_role=slow1 level_index=1 atom=0 fx=0.355292320251465 fy=10.174314498901367 fz=7.189455509185791 code_location=src/gromacs/mdlib/sim_util.cpp:after_nonbonded_stage
+side=PATCH step=2 stage=after_nonbonded buffer_role=slow1 level_index=1 atom=5 fx=-0.689706683158875 fy=-0.762958288192749 fz=-0.572247385978699 code_location=src/gromacs/mdlib/sim_util.cpp:after_nonbonded_stage
+side=PATCH step=2 stage=after_listed buffer_role=shared level_index=0 atom=0 fx=0.000000000000000 fy=0.000000000000000 fz=0.000000000000000 code_location=src/gromacs/mdlib/sim_util.cpp:after_listed_stage
+side=PATCH step=2 stage=after_listed buffer_role=shared level_index=0 atom=5 fx=-877.264465332031250 fy=4720.181640625000000 fz=427.609710693359375 code_location=src/gromacs/mdlib/sim_util.cpp:after_listed_stage
+side=PATCH step=2 stage=after_listed buffer_role=slow1 level_index=1 atom=0 fx=0.355292320251465 fy=10.174314498901367 fz=7.189455509185791 code_location=src/gromacs/mdlib/sim_util.cpp:after_listed_stage
+side=PATCH step=2 stage=after_listed buffer_role=slow1 level_index=1 atom=5 fx=-0.689706683158875 fy=-0.762958288192749 fz=-0.572247385978699 code_location=src/gromacs/mdlib/sim_util.cpp:after_listed_stage
+side=PATCH step=2 stage=after_longrange buffer_role=shared level_index=0 atom=0 fx=0.000000000000000 fy=0.000000000000000 fz=0.000000000000000 code_location=src/gromacs/mdlib/sim_util.cpp:after_longrange_stage
+side=PATCH step=2 stage=after_longrange buffer_role=shared level_index=0 atom=5 fx=-877.264465332031250 fy=4720.181640625000000 fz=427.609710693359375 code_location=src/gromacs/mdlib/sim_util.cpp:after_longrange_stage
+side=PATCH step=2 stage=after_longrange buffer_role=slow1 level_index=1 atom=0 fx=0.355292320251465 fy=10.174314498901367 fz=7.189455509185791 code_location=src/gromacs/mdlib/sim_util.cpp:after_longrange_stage
+side=PATCH step=2 stage=after_longrange buffer_role=slow1 level_index=1 atom=5 fx=-0.689706683158875 fy=-0.762958288192749 fz=-0.572247385978699 code_location=src/gromacs/mdlib/sim_util.cpp:after_longrange_stage

@@ -1,0 +1,16 @@
+{
+  "final_step": 20,
+  "final_time_ps": 0.0099999998,
+  "full_final_potential_kj_mol": -57.5381,
+  "full_final_total_kj_mol": 418.461,
+  "max_coordinate_abs_delta_nm": 0.0,
+  "max_velocity_abs_delta_nm_ps": 0.0,
+  "mode": "standalone_exact_respa",
+  "potential_abs_delta_kj_mol": 0.0,
+  "restart_final_potential_kj_mol": -57.5381,
+  "restart_final_total_kj_mol": 418.461,
+  "schema_version": 1,
+  "split_outer_steps": 2,
+  "system_id": "small_salt_polymer_box",
+  "total_abs_delta_kj_mol": 0.0
+}

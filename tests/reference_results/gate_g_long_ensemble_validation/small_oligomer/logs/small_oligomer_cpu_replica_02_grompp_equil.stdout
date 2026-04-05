@@ -1,0 +1,20 @@
+Setting the LD random seed to 2107184741
+
+Generated 3 of the 3 non-bonded parameter combinations
+
+Generated 3 of the 3 1-4 parameter combinations
+
+Excluding 3 bonded neighbours molecule type 'OLI'
+
+Velocities were taken from a Maxwell distribution at 300 K
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.418 nm between atom 3 and 6
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 25x25x25, spacing 0.080 0.080 0.080
+
+Estimate for the relative computational load of the PME mesh part: 0.99
+
+This run will generate roughly 4 Mb of data

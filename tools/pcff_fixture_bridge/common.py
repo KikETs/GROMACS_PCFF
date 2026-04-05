@@ -967,12 +967,15 @@ def render_gromacs_topology(typed_ir: dict) -> str:
 
         lines.append("")
 
-    molecule_counts = OrderedDict()
+    molecule_runs: list[tuple[str, int]] = []
     for instance in typed_ir["molecule_instances"]:
-        molecule_counts.setdefault(instance["template_name"], 0)
-        molecule_counts[instance["template_name"]] += 1
+        template_name = instance["template_name"]
+        if molecule_runs and molecule_runs[-1][0] == template_name:
+            molecule_runs[-1] = (template_name, molecule_runs[-1][1] + 1)
+        else:
+            molecule_runs.append((template_name, 1))
 
     lines.extend(["[ system ]", typed_ir["system_id"], "", "[ molecules ]", "; Name number"])
-    for template_name, count in molecule_counts.items():
+    for template_name, count in molecule_runs:
         lines.append(f"{template_name} {count}")
     return "\n".join(lines) + "\n"

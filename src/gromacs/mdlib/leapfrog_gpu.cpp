@@ -126,6 +126,12 @@ void LeapFrogGpu::integrate(DeviceBuffer<Float3>              d_x,
                          deviceStream_);
 }
 
+void LeapFrogGpu::driftOnly(DeviceBuffer<Float3> d_x, DeviceBuffer<Float3> d_v, const float dt)
+{
+    GMX_ASSERT(numAtoms_ > 0, "The number of atoms needs to be >0.");
+    launchLeapFrogDriftOnlyKernel(numAtoms_, d_x, d_v, dt, deviceStream_);
+}
+
 LeapFrogGpu::LeapFrogGpu(const DeviceContext& deviceContext,
                          const DeviceStream&  deviceStream,
                          const int            numTempScaleValues) :

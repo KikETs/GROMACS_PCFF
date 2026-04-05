@@ -8,7 +8,9 @@
 
 #include "gmxpre.h"
 
+#include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -259,6 +261,74 @@ std::vector<std::string> describeEvents(const std::vector<ExactRespaRuntimeEvent
     return labels;
 }
 
+const char* eventTypeLabel(const ExactRespaRuntimeEventType type)
+{
+    switch (type)
+    {
+        case ExactRespaRuntimeEventType::InitialKick: return "kick";
+        case ExactRespaRuntimeEventType::Drift: return "drift";
+        case ExactRespaRuntimeEventType::RefreshForce: return "force";
+        case ExactRespaRuntimeEventType::FinalKick: return "final_kick";
+    }
+
+    return "unknown";
+}
+
+void maybeWriteExactRespaRuntimeEventArtifact(const std::string&                      systemId,
+                                             const int                                level2Factor,
+                                             const int                                level3Factor,
+                                             const int                                outerCycles,
+                                             const std::vector<ExactRespaRuntimeEvent>& actualEvents,
+                                             const std::vector<ExactRespaRuntimeEvent>& referenceEvents)
+{
+    const char* artifactDir = std::getenv("GMX_PCFF_RESPA_EVENT_TRACE_DIR");
+    if (artifactDir == nullptr || *artifactDir == '\0')
+    {
+        return;
+    }
+
+    std::filesystem::path outputDir(artifactDir);
+    std::filesystem::create_directories(outputDir);
+    const auto outputPath =
+            outputDir / formatString("%s_l2_%d_l3_%d_cycles_%d.json",
+                                     systemId.c_str(),
+                                     level2Factor,
+                                     level3Factor,
+                                     outerCycles);
+
+    std::ofstream output(outputPath);
+    ASSERT_TRUE(output.is_open()) << "Could not open exact r-RESPA runtime event artifact at " << outputPath;
+
+    const auto writeEvents = [&output](const char* fieldName, const std::vector<ExactRespaRuntimeEvent>& events)
+    {
+        output << "  \"" << fieldName << "\": [\n";
+        for (Index index = 0; index < ssize(events); ++index)
+        {
+            const auto& event = events[index];
+            output << "    {\n"
+                   << "      \"base_step\": " << event.baseStep << ",\n"
+                   << "      \"event\": \"" << eventTypeLabel(event.type) << "\",\n"
+                   << "      \"level\": " << event.level << "\n"
+                   << "    }" << (index + 1 == ssize(events) ? "\n" : ",\n");
+        }
+        output << "  ]";
+    };
+
+    output << "{\n"
+           << "  \"schema_version\": 1,\n"
+           << "  \"system_id\": \"" << systemId << "\",\n"
+           << "  \"mode\": \"standalone_exact_respa\",\n"
+           << "  \"schedule\": {\n"
+           << "    \"levels\": 3,\n"
+           << "    \"level_step_factors\": [1, " << level2Factor << ", " << level3Factor << "],\n"
+           << "    \"outer_cycles\": " << outerCycles << "\n"
+           << "  },\n";
+    writeEvents("actual_event_trace", actualEvents);
+    output << ",\n";
+    writeEvents("reference_event_trace", referenceEvents);
+    output << "\n}\n";
+}
+
 class CollectingExactRespaRuntimeEventSink final : public ExactRespaRuntimeEventSink
 {
 public:
@@ -313,11 +383,15 @@ TEST_P(ExactRespaRuntimeEventOrderTest, MatchesLAMMPSReferenceEventOrder)
     CommandLine mdrunCaller;
     mdrunCaller.append("mdrun");
     mdrunCaller.append("-reprod");
+    mdrunCaller.addOption("-dlb", "no");
+    mdrunCaller.addOption("-pin", "off");
     ASSERT_EQ(0, runner_.callMdrun(mdrunCaller)) << "mdrun failed for exact runtime event trace " << systemId;
 
     const int  executedBaseSteps = outerCycles * level3Factor + 1;
     const auto referenceEvents = lammpsReferenceEventsForExecutedBaseSteps(
             makeExactRespaParameters(level2Factor, level3Factor), executedBaseSteps);
+    maybeWriteExactRespaRuntimeEventArtifact(
+            systemId, level2Factor, level3Factor, outerCycles, sink.events, referenceEvents);
     EXPECT_EQ(describeEvents(sink.events), describeEvents(referenceEvents));
 }
 
@@ -335,7 +409,9 @@ INSTANTIATE_TEST_SUITE_P(PcffExactRespaRuntimeEvents,
                          ExactRespaRuntimeEventOrderTest,
                          ::testing::Values(ExactRespaRuntimeEventParams{ "small_oligomer", 2, 4, 1 },
                                            ExactRespaRuntimeEventParams{ "small_oligomer", 2, 4, 2 },
-                                           ExactRespaRuntimeEventParams{ "small_oligomer", 3, 6, 1 }),
+                                           ExactRespaRuntimeEventParams{ "small_oligomer", 3, 6, 1 },
+                                           ExactRespaRuntimeEventParams{ "small_salt_polymer_box", 2, 4, 1 },
+                                           ExactRespaRuntimeEventParams{ "small_salt_polymer_box", 2, 4, 2 }),
                          exactRespaRuntimeEventCaseName);
 
 } // namespace
