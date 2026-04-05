@@ -189,6 +189,19 @@ python-format:
     paths:
       - black-format.log
 
+exact-openmp-report-backend:
+  rules:
+    - !reference [.rules:merge-requests, rules]
+  cache: {}
+  stage: pre-build
+  image: ${CI_REGISTRY_IMAGE}/ci-ubuntu-24.04-llvm-19-docs
+  variables:
+    KUBERNETES_CPU_LIMIT: 1
+    KUBERNETES_CPU_REQUEST: 1
+    KUBERNETES_MEMORY_REQUEST: 2Gi
+  script:
+    - python3 tools/exact_respa_openmp_validation/validate_report_set.py --manifest tests/reference_results/exact_respa_openmp_validation/report_set_manifest.json --out-dir /tmp/exact-openmp-validation-v2 --strict
+
 copyright-check:
   rules:
     - !reference [.rules:merge-requests, rules]

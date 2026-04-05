@@ -1,0 +1,25 @@
+{
+  "scope": "artifact-only frozen-reference parity mismatch evidence summary",
+  "no_fresh_runtime_rerun_performed": true,
+  "paired_artifacts": {
+    "human_readable_summary": "frozen_reference_parity_mismatch_summary.md",
+    "machine_readable_index": "frozen_reference_parity_mismatch_index.tsv"
+  },
+  "upstream_artifacts": {
+    "relocalization_summary": "tests/reference_results/step36_runtime_parity_gate_relocalization_summary/dense_oligomer/dt_0p0005/runtime_parity_relocalization_summary.json",
+    "relocalization_crosslink_table": "tests/reference_results/step36_runtime_parity_gate_relocalization_summary/dense_oligomer/dt_0p0005/runtime_json_crosslink_table.tsv",
+    "step0_potential_contract": "tests/reference_results/step60_exact_respa_step0_potential_contract_compare/exact_respa_vs_reference_step0_potential_diff.tsv",
+    "initial_total_contract": "tests/reference_results/step58_exact_respa_initial_total_contract_compare/exact_respa_vs_reference_initial_total_diff.tsv",
+    "final_total_contract": "tests/reference_results/step59_exact_respa_final_total_contract_compare/exact_respa_vs_reference_final_total_diff.tsv",
+    "same_file_raw_sum_identity": "tests/reference_results/step81_same_file_raw_sum_identity_compare/raw_sum_identity_compare.tsv",
+    "same_file_complementary_slice_identity": "tests/reference_results/step86_same_file_complementary_slice_identity_compare/complementary_slice_identity_compare.tsv",
+    "same_file_contribution_share": "tests/reference_results/step87_same_file_coulsr_ljsr_contribution_share/coulsr_ljsr_contribution_share.tsv"
+  },
+  "mapping": {
+    "step0_potential_rows": "verbatim copied from step60 exact_respa_vs_reference_step0_potential_diff.tsv; family/rank cross-linked from step36 runtime relocalization summary",
+    "initial_total_rows": "verbatim copied from step58 exact_respa_vs_reference_initial_total_diff.tsv; family/rank cross-linked from step36 runtime relocalization summary",
+    "final_total_rows": "verbatim copied from step59 exact_respa_vs_reference_final_total_diff.tsv; family/rank cross-linked from step36 runtime relocalization summary",
+    "same_file_closure_note": "derived from existing step81, step86, and step87 artifacts only; no new arithmetic computation in this step"
+  },
+  "note": "artifact-only frozen-reference parity mismatch evidence summary; frozen_reference_parity_mismatch_summary.md is the human-readable summary and frozen_reference_parity_mismatch_index.tsv is the machine-readable index; both summarize existing evidence only and do not add a new runtime rerun, arithmetic identity proof, writer-localization claim, or root-cause claim"
+}

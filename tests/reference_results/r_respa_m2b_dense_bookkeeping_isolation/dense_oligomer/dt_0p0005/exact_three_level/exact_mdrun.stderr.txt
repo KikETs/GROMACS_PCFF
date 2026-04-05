@@ -1,0 +1,81 @@
+      :-) GROMACS - gmx mdrun, 2027.0-dev-20260321-c02f3b86ca-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
+Working dir:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p0005/exact_three_level
+Command line:
+  gmx mdrun -s exact.tpr -deffnm exact -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod
+
+Reading file exact.tpr, VERSION 2027.0-dev-20260321-c02f3b86ca-unknown (single precision)
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'dense_oligomer'
+8 steps,      0.0 ps.
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.868095170 coul= 69.309983932 qq=-3334.450927734 self=-7230.132568359
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.447727203 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.868382961 coul= 69.308539260 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.448154449 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.868382961 coul= 69.308539260 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.448154449 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.869615353 coul= 69.303288472 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.454904556 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.869615353 coul= 69.303288472 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.454904556 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.871342665 coul= 69.300937922 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.454792023 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.871342665 coul= 69.300937922 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.454792023 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.873963934 coul= 69.295606883 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.460468292 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.873963934 coul= 69.295606883 qq=-3334.450927734 self=-7230.132568359
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.460468292 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.877191177 coul= 69.287351887 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.468109131 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.877191177 coul= 69.287351887 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.468109131 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.881306177 coul= 69.274687019 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.480693817 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.881306177 coul= 69.274687019 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.480693817 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.885886360 coul= 69.266208071 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.487222672 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.885886360 coul= 69.266208071 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.487222672 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.891341849 coul= 69.254275260 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.499296188 qq=-2222.967285156 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.891341849 coul= 69.254275260 qq=-3334.450927734 self=-7230.132568359
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.499296188 qq=-2222.967285156 self= 0.000000000
+
+Writing final coordinates.
+GMX_PCFF_RESPA_DEBUG listedPairOverlaps pairs=0 excludedPairs=192 duplicatePairs=0 duplicateExcludedPairs=0
+GMX_PCFF_RESPA_DEBUG pairs count=20352 lj=-664.897352138 coul= 69.240288402 qq=-3334.450927734 self= 0.000000000
+GMX_PCFF_RESPA_DEBUG excludedPairs count=768 lj= 0.000000000 coul= 8583.513280869 qq=-2222.967285156 self= 0.000000000
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.030        0.030       99.8
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:       13.075        1.836        3.304            0.116 
+
+GROMACS reminds you: "There's an old saying among scientific guys: “You can't make an omelet without breaking eggs, ideally by dropping a cement truck on them from a crane." (Dave Barry)
+

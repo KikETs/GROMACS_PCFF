@@ -2,6 +2,8 @@ name: Exact OpenMP Desktop Recurring Backend
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 1"
 
 jobs:
   collect-desktop-backend:
@@ -21,6 +23,7 @@ jobs:
         run: |
           test -n "${EXACT_OPENMP_REPO_ROOT}"
           test -e "${EXACT_OPENMP_REPO_ROOT}/.git"
+          git -C "${EXACT_OPENMP_REPO_ROOT}" reset --hard HEAD
           git -C "${EXACT_OPENMP_REPO_ROOT}" fetch --no-tags origin "${GITHUB_REF_NAME}"
           git -C "${EXACT_OPENMP_REPO_ROOT}" checkout --detach "${GITHUB_SHA}"
 

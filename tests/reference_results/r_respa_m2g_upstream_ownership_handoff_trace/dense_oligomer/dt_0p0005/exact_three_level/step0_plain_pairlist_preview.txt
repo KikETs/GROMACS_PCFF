@@ -1,0 +1,11 @@
+kind=pairlist_preview list=pairs count=20352
+kind=pairs ordinal=0 ai=0 aj=4 shift_index=22
+kind=pairs ordinal=1 ai=0 aj=5 shift_index=22
+kind=pairs ordinal=2 ai=0 aj=6 shift_index=22
+kind=pairs ordinal=3 ai=0 aj=7 shift_index=22
+kind=pairs ordinal=4 ai=1 aj=6 shift_index=22
+kind=pairs ordinal=5 ai=1 aj=7 shift_index=22
+kind=pairs ordinal=6 ai=2 aj=5 shift_index=22
+kind=pairs ordinal=7 ai=2 aj=6 shift_index=22
+kind=pairlist_preview list=excludedPairs count=768
+kind=excludedPairs ordinal=0 ai=0 aj=1 shift_index=22

@@ -1,0 +1,36 @@
+      :-) GROMACS - gmx mdrun, 2027.0-dev-20260321-c02f3b86ca-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
+Working dir:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet
+Command line:
+  gmx mdrun -s plain.tpr -deffnm plain -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod
+
+
+Back Off! I just backed up plain.log to ./#plain.log.1#
+Reading file plain.tpr, VERSION 2027.0-dev-20260321-c02f3b86ca-unknown (single precision)
+Can not increase nstlist because an NVE ensemble is used
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+Back Off! I just backed up plain.trr to ./#plain.trr.1#
+
+Back Off! I just backed up plain.edr to ./#plain.edr.1#
+starting mdrun 'dense_oligomer'
+8 steps,      0.0 ps.
+
+Writing final coordinates.
+
+Back Off! I just backed up plain.gro to ./#plain.gro.1#
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.011        0.011       99.7
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:       36.241        0.662        1.192            0.322 
+
+GROMACS reminds you: "It's just the way this stuff is done" (Built to Spill)
+

@@ -1,0 +1,356 @@
+{
+  "branch": "respa-m2-exact-three-level",
+  "build_provenance": {
+    "git_sha": "47a2c482027d7c910f527b0d8cd619281bcf9022 (dirty)",
+    "gmx_bin": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_builds/respa_m2_exact_three_level/bin/gmx",
+    "source_tree": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2",
+    "version_text": "      :-) GROMACS - gmx, 2027.0-dev-20260321-47a2c48202-dirty-unknown (-:\n\nExecutable:   /home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_builds/respa_m2_exact_three_level/bin/gmx\nData prefix:  /home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)\nWorking dir:  /home/kiket/\ubc14\ud0d5\ud654\uba74/test\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260321-47a2c48202-dirty-unknown\nGIT SHA1 hash:       47a2c482027d7c910f527b0d8cd619281bcf9022 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         disabled\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     none\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\n\n"
+  },
+  "exact_three_level_path": {
+    "integrator": "md-vv",
+    "level_factors": {
+      "level2": 2,
+      "level3": 4
+    },
+    "mode": "lammps-respa",
+    "mts_levels": 3,
+    "notes": [
+      "The frozen exact 3-level path already exists in the engine; this harness exercises it directly instead of silently falling back to the simpler 2-level path.",
+      "The simpler split reference on this harness is a PME-side legacy side-reference, not direct archived-M1 continuity."
+    ],
+    "ownership": {
+      "angle": 1,
+      "bond": 1,
+      "dihedral": 1,
+      "improper": 1,
+      "kspace": 3,
+      "nonbonded_inner": 1,
+      "nonbonded_middle": 2,
+      "nonbonded_outer": 3,
+      "pair": 3,
+      "pair14": 1
+    },
+    "switching_nm": {
+      "inner_off": 0.3,
+      "inner_on": 0.45,
+      "outer_off": 0.8,
+      "outer_on": 0.6
+    }
+  },
+  "fixtures": [
+    {
+      "bookkeeping_ok": false,
+      "coarse": {
+        "dt_ps": 0.0005,
+        "exact_vs_plain": {
+          "final_coord_diff": {
+            "l2_norm": 0.0004846627693552677,
+            "max_abs": 2.0000000000131024e-05,
+            "rms": 1.4279513783323393e-05
+          },
+          "final_force_diff": {
+            "l2_norm": 687.0291562211164,
+            "max_abs": 34.7325,
+            "rms": 20.24179063486764
+          },
+          "final_potential_abs_diff_kj_per_mol": 8583.863281,
+          "step0_force_diff": {
+            "l2_norm": 742.3481842394348,
+            "max_abs": 35.9212,
+            "rms": 21.871643128217706
+          },
+          "step0_potential_abs_diff_kj_per_mol": 8583.465088
+        },
+        "exact_vs_side_reference": {
+          "final_coord_diff": {
+            "l2_norm": 0.0005402517931475912,
+            "max_abs": 2.4000000000024002e-05,
+            "rms": 1.591732110345224e-05
+          },
+          "final_force_diff": {
+            "l2_norm": 680.0297692432139,
+            "max_abs": 35.1535,
+            "rms": 20.03556921835832
+          },
+          "final_potential_abs_diff_kj_per_mol": 8583.952148999999,
+          "step0_force_diff": {
+            "l2_norm": 742.3481711536402,
+            "max_abs": 35.9212,
+            "rms": 21.87164274267378
+          },
+          "step0_potential_abs_diff_kj_per_mol": 8583.465088
+        },
+        "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/exact_three_level",
+        "nsteps": 8,
+        "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/plain_verlet",
+        "side_reference_vs_plain": {
+          "final_coord_diff": {
+            "l2_norm": 0.0001465127980758503,
+            "max_abs": 1.0000000000065512e-05,
+            "rms": 4.316674710418712e-06
+          },
+          "final_force_diff": {
+            "l2_norm": 28.830681312666684,
+            "max_abs": 1.638300000000001,
+            "rms": 0.8494320942672869
+          },
+          "final_potential_abs_diff_kj_per_mol": 0.08886799999891082,
+          "step0_force_diff": {
+            "l2_norm": 0.0003173326330550173,
+            "max_abs": 0.00010000000000331966,
+            "rms": 9.349502363541045e-06
+          },
+          "step0_potential_abs_diff_kj_per_mol": 0.0
+        },
+        "side_reference_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/pme_legacy_side_reference"
+      },
+      "comparison_notes": [
+        "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
+        "The simpler split here is a PME-side legacy side-reference on the same harness; it is not direct archived-M1 continuity because archived M1 used md + Cut-off settings."
+      ],
+      "convergence_ok": false,
+      "dense_exact_force_ownership_isolation": {
+        "coarse_dt_ps": 0.0005,
+        "localization": {
+          "alignment_with_exact_minus_plain": 0.9999999999996434,
+          "alignment_with_plain_minus_exact": -0.9999999999996434,
+          "classification": "duplicated excluded-pair Coulomb correction force contribution",
+          "exact_minus_excluded_vs_plain_step0_force_diff": {
+            "l2_norm": 0.000633334307547299,
+            "max_abs": 6.67572021484375e-05,
+            "rms": 1.86597909843659e-05
+          },
+          "exact_plus_excluded_vs_plain_step0_force_diff": {
+            "l2_norm": 1484.6963604818418,
+            "max_abs": 71.84243392944336,
+            "rms": 43.74328602082071
+          },
+          "exact_step0_total_force_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/exact_three_level/exact_total_force.tsv",
+          "exact_vs_plain_step0_force_diff": {
+            "l2_norm": 742.3482152950181,
+            "max_abs": 35.921241760253906,
+            "rms": 21.871644043201602
+          },
+          "excluded_correction_force_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/exact_three_level/exact_excluded_pairs_correction_force.tsv",
+          "excluded_force_dump_metadata": {
+            "contribution": "excluded_pairs_coulomb_correction",
+            "final_merge": "combineMtsForces",
+            "initial_buffer": "forceWithVirial",
+            "level_index": "2",
+            "level_user": "3",
+            "postprocess": "postProcessForces"
+          },
+          "excluded_vs_exact_minus_plain_step0_force_diff": {
+            "l2_norm": 0.000633334307547299,
+            "max_abs": 6.67572021484375e-05,
+            "rms": 1.86597909843659e-05
+          },
+          "excluded_vs_plain_minus_exact_step0_force_diff": {
+            "l2_norm": 1484.6963604818418,
+            "max_abs": 71.84243392944336,
+            "rms": 43.74328602082071
+          },
+          "plain_step0_total_force_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/plain_verlet/plain_total_force.tsv",
+          "side_reference_step0_total_force_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy_total_force.tsv",
+          "side_reference_vs_plain_step0_force_diff": {
+            "l2_norm": 1891.5154552574957,
+            "max_abs": 113.18973862304688,
+            "rms": 55.72930854715562
+          },
+          "step0": 0,
+          "supports_duplicated_term": true,
+          "supports_missing_term": false,
+          "supports_wrong_buffer_level_ownership": false,
+          "why_not_fully_closed": "The excluded-pair Coulomb correction force dump localizes the correction vector directly, but buffer ownership should only be called closed if subtracting or adding that vector collapses the dense step-0 exact-vs-plain force mismatch."
+        }
+      },
+      "exact_schedule_active": true,
+      "exact_schedule_dump": {
+        "mts": "true",
+        "mts-level2-factor": "2",
+        "mts-level2-forces": "nonbonded-middle",
+        "mts-level3-factor": "4",
+        "mts-level3-forces": "longrange-nonbonded nonbonded-outer",
+        "mts-mode": "lammps-respa",
+        "mts-respa-angle-level": "1",
+        "mts-respa-bond-level": "1",
+        "mts-respa-dihedral-level": "1",
+        "mts-respa-improper-level": "1",
+        "mts-respa-inner-level": "1",
+        "mts-respa-inner-off": "0.3",
+        "mts-respa-inner-on": "0.45",
+        "mts-respa-kspace-level": "3",
+        "mts-respa-middle-level": "2",
+        "mts-respa-outer-level": "3",
+        "mts-respa-outer-off": "0.8",
+        "mts-respa-outer-on": "0.6",
+        "mts-respa-pair-level": "3",
+        "mts-respa-pair14-level": "1"
+      },
+      "exact_split": {
+        "inner_terms": [
+          "pair14",
+          "bond",
+          "angle",
+          "dihedral",
+          "nonbonded_inner"
+        ],
+        "middle_terms": [
+          "nonbonded_middle"
+        ],
+        "outer_terms": [
+          "pair",
+          "nonbonded_outer",
+          "kspace"
+        ]
+      },
+      "fine": {
+        "dt_ps": 0.00025,
+        "exact_vs_plain": {
+          "final_coord_diff": {
+            "l2_norm": 0.00048358660030972455,
+            "max_abs": 2.1000000000048757e-05,
+            "rms": 1.4247806848748117e-05
+          },
+          "final_force_diff": {
+            "l2_norm": 687.0506577598279,
+            "max_abs": 34.751599999999996,
+            "rms": 20.242424130027175
+          },
+          "final_potential_abs_diff_kj_per_mol": 8583.873779000001,
+          "step0_force_diff": {
+            "l2_norm": 742.3481842394348,
+            "max_abs": 35.9212,
+            "rms": 21.871643128217706
+          },
+          "step0_potential_abs_diff_kj_per_mol": 8583.465088
+        },
+        "exact_vs_side_reference": {
+          "final_coord_diff": {
+            "l2_norm": 0.0004940931086334931,
+            "max_abs": 2.1000000000048757e-05,
+            "rms": 1.4557357818845185e-05
+          },
+          "final_force_diff": {
+            "l2_norm": 683.342108184378,
+            "max_abs": 34.9684,
+            "rms": 20.13315994031188
+          },
+          "final_potential_abs_diff_kj_per_mol": 8583.927490000002,
+          "step0_force_diff": {
+            "l2_norm": 742.3481711536402,
+            "max_abs": 35.9212,
+            "rms": 21.87164274267378
+          },
+          "step0_potential_abs_diff_kj_per_mol": 8583.465088
+        },
+        "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p00025/exact_three_level",
+        "nsteps": 16,
+        "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p00025/plain_verlet",
+        "side_reference_vs_plain": {
+          "final_coord_diff": {
+            "l2_norm": 7.756287771857844e-05,
+            "max_abs": 1.0000000000065512e-05,
+            "rms": 2.2852182001312415e-06
+          },
+          "final_force_diff": {
+            "l2_norm": 14.979953622776938,
+            "max_abs": 0.8689999999999998,
+            "rms": 0.4413511161885651
+          },
+          "final_potential_abs_diff_kj_per_mol": 0.053711000000475906,
+          "step0_force_diff": {
+            "l2_norm": 0.0003173326330550173,
+            "max_abs": 0.00010000000000331966,
+            "rms": 9.349502363541045e-06
+          },
+          "step0_potential_abs_diff_kj_per_mol": 0.0
+        },
+        "side_reference_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p00025/pme_legacy_side_reference"
+      },
+      "fine_exact_no_worse_than_pme_side_reference": false,
+      "fixture_id": "dense_oligomer",
+      "fixture_sources": {
+        "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+        "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+        "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+      },
+      "gro_metadata": {
+        "box_nm": [
+          2.2,
+          2.2,
+          2.2
+        ],
+        "num_atoms": 384
+      },
+      "listed_terms_present": [
+        "pair14",
+        "bond",
+        "angle",
+        "dihedral"
+      ],
+      "m1_continuity": {
+        "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+        "archived_m1_settings": {
+          "coulombtype": "Cut-off",
+          "integrator": "md",
+          "mts_level2_forces": "nonbonded",
+          "mts_levels": 2,
+          "mts_mode": "legacy"
+        },
+        "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+        "current_side_reference_settings": {
+          "coulombtype": "PME",
+          "integrator": "md",
+          "label": "pme_legacy_side_reference",
+          "mts_level2_forces": "nonbonded longrange-nonbonded",
+          "mts_levels": 2,
+          "mts_mode": "legacy"
+        },
+        "direct_archived_m1_comparison_done": false,
+        "direct_archived_m1_comparison_feasible": false,
+        "why_not_feasible": "Archived M1 uses integrator = md with coulombtype = Cut-off and mts-level2-forces = nonbonded; the current exact-3-level harness requires PME-side md-vv settings, so the current simpler split can only be a PME-side legacy side-reference.",
+        "wording_requirement": "The current simpler split must be reported as a PME-side legacy side-reference, not as direct archived-M1 continuity."
+      },
+      "pme_side_reference_active": true,
+      "pme_side_reference_dump": {
+        "mts": "true",
+        "mts-level2-factor": "2",
+        "mts-level2-forces": "longrange-nonbonded nonbonded",
+        "mts-mode": "legacy"
+      }
+    }
+  ],
+  "git_status": [
+    " M src/gromacs/mdlib/sim_util.cpp",
+    " M tools/run_respa_m2_microfixtures/run_respa_m2.py",
+    "?? tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/"
+  ],
+  "head_commit": "47a2c482027d7c910f527b0d8cd619281bcf9022",
+  "m1_continuity": {
+    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_settings": {
+      "coulombtype": "Cut-off",
+      "integrator": "md",
+      "mts_level2_forces": "nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "current_side_reference_settings": {
+      "coulombtype": "PME",
+      "integrator": "md",
+      "label": "pme_legacy_side_reference",
+      "mts_level2_forces": "nonbonded longrange-nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "direct_archived_m1_comparison_done": false,
+    "direct_archived_m1_comparison_feasible": false,
+    "why_not_feasible": "Archived M1 uses integrator = md with coulombtype = Cut-off and mts-level2-forces = nonbonded; the current exact-3-level harness requires PME-side md-vv settings, so the current simpler split can only be a PME-side legacy side-reference.",
+    "wording_requirement": "The current simpler split must be reported as a PME-side legacy side-reference, not as direct archived-M1 continuity."
+  },
+  "milestone": "R-RESPA M2c",
+  "verdict": "FORCE DEFECT LOCALIZED TO DUPLICATED EXCLUDED-PAIR COULOMB FORCE OWNERSHIP",
+  "worktree": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2"
+}

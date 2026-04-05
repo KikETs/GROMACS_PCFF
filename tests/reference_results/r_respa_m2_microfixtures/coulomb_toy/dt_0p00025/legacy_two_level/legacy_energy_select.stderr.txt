@@ -1,0 +1,34 @@
+      :-) GROMACS - gmx energy, 2027.0-dev-20260321-c02f3b86ca-unknown (-:
+
+Executable:   /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
+Working dir:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level
+Command line:
+  gmx energy -f legacy.edr -o legacy_potential.xvg -xvg none
+
+Opened legacy.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  LJ-(SR)          2  Coulomb-(SR)     3  Coul.-recip.     4  Potential     
+  5  Kinetic-En.      6  Total-Energy     7  Temperature      8  Pressure      
+  9  Vir-XX          10  Vir-XY          11  Vir-XZ          12  Vir-YX        
+ 13  Vir-YY          14  Vir-YZ          15  Vir-ZX          16  Vir-ZY        
+ 17  Vir-ZZ          18  Pres-XX         19  Pres-XY         20  Pres-XZ       
+ 21  Pres-YX         22  Pres-YY         23  Pres-YZ         24  Pres-ZX       
+ 25  Pres-ZY         26  Pres-ZZ         27  #Surf*SurfTen   28  T-rest        
+
+
+Back Off! I just backed up legacy_potential.xvg to ./#legacy_potential.xvg.1#
+
+Reading energy frame      0 time    0.000         
+Reading energy frame      1 time    0.001         
+Reading energy frame      2 time    0.002         
+Reading energy frame      3 time    0.003         
+Reading energy frame      4 time    0.004         
+Last energy frame read 4 time    0.004         
+
+GROMACS reminds you: "It's just the way this stuff is done" (Built to Spill)
+

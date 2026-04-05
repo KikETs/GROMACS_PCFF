@@ -1,0 +1,23 @@
+level=0 active=true
+level=0 shift_force_ptr=0x5893814c4800
+level=0 shift_shift_ptr=0x5893813b6e20
+level=0 have_virial=false
+level=1 active=true
+level=1 shift_force_ptr=0x5893814c5b00
+level=1 shift_shift_ptr=0x5893813b7140
+level=1 have_virial=false
+level=2 active=true
+level=2 shift_force_ptr=0x5893814c6e00
+level=2 shift_shift_ptr=0x5893813dd770
+level=2 have_virial=true
+level=2 virial_force_ptr=0x5893814bd210
+outer_accumulator_present=true
+outer_accumulator_force_ptr=0x5893814bd210
+outer_accumulator_shift_ptr=0x0
+outer_accumulator_has_virial=true
+outer_accumulator_virial_ptr=0x5893814bd210
+outer_outputs_shift_force_ptr=0x5893814c6e00
+outer_outputs_shift_shift_ptr=0x5893813dd770
+outer_aliases_shift=false
+excluded_correction_force_dump_enabled=true
+excluded_correction_force_dump_ptr=0x5893814dcbb0

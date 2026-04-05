@@ -1,0 +1,3 @@
+# stage=control_pairs_outer_write_boundary pair_list=pairs ordinal=1 contribution=outer buffer=forceWithVirial accumulator_ptr=0x5ca8028fa310 virial_ptr=0x5ca8028fa310 ai=0 aj=5 shift_index=22 scalar=17.2728 correction_scalar=17.2728 qq=-8.68347 r=0.437587 snapshot=event
+0	25.185464859008789	-22.925464630126953	-19.955654144287109
+5	-25.185464859008789	22.925464630126953	19.955654144287109

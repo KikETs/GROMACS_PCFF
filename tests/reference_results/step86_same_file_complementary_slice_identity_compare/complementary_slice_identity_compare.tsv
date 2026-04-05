@@ -1,0 +1,3 @@
+system	exact_complementary_slice_sum	single_complementary_slice_sum	difference_exact_minus_single	exact_minus_single_complementary_slice_sum	identity_delta	interpretation
+small_oligomer	24.189967298826000000	24.189967298826000000	0.000000000000000000	0.000000000000000000	0.000000000000000000	exact identity
+small_salt_polymer_box	234.334358522168000000	234.334358522168000000	0.000000000000000000	0.000000000000000000	0.000000000000000000	exact identity

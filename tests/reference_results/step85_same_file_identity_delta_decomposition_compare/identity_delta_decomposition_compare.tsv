@@ -1,0 +1,3 @@
+system	coulsr_single_term_identity_delta	ljsr_single_term_identity_delta	sum_of_term_deltas	coulsr_plus_ljsr_two_term_identity_delta	decomposition_delta	interpretation
+small_oligomer	0.000000000000000000	0.000000000000000000	0.000000000000000000	0.000000000000000000	0.000000000000000000	exact decomposition identity
+small_salt_polymer_box	0.000000000752446000	0.000000000000148002	0.000000000752594002	0.000000000752594002	0.000000000000000000	exact decomposition identity

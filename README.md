@@ -2,25 +2,22 @@
 
 This project provides an auditable, high-fidelity bridge between the PCFF (Polymer Consistent Force Field) and a specialized GROMACS fork. It ensures that complex polymer topologies and Class2 potentials are mapped correctly between GROMACS and LAMMPS.
 
-## Project Status: v1.0.0-rc1
-The bridge has completed its foundational validation phase. It is currently in **Release Candidate 1**.
+## Current Status
+The current implementation status is documented in [Current Status Note](docs/current_status_note.md).
 
-### Readiness Matrix
-| System Type | Readiness | Key Constraint |
-| :--- | :--- | :--- |
-| **Neutral Polymers** | **Production-Ready** | None (sub-1% density parity) |
-| **Charged/Salt Systems** | **Qualified-Ready** | Mandatory density drift review |
-| **Transport Properties** | **Out-of-Scope** | Not validated for rc1 |
-
-For details, see the [Release Readiness Matrix](docs/release_readiness_matrix.md).
+Current evidence supports only a narrow locked-scope closure for the recent `r-RESPA` debugging work:
+- engine-side `LJ-(SR)` event-669 geometry fix is in place
+- locked-scope `LJ-(SR)` comparator branch is closed
+- locked-scope `Coulomb-(SR)` residual is still open
+- `Potential` remains a secondary aggregate term and is not treated as a simple mirror of `Coulomb-(SR)`
 
 ## Quick Start
 1.  **Topology:** Use the PCFF emitter to generate `.top` and `.gro` files.
-2.  **Workflow:** Follow the [Neutral Workflow Template](docs/m10_5_neutral_workflow_template.md) or [Charged Workflow Template](docs/m10_5_charged_workflow_template.md).
-3.  **Validation:** Review [Validation Report M10.5](docs/validation_report_m10_5.md) for the latest audit results.
+2.  **Workflow References:** Use the [Neutral Workflow Template](docs/m10_5_neutral_workflow_template.md) or [Charged Workflow Template](docs/m10_5_charged_workflow_template.md) as operational references, not as blanket readiness guarantees.
+3.  **Status / Validation:** Start with the [Current Status Note](docs/current_status_note.md) and then review the supporting validation reports for the specific scope you care about.
 
 ## Key Documentation
-- [Release Notes (v1.0.0-rc1)](docs/releases/v1.0.0-rc1.md)
+- [Current Status Note](docs/current_status_note.md)
 - [Known Limitations](docs/known_limitations.md)
 - [Troubleshooting Guide](docs/m10_5_troubleshooting.md)
 

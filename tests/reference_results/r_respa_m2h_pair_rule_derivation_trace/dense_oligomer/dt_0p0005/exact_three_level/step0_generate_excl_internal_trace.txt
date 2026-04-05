@@ -1,0 +1,7 @@
+stage=gen_nnb_bond_membership nrbonds=10 target_present=true target_count=1 control_present=false control_count=0
+stage=do_gen_direct_bond_rule_fire ai=0 aj=1 source=exclude_all_bonded_atoms condition_nrex_positive=true bond_list_index=0 nre_bucket=1 add_nnb_called=true
+stage=do_gen_summary target_direct_bond_rule_fired=true target_higher_order_rule_fired=false control_direct_bond_rule_fired=false control_higher_order_rule_fired=false
+stage=sort_and_purge_output atom=0 level0=0 level1=1 level2=2 level3=3 target_in_level1=true control_in_any_level=false
+stage=nnb2excl_flattened atom=0 nr_of_sortables=4 target_present=true target_count=1 control_present=false control_count=0
+stage=nnb2excl_control_check atom=0 control_present=false control_count=0
+stage=nnb2excl_emit atom=0 emitted=0,1,2,3 target_output_index=1 control_output_index=-1 target_present=true control_present=false

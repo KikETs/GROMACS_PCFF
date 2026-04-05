@@ -1,0 +1,837 @@
+{
+  "coarse": {
+    "dispatch_probe_work_dirs": {
+      "active_contributions": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed",
+      "correction_outer_selection": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed",
+      "includepair_policy": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted",
+      "outer_routing": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
+    },
+    "dt_ps": 0.0005,
+    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level",
+    "nsteps": 8
+  },
+  "comparison_notes": [
+    "This milestone traces only the dispatch-internal sub-decisions inside exact_excludedPairs_dispatch_contract.",
+    "No plain-Verlet or PME-side legacy side-reference trajectory comparison is needed; the reference contract is the same-run cleared exclusion bookkeeping path."
+  ],
+  "dense_dispatch_minimal_fix_isolation": {
+    "coarse_dt_ps": 0.0005,
+    "localization": {
+      "candidate_causality_table": [
+        {
+          "baseline_exact_behavior": "includePair admits target into excludedPairs dispatch; downstream bad semantics persists.",
+          "candidate": "includePair policy",
+          "diagnostic_perturbation": "Restrict includePair for target (0,1) inside excludedPairs dispatch only.",
+          "first_bad_semantics_still_occurs": false,
+          "probe_state": {
+            "active_row": null,
+            "admitted": false,
+            "effective_outer_active": false,
+            "effective_outer_scalar": 0.0,
+            "first_bad_semantics_occurs": false,
+            "include_row": {
+              "ai": "0",
+              "aj": "1",
+              "factor_coulomb": "0",
+              "factor_lj": "0",
+              "include_pair_base": "true",
+              "include_pair_effective": "false",
+              "pair_list": "excludedPairs",
+              "probe_mode": "includepair_restricted",
+              "role": "target_pair_0_1",
+              "semantic_result": "blocked_before_consumer",
+              "stage": "dispatch_internal_include_pair"
+            },
+            "physical_outer_realization": false,
+            "routing_row": null,
+            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted"
+          },
+          "semantic_result": "Target is blocked before consumer evaluation; first-bad semantics disappears.",
+          "verdict": "SUFFICIENT-BUT-NOT-MINIMAL"
+        },
+        {
+          "baseline_exact_behavior": "Target is admitted with outer contribution active and non-zero outer scalar.",
+          "candidate": "activeContributions configuration",
+          "diagnostic_perturbation": "Keep admission, but narrow effective active contributions by removing outer.",
+          "first_bad_semantics_still_occurs": false,
+          "probe_state": {
+            "active_row": {
+              "ai": "0",
+              "aj": "1",
+              "baseline_active": "inner,middle,outer",
+              "baseline_outer_active": "true",
+              "correction_scalar": "-13.3029",
+              "effective_active": "inner,middle",
+              "effective_outer_active": "false",
+              "inner_scalar": "0",
+              "middle_scalar": "0",
+              "outer_scalar_baseline": "-13.3029",
+              "outer_scalar_effective": "-13.3029",
+              "pair_list": "excludedPairs",
+              "probe_mode": "active_outer_narrowed",
+              "role": "target_pair_0_1",
+              "semantic_result": "admitted_but_semantically_harmless",
+              "stage": "dispatch_internal_active_contributions"
+            },
+            "admitted": true,
+            "effective_outer_active": false,
+            "effective_outer_scalar": -13.3029,
+            "first_bad_semantics_occurs": false,
+            "include_row": {
+              "ai": "0",
+              "aj": "1",
+              "factor_coulomb": "0",
+              "factor_lj": "0",
+              "include_pair_base": "true",
+              "include_pair_effective": "true",
+              "pair_list": "excludedPairs",
+              "probe_mode": "active_outer_narrowed",
+              "role": "target_pair_0_1",
+              "semantic_result": "admitted_into_dispatch",
+              "stage": "dispatch_internal_include_pair"
+            },
+            "physical_outer_realization": false,
+            "routing_row": {
+              "actual_outer_write_executed": "false",
+              "ai": "0",
+              "aj": "1",
+              "effective_outer_active": "false",
+              "effective_outer_scalar": "-13.3029",
+              "outer_force_write_eligible": "false",
+              "outer_routing_target": "none",
+              "pair_list": "excludedPairs",
+              "probe_mode": "active_outer_narrowed",
+              "role": "target_pair_0_1",
+              "semantic_result": "no_physical_outer_realization",
+              "stage": "dispatch_internal_outer_routing"
+            },
+            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed"
+          },
+          "semantic_result": "Target remains admitted, but no non-zero outer contribution remains; first-bad semantics disappears.",
+          "verdict": "SUFFICIENT-BUT-NOT-MINIMAL"
+        },
+        {
+          "baseline_exact_behavior": "Non-zero outer contribution is routed into forceWithVirial and physically written.",
+          "candidate": "outer routing / forceWithVirial selection",
+          "diagnostic_perturbation": "Keep admission and outer contribution live, but suppress outer physical write.",
+          "first_bad_semantics_still_occurs": true,
+          "probe_state": {
+            "active_row": {
+              "ai": "0",
+              "aj": "1",
+              "baseline_active": "inner,middle,outer",
+              "baseline_outer_active": "true",
+              "correction_scalar": "-13.3029",
+              "effective_active": "inner,middle,outer",
+              "effective_outer_active": "true",
+              "inner_scalar": "0",
+              "middle_scalar": "0",
+              "outer_scalar_baseline": "-13.3029",
+              "outer_scalar_effective": "-13.3029",
+              "pair_list": "excludedPairs",
+              "probe_mode": "outer_routing_suppressed",
+              "role": "target_pair_0_1",
+              "semantic_result": "nonzero_outer_contribution_live",
+              "stage": "dispatch_internal_active_contributions"
+            },
+            "admitted": true,
+            "effective_outer_active": true,
+            "effective_outer_scalar": -13.3029,
+            "first_bad_semantics_occurs": true,
+            "include_row": {
+              "ai": "0",
+              "aj": "1",
+              "factor_coulomb": "0",
+              "factor_lj": "0",
+              "include_pair_base": "true",
+              "include_pair_effective": "true",
+              "pair_list": "excludedPairs",
+              "probe_mode": "outer_routing_suppressed",
+              "role": "target_pair_0_1",
+              "semantic_result": "admitted_into_dispatch",
+              "stage": "dispatch_internal_include_pair"
+            },
+            "physical_outer_realization": false,
+            "routing_row": {
+              "actual_outer_write_executed": "false",
+              "ai": "0",
+              "aj": "1",
+              "effective_outer_active": "true",
+              "effective_outer_scalar": "-13.3029",
+              "outer_force_write_eligible": "true",
+              "outer_routing_target": "suppressed",
+              "pair_list": "excludedPairs",
+              "probe_mode": "outer_routing_suppressed",
+              "role": "target_pair_0_1",
+              "semantic_result": "no_physical_outer_realization",
+              "stage": "dispatch_internal_outer_routing"
+            },
+            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
+          },
+          "semantic_result": "Bad semantics still exists before routing, but physical outer realization is suppressed.",
+          "verdict": "NOT-CAUSAL"
+        },
+        {
+          "baseline_exact_behavior": "Admitted target promotes correction_scalar into a non-zero outer contribution.",
+          "candidate": "excluded correction -> outer contribution selection",
+          "diagnostic_perturbation": "Keep admission, active contributions, and routing, but suppress correction promotion into effective outer scalar.",
+          "first_bad_semantics_still_occurs": false,
+          "probe_state": {
+            "active_row": {
+              "ai": "0",
+              "aj": "1",
+              "baseline_active": "inner,middle,outer",
+              "baseline_outer_active": "true",
+              "correction_scalar": "-13.3029",
+              "effective_active": "inner,middle,outer",
+              "effective_outer_active": "true",
+              "inner_scalar": "0",
+              "middle_scalar": "0",
+              "outer_scalar_baseline": "-13.3029",
+              "outer_scalar_effective": "0",
+              "pair_list": "excludedPairs",
+              "probe_mode": "correction_outer_suppressed",
+              "role": "target_pair_0_1",
+              "semantic_result": "admitted_but_semantically_harmless",
+              "stage": "dispatch_internal_active_contributions"
+            },
+            "admitted": true,
+            "effective_outer_active": true,
+            "effective_outer_scalar": 0.0,
+            "first_bad_semantics_occurs": false,
+            "include_row": {
+              "ai": "0",
+              "aj": "1",
+              "factor_coulomb": "0",
+              "factor_lj": "0",
+              "include_pair_base": "true",
+              "include_pair_effective": "true",
+              "pair_list": "excludedPairs",
+              "probe_mode": "correction_outer_suppressed",
+              "role": "target_pair_0_1",
+              "semantic_result": "admitted_into_dispatch",
+              "stage": "dispatch_internal_include_pair"
+            },
+            "physical_outer_realization": false,
+            "routing_row": {
+              "actual_outer_write_executed": "false",
+              "ai": "0",
+              "aj": "1",
+              "effective_outer_active": "true",
+              "effective_outer_scalar": "0",
+              "outer_force_write_eligible": "false",
+              "outer_routing_target": "none",
+              "pair_list": "excludedPairs",
+              "probe_mode": "correction_outer_suppressed",
+              "role": "target_pair_0_1",
+              "semantic_result": "no_physical_outer_realization",
+              "stage": "dispatch_internal_outer_routing"
+            },
+            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed"
+          },
+          "semantic_result": "Target remains admitted with outer contribution active, but effective_outer_scalar becomes zero; first-bad semantics disappears.",
+          "verdict": "MINIMAL-FIX-CANDIDATE"
+        }
+      ],
+      "candidate_verdicts": {
+        "activeContributions configuration": "SUFFICIENT-BUT-NOT-MINIMAL",
+        "excluded correction -> outer contribution selection": "MINIMAL-FIX-CANDIDATE",
+        "includePair policy": "SUFFICIENT-BUT-NOT-MINIMAL",
+        "outer routing / forceWithVirial selection": "NOT-CAUSAL"
+      },
+      "control_result": {
+        "baseline_state": {
+          "active_row": {
+            "ai": "0",
+            "aj": "4",
+            "baseline_active": "inner,middle,outer",
+            "baseline_outer_active": "true",
+            "correction_scalar": "-17.4753",
+            "effective_active": "inner,middle,outer",
+            "effective_outer_active": "true",
+            "inner_scalar": "11.2251",
+            "middle_scalar": "11.1673",
+            "outer_scalar_baseline": "-17.4753",
+            "outer_scalar_effective": "-17.4753",
+            "pair_list": "pairs",
+            "probe_mode": "baseline",
+            "role": "control_pair_0_4",
+            "semantic_result": "nonzero_outer_contribution_live",
+            "stage": "dispatch_internal_active_contributions"
+          },
+          "admitted": true,
+          "effective_outer_active": true,
+          "effective_outer_scalar": -17.4753,
+          "first_bad_semantics_occurs": true,
+          "include_row": {
+            "ai": "0",
+            "aj": "4",
+            "factor_coulomb": "1",
+            "factor_lj": "1",
+            "include_pair_base": "true",
+            "include_pair_effective": "true",
+            "pair_list": "pairs",
+            "probe_mode": "baseline",
+            "role": "control_pair_0_4",
+            "semantic_result": "admitted_into_dispatch",
+            "stage": "dispatch_internal_include_pair"
+          },
+          "physical_outer_realization": true,
+          "routing_row": {
+            "actual_outer_write_executed": "true",
+            "ai": "0",
+            "aj": "4",
+            "effective_outer_active": "true",
+            "effective_outer_scalar": "-17.4753",
+            "outer_force_write_eligible": "true",
+            "outer_routing_target": "forceWithVirial",
+            "pair_list": "pairs",
+            "probe_mode": "baseline",
+            "role": "control_pair_0_4",
+            "semantic_result": "physical_outer_behavior_realized",
+            "stage": "dispatch_internal_outer_routing"
+          },
+          "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level"
+        },
+        "control_clean": true,
+        "pair": [
+          0,
+          4
+        ],
+        "probe_states": {
+          "active_contributions": {
+            "active_row": {
+              "ai": "0",
+              "aj": "4",
+              "baseline_active": "inner,middle,outer",
+              "baseline_outer_active": "true",
+              "correction_scalar": "-17.4753",
+              "effective_active": "inner,middle,outer",
+              "effective_outer_active": "true",
+              "inner_scalar": "11.2251",
+              "middle_scalar": "11.1673",
+              "outer_scalar_baseline": "-17.4753",
+              "outer_scalar_effective": "-17.4753",
+              "pair_list": "pairs",
+              "probe_mode": "active_outer_narrowed",
+              "role": "control_pair_0_4",
+              "semantic_result": "nonzero_outer_contribution_live",
+              "stage": "dispatch_internal_active_contributions"
+            },
+            "admitted": true,
+            "effective_outer_active": true,
+            "effective_outer_scalar": -17.4753,
+            "first_bad_semantics_occurs": true,
+            "include_row": {
+              "ai": "0",
+              "aj": "4",
+              "factor_coulomb": "1",
+              "factor_lj": "1",
+              "include_pair_base": "true",
+              "include_pair_effective": "true",
+              "pair_list": "pairs",
+              "probe_mode": "active_outer_narrowed",
+              "role": "control_pair_0_4",
+              "semantic_result": "admitted_into_dispatch",
+              "stage": "dispatch_internal_include_pair"
+            },
+            "physical_outer_realization": true,
+            "routing_row": {
+              "actual_outer_write_executed": "true",
+              "ai": "0",
+              "aj": "4",
+              "effective_outer_active": "true",
+              "effective_outer_scalar": "-17.4753",
+              "outer_force_write_eligible": "true",
+              "outer_routing_target": "forceWithVirial",
+              "pair_list": "pairs",
+              "probe_mode": "active_outer_narrowed",
+              "role": "control_pair_0_4",
+              "semantic_result": "physical_outer_behavior_realized",
+              "stage": "dispatch_internal_outer_routing"
+            },
+            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed"
+          },
+          "correction_outer_selection": {
+            "active_row": {
+              "ai": "0",
+              "aj": "4",
+              "baseline_active": "inner,middle,outer",
+              "baseline_outer_active": "true",
+              "correction_scalar": "-17.4753",
+              "effective_active": "inner,middle,outer",
+              "effective_outer_active": "true",
+              "inner_scalar": "11.2251",
+              "middle_scalar": "11.1673",
+              "outer_scalar_baseline": "-17.4753",
+              "outer_scalar_effective": "-17.4753",
+              "pair_list": "pairs",
+              "probe_mode": "correction_outer_suppressed",
+              "role": "control_pair_0_4",
+              "semantic_result": "nonzero_outer_contribution_live",
+              "stage": "dispatch_internal_active_contributions"
+            },
+            "admitted": true,
+            "effective_outer_active": true,
+            "effective_outer_scalar": -17.4753,
+            "first_bad_semantics_occurs": true,
+            "include_row": {
+              "ai": "0",
+              "aj": "4",
+              "factor_coulomb": "1",
+              "factor_lj": "1",
+              "include_pair_base": "true",
+              "include_pair_effective": "true",
+              "pair_list": "pairs",
+              "probe_mode": "correction_outer_suppressed",
+              "role": "control_pair_0_4",
+              "semantic_result": "admitted_into_dispatch",
+              "stage": "dispatch_internal_include_pair"
+            },
+            "physical_outer_realization": true,
+            "routing_row": {
+              "actual_outer_write_executed": "true",
+              "ai": "0",
+              "aj": "4",
+              "effective_outer_active": "true",
+              "effective_outer_scalar": "-17.4753",
+              "outer_force_write_eligible": "true",
+              "outer_routing_target": "forceWithVirial",
+              "pair_list": "pairs",
+              "probe_mode": "correction_outer_suppressed",
+              "role": "control_pair_0_4",
+              "semantic_result": "physical_outer_behavior_realized",
+              "stage": "dispatch_internal_outer_routing"
+            },
+            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed"
+          },
+          "includepair_policy": {
+            "active_row": {
+              "ai": "0",
+              "aj": "4",
+              "baseline_active": "inner,middle,outer",
+              "baseline_outer_active": "true",
+              "correction_scalar": "-17.4753",
+              "effective_active": "inner,middle,outer",
+              "effective_outer_active": "true",
+              "inner_scalar": "11.2251",
+              "middle_scalar": "11.1673",
+              "outer_scalar_baseline": "-17.4753",
+              "outer_scalar_effective": "-17.4753",
+              "pair_list": "pairs",
+              "probe_mode": "includepair_restricted",
+              "role": "control_pair_0_4",
+              "semantic_result": "nonzero_outer_contribution_live",
+              "stage": "dispatch_internal_active_contributions"
+            },
+            "admitted": true,
+            "effective_outer_active": true,
+            "effective_outer_scalar": -17.4753,
+            "first_bad_semantics_occurs": true,
+            "include_row": {
+              "ai": "0",
+              "aj": "4",
+              "factor_coulomb": "1",
+              "factor_lj": "1",
+              "include_pair_base": "true",
+              "include_pair_effective": "true",
+              "pair_list": "pairs",
+              "probe_mode": "includepair_restricted",
+              "role": "control_pair_0_4",
+              "semantic_result": "admitted_into_dispatch",
+              "stage": "dispatch_internal_include_pair"
+            },
+            "physical_outer_realization": true,
+            "routing_row": {
+              "actual_outer_write_executed": "true",
+              "ai": "0",
+              "aj": "4",
+              "effective_outer_active": "true",
+              "effective_outer_scalar": "-17.4753",
+              "outer_force_write_eligible": "true",
+              "outer_routing_target": "forceWithVirial",
+              "pair_list": "pairs",
+              "probe_mode": "includepair_restricted",
+              "role": "control_pair_0_4",
+              "semantic_result": "physical_outer_behavior_realized",
+              "stage": "dispatch_internal_outer_routing"
+            },
+            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted"
+          },
+          "outer_routing": {
+            "active_row": {
+              "ai": "0",
+              "aj": "4",
+              "baseline_active": "inner,middle,outer",
+              "baseline_outer_active": "true",
+              "correction_scalar": "-17.4753",
+              "effective_active": "inner,middle,outer",
+              "effective_outer_active": "true",
+              "inner_scalar": "11.2251",
+              "middle_scalar": "11.1673",
+              "outer_scalar_baseline": "-17.4753",
+              "outer_scalar_effective": "-17.4753",
+              "pair_list": "pairs",
+              "probe_mode": "outer_routing_suppressed",
+              "role": "control_pair_0_4",
+              "semantic_result": "nonzero_outer_contribution_live",
+              "stage": "dispatch_internal_active_contributions"
+            },
+            "admitted": true,
+            "effective_outer_active": true,
+            "effective_outer_scalar": -17.4753,
+            "first_bad_semantics_occurs": true,
+            "include_row": {
+              "ai": "0",
+              "aj": "4",
+              "factor_coulomb": "1",
+              "factor_lj": "1",
+              "include_pair_base": "true",
+              "include_pair_effective": "true",
+              "pair_list": "pairs",
+              "probe_mode": "outer_routing_suppressed",
+              "role": "control_pair_0_4",
+              "semantic_result": "admitted_into_dispatch",
+              "stage": "dispatch_internal_include_pair"
+            },
+            "physical_outer_realization": true,
+            "routing_row": {
+              "actual_outer_write_executed": "true",
+              "ai": "0",
+              "aj": "4",
+              "effective_outer_active": "true",
+              "effective_outer_scalar": "-17.4753",
+              "outer_force_write_eligible": "true",
+              "outer_routing_target": "forceWithVirial",
+              "pair_list": "pairs",
+              "probe_mode": "outer_routing_suppressed",
+              "role": "control_pair_0_4",
+              "semantic_result": "physical_outer_behavior_realized",
+              "stage": "dispatch_internal_outer_routing"
+            },
+            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
+          }
+        },
+        "why_clean": "The clean control remains admitted through the standard pairs path and keeps the same active contribution and routing semantics across all dispatch probes."
+      },
+      "minimal_fix_candidate": {
+        "classification": "excluded correction -> outer contribution selection",
+        "code_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/src/gromacs/mdlib/sim_util.cpp",
+        "why": "Blocking only correction promotion into the effective outer scalar removes the bad semantics while preserving admission, baseline activeContributions, and baseline outer routing."
+      },
+      "pair_dispatch_internal_trace": {
+        "append_branch": {
+          "ai": "0",
+          "aj": "1",
+          "branch": "excludedPairs",
+          "central_shift_index": "22",
+          "i_atom_index": "0",
+          "j_atom_index": "1",
+          "j_gt_i": "true",
+          "mask_word": "0",
+          "masked_value": "0",
+          "pair_bit": "2",
+          "predicate_excluded_branch": "true",
+          "predicate_mask_nonzero": "false",
+          "role": "target_pair_0_1",
+          "shift_index": "22",
+          "stage": "append_plain_pairlist_branch"
+        },
+        "baseline_dispatch_internal_state": {
+          "active_row": {
+            "ai": "0",
+            "aj": "1",
+            "baseline_active": "inner,middle,outer",
+            "baseline_outer_active": "true",
+            "correction_scalar": "-13.3029",
+            "effective_active": "inner,middle,outer",
+            "effective_outer_active": "true",
+            "inner_scalar": "0",
+            "middle_scalar": "0",
+            "outer_scalar_baseline": "-13.3029",
+            "outer_scalar_effective": "-13.3029",
+            "pair_list": "excludedPairs",
+            "probe_mode": "baseline",
+            "role": "target_pair_0_1",
+            "semantic_result": "nonzero_outer_contribution_live",
+            "stage": "dispatch_internal_active_contributions"
+          },
+          "admitted": true,
+          "effective_outer_active": true,
+          "effective_outer_scalar": -13.3029,
+          "first_bad_semantics_occurs": true,
+          "include_row": {
+            "ai": "0",
+            "aj": "1",
+            "factor_coulomb": "0",
+            "factor_lj": "0",
+            "include_pair_base": "true",
+            "include_pair_effective": "true",
+            "pair_list": "excludedPairs",
+            "probe_mode": "baseline",
+            "role": "target_pair_0_1",
+            "semantic_result": "admitted_into_dispatch",
+            "stage": "dispatch_internal_include_pair"
+          },
+          "physical_outer_realization": true,
+          "routing_row": {
+            "actual_outer_write_executed": "true",
+            "ai": "0",
+            "aj": "1",
+            "effective_outer_active": "true",
+            "effective_outer_scalar": "-13.3029",
+            "outer_force_write_eligible": "true",
+            "outer_routing_target": "forceWithVirial",
+            "pair_list": "excludedPairs",
+            "probe_mode": "baseline",
+            "role": "target_pair_0_1",
+            "semantic_result": "physical_outer_behavior_realized",
+            "stage": "dispatch_internal_outer_routing"
+          },
+          "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level"
+        },
+        "excluded_dispatch_contract": {
+          "control_in_list": "false",
+          "control_occurrences": "0",
+          "control_ordinal": "-1",
+          "factor_coulomb": "0",
+          "factor_lj": "0",
+          "include_rule": "always_true",
+          "list": "excludedPairs",
+          "semantic_role": "excluded_membership_reintroduced_into_exact_nonbonded_consumer",
+          "stage": "excluded_pairs_dispatch_contract",
+          "target_in_list": "true",
+          "target_occurrences": "1",
+          "target_ordinal": "0"
+        },
+        "plain_pairlist_membership": {
+          "ai": "0",
+          "aj": "1",
+          "in_debug_listed_pair_keys": "false",
+          "in_plain_excluded": "1",
+          "in_plain_pairs": "0",
+          "kind": "excluded",
+          "ordinal": "0",
+          "shift_index": "22"
+        },
+        "runtime_exclusions_input": {
+          "atom": "0",
+          "contains_control": "false",
+          "contains_target": "true",
+          "exclusions": "3,1,2,0",
+          "source": "top.excls_via_constructPairlist",
+          "stage": "runtime_exclusions_input"
+        }
+      },
+      "reference_reconciliation": {
+        "activeContributions_layer": {
+          "baseline_exact": {
+            "ai": "0",
+            "aj": "1",
+            "baseline_active": "inner,middle,outer",
+            "baseline_outer_active": "true",
+            "correction_scalar": "-13.3029",
+            "effective_active": "inner,middle,outer",
+            "effective_outer_active": "true",
+            "inner_scalar": "0",
+            "middle_scalar": "0",
+            "outer_scalar_baseline": "-13.3029",
+            "outer_scalar_effective": "-13.3029",
+            "pair_list": "excludedPairs",
+            "probe_mode": "baseline",
+            "role": "target_pair_0_1",
+            "semantic_result": "nonzero_outer_contribution_live",
+            "stage": "dispatch_internal_active_contributions"
+          },
+          "minimal_probe": {
+            "ai": "0",
+            "aj": "1",
+            "baseline_active": "inner,middle,outer",
+            "baseline_outer_active": "true",
+            "correction_scalar": "-13.3029",
+            "effective_active": "inner,middle,outer",
+            "effective_outer_active": "true",
+            "inner_scalar": "0",
+            "middle_scalar": "0",
+            "outer_scalar_baseline": "-13.3029",
+            "outer_scalar_effective": "0",
+            "pair_list": "excludedPairs",
+            "probe_mode": "correction_outer_suppressed",
+            "role": "target_pair_0_1",
+            "semantic_result": "admitted_but_semantically_harmless",
+            "stage": "dispatch_internal_active_contributions"
+          },
+          "narrowed_probe": {
+            "ai": "0",
+            "aj": "1",
+            "baseline_active": "inner,middle,outer",
+            "baseline_outer_active": "true",
+            "correction_scalar": "-13.3029",
+            "effective_active": "inner,middle",
+            "effective_outer_active": "false",
+            "inner_scalar": "0",
+            "middle_scalar": "0",
+            "outer_scalar_baseline": "-13.3029",
+            "outer_scalar_effective": "-13.3029",
+            "pair_list": "excludedPairs",
+            "probe_mode": "active_outer_narrowed",
+            "role": "target_pair_0_1",
+            "semantic_result": "admitted_but_semantically_harmless",
+            "stage": "dispatch_internal_active_contributions"
+          },
+          "reference_semantics": "A valid exclusion pair should not have a live non-zero outer physical contribution."
+        },
+        "divergence": "The exact path diverges from reference semantics only after it admits the excluded bookkeeping pair into dispatch-internal evaluation and then promotes correction_scalar into a live outer contribution.",
+        "includePair_layer": {
+          "baseline_exact": {
+            "ai": "0",
+            "aj": "1",
+            "factor_coulomb": "0",
+            "factor_lj": "0",
+            "include_pair_base": "true",
+            "include_pair_effective": "true",
+            "pair_list": "excludedPairs",
+            "probe_mode": "baseline",
+            "role": "target_pair_0_1",
+            "semantic_result": "admitted_into_dispatch",
+            "stage": "dispatch_internal_include_pair"
+          },
+          "reference_semantics": "The cleared exclusion contract should keep the pair out of the physical nonbonded consumer.",
+          "restricted_probe": {
+            "ai": "0",
+            "aj": "1",
+            "factor_coulomb": "0",
+            "factor_lj": "0",
+            "include_pair_base": "true",
+            "include_pair_effective": "false",
+            "pair_list": "excludedPairs",
+            "probe_mode": "includepair_restricted",
+            "role": "target_pair_0_1",
+            "semantic_result": "blocked_before_consumer",
+            "stage": "dispatch_internal_include_pair"
+          }
+        },
+        "outerRouting_layer": {
+          "baseline_exact": {
+            "actual_outer_write_executed": "true",
+            "ai": "0",
+            "aj": "1",
+            "effective_outer_active": "true",
+            "effective_outer_scalar": "-13.3029",
+            "outer_force_write_eligible": "true",
+            "outer_routing_target": "forceWithVirial",
+            "pair_list": "excludedPairs",
+            "probe_mode": "baseline",
+            "role": "target_pair_0_1",
+            "semantic_result": "physical_outer_behavior_realized",
+            "stage": "dispatch_internal_outer_routing"
+          },
+          "reference_semantics": "No physical outer forceWithVirial write should occur for the excluded bookkeeping pair.",
+          "suppressed_probe": {
+            "actual_outer_write_executed": "false",
+            "ai": "0",
+            "aj": "1",
+            "effective_outer_active": "true",
+            "effective_outer_scalar": "-13.3029",
+            "outer_force_write_eligible": "true",
+            "outer_routing_target": "suppressed",
+            "pair_list": "excludedPairs",
+            "probe_mode": "outer_routing_suppressed",
+            "role": "target_pair_0_1",
+            "semantic_result": "no_physical_outer_realization",
+            "stage": "dispatch_internal_outer_routing"
+          }
+        },
+        "target_pair": [
+          0,
+          1
+        ]
+      },
+      "supports_minimal_fix_candidate": true,
+      "why_not_fully_closed": "This isolates only the narrowest sub-decision for pair (0,1) on dense_oligomer coarse step 0 inside the excludedPairs dispatch site."
+    }
+  },
+  "exact_schedule_active": true,
+  "exact_schedule_dump": {
+    "mts": "true",
+    "mts-level2-factor": "2",
+    "mts-level2-forces": "nonbonded-middle",
+    "mts-level3-factor": "4",
+    "mts-level3-forces": "longrange-nonbonded nonbonded-outer",
+    "mts-mode": "lammps-respa",
+    "mts-respa-angle-level": "1",
+    "mts-respa-bond-level": "1",
+    "mts-respa-dihedral-level": "1",
+    "mts-respa-improper-level": "1",
+    "mts-respa-inner-level": "1",
+    "mts-respa-inner-off": "0.3",
+    "mts-respa-inner-on": "0.45",
+    "mts-respa-kspace-level": "3",
+    "mts-respa-middle-level": "2",
+    "mts-respa-outer-level": "3",
+    "mts-respa-outer-off": "0.8",
+    "mts-respa-outer-on": "0.6",
+    "mts-respa-pair-level": "3",
+    "mts-respa-pair14-level": "1"
+  },
+  "exact_split": {
+    "inner_terms": [
+      "pair14",
+      "bond",
+      "angle",
+      "dihedral",
+      "nonbonded_inner"
+    ],
+    "middle_terms": [
+      "nonbonded_middle"
+    ],
+    "outer_terms": [
+      "pair",
+      "nonbonded_outer",
+      "kspace"
+    ]
+  },
+  "fixture_id": "dense_oligomer",
+  "fixture_sources": {
+    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+  },
+  "gro_metadata": {
+    "box_nm": [
+      2.2,
+      2.2,
+      2.2
+    ],
+    "num_atoms": 384
+  },
+  "listed_terms_present": [
+    "pair14",
+    "bond",
+    "angle",
+    "dihedral"
+  ],
+  "m1_continuity": {
+    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_settings": {
+      "coulombtype": "Cut-off",
+      "integrator": "md",
+      "mts_level2_forces": "nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "current_side_reference_settings": {
+      "coulombtype": "PME",
+      "integrator": "md",
+      "label": "pme_legacy_side_reference",
+      "mts_level2_forces": "nonbonded longrange-nonbonded",
+      "mts_levels": 2,
+      "mts_mode": "legacy"
+    },
+    "direct_archived_m1_comparison_done": false,
+    "direct_archived_m1_comparison_feasible": false,
+    "why_not_feasible": "Archived M1 uses integrator = md with coulombtype = Cut-off and mts-level2-forces = nonbonded; the current exact-3-level harness requires PME-side md-vv settings, so the current simpler split can only be a PME-side legacy side-reference.",
+    "wording_requirement": "The current simpler split must be reported as a PME-side legacy side-reference, not as direct archived-M1 continuity."
+  }
+}

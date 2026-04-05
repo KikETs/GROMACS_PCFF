@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "report_semantics_version": 3,
+  "host_report_dir": "tests/reference_results/exact_respa_openmp_validation/host_reports",
+  "stale_host_report_dir": "tests/reference_results/exact_respa_openmp_validation/stale_host_reports",
+  "profiles": {
+    "amd_ryzen_9_9900x_numa_or_chiplet": {
+      "host_label": "9900x-kiket-local",
+      "topology_class": "numa-or-chiplet",
+      "cpu_model_slug": "amd_ryzen_9_9900x",
+      "filename_host_suffix": "",
+      "report_filename": "amd_ryzen_9_9900x_numa_or_chiplet.json",
+      "collection_mode": "scheduled",
+      "recurring_backend": {
+        "preferred_collection_mode": "scheduled",
+        "github_runner_labels": [
+          "self-hosted",
+          "linux",
+          "x64",
+          "exact-openmp-9900x"
+        ],
+        "backend_target": {
+          "mode": "local"
+        }
+      },
+      "release_binary": "build-worktree/bin/mdrun-non-integrator-test",
+      "tsan_binary": "build-clang-tsan-o2/bin/mdrun-non-integrator-test",
+      "gmx_bin": "build-worktree/bin/gmx",
+      "fixture_root": "tests/reference_results/m6_respa",
+      "system": "small_salt_polymer_box",
+      "tsan_required": true,
+      "tsan_env": {
+        "LD_LIBRARY_PATH": "/home/kiket/Desktop/test/local_toolchains/libtinfo5/lib/x86_64-linux-gnu:/home/kiket/Desktop/test/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib:/home/kiket/Desktop/test/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/clang/18/lib/x86_64-unknown-linux-gnu",
+        "TSAN_OPTIONS": "halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=/home/kiket/Desktop/test/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/bin/llvm-symbolizer"
+      }
+    },
+    "amd_ryzen_7_5800x_low_core_workstation_lab": {
+      "host_label": "Lab",
+      "topology_class": "low-core-workstation",
+      "cpu_model_slug": "amd_ryzen_7_5800x",
+      "filename_host_suffix": "lab",
+      "report_filename": "amd_ryzen_7_5800x_low_core_workstation_lab.json",
+      "collection_mode": "scheduled",
+      "recurring_backend": {
+        "preferred_collection_mode": "scheduled",
+        "github_runner_labels": [],
+        "backend_target": {
+          "mode": "ssh",
+          "ssh_target": "lab@100.121.61.51",
+          "repo_path": "/home/lab/바탕화면/GROMACS_PCFF"
+        }
+      },
+      "release_binary": "build-worktree/bin/mdrun-non-integrator-test",
+      "tsan_binary": "build-clang-tsan-o2/bin/mdrun-non-integrator-test",
+      "gmx_bin": "build-worktree/bin/gmx",
+      "fixture_root": "tests/reference_results/m6_respa",
+      "system": "small_salt_polymer_box",
+      "tsan_required": true,
+      "tsan_env": {
+        "LD_LIBRARY_PATH": "/home/lab/local_toolchains/libtinfo5/lib/x86_64-linux-gnu:/home/lab/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib:/home/lab/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/clang/18/lib/x86_64-unknown-linux-gnu",
+        "TSAN_OPTIONS": "halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=/home/lab/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/bin/llvm-symbolizer"
+      }
+    },
+    "intel_i9_12900k_mid_core_hybrid_desktop": {
+      "host_label": "user-Z690-AORUS-PRO",
+      "topology_class": "mid-core-hybrid-desktop",
+      "cpu_model_slug": "intel_i9_12900k",
+      "filename_host_suffix": "",
+      "report_filename": "intel_i9_12900k_mid_core_hybrid_desktop.json",
+      "collection_mode": "scheduled",
+      "recurring_backend": {
+        "preferred_collection_mode": "scheduled",
+        "github_runner_labels": [],
+        "backend_target": {
+          "mode": "ssh",
+          "ssh_target": "user@100.83.33.61",
+          "repo_path": "/home/user/Desktop/GROMACS_PCFF"
+        }
+      },
+      "release_binary": "build-worktree/bin/mdrun-non-integrator-test",
+      "tsan_binary": "build-clang-tsan-o2/bin/mdrun-non-integrator-test",
+      "gmx_bin": "build-worktree/bin/gmx",
+      "fixture_root": "tests/reference_results/m6_respa",
+      "system": "small_salt_polymer_box",
+      "tsan_required": true,
+      "tsan_env": {
+        "LD_LIBRARY_PATH": "/home/user/local_toolchains/libtinfo5/lib/x86_64-linux-gnu:/home/user/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib:/home/user/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/clang/18/lib/x86_64-unknown-linux-gnu",
+        "TSAN_OPTIONS": "halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=/home/user/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/bin/llvm-symbolizer"
+      }
+    }
+  },
+  "active_host_profiles": [
+    "amd_ryzen_9_9900x_numa_or_chiplet",
+    "amd_ryzen_7_5800x_low_core_workstation_lab",
+    "intel_i9_12900k_mid_core_hybrid_desktop"
+  ],
+  "pending_host_profiles": []
+}

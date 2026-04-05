@@ -1,0 +1,15 @@
+
+Statistics over 9 steps [ 0.0000 through 0.0040 ps ], 9 data sets
+All statistics are over 3 points (frames)
+
+Energy                      Average   Err.Est.       RMSD  Tot-Drift
+-------------------------------------------------------------------------------
+Class2 Bond                 1.15376         --  0.0786394  -0.234825  (kJ/mol)
+Class2 Angle                4.38069         --   0.058735   0.174244  (kJ/mol)
+Class2 Dih.                 945.769         --  0.0322133 -0.0959643  (kJ/mol)
+LJ-14                       92.0081         --   0.245743      0.729  (kJ/mol)
+Coulomb-14                  -5919.9         --   0.461172   -1.36819  (kJ/mol)
+LJ (SR)                    -664.882         --  0.0133104 -0.0395508  (kJ/mol)
+Coulomb (SR)               -7160.83         --  0.0103656  0.0281613  (kJ/mol)
+Coul. recip.                122.697         --   0.064578   -0.19209  (kJ/mol)
+Potential                  -12579.6         --   0.335492  -0.999092  (kJ/mol)

@@ -1,0 +1,3 @@
+# stage=first_excluded_outer_write pair_list=excludedPairs contribution=outer buffer=forceWithVirial alias_with_shift=false ai=0 aj=1 shift_index=22 scalar=-13.3029 correction_scalar=-13.3029 qq=8.68347 r=0.242624
+0	-36.337398529052734	41.049568176269531	0.87085205316543579
+1	36.337398529052734	-41.049568176269531	-0.87085205316543579

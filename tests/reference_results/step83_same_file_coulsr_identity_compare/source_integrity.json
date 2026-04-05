@@ -1,0 +1,94 @@
+{
+  "comparison_boundary": "same-file single-term identity comparison: (exact_step0_breakdown coulsr_kcal_mol - single_time_step_breakdown coulsr_kcal_mol) vs exact_minus_single_time_step coulsr_kcal_mol",
+  "mapping": {
+    "single_term_formula": "coulsr_kcal_mol",
+    "component_extraction_code": "src/programs/mdrun/tests/pcff_short_md.cpp:1120",
+    "delta_map_code": "src/programs/mdrun/tests/pcff_short_md.cpp:1130-1135",
+    "diagnostics_write_code": "src/programs/mdrun/tests/pcff_short_md.cpp:2242-2244",
+    "json_precision_code": "src/programs/mdrun/tests/pcff_short_md.cpp:1035",
+    "algebra": "Because exact_minus_single_time_step stores per-key (exact - single), exact_step0_breakdown coulsr_kcal_mol - single_time_step_breakdown coulsr_kcal_mol should equal exact_minus_single_time_step coulsr_kcal_mol.",
+    "note": "same-file single-term identity comparison only; writer localization is out of scope"
+  },
+  "systems": {
+    "small_oligomer": {
+      "file": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_oligomer_nve.json",
+      "sections": {
+        "exact_step0_breakdown": {
+          "section_line": 41,
+          "field": {
+            "json_path": "diagnostics.exact_step0_breakdown.coulsr_kcal_mol",
+            "line": 46,
+            "value": -26.9761787546
+          },
+          "single_term_value": "-26.9761787546"
+        },
+        "single_time_step_breakdown": {
+          "section_line": 54,
+          "field": {
+            "json_path": "diagnostics.single_time_step_breakdown.coulsr_kcal_mol",
+            "line": 59,
+            "value": -26.9761787546
+          },
+          "single_term_value": "-26.9761787546"
+        },
+        "exact_minus_single_time_step": {
+          "section_line": 28,
+          "field": {
+            "json_path": "diagnostics.exact_minus_single_time_step.coulsr_kcal_mol",
+            "line": 33,
+            "value": 0
+          },
+          "single_term_value": "0"
+        }
+      },
+      "computed": {
+        "exact_coulsr_kcal_mol": "-26.9761787546",
+        "single_coulsr_kcal_mol": "-26.9761787546",
+        "difference_exact_minus_single": "0E-10",
+        "exact_minus_single_coulsr_kcal_mol": "0",
+        "identity_delta": "0E-10",
+        "interpretation": "exact identity"
+      }
+    },
+    "small_salt_polymer_box": {
+      "file": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_salt_polymer_box_nve.json",
+      "sections": {
+        "exact_step0_breakdown": {
+          "section_line": 42,
+          "field": {
+            "json_path": "diagnostics.exact_step0_breakdown.coulsr_kcal_mol",
+            "line": 47,
+            "value": -167.366188297
+          },
+          "single_term_value": "-167.366188297"
+        },
+        "single_time_step_breakdown": {
+          "section_line": 55,
+          "field": {
+            "json_path": "diagnostics.single_time_step_breakdown.coulsr_kcal_mol",
+            "line": 60,
+            "value": -167.36617371
+          },
+          "single_term_value": "-167.36617371"
+        },
+        "exact_minus_single_time_step": {
+          "section_line": 29,
+          "field": {
+            "json_path": "diagnostics.exact_minus_single_time_step.coulsr_kcal_mol",
+            "line": 34,
+            "value": -1.4587752446e-05
+          },
+          "single_term_value": "-0.000014587752446"
+        }
+      },
+      "computed": {
+        "exact_coulsr_kcal_mol": "-167.366188297",
+        "single_coulsr_kcal_mol": "-167.36617371",
+        "difference_exact_minus_single": "-0.000014587",
+        "exact_minus_single_coulsr_kcal_mol": "-0.000014587752446",
+        "identity_delta": "7.52446E-10",
+        "interpretation": "a very small identity difference is visible"
+      }
+    }
+  }
+}

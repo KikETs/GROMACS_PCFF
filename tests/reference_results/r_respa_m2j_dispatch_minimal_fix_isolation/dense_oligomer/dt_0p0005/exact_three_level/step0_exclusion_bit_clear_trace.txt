@@ -1,0 +1,2 @@
+stage=runtime_clear_exclusion_bit source=top.excls atom_i=0 atom_j=1 i_index=0 j_index=1 j_cluster=0 list_index=0 inner_j=1 mask_before=2246 bit_mask=2 masked_before=2 mask_after=2244 masked_after=0 rule=jAtom_in_topology_exclusions
+stage=runtime_clear_exclusion_bit source=top.excls atom_i=0 atom_j=1 i_index=0 j_index=1 j_cluster=0 list_index=0 inner_j=1 mask_before=2246 bit_mask=2 masked_before=2 mask_after=2244 masked_after=0 rule=jAtom_in_topology_exclusions
