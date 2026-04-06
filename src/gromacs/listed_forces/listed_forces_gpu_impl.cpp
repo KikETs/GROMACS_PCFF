@@ -153,7 +153,7 @@ bool buildSupportsListedForcesGpu(std::string* error)
 bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, std::string* error)
 {
     MessageStringCollector errorReasons;
-    const bool isExactLammpsRespa = ir.useMts && ir.mtsMode == MtsMode::LammpsRespa;
+    const bool isExactLammpsRespa = useExactRespa(ir);
     const bool hasLennardJones14Pairs =
             topologyContainsInteractionType(mtop, InteractionFunction::LennardJones14);
     const bool hasListedPairGpuSemantics =
@@ -187,28 +187,25 @@ bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, 
             "Cannot compute bonded interactions on a GPU, because GPU implementation requires "
             "a dynamical integrator (md, sd, etc).");
     errorReasons.appendIf(EI_MIMIC(ir.eI), "MiMiC");
-    if (ir.useMts)
+    if (isExactLammpsRespa)
     {
-        if (isExactLammpsRespa)
-        {
-            errorReasons.appendIf(
-                    !hasLennardJones14Pairs,
-                    "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the pair14-only "
-                    "narrow mode, so the topology must contain Lennard-Jones 1-4 listed pairs.");
-            errorReasons.appendIf(
-                    hasExactHybridUnsupportedGpuBondedTypes,
-                    "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the pair14-only "
-                    "narrow mode. GPU-capable bond/angle/dihedral/improper kernels must remain on the CPU.");
-            errorReasons.appendIf(
-                    hasExactHybridUnsupportedPairInteractionTypes,
-                    "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted for "
-                    "InteractionFunction::LennardJones14 listed pairs. Coulomb14 and "
-                    "LennardJonesCoulomb14Q remain unsupported in the exact GPU path.");
-        }
-        else
-        {
-            errorReasons.append("Cannot run with multiple time stepping");
-        }
+        errorReasons.appendIf(
+                !hasLennardJones14Pairs,
+                "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the pair14-only "
+                "narrow mode, so the topology must contain Lennard-Jones 1-4 listed pairs.");
+        errorReasons.appendIf(
+                hasExactHybridUnsupportedGpuBondedTypes,
+                "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the pair14-only "
+                "narrow mode. GPU-capable bond/angle/dihedral/improper kernels must remain on the CPU.");
+        errorReasons.appendIf(
+                hasExactHybridUnsupportedPairInteractionTypes,
+                "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted for "
+                "InteractionFunction::LennardJones14 listed pairs. Coulomb14 and "
+                "LennardJonesCoulomb14Q remain unsupported in the exact GPU path.");
+    }
+    else if (ir.useMts)
+    {
+        errorReasons.append("Cannot run with multiple time stepping");
     }
     // There is one energy group for each wall and those are not used for 1-4 interactions
     errorReasons.appendIf((ir.opts.ngener - ir.nwall > 1), "Cannot run with multiple energy groups");

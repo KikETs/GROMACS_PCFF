@@ -56,6 +56,7 @@
 #include "gromacs/listed_forces/listed_forces.h"
 #include "gromacs/listed_forces/listed_forces_gpu.h"
 #include "gromacs/mdlib/force_flags.h"
+#include "gromacs/mdtypes/exactrespaschedule.h"
 #include "gromacs/mdtypes/forcerec.h"
 #include "gromacs/mdtypes/iforceprovider.h"
 #include "gromacs/mdtypes/inputrec.h"
@@ -96,31 +97,37 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
                                             bool       useGpuPmeDecomposition)
 {
     SimulationWorkload simulationWorkload;
-    const bool         useExactLammpsRespa =
-            inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa;
-    const bool         useExactLammpsRespaHybridGpuNonbonded =
-            useExactLammpsRespa && useGpuForNonbonded && isSupportedExactRespaHybridNbGpuInput(inputrec);
-    const bool         useExactLammpsRespaHybridGpuPme =
+    const bool         useExactLammpsRespa = useExactRespa(inputrec);
+    const bool         useAnySubsteps      = useMtsSubstepping(inputrec) || useExactLammpsRespa;
+    const bool exactLammpsRespaHasPairSplitting = exactRespaHasPairSplitting(inputrec);
+    const bool useExactLammpsRespaHybridGpuNonbonded =
+            useExactLammpsRespa && exactLammpsRespaHasPairSplitting && useGpuForNonbonded
+            && isSupportedExactRespaHybridNbGpuInput(inputrec);
+    const bool useExactLammpsRespaHybridGpuPme =
             useExactLammpsRespaHybridGpuNonbonded && (pmeRunMode == PmeRunMode::GPU);
-    const bool         useExactLammpsRespaHybridGpuUpdate =
+    const bool useExactLammpsRespaHybridGpuUpdate =
             useExactLammpsRespaHybridGpuPme && useGpuForBonded && useGpuForUpdate;
     const bool disableGpuForExactLammpsRespa =
             useExactLammpsRespa && !useExactLammpsRespaHybridGpuNonbonded;
 
     simulationWorkload.computeNonbonded = !disableNonbondedCalculation;
-    simulationWorkload.nonbondedMtsLevel =
-            (simulationWorkload.computeNonbonded && inputrec.useMts
-             && !(useExactLammpsRespa && inputrec.lammpsRespa.hasPairSplitting()))
-                    ? forceGroupMtsLevel(inputrec.mtsLevels, MtsForceGroups::Nonbonded)
+    simulationWorkload.nonbondedSubstepLevel =
+            (simulationWorkload.computeNonbonded && useAnySubsteps)
+                    ? (useExactLammpsRespa
+                               ? (exactLammpsRespaHasPairSplitting
+                                          ? 0
+                                          : exactRespaNonbondedFullLevel(inputrec))
+                               : forceGroupMtsLevel(inputrec.mtsLevels, MtsForceGroups::Nonbonded))
                     : 0;
     simulationWorkload.computeMuTot      = inputrecNeedMutot(&inputrec);
     simulationWorkload.haveDynamicBox    = haveDynamicBox;
-    simulationWorkload.useCpuNonbonded   = !useGpuForNonbonded || disableGpuForExactLammpsRespa;
-    simulationWorkload.useGpuNonbonded   = useGpuForNonbonded && !disableGpuForExactLammpsRespa;
-    simulationWorkload.useCpuNonbondedFE = useExactLammpsRespa || !useGpuForNonbondedFE;
-    simulationWorkload.useGpuNonbondedFE = !useExactLammpsRespa && useGpuForNonbondedFE;
+    simulationWorkload.useCpuNonbonded =
+            (useExactLammpsRespa && !useExactLammpsRespaHybridGpuNonbonded) || !useGpuForNonbonded;
+    simulationWorkload.useGpuNonbonded = useGpuForNonbonded && !disableGpuForExactLammpsRespa;
+    simulationWorkload.useCpuNonbondedFE = disableGpuForExactLammpsRespa || !useGpuForNonbondedFE;
+    simulationWorkload.useGpuNonbondedFE = !disableGpuForExactLammpsRespa && useGpuForNonbondedFE;
     simulationWorkload.useGpuForeignNonbondedFE =
-            !useExactLammpsRespa && useGpuForNonbondedFE && inputrec.fepvals->n_lambda > 0
+            !disableGpuForExactLammpsRespa && useGpuForNonbondedFE && inputrec.fepvals->n_lambda > 0
             && inputrec.fepvals->softcoreFunction == SoftcoreType::Beutler
             && inputrec.fepvals->sc_alpha != 0;
     simulationWorkload.useCpuPme =
@@ -138,8 +145,8 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     simulationWorkload.haveFillerParticlesInLocalState = haveFillerParticlesInLocalState;
     simulationWorkload.havePpDomainDecomposition       = havePpDomainDecomposition;
     simulationWorkload.useCpuHaloExchange =
-            havePpDomainDecomposition && (useExactLammpsRespa || !useGpuDirectHalo);
-    simulationWorkload.useGpuHaloExchange = !useExactLammpsRespa && useGpuDirectHalo;
+            havePpDomainDecomposition && (disableGpuForExactLammpsRespa || !useGpuDirectHalo);
+    simulationWorkload.useGpuHaloExchange = !disableGpuForExactLammpsRespa && useGpuDirectHalo;
     if (pmeRunMode == PmeRunMode::None)
     {
         GMX_RELEASE_ASSERT(!haveSeparatePmeRank, "Can not have separate PME rank(s) without PME.");
@@ -158,6 +165,7 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     simulationWorkload.useGpuPmeDecomposition       = !useExactLammpsRespa && useGpuPmeDecomposition;
     simulationWorkload.haveEwaldSurfaceContribution = haveEwaldSurfaceContribution(inputrec);
     simulationWorkload.useMts                       = inputrec.useMts;
+    simulationWorkload.useExactRespa               = useExactLammpsRespa;
     const bool featuresRequireGpuBufferOps =
             (!useExactLammpsRespa && useGpuForUpdate) || simulationWorkload.useGpuDirectCommunication;
 
@@ -172,10 +180,12 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     }
     // x/f transform is done on GPU by default unless it is not unsupported (with MTS) or disabled (with the env. var.)
     simulationWorkload.useGpuXBufferOpsWhenAllowed =
-            GpuConfigurationCapabilities::BufferOps && useGpuForNonbonded && !inputrec.useMts
+            GpuConfigurationCapabilities::BufferOps && useGpuForNonbonded
+            && !useAnySubsteps
             && !(useReplicaExchange && !useGpuForUpdate) && !disableGpuBufferOps;
     simulationWorkload.useGpuFBufferOpsWhenAllowed =
-            GpuConfigurationCapabilities::BufferOps && useGpuForNonbonded && !inputrec.useMts
+            GpuConfigurationCapabilities::BufferOps && useGpuForNonbonded
+            && (!useAnySubsteps)
             && !(useReplicaExchange && !useGpuForUpdate) && !disableGpuBufferOps;
     if (featuresRequireGpuBufferOps)
     {
@@ -299,13 +309,12 @@ StepWorkload setupStepWorkload(const int                     legacyFlags,
     flags.computeVirial                 = ((legacyFlags & GMX_FORCE_VIRIAL) != 0);
     flags.computeEnergy                 = ((legacyFlags & GMX_FORCE_ENERGY) != 0);
     flags.computeForces                 = ((legacyFlags & GMX_FORCE_FORCES) != 0);
-    flags.useOnlyMtsCombinedForceBuffer = ((legacyFlags & GMX_FORCE_DO_NOT_NEED_NORMAL_FORCE) != 0);
+    flags.useOnlyCombinedForceBuffer = ((legacyFlags & GMX_FORCE_DO_NOT_NEED_NORMAL_FORCE) != 0);
     flags.computeListedForces           = ((legacyFlags & GMX_FORCE_LISTED) != 0);
     flags.computeNonbondedForces =
             ((legacyFlags & GMX_FORCE_NONBONDED) != 0) && simulationWork.computeNonbonded
-            && !(simulationWork.nonbondedMtsLevel > 0
-                 && highestActiveLevel < simulationWork.nonbondedMtsLevel);
-    flags.nonbondedRespaContribution = MtsNonbondedRespaContribution::Full;
+            && !(simulationWork.nonbondedSubstepLevel > 0
+                 && highestActiveLevel < simulationWork.nonbondedSubstepLevel);
     flags.computeDhdl = ((legacyFlags & GMX_FORCE_DHDL) != 0);
 
     if (simulationWork.useGpuXBufferOpsWhenAllowed || simulationWork.useGpuFBufferOpsWhenAllowed)
@@ -324,14 +333,89 @@ StepWorkload setupStepWorkload(const int                     legacyFlags,
     flags.haveGpuPmeOnThisRank     = simulationWork.haveGpuPmeOnPpRank() && flags.computeLongRangeNonbondedForces;
     flags.computePmeOnSeparateRank = simulationWork.haveSeparatePmeRank && flags.computeLongRangeNonbondedForces;
     flags.combineMtsForcesBeforeHaloExchange =
-            (flags.computeForces && simulationWork.useMts && flags.computeSlowForces
-             && flags.useOnlyMtsCombinedForceBuffer
-             // Exact LAMMPS-style r-RESPA always uses at least three levels and keeps
-             // explicit per-level buffers, so it must never take this combined-only shortcut.
+            (flags.computeForces && simulationWork.useLegacyMtsSubsteps() && flags.computeSlowForces
+             && flags.useOnlyCombinedForceBuffer
              && mtsLevels.size() == 2
              && flags.highestActiveMtsLevel == 1
              && !(flags.computeVirial || simulationWork.useGpuNonbonded || flags.haveGpuPmeOnThisRank));
     // On NS steps, the buffer is cleared in stateGpu->reinit, no need to clear it twice.
+    flags.clearGpuFBufferEarly =
+            flags.useGpuFHalo && !domainWork.haveCpuLocalForceWork && !flags.doNeighborSearch;
+
+    return flags;
+}
+
+ExactRespaStepWork setupExactRespaStepWork(const int                   legacyFlags,
+                                           const t_inputrec&           inputrec,
+                                           const int64_t               step,
+                                           const DomainLifetimeWorkload& domainWork,
+                                           const SimulationWorkload&   simulationWork)
+{
+    GMX_RELEASE_ASSERT(useExactRespa(inputrec),
+                       "Exact step workload should only be queried for exact r-RESPA");
+    GMX_UNUSED_VALUE(domainWork);
+
+    ExactRespaStepWork flags;
+    flags.highestActiveLevel  = highestActiveExactRespaLevel(inputrec.exactRespa, step);
+    flags.haveSlowForceLevels = (flags.highestActiveLevel > 0);
+    const bool computeLongRangeNonbondedForces =
+            (flags.highestActiveLevel >= exactRespaLongrangeNonbondedLevel(inputrec));
+    flags.combineForcesBeforeHaloExchange =
+            ((legacyFlags & GMX_FORCE_FORCES) != 0) && simulationWork.useExactRespa
+            && flags.haveSlowForceLevels
+            && ((legacyFlags & GMX_FORCE_DO_NOT_NEED_NORMAL_FORCE) != 0)
+            && exactRespaNumLevels(inputrec) == 2
+            && flags.highestActiveLevel == 1
+            && !(((legacyFlags & GMX_FORCE_VIRIAL) != 0) || simulationWork.useGpuNonbonded
+                 || (simulationWork.haveGpuPmeOnPpRank() && computeLongRangeNonbondedForces));
+
+    return flags;
+}
+
+StepWorkload setupExactRespaStepWorkload(const int                   legacyFlags,
+                                         const t_inputrec&           inputrec,
+                                         const int64_t               step,
+                                         const DomainLifetimeWorkload& domainWork,
+                                         const SimulationWorkload&   simulationWork)
+{
+    GMX_RELEASE_ASSERT(useExactRespa(inputrec),
+                       "Exact step workload should only be queried for exact r-RESPA");
+
+    const int  highestActiveLevel             = highestActiveExactRespaLevel(inputrec.exactRespa, step);
+    const bool haveSlowForceLevels            = (highestActiveLevel > 0);
+    const int  longrangeLevel                 = exactRespaLongrangeNonbondedLevel(inputrec);
+    const bool computeLongRangeNonbondedForces = (highestActiveLevel >= longrangeLevel);
+
+    StepWorkload flags;
+    flags.stateChanged                    = ((legacyFlags & GMX_FORCE_STATECHANGED) != 0);
+    flags.doNeighborSearch                = ((legacyFlags & GMX_FORCE_NS) != 0);
+    flags.computeLongRangeNonbondedForces = computeLongRangeNonbondedForces;
+    flags.computeVirial                   = ((legacyFlags & GMX_FORCE_VIRIAL) != 0);
+    flags.computeEnergy                   = ((legacyFlags & GMX_FORCE_ENERGY) != 0);
+    flags.computeForces                   = ((legacyFlags & GMX_FORCE_FORCES) != 0);
+    flags.useOnlyCombinedForceBuffer      = ((legacyFlags & GMX_FORCE_DO_NOT_NEED_NORMAL_FORCE) != 0);
+    flags.computeListedForces             = ((legacyFlags & GMX_FORCE_LISTED) != 0);
+    flags.computeNonbondedForces =
+            ((legacyFlags & GMX_FORCE_NONBONDED) != 0) && simulationWork.computeNonbonded
+            && !(simulationWork.nonbondedSubstepLevel > 0
+                 && highestActiveLevel < simulationWork.nonbondedSubstepLevel);
+    flags.computeDhdl = ((legacyFlags & GMX_FORCE_DHDL) != 0);
+
+    if (simulationWork.useGpuXBufferOpsWhenAllowed || simulationWork.useGpuFBufferOpsWhenAllowed)
+    {
+        GMX_ASSERT(simulationWork.useGpuNonbonded,
+                   "Can only offload buffer ops if nonbonded computation is also offloaded");
+    }
+    flags.useGpuXBufferOps = simulationWork.useGpuXBufferOpsWhenAllowed && !flags.doNeighborSearch;
+    flags.useGpuFBufferOps = simulationWork.useGpuFBufferOpsWhenAllowed && !flags.computeVirial;
+    flags.useGpuPmeFReduction =
+            flags.computeLongRangeNonbondedForces && flags.useGpuFBufferOps
+            && (simulationWork.haveGpuPmeOnPpRank() || simulationWork.useGpuPmePpCommunication);
+    flags.useGpuXHalo              = simulationWork.useGpuHaloExchange && !flags.doNeighborSearch;
+    flags.useGpuFHalo              = simulationWork.useGpuHaloExchange && flags.useGpuFBufferOps;
+    flags.haveGpuPmeOnThisRank     = simulationWork.haveGpuPmeOnPpRank() && flags.computeLongRangeNonbondedForces;
+    flags.computePmeOnSeparateRank = simulationWork.haveSeparatePmeRank && flags.computeLongRangeNonbondedForces;
+    GMX_UNUSED_VALUE(haveSlowForceLevels);
     flags.clearGpuFBufferEarly =
             flags.useGpuFHalo && !domainWork.haveCpuLocalForceWork && !flags.doNeighborSearch;
 

@@ -1706,8 +1706,8 @@ int Mdrunner::mdrunner()
             canUseDirectGpuComm,
             useGpuPmeDecomposition);
 
-    if (runScheduleWork.simulationWork.useGpuNonbonded && inputrec->useMts
-        && inputrec->mtsMode == MtsMode::LammpsRespa && inputrec->lammpsRespa.hasPairSplitting())
+    if (runScheduleWork.simulationWork.useGpuNonbonded && gmx::useExactRespa(*inputrec)
+        && inputrec->exactRespa.forceLayout.hasPairSplitting())
     {
         if (havePPDomainDecomposition(cr->dd) || haveSeparatePmeRank)
         {
@@ -1834,9 +1834,9 @@ int Mdrunner::mdrunner()
     checkHardwareOversubscription(
             numThreadsOnThisRank, cr->commMyGroup.rank(), *hwinfo_->hardwareTopology, physicalNodeComm, mdlog);
 
-    const bool exactRespaHybridGpuRequested =
-            inputrec->useMts && inputrec->mtsMode == MtsMode::LammpsRespa
-            && inputrec->lammpsRespa.hasPairSplitting() && runScheduleWork.simulationWork.useGpuNonbonded;
+    const bool exactRespaHybridGpuRequested = gmx::useExactRespa(*inputrec)
+                                              && inputrec->exactRespa.forceLayout.hasPairSplitting()
+                                              && runScheduleWork.simulationWork.useGpuNonbonded;
     if (exactRespaHybridGpuRequested && numThreadsOnThisRank != 2)
     {
         GMX_THROW(InconsistentInputError(formatString(

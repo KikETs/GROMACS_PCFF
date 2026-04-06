@@ -133,7 +133,7 @@ const char* const g_specifyEverythingFormatString =
 
 bool isExactLammpsRespa(const t_inputrec& inputrec)
 {
-    return inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa;
+    return useExactRespa(inputrec);
 }
 
 bool isSupportedExactRespaHybridNbGpuInputInternal(const t_inputrec& inputrec)
@@ -143,7 +143,7 @@ bool isSupportedExactRespaHybridNbGpuInputInternal(const t_inputrec& inputrec)
         return false;
     }
 
-    if (!isExactLammpsRespa(inputrec) || !inputrec.lammpsRespa.hasPairSplitting())
+    if (!isExactLammpsRespa(inputrec) || !inputrec.exactRespa.forceLayout.hasPairSplitting())
     {
         return false;
     }

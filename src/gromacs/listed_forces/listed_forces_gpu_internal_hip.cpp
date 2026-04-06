@@ -248,7 +248,6 @@ __launch_bounds__(c_threadsBondedPerBlock) __global__
                                                  kernelParams.pbcAiuc,
                                                  kernelParams.repulsionPower,
                                                  kernelParams.electrostaticsScaleFactor,
-                                                 kernelParams.repulsionPower,
                                                  &vtot_loc,
                                                  &vtotElec_loc,
                                                  threadIdx.x);

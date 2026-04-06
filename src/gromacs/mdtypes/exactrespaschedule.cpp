@@ -250,6 +250,11 @@ int exactRespaNonbondedMtsFactor(const t_inputrec& ir)
         return 1;
     }
 
+    if (!exactRespaHasPairSplitting(ir))
+    {
+        return exactRespaLevelStepFactor(ir.exactRespa, exactRespaNonbondedFullLevel(ir));
+    }
+
     int factor = 1;
     factor = std::max(factor, exactRespaLevelStepFactor(ir.exactRespa, exactRespaNonbondedInnerLevel(ir)));
     factor = std::max(factor, exactRespaLevelStepFactor(ir.exactRespa, exactRespaNonbondedOuterLevel(ir)));

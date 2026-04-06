@@ -291,30 +291,29 @@ void setupLammpsRespaLevels(const GromppMtsOpts&                mtsOpts,
 
 } // namespace
 
-int forceGroupMtsLevel(ArrayRef<const MtsLevel> mtsLevels, const MtsForceGroups mtsForceGroup)
+namespace
 {
-    if (mtsLevels.empty())
+
+real respaSwitchIn(const real r, const real off, const real on)
+{
+    if (on <= off)
     {
-        return 0;
+        return (r >= on ? 1.0_real : 0.0_real);
+    }
+    if (r <= off)
+    {
+        return 0.0_real;
+    }
+    if (r >= on)
+    {
+        return 1.0_real;
     }
 
-    const int forceGroupIndex = static_cast<int>(mtsForceGroup);
-    for (int mtsLevel = 0; mtsLevel < static_cast<int>(mtsLevels.size()); mtsLevel++)
-    {
-        if (mtsLevels[mtsLevel].forceGroups[forceGroupIndex])
-        {
-            return mtsLevel;
-        }
-    }
-
-    GMX_RELEASE_ASSERT(false, "Each force group should belong to exactly one MTS level");
-    return 0;
+    const real x = (r - off) / (on - off);
+    return x * x * (3.0_real - 2.0_real * x);
 }
 
-int forceGroupMtsFactor(ArrayRef<const MtsLevel> mtsLevels, const MtsForceGroups mtsForceGroup)
-{
-    return mtsLevels.empty() ? 1 : mtsLevels[forceGroupMtsLevel(mtsLevels, mtsForceGroup)].stepFactor;
-}
+} // namespace
 
 int highestActiveMtsLevel(ArrayRef<const MtsLevel> mtsLevels, const int64_t step)
 {
@@ -346,86 +345,10 @@ bool mtsLevelIsActive(ArrayRef<const MtsLevel> mtsLevels, const int mtsLevel, co
     return (mtsLevels.empty() || highestActiveMtsLevel(mtsLevels, step) >= mtsLevel);
 }
 
-int nonbondedMtsFactor(const t_inputrec& ir)
-{
-    if (ir.useMts && !ir.mtsLevels.empty())
-    {
-        if (ir.mtsMode == MtsMode::LammpsRespa && ir.lammpsRespa.hasPairSplitting())
-        {
-            int factor = 1;
-            for (const auto contribution : { MtsNonbondedRespaContribution::Inner,
-                                             MtsNonbondedRespaContribution::Middle,
-                                             MtsNonbondedRespaContribution::Outer })
-            {
-                const int mtsLevel = nonbondedRespaContributionMtsLevel(ir, contribution);
-                if (mtsLevel >= 0)
-                {
-                    factor = std::max(factor, ir.mtsLevels[mtsLevel].stepFactor);
-                }
-            }
-            return factor;
-        }
-        return forceGroupMtsFactor(ir.mtsLevels, MtsForceGroups::Nonbonded);
-    }
-    else
-    {
-        return 1;
-    }
-}
-
-int nonbondedRespaContributionMtsLevel(const t_inputrec& ir, const MtsNonbondedRespaContribution contribution)
-{
-    if (!ir.useMts || ir.mtsLevels.empty())
-    {
-        return 0;
-    }
-    if (ir.mtsMode != MtsMode::LammpsRespa)
-    {
-        return (contribution == MtsNonbondedRespaContribution::Full)
-                       ? forceGroupMtsLevel(ir.mtsLevels, MtsForceGroups::Nonbonded)
-                       : -1;
-    }
-
-    switch (contribution)
-    {
-        case MtsNonbondedRespaContribution::Full:
-            return ir.lammpsRespa.hasPairSplitting() ? -1 : ir.lammpsRespa.pairLevel;
-        case MtsNonbondedRespaContribution::Inner: return ir.lammpsRespa.innerLevel;
-        case MtsNonbondedRespaContribution::Middle: return ir.lammpsRespa.middleLevel;
-        case MtsNonbondedRespaContribution::Outer: return ir.lammpsRespa.outerLevel;
-        default: GMX_RELEASE_ASSERT(false, "Invalid real-space nonbonded r-RESPA contribution");
-    }
-    return -1;
-}
-
-namespace
-{
-
-real respaSwitchIn(const real r, const real off, const real on)
-{
-    if (on <= off)
-    {
-        return (r >= on ? 1.0_real : 0.0_real);
-    }
-    if (r <= off)
-    {
-        return 0.0_real;
-    }
-    if (r >= on)
-    {
-        return 1.0_real;
-    }
-
-    const real x = (r - off) / (on - off);
-    return x * x * (3.0_real - 2.0_real * x);
-}
-
-} // namespace
-
 LammpsRespaPairSplitWeights computeLammpsRespaPairSplitWeights(const t_inputrec& ir, const real r)
 {
     LammpsRespaPairSplitWeights weights;
-    const auto&                 respa = ir.lammpsRespa;
+    const auto&                 respa = useExactRespa(ir) ? ir.exactRespa.forceLayout : ir.lammpsRespa;
 
     if (!respa.hasPairSplitting())
     {
@@ -457,11 +380,14 @@ std::vector<LammpsRespaNonbondedOutputSink> activeLammpsRespaNonbondedOutputSink
                                                                                    const bool        computeEnergy)
 {
     std::vector<LammpsRespaNonbondedOutputSink> sinks;
-    if (!ir.useMts || ir.mtsMode != MtsMode::LammpsRespa)
+    const bool                                  useExactLammpsRespa = useExactRespa(ir);
+    const bool useLegacyLammpsRespa = ir.useMts && ir.mtsMode == MtsMode::LammpsRespa;
+    if (!useExactLammpsRespa && !useLegacyLammpsRespa)
     {
         return sinks;
     }
 
+    const auto& respa = useExactLammpsRespa ? ir.exactRespa.forceLayout : ir.lammpsRespa;
     const auto appendSink = [&](const MtsNonbondedRespaContribution contribution)
     {
         const int mtsLevel = nonbondedRespaContributionMtsLevel(ir, contribution);
@@ -484,7 +410,7 @@ std::vector<LammpsRespaNonbondedOutputSink> activeLammpsRespaNonbondedOutputSink
                           accumulateEnergy });
     };
 
-    if (ir.lammpsRespa.hasPairSplitting())
+    if (respa.hasPairSplitting())
     {
         for (const auto contribution : { MtsNonbondedRespaContribution::Inner,
                                          MtsNonbondedRespaContribution::Middle,
@@ -571,194 +497,6 @@ std::vector<MtsLevel> setupMtsLevels(const GromppMtsOpts& mtsOpts, std::vector<s
     }
 
     return mtsLevels;
-}
-
-bool haveValidMtsSetup(const t_inputrec& ir)
-{
-    if (!ir.useMts || ir.mtsLevels.size() < 2 || ir.mtsLevels.size() > c_maxMtsLevels)
-    {
-        return false;
-    }
-
-    for (int mtsLevel = 1; mtsLevel < static_cast<int>(ir.mtsLevels.size()); mtsLevel++)
-    {
-        if (ir.mtsLevels[mtsLevel].stepFactor <= ir.mtsLevels[mtsLevel - 1].stepFactor
-            || ir.mtsLevels[mtsLevel].stepFactor % ir.mtsLevels[mtsLevel - 1].stepFactor != 0)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-namespace
-{
-
-//! Checks whether \p nstValue is a multiple of the largest MTS step, returns an error string for parameter \p param when this is not the case
-std::optional<std::string> checkMtsInterval(ArrayRef<const MtsLevel> mtsLevels, const char* param, const int nstValue)
-{
-    GMX_RELEASE_ASSERT(mtsLevels.size() >= 2, "Need at least two levels for MTS");
-
-    const int mtsFactor = mtsLevels.back().stepFactor;
-    if (nstValue % mtsFactor == 0)
-    {
-        return {};
-    }
-    else
-    {
-        return gmx::formatString(
-                "With MTS, %s = %d should be a multiple of mts-factor = %d", param, nstValue, mtsFactor);
-    }
-}
-
-} // namespace
-
-std::vector<std::string> checkMtsRequirements(const t_inputrec& ir)
-{
-    std::vector<std::string> errorMessages;
-
-    if (!ir.useMts)
-    {
-        return errorMessages;
-    }
-
-    GMX_RELEASE_ASSERT(haveValidMtsSetup(ir), "MTS setup should be valid here");
-
-    ArrayRef<const MtsLevel> mtsLevels = ir.mtsLevels;
-
-    if (ir.mtsMode == MtsMode::LammpsRespa)
-    {
-        if (static_cast<int>(mtsLevels.size()) != 3)
-        {
-            errorMessages.emplace_back(
-                    "Exact LAMMPS-style r-RESPA CPU validation is currently frozen only for mts-levels = 3");
-        }
-        if (ir.eI != IntegrationAlgorithm::MD && ir.eI != IntegrationAlgorithm::VV)
-        {
-            errorMessages.push_back(
-                    gmx::formatString("Exact LAMMPS-style r-RESPA is only supported with integrator %s or %s",
-                                      enumValueToString(IntegrationAlgorithm::MD),
-                                      enumValueToString(IntegrationAlgorithm::VV)));
-        }
-        if (ir.vdwtype != VanDerWaalsType::Cut)
-        {
-            errorMessages.emplace_back(
-                    "Exact LAMMPS-style r-RESPA currently requires vdw-type = cut-off");
-        }
-        if (ir.vdw_modifier != InteractionModifiers::None)
-        {
-            errorMessages.emplace_back(
-                    "Exact LAMMPS-style r-RESPA currently requires vdw-modifier = none");
-        }
-        if (!usingPmeOrEwald(ir.coulombtype))
-        {
-            errorMessages.emplace_back(
-                    "Exact LAMMPS-style r-RESPA currently requires coulombtype = PME or Ewald");
-        }
-        if (ir.coulomb_modifier != InteractionModifiers::None)
-        {
-            errorMessages.emplace_back(
-                    "Exact LAMMPS-style r-RESPA currently requires coulomb-modifier = none");
-        }
-        if (ir.lammpsRespa.hasPairSplitting())
-        {
-            const real shortestPairCutoff = std::min(ir.rcoulomb, ir.rvdw);
-            if (ir.lammpsRespa.outerOff > shortestPairCutoff)
-            {
-                errorMessages.emplace_back(gmx::formatString(
-                        "Exact LAMMPS-style r-RESPA requires mts-respa-outer-off = %g to be <= min(rcoulomb, rvdw) = %g",
-                        ir.lammpsRespa.outerOff,
-                        shortestPairCutoff));
-            }
-        }
-        if (ir.nstlist > 1)
-        {
-            const real longestPairCutoff = std::max(ir.rcoulomb, ir.rvdw);
-            if (ir.rlist <= longestPairCutoff)
-            {
-                errorMessages.emplace_back(gmx::formatString(
-                        "Exact LAMMPS-style r-RESPA with nstlist = %d requires rlist = %g to be > max(rcoulomb, rvdw) = %g so the plain Verlet pairlist has a real buffer",
-                        ir.nstlist,
-                        ir.rlist,
-                        longestPairCutoff));
-            }
-        }
-    }
-    else
-    {
-        if (ir.eI != IntegrationAlgorithm::MD)
-        {
-            errorMessages.push_back(
-                    gmx::formatString("Multiple time stepping is only supported with integrator %s",
-                                      enumValueToString(IntegrationAlgorithm::MD)));
-        }
-    }
-
-    if ((usingFullElectrostatics(ir.coulombtype) || usingLJPme(ir.vdwtype))
-        && forceGroupMtsLevel(ir.mtsLevels, MtsForceGroups::LongrangeNonbonded)
-                   != static_cast<int>(ir.mtsLevels.size()) - 1)
-    {
-        errorMessages.emplace_back(gmx::formatString(
-                "With long-range electrostatics and/or LJ treatment, the long-range part "
-                "has to be part of the mts-level%d-forces",
-                static_cast<int>(ir.mtsLevels.size())));
-    }
-
-    std::optional<std::string> mesg;
-    if (ir.nstcalcenergy > 0)
-    {
-        if ((mesg = checkMtsInterval(mtsLevels, "nstcalcenergy", ir.nstcalcenergy)))
-        {
-            errorMessages.push_back(mesg.value());
-        }
-    }
-    if ((mesg = checkMtsInterval(mtsLevels, "nstenergy", ir.nstenergy)))
-    {
-        errorMessages.push_back(mesg.value());
-    }
-    if ((mesg = checkMtsInterval(mtsLevels, "nstlog", ir.nstlog)))
-    {
-        errorMessages.push_back(mesg.value());
-    }
-    if ((mesg = checkMtsInterval(mtsLevels, "nstfout", ir.nstfout)))
-    {
-        errorMessages.push_back(mesg.value());
-    }
-    if (ir.efep != FreeEnergyPerturbationType::No)
-    {
-        if ((mesg = checkMtsInterval(mtsLevels, "nstdhdl", ir.fepvals->nstdhdl)))
-        {
-            errorMessages.push_back(mesg.value());
-        }
-    }
-    const int nonbondedFactor = nonbondedMtsFactor(ir);
-    if (nonbondedFactor > 1)
-    {
-        if (ir.nstlist % nonbondedFactor != 0)
-        {
-            errorMessages.push_back(gmx::formatString(
-                    "With MTS, nstlist = %d should be a multiple of the nonbonded mts-factor = %d",
-                    ir.nstlist,
-                    nonbondedFactor));
-        }
-    }
-
-    if (ir.bPull)
-    {
-        const int pullMtsLevel  = gmx::forceGroupMtsLevel(ir.mtsLevels, gmx::MtsForceGroups::Pull);
-        const int mtsStepFactor = ir.mtsLevels[pullMtsLevel].stepFactor;
-        if (ir.pull->nstxout % mtsStepFactor != 0)
-        {
-            errorMessages.emplace_back("pull-nstxout should be a multiple of mts-factor");
-        }
-        if (ir.pull->nstfout % mtsStepFactor != 0)
-        {
-            errorMessages.emplace_back("pull-nstfout should be a multiple of mts-factor");
-        }
-    }
-
-    return errorMessages;
 }
 
 } // namespace gmx

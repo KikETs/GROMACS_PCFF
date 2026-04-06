@@ -91,8 +91,8 @@ struct BondedGpuKernelParameters
     PbcAiuc pbcAiuc;
     //! Scale factor
     float electrostaticsScaleFactor;
-    //! Repulsion power for listed 1-4 Lennard-Jones interactions
-    float repulsionPower;
+    //! Listed-pair Lennard-Jones repulsion power (currently 9 or 12)
+    int repulsionPower;
     //! The bonded types on GPU
     InteractionFunction fTypesOnGpu[numFTypesOnGpu];
     //! The number of bonds for every function type
@@ -101,12 +101,15 @@ struct BondedGpuKernelParameters
     int fTypeRangeStart[numFTypesOnGpu];
     //! The end index in the range of each interaction type
     int fTypeRangeEnd[numFTypesOnGpu];
+    //! Debug-only selector for tracing PCFF/class2 subterms.
+    int pcffClass2DebugMode;
     BondedGpuKernelParameters()
     {
         matrix boxDummy = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
         setPbcAiuc(0, boxDummy, &pbcAiuc);
         electrostaticsScaleFactor = 1.0F;
-        repulsionPower            = 12.0F;
+        repulsionPower            = 12;
+        pcffClass2DebugMode       = static_cast<int>(PcffClass2DebugMode::None);
     }
 };
 struct BondedGpuKernelBuffers
@@ -174,6 +177,16 @@ public:
     void waitAccumulateEnergyTerms(gmx_enerdata_t* enerd);
     /*! \brief Clears the device side energy buffer */
     void clearEnergies();
+
+    void setPcffClass2DebugMode(PcffClass2DebugMode mode)
+    {
+        kernelParams_.pcffClass2DebugMode = static_cast<int>(mode);
+    }
+
+    void clearPcffClass2DebugMode()
+    {
+        kernelParams_.pcffClass2DebugMode = static_cast<int>(PcffClass2DebugMode::None);
+    }
 
 private:
     /*! \brief The interaction lists

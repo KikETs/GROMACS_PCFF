@@ -766,7 +766,9 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
         if (traceState && tracePositions)
         {
             fr_->stateGpu->copyCoordinatesFromGpu(
-                    state_->x.arrayRefWithPadding().unpaddedArrayRef(), AtomLocality::Local);
+                    state_->x.arrayRefWithPadding().unpaddedArrayRef(),
+                    AtomLocality::Local,
+                    exactRespaGpuUpdater_->xUpdatedOnDeviceEvent());
             fr_->stateGpu->waitCoordinatesReadyOnHost(AtomLocality::Local);
             copiedCoordinatesFromGpuAfterDrift = true;
         }
@@ -819,7 +821,9 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
         // GPU drift therefore has to materialize updated x on the host before every nested force step,
         // not only on neighbor-search steps.
         fr_->stateGpu->copyCoordinatesFromGpu(
-                state_->x.arrayRefWithPadding().unpaddedArrayRef(), AtomLocality::Local);
+                state_->x.arrayRefWithPadding().unpaddedArrayRef(),
+                AtomLocality::Local,
+                exactRespaGpuUpdater_->xUpdatedOnDeviceEvent());
         fr_->stateGpu->waitCoordinatesReadyOnHost(AtomLocality::Local);
         copiedCoordinatesFromGpuAfterDrift = true;
     }
@@ -889,13 +893,7 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
     {
         fr_->stateGpu->copyVelocitiesToGpu(state_->v.arrayRefWithPadding().unpaddedArrayRef(),
                                            AtomLocality::Local);
-        if (!nextStepIsNsStep)
-        {
-            const DeviceStream* updateStream = fr_->stateGpu->getUpdateStream();
-            GMX_RELEASE_ASSERT(updateStream != nullptr,
-                               "Exact r-RESPA GPU update requires a valid update stream.");
-            exactRespaGpuUpdater_->xUpdatedOnDeviceEvent()->markEvent(*updateStream);
-        }
+        GMX_UNUSED_VALUE(nextStepIsNsStep);
     }
 }
 

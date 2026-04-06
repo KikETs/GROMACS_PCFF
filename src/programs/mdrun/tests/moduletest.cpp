@@ -366,7 +366,11 @@ std::unique_ptr<gmx_hw_info_t> MdrunTestFixtureBase::s_hwinfo;
 // static
 void MdrunTestFixtureBase::SetUpTestSuite()
 {
+#if GMX_LIB_MPI
     s_communicator = MPI_COMM_WORLD;
+#else
+    s_communicator = MPI_COMM_NULL;
+#endif
     auto newHwinfo = gmx_detect_hardware(
             PhysicalNodeCommunicator{ s_communicator, gmx_physicalnode_id_hash() }, s_communicator);
     std::swap(s_hwinfo, newHwinfo);
@@ -376,6 +380,9 @@ void MdrunTestFixtureBase::SetUpTestSuite()
 void MdrunTestFixtureBase::TearDownTestSuite()
 {
     s_hwinfo.reset(nullptr);
+#if !GMX_LIB_MPI
+    s_communicator = MPI_COMM_NULL;
+#endif
 }
 
 MdrunTestFixtureBase::MdrunTestFixtureBase()

@@ -79,20 +79,6 @@ void launchScaleCoordinatesKernel(int                  numAtoms,
                                   const ScalingMatrix& mu,
                                   const DeviceStream&  deviceStream);
 
-/*! \brief Launches a coordinate drift kernel.
- *
- * \param[in] numAtoms      Number of atoms in the system.
- * \param[in] d_coordinates Device buffer with coordinates to update.
- * \param[in] d_velocities  Device buffer with velocities.
- * \param[in] dt            Timestep.
- * \param[in] deviceStream  Stream to launch kernel in.
- */
-void launchDriftCoordinatesKernel(int                  numAtoms,
-                                  DeviceBuffer<Float3> d_coordinates,
-                                  DeviceBuffer<Float3> d_velocities,
-                                  float                dt,
-                                  const DeviceStream&  deviceStream);
-
 } // namespace gmx
 
 #endif // GMX_MDLIB_UPDATE_CONSTRAIN_GPU_INTERNAL_H

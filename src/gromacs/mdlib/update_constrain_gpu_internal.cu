@@ -76,26 +76,6 @@ __launch_bounds__(c_maxThreadsPerBlock) __global__
     }
 }
 
-__launch_bounds__(c_maxThreadsPerBlock) __global__
-        static void driftCoordinatesKernel(const int numAtoms,
-                                           float3* __restrict__ gm_x,
-                                           const float3* __restrict__ gm_v,
-                                           const float dt)
-{
-    const int threadIndex = blockIdx.x * blockDim.x + threadIdx.x;
-    if (threadIndex < numAtoms)
-    {
-        const float3 velocity = gm_v[threadIndex];
-        float3       position = gm_x[threadIndex];
-
-        position.x += dt * velocity.x;
-        position.y += dt * velocity.y;
-        position.z += dt * velocity.z;
-
-        gm_x[threadIndex] = position;
-    }
-}
-
 void launchScaleCoordinatesKernel(const int            numAtoms,
                                   DeviceBuffer<Float3> d_coordinates,
                                   const ScalingMatrix& mu,
@@ -122,35 +102,6 @@ void launchScaleCoordinatesKernel(const int            numAtoms,
     // TODO: Although this only happens on the pressure coupling steps, this synchronization
     //       can affect the performance if nstpcouple is small. See Issue #4018
     deviceStream.synchronize();
-}
-
-void launchDriftCoordinatesKernel(const int            numAtoms,
-                                  DeviceBuffer<Float3> d_coordinates,
-                                  DeviceBuffer<Float3> d_velocities,
-                                  const float          dt,
-                                  const DeviceStream&  deviceStream)
-{
-    KernelLaunchConfig kernelLaunchConfig;
-
-    kernelLaunchConfig.blockSize[0]     = c_threadsPerBlock;
-    kernelLaunchConfig.blockSize[1]     = 1;
-    kernelLaunchConfig.blockSize[2]     = 1;
-    kernelLaunchConfig.sharedMemorySize = 0;
-
-    kernelLaunchConfig.gridSize[0] = divideRoundUp(numAtoms, c_threadsPerBlock);
-
-    const auto kernelArgs = prepareGpuKernelArguments(driftCoordinatesKernel,
-                                                      kernelLaunchConfig,
-                                                      &numAtoms,
-                                                      asFloat3Pointer(&d_coordinates),
-                                                      asFloat3Pointer(&d_velocities),
-                                                      &dt);
-    launchGpuKernel(driftCoordinatesKernel,
-                    kernelLaunchConfig,
-                    deviceStream,
-                    nullptr,
-                    "driftCoordinates_kernel",
-                    kernelArgs);
 }
 
 } // namespace gmx

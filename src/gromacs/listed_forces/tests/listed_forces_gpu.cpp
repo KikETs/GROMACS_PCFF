@@ -68,6 +68,15 @@ void initializeExactLammpsRespaInputrec(t_inputrec* ir)
     initializeDynamicsInputrec(ir);
     ir->useMts   = true;
     ir->mtsMode  = MtsMode::LammpsRespa;
+    ir->lammpsRespa.enabled       = true;
+    ir->lammpsRespa.bondLevel     = 0;
+    ir->lammpsRespa.angleLevel    = 1;
+    ir->lammpsRespa.dihedralLevel = 1;
+    ir->lammpsRespa.improperLevel = 1;
+    ir->lammpsRespa.pair14Level   = 1;
+    ir->lammpsRespa.kspaceLevel   = 2;
+    ir->exactRespa.levelStepFactors = { 1, 2, 4 };
+    ir->exactRespa.forceLayout      = ir->lammpsRespa;
 }
 
 void initializeMixedClass2BondTopology(gmx_mtop_t* mtop)
