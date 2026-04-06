@@ -35,7 +35,10 @@
 
 #include "mdsetup.h"
 
+#include <cstdio>
+#include <cstdlib>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "gromacs/domdec/domdec.h"
@@ -63,6 +66,16 @@
 
 namespace gmx
 {
+
+static void appendOwnershipTraceLineMdsetup(const std::string& filePath, const std::string& line)
+{
+    if (FILE* file = std::fopen(filePath.c_str(), "a"))
+    {
+        std::fputs(line.c_str(), file);
+        std::fputc('\n', file);
+        std::fclose(file);
+    }
+}
 
 /* TODO: Add a routine that collects the initial setup of the algorithms.
  *
@@ -113,6 +126,44 @@ void mdAlgorithmsSetupAtomData(const gmx_domdec_t*  dd,
     if (dd == nullptr)
     {
         gmx_mtop_generate_local_top(top_global, top, inputrec.efep != FreeEnergyPerturbationType::No);
+
+        const char* ownershipTraceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+        if (ownershipTraceDirPath != nullptr && *ownershipTraceDirPath != '\0')
+        {
+            auto joinIndexList = [](const auto& values)
+            {
+                std::string joined;
+                for (int value : values)
+                {
+                    if (!joined.empty())
+                    {
+                        joined += ",";
+                    }
+                    joined += std::to_string(value);
+                }
+                if (joined.empty())
+                {
+                    joined = "none";
+                }
+                return joined;
+            };
+
+            const std::string globalMolTypeExclusions =
+                    (top_global.moltype.empty() || top_global.moltype.front().excls.empty())
+                            ? "none"
+                            : joinIndexList(top_global.moltype.front().excls[0]);
+            const std::string localTopExclusions =
+                    top->excls.empty() ? "none" : joinIndexList(top->excls.front());
+            const std::string intermolecularExclusions =
+                    joinIndexList(top_global.intermolecularExclusionGroup);
+
+            appendOwnershipTraceLineMdsetup(
+                    std::string(ownershipTraceDirPath) + "/step0_mdsetup_local_topology_trace.txt",
+                    "stage=post_generate_local_top dd=false moltype0_atom0_exclusions="
+                            + globalMolTypeExclusions + " intermolecular_exclusion_group="
+                            + intermolecularExclusions + " local_top_atom0_exclusions="
+                            + localTopExclusions + " use_gpu_nonbonded=pending");
+        }
     }
 
     if (fr->wholeMoleculeTransform && dd)

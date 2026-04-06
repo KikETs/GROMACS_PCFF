@@ -231,6 +231,13 @@ static inline void set_cutoff_parameters(NBParamGpu*                nbp,
     nbp->sh_lj_ewald   = ic.vdw.ewaldShift;
     nbp->ewaldcoeff_lj = ic.vdw.ewaldCoeff;
 
+    nbp->exactRespaContribution = 3;
+    nbp->exactRespaHasMiddle    = 0;
+    nbp->exactRespaInnerOff     = 0.0F;
+    nbp->exactRespaInnerOn      = 0.0F;
+    nbp->exactRespaOuterOn      = 0.0F;
+    nbp->exactRespaOuterOff     = 0.0F;
+
     nbp->rvdw_switch      = ic.vdw.switchDistance;
     nbp->dispersion_shift = ic.vdw.dispersionShift;
     nbp->repulsion_shift  = ic.vdw.repulsionShift;

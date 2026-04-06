@@ -55,6 +55,7 @@
 #include "gromacs/listed_forces/listed_forces_gpu.h"
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/md_enums.h"
+#include "gromacs/mdtypes/multipletimestepping.h"
 #include "gromacs/topology/idef.h"
 #include "gromacs/topology/topology.h"
 #include "gromacs/utility/arrayref.h"
@@ -110,6 +111,29 @@ static bool bondedInteractionsCanRunOnGpu(const gmx_mtop_t& mtop)
     return false;
 }
 
+//! Returns whether \p fType appears anywhere in the topology.
+static bool topologyContainsInteractionType(const gmx_mtop_t& mtop, const InteractionFunction fType)
+{
+    for (const auto& moltype : mtop.moltype)
+    {
+        if (!moltype.ilist[fType].iatoms.empty())
+        {
+            return true;
+        }
+    }
+    return (mtop.intermolecular_ilist != nullptr && !(*mtop.intermolecular_ilist)[fType].iatoms.empty());
+}
+
+//! Returns whether any of the listed interaction types appear anywhere in the topology.
+static bool topologyContainsAnyInteractionType(const gmx_mtop_t&                    mtop,
+                                               const std::initializer_list<InteractionFunction> fTypes)
+{
+    return std::any_of(fTypes.begin(),
+                       fTypes.end(),
+                       [&mtop](const InteractionFunction fType)
+                       { return topologyContainsInteractionType(mtop, fType); });
+}
+
 bool buildSupportsListedForcesGpu(std::string* error)
 {
     MessageStringCollector errorReasons;
@@ -129,6 +153,30 @@ bool buildSupportsListedForcesGpu(std::string* error)
 bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, std::string* error)
 {
     MessageStringCollector errorReasons;
+    const bool isExactLammpsRespa = ir.useMts && ir.mtsMode == MtsMode::LammpsRespa;
+    const bool hasLennardJones14Pairs =
+            topologyContainsInteractionType(mtop, InteractionFunction::LennardJones14);
+    const bool hasListedPairGpuSemantics =
+            topologyContainsAnyInteractionType(mtop,
+                                              { InteractionFunction::LennardJones14,
+                                                InteractionFunction::LennardJonesCoulomb14Q,
+                                                InteractionFunction::Coulomb14 });
+    const bool hasExactHybridUnsupportedGpuBondedTypes =
+            topologyContainsAnyInteractionType(mtop,
+                                              { InteractionFunction::Bonds,
+                                                InteractionFunction::Angles,
+                                                InteractionFunction::UreyBradleyPotential,
+                                                InteractionFunction::ProperDihedrals,
+                                                InteractionFunction::RyckaertBellemansDihedrals,
+                                                InteractionFunction::ImproperDihedrals,
+                                                InteractionFunction::PeriodicImproperDihedrals });
+    const bool hasExactHybridUnsupportedPairInteractionTypes =
+            topologyContainsAnyInteractionType(mtop,
+                                              { InteractionFunction::LennardJonesCoulomb14Q,
+                                                InteractionFunction::Coulomb14 });
+    const bool repulsionPowerSupported =
+            std::abs(mtop.ffparams.reppow - 12.0) <= 10 * GMX_DOUBLE_EPS
+            || (isExactLammpsRespa && std::abs(mtop.ffparams.reppow - 9.0) <= 10 * GMX_DOUBLE_EPS);
     // Before changing the prefix string, make sure that it is not searched for in regression tests.
     errorReasons.startContext("Bonded interactions can not be computed on a GPU:");
 
@@ -139,13 +187,37 @@ bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, 
             "Cannot compute bonded interactions on a GPU, because GPU implementation requires "
             "a dynamical integrator (md, sd, etc).");
     errorReasons.appendIf(EI_MIMIC(ir.eI), "MiMiC");
-    errorReasons.appendIf(gmx::useMtsSubstepping(ir), "Cannot run with multiple time stepping");
+    if (ir.useMts)
+    {
+        if (isExactLammpsRespa)
+        {
+            errorReasons.appendIf(
+                    !hasLennardJones14Pairs,
+                    "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the pair14-only "
+                    "narrow mode, so the topology must contain Lennard-Jones 1-4 listed pairs.");
+            errorReasons.appendIf(
+                    hasExactHybridUnsupportedGpuBondedTypes,
+                    "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the pair14-only "
+                    "narrow mode. GPU-capable bond/angle/dihedral/improper kernels must remain on the CPU.");
+            errorReasons.appendIf(
+                    hasExactHybridUnsupportedPairInteractionTypes,
+                    "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted for "
+                    "InteractionFunction::LennardJones14 listed pairs. Coulomb14 and "
+                    "LennardJonesCoulomb14Q remain unsupported in the exact GPU path.");
+        }
+        else
+        {
+            errorReasons.append("Cannot run with multiple time stepping");
+        }
+    }
     // There is one energy group for each wall and those are not used for 1-4 interactions
     errorReasons.appendIf((ir.opts.ngener - ir.nwall > 1), "Cannot run with multiple energy groups");
-    errorReasons.appendIf(std::abs(mtop.ffparams.reppow - 9.0) > 10 * GMX_DOUBLE_EPS
-                                  && std::abs(mtop.ffparams.reppow - 12.0) > 10 * GMX_DOUBLE_EPS,
-                          "Bonded GPU offload currently supports only 12-6 and 9-6 listed 1-4 "
-                          "Lennard-Jones semantics.");
+    errorReasons.appendIf(hasListedPairGpuSemantics && !repulsionPowerSupported,
+                          isExactLammpsRespa
+                                  ? "Exact LAMMPS-style r-RESPA hybrid bonded GPU only supports 12-6 "
+                                    "and 9-6 listed 1-4 Lennard-Jones semantics."
+                                  : "The bonded GPU path only supports 12-6 listed 1-4 Lennard-Jones "
+                                    "semantics outside the exact LAMMPS-style r-RESPA pair14-only mode.");
     errorReasons.finishContext();
     if (error != nullptr)
     {
@@ -203,10 +275,6 @@ void ListedForcesGpu::launchEnergyTransfer() {}
 void ListedForcesGpu::waitAccumulateEnergyTerms(gmx_enerdata_t* /* enerd */) {}
 
 void ListedForcesGpu::clearEnergies() {}
-
-void ListedForcesGpu::setPcffClass2DebugMode(PcffClass2DebugMode /* mode */) {}
-
-void ListedForcesGpu::clearPcffClass2DebugMode() {}
 
 #endif // !GMX_GPU || GMX_GPU_OPENCL
 

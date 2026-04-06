@@ -45,8 +45,6 @@
 
 #include "gmxpre.h"
 
-#include <algorithm>
-
 #include "gromacs/gpu_utils/device_context.h"
 #include "gromacs/gpu_utils/device_stream.h"
 #include "gromacs/gpu_utils/devicebuffer.h"
@@ -125,7 +123,7 @@ ListedForcesGpu::Impl::Impl(const gmx_ffparams_t& ffparams,
     clearDeviceBufferAsync(&d_vTot_, 0, static_cast<int>(InteractionFunction::Count), deviceStream_);
 
     kernelParams_.electrostaticsScaleFactor = electrostaticsScaleFactor;
-    kernelParams_.repulsionPower            = static_cast<int>(ffparams.reppow + 0.5);
+    kernelParams_.repulsionPower            = ffparams.reppow;
     kernelBuffers_.d_forceParams            = d_forceParams_;
     kernelBuffers_.d_vTot                   = d_vTot_;
     for (int i = 0; i < numFTypesOnGpu; i++)
@@ -414,8 +412,6 @@ void ListedForcesGpu::Impl::clearEnergies()
     clearDeviceBufferAsync(&d_vTot_, 0, static_cast<int>(InteractionFunction::Count), deviceStream_);
     wallcycle_sub_stop(wcycle_, WallCycleSubCounter::LaunchGpuBonded);
     wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
-
-    std::fill(vTot_.begin(), vTot_.end(), 0.0F);
 }
 
 // ---- ListedForcesGpu
@@ -477,16 +473,6 @@ void ListedForcesGpu::waitAccumulateEnergyTerms(gmx_enerdata_t* enerd)
 void ListedForcesGpu::clearEnergies()
 {
     impl_->clearEnergies();
-}
-
-void ListedForcesGpu::setPcffClass2DebugMode(PcffClass2DebugMode mode)
-{
-    impl_->setPcffClass2DebugMode(mode);
-}
-
-void ListedForcesGpu::clearPcffClass2DebugMode()
-{
-    impl_->clearPcffClass2DebugMode();
 }
 
 } // namespace gmx

@@ -58,6 +58,7 @@
 struct DeviceInformation;
 struct gmx_hw_info_t;
 struct t_commrec;
+struct t_inputrec;
 
 enum class PmeRunMode;
 
@@ -234,6 +235,7 @@ public:
     void reportGpuUsage(const MDLogger&           mdlog,
                         bool                      printHostName,
                         PmeRunMode                pmeRunMode,
+                        const t_inputrec&         inputrec,
                         const SimulationWorkload& simulationWork);
 
     /*! \brief Logs to \c mdlog information that may help a user

@@ -254,6 +254,7 @@ __global__ void bonded_kernel_gpu(BondedGpuKernelParameters kernelParams,
                                                  kernelParams.pbcAiuc,
                                                  kernelParams.repulsionPower,
                                                  kernelParams.electrostaticsScaleFactor,
+                                                 kernelParams.repulsionPower,
                                                  &vtot_loc,
                                                  &vtotElec_loc,
                                                  threadIdx.x);

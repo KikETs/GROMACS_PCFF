@@ -540,6 +540,7 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 
                                 inv_r  = rsqrt(r2);
                                 inv_r2 = inv_r * inv_r;
+                                const float r = r2 * inv_r;
 #    if !defined LJ_COMB_LB || defined CALC_ENERGIES
                                 inv_r6          = inv_r2 * inv_r2 * inv_r2;
                                 float inv_r_rep = (nbparam.repulsionPower == 12.0F)
@@ -628,29 +629,84 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 #        endif
 #    endif /* VDW_CUTOFF_CHECK */
 
+                                const bool  exactRespaSplitLaunch =
+                                        (nbparam.exactRespaContribution != c_exactRespaContributionFull);
+                                const bool  exactRespaOuterLaunch =
+                                        (nbparam.exactRespaContribution == c_exactRespaContributionOuter);
+                                const float exactRespaWeight =
+                                        exactRespaSplitLaunch ? exactRespaSplitWeight(nbparam, r) : 1.0F;
+                                if (exactRespaSplitLaunch)
+                                {
+                                    F_invr *= exactRespaWeight;
+                                }
+
 #    ifdef CALC_ENERGIES
                                 E_lj += E_lj_p;
 #    endif
 
 
 #    ifdef EL_CUTOFF
+                                {
 #        ifdef EXCLUSION_FORCES
-                                F_invr += qi * qj_f * int_bit * inv_r2 * inv_r;
+                                    float coulombDirectF = qi * qj_f * int_bit * inv_r2 * inv_r;
 #        else
-                                F_invr += qi * qj_f * inv_r2 * inv_r;
+                                    float coulombDirectF = qi * qj_f * inv_r2 * inv_r;
 #        endif
+                                    if (exactRespaSplitLaunch)
+                                    {
+                                        coulombDirectF *= exactRespaWeight;
+                                    }
+                                    F_invr += coulombDirectF;
+                                }
 #    endif
 #    ifdef EL_RF
-                                F_invr += qi * qj_f * (int_bit * inv_r2 * inv_r - two_k_rf);
+                                {
+                                    float coulombDirectF     = qi * qj_f * int_bit * inv_r2 * inv_r;
+                                    float coulombCorrectionF = -qi * qj_f * two_k_rf;
+                                    if (exactRespaSplitLaunch)
+                                    {
+                                        coulombDirectF *= exactRespaWeight;
+                                        F_invr += coulombDirectF
+                                                  + (exactRespaOuterLaunch ? coulombCorrectionF : 0.0F);
+                                    }
+                                    else
+                                    {
+                                        F_invr += coulombDirectF + coulombCorrectionF;
+                                    }
+                                }
 #    endif
 #    if defined EL_EWALD_ANA
-                                F_invr += qi * qj_f
-                                          * (int_bit * inv_r2 * inv_r + pmeCorrF(beta2 * r2) * beta3);
+                                {
+                                    float coulombDirectF = qi * qj_f * int_bit * inv_r2 * inv_r;
+                                    float coulombCorrectionF =
+                                            qi * qj_f * pmeCorrF(beta2 * r2) * beta3;
+                                    if (exactRespaSplitLaunch)
+                                    {
+                                        coulombDirectF *= exactRespaWeight;
+                                        F_invr += coulombDirectF
+                                                  + (exactRespaOuterLaunch ? coulombCorrectionF : 0.0F);
+                                    }
+                                    else
+                                    {
+                                        F_invr += coulombDirectF + coulombCorrectionF;
+                                    }
+                                }
 #    elif defined EL_EWALD_TAB
-                                F_invr += qi * qj_f
-                                          * (int_bit * inv_r2
-                                             - interpolate_coulomb_force_r(nbparam, r2 * inv_r))
-                                          * inv_r;
+                                {
+                                    float coulombDirectF = qi * qj_f * int_bit * inv_r2 * inv_r;
+                                    float coulombCorrectionF =
+                                            -qi * qj_f * interpolate_coulomb_force_r(nbparam, r) * inv_r;
+                                    if (exactRespaSplitLaunch)
+                                    {
+                                        coulombDirectF *= exactRespaWeight;
+                                        F_invr += coulombDirectF
+                                                  + (exactRespaOuterLaunch ? coulombCorrectionF : 0.0F);
+                                    }
+                                    else
+                                    {
+                                        F_invr += coulombDirectF + coulombCorrectionF;
+                                    }
+                                }
 #    endif /* EL_EWALD_ANA/TAB */
 
 #    ifdef CALC_ENERGIES

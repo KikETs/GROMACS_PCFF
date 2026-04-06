@@ -63,7 +63,6 @@
 #include "gromacs/mdlib/gmx_omp_nthreads.h"
 #include "gromacs/mdlib/update_constrain_gpu.h"
 #include "gromacs/mdtypes/commrec.h"
-#include "gromacs/mdtypes/exactrespaschedule.h"
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/md_enums.h"
 #include "gromacs/mdtypes/mdrunoptions.h"
@@ -132,7 +131,56 @@ const char* const g_specifyEverythingFormatString =
 #endif
         ;
 
+bool isExactLammpsRespa(const t_inputrec& inputrec)
+{
+    return inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa;
+}
+
+bool isSupportedExactRespaHybridNbGpuInputInternal(const t_inputrec& inputrec)
+{
+    if (!GMX_GPU_CUDA)
+    {
+        return false;
+    }
+
+    if (!isExactLammpsRespa(inputrec) || !inputrec.lammpsRespa.hasPairSplitting())
+    {
+        return false;
+    }
+
+    const bool forceOnlySchedule =
+            inputrec.nsteps > 0 && inputrec.nstcalcenergy > inputrec.nsteps
+            && inputrec.nstenergy > inputrec.nsteps;
+
+    return forceOnlySchedule && inputrec.efep == FreeEnergyPerturbationType::No
+           && inputrec.vdwtype == VanDerWaalsType::Cut
+           && inputrec.vdw_modifier == InteractionModifiers::None
+           && usingPmeOrEwald(inputrec.coulombtype)
+           && inputrec.coulomb_modifier == InteractionModifiers::None;
+}
+
+const char* const g_exactRespaGpuNonbondedNotSupportedReason =
+        "Exact LAMMPS-style r-RESPA hybrid OpenMP+GPU nonbonded is only admitted in the narrow "
+        "force-only CUDA shape with no exact-path energy/virial steps and the audited two-thread "
+        "OpenMP runtime. The requested input does not satisfy that audited HG1/HG3 admission "
+        "contract.";
+
+const char* const g_exactRespaGpuPmeNotSupportedReason =
+        "Exact LAMMPS-style r-RESPA hybrid PME is only admitted in the audited HG5 narrow "
+        "force-only CUDA shape with single-rank on-rank GPU PME, GPU FFT, and the audited "
+        "two-thread OpenMP runtime.";
+
+const char* const g_exactRespaGpuUpdateNotSupportedReason =
+        "Exact LAMMPS-style r-RESPA hybrid GPU update is only admitted in the audited HG6 "
+        "narrow force-only CUDA shape with GPU nonbonded, pair14-only bonded GPU, on-rank "
+        "GPU PME+FFT, and the audited two-thread OpenMP runtime.";
+
 } // namespace
+
+bool isSupportedExactRespaHybridNbGpuInput(const t_inputrec& inputrec)
+{
+    return isSupportedExactRespaHybridNbGpuInputInternal(inputrec);
+}
 
 bool decideWhetherToUseGpusForNonbondedWithThreadMpi(const TaskTarget        nonbondedTarget,
                                                      const bool              haveAvailableDevices,
@@ -203,18 +251,13 @@ bool canUseGpusForNonbonded(const t_inputrec& ir, const bool doRerun, std::strin
     {
         MtsLevel mtsLevelOnlyPme;
         mtsLevelOnlyPme.forceGroups.set(static_cast<int>(MtsForceGroups::LongrangeNonbonded));
-        if (useExactRespa(ir))
+        if (isExactLammpsRespa(ir))
         {
-#if GMX_GPU_CUDA
-            errorReasons.appendIf(!exactRespaHasPairSplitting(ir),
-                                  "Standalone exact r-RESPA GPU offload currently requires pair splitting.");
-#else
-            errorReasons.append("Standalone exact r-RESPA GPU offload is only implemented in CUDA builds.");
-#endif
+            errorReasons.appendIf(!isSupportedExactRespaHybridNbGpuInput(ir),
+                                  g_exactRespaGpuNonbondedNotSupportedReason);
         }
-        else if (useMtsSubstepping(ir)
-                 && !(ir.mtsLevels.size() == 2
-                      && ir.mtsLevels[1].forceGroups == mtsLevelOnlyPme.forceGroups))
+        else if (ir.useMts
+                 && !(ir.mtsLevels.size() == 2 && ir.mtsLevels[1].forceGroups == mtsLevelOnlyPme.forceGroups))
         {
             errorReasons.append(gmx::formatString(
                     "Multiple time stepping is only supported with GPUs when MTS is only applied "
@@ -246,9 +289,14 @@ static bool canUseGpusForPme(const bool        useGpuForNonbonded,
     gmx::MessageStringCollector errorReasons;
     // Before changing the prefix string, make sure that it is not searched for in regression tests.
     errorReasons.startContext("Cannot compute PME interactions on a GPU, because:");
+    const bool exactRespaGpuPmeRequested = isExactLammpsRespa(inputrec) && pmeTarget == TaskTarget::Gpu;
+    errorReasons.appendIf(exactRespaGpuPmeRequested && !isSupportedExactRespaHybridNbGpuInput(inputrec),
+                          g_exactRespaGpuPmeNotSupportedReason);
     errorReasons.appendIf(!useGpuForNonbonded, "Nonbonded interactions must also run on GPUs.");
     errorReasons.appendIf(!pme_gpu_supports_build(&tempString), tempString);
     errorReasons.appendIf(!pme_gpu_supports_input(inputrec, &tempString), tempString);
+    errorReasons.appendIf(exactRespaGpuPmeRequested && !decideWhetherToUseGpusForPmeFft(pmeFftTarget),
+                          g_exactRespaGpuPmeNotSupportedReason);
     if (!decideWhetherToUseGpusForPmeFft(pmeFftTarget))
     {
         // We need to do FFT on CPU, so we check whether we are able to use PME Mixed mode.
@@ -375,6 +423,7 @@ bool decideWhetherToUseGpusForNonbonded(const TaskTarget          nonbondedTarge
                                         const std::vector<int>&   userGpuTaskAssignment,
                                         const EmulateGpuNonbonded emulateGpuNonbonded,
                                         const bool                canUseNonbondedOnGpu,
+                                        const std::string&        nonbondedNotSupportedReason,
                                         const bool                binaryReproducibilityRequested,
                                         const bool                gpusWereDetected)
 {
@@ -424,6 +473,10 @@ bool decideWhetherToUseGpusForNonbonded(const TaskTarget          nonbondedTarge
     {
         if (nonbondedTarget == TaskTarget::Gpu)
         {
+            if (!nonbondedNotSupportedReason.empty())
+            {
+                GMX_THROW(InconsistentInputError(nonbondedNotSupportedReason));
+            }
             GMX_THROW(InconsistentInputError(
                     "Nonbonded interactions on the GPU were required, but not supported for these "
                     "simulation settings. Change your settings, or do not require using GPUs."));
@@ -703,6 +756,7 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
                                     const PmeRunMode     pmeRunMode,
                                     const bool           havePmeOnlyRank,
                                     const bool           useGpuForNonbonded,
+                                    const bool           useGpuForBonded,
                                     const TaskTarget     updateTarget,
                                     const bool           gpusWereDetected,
                                     const t_inputrec&    inputrec,
@@ -735,21 +789,6 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
 
     const bool hasAnyConstraints      = gmx_mtop_interaction_count(mtop, IF_CONSTRAINT) > 0;
     const bool pmeSpreadGatherUsesCpu = (pmeRunMode == PmeRunMode::CPU);
-    const bool exactRespaSupportedTemperatureCoupling =
-            inputrec.etc == TemperatureCoupling::No || inputrec.etc == TemperatureCoupling::Berendsen
-            || inputrec.etc == TemperatureCoupling::VRescale;
-    const bool exactRespaSupportedPressureCoupling =
-            inputrec.pressureCouplingOptions.epc == PressureCoupling::No
-            || inputrec.pressureCouplingOptions.epc == PressureCoupling::Berendsen
-            || inputrec.pressureCouplingOptions.epc == PressureCoupling::CRescale;
-    const bool exactRespaGpuUpdateSupportedConfiguration =
-            useExactRespa(inputrec) && !isDomainDecomposition
-            && inputrec.eI == IntegrationAlgorithm::VV && exactRespaSupportedTemperatureCoupling
-            && exactRespaSupportedPressureCoupling
-            && inputrec.comm_mode == ComRemovalAlgorithm::No && !hasAnyConstraints
-            && !useEssentialDynamics && !doOrientationRestraints && !haveFrozenAtoms
-            && !useModularSimulator && !doRerun && useGpuForNonbonded
-            && pmeRunMode == PmeRunMode::GPU;
 
     gmx::MessageStringCollector errorReasons;
     errorReasons.startContext(
@@ -776,11 +815,18 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
                               "With separate PME rank(s), PME must run on the GPU.");
     }
 
-    errorReasons.appendIf(useExactRespa(inputrec) && !exactRespaGpuUpdateSupportedConfiguration,
-                          "Standalone exact r-RESPA GPU update is only supported for single-rank, "
-                          "unconstrained md-vv with GPU non-bonded and GPU PME, using "
-                          "tcoupl = no/berendsen/v-rescale and pcoupl = no/berendsen/c-rescale.");
-    errorReasons.appendIf(useMtsSubstepping(inputrec), "Multiple time stepping is not supported.");
+    const bool exactLammpsRespa = isExactLammpsRespa(inputrec);
+    if (exactLammpsRespa)
+    {
+        const bool exactHybridUpdateShape =
+                isSupportedExactRespaHybridNbGpuInput(inputrec) && useGpuForNonbonded
+                && useGpuForBonded && pmeRunMode == PmeRunMode::GPU;
+        errorReasons.appendIf(!exactHybridUpdateShape, g_exactRespaGpuUpdateNotSupportedReason);
+    }
+    else
+    {
+        errorReasons.appendIf(inputrec.useMts, "Multiple time stepping is not supported.");
+    }
 
     errorReasons.appendIf((inputrec.eConstrAlg == ConstraintAlgorithm::Shake && hasAnyConstraints
                            && gmx_mtop_ftype_count(mtop, InteractionFunction::Constraints) > 0),
@@ -806,7 +852,7 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
         GMX_UNUSED_VALUE(silenceWarningMessageWithUpdateAuto);
         silenceWarningMessageWithUpdateAuto = true;
     }
-    errorReasons.appendIf((inputrec.eI != IntegrationAlgorithm::MD) && !exactRespaGpuUpdateSupportedConfiguration,
+    errorReasons.appendIf((!exactLammpsRespa && inputrec.eI != IntegrationAlgorithm::MD),
                           "Only the md integrator is supported.");
     errorReasons.appendIf((inputrec.etc == TemperatureCoupling::NoseHoover),
                           "Nose-Hoover temperature coupling is not supported.");
@@ -880,7 +926,7 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
 }
 
 bool decideWhetherDirectGpuCommunicationCanBeUsed(gmx::GpuAwareMpiStatus gpuAwareMpiStatus,
-                                                  bool                   haveLegacyMts,
+                                                  bool                   haveMts,
                                                   bool                   useReplicaExchange,
                                                   bool                   haveSwapCoords,
                                                   bool                   gpusWereDetected,
@@ -993,7 +1039,7 @@ bool decideWhetherDirectGpuCommunicationCanBeUsed(gmx::GpuAwareMpiStatus gpuAwar
     // fallback to CPU halo, and report accordingly
     gmx::MessageStringCollector errorReasons;
     errorReasons.startContext("Direct GPU communication cannot be activated because:");
-    errorReasons.appendIf(haveLegacyMts, "MTS is not supported.");
+    errorReasons.appendIf(haveMts, "MTS is not supported.");
     errorReasons.appendIf(useReplicaExchange, "Replica exchange is not supported.");
     errorReasons.appendIf(haveSwapCoords, "Swap-coords is not supported.");
     errorReasons.finishContext();

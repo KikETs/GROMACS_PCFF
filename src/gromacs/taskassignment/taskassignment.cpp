@@ -471,6 +471,7 @@ GpuTaskAssignments::GpuTaskAssignments(const gmx_hw_info_t& hardwareInfo) :
 void GpuTaskAssignments::reportGpuUsage(const MDLogger&           mdlog,
                                         bool                      printHostName,
                                         PmeRunMode                pmeRunMode,
+                                        const t_inputrec&         inputrec,
                                         const SimulationWorkload& simulationWork)
 {
     gmx::reportGpuUsage(mdlog,
@@ -479,6 +480,7 @@ void GpuTaskAssignments::reportGpuUsage(const MDLogger&           mdlog,
                         numRanksOnThisNode_,
                         printHostName,
                         pmeRunMode,
+                        inputrec,
                         simulationWork);
 }
 

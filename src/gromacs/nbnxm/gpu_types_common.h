@@ -267,6 +267,16 @@ struct NBParamGpu
     //! VdW switch constants
     switch_consts_t vdw_switch;
 
+    //! Exact LAMMPS-style r-RESPA per-launch contribution selector.
+    int exactRespaContribution;
+    //! Whether the exact split uses an intermediate middle shell.
+    int exactRespaHasMiddle;
+    //! Exact split transition radii.
+    float exactRespaInnerOff;
+    float exactRespaInnerOn;
+    float exactRespaOuterOn;
+    float exactRespaOuterOff;
+
     /* LJ non-bonded parameters - accessed through texture memory */
     //! nonbonded parameter table with 6*C6/12*C12 pairs per atom type-pair, ntype^2 elements
     DeviceBuffer<Float2> nbfp{};

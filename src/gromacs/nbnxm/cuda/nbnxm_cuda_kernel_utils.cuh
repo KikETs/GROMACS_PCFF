@@ -68,6 +68,54 @@ static const int __device__ c_clusterSizeLog2 = gmx::StaticLog2<c_clusterSize>::
 /*! \brief Stride in the force accumulation buffer */
 static const int __device__ c_fbufStride = c_clusterSizeSq;
 
+static constexpr int c_exactRespaContributionInner  = 0;
+static constexpr int c_exactRespaContributionMiddle = 1;
+static constexpr int c_exactRespaContributionOuter  = 2;
+static constexpr int c_exactRespaContributionFull   = 3;
+
+static __forceinline__ __device__ float exactRespaSwitchIn(const float r, const float off, const float on)
+{
+    if (on <= off)
+    {
+        return (r >= on ? 1.0F : 0.0F);
+    }
+    if (r <= off)
+    {
+        return 0.0F;
+    }
+    if (r >= on)
+    {
+        return 1.0F;
+    }
+
+    const float x = (r - off) / (on - off);
+    return x * x * (3.0F - 2.0F * x);
+}
+
+static __forceinline__ __device__ float exactRespaSplitWeight(const NBParamGpu& nbparam, const float r)
+{
+    if (nbparam.exactRespaContribution == c_exactRespaContributionFull)
+    {
+        return 1.0F;
+    }
+
+    const float switchIntoOuter = exactRespaSwitchIn(r, nbparam.exactRespaOuterOn, nbparam.exactRespaOuterOff);
+    if (nbparam.exactRespaHasMiddle == 0)
+    {
+        return (nbparam.exactRespaContribution == c_exactRespaContributionInner) ? (1.0F - switchIntoOuter)
+                                                                                  : switchIntoOuter;
+    }
+
+    const float switchIntoMiddle = exactRespaSwitchIn(r, nbparam.exactRespaInnerOff, nbparam.exactRespaInnerOn);
+    switch (nbparam.exactRespaContribution)
+    {
+        case c_exactRespaContributionInner: return 1.0F - switchIntoMiddle;
+        case c_exactRespaContributionMiddle: return switchIntoMiddle * (1.0F - switchIntoOuter);
+        case c_exactRespaContributionOuter: return switchIntoOuter;
+        default: return 1.0F;
+    }
+}
+
 /*! Convert LJ sigma,epsilon parameters to C6,C12. */
 static __forceinline__ __device__ void
 convert_sigma_epsilon_to_c6_c12(const float sigma, const float epsilon, float* c6, float* c12)

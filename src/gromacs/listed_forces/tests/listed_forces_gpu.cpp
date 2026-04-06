@@ -56,7 +56,28 @@ void initializeListedPairTopology(gmx_mtop_t* mtop, const double repulsionPower)
     mtop->moltype[0].ilist[InteractionFunction::LennardJones14].iatoms = { 0, 0, 1 };
 }
 
-TEST(ListedForcesGpuInputSupportTest, AcceptsSixthPowerRepulsionForBondedGpu)
+void initializeHarmonicBondTopology(gmx_mtop_t* mtop, const double repulsionPower)
+{
+    mtop->ffparams.reppow = repulsionPower;
+    mtop->moltype.resize(1);
+    mtop->moltype[0].ilist[InteractionFunction::Bonds].iatoms = { 0, 0, 1 };
+}
+
+void initializeExactLammpsRespaInputrec(t_inputrec* ir)
+{
+    initializeDynamicsInputrec(ir);
+    ir->useMts   = true;
+    ir->mtsMode  = MtsMode::LammpsRespa;
+}
+
+void initializeMixedClass2BondTopology(gmx_mtop_t* mtop)
+{
+    mtop->ffparams.reppow = 12.0;
+    mtop->moltype.resize(1);
+    mtop->moltype[0].ilist[InteractionFunction::BondClass2].iatoms = { 0, 0, 1 };
+}
+
+TEST(ListedForcesGpuInputSupportTest, RejectsSixthPowerRepulsionForBondedGpu)
 {
     t_inputrec  ir;
     gmx_mtop_t  mtop;
@@ -64,7 +85,9 @@ TEST(ListedForcesGpuInputSupportTest, AcceptsSixthPowerRepulsionForBondedGpu)
     initializeDynamicsInputrec(&ir);
     initializeListedPairTopology(&mtop, 9.0);
 
-    EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
+    EXPECT_FALSE(inputSupportsListedForcesGpu(ir, mtop, &error));
+    EXPECT_NE(error.find("only supports 12-6 listed 1-4 Lennard-Jones semantics outside the exact"),
+              std::string::npos);
 }
 
 TEST(ListedForcesGpuInputSupportTest, AcceptsTwelveSixListedPairsForBondedGpu)
@@ -76,6 +99,53 @@ TEST(ListedForcesGpuInputSupportTest, AcceptsTwelveSixListedPairsForBondedGpu)
     initializeListedPairTopology(&mtop, 12.0);
 
     EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
+}
+
+TEST(ListedForcesGpuInputSupportTest, ExactRespaAcceptsNineSixListedPairsForBondedGpu)
+{
+    t_inputrec  ir;
+    gmx_mtop_t  mtop;
+    std::string error;
+    initializeExactLammpsRespaInputrec(&ir);
+    initializeListedPairTopology(&mtop, 9.0);
+
+    EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
+}
+
+TEST(ListedForcesGpuInputSupportTest, DoesNotRejectNinthPowerRepulsionWithoutListedPairs)
+{
+    t_inputrec  ir;
+    gmx_mtop_t  mtop;
+    std::string error;
+    initializeDynamicsInputrec(&ir);
+    initializeHarmonicBondTopology(&mtop, 9.0);
+
+    EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
+}
+
+TEST(ListedForcesGpuInputSupportTest, ExactRespaPcffClass2WithLennardJones14PairsIsAdmitted)
+{
+    t_inputrec  ir;
+    gmx_mtop_t  mtop;
+    std::string error;
+    initializeExactLammpsRespaInputrec(&ir);
+    initializeMixedClass2BondTopology(&mtop);
+    mtop.moltype[0].ilist[InteractionFunction::LennardJones14].iatoms = { 0, 0, 1 };
+
+    EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
+}
+
+TEST(ListedForcesGpuInputSupportTest, ExactRespaRejectsGpuCapableBondTypesOutsidePair14OnlyMode)
+{
+    t_inputrec  ir;
+    gmx_mtop_t  mtop;
+    std::string error;
+    initializeExactLammpsRespaInputrec(&ir);
+    initializeListedPairTopology(&mtop, 9.0);
+    mtop.moltype[0].ilist[InteractionFunction::Bonds].iatoms = { 0, 0, 1 };
+
+    EXPECT_FALSE(inputSupportsListedForcesGpu(ir, mtop, &error));
+    EXPECT_NE(error.find("pair14-only narrow mode"), std::string::npos);
 }
 
 } // namespace

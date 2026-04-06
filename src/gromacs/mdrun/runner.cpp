@@ -45,6 +45,7 @@
 #include "config.h"
 
 #include <cassert>
+#include <cstdio>
 #include <cinttypes>
 #include <cmath>
 #include <csignal>
@@ -213,6 +214,16 @@ struct pull_t;
 
 namespace gmx
 {
+
+static void appendOwnershipTraceLineRunner(const std::string& filePath, const std::string& line)
+{
+    if (FILE* file = std::fopen(filePath.c_str(), "a"))
+    {
+        std::fputs(line.c_str(), file);
+        std::fputc('\n', file);
+        std::fclose(file);
+    }
+}
 
 /*! \brief Manage any development feature flag variables encountered
  *
@@ -1038,6 +1049,7 @@ int Mdrunner::mdrunner()
                                                                 userGpuTaskAssignment,
                                                                 emulateGpuNonbonded,
                                                                 canUseGpuForNonbonded,
+                                                                gpuNonbondedNotSupportedReason,
                                                                 mdrunOptions.reproducible,
                                                                 gpusWereDetected);
         useGpuForNonbondedFE = decideWhetherToUseGpusForNonbondedFE(useGpuForNonbonded, nonbondedFeTarget);
@@ -1341,6 +1353,36 @@ int Mdrunner::mdrunner()
                   "This group-scheme .tpr file can no longer be run by mdrun. Please update to the "
                   "Verlet scheme, or use an earlier version of GROMACS if necessary.");
     }
+    if (const char* ownershipTraceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+        ownershipTraceDirPath != nullptr && *ownershipTraceDirPath != '\0' && !mtop.moltype.empty()
+        && !mtop.moltype.front().excls.empty())
+    {
+        const auto joinIndexList = [](const auto& values)
+        {
+            std::string joined;
+            for (int value : values)
+            {
+                if (!joined.empty())
+                {
+                    joined += ",";
+                }
+                joined += std::to_string(value);
+            }
+            if (joined.empty())
+            {
+                joined = "none";
+            }
+            return joined;
+        };
+        appendOwnershipTraceLineRunner(
+                std::string(ownershipTraceDirPath) + "/step0_runner_topology_trace.txt",
+                "stage=pre_prepare_verlet_scheme use_gpu_nonbonded="
+                        + std::string(useGpuForNonbonded ? "true" : "false") + " use_modular_simulator="
+                        + std::string(useModularSimulator ? "true" : "false") + " moltype0_atom0_exclusions="
+                        + joinIndexList(mtop.moltype.front().excls[0]) + " intermolecular_exclusion_group="
+                        + joinIndexList(mtop.intermolecularExclusionGroup) + " rlist="
+                        + std::to_string(inputrec->rlist));
+    }
     /* Update rlist and nstlist. */
     /* Note: prepare_verlet_scheme is calling increaseNstlist(...), which (while attempting to
      * increase rlist) tries to check if the newly chosen value fits with the DD scheme. As this is
@@ -1355,6 +1397,36 @@ int Mdrunner::mdrunner()
             mpiCommSimulation.isMainRank() ? globalState->x : gmx::ArrayRef<const gmx::RVec>{},
             box,
             useGpuForNonbonded || (emulateGpuNonbonded == EmulateGpuNonbonded::Yes));
+    if (const char* ownershipTraceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+        ownershipTraceDirPath != nullptr && *ownershipTraceDirPath != '\0' && !mtop.moltype.empty()
+        && !mtop.moltype.front().excls.empty())
+    {
+        const auto joinIndexList = [](const auto& values)
+        {
+            std::string joined;
+            for (int value : values)
+            {
+                if (!joined.empty())
+                {
+                    joined += ",";
+                }
+                joined += std::to_string(value);
+            }
+            if (joined.empty())
+            {
+                joined = "none";
+            }
+            return joined;
+        };
+        appendOwnershipTraceLineRunner(
+                std::string(ownershipTraceDirPath) + "/step0_runner_topology_trace.txt",
+                "stage=post_prepare_verlet_scheme use_gpu_nonbonded="
+                        + std::string(useGpuForNonbonded ? "true" : "false") + " use_modular_simulator="
+                        + std::string(useModularSimulator ? "true" : "false") + " moltype0_atom0_exclusions="
+                        + joinIndexList(mtop.moltype.front().excls[0]) + " intermolecular_exclusion_group="
+                        + joinIndexList(mtop.intermolecularExclusionGroup) + " rlist="
+                        + std::to_string(inputrec->rlist));
+    }
 
     // We need to decide on update groups early, as this affects
     // inter-domain communication distances.
@@ -1393,6 +1465,7 @@ int Mdrunner::mdrunner()
                 pmeRunMode,
                 domdecOptions.numPmeRanks > 0,
                 useGpuForNonbonded,
+                useGpuForBonded,
                 updateTarget,
                 gpusWereDetected,
                 *inputrec,
@@ -1633,6 +1706,17 @@ int Mdrunner::mdrunner()
             canUseDirectGpuComm,
             useGpuPmeDecomposition);
 
+    if (runScheduleWork.simulationWork.useGpuNonbonded && inputrec->useMts
+        && inputrec->mtsMode == MtsMode::LammpsRespa && inputrec->lammpsRespa.hasPairSplitting())
+    {
+        if (havePPDomainDecomposition(cr->dd) || haveSeparatePmeRank)
+        {
+            GMX_THROW(InconsistentInputError(
+                    "Exact LAMMPS-style r-RESPA hybrid OpenMP+GPU nonbonded is currently "
+                    "restricted to single-rank runs without domain decomposition or separate PME ranks."));
+        }
+    }
+
     if (GMX_LIB_MPI && deviceInfo
         && (runScheduleWork.simulationWork.useGpuDirectCommunication
             || runScheduleWork.simulationWork.useGpuPmeDecomposition
@@ -1657,7 +1741,8 @@ int Mdrunner::mdrunner()
     }
 
     const bool printHostName = (cr->commMySim.isParallel());
-    gpuTaskAssignments.reportGpuUsage(mdlog, printHostName, pmeRunMode, runScheduleWork.simulationWork);
+    gpuTaskAssignments.reportGpuUsage(
+            mdlog, printHostName, pmeRunMode, *inputrec, runScheduleWork.simulationWork);
 
     std::unique_ptr<DeviceStreamManager> deviceStreamManager = nullptr;
 
@@ -1748,6 +1833,19 @@ int Mdrunner::mdrunner()
                                              : gmx_omp_nthreads_get(ModuleMultiThread::Pme);
     checkHardwareOversubscription(
             numThreadsOnThisRank, cr->commMyGroup.rank(), *hwinfo_->hardwareTopology, physicalNodeComm, mdlog);
+
+    const bool exactRespaHybridGpuRequested =
+            inputrec->useMts && inputrec->mtsMode == MtsMode::LammpsRespa
+            && inputrec->lammpsRespa.hasPairSplitting() && runScheduleWork.simulationWork.useGpuNonbonded;
+    if (exactRespaHybridGpuRequested && numThreadsOnThisRank != 2)
+    {
+        GMX_THROW(InconsistentInputError(formatString(
+                "Exact LAMMPS-style r-RESPA hybrid OpenMP+GPU is currently "
+                "restricted to exactly 2 OpenMP threads per rank in the audited HG1 narrow "
+                "runtime shape. This run resolved to %d OpenMP thread%s on this rank.",
+                numThreadsOnThisRank,
+                numThreadsOnThisRank == 1 ? "" : "s")));
+    }
 
     // Enable Peer access between GPUs where available
     // Only for DD, only main PP rank needs to perform setup, and only if thread MPI plus

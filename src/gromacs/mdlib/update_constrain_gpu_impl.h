@@ -123,8 +123,8 @@ public:
                    float                             dtPressureCouple,
                    const gmx::Matrix3x3&             prVelocityScalingMatrix);
 
-    /*! \brief Advance coordinates using the current device velocities without touching forces. */
-    void driftOnly(real dt);
+    /*! \brief Drift coordinates on the GPU using the current device-side velocities. */
+    void driftCoordinates(real dt);
 
     /*! \brief Scale coordinates on the GPU for the pressure coupling.
      *

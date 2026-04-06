@@ -975,9 +975,26 @@ void nonbonded_verlet_t::dispatchNonbondedKernel(gmx::InteractionLocality       
                              wcycle_);
             break;
 
-        case NbnxmKernelType::Gpu8x8x8: gpu_launch_kernel(gpuNbv_, stepWork, iLocality); break;
+        case NbnxmKernelType::Gpu8x8x8:
+            if (stepWork.nonbondedRespaContribution != MtsNonbondedRespaContribution::Full)
+            {
+                GMX_RELEASE_ASSERT(!stepWork.computeEnergy && !stepWork.computeVirial,
+                                   "GPU NBNXM exact LAMMPS-style r-RESPA launches are currently "
+                                   "supported only for force-only steps");
+                GMX_RELEASE_ASSERT(ic.vdw.type == VanDerWaalsType::Cut
+                                           && ic.vdw.modifier == InteractionModifiers::None
+                                           && usingPmeOrEwald(ic.coulomb.type)
+                                           && ic.coulomb.modifier == InteractionModifiers::None,
+                                   "GPU NBNXM exact LAMMPS-style r-RESPA launches currently "
+                                   "support only cut-off LJ with PME/Ewald Coulomb and no real-space modifiers");
+            }
+            gpu_launch_kernel(gpuNbv_, stepWork, iLocality);
+            break;
 
         case NbnxmKernelType::Cpu8x8x8_PlainC:
+            GMX_RELEASE_ASSERT(
+                    stepWork.nonbondedRespaContribution == MtsNonbondedRespaContribution::Full,
+                    "GPU-reference NBNXM does not yet support exact LAMMPS-style r-RESPA per-contribution launches");
             nbnxn_kernel_gpu_ref(pairlistSet.gpuList(),
                                  nbat_.get(),
                                  ic,

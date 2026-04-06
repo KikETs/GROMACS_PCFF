@@ -1647,6 +1647,14 @@ static void setExclusionsForIEntry(const GridSet&          gridSet,
                                    int gmx_unused          na_cj_2log,
                                    const ListOfLists<int>& exclusions)
 {
+    const char* ownershipTraceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+    static bool dumpedRuntimeExclusionInputGpu = false;
+    static bool dumpedTargetBitClearTraceGpu   = false;
+    static bool dumpedControlBitClearTraceGpu  = false;
+    constexpr int targetAtomI                  = 0;
+    constexpr int targetAtomJ                  = 1;
+    constexpr int controlAtomJ                 = 4;
+
     // Set the exclusions for the current (ie. last) i-entry in the list
     const nbnxn_sci_t& currentIEntry = nbl->sci.back();
     if (currentIEntry.numJClusterGroups() == 0)
@@ -1678,6 +1686,20 @@ static void setExclusionsForIEntry(const GridSet&          gridSet,
         const int iAtom  = atomIndices[iIndex];
         if (iAtom >= 0)
         {
+            if (!dumpedRuntimeExclusionInputGpu && ownershipTraceDirPath != nullptr
+                && *ownershipTraceDirPath != '\0' && iAtom == targetAtomI)
+            {
+                const auto exclusionsForAtom = exclusions[iAtom];
+                appendOwnershipHandoffTraceLine(
+                        ownershipTraceDirPath,
+                        "step0_runtime_exclusions_input_gpu.txt",
+                        "stage=runtime_exclusions_input_gpu source=top.excls_via_constructPairlist atom=0 exclusions="
+                                + joinIndexList(exclusionsForAtom) + " contains_target="
+                                + std::string(arrayRefContains(exclusionsForAtom, targetAtomJ) ? "true" : "false")
+                                + " contains_control="
+                                + std::string(arrayRefContains(exclusionsForAtom, controlAtomJ) ? "true" : "false"));
+                dumpedRuntimeExclusionInputGpu = true;
+            }
             const int iCluster = i / c_clusterSize;
 
             /* Loop over the topology-based exclusions for this i-atom */
@@ -1732,9 +1754,38 @@ static void setExclusionsForIEntry(const GridSet&          gridSet,
 
                             auto& interactionMask =
                                     get_exclusion_mask(nbl, cj_to_cjPacked<layoutType>(index), jHalf);
-
-                            interactionMask.pair[atomIndexInClusterpairSplit<layoutType>(innerJ) * c_clusterSize + innerI] &=
-                                    ~pairMask;
+                            const int          exclPair   = atomIndexInClusterpairSplit<layoutType>(innerJ) * c_clusterSize + innerI;
+                            const unsigned int maskBefore = interactionMask.pair[exclPair];
+                            interactionMask.pair[exclPair] &= ~pairMask;
+                            const unsigned int maskAfter = interactionMask.pair[exclPair];
+                            if (ownershipTraceDirPath != nullptr && *ownershipTraceDirPath != '\0'
+                                && iAtom == targetAtomI && (jAtom == targetAtomJ || jAtom == controlAtomJ))
+                            {
+                                const bool isTarget = (jAtom == targetAtomJ);
+                                bool& dumpedTrace   = isTarget ? dumpedTargetBitClearTraceGpu : dumpedControlBitClearTraceGpu;
+                                if (!dumpedTrace)
+                                {
+                                    appendOwnershipHandoffTraceLine(
+                                            ownershipTraceDirPath,
+                                            "step0_exclusion_bit_clear_trace_gpu.txt",
+                                            "stage=runtime_clear_exclusion_bit_gpu source=top.excls atom_i=0 atom_j="
+                                                    + std::to_string(jAtom) + " i_index="
+                                                    + std::to_string(iIndex) + " j_index="
+                                                    + std::to_string(jIndex) + " j_cluster="
+                                                    + std::to_string(jCluster) + " list_index="
+                                                    + std::to_string(index) + " inner_i="
+                                                    + std::to_string(innerI) + " inner_j="
+                                                    + std::to_string(innerJ) + " j_half="
+                                                    + std::to_string(jHalf) + " excl_pair="
+                                                    + std::to_string(exclPair) + " pair_mask="
+                                                    + std::to_string(pairMask) + " mask_before="
+                                                    + std::to_string(maskBefore) + " mask_after="
+                                                    + std::to_string(maskAfter) + " role="
+                                                    + std::string(isTarget ? "target_pair_0_1"
+                                                                           : "control_pair_0_4"));
+                                    dumpedTrace = true;
+                                }
+                            }
                         }
                     }
                 }

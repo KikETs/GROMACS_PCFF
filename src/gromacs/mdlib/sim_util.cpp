@@ -70,15 +70,11 @@
 #include "gromacs/ewald/pme_coordinate_receiver_gpu.h"
 #include "gromacs/ewald/pme_pp.h"
 #include "gromacs/ewald/pme_pp_comm_gpu.h"
-#include "gromacs/gpu_utils/device_stream_manager.h"
-#include "gromacs/gpu_utils/devicebuffer.h"
 #include "gromacs/gmxlib/network.h"
 #include "gromacs/gmxlib/nrnb.h"
 #include "gromacs/gpu_utils/devicebuffer_datatype.h"
-#include "gromacs/gpu_utils/gpueventsynchronizer.h"
 #include "gromacs/gpu_utils/gpu_utils.h"
 #include "gromacs/imd/imd.h"
-#include "gromacs/listed_forces/bonded.h"
 #include "gromacs/listed_forces/disre.h"
 #include "gromacs/listed_forces/listed_forces.h"
 #include "gromacs/listed_forces/listed_forces_gpu.h"
@@ -91,7 +87,6 @@
 #include "gromacs/mdlib/constr.h"
 #include "gromacs/mdlib/dispersioncorrection.h"
 #include "gromacs/mdlib/enerdata_utils.h"
-#include "gromacs/mdlib/exactrespa_nonbonded_gpu.h"
 #include "gromacs/mdlib/force.h"
 #include "gromacs/mdlib/force_flags.h"
 #include "gromacs/mdlib/forcerec.h"
@@ -104,11 +99,9 @@
 #include "gromacs/mdtypes/commrec.h"
 #include "gromacs/mdtypes/atominfo.h"
 #include "gromacs/mdtypes/enerdata.h"
-#include "gromacs/mdtypes/exactrespaforcestore.h"
 #include "gromacs/mdtypes/forcebuffers.h"
 #include "gromacs/mdtypes/forceoutput.h"
 #include "gromacs/mdtypes/forcerec.h"
-#include "gromacs/mdtypes/exactrespaschedule.h"
 #include "gromacs/mdtypes/iforceprovider.h"
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/interaction_const.h"
@@ -121,10 +114,12 @@
 #include "gromacs/mdtypes/state_propagator_data_gpu.h"
 #include "gromacs/nbnxm/atomdata.h"
 #include "gromacs/nbnxm/gpu_data_mgmt.h"
-#include "gromacs/nbnxm/gpu_types_common.h"
 #include "gromacs/nbnxm/kernels_reference/kernel_ref_4x4.h"
 #include "gromacs/nbnxm/nbnxm.h"
 #include "gromacs/nbnxm/nbnxm_gpu.h"
+#if GMX_GPU_CUDA
+#    include "gromacs/nbnxm/cuda/nbnxm_cuda_types.h"
+#endif
 #include "gromacs/nbnxm/pairlist.h"
 #include "gromacs/pbcutil/ishift.h"
 #include "gromacs/pbcutil/pbc.h"
@@ -637,62 +632,6 @@ static void do_nb_verlet(t_forcerec*                fr,
             nrnb);
 }
 
-struct LammpsRespaSplitWeights
-{
-    real inner  = 0;
-    real middle = 0;
-    real outer  = 1;
-};
-
-static real respaSwitchIn(const real r, const real off, const real on)
-{
-    if (on <= off)
-    {
-        return (r >= on ? 1.0_real : 0.0_real);
-    }
-    if (r <= off)
-    {
-        return 0.0_real;
-    }
-    if (r >= on)
-    {
-        return 1.0_real;
-    }
-
-    const real x = (r - off) / (on - off);
-    return x * x * (3.0_real - 2.0_real * x);
-}
-
-static LammpsRespaSplitWeights computeLammpsRespaSplitWeights(const t_inputrec& inputrec, const real r)
-{
-    LammpsRespaSplitWeights weights;
-    const auto&             respa = gmx::useExactRespa(inputrec) ? inputrec.exactRespa.forceLayout
-                                                                  : inputrec.lammpsRespa;
-
-    if (!respa.hasPairSplitting())
-    {
-        return weights;
-    }
-
-    if (respa.hasMiddle())
-    {
-        const real switchIntoMiddle = respaSwitchIn(r, respa.innerOff, respa.innerOn);
-        const real switchIntoOuter  = respaSwitchIn(r, respa.outerOn, respa.outerOff);
-        weights.inner               = 1.0_real - switchIntoMiddle;
-        weights.middle              = switchIntoMiddle * (1.0_real - switchIntoOuter);
-        weights.outer               = switchIntoOuter;
-    }
-    else
-    {
-        const real switchIntoOuter = respaSwitchIn(r, respa.outerOn, respa.outerOff);
-        weights.inner              = 1.0_real - switchIntoOuter;
-        weights.middle             = 0.0_real;
-        weights.outer              = switchIntoOuter;
-    }
-
-    return weights;
-}
-
 static void accumulatePairVirial(const RVec& dx, const RVec& force, matrix virial)
 {
     for (int dim1 = 0; dim1 < DIM; dim1++)
@@ -892,162 +831,10 @@ static const std::vector<int64_t>& respaMultiStepCoulombTraceSteps()
     return steps;
 }
 
-static const std::vector<int64_t>& respaForceComponentTraceSteps()
-{
-    static const std::vector<int64_t> steps = []()
-    {
-        std::vector<int64_t> parsedSteps;
-        const char*          value = std::getenv("GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS_STEPS");
-        if (value == nullptr || *value == '\0')
-        {
-            return parsedSteps;
-        }
-
-        std::stringstream ss(value);
-        std::string       item;
-        while (std::getline(ss, item, ','))
-        {
-            if (!item.empty())
-            {
-                parsedSteps.push_back(std::stoll(item));
-            }
-        }
-        return parsedSteps;
-    }();
-    return steps;
-}
-
-static const std::vector<int64_t>& respaPcffClass2SubtermTraceSteps()
-{
-    static const std::vector<int64_t> steps = []()
-    {
-        std::vector<int64_t> parsedSteps;
-        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS");
-        if (value == nullptr || *value == '\0')
-        {
-            return parsedSteps;
-        }
-
-        std::stringstream ss(value);
-        std::string       item;
-        while (std::getline(ss, item, ','))
-        {
-            if (!item.empty())
-            {
-                parsedSteps.push_back(std::stoll(item));
-            }
-        }
-        return parsedSteps;
-    }();
-    return steps;
-}
-
-static const std::vector<int64_t>& respaCpuCorrectionTraceSteps()
-{
-    static const std::vector<int64_t> steps = []()
-    {
-        std::vector<int64_t> parsedSteps;
-        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES_STEPS");
-        if (value == nullptr || *value == '\0')
-        {
-            return parsedSteps;
-        }
-
-        std::stringstream ss(value);
-        std::string       item;
-        while (std::getline(ss, item, ','))
-        {
-            if (!item.empty())
-            {
-                parsedSteps.push_back(std::stoll(item));
-            }
-        }
-        return parsedSteps;
-    }();
-    return steps;
-}
-
-static const std::vector<int64_t>& respaRealspaceForceSubcomponentTraceSteps()
-{
-    static const std::vector<int64_t> steps = []()
-    {
-        std::vector<int64_t> parsedSteps;
-        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS_STEPS");
-        if (value == nullptr || *value == '\0')
-        {
-            return parsedSteps;
-        }
-
-        std::stringstream ss(value);
-        std::string       item;
-        while (std::getline(ss, item, ','))
-        {
-            if (!item.empty())
-            {
-                parsedSteps.push_back(std::stoll(item));
-            }
-        }
-        return parsedSteps;
-    }();
-    return steps;
-}
-
-static const std::vector<int64_t>& respaStep1Subset01ForceGroupAuditSteps()
-{
-    static const std::vector<int64_t> steps = []()
-    {
-        std::vector<int64_t> parsedSteps;
-        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_STEP1_SUBSET01_FORCEGROUP_AUDIT_STEPS");
-        if (value == nullptr || *value == '\0')
-        {
-            return parsedSteps;
-        }
-
-        std::stringstream ss(value);
-        std::string       item;
-        while (std::getline(ss, item, ','))
-        {
-            if (!item.empty())
-            {
-                parsedSteps.push_back(std::stoll(item));
-            }
-        }
-        return parsedSteps;
-    }();
-    return steps;
-}
-
 static bool shouldTraceRespaMultiStepCoulombStep(const int64_t step)
 {
     const auto& traceSteps = respaMultiStepCoulombTraceSteps();
     return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
-}
-
-static const std::vector<int>& respaForceTraceAtomIndices()
-{
-    static const std::vector<int> atomIndices = []()
-    {
-        std::vector<int> parsedAtomIndices;
-        const char*      value = std::getenv("GMX_PCFF_RESPA_TRACE_ATOMS");
-        if (value != nullptr && *value != '\0')
-        {
-            std::stringstream ss(value);
-            std::string       item;
-            while (std::getline(ss, item, ','))
-            {
-                if (!item.empty())
-                {
-                    parsedAtomIndices.push_back(std::stoi(item));
-                }
-            }
-        }
-        if (parsedAtomIndices.empty())
-        {
-            parsedAtomIndices = { 0, 5 };
-        }
-        return parsedAtomIndices;
-    }();
-    return atomIndices;
 }
 
 static bool shouldTraceRespaCoordHandoffStep(const int64_t step)
@@ -1057,12 +844,6 @@ static bool shouldTraceRespaCoordHandoffStep(const int64_t step)
 }
 
 extern thread_local bool g_respaSuppressDoForceStateXChain;
-extern thread_local const char* g_respaDoForceContextLabel;
-extern thread_local int64_t g_respaCurrentDoForceStep;
-extern thread_local const int* g_respaCurrentGlobalAtomIndices;
-extern thread_local int g_respaCurrentGlobalAtomIndexCount;
-static thread_local const int* g_respaTraceGlobalAtomIndices    = nullptr;
-static thread_local int        g_respaTraceGlobalAtomIndexCount = 0;
 
 static bool shouldTraceRespaStateXChainStep(const int64_t step)
 {
@@ -1076,692 +857,33 @@ static const char* activeM2pTraceDirPath()
     return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
 }
 
-static bool shouldTraceRespaForceComponentsStep(const int64_t step)
+static bool shouldTraceRespaForceComponentsStep(const int64_t step, const int highestActiveMtsLevel)
 {
-    if (!respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS"))
-    {
-        return false;
-    }
-
-    const auto& traceSteps = respaForceComponentTraceSteps();
-    if (!traceSteps.empty())
-    {
-        return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
-    }
-
-    return step == 0;
+    return respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS")
+           && (step == 0 || highestActiveMtsLevel > 0);
 }
 
-static bool shouldTraceExactGpuListedFtypeSplitStep(const int64_t step)
+static bool shouldTraceRespaRealspaceForceSubcomponentsStep(const int64_t step,
+                                                            const int     highestActiveMtsLevel)
 {
-    return (respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_GPU_LISTED_FTYPE_SPLIT")
-            || respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_GPU_PAIR14_SPLIT"))
-           && activeM2pTraceDirPath() != nullptr && shouldTraceRespaForceComponentsStep(step);
-}
-
-static bool shouldTraceExactGpuListedClass2SubtermSplitStep(const int64_t step)
-{
-    return respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_GPU_CLASS2_SUBTERM_SPLIT")
-           && activeM2pTraceDirPath() != nullptr && shouldTraceRespaForceComponentsStep(step);
-}
-
-static bool shouldTraceExactGpuBondedMixedVsSequentialStep(const int64_t step)
-{
-    return respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_GPU_BONDED_MIXED_VS_SEQUENTIAL")
-           && activeM2pTraceDirPath() != nullptr && shouldTraceRespaForceComponentsStep(step);
-}
-
-static bool shouldUseExactGpuBondedSequentialFtypesValidation()
-{
-    return respaTraceFlagEnabled("GMX_PCFF_RESPA_EXACT_GPU_BONDED_SEQUENTIAL_FTYPES");
-}
-
-static bool shouldTraceExactGpuBondedLaunchContextStep(const int64_t step)
-{
-    return respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_GPU_BONDED_LAUNCH_CONTEXT")
-           && activeM2pTraceDirPath() != nullptr && shouldTraceRespaForceComponentsStep(step);
-}
-
-static bool shouldTraceExactGpuBondedDeviceXqStep(const int64_t step)
-{
-    return respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_GPU_BONDED_DEVICE_XQ")
-           && activeM2pTraceDirPath() != nullptr && shouldTraceRespaForceComponentsStep(step);
-}
-
-static bool shouldTraceExactGpuBondedDeviceForceStep(const int64_t step)
-{
-    return respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_GPU_BONDED_DEVICE_FORCE")
-           && activeM2pTraceDirPath() != nullptr && shouldTraceRespaForceComponentsStep(step);
-}
-
-static bool shouldTraceExactGpuBondedGridIndexStep(const int64_t step)
-{
-    return respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_GPU_BONDED_GRID_INDICES")
-           && activeM2pTraceDirPath() != nullptr && shouldTraceRespaForceComponentsStep(step);
-}
-
-static void appendExactGpuBondedLaunchContextTrace(const char* traceDirPath,
-                                                   const int64_t step,
-                                                   const int exactLevel,
-                                                   const char* localCoordinateProvider,
-                                                   const bool stepUsesGpuXBufferOps,
-                                                   const bool stepDoesNeighborSearch,
-                                                   const bool localCoordinatesNeededOnDevice,
-                                                   const bool copiedCoordinatesFromGpuToHost,
-                                                   const bool copiedCoordinatesFromHostToGpu,
-                                                   const int expectedLocalConsumptionCount,
-                                                   const bool uploadedCoordinatesForBonded)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
-    {
-        return;
-    }
-
-    static std::once_flag traceHeaderOnce;
-    std::call_once(traceHeaderOnce,
-                   [traceDirPath]()
-                   {
-                       writeRespaTraceTextFile(traceDirPath,
-                                               "exact_gpu_bonded_launch_context.tsv",
-                                               "# step\tlevel\tprovider\tuse_gpu_x_buffer_ops\tdo_neighbor_search\tlocal_coordinates_needed_on_device\tcopied_coordinates_from_gpu_to_host\tcopied_coordinates_from_host_to_gpu\texpected_local_x_ready_consumption_count\tuploaded_coordinates_for_bonded\n");
-                   });
-
-    appendRespaTraceTextLine(traceDirPath,
-                             "exact_gpu_bonded_launch_context.tsv",
-                             std::to_string(step) + '\t' + std::to_string(exactLevel) + '\t'
-                                     + localCoordinateProvider + '\t'
-                                     + (stepUsesGpuXBufferOps ? "1" : "0") + '\t'
-                                     + (stepDoesNeighborSearch ? "1" : "0") + '\t'
-                                     + (localCoordinatesNeededOnDevice ? "1" : "0") + '\t'
-                                     + (copiedCoordinatesFromGpuToHost ? "1" : "0") + '\t'
-                                     + (copiedCoordinatesFromHostToGpu ? "1" : "0") + '\t'
-                                     + std::to_string(expectedLocalConsumptionCount) + '\t'
-                                     + (uploadedCoordinatesForBonded ? "1" : "0"));
-}
-
-static void appendExactGpuBondedGridIndexTrace(const char*         traceDirPath,
-                                               const int64_t       step,
-                                               const int           exactLevel,
-                                               nonbonded_verlet_t* nbv)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0' || nbv == nullptr)
-    {
-        return;
-    }
-
-    static std::once_flag traceHeaderOnce;
-    std::call_once(traceHeaderOnce,
-                   [traceDirPath]()
-                   {
-                       writeRespaTraceTextFile(traceDirPath,
-                                               "exact_gpu_bonded_grid_index_trace.tsv",
-                                               "# step\tlevel\tatom\tmapped_index\torder_matches_nbnxn\n");
-                   });
-
-    const bool orderMatches = nbv->localAtomOrderMatchesNbnxmOrder();
-    const auto gridIndices  = nbv->getGridIndices();
-    const int  numLocalAtoms = nbv->getNumAtoms(AtomLocality::Local);
-
-    for (const int atomIndex : respaForceTraceAtomIndices())
-    {
-        if (atomIndex < 0 || atomIndex >= numLocalAtoms)
-        {
-            continue;
-        }
-        const int mappedIndex =
-                orderMatches ? atomIndex
-                             : ((atomIndex >= 0 && atomIndex < gridIndices.ssize()) ? gridIndices[atomIndex]
-                                                                                     : -1);
-        appendRespaTraceTextLine(traceDirPath,
-                                 "exact_gpu_bonded_grid_index_trace.tsv",
-                                 std::to_string(step) + '\t' + std::to_string(exactLevel) + '\t'
-                                         + std::to_string(atomIndex) + '\t'
-                                         + std::to_string(mappedIndex) + '\t'
-                                         + (orderMatches ? "1" : "0"));
-    }
-}
-
-#if GMX_GPU
-static void appendExactGpuBondedDeviceXqTrace(const char*            traceDirPath,
-                                              const int64_t          step,
-                                              const int              exactLevel,
-                                              const char*            stageLabel,
-                                              nonbonded_verlet_t*    nbv,
-                                              const DeviceStream&    deviceStream)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0' || nbv == nullptr || nbv->gpuNbv() == nullptr)
-    {
-        return;
-    }
-
-    NBAtomDataGpu* atomData = gpuGetNBAtomData(nbv->gpuNbv());
-    if (atomData == nullptr)
-    {
-        return;
-    }
-
-    const int numLocalAtoms = nbv->getNumAtoms(AtomLocality::Local);
-    if (numLocalAtoms == 0)
-    {
-        return;
-    }
-
-    std::vector<Float4> hostXq(numLocalAtoms);
-    copyFromDeviceBuffer(hostXq.data(),
-                         &atomData->xq,
-                         0,
-                         numLocalAtoms,
-                         deviceStream,
-                         GpuApiCallBehavior::Sync,
-                         nullptr);
-
-    static std::once_flag traceHeaderOnce;
-    std::call_once(traceHeaderOnce,
-                   [traceDirPath]()
-                   {
-                       writeRespaTraceTextFile(traceDirPath,
-                                               "exact_gpu_bonded_device_xq_trace.tsv",
-                                               "# step\tlevel\tstage\tatom\tx\ty\tz\tq\n");
-                   });
-
-    const bool orderMatches  = nbv->localAtomOrderMatchesNbnxmOrder();
-    const auto gridIndices   = nbv->getGridIndices();
-    const auto mappedAtomIndex = [&](const int atomIndex) -> int
-    {
-        if (!orderMatches)
-        {
-            if (atomIndex < 0 || atomIndex >= gridIndices.ssize())
-            {
-                return -1;
-            }
-            return gridIndices[atomIndex];
-        }
-        return atomIndex;
-    };
-
-    for (const int atomIndex : respaForceTraceAtomIndices())
-    {
-        if (atomIndex < 0 || atomIndex >= numLocalAtoms)
-        {
-            continue;
-        }
-        const int mappedIndex = mappedAtomIndex(atomIndex);
-        if (mappedIndex < 0 || mappedIndex >= numLocalAtoms)
-        {
-            continue;
-        }
-        const float* xqComponents    = reinterpret_cast<const float*>(&hostXq[mappedIndex]);
-        appendRespaTraceTextLine(traceDirPath,
-                                 "exact_gpu_bonded_device_xq_trace.tsv",
-                                 std::to_string(step) + '\t' + std::to_string(exactLevel) + '\t'
-                                         + stageLabel + '\t' + std::to_string(atomIndex) + '\t'
-                                         + formatString("%.15f", xqComponents[0]) + '\t'
-                                         + formatString("%.15f", xqComponents[1]) + '\t'
-                                         + formatString("%.15f", xqComponents[2]) + '\t'
-                                         + formatString("%.15f", xqComponents[3]));
-    }
-}
-
-static void appendExactGpuBondedDeviceForceTrace(const char*            traceDirPath,
-                                                 const int64_t          step,
-                                                 const int              exactLevel,
-                                                 const char*            stageLabel,
-                                                 nonbonded_verlet_t*    nbv,
-                                                 const DeviceStream&    deviceStream)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0' || nbv == nullptr || nbv->gpuNbv() == nullptr)
-    {
-        return;
-    }
-
-    NBAtomDataGpu* atomData = gpuGetNBAtomData(nbv->gpuNbv());
-    if (atomData == nullptr)
-    {
-        return;
-    }
-
-    const int numLocalAtoms = nbv->getNumAtoms(AtomLocality::Local);
-    if (numLocalAtoms == 0)
-    {
-        return;
-    }
-
-    std::vector<Float3> hostForce(numLocalAtoms);
-    copyFromDeviceBuffer(hostForce.data(),
-                         &atomData->f,
-                         0,
-                         numLocalAtoms,
-                         deviceStream,
-                         GpuApiCallBehavior::Sync,
-                         nullptr);
-
-    static std::once_flag traceHeaderOnce;
-    std::call_once(traceHeaderOnce,
-                   [traceDirPath]()
-                   {
-                       writeRespaTraceTextFile(traceDirPath,
-                                               "exact_gpu_bonded_device_force_trace.tsv",
-                                               "# step\tlevel\tstage\tatom\tfx\tfy\tfz\n");
-                   });
-
-    const bool orderMatches = nbv->localAtomOrderMatchesNbnxmOrder();
-    const auto gridIndices  = nbv->getGridIndices();
-    const auto mappedAtomIndex = [&](const int atomIndex) -> int
-    {
-        if (!orderMatches)
-        {
-            if (atomIndex < 0 || atomIndex >= gridIndices.ssize())
-            {
-                return -1;
-            }
-            return gridIndices[atomIndex];
-        }
-        return atomIndex;
-    };
-
-    for (const int atomIndex : respaForceTraceAtomIndices())
-    {
-        if (atomIndex < 0 || atomIndex >= numLocalAtoms)
-        {
-            continue;
-        }
-        const int mappedIndex = mappedAtomIndex(atomIndex);
-        if (mappedIndex < 0 || mappedIndex >= numLocalAtoms)
-        {
-            continue;
-        }
-        const float* forceComponents = reinterpret_cast<const float*>(&hostForce[mappedIndex]);
-        appendRespaTraceTextLine(traceDirPath,
-                                 "exact_gpu_bonded_device_force_trace.tsv",
-                                 std::to_string(step) + '\t' + std::to_string(exactLevel) + '\t'
-                                         + stageLabel + '\t' + std::to_string(atomIndex) + '\t'
-                                         + formatString("%.15f", forceComponents[0]) + '\t'
-                                         + formatString("%.15f", forceComponents[1]) + '\t'
-                                         + formatString("%.15f", forceComponents[2]));
-    }
-}
-#endif
-
-static InteractionDefinitions makeSingleInteractionFunctionDefinitions(const InteractionDefinitions& source,
-                                                                      const InteractionFunction       keptFtype)
-{
-    InteractionDefinitions filtered(source);
-    filtered.iparams_posres.clear();
-    filtered.iparams_fbposres.clear();
-
-    for (const auto ftype : gmx::EnumerationWrapper<InteractionFunction>{})
-    {
-        if (ftype != keptFtype)
-        {
-            filtered.il[ftype].clear();
-            filtered.numNonperturbedInteractions[ftype] = 0;
-        }
-    }
-
-    return filtered;
-}
-
-static const char* exactGpuListedFunctionTraceLabel(const InteractionFunction ftype)
-{
-    switch (ftype)
-    {
-        case InteractionFunction::Bonds: return "bonds_only";
-        case InteractionFunction::BondClass2: return "bond_class2_only";
-        case InteractionFunction::Angles: return "angles_only";
-        case InteractionFunction::UreyBradleyPotential: return "urey_bradley_only";
-        case InteractionFunction::AngleClass2: return "angle_class2_only";
-        case InteractionFunction::ProperDihedrals: return "proper_dihedrals_only";
-        case InteractionFunction::RyckaertBellemansDihedrals: return "ryckaert_bellemans_only";
-        case InteractionFunction::DihedralClass2: return "dihedral_class2_only";
-        case InteractionFunction::ImproperDihedrals: return "improper_dihedrals_only";
-        case InteractionFunction::ImproperClass2: return "improper_class2_only";
-        case InteractionFunction::PeriodicImproperDihedrals: return "periodic_improper_dihedrals_only";
-        case InteractionFunction::LennardJones14: return "pair14_only";
-        default: return nullptr;
-    }
-}
-
-struct ExactGpuListedClass2SubtermTraceMode
-{
-    PcffClass2DebugMode mode;
-    const char*         label;
-};
-
-static ArrayRef<const ExactGpuListedClass2SubtermTraceMode> exactGpuListedClass2SubtermTraceModes(
-        const InteractionFunction ftype)
-{
-    static const std::array<ExactGpuListedClass2SubtermTraceMode, 3> bondClass2Modes = {
-        ExactGpuListedClass2SubtermTraceMode{ PcffClass2DebugMode::BondClass2K2Only, "bond_class2_k2_only" },
-        ExactGpuListedClass2SubtermTraceMode{ PcffClass2DebugMode::BondClass2K3Only, "bond_class2_k3_only" },
-        ExactGpuListedClass2SubtermTraceMode{ PcffClass2DebugMode::BondClass2K4Only, "bond_class2_k4_only" },
-    };
-    static const std::array<ExactGpuListedClass2SubtermTraceMode, 4> angleClass2Modes = {
-        ExactGpuListedClass2SubtermTraceMode{ PcffClass2DebugMode::AngleClass2MainOnly, "angle_class2_main_only" },
-        ExactGpuListedClass2SubtermTraceMode{ PcffClass2DebugMode::AngleClass2BondBondOnly, "angle_class2_bond_bond_only" },
-        ExactGpuListedClass2SubtermTraceMode{ PcffClass2DebugMode::AngleClass2BondAngle1Only, "angle_class2_bond_angle_1_only" },
-        ExactGpuListedClass2SubtermTraceMode{ PcffClass2DebugMode::AngleClass2BondAngle2Only, "angle_class2_bond_angle_2_only" },
-    };
-
-    switch (ftype)
-    {
-        case InteractionFunction::BondClass2: return makeConstArrayRef(bondClass2Modes);
-        case InteractionFunction::AngleClass2: return makeConstArrayRef(angleClass2Modes);
-        default: return {};
-    }
-}
-
-static constexpr std::array<InteractionFunction, 12> c_exactGpuListedFtypesForTraceOrSequentialValidation = {
-    InteractionFunction::Bonds,
-    InteractionFunction::BondClass2,
-    InteractionFunction::Angles,
-    InteractionFunction::UreyBradleyPotential,
-    InteractionFunction::AngleClass2,
-    InteractionFunction::ProperDihedrals,
-    InteractionFunction::RyckaertBellemansDihedrals,
-    InteractionFunction::DihedralClass2,
-    InteractionFunction::ImproperDihedrals,
-    InteractionFunction::ImproperClass2,
-    InteractionFunction::PeriodicImproperDihedrals,
-    InteractionFunction::LennardJones14,
-};
-
-static bool shouldTracePcffClass2SubtermEnergiesStep(const int64_t step)
-{
-    if (!respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES")
-        || activeM2pTraceDirPath() == nullptr)
-    {
-        return false;
-    }
-
-    const auto& traceSteps = respaPcffClass2SubtermTraceSteps();
-    if (!traceSteps.empty())
-    {
-        return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
-    }
-
-    return step == 0;
-}
-
-static bool shouldTraceCpuCorrectionEnergiesStep(const int64_t step)
-{
-    if (!respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES")
-        || activeM2pTraceDirPath() == nullptr)
-    {
-        return false;
-    }
-
-    const auto& traceSteps = respaCpuCorrectionTraceSteps();
-    if (!traceSteps.empty())
-    {
-        return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
-    }
-
-    return step == 0;
-}
-
-static void appendPcffClass2SubtermEnergyTrace(const char*                          traceDirPath,
-                                               const int64_t                        step,
-                                               const int                            level,
-                                               const char*                          actualBackend,
-                                               const PcffClass2SubtermEnergies&     energies)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
-    {
-        return;
-    }
-
-    static std::once_flag traceHeaderOnce;
-    std::call_once(traceHeaderOnce,
-                   [traceDirPath]()
-                   {
-                       writeRespaTraceTextFile(traceDirPath,
-                                               "class2_subterm_energy_trace.tsv",
-                                               "#step\tlevel\tactual_backend\tterm\tenergy_kj_mol\tinteraction_count\tdiagnostic_origin\n");
-                   });
-
-    struct TermRow
-    {
-        const char* name;
-        double      energy;
-        int         count;
-    };
-
-    const std::array<TermRow, 17> termRows = {
-        { { "bond_class2_main", energies.bondClass2Main, energies.bondClass2Count },
-          { "angle_class2_main", energies.angleClass2Main, energies.angleClass2Count },
-          { "angle_class2_bond_bond", energies.angleClass2BondBond, energies.angleClass2Count },
-          { "angle_class2_bond_angle_1", energies.angleClass2BondAngle1, energies.angleClass2Count },
-          { "angle_class2_bond_angle_2", energies.angleClass2BondAngle2, energies.angleClass2Count },
-          { "dihedral_class2_main", energies.dihedralClass2Main, energies.dihedralClass2Count },
-          { "dihedral_class2_middle_bond_torsion",
-            energies.dihedralClass2MiddleBondTorsion,
-            energies.dihedralClass2Count },
-          { "dihedral_class2_end_bond_torsion_1",
-            energies.dihedralClass2EndBondTorsion1,
-            energies.dihedralClass2Count },
-          { "dihedral_class2_end_bond_torsion_2",
-            energies.dihedralClass2EndBondTorsion2,
-            energies.dihedralClass2Count },
-          { "dihedral_class2_angle_torsion_1",
-            energies.dihedralClass2AngleTorsion1,
-            energies.dihedralClass2Count },
-          { "dihedral_class2_angle_torsion_2",
-            energies.dihedralClass2AngleTorsion2,
-            energies.dihedralClass2Count },
-          { "dihedral_class2_angle_angle_torsion",
-            energies.dihedralClass2AngleAngleTorsion,
-            energies.dihedralClass2Count },
-          { "dihedral_class2_bond_bond_13_torsion",
-            energies.dihedralClass2BondBond13Torsion,
-            energies.dihedralClass2Count },
-          { "improper_class2_main", energies.improperClass2Main, energies.improperClass2Count },
-          { "improper_class2_angle_angle_1",
-            energies.improperClass2AngleAngle1,
-            energies.improperClass2Count },
-          { "improper_class2_angle_angle_2",
-            energies.improperClass2AngleAngle2,
-            energies.improperClass2Count },
-          { "improper_class2_angle_angle_3",
-            energies.improperClass2AngleAngle3,
-            energies.improperClass2Count } }
-    };
-
-    for (const TermRow& row : termRows)
-    {
-        std::ostringstream line;
-        line.setf(std::ios::scientific);
-        line.precision(17);
-        line << step << '\t' << level << '\t' << actualBackend << '\t' << row.name << '\t' << row.energy << '\t'
-             << row.count << '\t' << "host_diagnostic_rescan";
-        appendRespaTraceTextLine(traceDirPath, "class2_subterm_energy_trace.tsv", line.str());
-    }
-}
-
-static void appendCpuCorrectionEnergyTrace(const char* traceDirPath,
-                                           const int64_t step,
-                                           const int level,
-                                           const char* actualBackend,
-                                           const double reciprocalEnergy,
-                                           const double selfEnergy,
-                                           const double excludedCorrectionEnergy,
-                                           const double shortRangePairEnergy,
-                                           const double shortRangeTotalEnergy,
-                                           const int reciprocalCount,
-                                           const int selfCount,
-                                           const int excludedCount,
-                                           const int pairCount)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
-    {
-        return;
-    }
-
-    static std::once_flag traceHeaderOnce;
-    std::call_once(traceHeaderOnce,
-                   [traceDirPath]()
-                   {
-                       writeRespaTraceTextFile(traceDirPath,
-                                               "cpu_correction_energy_trace.tsv",
-                                               "#step\tlevel\tactual_backend\tterm\tenergy_kj_mol\tinteraction_count\tdiagnostic_origin\n");
-                   });
-
-    struct TermRow
-    {
-        const char* name;
-        double      energy;
-        int         count;
-    };
-
-    const std::array<TermRow, 5> termRows = {
-        { { "coulomb_pairs_short_range", shortRangePairEnergy, pairCount },
-          { "coulomb_excluded_correction", excludedCorrectionEnergy, excludedCount },
-          { "coulomb_self", selfEnergy, selfCount },
-          { "coulomb_short_range_total", shortRangeTotalEnergy, pairCount + excludedCount + selfCount },
-          { "coulomb_reciprocal", reciprocalEnergy, reciprocalCount } }
-    };
-
-    for (const TermRow& row : termRows)
-    {
-        std::ostringstream line;
-        line.setf(std::ios::scientific);
-        line.precision(17);
-        line << step << '\t' << level << '\t' << actualBackend << '\t' << row.name << '\t' << row.energy << '\t'
-             << row.count << '\t' << "runtime_energy_split";
-        appendRespaTraceTextLine(traceDirPath, "cpu_correction_energy_trace.tsv", line.str());
-    }
-}
-
-static void appendExplicitLevel0SnapshotForTracedAtoms(const char*               traceDirPath,
-                                                       const int64_t             step,
-                                                       const char*               stageLabel,
-                                                       ArrayRef<const gmx::RVec> coordinates,
-                                                       ArrayRef<const gmx::RVec> forceBuffer,
-                                                       const char*               codeLocation)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
-    {
-        return;
-    }
-
-    static std::mutex                      traceMutex;
-    static std::unordered_set<std::string> emittedRows;
-    const int                              availableAtoms = forceBuffer.ssize();
-    for (const int atomIndex : respaForceTraceAtomIndices())
-    {
-        if (atomIndex < 0 || atomIndex >= availableAtoms)
-        {
-            continue;
-        }
-
-        const std::string row =
-                "step=" + std::to_string(step) + " stage=" + std::string(stageLabel) + " atom="
-                + std::to_string(atomIndex) + " px=" + formatString("%.15f", coordinates[atomIndex][XX]) + " py="
-                + formatString("%.15f", coordinates[atomIndex][YY]) + " pz="
-                + formatString("%.15f", coordinates[atomIndex][ZZ]) + " fx="
-                + formatString("%.15f", forceBuffer[atomIndex][XX]) + " fy="
-                + formatString("%.15f", forceBuffer[atomIndex][YY]) + " fz="
-                + formatString("%.15f", forceBuffer[atomIndex][ZZ]) + " context_label="
-                + std::string((g_respaDoForceContextLabel != nullptr) ? g_respaDoForceContextLabel
-                                                                      : "unspecified")
-                + " code_location="
-                + std::string(codeLocation);
-        const std::string rowKey =
-                std::string(traceDirPath) + "/explicit_level0_stage_trace.txt\n" + row;
-        {
-            std::lock_guard<std::mutex> guard(traceMutex);
-            if (!emittedRows.insert(rowKey).second)
-            {
-                continue;
-            }
-        }
-        appendRespaTraceTextLine(traceDirPath, "explicit_level0_stage_trace.txt", row);
-    }
-}
-
-static bool shouldTraceRespaRealspaceForceSubcomponentsStep(const int64_t step)
-{
-    const auto& traceSteps = respaRealspaceForceSubcomponentTraceSteps();
-    if (respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS") && !traceSteps.empty())
-    {
-        return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
-    }
-
-    return (step == 0 && respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS"))
-           || (step == 2 && respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_STEP1_SUBSET01_FORCEGROUP_AUDIT")
-               && activeM2pTraceDirPath() != nullptr);
-}
-
-static bool shouldTraceRespaExclusionEquivalenceStep(const int64_t step)
-{
-    return step == 0 && respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_EXCLUSION_EQUIVALENCE");
-}
-
-static bool shouldTraceRespaExclusionEquivalencePair(const int ai, const int aj)
-{
-    return ai == 0 || ai == 5 || aj == 0 || aj == 5;
-}
-
-static bool shouldTraceBoundaryDominantPair(const int ai, const int aj)
-{
-    const int first  = std::min(ai, aj);
-    const int second = std::max(ai, aj);
-    return first == 0 && (second == 4 || second == 5 || second == 6);
-}
-
-static bool shouldTraceStep1Subset01ForceGroupAuditStep(const int64_t step)
-{
-    if (!respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_STEP1_SUBSET01_FORCEGROUP_AUDIT")
-        || activeM2pTraceDirPath() == nullptr)
-    {
-        return false;
-    }
-
-    const auto& traceSteps = respaStep1Subset01ForceGroupAuditSteps();
-    if (!traceSteps.empty())
-    {
-        return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
-    }
-
-    return step == 2;
+    return respaTraceFlagEnabled("GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS")
+           && (step == 0 || highestActiveMtsLevel > 0);
 }
 
 struct TracedForcePair
 {
-    std::vector<int>                    atomIndices = respaForceTraceAtomIndices();
-    std::vector<std::array<double, DIM>> atoms =
-            std::vector<std::array<double, DIM>>(atomIndices.size(), std::array<double, DIM>{ 0.0, 0.0, 0.0 });
+    std::array<std::array<double, DIM>, 2> atoms = { { { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 } } };
 };
-
-static void addTracedForcePairToTracedPair(TracedForcePair* destination, const TracedForcePair& source)
-{
-    if (destination == nullptr || destination->atoms.size() != source.atoms.size())
-    {
-        return;
-    }
-
-    for (int traceAtomIndex = 0; traceAtomIndex < static_cast<int>(destination->atoms.size()); ++traceAtomIndex)
-    {
-        for (int dim = 0; dim < DIM; ++dim)
-        {
-            destination->atoms[traceAtomIndex][dim] += source.atoms[traceAtomIndex][dim];
-        }
-    }
-}
 
 static void addForceArrayToTracedPair(TracedForcePair* pair, ArrayRef<const RVec> force)
 {
-    if (pair == nullptr || force.empty())
+    if (pair == nullptr || force.ssize() <= 5)
     {
         return;
     }
 
-    for (int traceAtomIndex = 0; traceAtomIndex < static_cast<int>(pair->atomIndices.size()); ++traceAtomIndex)
+    for (const auto [traceAtomIndex, atomIndex] : { std::pair<int, int>{ 0, 0 }, std::pair<int, int>{ 1, 5 } })
     {
-        const int atomIndex = pair->atomIndices[traceAtomIndex];
-        if (atomIndex < 0 || atomIndex >= force.ssize())
-        {
-            continue;
-        }
         for (int dim = 0; dim < DIM; ++dim)
         {
             pair->atoms[traceAtomIndex][dim] += force[atomIndex][dim];
@@ -1783,9 +905,8 @@ static void addPairContributionToTracedPair(TracedForcePair* pair, const int ai,
         return;
     }
 
-    for (int traceAtomIndex = 0; traceAtomIndex < static_cast<int>(pair->atomIndices.size()); ++traceAtomIndex)
+    for (const auto [traceAtomIndex, atomIndex] : { std::pair<int, int>{ 0, 0 }, std::pair<int, int>{ 1, 5 } })
     {
-        const int atomIndex = pair->atomIndices[traceAtomIndex];
         if (ai == atomIndex)
         {
             for (int dim = 0; dim < DIM; ++dim)
@@ -1806,10 +927,7 @@ static void addPairContributionToTracedPair(TracedForcePair* pair, const int ai,
 static TracedForcePair subtractTracedForcePairs(const TracedForcePair& after, const TracedForcePair& before)
 {
     TracedForcePair delta;
-    delta.atomIndices = after.atomIndices;
-    delta.atoms.assign(delta.atomIndices.size(), std::array<double, DIM>{ 0.0, 0.0, 0.0 });
-    GMX_RELEASE_ASSERT(after.atomIndices == before.atomIndices, "Trace atom selections should match");
-    for (int atomIndex = 0; atomIndex < static_cast<int>(after.atomIndices.size()); ++atomIndex)
+    for (int atomIndex = 0; atomIndex < 2; ++atomIndex)
     {
         for (int dim = 0; dim < DIM; ++dim)
         {
@@ -1819,55 +937,81 @@ static TracedForcePair subtractTracedForcePairs(const TracedForcePair& after, co
     return delta;
 }
 
-static TracedForcePair addTracedForcePairs(const TracedForcePair& lhs, const TracedForcePair& rhs)
+struct ExactRespaRealspaceTraceCapture
 {
-    TracedForcePair sum;
-    sum.atomIndices = lhs.atomIndices;
-    sum.atoms.assign(sum.atomIndices.size(), std::array<double, DIM>{ 0.0, 0.0, 0.0 });
-    GMX_RELEASE_ASSERT(lhs.atomIndices == rhs.atomIndices, "Trace atom selections should match");
-    for (int atomIndex = 0; atomIndex < static_cast<int>(lhs.atomIndices.size()); ++atomIndex)
-    {
-        for (int dim = 0; dim < DIM; ++dim)
-        {
-            sum.atoms[atomIndex][dim] = lhs.atoms[atomIndex][dim] + rhs.atoms[atomIndex][dim];
-        }
-    }
-    return sum;
+    int64_t         step = -1;
+    bool            valid = false;
+    TracedForcePair ljSrForce;
+    TracedForcePair coulombSrForce;
+    TracedForcePair exclusionCorrectionForce;
+    TracedForcePair combinedForce;
+};
+
+static ExactRespaRealspaceTraceCapture& exactRespaRealspaceTraceCapture()
+{
+    static ExactRespaRealspaceTraceCapture capture;
+    return capture;
 }
 
-struct ExactRespaForceOutputs
+static void clearExactRespaRealspaceTraceCapture(const int64_t step)
 {
-    static constexpr int c_numLevels = ExactRespaForceStore::c_numStoredLevels;
+    auto& capture                    = exactRespaRealspaceTraceCapture();
+    capture.step                     = step;
+    capture.valid                    = false;
+    capture.ljSrForce                = {};
+    capture.coulombSrForce           = {};
+    capture.exclusionCorrectionForce = {};
+    capture.combinedForce            = {};
+}
 
-    int numLevels          = 0;
-    int highestActiveLevel = 0;
-    int longrangeLevel     = 0;
-    std::array<ForceOutputs*, c_numLevels> levelOutputs = { nullptr, nullptr, nullptr };
+static void storeExactRespaRealspaceTraceCapture(const int64_t         step,
+                                                 const TracedForcePair& ljSrForce,
+                                                 const TracedForcePair& coulombSrForce,
+                                                 const TracedForcePair& exclusionCorrectionForce,
+                                                 const TracedForcePair& combinedForce)
+{
+    auto& capture                    = exactRespaRealspaceTraceCapture();
+    capture.step                     = step;
+    capture.valid                    = true;
+    capture.ljSrForce                = ljSrForce;
+    capture.coulombSrForce           = coulombSrForce;
+    capture.exclusionCorrectionForce = exclusionCorrectionForce;
+    capture.combinedForce            = combinedForce;
+}
 
-    int numActiveLevels() const { return std::min(numLevels, highestActiveLevel + 1); }
+static const ExactRespaRealspaceTraceCapture* activeExactRespaRealspaceTraceCapture(const int64_t step)
+{
+    const auto& capture = exactRespaRealspaceTraceCapture();
+    return (capture.valid && capture.step == step) ? &capture : nullptr;
+}
 
-    ForceOutputs* levelOrNull(const int level) const
+static TracedForcePair captureDistinctForceOutput(ForceOutputs* outputs)
+{
+    TracedForcePair                 pair;
+    std::unordered_set<const void*> seenBuffers;
+
+    if (outputs == nullptr)
     {
-        return (level >= 0 && level < c_numLevels) ? levelOutputs[level] : nullptr;
+        return pair;
     }
 
-    bool hasLevel(const int level) const { return level >= 0 && level < numActiveLevels() && levelOrNull(level) != nullptr; }
-
-    ForceOutputs& level(const int level) const
+    const auto shiftForce = outputs->forceWithShiftForces().force();
+    if (!shiftForce.empty() && seenBuffers.insert(shiftForce.data()).second)
     {
-        ForceOutputs* outputs = levelOrNull(level);
-        GMX_RELEASE_ASSERT(outputs != nullptr, "Exact r-RESPA level output should be available");
-        return *outputs;
+        addForceArrayToTracedPair(&pair, shiftForce);
     }
 
-    ForceOutputs* longrangeOutputOrNull() const { return hasLevel(longrangeLevel) ? levelOutputs[longrangeLevel] : nullptr; }
-};
+    if (outputs->haveForceWithVirial())
+    {
+        const auto virialForce = outputs->forceWithVirial().force_;
+        if (!virialForce.empty() && seenBuffers.insert(virialForce.data()).second)
+        {
+            addForceArrayToTracedPair(&pair, virialForce);
+        }
+    }
 
-struct ExactRespaForceOutputStorage
-{
-    std::array<PaddedHostVector<RVec>, ExactRespaForceOutputs::c_numLevels> ownedLevelForceBuffers;
-    std::array<std::optional<ForceOutputs>, ExactRespaForceOutputs::c_numLevels> ownedLevelOutputs;
-};
+    return pair;
+}
 
 static TracedForcePair captureDistinctForceOutputs(ArrayRef<ForceOutputs*> forceOutByMtsLevel,
                                                    const int             highestActiveMtsLevel)
@@ -1884,7 +1028,6 @@ static TracedForcePair captureDistinctForceOutputs(ArrayRef<ForceOutputs*> force
         {
             continue;
         }
-
         const auto shiftForce = outputs->forceWithShiftForces().force();
         if (!shiftForce.empty() && seenBuffers.insert(shiftForce.data()).second)
         {
@@ -1904,156 +1047,169 @@ static TracedForcePair captureDistinctForceOutputs(ArrayRef<ForceOutputs*> force
     return pair;
 }
 
-static TracedForcePair captureDistinctForceOutputs(const ExactRespaForceOutputs& exactRespaForceOutputs)
+static bool isExactLammpsRespaRuntime(const t_inputrec& inputrec)
 {
-    TracedForcePair                  pair;
-    std::unordered_set<const void*>  seenBuffers;
-
-    for (int level = 0; level < exactRespaForceOutputs.numActiveLevels(); ++level)
-    {
-        ForceOutputs* outputs = exactRespaForceOutputs.levelOrNull(level);
-        if (outputs == nullptr)
-        {
-            continue;
-        }
-
-        const auto shiftForce = outputs->forceWithShiftForces().force();
-        if (!shiftForce.empty() && seenBuffers.insert(shiftForce.data()).second)
-        {
-            addForceArrayToTracedPair(&pair, shiftForce);
-        }
-
-        if (outputs->haveForceWithVirial())
-        {
-            const auto virialForce = outputs->forceWithVirial().force_;
-            if (!virialForce.empty() && seenBuffers.insert(virialForce.data()).second)
-            {
-                addForceArrayToTracedPair(&pair, virialForce);
-            }
-        }
-    }
-
-    return pair;
+    return inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa;
 }
 
-static void appendStep1Subset01ForceGroupStageSnapshot(const char*                  traceDirPath,
-                                                       const char*                  side,
-                                                       const int64_t                step,
-                                                       const char*                  stage,
-                                                       const char*                  bufferRole,
-                                                       const int                    levelIndex,
-                                                       const int                    atomIndex,
-                                                       const gmx::RVec&             force,
-                                                       const char*                  codeLocation)
+static bool isSupportedExactLammpsRespaHybridGpuForceOnlySimulation(const t_inputrec&         inputrec,
+                                                                    const SimulationWorkload& simulationWork)
 {
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    return isExactLammpsRespaRuntime(inputrec) && inputrec.lammpsRespa.hasPairSplitting()
+           && simulationWork.useGpuNonbonded && !simulationWork.havePpDomainDecomposition
+           && !simulationWork.haveSeparatePmeRank && !simulationWork.useGpuNonbondedFE
+           && !simulationWork.useGpuForeignNonbondedFE && !simulationWork.useGpuUpdate
+           && !simulationWork.useGpuXBufferOpsWhenAllowed
+           && !simulationWork.useGpuFBufferOpsWhenAllowed && !simulationWork.useGpuHaloExchange
+           && !simulationWork.useGpuPmePpCommunication
+           && !simulationWork.useGpuDirectCommunication
+           && !simulationWork.useGpuPmeDecomposition && !simulationWork.useMdGpuGraph
+           && (!simulationWork.useGpuPme || simulationWork.useGpuPmeFft);
+}
+
+static bool isSupportedExactLammpsRespaHybridGpuUpdateSimulation(const t_inputrec&         inputrec,
+                                                                 const SimulationWorkload& simulationWork)
+{
+    return isExactLammpsRespaRuntime(inputrec) && inputrec.lammpsRespa.hasPairSplitting()
+           && simulationWork.useGpuNonbonded && simulationWork.useGpuBonded && simulationWork.useGpuPme
+           && simulationWork.useGpuPmeFft && simulationWork.useGpuUpdate
+           && !simulationWork.havePpDomainDecomposition && !simulationWork.haveSeparatePmeRank
+           && !simulationWork.useGpuNonbondedFE && !simulationWork.useGpuForeignNonbondedFE
+           && !simulationWork.useGpuXBufferOpsWhenAllowed
+           && !simulationWork.useGpuFBufferOpsWhenAllowed && !simulationWork.useGpuHaloExchange
+           && !simulationWork.useGpuPmePpCommunication
+           && !simulationWork.useGpuDirectCommunication
+           && !simulationWork.useGpuPmeDecomposition && !simulationWork.useMdGpuGraph;
+}
+
+static bool isSupportedExactLammpsRespaHybridGpuSimulation(const t_inputrec&         inputrec,
+                                                           const SimulationWorkload& simulationWork)
+{
+    return isSupportedExactLammpsRespaHybridGpuForceOnlySimulation(inputrec, simulationWork)
+           || isSupportedExactLammpsRespaHybridGpuUpdateSimulation(inputrec, simulationWork);
+}
+
+static bool isExactLammpsRespaHybridGpuRuntime(const t_inputrec&         inputrec,
+                                               const SimulationWorkload& simulationWork,
+                                               const StepWorkload&       stepWork)
+{
+    return isSupportedExactLammpsRespaHybridGpuSimulation(inputrec, simulationWork)
+           && !stepWork.computeVirial && !stepWork.computeEnergy
+           && !stepWork.useGpuXBufferOps && !stepWork.useGpuFBufferOps
+           && !stepWork.useGpuPmeFReduction && !stepWork.useGpuXHalo && !stepWork.useGpuFHalo
+           && !stepWork.computePmeOnSeparateRank && !stepWork.combineMtsForcesBeforeHaloExchange;
+}
+
+static void assertExactLammpsRespaOwnershipContract(const t_inputrec&        inputrec,
+                                                    const SimulationWorkload& simulationWork,
+                                                    const StepWorkload&       stepWork,
+                                                    ForceBuffersView*         forceView,
+                                                    ForceOutputs&             forceOutMtsLevel0,
+                                                    ArrayRef<ForceOutputs*>   forceOutByMtsLevel)
+{
+    if (!isExactLammpsRespaRuntime(inputrec))
     {
         return;
     }
 
-    static std::mutex                   traceMutex;
-    static std::unordered_set<std::string> emittedRows;
-    const std::string                  row =
-            "side=" + std::string(side) + " step=" + std::to_string(step) + " stage=" + std::string(stage)
-            + " buffer_role=" + std::string(bufferRole) + " level_index=" + std::to_string(levelIndex)
-            + " atom=" + std::to_string(atomIndex) + " fx=" + formatString("%.15f", force[XX]) + " fy="
-            + formatString("%.15f", force[YY]) + " fz=" + formatString("%.15f", force[ZZ]) + " code_location="
-            + std::string(codeLocation);
-    const std::string rowKey = std::string(traceDirPath) + "/step1_subset01_forcegroup_stage_trace.txt\n" + row;
+    GMX_RELEASE_ASSERT(forceView != nullptr,
+                       "Exact LAMMPS-style r-RESPA HG2 contract requires explicit force buffers");
+    const bool exactHybridGpuSimulation =
+            isSupportedExactLammpsRespaHybridGpuSimulation(inputrec, simulationWork);
+    const bool exactHybridGpuRuntime =
+            isExactLammpsRespaHybridGpuRuntime(inputrec, simulationWork, stepWork);
+    if (!exactHybridGpuRuntime)
     {
-        std::lock_guard<std::mutex> guard(traceMutex);
-        if (!emittedRows.insert(rowKey).second)
+        if (!exactHybridGpuSimulation)
         {
-            return;
+            GMX_RELEASE_ASSERT(!simulationWork.useGpuNonbonded && !simulationWork.useGpuNonbondedFE
+                                       && !simulationWork.useGpuForeignNonbondedFE
+                                       && !simulationWork.useGpuPme && !simulationWork.useGpuPmeFft
+                                       && !simulationWork.useGpuBonded && !simulationWork.useGpuUpdate
+                                       && !simulationWork.useGpuXBufferOpsWhenAllowed
+                                       && !simulationWork.useGpuFBufferOpsWhenAllowed
+                                       && !simulationWork.useGpuHaloExchange
+                                       && !simulationWork.useGpuPmePpCommunication
+                                       && !simulationWork.useGpuDirectCommunication
+                                       && !simulationWork.useGpuPmeDecomposition,
+                               "Exact LAMMPS-style r-RESPA HG2 contract keeps GPU work and communication disabled until ownership is audited");
         }
+        GMX_RELEASE_ASSERT(!stepWork.useGpuXBufferOps && !stepWork.useGpuFBufferOps
+                                   && !stepWork.useGpuPmeFReduction && !stepWork.useGpuXHalo
+                                   && !stepWork.useGpuFHalo && !stepWork.haveGpuPmeOnThisRank
+                                   && !stepWork.combineMtsForcesBeforeHaloExchange,
+                           "Exact LAMMPS-style r-RESPA HG2 contract requires an explicit CPU-thread reduction boundary before any GPU merge");
+    }
+    else
+    {
+        GMX_RELEASE_ASSERT(simulationWork.useGpuNonbonded && !simulationWork.havePpDomainDecomposition,
+                           "Exact LAMMPS-style r-RESPA narrow hybrid GPU mode requires single-rank nonbonded GPU execution");
+        GMX_RELEASE_ASSERT(!simulationWork.useGpuPme || (simulationWork.useGpuPmeFft && !simulationWork.useCpuPme),
+                           "Exact LAMMPS-style r-RESPA HG5 narrow mode requires on-rank full GPU PME");
+        GMX_RELEASE_ASSERT(!simulationWork.useGpuPme
+                                   || (stepWork.haveGpuPmeOnThisRank
+                                       == stepWork.computeLongRangeNonbondedForces),
+                           "Exact LAMMPS-style r-RESPA HG5 reciprocal ownership requires GPU PME only on reciprocal steps");
     }
 
-    appendRespaTraceTextLine(traceDirPath, "step1_subset01_forcegroup_stage_trace.txt", row);
-}
-
-static void appendStep1Subset01ForceGroupBufferSnapshot(const char*                traceDirPath,
-                                                        const char*                side,
-                                                        const int64_t              step,
-                                                        const char*                stage,
-                                                        ArrayRef<ForceOutputs*>    forceOutByMtsLevel,
-                                                        const int                  highestActiveMtsLevel,
-                                                        const char*                level0Role,
-                                                        const char*                codeLocation)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
+    if (!stepWork.computeForces)
     {
         return;
     }
 
-    const auto appendBufferForAtoms = [&](const char* role, const int levelIndex, ArrayRef<const RVec> force)
+    const auto assertNoShiftOrVirialMergeBoundary = [](ForceOutputs& outputs)
     {
-        if (force.empty() || force.ssize() <= 5)
+        GMX_RELEASE_ASSERT(!outputs.forceWithShiftForces().computeVirial()
+                                   && outputs.forceWithShiftForces().shiftForces().empty(),
+                           "Exact LAMMPS-style r-RESPA HG2 narrow hybrid contract keeps shift-force reduction disabled in force-only mode");
+        if (outputs.haveForceWithVirial())
         {
-            return;
-        }
-        for (const int atomIndex : { 0, 5 })
-        {
-            appendStep1Subset01ForceGroupStageSnapshot(
-                    traceDirPath, side, step, stage, role, levelIndex, atomIndex, force[atomIndex], codeLocation);
+            GMX_RELEASE_ASSERT(!outputs.forceWithVirial().computeVirial_,
+                               "Exact LAMMPS-style r-RESPA HG2 narrow hybrid contract keeps direct-virial accumulation disabled in force-only mode");
         }
     };
 
-    if (forceOutByMtsLevel.empty() || forceOutByMtsLevel[0] == nullptr)
+    const auto level0Force         = forceOutMtsLevel0.forceWithShiftForces().force();
+    const auto expectedLevel0Force = forceView->force();
+    GMX_RELEASE_ASSERT(level0Force.data() == expectedLevel0Force.data()
+                               && gmx::ssize(level0Force) == gmx::ssize(expectedLevel0Force),
+                       "Exact LAMMPS-style r-RESPA level-0 ownership must stay on the explicit host force buffer");
+    if (exactHybridGpuRuntime)
+    {
+        assertNoShiftOrVirialMergeBoundary(forceOutMtsLevel0);
+    }
+
+    if (!stepWork.computeSlowForces)
     {
         return;
     }
 
-    appendBufferForAtoms(level0Role, 0, forceOutByMtsLevel[0]->forceWithShiftForces().force());
-    if (highestActiveMtsLevel >= 1 && forceOutByMtsLevel.ssize() > 1 && forceOutByMtsLevel[1] != nullptr)
-    {
-        appendBufferForAtoms("slow1", 1, forceOutByMtsLevel[1]->forceWithShiftForces().force());
-    }
-    if (highestActiveMtsLevel >= 2 && forceOutByMtsLevel.ssize() > 2 && forceOutByMtsLevel[2] != nullptr)
-    {
-        const auto slow2Force = forceOutByMtsLevel[2]->haveForceWithVirial()
-                                        ? forceOutByMtsLevel[2]->forceWithVirial().force_
-                                        : forceOutByMtsLevel[2]->forceWithShiftForces().force();
-        appendBufferForAtoms("slow2", 2, slow2Force);
-    }
-}
+    GMX_RELEASE_ASSERT(gmx::ssize(forceOutByMtsLevel) > stepWork.highestActiveMtsLevel,
+                       "Exact LAMMPS-style r-RESPA needs one force output per active MTS level");
+    GMX_RELEASE_ASSERT(forceView->numMtsLevelForceBuffers() >= stepWork.highestActiveMtsLevel,
+                       "Exact LAMMPS-style r-RESPA needs one dedicated slow-force buffer per active MTS level");
 
-static void appendStep1Subset01ForceGroupBufferSnapshot(const char*                 traceDirPath,
-                                                        const char*                 side,
-                                                        const int64_t               step,
-                                                        const char*                 stage,
-                                                        const ExactRespaForceOutputs& exactRespaForceOutputs,
-                                                        const char*                 level0Role,
-                                                        const char*                 codeLocation)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0' || !exactRespaForceOutputs.hasLevel(0))
+    std::unordered_set<const RVec*> slowLevelForceBuffers;
+    const RVec* const               level0Pointer = level0Force.data();
+    for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; ++mtsLevel)
     {
-        return;
-    }
+        ForceOutputs* outputs = forceOutByMtsLevel[mtsLevel];
+        GMX_RELEASE_ASSERT(outputs != nullptr,
+                           "Exact LAMMPS-style r-RESPA requires an explicit force output object for every active slow level");
 
-    const auto appendBufferForAtoms = [&](const char* role, const int levelIndex, ArrayRef<const RVec> force)
-    {
-        if (force.empty() || force.ssize() <= 5)
+        const auto levelForce         = outputs->forceWithShiftForces().force();
+        const auto expectedLevelForce = forceView->forceForMtsLevel(mtsLevel);
+        GMX_RELEASE_ASSERT(levelForce.data() == expectedLevelForce.data()
+                                   && gmx::ssize(levelForce) == gmx::ssize(expectedLevelForce),
+                           "Exact LAMMPS-style r-RESPA slow-level ownership must stay on explicit per-level host force buffers");
+        GMX_RELEASE_ASSERT(levelForce.data() != level0Pointer,
+                           "Exact LAMMPS-style r-RESPA slow-force buffers must not alias level-0 ownership");
+        GMX_RELEASE_ASSERT(slowLevelForceBuffers.insert(levelForce.data()).second,
+                           "Exact LAMMPS-style r-RESPA requires distinct host force buffers per active slow level");
+        if (exactHybridGpuRuntime)
         {
-            return;
+            assertNoShiftOrVirialMergeBoundary(*outputs);
         }
-        for (const int atomIndex : { 0, 5 })
-        {
-            appendStep1Subset01ForceGroupStageSnapshot(
-                    traceDirPath, side, step, stage, role, levelIndex, atomIndex, force[atomIndex], codeLocation);
-        }
-    };
-
-    appendBufferForAtoms(level0Role, 0, exactRespaForceOutputs.level(0).forceWithShiftForces().force());
-    if (exactRespaForceOutputs.hasLevel(1))
-    {
-        appendBufferForAtoms("slow1", 1, exactRespaForceOutputs.level(1).forceWithShiftForces().force());
-    }
-    if (exactRespaForceOutputs.hasLevel(2))
-    {
-        const auto slow2Force = exactRespaForceOutputs.level(2).haveForceWithVirial()
-                                        ? exactRespaForceOutputs.level(2).forceWithVirial().force_
-                                        : exactRespaForceOutputs.level(2).forceWithShiftForces().force();
-        appendBufferForAtoms("slow2", 2, slow2Force);
     }
 }
 
@@ -2073,28 +1229,18 @@ static void appendForceComponentTracePairToFile(const char*                trace
         return;
     }
 
-    for (int traceAtomIndex = 0; traceAtomIndex < static_cast<int>(pair.atomIndices.size()); ++traceAtomIndex)
+    for (const auto [traceAtomIndex, atomIndex] : { std::pair<int, int>{ 0, 0 }, std::pair<int, int>{ 1, 5 } })
     {
-        const int atomIndex = pair.atomIndices[traceAtomIndex];
-        const bool haveGlobalAtomIndex =
-                g_respaTraceGlobalAtomIndices != nullptr && atomIndex >= 0
-                && atomIndex < g_respaTraceGlobalAtomIndexCount;
-        const int globalAtomIndex =
-                haveGlobalAtomIndex ? g_respaTraceGlobalAtomIndices[atomIndex] : atomIndex;
         appendRespaTraceTextLine(
                 traceDirPath,
                 fileName,
                 "side=" + std::string(side) + " step=" + std::to_string(step) + " atom="
                         + std::to_string(atomIndex) + " component_name=" + std::string(componentName)
-                        + " global_atom=" + std::to_string(globalAtomIndex)
                         + " available=true fx="
                         + formatString("%.15f", pair.atoms[traceAtomIndex][XX]) + " fy="
                         + formatString("%.15f", pair.atoms[traceAtomIndex][YY]) + " fz="
                         + formatString("%.15f", pair.atoms[traceAtomIndex][ZZ]) + " source_label="
                         + std::string(sourceLabel) + " code_location=" + std::string(codeLocation)
-                        + " context_label="
-                        + std::string((g_respaDoForceContextLabel != nullptr) ? g_respaDoForceContextLabel
-                                                                              : "unspecified")
                         + " component_kind=" + std::string(componentKind) + " true_source_component="
                         + std::string(trueSourceComponent ? "true" : "false"));
     }
@@ -2136,24 +1282,15 @@ static void appendForceComponentUnavailablePairToFile(const char* traceDirPath,
         return;
     }
 
-    for (const int atomIndex : respaForceTraceAtomIndices())
+    for (const int atomIndex : { 0, 5 })
     {
-        const bool haveGlobalAtomIndex =
-                g_respaTraceGlobalAtomIndices != nullptr && atomIndex >= 0
-                && atomIndex < g_respaTraceGlobalAtomIndexCount;
-        const int globalAtomIndex =
-                haveGlobalAtomIndex ? g_respaTraceGlobalAtomIndices[atomIndex] : atomIndex;
         appendRespaTraceTextLine(
                 traceDirPath,
                 fileName,
                 "side=" + std::string(side) + " step=" + std::to_string(step) + " atom="
                         + std::to_string(atomIndex) + " component_name=" + std::string(componentName)
-                        + " global_atom=" + std::to_string(globalAtomIndex)
                         + " available=false source_label=" + std::string(sourceLabel)
-                        + " code_location=" + std::string(codeLocation) + " context_label="
-                        + std::string((g_respaDoForceContextLabel != nullptr) ? g_respaDoForceContextLabel
-                                                                              : "unspecified")
-                        + " reason=" + std::string(reason));
+                        + " code_location=" + std::string(codeLocation) + " reason=" + std::string(reason));
     }
 }
 
@@ -2197,188 +1334,6 @@ static void appendRealspaceForceSubcomponentTracePair(const char*            tra
                                         trueSourceComponent);
 }
 
-static void appendForceStoreUpdateInputTrace(const char*           traceDirPath,
-                                             const int64_t         step,
-                                             const char*           inputLabel,
-                                             ArrayRef<const RVec>  values)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0' || values.empty())
-    {
-        return;
-    }
-
-    static std::once_flag traceHeaderOnce;
-    std::call_once(traceHeaderOnce,
-                   [traceDirPath]()
-                   {
-                       writeRespaTraceTextFile(traceDirPath,
-                                               "force_store_update_inputs_trace.txt",
-                                               "# step\tinput\tatom\tfx\tfy\tfz\n");
-                   });
-
-    for (const int atomIndex : respaForceTraceAtomIndices())
-    {
-        if (atomIndex < 0 || atomIndex >= values.ssize())
-        {
-            continue;
-        }
-        appendRespaTraceTextLine(traceDirPath,
-                                 "force_store_update_inputs_trace.txt",
-                                 std::to_string(step) + '\t' + inputLabel + '\t'
-                                         + std::to_string(atomIndex) + '\t'
-                                         + formatString("%.15f", values[atomIndex][XX]) + '\t'
-                                         + formatString("%.15f", values[atomIndex][YY]) + '\t'
-                                         + formatString("%.15f", values[atomIndex][ZZ]));
-    }
-}
-
-static void appendExactGpuBondedReductionTrace(const char*          traceDirPath,
-                                               const int64_t        step,
-                                               const int            exactLevel,
-                                               const char*          stageLabel,
-                                               ArrayRef<const RVec> values)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0' || values.empty())
-    {
-        return;
-    }
-
-    static std::once_flag traceHeaderOnce;
-    std::call_once(traceHeaderOnce,
-                   [traceDirPath]()
-                   {
-                       writeRespaTraceTextFile(traceDirPath,
-                                               "exact_gpu_bonded_reduction_trace.txt",
-                                               "# step\tlevel\tstage\tatom\tfx\tfy\tfz\n");
-                   });
-
-    for (const int atomIndex : respaForceTraceAtomIndices())
-    {
-        if (atomIndex < 0 || atomIndex >= values.ssize())
-        {
-            continue;
-        }
-        appendRespaTraceTextLine(traceDirPath,
-                                 "exact_gpu_bonded_reduction_trace.txt",
-                                 std::to_string(step) + '\t' + std::to_string(exactLevel) + '\t'
-                                         + stageLabel + '\t' + std::to_string(atomIndex) + '\t'
-                                         + formatString("%.15f", values[atomIndex][XX]) + '\t'
-                                         + formatString("%.15f", values[atomIndex][YY]) + '\t'
-                                         + formatString("%.15f", values[atomIndex][ZZ]));
-    }
-}
-
-static void appendExactGpuBondedReductionTrace(const char*            traceDirPath,
-                                               const int64_t          step,
-                                               const int              exactLevel,
-                                               const char*            stageLabel,
-                                               const TracedForcePair& pair)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
-    {
-        return;
-    }
-
-    static std::once_flag traceHeaderOnce;
-    std::call_once(traceHeaderOnce,
-                   [traceDirPath]()
-                   {
-                       writeRespaTraceTextFile(traceDirPath,
-                                               "exact_gpu_bonded_reduction_trace.txt",
-                                               "# step\tlevel\tstage\tatom\tfx\tfy\tfz\n");
-                   });
-
-    for (int tracedAtomIndex = 0; tracedAtomIndex < static_cast<int>(pair.atomIndices.size()); ++tracedAtomIndex)
-    {
-        const int atomIndex = pair.atomIndices[tracedAtomIndex];
-        appendRespaTraceTextLine(traceDirPath,
-                                 "exact_gpu_bonded_reduction_trace.txt",
-                                 std::to_string(step) + '\t' + std::to_string(exactLevel) + '\t'
-                                         + stageLabel + '\t' + std::to_string(atomIndex) + '\t'
-                                         + formatString("%.15f", pair.atoms[tracedAtomIndex][XX]) + '\t'
-                                         + formatString("%.15f", pair.atoms[tracedAtomIndex][YY]) + '\t'
-                                         + formatString("%.15f", pair.atoms[tracedAtomIndex][ZZ]));
-    }
-}
-
-static TracedForcePair captureNbatOutputForceBufferPair(nonbonded_verlet_t* nbv)
-{
-    TracedForcePair pair;
-    if (nbv == nullptr)
-    {
-        return pair;
-    }
-
-    const auto&       nbat            = nbv->nbat();
-    const auto&       outputBuffer    = nbat.outputBuffer(0);
-    ArrayRef<const real> forceBuffer  = outputBuffer.f;
-    const bool        orderMatches    = nbv->localAtomOrderMatchesNbnxmOrder();
-    const auto        gridIndices     = nbv->getGridIndices();
-    const int         numLocalAtoms   = nbv->getNumAtoms(AtomLocality::Local);
-
-    const auto mappedAtomIndex = [&](const int atomIndex) -> int
-    {
-        if (!orderMatches)
-        {
-            if (atomIndex < 0 || atomIndex >= gridIndices.ssize())
-            {
-                return -1;
-            }
-            return gridIndices[atomIndex];
-        }
-        return atomIndex;
-    };
-
-    for (int tracedAtomIndex = 0; tracedAtomIndex < static_cast<int>(pair.atomIndices.size()); ++tracedAtomIndex)
-    {
-        const int atomIndex = pair.atomIndices[tracedAtomIndex];
-        if (atomIndex < 0 || atomIndex >= numLocalAtoms)
-        {
-            continue;
-        }
-        const int mappedIndex = mappedAtomIndex(atomIndex);
-        if (mappedIndex < 0)
-        {
-            continue;
-        }
-
-        switch (nbat.FFormat)
-        {
-            case nbatXYZ:
-            {
-                const int offset = mappedIndex * STRIDE_XYZ;
-                pair.atoms[tracedAtomIndex] = { forceBuffer[offset + 0], forceBuffer[offset + 1], forceBuffer[offset + 2] };
-                break;
-            }
-            case nbatXYZQ:
-            {
-                const int offset = mappedIndex * STRIDE_XYZQ;
-                pair.atoms[tracedAtomIndex] = { forceBuffer[offset + 0], forceBuffer[offset + 1], forceBuffer[offset + 2] };
-                break;
-            }
-            case nbatX4:
-            {
-                const int offset = atom_to_x_index<c_packX4>(mappedIndex);
-                pair.atoms[tracedAtomIndex] = { forceBuffer[offset + 0 * c_packX4],
-                                                forceBuffer[offset + 1 * c_packX4],
-                                                forceBuffer[offset + 2 * c_packX4] };
-                break;
-            }
-            case nbatX8:
-            {
-                const int offset = atom_to_x_index<c_packX8>(mappedIndex);
-                pair.atoms[tracedAtomIndex] = { forceBuffer[offset + 0 * c_packX8],
-                                                forceBuffer[offset + 1 * c_packX8],
-                                                forceBuffer[offset + 2 * c_packX8] };
-                break;
-            }
-            default: break;
-        }
-    }
-
-    return pair;
-}
-
 static void appendRealspaceForceSubcomponentUnavailablePair(const char* traceDirPath,
                                                             const char* side,
                                                             const int64_t step,
@@ -2395,127 +1350,6 @@ static void appendRealspaceForceSubcomponentUnavailablePair(const char* traceDir
                                               sourceLabel,
                                               codeLocation,
                                               reason);
-}
-
-static void appendExclusionEquivalenceTracePair(const char*        traceDirPath,
-                                                const char*        side,
-                                                const int64_t      step,
-                                                const int          pairOrdinal,
-                                                const int          ai,
-                                                const int          aj,
-                                                const char*        sourcePath,
-                                                const char*        membershipSource,
-                                                const char*        listKind,
-                                                const bool         treatedAsExclusionProducer,
-                                                const bool         includePairEffective,
-                                                const real         factorCoulomb,
-                                                const real         factorLj,
-                                                const real         qq,
-                                                const int          tableIndex,
-                                                const real         frac,
-                                                const real         fexcl,
-                                                const real         vcorr,
-                                                const real         bareCoulombScalar,
-                                                const real         correctionScalarRaw,
-                                                const real         correctionForceScalarEquivalent,
-                                                const real         effectiveOuterScalar,
-                                                const real         fullScalar,
-                                                const RVec&        correctionForceWritten,
-                                                const RVec&        combinedForceWritten,
-                                                const char*        sinkTarget,
-                                                const bool         sinkWriteExecuted,
-                                                const char*        sourceLabel,
-                                                const char*        componentKind,
-                                                const char*        codeLocation)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
-    {
-        return;
-    }
-
-    appendRespaTraceTextLine(
-            traceDirPath,
-            "step0_exclusion_equivalence_pair_trace.txt",
-            "side=" + std::string(side) + " step=" + std::to_string(step) + " pair_ordinal="
-                    + std::to_string(pairOrdinal) + " ai=" + std::to_string(ai) + " aj="
-                    + std::to_string(aj) + " pair_key=" + std::to_string(ai) + "_" + std::to_string(aj)
-                    + " source_path=" + std::string(sourcePath) + " membership_source="
-                    + std::string(membershipSource) + " list_kind=" + std::string(listKind)
-                    + " treated_as_exclusion_correction_producer="
-                    + std::string(treatedAsExclusionProducer ? "true" : "false")
-                    + " include_pair_effective="
-                    + std::string(includePairEffective ? "true" : "false") + " factor_coulomb="
-                    + formatString("%.15f", factorCoulomb) + " factor_lj="
-                    + formatString("%.15f", factorLj) + " qq=" + formatString("%.15f", qq)
-                    + " table_index=" + std::to_string(tableIndex) + " frac="
-                    + formatString("%.15f", frac) + " fexcl=" + formatString("%.15f", fexcl)
-                    + " vcorr=" + formatString("%.15f", vcorr) + " bare_coulomb_scalar="
-                    + formatString("%.15f", bareCoulombScalar) + " correction_scalar_raw="
-                    + formatString("%.15f", correctionScalarRaw)
-                    + " correction_force_scalar_equivalent="
-                    + formatString("%.15f", correctionForceScalarEquivalent) + " effective_outer_scalar="
-                    + formatString("%.15f", effectiveOuterScalar) + " full_scalar="
-                    + formatString("%.15f", fullScalar) + " correction_force_written_fx="
-                    + formatString("%.15f", correctionForceWritten[XX]) + " correction_force_written_fy="
-                    + formatString("%.15f", correctionForceWritten[YY]) + " correction_force_written_fz="
-                    + formatString("%.15f", correctionForceWritten[ZZ]) + " combined_force_written_fx="
-                    + formatString("%.15f", combinedForceWritten[XX]) + " combined_force_written_fy="
-                    + formatString("%.15f", combinedForceWritten[YY]) + " combined_force_written_fz="
-                    + formatString("%.15f", combinedForceWritten[ZZ]) + " sink_target="
-                    + std::string(sinkTarget) + " sink_write_executed="
-                    + std::string(sinkWriteExecuted ? "true" : "false") + " source_label="
-                    + std::string(sourceLabel) + " component_kind=" + std::string(componentKind)
-                    + " code_location=" + std::string(codeLocation));
-}
-
-static void appendBoundaryBookkeepingAuditLine(const char* traceDirPath,
-                                               const char* side,
-                                               const int64_t step,
-                                               const int ai,
-                                               const int aj,
-                                               const char* listKind,
-                                               const char* contribution,
-                                               const real r,
-                                               const real outerScalar,
-                                               const real effectiveOuterScalar,
-                                               const real fullCoulombEnergy,
-                                               const bool scalarIsZero,
-                                               const bool energyWriteExecuted,
-                                               const bool suppressBookkeepingEnergy,
-                                               const bool suppressExcludedPairComparableEnergy,
-                                               const int energyIndex,
-                                               const real targetBefore,
-                                               const real writeDelta,
-                                               const real targetAfter,
-                                               const char* reason,
-                                               const char* codeLocation)
-{
-    if (traceDirPath == nullptr || *traceDirPath == '\0')
-    {
-        return;
-    }
-
-    appendRespaTraceTextLine(
-            traceDirPath,
-            "boundary_force_energy_crosscheck_trace.txt",
-            "side=" + std::string(side) + " step=" + std::to_string(step) + " pair_i="
-                    + std::to_string(std::min(ai, aj)) + " pair_j=" + std::to_string(std::max(ai, aj))
-                    + " list_kind=" + std::string(listKind) + " contribution=" + std::string(contribution)
-                    + " r=" + formatString("%.15f", r) + " outerScalar="
-                    + formatString("%.15f", outerScalar) + " effectiveOuterScalar="
-                    + formatString("%.15f", effectiveOuterScalar) + " fullCoulombEnergy="
-                    + formatString("%.15f", fullCoulombEnergy) + " scalar_zero="
-                    + std::string(scalarIsZero ? "true" : "false") + " energy_write_executed="
-                    + std::string(energyWriteExecuted ? "true" : "false")
-                    + " suppress_bookkeeping_energy="
-                    + std::string(suppressBookkeepingEnergy ? "true" : "false")
-                    + " suppress_excluded_pair_comparable_energy="
-                    + std::string(suppressExcludedPairComparableEnergy ? "true" : "false")
-                    + " energy_index=" + std::to_string(energyIndex) + " sink_name=coulEnergyTerms"
-                    + " target_before=" + formatString("%.15f", targetBefore) + " write_delta="
-                    + formatString("%.15f", writeDelta) + " target_after="
-                    + formatString("%.15f", targetAfter) + " reason=" + std::string(reason)
-                    + " code_location=" + std::string(codeLocation));
 }
 
 static const char* loopEntryStageName(const int64_t step)
@@ -2610,22 +1444,14 @@ static void appendStateXChainTracePair(const char*          traceDirPath,
                                        const char*          codeLocation,
                                        bool                 writesStateX)
 {
-    for (const int atomIndex : respaForceTraceAtomIndices())
+    if (coords.size() <= 5)
     {
-        if (atomIndex < 0 || atomIndex >= coords.ssize())
-        {
-            continue;
-        }
-        appendStateXChainTraceLine(traceDirPath,
-                                   side,
-                                   stageName,
-                                   step,
-                                   atomIndex,
-                                   coords[atomIndex],
-                                   writerName,
-                                   codeLocation,
-                                   writesStateX);
+        return;
     }
+    appendStateXChainTraceLine(
+            traceDirPath, side, stageName, step, 0, coords[0], writerName, codeLocation, writesStateX);
+    appendStateXChainTraceLine(
+            traceDirPath, side, stageName, step, 5, coords[5], writerName, codeLocation, writesStateX);
 }
 
 static void appendCoordHandoffTracePair(const char*           traceDirPath,
@@ -2636,15 +1462,12 @@ static void appendCoordHandoffTracePair(const char*           traceDirPath,
                                         const char*           bufferLabel,
                                         const void*           bufferPtr)
 {
-    for (const int atomIndex : respaForceTraceAtomIndices())
+    if (coords.size() <= 5)
     {
-        if (atomIndex < 0 || atomIndex >= coords.ssize())
-        {
-            continue;
-        }
-        appendCoordHandoffTraceLine(
-                traceDirPath, side, stageName, step, atomIndex, coords[atomIndex], bufferLabel, bufferPtr);
+        return;
     }
+    appendCoordHandoffTraceLine(traceDirPath, side, stageName, step, 0, coords[0], bufferLabel, bufferPtr);
+    appendCoordHandoffTraceLine(traceDirPath, side, stageName, step, 5, coords[5], bufferLabel, bufferPtr);
 }
 
 static void appendCoordHandoffTracePair(const char*              traceDirPath,
@@ -2655,21 +1478,10 @@ static void appendCoordHandoffTracePair(const char*              traceDirPath,
                                         const char*              bufferLabel,
                                         const void*              bufferPtr)
 {
-    for (const int atomIndex : respaForceTraceAtomIndices())
-    {
-        if (atomIndex < 0 || atomIndex >= nbat.numAtoms())
-        {
-            continue;
-        }
-        appendCoordHandoffTraceLine(traceDirPath,
-                                    side,
-                                    stageName,
-                                    step,
-                                    atomIndex,
-                                    getCoordinate(nbat, atomIndex),
-                                    bufferLabel,
-                                    bufferPtr);
-    }
+    appendCoordHandoffTraceLine(
+            traceDirPath, side, stageName, step, 0, getCoordinate(nbat, 0), bufferLabel, bufferPtr);
+    appendCoordHandoffTraceLine(
+            traceDirPath, side, stageName, step, 5, getCoordinate(nbat, 5), bufferLabel, bufferPtr);
 }
 
 static void appendCoulombFirstWriteTraceLine(const char* traceDirPath,
@@ -3147,43 +1959,27 @@ static void appendLjAccumWriteTraceLine(const char* traceDirPath,
                     + " pairStats_lj_after=" + formatString("%.15f", pairStatsLjAfter));
 }
 
-static void computeExactRespaNonbondedCpu(const t_inputrec&                 inputrec,
-                                          const InteractionDefinitions&     idef,
-                                          t_forcerec*                       fr,
-                                          const t_mdatoms&                  mdatoms,
-                                          ArrayRef<const RVec>              coordinates,
-                                          const ExactRespaForceOutputs&     exactRespaForceOutputs,
-                                          gmx_enerdata_t*                   enerd,
-                                          const StepWorkload&               stepWork,
-                                          const int64_t                     step)
+static void computeLammpsRespaNonbondedCpu(const t_inputrec&                inputrec,
+                                           const InteractionDefinitions&    idef,
+                                           t_forcerec*                      fr,
+                                           const t_mdatoms&                 mdatoms,
+                                           ArrayRef<const RVec>             coordinates,
+                                           ArrayRef<ForceOutputs*>          forceOutByMtsLevel,
+                                           gmx_enerdata_t*                  enerd,
+                                           const StepWorkload&              stepWork,
+                                           const int64_t                    step,
+                                           const bool                       traceOnlyDiagnostics = false)
 {
-    enum class ExactRespaNonbondedContribution : int
-    {
-        Inner,
-        Middle,
-        Outer,
-        Count
-    };
-
-    const bool traceRealspaceForceSubcomponents = shouldTraceRespaRealspaceForceSubcomponentsStep(step);
-    const bool traceExclusionEquivalence        = shouldTraceRespaExclusionEquivalenceStep(step);
-    const bool traceStep1Subset01ForceGroupAudit =
-            shouldTraceStep1Subset01ForceGroupAuditStep(step);
+    const bool traceRealspaceForceSubcomponents =
+            shouldTraceRespaRealspaceForceSubcomponentsStep(step, stepWork.highestActiveMtsLevel);
+    const bool traceForceComponents =
+            shouldTraceRespaForceComponentsStep(step, stepWork.highestActiveMtsLevel);
     TracedForcePair tracedPatchLjSrForce;
     TracedForcePair tracedPatchCoulombSrForce;
     TracedForcePair tracedPatchExclusionCorrectionForce;
     TracedForcePair tracedPatchCombinedRealspaceForce;
-    TracedForcePair tracedExactInnerRealspaceForce;
-    TracedForcePair tracedExactMiddleRealspaceForce;
-    TracedForcePair tracedExactOuterRealspaceForce;
-    TracedForcePair tracedExactInnerLjSrForce;
-    TracedForcePair tracedExactInnerBareCoulombSrForce;
-    TracedForcePair tracedExactInnerCorrectionForce;
-    TracedForcePair tracedExactMiddleLjSrForce;
-    TracedForcePair tracedExactMiddleBareCoulombSrForce;
-    TracedForcePair tracedExactMiddleCorrectionForce;
 
-    if (shouldTraceRespaCoordHandoffStep(step))
+    if (!traceOnlyDiagnostics && shouldTraceRespaCoordHandoffStep(step))
     {
         appendCoordHandoffTracePair(activeM2pTraceDirPath(),
                                     "PATCH",
@@ -3211,32 +2007,34 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
     struct ContributionAccumulator
     {
-        ExactRespaNonbondedContribution contribution;
-        ForceOutputs*                  outputs = nullptr;
-        ArrayRef<RVec>                 force;
-        ArrayRef<RVec>                 shift;
-        ForceWithVirial*               forceWithVirial = nullptr;
-        bool                           accumulateEnergy = false;
-        matrix                         virial           = { { 0 } };
+        MtsNonbondedRespaContribution contribution;
+        ForceOutputs*                 outputs = nullptr;
+        ArrayRef<RVec>                force;
+        ArrayRef<RVec>                shift;
+        ForceWithVirial*              forceWithVirial = nullptr;
+        bool                          accumulateEnergy = false;
+        matrix                        virial           = { { 0 } };
     };
 
     std::vector<ContributionAccumulator> activeContributions;
-    const auto appendContribution = [&](const ExactRespaNonbondedContribution contribution, const int level)
+    const auto outputSinks = activeLammpsRespaNonbondedOutputSinks(
+            inputrec, stepWork.highestActiveMtsLevel, stepWork.computeVirial, stepWork.computeEnergy);
+    for (const auto& outputSink : outputSinks)
     {
-        ForceOutputs* outputs = exactRespaForceOutputs.levelOrNull(level);
-        if (outputs == nullptr)
+        const int mtsLevel = outputSink.mtsLevel;
+        if (mtsLevel < 0 || mtsLevel >= forceOutByMtsLevel.ssize() || forceOutByMtsLevel[mtsLevel] == nullptr)
         {
-            return;
+            continue;
         }
 
-        ContributionAccumulator accumulator;
-        accumulator.contribution = contribution;
-        accumulator.outputs      = outputs;
-        accumulator.accumulateEnergy = (contribution == ExactRespaNonbondedContribution::Outer) && stepWork.computeEnergy;
+        ForceOutputs* outputs = forceOutByMtsLevel[mtsLevel];
 
-        const bool directVirialContribution =
-                stepWork.computeVirial && (contribution == ExactRespaNonbondedContribution::Outer);
-        if (directVirialContribution)
+        ContributionAccumulator accumulator;
+        accumulator.contribution    = outputSink.contribution;
+        accumulator.outputs         = outputs;
+        accumulator.accumulateEnergy = outputSink.accumulateEnergy;
+
+        if (outputSink.sinkKind == LammpsRespaNonbondedOutputSinkKind::ForceWithVirial)
         {
             GMX_RELEASE_ASSERT(outputs->haveForceWithVirial(),
                                "Exact LAMMPS-style r-RESPA outer forces require a direct-virial buffer");
@@ -3250,19 +2048,12 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
         }
 
         activeContributions.push_back(accumulator);
-    };
-
-    appendContribution(ExactRespaNonbondedContribution::Inner, exactRespaNonbondedInnerLevel(inputrec));
-    if (inputrec.exactRespa.forceLayout.hasMiddle())
-    {
-        appendContribution(ExactRespaNonbondedContribution::Middle, exactRespaNonbondedMiddleLevel(inputrec));
     }
-    appendContribution(ExactRespaNonbondedContribution::Outer, exactRespaNonbondedOuterLevel(inputrec));
 
     ContributionAccumulator* outerAccumulator = nullptr;
     for (auto& accumulator : activeContributions)
     {
-        if (accumulator.contribution == ExactRespaNonbondedContribution::Outer)
+        if (accumulator.contribution == MtsNonbondedRespaContribution::Outer)
         {
             outerAccumulator = &accumulator;
             break;
@@ -3275,7 +2066,9 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                                               [](const ContributionAccumulator& accumulator)
                                               {
                                                   return accumulator.contribution
-                                                         == ExactRespaNonbondedContribution::Outer;
+                                                                 == MtsNonbondedRespaContribution::Outer
+                                                         || accumulator.contribution
+                                                                    == MtsNonbondedRespaContribution::Full;
                                               }),
                        "Exact LAMMPS-style r-RESPA virial steps require the outer contribution to be active");
 
@@ -3286,30 +2079,32 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
     auto&      vdwEnergyTerms   = enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::LJSR];
     auto&      coulEnergyTerms  = enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR];
     const bool debugExactRespa  = (std::getenv("GMX_PCFF_RESPA_DEBUG") != nullptr);
-    const bool traceCpuCorrectionEnergies =
-            stepWork.computeEnergy && shouldTraceCpuCorrectionEnergiesStep(step);
     const char* excludedCorrectionForceDumpPath =
             std::getenv("GMX_PCFF_RESPA_EXCLUDED_FORCE_DUMP_FILE");
     const bool dumpExcludedCorrectionForce =
-            (excludedCorrectionForceDumpPath != nullptr && *excludedCorrectionForceDumpPath != '\0');
+            !traceOnlyDiagnostics && (excludedCorrectionForceDumpPath != nullptr && *excludedCorrectionForceDumpPath != '\0');
     const char* earlyAccumTraceDirPath = std::getenv("GMX_PCFF_RESPA_EARLY_TRACE_DIR");
     static bool dumpedEarlyAccumTrace  = false;
     const bool dumpEarlyAccumTrace =
-            (earlyAccumTraceDirPath != nullptr && *earlyAccumTraceDirPath != '\0' && !dumpedEarlyAccumTrace);
+            !traceOnlyDiagnostics
+            && (earlyAccumTraceDirPath != nullptr && *earlyAccumTraceDirPath != '\0' && !dumpedEarlyAccumTrace);
     const char* pairWriteProofDirPath = std::getenv("GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR");
     static bool dumpedPairWriteProof  = false;
     const bool dumpPairWriteProof =
-            (pairWriteProofDirPath != nullptr && *pairWriteProofDirPath != '\0' && !dumpedPairWriteProof);
+            !traceOnlyDiagnostics
+            && (pairWriteProofDirPath != nullptr && *pairWriteProofDirPath != '\0' && !dumpedPairWriteProof);
     const char* downstreamContractTraceDirPath = std::getenv("GMX_PCFF_RESPA_DOWNSTREAM_CONTRACT_TRACE_DIR");
     static bool dumpedDownstreamContractTrace  = false;
     const bool dumpDownstreamContract =
-            (downstreamContractTraceDirPath != nullptr && *downstreamContractTraceDirPath != '\0'
-             && !dumpedDownstreamContractTrace);
+            !traceOnlyDiagnostics && (downstreamContractTraceDirPath != nullptr
+                                      && *downstreamContractTraceDirPath != '\0'
+                                      && !dumpedDownstreamContractTrace);
     const char* bookkeepingResidualTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2L_TRACE_DIR");
     static bool dumpedBookkeepingResidualTrace  = false;
     const bool dumpBookkeepingResidualTrace =
-            (bookkeepingResidualTraceDirPath != nullptr && *bookkeepingResidualTraceDirPath != '\0'
-             && !dumpedBookkeepingResidualTrace);
+            !traceOnlyDiagnostics && (bookkeepingResidualTraceDirPath != nullptr
+                                      && *bookkeepingResidualTraceDirPath != '\0'
+                                      && !dumpedBookkeepingResidualTrace);
     const char* dispatchInternalTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2K_TRACE_DIR");
     if (dispatchInternalTraceDirPath == nullptr || *dispatchInternalTraceDirPath == '\0')
     {
@@ -3317,8 +2112,9 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
     }
     static bool dumpedDispatchInternalTrace  = false;
     const bool dumpDispatchInternalTrace =
-            (dispatchInternalTraceDirPath != nullptr && *dispatchInternalTraceDirPath != '\0'
-             && !dumpedDispatchInternalTrace);
+            !traceOnlyDiagnostics && (dispatchInternalTraceDirPath != nullptr
+                                      && *dispatchInternalTraceDirPath != '\0'
+                                      && !dumpedDispatchInternalTrace);
     const char* dispatchProbeModeEnv = std::getenv("GMX_PCFF_RESPA_M2L_PROBE_MODE");
     if (dispatchProbeModeEnv == nullptr || *dispatchProbeModeEnv == '\0')
     {
@@ -3605,13 +2401,14 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             (outerAccumulator != nullptr && outerAccumulator->outputs != nullptr
              && outerAccumulator->force.data()
                         == outerAccumulator->outputs->forceWithShiftForces().force().data());
-    const auto contributionLabel = [](const ExactRespaNonbondedContribution contribution) -> const char*
+    const auto contributionLabel = [](const MtsNonbondedRespaContribution contribution) -> const char*
     {
         switch (contribution)
         {
-            case ExactRespaNonbondedContribution::Inner: return "inner";
-            case ExactRespaNonbondedContribution::Middle: return "middle";
-            case ExactRespaNonbondedContribution::Outer: return "outer";
+            case MtsNonbondedRespaContribution::Inner: return "inner";
+            case MtsNonbondedRespaContribution::Middle: return "middle";
+            case MtsNonbondedRespaContribution::Outer: return "outer";
+            case MtsNonbondedRespaContribution::Full: return "full";
             default: return "unknown";
         }
     };
@@ -3622,7 +2419,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
         for (const auto& accumulator : accumulators)
         {
             if (excludeOuterForProbe
-                && accumulator.contribution == ExactRespaNonbondedContribution::Outer)
+                && accumulator.contribution == MtsNonbondedRespaContribution::Outer)
             {
                 continue;
             }
@@ -3634,8 +2431,51 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
         }
         return labels.empty() ? "none" : labels;
     };
+    const char* nonbondedOutputContractTraceDirPath =
+            std::getenv("GMX_PCFF_RESPA_NONBONDED_OUTPUT_CONTRACT_TRACE_DIR");
+    const bool dumpNonbondedOutputContract =
+            !traceOnlyDiagnostics && (nonbondedOutputContractTraceDirPath != nullptr
+                                      && *nonbondedOutputContractTraceDirPath != '\0' && step == 0);
+    if (dumpNonbondedOutputContract)
+    {
+        writeRespaTraceTextFile(
+                nonbondedOutputContractTraceDirPath, "step0_nonbonded_output_contract_trace.txt", "");
+        const std::string activeContributionLabels =
+                joinActiveContributionLabels(activeContributions, false);
+        for (const auto& accumulator : activeContributions)
+        {
+            const int mtsLevel = nonbondedRespaContributionMtsLevel(inputrec, accumulator.contribution);
+            const bool outputHasVirial = (accumulator.outputs != nullptr && accumulator.outputs->haveForceWithVirial());
+            const bool aliasesShiftForce =
+                    (accumulator.outputs != nullptr
+                     && accumulator.force.data() == accumulator.outputs->forceWithShiftForces().force().data());
+            const bool aliasesVirialForce =
+                    (accumulator.outputs != nullptr && accumulator.forceWithVirial != nullptr
+                     && accumulator.force.data() == accumulator.outputs->forceWithVirial().force_.data());
+            appendRespaTraceTextLine(
+                    nonbondedOutputContractTraceDirPath,
+                    "step0_nonbonded_output_contract_trace.txt",
+                    "step=" + std::to_string(step) + " contribution="
+                            + std::string(contributionLabel(accumulator.contribution)) + " mts_level="
+                            + std::to_string(mtsLevel) + " force_sink="
+                            + std::string(accumulator.forceWithVirial != nullptr ? "forceWithVirial"
+                                                                                : "forceWithShiftForces")
+                            + " uses_shift_buffer="
+                            + std::string(accumulator.shift.empty() ? "false" : "true")
+                            + " direct_virial="
+                            + std::string(accumulator.forceWithVirial != nullptr ? "true" : "false")
+                            + " output_has_virial=" + std::string(outputHasVirial ? "true" : "false")
+                            + " accumulate_energy="
+                            + std::string(accumulator.accumulateEnergy ? "true" : "false")
+                            + " aliases_shift_force="
+                            + std::string(aliasesShiftForce ? "true" : "false")
+                            + " aliases_virial_force="
+                            + std::string(aliasesVirialForce ? "true" : "false")
+                            + " active_contributions=" + activeContributionLabels
+                            + " semantic_role=exact_nonbonded_output_sink_oracle");
+        }
+    }
     const real pmeSelfEnergy    = computePmeSelfEnergy(*fr->ic);
-    int        selfEnergyAtomCount = 0;
     std::vector<RVec> excludedCorrectionForce;
     if (dumpExcludedCorrectionForce)
     {
@@ -3657,9 +2497,9 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
     {
         std::string contents;
         const auto  appendLine = [&contents](const std::string& line) { contents += line + "\n"; };
-        for (int mtsLevel = 0; mtsLevel < exactRespaForceOutputs.numActiveLevels(); ++mtsLevel)
+        for (int mtsLevel = 0; mtsLevel < forceOutByMtsLevel.ssize(); ++mtsLevel)
         {
-            const ForceOutputs* outputs = exactRespaForceOutputs.levelOrNull(mtsLevel);
+            const ForceOutputs* outputs = forceOutByMtsLevel[mtsLevel];
             if (outputs == nullptr)
             {
                 appendLine("level=" + std::to_string(mtsLevel) + " active=false");
@@ -3878,7 +2718,6 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
         double      ljEnergy     = 0;
         double      coulEnergy   = 0;
         double      qqSum        = 0;
-        double      rawCoulEnergy = 0;
         double      selfEnergy   = 0;
     };
 
@@ -3924,8 +2763,6 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                      && isExcludedPairlist);
             const bool includePairBase      = includePair(ai, aj);
             const bool includePairEffective = includePairBase && !probeIncludePairRestricted;
-            const bool traceExclusionEquivalencePair =
-                    traceExclusionEquivalence && shouldTraceRespaExclusionEquivalencePair(ai, aj);
 
             if (isDispatchTracePair)
             {
@@ -3968,7 +2805,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             const real rinvsq = rinv * rinv;
             const real r      = rsq * rinv;
 
-            const auto splitWeights = computeLammpsRespaSplitWeights(inputrec, r);
+            const auto splitWeights = computeLammpsRespaPairSplitWeights(inputrec, r);
 
             int  typeI       = -1;
             int  typeJ       = -1;
@@ -4096,10 +2933,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                                                         static_cast<real>(debugStats->coulEnergy),
                                                         "src/gromacs/mdlib/sim_util.cpp:2069");
                 }
-                const real admittedComparableCoulombEnergy =
-                        isExcludedPairlist ? 0.0_real : fullCoulombEnergy;
-                debugStats->coulEnergy += admittedComparableCoulombEnergy;
-                debugStats->rawCoulEnergy += fullCoulombEnergy;
+                debugStats->coulEnergy += fullCoulombEnergy;
                 debugStats->qqSum += qq;
             }
             if (dumpM2qLjSrTrace || dumpM2rLjSrTrace || dumpM2sLjSrTrace || dumpM2vLjSrTrace || dumpM2wLjSrTrace)
@@ -4107,55 +2941,25 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                 m2qEarliestRawLjTotal += rawLjEnergy * factorLj;
             }
 
-            const real innerCorrectionScalar  = 0.0_real;
-            const real middleCorrectionScalar = 0.0_real;
-            const real outerCorrectionScalar  = correctionScalar;
-            const real innerScalar = bareCoulombScalar * splitWeights.inner
-                                     + factorLj * rawLjScalar * splitWeights.inner;
-            const real middleScalar = bareCoulombScalar * splitWeights.middle
-                                      + factorLj * rawLjScalar * splitWeights.middle;
+            const real innerScalar =
+                    bareCoulombScalar * splitWeights.inner + factorLj * rawLjScalar * splitWeights.inner;
+            const real middleScalar =
+                    bareCoulombScalar * splitWeights.middle + factorLj * rawLjScalar * splitWeights.middle;
             const real bareOuterScalar =
                     bareCoulombScalar * splitWeights.outer + factorLj * rawLjScalar * splitWeights.outer;
             const real outerScalar =
-                    (patchShapeA ? bareOuterScalar : outerCorrectionScalar + bareOuterScalar);
+                    (patchShapeA ? bareOuterScalar : correctionScalar + bareOuterScalar);
             const real fullScalar = correctionScalar + bareCoulombScalar + factorLj * rawLjScalar;
             const real effectiveOuterScalar =
                     (probeCorrectionOuterSuppressed || patchShapeB)
                             ? bareOuterScalar
                             : outerScalar;
-            if (traceStep1Subset01ForceGroupAudit)
-            {
-                const real innerLjScalar          = factorLj * rawLjScalar * splitWeights.inner;
-                const real innerBareCoulombScalar = bareCoulombScalar * splitWeights.inner;
-                const real middleLjScalar         = factorLj * rawLjScalar * splitWeights.middle;
-                const real middleBareCoulombScalar = bareCoulombScalar * splitWeights.middle;
-                const auto accumulateScalarContribution =
-                        [&](TracedForcePair* targetPair, const real scalar)
-                {
-                    if (scalar == 0.0_real)
-                    {
-                        return;
-                    }
-                    RVec force = { 0, 0, 0 };
-                    svmul(scalar * rinvsq, dx, force);
-                    addPairContributionToTracedPair(targetPair, ai, aj, force);
-                };
-
-                accumulateScalarContribution(&tracedExactInnerLjSrForce, innerLjScalar);
-                accumulateScalarContribution(&tracedExactInnerBareCoulombSrForce, innerBareCoulombScalar);
-                accumulateScalarContribution(&tracedExactInnerCorrectionForce, innerCorrectionScalar);
-                accumulateScalarContribution(&tracedExactMiddleLjSrForce, middleLjScalar);
-                accumulateScalarContribution(&tracedExactMiddleBareCoulombSrForce, middleBareCoulombScalar);
-                accumulateScalarContribution(&tracedExactMiddleCorrectionForce, middleCorrectionScalar);
-                accumulateScalarContribution(&tracedExactInnerRealspaceForce, innerScalar);
-                accumulateScalarContribution(&tracedExactMiddleRealspaceForce, middleScalar);
-                accumulateScalarContribution(&tracedExactOuterRealspaceForce, effectiveOuterScalar);
-
-            }
             if (traceRealspaceForceSubcomponents)
             {
                 RVec ljForce = { 0, 0, 0 };
                 RVec coulombSrForce = { 0, 0, 0 };
+                RVec exclusionCorrectionForce = { 0, 0, 0 };
+                RVec combinedForce = { 0, 0, 0 };
 
                 if (factorLj != 0.0_real && rawLjScalar != 0.0_real)
                 {
@@ -4165,9 +2969,21 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                 {
                     svmul(bareCoulombScalar * rinvsq, dx, coulombSrForce);
                 }
+                if (correctionScalar != 0.0_real)
+                {
+                    svmul(correctionScalar * rinvsq, dx, exclusionCorrectionForce);
+                }
+                if (fullScalar != 0.0_real)
+                {
+                    svmul(fullScalar * rinvsq, dx, combinedForce);
+                }
 
                 addPairContributionToTracedPair(&tracedPatchLjSrForce, ai, aj, ljForce);
                 addPairContributionToTracedPair(&tracedPatchCoulombSrForce, ai, aj, coulombSrForce);
+                addPairContributionToTracedPair(
+                        &tracedPatchExclusionCorrectionForce, ai, aj, exclusionCorrectionForce);
+                addPairContributionToTracedPair(
+                        &tracedPatchCombinedRealspaceForce, ai, aj, combinedForce);
             }
             const bool baselineOuterActive =
                     std::any_of(activeContributions.begin(),
@@ -4175,7 +2991,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                                 [](const ContributionAccumulator& accumulator)
                                 {
                                     return accumulator.contribution
-                                           == ExactRespaNonbondedContribution::Outer;
+                                           == MtsNonbondedRespaContribution::Outer;
                                 });
             const bool effectiveOuterActive = baselineOuterActive && !probeActiveOuterNarrowed;
             const bool bookkeepingSinkEligible =
@@ -4281,207 +3097,144 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
             bool        outerWriteExecuted = false;
             std::string outerRoutingTarget = "none";
-            bool        correctionWriteExecuted = false;
-            std::string correctionRoutingTarget = "none";
-            RVec        writtenCorrectionForce = { 0, 0, 0 };
-            RVec        writtenCombinedForce   = { 0, 0, 0 };
             for (auto& accumulator : activeContributions)
             {
                 if (probeActiveOuterNarrowed
-                    && accumulator.contribution == ExactRespaNonbondedContribution::Outer)
+                    && accumulator.contribution == MtsNonbondedRespaContribution::Outer)
                 {
                     continue;
                 }
                 real scalar = 0;
                 switch (accumulator.contribution)
                 {
-                    case ExactRespaNonbondedContribution::Inner:
+                    case MtsNonbondedRespaContribution::Inner:
                         scalar = innerScalar;
                         break;
-                    case ExactRespaNonbondedContribution::Middle:
+                    case MtsNonbondedRespaContribution::Middle:
                         scalar = middleScalar;
                         break;
-                    case ExactRespaNonbondedContribution::Outer:
+                    case MtsNonbondedRespaContribution::Outer:
                         scalar = effectiveOuterScalar;
+                        break;
+                    case MtsNonbondedRespaContribution::Full:
+                        scalar = fullScalar;
                         break;
                     default: GMX_RELEASE_ASSERT(false, "Unexpected nonbonded r-RESPA contribution");
                 }
 
-                const bool traceBoundaryBookkeepingPair =
-                        shouldTraceRespaMultiStepCoulombStep(step) && !isExcludedPairlist
-                        && shouldTraceBoundaryDominantPair(ai, aj)
-                        && accumulator.contribution == ExactRespaNonbondedContribution::Outer;
-                const bool scalarIsZero = (scalar == 0.0_real);
-                if (scalarIsZero)
+                if (scalar == 0.0_real)
                 {
-                    if (traceBoundaryBookkeepingPair && accumulator.accumulateEnergy)
-                    {
-                        const int energyIndex = energyGroupPairIndex(ai, aj, *fr, mdatoms);
-                        appendBoundaryBookkeepingAuditLine(activeM2pTraceDirPath(),
-                                                           "PATCH",
-                                                           step,
-                                                           ai,
-                                                           aj,
-                                                           isExcludedPairlist ? "excludedPairs" : "pairs",
-                                                           contributionLabel(accumulator.contribution),
-                                                           r,
-                                                           outerScalar,
-                                                           effectiveOuterScalar,
-                                                           fullCoulombEnergy,
-                                                           scalarIsZero,
-                                                           false,
-                                                           false,
-                                                           false,
-                                                           energyIndex,
-                                                           coulEnergyTerms[energyIndex],
-                                                           0.0_real,
-                                                           coulEnergyTerms[energyIndex],
-                                                           "scalar_zero_gate_pre_energy",
-                                                           "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu");
-                    }
-                    if (!accumulator.accumulateEnergy)
-                    {
-                        continue;
-                    }
+                    continue;
                 }
 
-                RVec force = { 0, 0, 0 };
+                RVec force;
+                svmul(scalar * rinvsq, dx, force);
                 const bool suppressOuterWrite =
                         probeOuterRoutingSuppressed
-                        && accumulator.contribution == ExactRespaNonbondedContribution::Outer;
-                // Excluded-pair PME real-space correction is a physical outer contribution for
-                // exact r-RESPA; masking it here drops the same Coulomb-SR offset we already
-                // fixed in the single-step plain-kernel path.
-                const bool suppressExcludedPairPhysicalWrite = false;
-                if (!scalarIsZero)
+                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer;
+                if (accumulator.contribution == MtsNonbondedRespaContribution::Outer)
                 {
-                    svmul(scalar * rinvsq, dx, force);
-                    if (accumulator.contribution == ExactRespaNonbondedContribution::Outer)
+                    outerRoutingTarget = suppressOuterWrite
+                                                 ? "suppressed"
+                                                 : (accumulator.forceWithVirial != nullptr ? "forceWithVirial"
+                                                                                          : "none");
+                }
+                const bool shouldDumpExcludedPairWrite =
+                        dumpPairWriteProof && isExcludedPairlist
+                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer && pairOrdinal == 0;
+                const bool shouldDumpControlPairWrite =
+                        dumpPairWriteProof && !isExcludedPairlist
+                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer
+                        && pairOrdinal < c_maxControlPairWriteProofs;
+                if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
+                    && accumulator.forceWithVirial != nullptr)
+                {
+                    const std::string prefix = shouldDumpExcludedPairWrite
+                                                       ? "step0_outer_excluded_write_ord000"
+                                                       : "step0_outer_pairs_write_ord"
+                                                                 + std::to_string(pairOrdinal);
+                    const std::string header =
+                            "stage="
+                            + std::string(shouldDumpExcludedPairWrite ? "first_excluded_outer_write_boundary"
+                                                                      : "control_pairs_outer_write_boundary")
+                            + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
+                            + " ordinal=" + std::to_string(pairOrdinal) + " contribution=outer buffer=forceWithVirial"
+                            + " accumulator_ptr=" + formatPointerValue(accumulator.force.data())
+                            + " virial_ptr="
+                            + formatPointerValue(accumulator.forceWithVirial->force_.data()) + " ai="
+                            + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
+                            + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
+                            + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
+                            + gmx::toString(qq) + " r=" + gmx::toString(r);
+                    dumpRespaMergeTraceVector(pairWriteProofDirPath,
+                                              (prefix + "_before.tsv").c_str(),
+                                              header + " snapshot=before",
+                                              accumulator.force);
+                    dumpRespaTraceEvent(pairWriteProofDirPath,
+                                        (prefix + "_event.tsv").c_str(),
+                                        header + " snapshot=event",
+                                        ai,
+                                        force,
+                                        aj,
+                                        RVec(-force[XX], -force[YY], -force[ZZ]));
+                }
+                if (dumpEarlyAccumTrace && factorCoulomb == 0.0_real && factorLj == 0.0_real
+                    && accumulator.contribution == MtsNonbondedRespaContribution::Outer && !dumpedFirstExcludedWrite)
+                {
+                    dumpRespaTraceEvent(
+                            earlyAccumTraceDirPath,
+                            "step0_outer_first_excluded_write.tsv",
+                            "stage=first_excluded_outer_write pair_list=excludedPairs contribution=outer buffer=forceWithVirial alias_with_shift="
+                                    + std::string(outerAliasesShift ? "true" : "false") + " ai="
+                                    + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
+                                    + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
+                                    + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
+                                    + gmx::toString(qq) + " r=" + gmx::toString(r),
+                            ai,
+                            force,
+                            aj,
+                            RVec(-force[XX], -force[YY], -force[ZZ]));
+                    dumpedFirstExcludedWrite = true;
+                }
+                if (!suppressOuterWrite)
+                {
+                    rvec_inc(accumulator.force[ai], force);
+                    rvec_dec(accumulator.force[aj], force);
+                    if (accumulator.contribution == MtsNonbondedRespaContribution::Outer)
                     {
-                        outerRoutingTarget = suppressOuterWrite
-                                                     ? "suppressed"
-                                                     : (suppressExcludedPairPhysicalWrite
-                                                                ? "masked_excluded_pair"
-                                                     : (accumulator.forceWithVirial != nullptr ? "forceWithVirial"
-                                                                                              : (!accumulator.force.empty()
-                                                                                                         ? "forceWithShift"
-                                                                                                         : "none")));
+                        outerWriteExecuted = true;
                     }
-                    const bool shouldDumpExcludedPairWrite =
-                            dumpPairWriteProof && isExcludedPairlist
-                            && accumulator.contribution == ExactRespaNonbondedContribution::Outer && pairOrdinal == 0;
-                    const bool shouldDumpControlPairWrite =
-                            dumpPairWriteProof && !isExcludedPairlist
-                            && accumulator.contribution == ExactRespaNonbondedContribution::Outer
-                            && pairOrdinal < c_maxControlPairWriteProofs;
-                    if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
-                        && accumulator.forceWithVirial != nullptr)
-                    {
-                        const std::string prefix = shouldDumpExcludedPairWrite
-                                                           ? "step0_outer_excluded_write_ord000"
-                                                           : "step0_outer_pairs_write_ord"
-                                                                     + std::to_string(pairOrdinal);
-                        const std::string header =
-                                "stage="
-                                + std::string(shouldDumpExcludedPairWrite ? "first_excluded_outer_write_boundary"
-                                                                          : "control_pairs_outer_write_boundary")
-                                + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
-                                + " ordinal=" + std::to_string(pairOrdinal)
-                                + " contribution=outer buffer=forceWithVirial"
-                                + " accumulator_ptr=" + formatPointerValue(accumulator.force.data())
-                                + " virial_ptr="
-                                + formatPointerValue(accumulator.forceWithVirial->force_.data()) + " ai="
-                                + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
-                                + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
-                                + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
-                                + gmx::toString(qq) + " r=" + gmx::toString(r);
-                        dumpRespaMergeTraceVector(pairWriteProofDirPath,
-                                                  (prefix + "_before.tsv").c_str(),
-                                                  header + " snapshot=before",
-                                                  accumulator.force);
-                        dumpRespaTraceEvent(pairWriteProofDirPath,
-                                            (prefix + "_event.tsv").c_str(),
-                                            header + " snapshot=event",
-                                            ai,
-                                            force,
-                                            aj,
-                                            RVec(-force[XX], -force[YY], -force[ZZ]));
-                    }
-                    if (dumpEarlyAccumTrace && factorCoulomb == 0.0_real && factorLj == 0.0_real
-                        && accumulator.contribution == ExactRespaNonbondedContribution::Outer
-                        && !dumpedFirstExcludedWrite && !suppressExcludedPairPhysicalWrite)
-                    {
-                        dumpRespaTraceEvent(
-                                earlyAccumTraceDirPath,
-                                "step0_outer_first_excluded_write.tsv",
-                                "stage=first_excluded_outer_write pair_list=excludedPairs contribution=outer buffer=forceWithVirial alias_with_shift="
-                                        + std::string(outerAliasesShift ? "true" : "false") + " ai="
-                                        + std::to_string(ai) + " aj=" + std::to_string(aj)
-                                        + " shift_index=" + std::to_string(shiftIndex) + " scalar="
-                                        + gmx::toString(scalar) + " correction_scalar="
-                                        + gmx::toString(correctionScalar) + " qq=" + gmx::toString(qq)
-                                        + " r=" + gmx::toString(r),
-                                ai,
-                                force,
-                                aj,
-                                RVec(-force[XX], -force[YY], -force[ZZ]));
-                        dumpedFirstExcludedWrite = true;
-                    }
-                    if (!suppressOuterWrite && !suppressExcludedPairPhysicalWrite)
-                    {
-                        rvec_inc(writtenCombinedForce, force);
-                        rvec_inc(accumulator.force[ai], force);
-                        rvec_dec(accumulator.force[aj], force);
-                        if (accumulator.contribution == ExactRespaNonbondedContribution::Outer)
-                        {
-                            outerWriteExecuted = true;
-                            if (correctionScalar != 0.0_real)
-                            {
-                                RVec correctionForceOnly;
-                                svmul(correctionScalar * rinvsq, dx, correctionForceOnly);
-                                rvec_inc(writtenCorrectionForce, correctionForceOnly);
-                                correctionWriteExecuted = true;
-                            }
-                        }
-                    }
-                    if (accumulator.contribution == ExactRespaNonbondedContribution::Outer
-                        && correctionScalar != 0.0_real)
-                    {
-                        correctionRoutingTarget = outerRoutingTarget;
-                    }
-                    if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
-                        && accumulator.forceWithVirial != nullptr)
-                    {
-                        const std::string prefix = shouldDumpExcludedPairWrite
-                                                           ? "step0_outer_excluded_write_ord000"
-                                                           : "step0_outer_pairs_write_ord"
-                                                                     + std::to_string(pairOrdinal);
-                        const std::string header =
-                                "stage="
-                                + std::string(shouldDumpExcludedPairWrite ? "first_excluded_outer_write_boundary"
-                                                                          : "control_pairs_outer_write_boundary")
-                                + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
-                                + " ordinal=" + std::to_string(pairOrdinal)
-                                + " contribution=outer buffer=forceWithVirial"
-                                + " accumulator_ptr=" + formatPointerValue(accumulator.force.data())
-                                + " virial_ptr="
-                                + formatPointerValue(accumulator.forceWithVirial->force_.data()) + " ai="
-                                + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
-                                + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
-                                + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
-                                + gmx::toString(qq) + " r=" + gmx::toString(r);
-                        dumpRespaMergeTraceVector(pairWriteProofDirPath,
-                                                  (prefix + "_after.tsv").c_str(),
-                                                  header + " snapshot=after",
-                                                  accumulator.force);
-                    }
+                }
+                if ((shouldDumpExcludedPairWrite || shouldDumpControlPairWrite)
+                    && accumulator.forceWithVirial != nullptr)
+                {
+                    const std::string prefix = shouldDumpExcludedPairWrite
+                                                       ? "step0_outer_excluded_write_ord000"
+                                                       : "step0_outer_pairs_write_ord"
+                                                                 + std::to_string(pairOrdinal);
+                    const std::string header =
+                            "stage="
+                            + std::string(shouldDumpExcludedPairWrite ? "first_excluded_outer_write_boundary"
+                                                                      : "control_pairs_outer_write_boundary")
+                            + " pair_list=" + std::string(isExcludedPairlist ? "excludedPairs" : "pairs")
+                            + " ordinal=" + std::to_string(pairOrdinal) + " contribution=outer buffer=forceWithVirial"
+                            + " accumulator_ptr=" + formatPointerValue(accumulator.force.data())
+                            + " virial_ptr="
+                            + formatPointerValue(accumulator.forceWithVirial->force_.data()) + " ai="
+                            + std::to_string(ai) + " aj=" + std::to_string(aj) + " shift_index="
+                            + std::to_string(shiftIndex) + " scalar=" + gmx::toString(scalar)
+                            + " correction_scalar=" + gmx::toString(correctionScalar) + " qq="
+                            + gmx::toString(qq) + " r=" + gmx::toString(r);
+                    dumpRespaMergeTraceVector(pairWriteProofDirPath,
+                                              (prefix + "_after.tsv").c_str(),
+                                              header + " snapshot=after",
+                                              accumulator.force);
+                }
 
-                    if (!suppressOuterWrite && !suppressExcludedPairPhysicalWrite && !accumulator.shift.empty()
-                        && shiftIndex != c_centralShiftIndex)
-                    {
-                        rvec_inc(accumulator.shift[shiftIndex], force);
-                        rvec_dec(accumulator.shift[c_centralShiftIndex], force);
-                    }
+                if (!suppressOuterWrite && !accumulator.shift.empty() && shiftIndex != c_centralShiftIndex)
+                {
+                    rvec_inc(accumulator.shift[shiftIndex], force);
+                    rvec_dec(accumulator.shift[c_centralShiftIndex], force);
                 }
 
                 if (accumulator.accumulateEnergy)
@@ -4489,15 +3242,11 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                     const int energyIndex = energyGroupPairIndex(ai, aj, *fr, mdatoms);
                     const bool suppressBookkeepingEnergy =
                             probeBookkeepingEnergySuppressed
-                            && accumulator.contribution == ExactRespaNonbondedContribution::Outer;
+                            && accumulator.contribution == MtsNonbondedRespaContribution::Outer;
                     const real vdwEnergyDelta = suppressBookkeepingEnergy ? 0.0_real : factorLj * rawLjEnergy;
-                    const bool suppressExcludedPairComparableEnergy = false;
-                    const real coulEnergyDelta =
-                            (suppressBookkeepingEnergy || suppressExcludedPairComparableEnergy)
-                                    ? 0.0_real
-                                    : fullCoulombEnergy;
+                    const real coulEnergyDelta = suppressBookkeepingEnergy ? 0.0_real : fullCoulombEnergy;
                     if (isBookkeepingTracePair
-                        && accumulator.contribution == ExactRespaNonbondedContribution::Outer)
+                        && accumulator.contribution == MtsNonbondedRespaContribution::Outer)
                     {
                         appendRespaTraceTextLine(
                                 bookkeepingResidualTraceDirPath,
@@ -4566,32 +3315,6 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                         {
                             patchPreSelfWritesForEnergyIndex0.erase(patchPreSelfWritesForEnergyIndex0.begin());
                         }
-                    }
-                    if (traceBoundaryBookkeepingPair)
-                    {
-                        const real targetBefore = coulEnergyTerms[energyIndex];
-                        const real targetAfter  = targetBefore + coulEnergyDelta;
-                        appendBoundaryBookkeepingAuditLine(activeM2pTraceDirPath(),
-                                                           "PATCH",
-                                                           step,
-                                                           ai,
-                                                           aj,
-                                                           isExcludedPairlist ? "excludedPairs" : "pairs",
-                                                           contributionLabel(accumulator.contribution),
-                                                           r,
-                                                           outerScalar,
-                                                           effectiveOuterScalar,
-                                                           fullCoulombEnergy,
-                                                           scalarIsZero,
-                                                           coulEnergyDelta != 0.0_real,
-                                                           suppressBookkeepingEnergy,
-                                                           suppressExcludedPairComparableEnergy,
-                                                           energyIndex,
-                                                           targetBefore,
-                                                           coulEnergyDelta,
-                                                           targetAfter,
-                                                           "energy_sink_write",
-                                                           "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu");
                     }
                     coulEnergyTerms[energyIndex] += coulEnergyDelta;
                     if ((dumpM2sLjSrTrace || dumpM2uLjSrTrace) && !m2sFirstWriteCaptured
@@ -4669,56 +3392,10 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                     }
                 }
 
-                if (!suppressOuterWrite && !suppressExcludedPairPhysicalWrite && stepWork.computeVirial
-                    && accumulator.forceWithVirial != nullptr)
+                if (!suppressOuterWrite && stepWork.computeVirial && accumulator.forceWithVirial != nullptr)
                 {
                     accumulatePairVirial(dx, force, accumulator.virial);
                 }
-            }
-
-            if (traceExclusionEquivalencePair)
-            {
-                appendExclusionEquivalenceTracePair(
-                        activeM2pTraceDirPath(),
-                        "PATCH",
-                        step,
-                        pairOrdinal,
-                        ai,
-                        aj,
-                        "exact_cpu_rrespa",
-                        isExcludedPairlist ? "plainPairlist.excludedPairs" : "plainPairlist.pairs",
-                        isExcludedPairlist ? "excludedPairs" : "pairs",
-                        isExcludedPairlist && correctionScalar != 0.0_real,
-                        includePairEffective,
-                        factorCoulomb,
-                        factorLj,
-                        qq,
-                        coulTableIndex,
-                        coulFrac,
-                        coulFexcl,
-                        coulVcorr,
-                        bareCoulombScalar,
-                        correctionScalar,
-                        correctionScalar * rinvsq,
-                        effectiveOuterScalar,
-                        fullScalar,
-                        writtenCorrectionForce,
-                        writtenCombinedForce,
-                        correctionRoutingTarget.c_str(),
-                        correctionWriteExecuted,
-                        isExcludedPairlist ? "excluded_pairlist_entry_promoted_to_outer_contribution"
-                                           : "pairlist_entry_outer_correction_component",
-                        isExcludedPairlist ? "excluded_pairlist_correction_candidate"
-                                           : "included_pair_outer_correction_component",
-                        "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu_exclusion_equivalence_trace");
-            }
-
-            if (traceRealspaceForceSubcomponents)
-            {
-                addPairContributionToTracedPair(
-                        &tracedPatchExclusionCorrectionForce, ai, aj, writtenCorrectionForce);
-                addPairContributionToTracedPair(
-                        &tracedPatchCombinedRealspaceForce, ai, aj, writtenCombinedForce);
             }
 
             if (isDispatchTracePair)
@@ -4800,7 +3477,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                     1.0_real,
                     1.0_real,
                     [](const int, const int) { return true; },
-                    (debugExactRespa || dumpLjSrTrace || traceCpuCorrectionEnergies) ? &pairStats : nullptr);
+                    (debugExactRespa || dumpLjSrTrace) ? &pairStats : nullptr);
     const double patchCombinedAfterPairs =
             (ljSrTraceDirPath != nullptr && *ljSrTraceDirPath != '\0') ? sumEnergyTermsOnce(coulEnergyTerms) : 0.0;
     const double patchLjCombinedAfterPairs =
@@ -4819,7 +3496,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                     0.0_real,
                     0.0_real,
                     [](const int, const int) { return true; },
-                    (debugExactRespa || dumpLjSrTrace || traceCpuCorrectionEnergies) ? &excludedStats : nullptr);
+                    (debugExactRespa || dumpLjSrTrace) ? &excludedStats : nullptr);
     if (traceRealspaceForceSubcomponents)
     {
         appendRealspaceForceSubcomponentTracePair(activeM2pTraceDirPath(),
@@ -4867,151 +3544,13 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                                                   "combined_total",
                                                   false);
     }
-    if (traceStep1Subset01ForceGroupAudit)
+    if (traceRealspaceForceSubcomponents || traceForceComponents)
     {
-        const TracedForcePair tracedExactSubset01RealspaceForce =
-                addTracedForcePairs(tracedExactInnerRealspaceForce, tracedExactMiddleRealspaceForce);
-        const char* producerTermTraceFile = "step2_current_nonbonded_producer_term_trace.txt";
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "inner_lj_sr_force",
-                                            tracedExactInnerLjSrForce,
-                                            "computeLammpsRespaNonbondedCpu.factorLj_rawLjScalar_splitWeights.inner",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "term_component",
-                                            true);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "inner_bare_coulomb_sr_force",
-                                            tracedExactInnerBareCoulombSrForce,
-                                            "computeLammpsRespaNonbondedCpu.bareCoulombScalar_splitWeights.inner",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "term_component",
-                                            true);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "inner_correction_force",
-                                            tracedExactInnerCorrectionForce,
-                                            "computeLammpsRespaNonbondedCpu.correctionScalar_splitWeights.inner",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "term_component",
-                                            true);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "inner_total",
-                                            tracedExactInnerRealspaceForce,
-                                            "computeLammpsRespaNonbondedCpu.innerScalar",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "combined_term_total",
-                                            false);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "middle_lj_sr_force",
-                                            tracedExactMiddleLjSrForce,
-                                            "computeLammpsRespaNonbondedCpu.factorLj_rawLjScalar_splitWeights.middle",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "term_component",
-                                            true);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "middle_bare_coulomb_sr_force",
-                                            tracedExactMiddleBareCoulombSrForce,
-                                            "computeLammpsRespaNonbondedCpu.bareCoulombScalar_splitWeights.middle",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "term_component",
-                                            true);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "middle_correction_force",
-                                            tracedExactMiddleCorrectionForce,
-                                            "computeLammpsRespaNonbondedCpu.correctionScalar_splitWeights.middle",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "term_component",
-                                            true);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "middle_total",
-                                            tracedExactMiddleRealspaceForce,
-                                            "computeLammpsRespaNonbondedCpu.middleScalar",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "combined_term_total",
-                                            false);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "inner_live",
-                                            tracedExactInnerRealspaceForce,
-                                            "computeLammpsRespaNonbondedCpu.innerScalar",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "live_buffer_payload",
-                                            false);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "middle_live",
-                                            tracedExactMiddleRealspaceForce,
-                                            "computeLammpsRespaNonbondedCpu.middleScalar",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "live_buffer_payload",
-                                            false);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            producerTermTraceFile,
-                                            "PATCH",
-                                            step,
-                                            "subset01_after_nonbonded",
-                                            tracedExactSubset01RealspaceForce,
-                                            "computeLammpsRespaNonbondedCpu.inner_plus_middle_current_nonbonded",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "subset_total",
-                                            false);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            "step1_subset01_forcegroup_realspace_split_trace.txt",
-                                            "PATCH",
-                                            step,
-                                            "nonbonded_inner_live",
-                                            tracedExactInnerRealspaceForce,
-                                            "computeLammpsRespaNonbondedCpu.innerScalar",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "true_source_component",
-                                            true);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            "step1_subset01_forcegroup_realspace_split_trace.txt",
-                                            "PATCH",
-                                            step,
-                                            "nonbonded_middle_live",
-                                            tracedExactMiddleRealspaceForce,
-                                            "computeLammpsRespaNonbondedCpu.middleScalar",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "true_source_component",
-                                            true);
-        appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                            "step1_subset01_forcegroup_realspace_split_trace.txt",
-                                            "PATCH",
-                                            step,
-                                            "nonbonded_outer_live",
-                                            tracedExactOuterRealspaceForce,
-                                            "computeLammpsRespaNonbondedCpu.effectiveOuterScalar",
-                                            "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
-                                            "true_source_component",
-                                            true);
+        storeExactRespaRealspaceTraceCapture(step,
+                                             tracedPatchLjSrForce,
+                                             tracedPatchCoulombSrForce,
+                                             tracedPatchExclusionCorrectionForce,
+                                             tracedPatchCombinedRealspaceForce);
     }
     const double patchCombinedAfterExcluded =
             (ljSrTraceDirPath != nullptr && *ljSrTraceDirPath != '\0') ? sumEnergyTermsOnce(coulEnergyTerms) : 0.0;
@@ -5228,7 +3767,6 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
             const int energyIndex = energyGroupPairIndex(atom, atom, *fr, mdatoms);
             const real selfEnergy = -fr->ic->coulomb.epsfac * charge * charge * pmeSelfEnergy;
-            ++selfEnergyAtomCount;
             if (dumpCoulombPreSelfWindowTrace && energyIndex == 0 && selfEnergy != 0.0_real)
             {
                 static std::string emittedPreSelfWindowTracePath;
@@ -5286,7 +3824,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                                                  "src/gromacs/mdlib/sim_util.cpp:2315");
             }
             coulEnergyTerms[energyIndex] += selfEnergy;
-            if (debugExactRespa || traceCpuCorrectionEnergies)
+            if (debugExactRespa)
             {
                 pairStats.selfEnergy += selfEnergy;
             }
@@ -5300,30 +3838,6 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             (ljSrTraceDirPath != nullptr && *ljSrTraceDirPath != '\0') ? patchLjCombinedAfterExcluded : 0.0;
     const double patchLjCombinedAfterSelf =
             (ljSrTraceDirPath != nullptr && *ljSrTraceDirPath != '\0') ? sumEnergyTermsOnce(vdwEnergyTerms) : 0.0;
-    if (stepWork.computeEnergy && shouldTraceCpuCorrectionEnergiesStep(step))
-    {
-        const int outerLevel = exactRespaNonbondedOuterLevel(inputrec);
-        const double reciprocalEnergy =
-                static_cast<double>(enerd->term[InteractionFunction::CoulombReciprocalSpace]);
-        const double selfEnergy = pairStats.selfEnergy;
-        const double excludedCorrectionEnergy = excludedStats.rawCoulEnergy;
-        const double shortRangeTotalEnergy =
-                sumEnergyTermsOnce(coulEnergyTerms);
-        const double shortRangePairEnergy = pairStats.rawCoulEnergy;
-        appendCpuCorrectionEnergyTrace(activeM2pTraceDirPath(),
-                                       step,
-                                       outerLevel,
-                                       "cpu_only",
-                                       reciprocalEnergy,
-                                       selfEnergy,
-                                       excludedCorrectionEnergy,
-                                       shortRangePairEnergy,
-                                       shortRangeTotalEnergy,
-                                       1,
-                                       selfEnergyAtomCount,
-                                       excludedStats.count,
-                                       pairStats.count);
-    }
     if (dumpMultiStepCoulombStateTrace)
     {
         static std::string clearedMultiStepTracePath;
@@ -5410,13 +3924,6 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                 "side=PATCH variable=excludedStats.coulEnergy role=patch_excluded_comparable_source before=0.000000000000000 delta="
                         + formatString("%.15f", excludedStats.coulEnergy) + " after="
                         + formatString("%.15f", excludedStats.coulEnergy)
-                        + " code_location=src/gromacs/mdlib/sim_util.cpp:after_excluded_processPairlist");
-        appendRespaTraceTextLine(
-                ljSrTraceDirPath,
-                "step0_coulomb_source_truth_trace.txt",
-                "side=PATCH variable=excludedStats.rawCoulEnergy role=patch_excluded_runtime_split_source before=0.000000000000000 delta="
-                        + formatString("%.15f", excludedStats.rawCoulEnergy) + " after="
-                        + formatString("%.15f", excludedStats.rawCoulEnergy)
                         + " code_location=src/gromacs/mdlib/sim_util.cpp:after_excluded_processPairlist");
         appendRespaTraceTextLine(
                 ljSrTraceDirPath,
@@ -5509,7 +4016,8 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
         static bool dumpedExcludedCorrectionForce = false;
         if (!dumpedExcludedCorrectionForce)
         {
-            const int outerMtsLevel = exactRespaNonbondedOuterLevel(inputrec);
+            const int outerMtsLevel =
+                    nonbondedRespaContributionMtsLevel(inputrec, MtsNonbondedRespaContribution::Outer);
             FILE* dumpFile = std::fopen(excludedCorrectionForceDumpPath, "w");
             if (dumpFile == nullptr)
             {
@@ -5544,6 +4052,480 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             accumulator.forceWithVirial->addVirialContribution(accumulator.virial);
         }
     }
+}
+
+static void setExactLammpsRespaGpuLaunchParameters(NbnxmGpu*                               gpuNbv,
+                                                   const t_inputrec&                       inputrec,
+                                                   const MtsNonbondedRespaContribution contribution)
+{
+    const auto toGpuExactRespaContribution = [](const MtsNonbondedRespaContribution hostContribution) -> int
+    {
+        switch (hostContribution)
+        {
+            case MtsNonbondedRespaContribution::Inner: return 0;
+            case MtsNonbondedRespaContribution::Middle: return 1;
+            case MtsNonbondedRespaContribution::Outer: return 2;
+            case MtsNonbondedRespaContribution::Full: return 3;
+            case MtsNonbondedRespaContribution::Count:
+                GMX_RELEASE_ASSERT(false,
+                                   "The exact r-RESPA contribution count sentinel is not a launch mode");
+                break;
+        }
+        GMX_RELEASE_ASSERT(false, "Unhandled exact r-RESPA nonbonded GPU contribution");
+        return 3;
+    };
+
+    GMX_RELEASE_ASSERT(gpuNbv != nullptr && gpuNbv->nbparam != nullptr,
+                       "Exact LAMMPS-style r-RESPA GPU launches require initialized GPU nonbonded parameters");
+    auto* nbparam                   = gpuNbv->nbparam;
+    nbparam->exactRespaContribution = toGpuExactRespaContribution(contribution);
+    nbparam->exactRespaHasMiddle    = inputrec.lammpsRespa.hasMiddle() ? 1 : 0;
+    nbparam->exactRespaInnerOff     = inputrec.lammpsRespa.innerOff;
+    nbparam->exactRespaInnerOn      = inputrec.lammpsRespa.innerOn;
+   nbparam->exactRespaOuterOn      = inputrec.lammpsRespa.outerOn;
+    nbparam->exactRespaOuterOff     = inputrec.lammpsRespa.outerOff;
+}
+
+static void replayExactLammpsRespaNonbondedTraceShadow(const t_inputrec&             inputrec,
+                                                       const InteractionDefinitions& idef,
+                                                       t_forcerec*                   fr,
+                                                       const t_mdatoms&              mdatoms,
+                                                       ArrayRef<const RVec>          coordinates,
+                                                       gmx_enerdata_t*               enerd,
+                                                       const StepWorkload&           stepWork,
+                                                       const int64_t                 step)
+{
+    const bool needsDetailedTrace =
+            shouldTraceRespaForceComponentsStep(step, stepWork.highestActiveMtsLevel)
+            || shouldTraceRespaRealspaceForceSubcomponentsStep(step, stepWork.highestActiveMtsLevel);
+    if (!needsDetailedTrace)
+    {
+        return;
+    }
+
+    const int numLevels = std::max(1, stepWork.highestActiveMtsLevel + 1);
+    gmx::ForceBuffers shadowForceBuffers(numLevels, gmx::PinningPolicy::CannotBePinned);
+    shadowForceBuffers.resize(coordinates.ssize());
+
+    std::vector<std::unique_ptr<ForceOutputs>> ownedShadowOutputs;
+    std::vector<ForceOutputs*>                 shadowOutputs(numLevels, nullptr);
+    ownedShadowOutputs.reserve(numLevels);
+
+    const auto makeShiftOnlyOutputs = [](const ArrayRefWithPadding<RVec>& forceBuffer)
+    {
+        ForceWithShiftForces forceWithShiftForces(forceBuffer, false, {});
+        ForceWithVirial      forceWithVirial(forceWithShiftForces.force(), false);
+        return std::make_unique<ForceOutputs>(forceWithShiftForces, false, forceWithVirial);
+    };
+
+    ownedShadowOutputs.push_back(makeShiftOnlyOutputs(shadowForceBuffers.view().forceWithPadding()));
+    shadowOutputs[0] = ownedShadowOutputs.back().get();
+    for (auto& force : shadowForceBuffers.view().force())
+    {
+        clear_rvec(force);
+    }
+
+    for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; ++mtsLevel)
+    {
+        ownedShadowOutputs.push_back(
+                makeShiftOnlyOutputs(shadowForceBuffers.view().forceForMtsLevelWithPadding(mtsLevel)));
+        shadowOutputs[mtsLevel] = ownedShadowOutputs.back().get();
+        auto shadowForce = shadowForceBuffers.view().forceForMtsLevel(mtsLevel);
+        for (auto& force : shadowForce)
+        {
+            clear_rvec(force);
+        }
+    }
+
+    computeLammpsRespaNonbondedCpu(
+            inputrec, idef, fr, mdatoms, coordinates, shadowOutputs, enerd, stepWork, step, true);
+}
+
+static void computeLammpsRespaNonbondedGpuNarrow(const t_inputrec&             inputrec,
+                                                 const InteractionDefinitions& idef,
+                                                 t_forcerec*                   fr,
+                                                 const t_mdatoms&              mdatoms,
+                                                 ArrayRef<const RVec>          coordinates,
+                                                 const interaction_const_t*    ic,
+                                                 ArrayRef<ForceOutputs*>       forceOutByMtsLevel,
+                                                 gmx_enerdata_t*               enerd,
+                                                 const StepWorkload&           stepWork,
+                                                 const int64_t                 step,
+                                                 t_nrnb*                       nrnb,
+                                                 gmx_wallcycle*                wcycle)
+{
+    GMX_RELEASE_ASSERT(fr != nullptr && fr->nbv != nullptr && fr->nbv->gpuNbv() != nullptr,
+                       "Exact LAMMPS-style r-RESPA HG3 narrow mode requires initialized GPU nonbonded state");
+    GMX_RELEASE_ASSERT(!stepWork.computeVirial && !stepWork.computeEnergy,
+                       "Exact LAMMPS-style r-RESPA HG3 narrow mode is force-only");
+    GMX_RELEASE_ASSERT(!stepWork.useGpuXBufferOps && !stepWork.useGpuFBufferOps,
+                       "Exact LAMMPS-style r-RESPA HG3 narrow mode does not support GPU buffer ops");
+    GMX_RELEASE_ASSERT(ic != nullptr && ic->vdw.type == VanDerWaalsType::Cut
+                               && ic->vdw.modifier == InteractionModifiers::None
+                               && usingPmeOrEwald(ic->coulomb.type)
+                               && ic->coulomb.modifier == InteractionModifiers::None,
+                       "Exact LAMMPS-style r-RESPA HG3 narrow mode supports only cut-off LJ with PME/Ewald Coulomb");
+
+    struct ContributionTarget
+    {
+        MtsNonbondedRespaContribution contribution;
+        ArrayRef<RVec>                force;
+    };
+
+    std::vector<ContributionTarget> activeTargets;
+    const auto outputSinks = activeLammpsRespaNonbondedOutputSinks(
+            inputrec, stepWork.highestActiveMtsLevel, stepWork.computeVirial, stepWork.computeEnergy);
+    for (const auto& outputSink : outputSinks)
+    {
+        GMX_RELEASE_ASSERT(outputSink.sinkKind == LammpsRespaNonbondedOutputSinkKind::ShiftForce,
+                           "Exact LAMMPS-style r-RESPA HG3 narrow mode requires host force-with-shift sinks");
+        const int mtsLevel = outputSink.mtsLevel;
+        GMX_RELEASE_ASSERT(mtsLevel >= 0 && mtsLevel < forceOutByMtsLevel.ssize()
+                                   && forceOutByMtsLevel[mtsLevel] != nullptr,
+                           "Exact LAMMPS-style r-RESPA HG3 narrow mode requires one host force sink per active contribution");
+        activeTargets.push_back(
+                { outputSink.contribution, forceOutByMtsLevel[mtsLevel]->forceWithShiftForces().force() });
+    }
+
+    const auto contributionLabel = [](const MtsNonbondedRespaContribution contribution) -> const char*
+    {
+        switch (contribution)
+        {
+            case MtsNonbondedRespaContribution::Inner: return "inner";
+            case MtsNonbondedRespaContribution::Middle: return "middle";
+            case MtsNonbondedRespaContribution::Outer: return "outer";
+            case MtsNonbondedRespaContribution::Full: return "full";
+        }
+        GMX_RELEASE_ASSERT(false, "Unhandled exact LAMMPS-style r-RESPA contribution");
+        return "unknown";
+    };
+    const char* nonbondedOutputContractTraceDirPath =
+            std::getenv("GMX_PCFF_RESPA_NONBONDED_OUTPUT_CONTRACT_TRACE_DIR");
+    const bool dumpNonbondedOutputContract =
+            (nonbondedOutputContractTraceDirPath != nullptr && *nonbondedOutputContractTraceDirPath != '\0'
+             && step == 0);
+    if (dumpNonbondedOutputContract)
+    {
+        writeRespaTraceTextFile(
+                nonbondedOutputContractTraceDirPath, "step0_nonbonded_output_contract_trace.txt", "");
+        std::string activeContributionLabels;
+        for (const auto& outputSink : outputSinks)
+        {
+            if (!activeContributionLabels.empty())
+            {
+                activeContributionLabels += ",";
+            }
+            activeContributionLabels += contributionLabel(outputSink.contribution);
+        }
+        if (activeContributionLabels.empty())
+        {
+            activeContributionLabels = "none";
+        }
+        for (const auto& outputSink : outputSinks)
+        {
+            const int mtsLevel = outputSink.mtsLevel;
+            GMX_RELEASE_ASSERT(mtsLevel >= 0 && mtsLevel < forceOutByMtsLevel.ssize()
+                                       && forceOutByMtsLevel[mtsLevel] != nullptr,
+                               "Exact LAMMPS-style r-RESPA HG3 narrow mode requires valid output sinks");
+            ForceOutputs* outputs = forceOutByMtsLevel[mtsLevel];
+            const auto    force   = outputs->forceWithShiftForces().force();
+            const auto    shift   = outputs->forceWithShiftForces().shiftForces();
+            appendRespaTraceTextLine(
+                    nonbondedOutputContractTraceDirPath,
+                    "step0_nonbonded_output_contract_trace.txt",
+                    "step=" + std::to_string(step) + " contribution="
+                            + std::string(contributionLabel(outputSink.contribution)) + " mts_level="
+                            + std::to_string(mtsLevel) + " force_sink=forceWithShiftForces uses_shift_buffer="
+                            + std::string(shift.empty() ? "false" : "true")
+                            + " direct_virial=false output_has_virial="
+                            + std::string(outputs->haveForceWithVirial() ? "true" : "false")
+                            + " accumulate_energy="
+                            + std::string(outputSink.accumulateEnergy ? "true" : "false")
+                            + " aliases_shift_force="
+                            + std::string(force.data() == outputs->forceWithShiftForces().force().data() ? "true"
+                                                                                                          : "false")
+                            + " aliases_virial_force=false active_contributions=" + activeContributionLabels
+                            + " semantic_role=exact_nonbonded_output_sink_oracle");
+        }
+    }
+
+    const char* pairWriteProofDirPath = std::getenv("GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR");
+    const bool dumpPairWriteProof =
+            (pairWriteProofDirPath != nullptr && *pairWriteProofDirPath != '\0' && step == 0);
+    const char* downstreamContractTraceDirPath = std::getenv("GMX_PCFF_RESPA_DOWNSTREAM_CONTRACT_TRACE_DIR");
+    const bool dumpDownstreamContract =
+            (downstreamContractTraceDirPath != nullptr && *downstreamContractTraceDirPath != '\0'
+             && step == 0);
+    if (dumpPairWriteProof || dumpDownstreamContract)
+    {
+        GMX_RELEASE_ASSERT(fr->plainPairlistRange.has_value(),
+                           "Exact LAMMPS-style r-RESPA HG3 narrow mode diagnostics require a plain pairlist");
+        const auto& plainPairlist = fr->nbv->plainPairlist(fr->plainPairlistRange.value(), fr->shift_vec);
+        const auto  pairKey       = [](const int ai, const int aj)
+        {
+            const uint32_t first  = static_cast<uint32_t>(std::min(ai, aj));
+            const uint32_t second = static_cast<uint32_t>(std::max(ai, aj));
+            return (static_cast<uint64_t>(first) << 32) | second;
+        };
+        const auto countPairKeyOccurrences = [&pairKey](const auto& entries, const uint64_t keyToCount) -> int
+        {
+            return static_cast<int>(std::count_if(entries.begin(),
+                                                  entries.end(),
+                                                  [&pairKey, keyToCount](const auto& entry)
+                                                  { return pairKey(entry.first.first, entry.first.second) == keyToCount; }));
+        };
+        const auto firstOrdinalForKey = [&pairKey](const auto& entries, const uint64_t keyToFind) -> int
+        {
+            for (int ordinal = 0; ordinal < static_cast<int>(entries.size()); ++ordinal)
+            {
+                if (pairKey(entries[ordinal].first.first, entries[ordinal].first.second) == keyToFind)
+                {
+                    return ordinal;
+                }
+            }
+            return -1;
+        };
+
+        if (dumpPairWriteProof)
+        {
+            constexpr int c_maxPreviewPairs = 8;
+            std::string   contents;
+            const auto    appendLine = [&contents](const std::string& line) { contents += line + "\n"; };
+            appendLine("kind=pairlist_preview list=pairs count=" + std::to_string(plainPairlist.pairs.size()));
+            for (int ordinal = 0; ordinal < static_cast<int>(plainPairlist.pairs.size())
+                                  && ordinal < c_maxPreviewPairs;
+                 ++ordinal)
+            {
+                const auto& entry = plainPairlist.pairs[ordinal];
+                appendLine("kind=pairs ordinal=" + std::to_string(ordinal) + " ai="
+                           + std::to_string(entry.first.first) + " aj="
+                           + std::to_string(entry.first.second) + " shift_index="
+                           + std::to_string(entry.second));
+            }
+            appendLine("kind=pairlist_preview list=excludedPairs count="
+                       + std::to_string(plainPairlist.excludedPairs.size()));
+            if (!plainPairlist.excludedPairs.empty())
+            {
+                const auto& entry = plainPairlist.excludedPairs.front();
+                appendLine("kind=excludedPairs ordinal=0 ai=" + std::to_string(entry.first.first) + " aj="
+                           + std::to_string(entry.first.second) + " shift_index="
+                           + std::to_string(entry.second));
+            }
+            writeRespaTraceTextFile(pairWriteProofDirPath, "step0_plain_pairlist_preview.txt", contents);
+        }
+
+        if (dumpPairWriteProof)
+        {
+            std::string contents;
+            const auto  appendLine = [&contents](const std::string& line) { contents += line + "\n"; };
+            for (int mtsLevel = 0; mtsLevel < forceOutByMtsLevel.ssize(); ++mtsLevel)
+            {
+                ForceOutputs* outputs = forceOutByMtsLevel[mtsLevel];
+                if (outputs == nullptr)
+                {
+                    appendLine("level=" + std::to_string(mtsLevel) + " active=false");
+                    continue;
+                }
+
+                appendLine("level=" + std::to_string(mtsLevel) + " active=true");
+                appendLine("level=" + std::to_string(mtsLevel) + " shift_force_ptr="
+                           + formatPointerValue(outputs->forceWithShiftForces().force().data()));
+                appendLine("level=" + std::to_string(mtsLevel) + " shift_shift_ptr="
+                           + formatPointerValue(outputs->forceWithShiftForces().shiftForces().data()));
+                appendLine("level=" + std::to_string(mtsLevel) + " have_virial="
+                           + std::string(outputs->haveForceWithVirial() ? "true" : "false"));
+                if (outputs->haveForceWithVirial())
+                {
+                    appendLine("level=" + std::to_string(mtsLevel) + " virial_force_ptr="
+                               + formatPointerValue(outputs->forceWithVirial().force_.data()));
+                }
+            }
+
+            const auto outerSinkIt = std::find_if(outputSinks.begin(),
+                                                  outputSinks.end(),
+                                                  [](const auto& outputSink)
+                                                  { return outputSink.contribution
+                                                           == MtsNonbondedRespaContribution::Outer; });
+            const auto outerTargetIt = std::find_if(activeTargets.begin(),
+                                                    activeTargets.end(),
+                                                    [](const auto& target)
+                                                    { return target.contribution
+                                                             == MtsNonbondedRespaContribution::Outer; });
+            appendLine("outer_accumulator_present="
+                       + std::string(outerSinkIt != outputSinks.end() && outerTargetIt != activeTargets.end()
+                                             ? "true"
+                                             : "false"));
+            if (outerSinkIt != outputSinks.end() && outerTargetIt != activeTargets.end())
+            {
+                GMX_RELEASE_ASSERT(outerSinkIt->mtsLevel >= 0 && outerSinkIt->mtsLevel < forceOutByMtsLevel.ssize()
+                                           && forceOutByMtsLevel[outerSinkIt->mtsLevel] != nullptr,
+                                   "Exact LAMMPS-style r-RESPA HG2/HG3 narrow GPU trace requires a valid outer host force sink");
+                ForceOutputs* outerOutputs = forceOutByMtsLevel[outerSinkIt->mtsLevel];
+                appendLine("outer_accumulator_force_ptr="
+                           + formatPointerValue(outerTargetIt->force.data()));
+                appendLine("outer_accumulator_shift_ptr="
+                           + formatPointerValue(outerOutputs->forceWithShiftForces().shiftForces().data()));
+                appendLine("outer_accumulator_has_virial=false");
+                appendLine("outer_outputs_shift_force_ptr="
+                           + formatPointerValue(outerOutputs->forceWithShiftForces().force().data()));
+                appendLine("outer_outputs_shift_shift_ptr="
+                           + formatPointerValue(outerOutputs->forceWithShiftForces().shiftForces().data()));
+                appendLine("outer_aliases_shift="
+                           + std::string(outerTargetIt->force.data()
+                                                         == outerOutputs->forceWithShiftForces().force().data()
+                                                 ? "true"
+                                                 : "false"));
+            }
+            appendLine("excluded_correction_force_dump_enabled=false");
+            appendLine("excluded_correction_force_dump_ptr=0x0");
+            writeRespaTraceTextFile(pairWriteProofDirPath, "step0_force_storage_identity.txt", contents);
+        }
+
+        if (dumpDownstreamContract)
+        {
+            const uint64_t targetPairKey  = pairKey(0, 1);
+            const uint64_t controlPairKey = pairKey(0, 4);
+            writeRespaTraceTextFile(downstreamContractTraceDirPath, "step0_downstream_contract_trace.txt", "");
+            appendRespaTraceTextLine(
+                    downstreamContractTraceDirPath,
+                    "step0_downstream_contract_trace.txt",
+                    "stage=excluded_pairs_dispatch_contract list=excludedPairs factor_coulomb=0 factor_lj=0 include_rule=always_true "
+                            "target_in_list="
+                            + std::string(countPairKeyOccurrences(plainPairlist.excludedPairs, targetPairKey) > 0
+                                                  ? "true"
+                                                  : "false")
+                            + " target_ordinal="
+                            + std::to_string(firstOrdinalForKey(plainPairlist.excludedPairs, targetPairKey))
+                            + " target_occurrences="
+                            + std::to_string(countPairKeyOccurrences(plainPairlist.excludedPairs, targetPairKey))
+                            + " control_in_list="
+                            + std::string(countPairKeyOccurrences(plainPairlist.excludedPairs, controlPairKey) > 0
+                                                  ? "true"
+                                                  : "false")
+                            + " control_ordinal="
+                            + std::to_string(firstOrdinalForKey(plainPairlist.excludedPairs, controlPairKey))
+                            + " control_occurrences="
+                            + std::to_string(countPairKeyOccurrences(plainPairlist.excludedPairs, controlPairKey))
+                            + " semantic_role=excluded_membership_reintroduced_into_exact_nonbonded_consumer");
+            appendRespaTraceTextLine(
+                    downstreamContractTraceDirPath,
+                    "step0_downstream_contract_trace.txt",
+                    "stage=pairs_dispatch_contract list=pairs factor_coulomb=1 factor_lj=1 include_rule=always_true "
+                            "target_in_list="
+                            + std::string(countPairKeyOccurrences(plainPairlist.pairs, targetPairKey) > 0 ? "true"
+                                                                                                            : "false")
+                            + " target_ordinal="
+                            + std::to_string(firstOrdinalForKey(plainPairlist.pairs, targetPairKey))
+                            + " target_occurrences="
+                            + std::to_string(countPairKeyOccurrences(plainPairlist.pairs, targetPairKey))
+                            + " control_in_list="
+                            + std::string(countPairKeyOccurrences(plainPairlist.pairs, controlPairKey) > 0 ? "true"
+                                                                                                             : "false")
+                            + " control_ordinal="
+                            + std::to_string(firstOrdinalForKey(plainPairlist.pairs, controlPairKey))
+                            + " control_occurrences="
+                            + std::to_string(countPairKeyOccurrences(plainPairlist.pairs, controlPairKey))
+                            + " semantic_role=standard_physical_nonbonded_consumer");
+        }
+    }
+
+    nonbonded_verlet_t* nbv = fr->nbv.get();
+    NbnxmGpu*           gpu = nbv->gpuNbv();
+
+    wallcycle_start(wcycle, WallCycleCounter::LaunchGpuPp);
+    wallcycle_sub_start(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
+    gpu_upload_shiftvec(gpu, &nbv->nbat());
+    gpu_copy_xq_to_gpu(gpu, &nbv->nbat(), AtomLocality::Local);
+    wallcycle_sub_stop(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
+    wallcycle_stop(wcycle, WallCycleCounter::LaunchGpuPp);
+
+    for (const auto& target : activeTargets)
+    {
+        const StepWorkload contributionWork = stepWork.withExactNonbondedContribution(target.contribution);
+        const auto         disabledShiftReductionSink = forceOutByMtsLevel[0]->forceWithShiftForces().shiftForces();
+        GMX_RELEASE_ASSERT(disabledShiftReductionSink.empty(),
+                           "Exact LAMMPS-style r-RESPA HG2/HG3 narrow mode supports only atom-force GPU merge; shift-force reduction stays disabled");
+        setExactLammpsRespaGpuLaunchParameters(gpu, inputrec, target.contribution);
+
+        wallcycle_start_nocount(wcycle, WallCycleCounter::LaunchGpuPp);
+        wallcycle_sub_start(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
+        gpu_clear_outputs(gpu, contributionWork.computeVirial);
+        do_nb_verlet(fr, ic, enerd, contributionWork, InteractionLocality::Local, enbvClearFNo, step, nrnb, wcycle);
+        gpu_launch_cpyback(gpu, &nbv->nbat(), contributionWork, AtomLocality::Local);
+        wallcycle_sub_stop(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
+        wallcycle_stop(wcycle, WallCycleCounter::LaunchGpuPp);
+
+        gpu_wait_finish_task(gpu,
+                             contributionWork,
+                             AtomLocality::Local,
+                             false,
+                             enerd,
+                             disabledShiftReductionSink,
+                             wcycle);
+        nbv->atomdata_add_nbat_f_to_f(AtomLocality::Local, target.force);
+    }
+
+    replayExactLammpsRespaNonbondedTraceShadow(
+            inputrec, idef, fr, mdatoms, coordinates, enerd, stepWork, step);
+
+    setExactLammpsRespaGpuLaunchParameters(gpu, inputrec, MtsNonbondedRespaContribution::Full);
+}
+
+static void computeLammpsRespaBondedGpuPair14Narrow(const t_inputrec&       inputrec,
+                                                    t_forcerec*             fr,
+                                                    const matrix            box,
+                                                    ArrayRef<ForceOutputs*> forceOutByMtsLevel,
+                                                    gmx_enerdata_t*         enerd,
+                                                    const StepWorkload&     stepWork,
+                                                    gmx_wallcycle*          wcycle)
+{
+    if (!stepWork.computeListedForces)
+    {
+        return;
+    }
+
+    GMX_RELEASE_ASSERT(fr != nullptr && fr->listedForcesGpu != nullptr && fr->nbv != nullptr
+                               && fr->nbv->gpuNbv() != nullptr,
+                       "Exact LAMMPS-style r-RESPA HG4 narrow mode requires initialized GPU bonded and nonbonded state");
+    GMX_RELEASE_ASSERT(!stepWork.computeVirial && !stepWork.computeEnergy,
+                       "Exact LAMMPS-style r-RESPA HG4 narrow mode is force-only");
+    GMX_RELEASE_ASSERT(!stepWork.useGpuXBufferOps && !stepWork.useGpuFBufferOps,
+                       "Exact LAMMPS-style r-RESPA HG4 narrow mode does not support GPU buffer ops");
+
+    const int pair14Level = inputrec.lammpsRespa.pair14Level;
+    if (pair14Level < 0 || pair14Level > stepWork.highestActiveMtsLevel)
+    {
+        return;
+    }
+
+    GMX_RELEASE_ASSERT(pair14Level < forceOutByMtsLevel.ssize() && forceOutByMtsLevel[pair14Level] != nullptr,
+                       "Exact LAMMPS-style r-RESPA HG4 narrow mode requires an explicit pair14 host force sink");
+    GMX_RELEASE_ASSERT(fr->listedForcesGpu->haveInteractions(),
+                       "Exact LAMMPS-style r-RESPA HG4 narrow mode requires Lennard-Jones 1-4 GPU work");
+
+    ForceOutputs&       forceOut = *forceOutByMtsLevel[pair14Level];
+    nonbonded_verlet_t* nbv      = fr->nbv.get();
+    NbnxmGpu*           gpu      = nbv->gpuNbv();
+    const auto          disabledShiftReductionSink = forceOut.forceWithShiftForces().shiftForces();
+    GMX_RELEASE_ASSERT(disabledShiftReductionSink.empty(),
+                       "Exact LAMMPS-style r-RESPA HG2/HG4 narrow mode supports only atom-force GPU merge; shift-force reduction stays disabled");
+
+    wallcycle_start_nocount(wcycle, WallCycleCounter::LaunchGpuPp);
+    wallcycle_sub_start(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
+    gpu_clear_outputs(gpu, stepWork.computeVirial);
+    fr->listedForcesGpu->setPbcAndlaunchKernel(fr->pbcType, box, fr->bMolPBC, stepWork);
+    gpu_launch_cpyback(gpu, &nbv->nbat(), stepWork, AtomLocality::Local);
+    wallcycle_sub_stop(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
+    wallcycle_stop(wcycle, WallCycleCounter::LaunchGpuPp);
+
+    gpu_wait_finish_task(gpu,
+                         stepWork,
+                         AtomLocality::Local,
+                         false,
+                         enerd,
+                         disabledShiftReductionSink,
+                         wcycle);
+    nbv->atomdata_add_nbat_f_to_f(AtomLocality::Local, forceOut.forceWithShiftForces().force());
 }
 
 static inline void clearRVecs(ArrayRef<RVec> v, const bool useOpenmpThreading)
@@ -5716,7 +4698,6 @@ static void computeSpecialForces(FILE*                fplog,
                                  const t_mdatoms*     mdatoms,
                                  ArrayRef<const real> lambda,
                                  const StepWorkload&  stepWork,
-                                 const ExactRespaStepWork* exactRespaStepWork,
                                  ArrayRef<ForceWithVirial*> forceWithVirialPerMtsLevel,
                                  gmx_enerdata_t*      enerd,
                                  gmx_edsam*           ed,
@@ -5742,14 +4723,9 @@ static void computeSpecialForces(FILE*                fplog,
         forceProviders->calculateForces(forceProviderInput, &forceProviderOutput);
     }
 
-    const int activeLevel =
-            (exactRespaStepWork != nullptr) ? exactRespaStepWork->highestActiveLevel
-                                            : stepWork.highestActiveMtsLevel;
-    const int  pullMtsLevel = gmx::useExactRespa(inputrec) ? gmx::exactRespaPullLevel(inputrec)
-                                                           : forceGroupMtsLevel(inputrec.mtsLevels,
-                                                                                 MtsForceGroups::Pull);
+    const int  pullMtsLevel = forceGroupMtsLevel(inputrec.mtsLevels, MtsForceGroups::Pull);
     const bool doPulling    = (inputrec.bPull && pull_have_potential(*pull_work)
-                            && pullMtsLevel <= activeLevel);
+                            && pullMtsLevel <= stepWork.highestActiveMtsLevel);
 
     /* pull_potential_wrapper(), awh->applyBiasForcesAndUpdateBias(), pull_apply_forces()
      * have to be called in this order
@@ -5761,7 +4737,7 @@ static void computeSpecialForces(FILE*                fplog,
                 mpiComm, inputrec, box, x, mdatoms, enerd, pull_work, lambda.data(), t, wcycle);
     }
     // Note: the awh condition is mirrored in haveSpecialForces()
-    if (awh && pullMtsLevel <= activeLevel)
+    if (awh && pullMtsLevel <= stepWork.highestActiveMtsLevel)
     {
         const bool          needForeignEnergyDifferences = awh->needForeignEnergyDifferences(step);
         std::vector<double> foreignLambdaDeltaH, foreignLambdaDhDl;
@@ -6032,46 +5008,6 @@ static ForceOutputs setupForceOutputs(ForceHelperBuffers*           forceHelperB
             forceWithShiftForces, forceHelperBuffers->haveDirectVirialContributions(), forceWithVirial);
 }
 
-static ExactRespaForceOutputs setupExactRespaForceOutputs(const t_inputrec&           inputrec,
-                                                          ForceOutputs*               level0Output,
-                                                          ExactRespaForceOutputStorage* exactRespaForceOutputStorage,
-                                                          t_forcerec*                 fr,
-                                                          const DomainLifetimeWorkload& domainWork,
-                                                          const StepWorkload&         stepWork,
-                                                          const ExactRespaStepWork&   exactRespaStepWork,
-                                                          const bool                  havePpDomainDecomposition,
-                                                          gmx_wallcycle*              wcycle)
-{
-    GMX_RELEASE_ASSERT(useExactRespa(inputrec), "Exact level outputs should only be set up for exact r-RESPA");
-    GMX_RELEASE_ASSERT(level0Output != nullptr, "Need a level-0 exact force output");
-    GMX_RELEASE_ASSERT(exactRespaForceOutputStorage != nullptr, "Need exact force-output storage");
-
-    ExactRespaForceOutputs exactRespaForceOutputs;
-    exactRespaForceOutputs.numLevels =
-            std::min(exactRespaNumLevels(inputrec), ExactRespaForceOutputs::c_numLevels);
-    exactRespaForceOutputs.highestActiveLevel =
-            std::min(exactRespaStepWork.highestActiveLevel, exactRespaForceOutputs.numLevels - 1);
-    exactRespaForceOutputs.longrangeLevel = exactRespaLongrangeNonbondedLevel(inputrec);
-    exactRespaForceOutputs.levelOutputs[0] = level0Output;
-
-    for (int level = 1; level < exactRespaForceOutputs.numActiveLevels(); ++level)
-    {
-        exactRespaForceOutputStorage->ownedLevelForceBuffers[level].resizeWithPadding(
-                level0Output->forceWithShiftForces().force().size());
-        exactRespaForceOutputStorage->ownedLevelOutputs[level].emplace(
-                setupForceOutputs(&fr->forceHelperBuffers[level],
-                                  exactRespaForceOutputStorage->ownedLevelForceBuffers[level].arrayRefWithPadding(),
-                                  domainWork,
-                                  stepWork,
-                                  havePpDomainDecomposition,
-                                  wcycle));
-        exactRespaForceOutputs.levelOutputs[level] =
-                &exactRespaForceOutputStorage->ownedLevelOutputs[level].value();
-    }
-
-    return exactRespaForceOutputs;
-}
-
 /* \brief Launch end-of-step GPU tasks: buffer clearing and rolling pruning.
  *
  */
@@ -6160,12 +5096,11 @@ static int getExpectedLocalXReadyOnDeviceConsumptionCount(const SimulationWorklo
             // Event is consumed by launchPmeGpuSpread
             result++;
         }
-    }
-    if (stepWork.computeNonbondedForces && stepWork.useGpuXBufferOps)
-    {
-        // Event is consumed by convertCoordinatesGpu for GPU non-bonded work, including
-        // exact-r-RESPA inner steps that skip long-range electrostatics.
-        result++;
+        if (stepWork.computeNonbondedForces && stepWork.useGpuXBufferOps)
+        {
+            // Event is consumed by convertCoordinatesGpu
+            result++;
+        }
     }
     if (stepWork.useGpuXHalo)
     {
@@ -6332,9 +5267,8 @@ static void setupLocalGpuForceReduction(const MdrunScheduleWorkload& runSchedule
                                         const gmx_pme_t*             pmedata,
                                         const gmx_domdec_t*          dd)
 {
-    GMX_ASSERT(!(runScheduleWork.simulationWork.useLegacyMtsSubsteps()
-                 || runScheduleWork.simulationWork.useExactRespa),
-               "GPU force reduction is not compatible with substepped dynamics");
+    GMX_ASSERT(!runScheduleWork.simulationWork.useMts,
+               "GPU force reduction is not compatible with MTS");
 
     // (re-)initialize local GPU force reduction
     const bool accumulate = runScheduleWork.domainWork.haveCpuLocalForceWork
@@ -6485,9 +5419,62 @@ static void doPairSearch(const t_commrec*             cr,
     const StepWorkload&           stepWork       = runScheduleWork.stepWork;
     const DomainLifetimeWorkload& domainWork     = runScheduleWork.domainWork;
     const char*                   traceSide =
-            (gmx::useExactRespa(inputrec) && gmx::exactRespaHasPairSplitting(inputrec))
+            (inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa && inputrec.lammpsRespa.hasPairSplitting())
                     ? "PATCH"
                     : "PLAIN";
+    const char* ownershipTraceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+    const auto appendPairSearchTopologyTrace = [&](const char* stageName, const bool includeLocalAtomOrder)
+    {
+        if (ownershipTraceDirPath == nullptr || *ownershipTraceDirPath == '\0')
+        {
+            return;
+        }
+
+        std::string exclusionsForAtom0 = "none";
+        if (top.excls.ssize() > 0)
+        {
+            exclusionsForAtom0.clear();
+            for (Index index = 0; index < top.excls[0].ssize(); ++index)
+            {
+                if (!exclusionsForAtom0.empty())
+                {
+                    exclusionsForAtom0 += ",";
+                }
+                exclusionsForAtom0 += std::to_string(top.excls[0][index]);
+            }
+            if (exclusionsForAtom0.empty())
+            {
+                exclusionsForAtom0 = "none";
+            }
+        }
+
+        std::string localAtomOrder = "none";
+        if (includeLocalAtomOrder && nbv != nullptr)
+        {
+            const auto atomOrder = nbv->getLocalAtomOrder();
+            if (!atomOrder.empty())
+            {
+                localAtomOrder.clear();
+                for (int atomIndex : atomOrder)
+                {
+                    if (!localAtomOrder.empty())
+                    {
+                        localAtomOrder += ",";
+                    }
+                    localAtomOrder += std::to_string(atomIndex);
+                }
+            }
+        }
+
+        appendRespaTraceTextLine(
+                ownershipTraceDirPath,
+                "step0_pairsearch_topology_trace.txt",
+                "stage=" + std::string(stageName) + " source=sim_util.doPairSearch local_top_atom=0 exclusions="
+                        + exclusionsForAtom0 + " local_atom_order=" + localAtomOrder + " use_gpu_nonbonded="
+                        + std::string(simulationWork.useGpuNonbonded ? "true" : "false"));
+    };
+
+    appendPairSearchTopologyTrace("entry", false);
 
     if (needStateGpu(simulationWork))
     {
@@ -6600,6 +5587,7 @@ static void doPairSearch(const t_commrec*             cr,
                                         "nbv.nbat.x()_after_putAtomsOnGrid",
                                         nbv->nbat().x().data());
         }
+        appendPairSearchTopologyTrace("after_put_atoms_on_grid_local", true);
     }
     else
     {
@@ -6610,11 +5598,35 @@ static void doPairSearch(const t_commrec*             cr,
         }
         nbv->convertCoordinates(AtomLocality::NonLocal, x.unpaddedArrayRef());
         wallcycle_sub_stop(wcycle, WallCycleSubCounter::NBSGridNonLocal);
+        appendPairSearchTopologyTrace("after_put_atoms_on_grid_nonlocal", true);
     }
 
+    appendPairSearchTopologyTrace("before_set_atom_properties", true);
     nbv->setAtomProperties(mdatoms.typeA, mdatoms.chargeA, fr->atomInfo, mdatoms.typeB, mdatoms.chargeB);
+    appendPairSearchTopologyTrace("after_set_atom_properties", true);
 
     wallcycle_stop(wcycle, WallCycleCounter::NS);
+    if (ownershipTraceDirPath != nullptr && *ownershipTraceDirPath != '\0' && top.excls.ssize() > 0)
+    {
+        std::string exclusionsForAtom0;
+        for (Index index = 0; index < top.excls[0].ssize(); ++index)
+        {
+            if (!exclusionsForAtom0.empty())
+            {
+                exclusionsForAtom0 += ",";
+            }
+            exclusionsForAtom0 += std::to_string(top.excls[0][index]);
+        }
+        if (exclusionsForAtom0.empty())
+        {
+            exclusionsForAtom0 = "none";
+        }
+        appendRespaTraceTextLine(ownershipTraceDirPath,
+                                 "step0_pre_gpu_init_local_top_exclusions.txt",
+                                 "stage=pre_gpu_init source=sim_util.doPairSearch local_top_atom=0 exclusions="
+                                         + exclusionsForAtom0 + " use_gpu_nonbonded="
+                                         + std::string(simulationWork.useGpuNonbonded ? "true" : "false"));
+    }
 
     /* initialize the GPU nbnxm atom data and bonded data structures */
     if (simulationWork.useGpuNonbonded)
@@ -6645,6 +5657,27 @@ static void doPairSearch(const t_commrec*             cr,
     wallcycle_sub_start(wcycle, WallCycleSubCounter::NBSSearchLocal);
     /* Note that with a GPU the launch overhead of the list transfer is not timed separately */
     const bool alsoMakePlainPairlist = fr->plainPairlistRange.has_value();
+    if (ownershipTraceDirPath != nullptr && *ownershipTraceDirPath != '\0' && top.excls.ssize() > 0)
+    {
+        std::string exclusionsForAtom0;
+        for (Index index = 0; index < top.excls[0].ssize(); ++index)
+        {
+            if (!exclusionsForAtom0.empty())
+            {
+                exclusionsForAtom0 += ",";
+            }
+            exclusionsForAtom0 += std::to_string(top.excls[0][index]);
+        }
+        if (exclusionsForAtom0.empty())
+        {
+            exclusionsForAtom0 = "none";
+        }
+        appendRespaTraceTextLine(ownershipTraceDirPath,
+                                 "step0_pre_construct_pairlist_exclusions.txt",
+                                 "stage=pre_construct_pairlist source=sim_util.do_force_cutsVERLET local_top_atom=0 exclusions="
+                                         + exclusionsForAtom0 + " use_gpu_nonbonded="
+                                         + std::string(simulationWork.useGpuNonbonded ? "true" : "false"));
+    }
     nbv->constructPairlist(InteractionLocality::Local, top.excls, alsoMakePlainPairlist, step, nrnb);
 
     nbv->setupGpuShortRangeWork(fr->listedForcesGpu.get(), InteractionLocality::Local);
@@ -6741,7 +5774,6 @@ void do_force(FILE*                         fplog,
               ArrayRef<RVec>                v,
               const history_t*              hist,
               ForceBuffersView*             forceView,
-              ExactRespaForceStore*         exactRespaForceStore,
               tensor                        vir_force,
               const t_mdatoms*              mdatoms,
               gmx_enerdata_t*               enerd,
@@ -6770,35 +5802,23 @@ void do_force(FILE*                         fplog,
     const DomainLifetimeWorkload& domainWork = runScheduleWork.domainWork;
 
     const StepWorkload& stepWork = runScheduleWork.stepWork;
-    const ExactRespaStepWork& exactRespaStepWork = runScheduleWork.exactRespaStepWork;
-    const int highestActiveSubstepLevel =
-            simulationWork.useExactRespa ? exactRespaStepWork.highestActiveLevel
-                                         : stepWork.highestActiveMtsLevel;
-    const bool computeLegacySlowSubstepForces =
-            (!simulationWork.useExactRespa && stepWork.computeSlowForces);
-    const bool combineSubstepForcesBeforeHaloExchange =
-            simulationWork.useExactRespa ? exactRespaStepWork.combineForcesBeforeHaloExchange
-                                         : stepWork.combineMtsForcesBeforeHaloExchange;
-    const bool          useExactLammpsRespaPairSplitting =
-            gmx::useExactRespa(inputrec) && gmx::exactRespaHasPairSplitting(inputrec);
-    const bool          useDedicatedExactRespaGpuNonbonded =
-            stepWork.computeNonbondedForces && useExactLammpsRespaPairSplitting
-            && simulationWork.useGpuNonbonded;
     const char*         traceSide =
-            useExactLammpsRespaPairSplitting ? "PATCH" : "PLAIN";
-    const bool          traceForceComponents = shouldTraceRespaForceComponentsStep(step);
-    const bool          traceExactGpuBondedLaunchContext =
-            shouldTraceExactGpuBondedLaunchContextStep(step);
-    const bool          traceExactGpuBondedDeviceXq =
-            shouldTraceExactGpuBondedDeviceXqStep(step);
-    const bool          traceExactGpuBondedDeviceForce =
-            shouldTraceExactGpuBondedDeviceForceStep(step);
-    const bool          traceExactGpuBondedGridIndices =
-            shouldTraceExactGpuBondedGridIndexStep(step);
+            (inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa && inputrec.lammpsRespa.hasPairSplitting())
+                    ? "PATCH"
+                    : "PLAIN";
+    const bool          traceForceComponents =
+            shouldTraceRespaForceComponentsStep(step, stepWork.highestActiveMtsLevel);
     const bool          traceRealspaceForceSubcomponents =
-            shouldTraceRespaRealspaceForceSubcomponentsStep(step);
-    const bool          traceExclusionEquivalence =
-            shouldTraceRespaExclusionEquivalenceStep(step);
+            shouldTraceRespaRealspaceForceSubcomponentsStep(step, stepWork.highestActiveMtsLevel);
+    const bool          useExactLammpsRespaNonbonded =
+            stepWork.computeNonbondedForces && inputrec.useMts && inputrec.mtsMode == MtsMode::LammpsRespa
+            && inputrec.lammpsRespa.hasPairSplitting();
+    const bool          exactHybridGpuSimulation =
+            useExactLammpsRespaNonbonded
+            && isSupportedExactLammpsRespaHybridGpuSimulation(inputrec, simulationWork);
+    const bool          useExactLammpsRespaHybridGpuNonbonded =
+            exactHybridGpuSimulation
+            && isExactLammpsRespaHybridGpuRuntime(inputrec, simulationWork, stepWork);
 
     if (traceForceComponents)
     {
@@ -6831,21 +5851,9 @@ void do_force(FILE*                         fplog,
             }
         }
     }
-    if (traceExclusionEquivalence)
+    if (traceForceComponents || traceRealspaceForceSubcomponents)
     {
-        const char* traceDirPath = activeM2pTraceDirPath();
-        if (traceDirPath != nullptr && *traceDirPath != '\0')
-        {
-            static std::string clearedExclusionEquivalenceTracePath;
-            const std::string  tracePath =
-                    (std::filesystem::path(traceDirPath) / "step0_exclusion_equivalence_pair_trace.txt")
-                            .string();
-            if (tracePath != clearedExclusionEquivalenceTracePath)
-            {
-                writeRespaTraceTextFile(traceDirPath, "step0_exclusion_equivalence_pair_trace.txt", "");
-                clearedExclusionEquivalenceTracePath = tracePath;
-            }
-        }
+        clearExactRespaRealspaceTraceCapture(step);
     }
 
     if (shouldTraceRespaStateXChainStep(step))
@@ -6862,51 +5870,6 @@ void do_force(FILE*                         fplog,
 
     const bool pmeSendCoordinatesFromGpu =
             simulationWork.useGpuPmePpCommunication && !stepWork.doNeighborSearch;
-
-    const int64_t previousRespaCurrentDoForceStep = g_respaCurrentDoForceStep;
-    const int* previousRespaTraceGlobalAtomIndices = g_respaTraceGlobalAtomIndices;
-    const int previousRespaTraceGlobalAtomIndexCount = g_respaTraceGlobalAtomIndexCount;
-    const int* previousRespaCurrentGlobalAtomIndices = g_respaCurrentGlobalAtomIndices;
-    const int previousRespaCurrentGlobalAtomIndexCount = g_respaCurrentGlobalAtomIndexCount;
-    struct RespaTraceThreadLocalGuard
-    {
-        int64_t& currentDoForceStep;
-        const int*& traceGlobalAtomIndices;
-        int& traceGlobalAtomIndexCount;
-        const int*& currentGlobalAtomIndices;
-        int& currentGlobalAtomIndexCount;
-        int64_t previousDoForceStep;
-        const int* previousGlobalAtomIndices;
-        int previousGlobalAtomIndexCount;
-        const int* previousCurrentGlobalAtomIndices;
-        int previousCurrentGlobalAtomIndexCount;
-
-        ~RespaTraceThreadLocalGuard()
-        {
-            currentDoForceStep = previousDoForceStep;
-            traceGlobalAtomIndices = previousGlobalAtomIndices;
-            traceGlobalAtomIndexCount = previousGlobalAtomIndexCount;
-            currentGlobalAtomIndices = previousCurrentGlobalAtomIndices;
-            currentGlobalAtomIndexCount = previousCurrentGlobalAtomIndexCount;
-        }
-    } respaTraceThreadLocalGuard{ g_respaCurrentDoForceStep,
-                                  g_respaTraceGlobalAtomIndices,
-                                  g_respaTraceGlobalAtomIndexCount,
-                                  g_respaCurrentGlobalAtomIndices,
-                                  g_respaCurrentGlobalAtomIndexCount,
-                                  previousRespaCurrentDoForceStep,
-                                  previousRespaTraceGlobalAtomIndices,
-                                  previousRespaTraceGlobalAtomIndexCount,
-                                  previousRespaCurrentGlobalAtomIndices,
-                                  previousRespaCurrentGlobalAtomIndexCount };
-
-    g_respaCurrentDoForceStep = step;
-    g_respaTraceGlobalAtomIndices =
-            haveDDAtomOrdering(*cr) ? cr->dd->globalAtomIndices.data() : nullptr;
-    g_respaTraceGlobalAtomIndexCount =
-            haveDDAtomOrdering(*cr) ? static_cast<int>(cr->dd->globalAtomIndices.size()) : 0;
-    g_respaCurrentGlobalAtomIndices = g_respaTraceGlobalAtomIndices;
-    g_respaCurrentGlobalAtomIndexCount = g_respaTraceGlobalAtomIndexCount;
 
     const bool reinitGpuPmePpComms = simulationWork.useGpuPmePpCommunication && stepWork.doNeighborSearch;
     if (stepWork.computePmeOnSeparateRank && stepWork.doNeighborSearch)
@@ -6947,22 +5910,6 @@ void do_force(FILE*                         fplog,
                                         ? stateGpu->getCoordinatesReadyOnDeviceEvent(
                                                   AtomLocality::Local, simulationWork, stepWork)
                                         : nullptr;
-    const bool localCoordinatesNeededOnDevice =
-            stepWork.haveGpuPmeOnThisRank || stepWork.useGpuXBufferOps || pmeSendCoordinatesFromGpu;
-    const int expectedLocalXReadyOnDeviceConsumptionCount =
-            localCoordinatesNeededOnDevice
-                    ? getExpectedLocalXReadyOnDeviceConsumptionCount(
-                              simulationWork, stepWork, domainWork, pmeSendCoordinatesFromGpu)
-                    : 0;
-    const char* localCoordinateProvider =
-            (simulationWork.useGpuUpdate && !stepWork.doNeighborSearch) ? "xUpdatedOnDeviceEvent"
-                                                                        : "xReadyOnDevice";
-
-    if (simulationWork.useGpuUpdate && !stepWork.doNeighborSearch && localCoordinatesNeededOnDevice)
-    {
-        stateGpu->setXUpdatedOnDeviceEventExpectedConsumptionCount(
-                expectedLocalXReadyOnDeviceConsumptionCount);
-    }
 
     if (stepWork.clearGpuFBufferEarly)
     {
@@ -6996,8 +5943,8 @@ void do_force(FILE*                         fplog,
                                || cr->dd->gpuHaloExchangeNvshmemHelper != nullptr)),
                "The GPU halo exchange is active, but it has not been constructed.");
 
-    bool gmx_used_in_debug haveCopiedXFromGpu = false;
-    bool                   copiedCoordinatesToGpu = false;
+    bool gmx_used_in_debug haveCopiedXFromGpu                 = false;
+    bool                 haveWaitedForLocalCoordinatesOnHost = false;
     // Copy coordinate from the GPU if update is on the GPU and there
     // are forces to be computed on the CPU, or for the computation of
     // virial, or if host-side data will be transferred from this task
@@ -7017,9 +5964,12 @@ void do_force(FILE*                         fplog,
     // The local coordinates can be copied right away.
     // NOTE: Consider moving this copy to right after they are updated and constrained,
     //       if the later is not offloaded.
-    if (localCoordinatesNeededOnDevice)
+    if (stepWork.haveGpuPmeOnThisRank || stepWork.useGpuXBufferOps || pmeSendCoordinatesFromGpu)
     {
         GMX_ASSERT(stateGpu != nullptr, "stateGpu should not be null");
+        const int expectedLocalXReadyOnDeviceConsumptionCount =
+                getExpectedLocalXReadyOnDeviceConsumptionCount(
+                        simulationWork, stepWork, domainWork, pmeSendCoordinatesFromGpu);
 
         // We need to copy coordinates when:
         // 1. Update is not offloaded
@@ -7029,7 +5979,11 @@ void do_force(FILE*                         fplog,
             stateGpu->copyCoordinatesToGpu(x.unpaddedArrayRef(),
                                            AtomLocality::Local,
                                            expectedLocalXReadyOnDeviceConsumptionCount);
-            copiedCoordinatesToGpu = true;
+        }
+        else if (simulationWork.useGpuUpdate)
+        {
+            stateGpu->setXUpdatedOnDeviceEventExpectedConsumptionCount(
+                    expectedLocalXReadyOnDeviceConsumptionCount);
         }
     }
 
@@ -7041,6 +5995,7 @@ void do_force(FILE*                         fplog,
             GMX_ASSERT(haveCopiedXFromGpu,
                        "a wait should only be triggered if copy has been scheduled");
             stateGpu->waitCoordinatesReadyOnHost(AtomLocality::Local);
+            haveWaitedForLocalCoordinatesOnHost = true;
         }
 
         gmx_pme_send_coordinates(fr,
@@ -7093,7 +6048,8 @@ void do_force(FILE*                         fplog,
     if (!stepWork.doNeighborSearch && !EI_TPI(inputrec.eI) && stepWork.computeNonbondedForces)
     {
         const bool useExactLammpsRespaNonbondedLocal =
-                stepWork.computeNonbondedForces && useExactLammpsRespaPairSplitting;
+                stepWork.computeNonbondedForces && inputrec.useMts
+                && inputrec.mtsMode == MtsMode::LammpsRespa && inputrec.lammpsRespa.hasPairSplitting();
         if (stepWork.useGpuXBufferOps)
         {
             GMX_ASSERT(stateGpu, "stateGpu should be valid when buffer ops are offloaded");
@@ -7107,6 +6063,7 @@ void do_force(FILE*                         fplog,
                 GMX_ASSERT(haveCopiedXFromGpu,
                            "a wait should only be triggered if copy has been scheduled");
                 stateGpu->waitCoordinatesReadyOnHost(AtomLocality::Local);
+                haveWaitedForLocalCoordinatesOnHost = true;
             }
             if (shouldTraceRespaCoordHandoffStep(step) && !useExactLammpsRespaNonbondedLocal)
             {
@@ -7132,7 +6089,7 @@ void do_force(FILE*                         fplog,
         }
     }
 
-    if (simulationWork.useGpuNonbonded && !useDedicatedExactRespaGpuNonbonded
+    if (simulationWork.useGpuNonbonded && !exactHybridGpuSimulation
         && (stepWork.computeNonbondedForces || domainWork.haveGpuBondedWork))
     {
         ddBalanceRegionHandler.openBeforeForceComputationGpu();
@@ -7210,6 +6167,7 @@ void do_force(FILE*                         fplog,
                     if (!haveAlreadyWaited)
                     {
                         stateGpu->waitCoordinatesReadyOnHost(AtomLocality::Local);
+                        haveWaitedForLocalCoordinatesOnHost = true;
                     }
                 }
 
@@ -7248,7 +6206,7 @@ void do_force(FILE*                         fplog,
             nbv->convertCoordinates(AtomLocality::NonLocal, x.unpaddedArrayRef());
         }
 
-        if (simulationWork.useGpuNonbonded && !useDedicatedExactRespaGpuNonbonded)
+        if (simulationWork.useGpuNonbonded && !exactHybridGpuSimulation)
         {
 
             if (!stepWork.useGpuXBufferOps)
@@ -7279,7 +6237,7 @@ void do_force(FILE*                         fplog,
         }
     }
 
-    if (simulationWork.useGpuNonbonded && !useDedicatedExactRespaGpuNonbonded
+    if (simulationWork.useGpuNonbonded && !exactHybridGpuSimulation
         && stepWork.computeNonbondedForces)
     {
         /* launch D2H copy-back F */
@@ -7335,40 +6293,17 @@ void do_force(FILE*                         fplog,
      */
     ForceOutputs forceOutMtsLevel0 = setupForceOutputs(
             &fr->forceHelperBuffers[0], force, domainWork, stepWork, simulationWork.havePpDomainDecomposition, wcycle);
-    const int  numMtsLevels = gmx::useExactRespa(inputrec) ? gmx::exactRespaNumLevels(inputrec)
-                                                           : static_cast<int>(inputrec.mtsLevels.size());
-    const bool useExactRespaForceOutputs = simulationWork.useExactRespa;
-    const bool useLegacyMtsForceOutputs  = simulationWork.useLegacyMtsSubsteps();
-    const bool useSubstepLevels          = useExactRespaForceOutputs || useLegacyMtsForceOutputs;
-    const bool useMultiLevelMts          = (useLegacyMtsForceOutputs && numMtsLevels > 2);
-    const int  longrangeMtsLevel = gmx::useExactRespa(inputrec)
-                                           ? gmx::exactRespaLongrangeNonbondedLevel(inputrec)
-                                           : (useSubstepLevels ? forceGroupMtsLevel(inputrec.mtsLevels,
-                                                                                    MtsForceGroups::LongrangeNonbonded)
-                                                               : 0);
+    const bool useMultiLevelMts = (simulationWork.useMts && inputrec.mtsLevels.size() > 2);
+    const int  longrangeMtsLevel =
+            simulationWork.useMts ? forceGroupMtsLevel(inputrec.mtsLevels, MtsForceGroups::LongrangeNonbonded) : 0;
 
-    ExactRespaForceOutputStorage          exactRespaForceOutputStorage;
-    ExactRespaForceOutputs                exactRespaForceOutputs;
     std::optional<ForceOutputs>              forceOutSingleSlowLevel;
     std::vector<std::optional<ForceOutputs>> forceOutMultiLevel;
     std::vector<ForceOutputs*>               forceOutByMtsLevel(
-            (!useExactRespaForceOutputs && useSubstepLevels) ? numMtsLevels : 1, nullptr);
+            simulationWork.useMts ? inputrec.mtsLevels.size() : 1, nullptr);
     forceOutByMtsLevel[0] = &forceOutMtsLevel0;
 
-    if (useExactRespaForceOutputs)
-    {
-        exactRespaForceOutputs =
-                setupExactRespaForceOutputs(inputrec,
-                                            &forceOutMtsLevel0,
-                                            &exactRespaForceOutputStorage,
-                                            fr,
-                                            domainWork,
-                                            stepWork,
-                                            exactRespaStepWork,
-                                            simulationWork.havePpDomainDecomposition,
-                                            wcycle);
-    }
-    else if (useLegacyMtsForceOutputs && computeLegacySlowSubstepForces)
+    if (simulationWork.useMts && stepWork.computeSlowForces)
     {
         if (!useMultiLevelMts)
         {
@@ -7382,8 +6317,8 @@ void do_force(FILE*                         fplog,
         }
         else
         {
-            forceOutMultiLevel.resize(numMtsLevels);
-            for (int mtsLevel = 1; mtsLevel <= highestActiveSubstepLevel; mtsLevel++)
+            forceOutMultiLevel.resize(inputrec.mtsLevels.size());
+            for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; mtsLevel++)
             {
                 forceOutMultiLevel[mtsLevel].emplace(setupForceOutputs(&fr->forceHelperBuffers[mtsLevel],
                                                                        forceView->forceForMtsLevelWithPadding(mtsLevel),
@@ -7396,70 +6331,47 @@ void do_force(FILE*                         fplog,
         }
     }
 
-    ForceOutputs* forceOutLongrange = &forceOutMtsLevel0;
-    if (useExactRespaForceOutputs)
-    {
-        forceOutLongrange =
-                stepWork.computeLongRangeNonbondedForces ? exactRespaForceOutputs.longrangeOutputOrNull()
-                                                         : nullptr;
-    }
-    else if (useLegacyMtsForceOutputs)
-    {
-        forceOutLongrange =
-                stepWork.computeLongRangeNonbondedForces ? forceOutByMtsLevel[longrangeMtsLevel] : nullptr;
-    }
+    ForceOutputs* forceOutMtsLevel1 = simulationWork.useMts
+                                              ? (stepWork.computeLongRangeNonbondedForces
+                                                         ? forceOutByMtsLevel[longrangeMtsLevel]
+                                                         : nullptr)
+                                              : &forceOutMtsLevel0;
     GMX_ASSERT(!stepWork.computeLongRangeNonbondedForces
-                       || forceOutLongrange == nullptr
-                       || forceOutLongrange->haveForceWithVirial(),
+                       || forceOutMtsLevel1 == nullptr
+                       || forceOutMtsLevel1->haveForceWithVirial(),
                "Active long-range nonbonded work requires a force-with-virial output buffer");
 
+    const bool nonbondedAtMtsNonzeroLevel = simulationWork.nonbondedMtsLevel > 0;
+
     ForceOutputs* forceOutNonbonded = &forceOutMtsLevel0;
-    if (useExactRespaForceOutputs && stepWork.computeNonbondedForces && !exactRespaHasPairSplitting(inputrec))
+    if (simulationWork.useMts && nonbondedAtMtsNonzeroLevel && stepWork.computeNonbondedForces)
     {
-        forceOutNonbonded = exactRespaForceOutputs.levelOrNull(exactRespaNonbondedFullLevel(inputrec));
+        forceOutNonbonded = forceOutByMtsLevel[simulationWork.nonbondedMtsLevel];
     }
-    else if (useLegacyMtsForceOutputs && simulationWork.nonbondedSubstepLevel > 0
-             && stepWork.computeNonbondedForces)
+    std::vector<ForceWithVirial*> forceWithVirialByMtsLevel(forceOutByMtsLevel.size(), nullptr);
+    forceWithVirialByMtsLevel[0] = &forceOutMtsLevel0.forceWithVirial();
+    for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel && mtsLevel < static_cast<int>(forceOutByMtsLevel.size());
+         mtsLevel++)
     {
-        forceOutNonbonded = forceOutByMtsLevel[simulationWork.nonbondedSubstepLevel];
-    }
-    std::vector<ForceWithVirial*> forceWithVirialByLevel(
-            useExactRespaForceOutputs ? exactRespaForceOutputs.numLevels : forceOutByMtsLevel.size(), nullptr);
-    forceWithVirialByLevel[0] = &forceOutMtsLevel0.forceWithVirial();
-    if (useExactRespaForceOutputs)
-    {
-        for (int level = 1; level < exactRespaForceOutputs.numActiveLevels(); ++level)
+        if (forceOutByMtsLevel[mtsLevel] != nullptr)
         {
-            if (exactRespaForceOutputs.hasLevel(level))
-            {
-                forceWithVirialByLevel[level] = &exactRespaForceOutputs.level(level).forceWithVirial();
-            }
+            forceWithVirialByMtsLevel[mtsLevel] = &forceOutByMtsLevel[mtsLevel]->forceWithVirial();
         }
     }
-    else
-    {
-        for (int mtsLevel = 1;
-             mtsLevel <= highestActiveSubstepLevel
-             && mtsLevel < static_cast<int>(forceOutByMtsLevel.size());
-             mtsLevel++)
-        {
-            if (forceOutByMtsLevel[mtsLevel] != nullptr)
-            {
-                forceWithVirialByLevel[mtsLevel] = &forceOutByMtsLevel[mtsLevel]->forceWithVirial();
-            }
-        }
-    }
+
+    assertExactLammpsRespaOwnershipContract(
+            inputrec, simulationWork, stepWork, forceView, forceOutMtsLevel0, forceOutByMtsLevel);
 
     TracedForcePair tracedForceOutputsBeforeNonbonded;
     TracedForcePair tracedCombinedRealspaceDelta;
     TracedForcePair tracedBondedDelta;
+    TracedForcePair tracedPair14Delta;
     TracedForcePair tracedCoulombRecipDelta;
+    bool            haveTracedPair14Delta = false;
     if (traceForceComponents)
     {
-        tracedForceOutputsBeforeNonbonded = useExactRespaForceOutputs
-                                                    ? captureDistinctForceOutputs(exactRespaForceOutputs)
-                                                    : captureDistinctForceOutputs(forceOutByMtsLevel,
-                                                                                  highestActiveSubstepLevel);
+        tracedForceOutputsBeforeNonbonded =
+                captureDistinctForceOutputs(forceOutByMtsLevel, stepWork.highestActiveMtsLevel);
     }
 
     if (inputrec.bPull && pull_have_constraint(*pull_work))
@@ -7474,9 +6386,9 @@ void do_force(FILE*                         fplog,
     {
         const bool needCoordsOnHost = (runScheduleWork.domainWork.haveCpuLocalForceWork
                                        || stepWork.computeVirial || simulationWork.computeMuTot);
-        const bool haveAlreadyWaited =
-                simulationWork.useCpuHaloExchange
-                || (stepWork.computePmeOnSeparateRank && !pmeSendCoordinatesFromGpu);
+        const bool haveAlreadyWaited = haveWaitedForLocalCoordinatesOnHost
+                                       || simulationWork.useCpuHaloExchange
+                                       || (stepWork.computePmeOnSeparateRank && !pmeSendCoordinatesFromGpu);
         if (needCoordsOnHost && !haveAlreadyWaited)
         {
             GMX_ASSERT(haveCopiedXFromGpu,
@@ -7536,59 +6448,18 @@ void do_force(FILE*                         fplog,
      * decomposition load balancing.
      */
 
-    const bool useOrEmulateGpuNb =
-            !useDedicatedExactRespaGpuNonbonded && (simulationWork.useGpuNonbonded || fr->nbv->emulateGpu());
-    const bool useExactLammpsRespaNonbonded =
-            stepWork.computeNonbondedForces && useExactLammpsRespaPairSplitting;
-    const bool useExactLammpsRespaGpuNonbonded =
-            useExactLammpsRespaNonbonded && simulationWork.useGpuNonbonded;
-    const bool haveExactSlowForceOutputs  = (useExactRespaForceOutputs && exactRespaForceOutputs.numActiveLevels() > 1);
-    const bool haveLegacySlowForceOutputs =
-            (useLegacyMtsForceOutputs && computeLegacySlowSubstepForces);
-    const bool traceExactGpuListedFtypeSplit =
-            shouldTraceExactGpuListedFtypeSplitStep(step) && useExactRespaForceOutputs
-            && simulationWork.useGpuBonded;
-    const bool traceExactGpuListedClass2SubtermSplit =
-            shouldTraceExactGpuListedClass2SubtermSplitStep(step) && useExactRespaForceOutputs
-            && simulationWork.useGpuBonded;
-    const bool traceExactGpuBondedMixedVsSequential =
-            shouldTraceExactGpuBondedMixedVsSequentialStep(step) && useExactRespaForceOutputs
-            && simulationWork.useGpuBonded;
-    const bool traceStep1Subset01ForceGroupAudit = shouldTraceStep1Subset01ForceGroupAuditStep(step);
-    const char* step1Subset01TraceSide          = useExactLammpsRespaNonbonded ? "PATCH" : "PLAIN";
-    const char* step1Subset01Level0Role         = useExactLammpsRespaNonbonded ? "shared" : "plain_total";
+    const bool useOrEmulateGpuNb = simulationWork.useGpuNonbonded || fr->nbv->emulateGpu();
 
+    GMX_RELEASE_ASSERT(!useExactLammpsRespaNonbonded || !simulationWork.useGpuNonbonded
+                               || exactHybridGpuSimulation,
+                       "Exact LAMMPS-style r-RESPA GPU nonbonded is only admitted in the audited HG3 narrow mode");
+    GMX_RELEASE_ASSERT(!useExactLammpsRespaNonbonded || !fr->nbv->emulateGpu(),
+                       "Exact LAMMPS-style r-RESPA GPU-emulation path is not an HG3 substitute");
     GMX_RELEASE_ASSERT(!useExactLammpsRespaNonbonded || !domainWork.haveCpuNonbondedFreeEnergyWork,
                        "Exact LAMMPS-style r-RESPA does not support nonbonded free-energy work yet");
 
-    if (traceStep1Subset01ForceGroupAudit)
-    {
-        if (useExactRespaForceOutputs)
-        {
-            appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
-                                                       step1Subset01TraceSide,
-                                                       step,
-                                                       "after_clear",
-                                                       exactRespaForceOutputs,
-                                                       step1Subset01Level0Role,
-                                                       "src/gromacs/mdlib/sim_util.cpp:after_clear_force_outputs");
-        }
-        else
-        {
-            appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
-                                                       step1Subset01TraceSide,
-                                                       step,
-                                                       "after_clear",
-                                                       forceOutByMtsLevel,
-                                                       highestActiveSubstepLevel,
-                                                       step1Subset01Level0Role,
-                                                       "src/gromacs/mdlib/sim_util.cpp:after_clear_force_outputs");
-        }
-    }
-
     if (useExactLammpsRespaNonbonded)
     {
-        wallcycle_start_nocount(wcycle, WallCycleCounter::Force);
         if (shouldTraceRespaStateXChainStep(step))
         {
             appendStateXChainTracePair(activeM2pTraceDirPath(),
@@ -7596,7 +6467,7 @@ void do_force(FILE*                         fplog,
                                        preHandoffStageName(step),
                                        step,
                                        x.unpaddedArrayRef(),
-                                       "do_force->computeExactRespaNonbondedCpu",
+                                       "do_force->computeLammpsRespaNonbondedCpu",
                                        "src/gromacs/mdlib/sim_util.cpp:5112",
                                        false);
         }
@@ -7617,52 +6488,29 @@ void do_force(FILE*                         fplog,
                                         "x.unpaddedArrayRef()_passed_to_exact_nonbonded",
                                         x.unpaddedArrayRef().data());
         }
-        if (useExactLammpsRespaGpuNonbonded)
+        if (useExactLammpsRespaHybridGpuNonbonded)
         {
-            GMX_RELEASE_ASSERT(!simulationWork.havePpDomainDecomposition,
-                               "Exact r-RESPA GPU nonbonded offload currently supports single-rank execution only");
-
-            ExactRespaGpuOutputView gpuOutputView;
-            const int               outerLevel = exactRespaNonbondedOuterLevel(inputrec);
-            for (int level = 0; level < exactRespaForceOutputs.numActiveLevels(); ++level)
-            {
-                ForceOutputs* outputs = exactRespaForceOutputs.levelOrNull(level);
-                if (outputs == nullptr)
-                {
-                    continue;
-                }
-
-                gpuOutputView.levels[level].active = true;
-                if (level == outerLevel && stepWork.computeVirial)
-                {
-                    GMX_RELEASE_ASSERT(outputs->haveForceWithVirial(),
-                                       "Exact r-RESPA GPU outer force level requires a direct-virial buffer");
-                    gpuOutputView.levels[level].force              = outputs->forceWithVirial().force_;
-                    gpuOutputView.levels[level].directVirialOutput = &outputs->forceWithVirial();
-                }
-                else
-                {
-                    gpuOutputView.levels[level].force = outputs->forceWithShiftForces().force();
-                    gpuOutputView.levels[level].shift = outputs->forceWithShiftForces().shiftForces();
-                }
-            }
-
-            computeExactRespaNonbondedGpu(
-                    inputrec, fr, *mdatoms, x.unpaddedArrayRef(), gpuOutputView, enerd, stepWork, step);
+            computeLammpsRespaNonbondedGpuNarrow(
+                    inputrec,
+                    top->idef,
+                    fr,
+                    *mdatoms,
+                    x.unpaddedArrayRef(),
+                    ic,
+                    forceOutByMtsLevel,
+                    enerd,
+                    stepWork,
+                    step,
+                    nrnb,
+                    wcycle);
         }
         else
         {
-            computeExactRespaNonbondedCpu(inputrec,
-                                          top->idef,
-                                          fr,
-                                          *mdatoms,
-                                          x.unpaddedArrayRef(),
-                                          exactRespaForceOutputs,
-                                          enerd,
-                                          stepWork,
-                                          step);
+            wallcycle_start_nocount(wcycle, WallCycleCounter::Force);
+            computeLammpsRespaNonbondedCpu(
+                    inputrec, top->idef, fr, *mdatoms, x.unpaddedArrayRef(), forceOutByMtsLevel, enerd, stepWork, step);
+            wallcycle_stop(wcycle, WallCycleCounter::Force);
         }
-        wallcycle_stop(wcycle, WallCycleCounter::Force);
     }
     else if (!useOrEmulateGpuNb)
     {
@@ -7756,38 +6604,11 @@ void do_force(FILE*                         fplog,
         }
     }
 
-    if (traceStep1Subset01ForceGroupAudit)
-    {
-        if (useExactRespaForceOutputs)
-        {
-            appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
-                                                       step1Subset01TraceSide,
-                                                       step,
-                                                       "after_nonbonded",
-                                                       exactRespaForceOutputs,
-                                                       step1Subset01Level0Role,
-                                                       "src/gromacs/mdlib/sim_util.cpp:after_nonbonded_stage");
-        }
-        else
-        {
-            appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
-                                                       step1Subset01TraceSide,
-                                                       step,
-                                                       "after_nonbonded",
-                                                       forceOutByMtsLevel,
-                                                       highestActiveSubstepLevel,
-                                                       step1Subset01Level0Role,
-                                                       "src/gromacs/mdlib/sim_util.cpp:after_nonbonded_stage");
-        }
-    }
-
     TracedForcePair tracedForceOutputsBeforeListed;
     if (traceForceComponents)
     {
         const auto tracedForceOutputsAfterNonbonded =
-                useExactRespaForceOutputs ? captureDistinctForceOutputs(exactRespaForceOutputs)
-                                          : captureDistinctForceOutputs(forceOutByMtsLevel,
-                                                                        highestActiveSubstepLevel);
+                captureDistinctForceOutputs(forceOutByMtsLevel, stepWork.highestActiveMtsLevel);
         tracedCombinedRealspaceDelta =
                 subtractTracedForcePairs(tracedForceOutputsAfterNonbonded, tracedForceOutputsBeforeNonbonded);
         tracedForceOutputsBeforeListed = tracedForceOutputsAfterNonbonded;
@@ -7797,12 +6618,7 @@ void do_force(FILE*                         fplog,
         const auto toTracedForcePair = [](const M2pPlain4x4TracedForcePair& source)
         {
             TracedForcePair result;
-            result.atomIndices = { 0, 5 };
-            result.atoms.assign(result.atomIndices.size(), std::array<double, DIM>{ 0.0, 0.0, 0.0 });
-            for (int atomIndex = 0; atomIndex < static_cast<int>(result.atomIndices.size()); ++atomIndex)
-            {
-                result.atoms[atomIndex] = source.atoms[atomIndex];
-            }
+            result.atoms = source.atoms;
             return result;
         };
         appendRealspaceForceSubcomponentTracePair(activeM2pTraceDirPath(),
@@ -7849,49 +6665,6 @@ void do_force(FILE*                         fplog,
                                                   "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
                                                   "combined_total",
                                                   false);
-        if (traceStep1Subset01ForceGroupAudit)
-        {
-            appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                                "step2_current_nonbonded_producer_term_trace.txt",
-                                                "PLAIN",
-                                                step,
-                                                "plain_lj_sr_force",
-                                                toTracedForcePair(readM2pPlain4x4LjSrForcePair()),
-                                                "kernel_ref_inner.frLJ_times_rinvsq",
-                                                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
-                                                "downstream_total_component",
-                                                true);
-            appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                                "step2_current_nonbonded_producer_term_trace.txt",
-                                                "PLAIN",
-                                                step,
-                                                "plain_coulomb_sr_force",
-                                                toTracedForcePair(readM2pPlain4x4CoulombSrForcePair()),
-                                                "kernel_ref_inner.interact_times_rinvsq_term",
-                                                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
-                                                "downstream_total_component",
-                                                true);
-            appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                                "step2_current_nonbonded_producer_term_trace.txt",
-                                                "PLAIN",
-                                                step,
-                                                "plain_exclusion_correction_force",
-                                                toTracedForcePair(readM2pPlain4x4ExclusionCorrectionForcePair()),
-                                                "kernel_ref_inner.fexcl_correction_term",
-                                                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
-                                                "downstream_total_component",
-                                                true);
-            appendForceComponentTracePairToFile(activeM2pTraceDirPath(),
-                                                "step2_current_nonbonded_producer_term_trace.txt",
-                                                "PLAIN",
-                                                step,
-                                                "plain_after_nonbonded",
-                                                toTracedForcePair(readM2pPlain4x4CombinedRealspaceForcePair()),
-                                                "kernel_ref_inner.fscal_total",
-                                                "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h",
-                                                "downstream_total",
-                                                false);
-        }
     }
 
     // Compute wall interactions, when present.
@@ -7917,6 +6690,18 @@ void do_force(FILE*                         fplog,
 
     if (stepWork.computeListedForces)
     {
+        TracedForcePair tracedPair14BeforeListed;
+        const int       pair14Level = inputrec.lammpsRespa.pair14Level;
+        const bool      shouldTraceExactPair14Delta =
+                traceForceComponents && useExactLammpsRespaNonbonded && pair14Level >= 0
+                && pair14Level <= stepWork.highestActiveMtsLevel
+                && pair14Level < static_cast<int>(forceOutByMtsLevel.size())
+                && forceOutByMtsLevel[pair14Level] != nullptr;
+        if (shouldTraceExactPair14Delta)
+        {
+            tracedPair14BeforeListed = captureDistinctForceOutput(forceOutByMtsLevel[pair14Level]);
+        }
+
         /* Check whether we need to take into account PBC in listed interactions */
         bool needMolPbc = false;
         for (const auto& listedForces : fr->listedForces)
@@ -7937,673 +6722,67 @@ void do_force(FILE*                         fplog,
             set_pbc_dd(&pbc, fr->pbcType, haveDDAtomOrdering(*cr) ? &cr->dd->numCells : nullptr, TRUE, box);
         }
 
-        if (useExactRespaForceOutputs && simulationWork.useGpuBonded && fr->listedForcesGpu != nullptr)
+        const int numActiveMtsLevels = simulationWork.useMts ? (stepWork.highestActiveMtsLevel + 1) : 1;
+        for (int mtsIndex = 0; mtsIndex < numActiveMtsLevels; mtsIndex++)
         {
-            GMX_RELEASE_ASSERT(!simulationWork.havePpDomainDecomposition,
-                               "Exact r-RESPA GPU bonded offload currently supports single-rank execution only");
-
-            bool uploadedExactRespaGpuBondedCoordinates = false;
-            const bool useExactGpuBondedSequentialFtypesValidation =
-                    shouldUseExactGpuBondedSequentialFtypesValidation();
-            for (int exactLevel = 0; exactLevel < exactRespaForceOutputs.numActiveLevels(); ++exactLevel)
-            {
-                ForceOutputs* forceOutPtr = exactRespaForceOutputs.levelOrNull(exactLevel);
-                if (forceOutPtr == nullptr)
-                {
-                    continue;
-                }
-
-                const InteractionDefinitions& levelIdef =
-                        fr->listedForces[exactLevel].interactionDefinitions();
-                fr->listedForcesGpu->updateHaveInteractions(levelIdef);
-                if (!fr->listedForcesGpu->haveInteractions())
-                {
-                    continue;
-                }
-
-                if (!uploadedExactRespaGpuBondedCoordinates && !stepWork.useGpuXBufferOps)
-                {
-                    wallcycle_start(wcycle, WallCycleCounter::LaunchGpuPp);
-                    wallcycle_sub_start(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
-                    gpu_upload_shiftvec(nbv->gpuNbv(), &nbv->nbat());
-                    gpu_copy_xq_to_gpu(nbv->gpuNbv(), &nbv->nbat(), AtomLocality::Local);
-                    wallcycle_sub_stop(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
-                    wallcycle_stop(wcycle, WallCycleCounter::LaunchGpuPp);
-                    uploadedExactRespaGpuBondedCoordinates = true;
-                }
-
-                if (useExactGpuBondedSequentialFtypesValidation)
-                {
-                    std::array<RVec, 8> tracedForceBeforeReduceStorage = {};
-                    int                 tracedForceCountBeforeReduce   = 0;
-                    TracedForcePair     tracedCombinedGpuOutput;
-                    if (traceForceComponents)
-                    {
-                        const auto tracedHostForceView = forceOutPtr->forceWithShiftForces().force();
-                        tracedForceCountBeforeReduce = std::min<int>(8, tracedHostForceView.ssize());
-                        for (int atom = 0; atom < tracedForceCountBeforeReduce; ++atom)
-                        {
-                            copy_rvec(tracedHostForceView[atom], tracedForceBeforeReduceStorage[atom]);
-                        }
-                    }
-
-                    bool launchedAnySequentialFtype = false;
-                    for (const InteractionFunction tracedFtype :
-                         c_exactGpuListedFtypesForTraceOrSequentialValidation)
-                    {
-                        if (levelIdef.il[tracedFtype].empty())
-                        {
-                            continue;
-                        }
-
-                        const InteractionDefinitions singleFtypeIdef =
-                                makeSingleInteractionFunctionDefinitions(levelIdef, tracedFtype);
-                        fr->listedForcesGpu->updateHaveInteractions(singleFtypeIdef);
-                        if (!fr->listedForcesGpu->haveInteractions())
-                        {
-                            continue;
-                        }
-
-                        launchedAnySequentialFtype = true;
-                        fr->listedForcesGpu->updateInteractionListsAndDeviceBuffers(
-                                nbv->getGridIndices(), singleFtypeIdef, gpuGetNBAtomData(nbv->gpuNbv()));
-                        gpu_clear_outputs(nbv->gpuNbv(), stepWork.computeVirial);
-                        fr->listedForcesGpu->setPbcAndlaunchKernel(
-                                fr->pbcType, box, fr->bMolPBC, stepWork);
-                        gpu_launch_cpyback(nbv->gpuNbv(), &nbv->nbat(), stepWork, AtomLocality::Local);
-                        if (stepWork.computeEnergy)
-                        {
-                            fr->listedForcesGpu->launchEnergyTransfer();
-                        }
-
-                        gpu_wait_finish_task(nbv->gpuNbv(),
-                                             stepWork,
-                                             AtomLocality::Local,
-                                             false,
-                                             enerd,
-                                             forceOutPtr->forceWithShiftForces().shiftForces(),
-                                             wcycle);
-                        if (traceForceComponents)
-                        {
-                            addTracedForcePairToTracedPair(&tracedCombinedGpuOutput,
-                                                           captureNbatOutputForceBufferPair(nbv));
-                        }
-
-                        nbv->atomdata_add_nbat_f_to_f(AtomLocality::Local,
-                                                      forceOutPtr->forceWithShiftForces().force());
-                        nbv->nbat().clearForceBuffer(0);
-
-                        if (stepWork.computeEnergy)
-                        {
-                            fr->listedForcesGpu->waitAccumulateEnergyTerms(enerd);
-                            fr->listedForcesGpu->clearEnergies();
-                        }
-                    }
-                    GMX_RELEASE_ASSERT(launchedAnySequentialFtype,
-                                       "Sequential exact GPU bonded validation expected at least one "
-                                       "GPU-listed interaction function");
-
-                    if (traceForceComponents)
-                    {
-                        appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                           step,
-                                                           exactLevel,
-                                                           "nbat_output_buffer",
-                                                           tracedCombinedGpuOutput);
-                        const auto tracedHostForceView = forceOutPtr->forceWithShiftForces().force();
-                        appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                           step,
-                                                           exactLevel,
-                                                           "before_reduce",
-                                                           makeConstArrayRef(tracedForceBeforeReduceStorage)
-                                                                   .subArray(0, tracedForceCountBeforeReduce));
-                        appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                           step,
-                                                           exactLevel,
-                                                           "after_reduce",
-                                                           tracedHostForceView);
-
-                        std::array<RVec, 8> tracedReductionDeltaStorage = {};
-                        const int tracedReductionCount =
-                                std::min<int>(tracedForceCountBeforeReduce, tracedHostForceView.ssize());
-                        for (int atom = 0; atom < tracedReductionCount; ++atom)
-                        {
-                            for (int dim = 0; dim < DIM; ++dim)
-                            {
-                                tracedReductionDeltaStorage[atom][dim] =
-                                        tracedHostForceView[atom][dim]
-                                        - tracedForceBeforeReduceStorage[atom][dim];
-                            }
-                        }
-                        appendExactGpuBondedReductionTrace(
-                                activeM2pTraceDirPath(),
-                                step,
-                                exactLevel,
-                                "reduction_delta",
-                                makeConstArrayRef(tracedReductionDeltaStorage).subArray(
-                                        0, tracedReductionCount));
-                    }
-
-                    fr->listedForcesGpu->updateHaveInteractions(levelIdef);
-                }
-                else
-                {
-                    std::vector<RVec> tracedMixedReductionDeltaStorage;
-                    fr->listedForcesGpu->updateInteractionListsAndDeviceBuffers(
-                            nbv->getGridIndices(), levelIdef, gpuGetNBAtomData(nbv->gpuNbv()));
-                    if (traceExactGpuBondedLaunchContext)
-                    {
-                        appendExactGpuBondedLaunchContextTrace(activeM2pTraceDirPath(),
-                                                               step,
-                                                               exactLevel,
-                                                               localCoordinateProvider,
-                                                               stepWork.useGpuXBufferOps,
-                                                               stepWork.doNeighborSearch,
-                                                               localCoordinatesNeededOnDevice,
-                                                               haveCopiedXFromGpu,
-                                                               copiedCoordinatesToGpu,
-                                                               expectedLocalXReadyOnDeviceConsumptionCount,
-                                                               uploadedExactRespaGpuBondedCoordinates);
-                    }
-                    if (traceExactGpuBondedGridIndices)
-                    {
-                        appendExactGpuBondedGridIndexTrace(activeM2pTraceDirPath(), step, exactLevel, nbv);
-                    }
-#if GMX_GPU
-                    if (traceExactGpuBondedDeviceXq && fr->deviceStreamManager != nullptr)
-                    {
-                        appendExactGpuBondedDeviceXqTrace(activeM2pTraceDirPath(),
-                                                          step,
-                                                          exactLevel,
-                                                          "pre_kernel",
-                                                          nbv,
-                                                          fr->deviceStreamManager->bondedStream());
-                    }
-                    if (traceExactGpuBondedDeviceForce && fr->deviceStreamManager != nullptr)
-                    {
-                        appendExactGpuBondedDeviceForceTrace(activeM2pTraceDirPath(),
-                                                             step,
-                                                             exactLevel,
-                                                             "pre_clear",
-                                                             nbv,
-                                                             fr->deviceStreamManager->bondedStream());
-                    }
-#endif
-                    gpu_clear_outputs(nbv->gpuNbv(), stepWork.computeVirial);
-#if GMX_GPU
-                    if (traceExactGpuBondedDeviceForce && fr->deviceStreamManager != nullptr)
-                    {
-                        appendExactGpuBondedDeviceForceTrace(activeM2pTraceDirPath(),
-                                                             step,
-                                                             exactLevel,
-                                                             "post_clear",
-                                                             nbv,
-                                                             fr->deviceStreamManager->bondedStream());
-                    }
-#endif
-                    fr->listedForcesGpu->setPbcAndlaunchKernel(fr->pbcType, box, fr->bMolPBC, stepWork);
-                    gpu_launch_cpyback(nbv->gpuNbv(), &nbv->nbat(), stepWork, AtomLocality::Local);
-                    if (stepWork.computeEnergy)
-                    {
-                        fr->listedForcesGpu->launchEnergyTransfer();
-                    }
-
-                    gpu_wait_finish_task(nbv->gpuNbv(),
-                                         stepWork,
-                                         AtomLocality::Local,
-                                         false,
-                                         enerd,
-                                         forceOutPtr->forceWithShiftForces().shiftForces(),
-                                         wcycle);
-                    std::array<RVec, 8> tracedForceBeforeReduceStorage = {};
-                    int                 tracedForceCountBeforeReduce   = 0;
-                    if (traceForceComponents)
-                    {
-                        appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                           step,
-                                                           exactLevel,
-                                                           "nbat_output_buffer",
-                                                           captureNbatOutputForceBufferPair(nbv));
-                        const auto tracedHostForceView = forceOutPtr->forceWithShiftForces().force();
-                        tracedForceCountBeforeReduce = std::min<int>(8, tracedHostForceView.ssize());
-                        for (int atom = 0; atom < tracedForceCountBeforeReduce; ++atom)
-                        {
-                            copy_rvec(tracedHostForceView[atom], tracedForceBeforeReduceStorage[atom]);
-                        }
-                        appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                           step,
-                                                           exactLevel,
-                                                           "before_reduce",
-                                                           tracedHostForceView);
-                    }
-                    nbv->atomdata_add_nbat_f_to_f(AtomLocality::Local,
-                                                  forceOutPtr->forceWithShiftForces().force());
-                    if (traceForceComponents)
-                    {
-                        const auto tracedHostForceView = forceOutPtr->forceWithShiftForces().force();
-                        appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                           step,
-                                                           exactLevel,
-                                                           "after_reduce",
-                                                           tracedHostForceView);
-
-                        std::array<RVec, 8> tracedReductionDeltaStorage = {};
-                        const int tracedReductionCount =
-                                std::min<int>(tracedForceCountBeforeReduce, tracedHostForceView.ssize());
-                        for (int atom = 0; atom < tracedReductionCount; ++atom)
-                        {
-                            for (int dim = 0; dim < DIM; ++dim)
-                            {
-                                tracedReductionDeltaStorage[atom][dim] =
-                                        tracedHostForceView[atom][dim]
-                                        - tracedForceBeforeReduceStorage[atom][dim];
-                            }
-                        }
-                        appendExactGpuBondedReductionTrace(
-                                activeM2pTraceDirPath(),
-                                step,
-                                exactLevel,
-                                "reduction_delta",
-                                makeConstArrayRef(tracedReductionDeltaStorage).subArray(
-                                        0, tracedReductionCount));
-                        tracedMixedReductionDeltaStorage.assign(tracedReductionCount, RVec{});
-                        for (int atom = 0; atom < tracedReductionCount; ++atom)
-                        {
-                            copy_rvec(tracedReductionDeltaStorage[atom],
-                                      tracedMixedReductionDeltaStorage[atom]);
-                        }
-                    }
-                    nbv->nbat().clearForceBuffer(0);
-
-                    if (stepWork.computeEnergy)
-                    {
-                        fr->listedForcesGpu->waitAccumulateEnergyTerms(enerd);
-                        fr->listedForcesGpu->clearEnergies();
-                    }
-
-                    if (traceExactGpuBondedMixedVsSequential && traceForceComponents)
-                    {
-                        TracedForcePair     tracedSequentialCombinedGpuOutput;
-                        std::vector<RVec>   sequentialReducedStorage(
-                                forceOutPtr->forceWithShiftForces().force().ssize());
-                        StepWorkload        splitStepWork = stepWork;
-                        splitStepWork.computeEnergy       = false;
-                        splitStepWork.computeVirial       = false;
-                        bool launchedAnySequentialFtype   = false;
-                        for (auto& forceValue : sequentialReducedStorage)
-                        {
-                            clear_rvec(forceValue);
-                        }
-
-                        for (const InteractionFunction tracedFtype :
-                             c_exactGpuListedFtypesForTraceOrSequentialValidation)
-                        {
-                            if (levelIdef.il[tracedFtype].empty())
-                            {
-                                continue;
-                            }
-
-                            const InteractionDefinitions singleFtypeIdef =
-                                    makeSingleInteractionFunctionDefinitions(levelIdef, tracedFtype);
-                            fr->listedForcesGpu->updateHaveInteractions(singleFtypeIdef);
-                            if (!fr->listedForcesGpu->haveInteractions())
-                            {
-                                continue;
-                            }
-
-                            launchedAnySequentialFtype = true;
-                            fr->listedForcesGpu->updateInteractionListsAndDeviceBuffers(
-                                    nbv->getGridIndices(),
-                                    singleFtypeIdef,
-                                    gpuGetNBAtomData(nbv->gpuNbv()));
-                            gpu_clear_outputs(nbv->gpuNbv(), false);
-                            fr->listedForcesGpu->setPbcAndlaunchKernel(
-                                    fr->pbcType, box, fr->bMolPBC, splitStepWork);
-                            gpu_launch_cpyback(
-                                    nbv->gpuNbv(), &nbv->nbat(), splitStepWork, AtomLocality::Local);
-                            gpu_wait_finish_task(nbv->gpuNbv(),
-                                                 splitStepWork,
-                                                 AtomLocality::Local,
-                                                 false,
-                                                 enerd,
-                                                 forceOutPtr->forceWithShiftForces().shiftForces(),
-                                                 wcycle);
-                            addTracedForcePairToTracedPair(&tracedSequentialCombinedGpuOutput,
-                                                           captureNbatOutputForceBufferPair(nbv));
-                            nbv->atomdata_add_nbat_f_to_f(AtomLocality::Local,
-                                                          makeArrayRef(sequentialReducedStorage));
-                            nbv->nbat().clearForceBuffer(0);
-                        }
-
-                        GMX_RELEASE_ASSERT(launchedAnySequentialFtype,
-                                           "Mixed-vs-sequential exact GPU bonded trace expected at "
-                                           "least one GPU-listed interaction function");
-
-                        appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                           step,
-                                                           exactLevel,
-                                                           "sequential_all_ftypes_nbat_output_buffer",
-                                                           tracedSequentialCombinedGpuOutput);
-                        appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                           step,
-                                                           exactLevel,
-                                                           "sequential_all_ftypes_reduction_delta",
-                                                           makeConstArrayRef(sequentialReducedStorage));
-                        if (!tracedMixedReductionDeltaStorage.empty())
-                        {
-                            std::array<RVec, 8> tracedMixedMinusSequentialStorage = {};
-                            const int tracedComparisonCount = std::min<int>(
-                                    std::min<int>(static_cast<int>(tracedMixedReductionDeltaStorage.size()),
-                                                  static_cast<int>(sequentialReducedStorage.size())),
-                                    8);
-                            for (int atom = 0; atom < tracedComparisonCount; ++atom)
-                            {
-                                for (int dim = 0; dim < DIM; ++dim)
-                                {
-                                    tracedMixedMinusSequentialStorage[atom][dim] =
-                                            tracedMixedReductionDeltaStorage[atom][dim]
-                                            - sequentialReducedStorage[atom][dim];
-                                }
-                            }
-                            appendExactGpuBondedReductionTrace(
-                                    activeM2pTraceDirPath(),
-                                    step,
-                                    exactLevel,
-                                    "mixed_minus_sequential_reduction_delta",
-                                    makeConstArrayRef(tracedMixedMinusSequentialStorage)
-                                            .subArray(0, tracedComparisonCount));
-                        }
-
-                        fr->listedForcesGpu->updateHaveInteractions(levelIdef);
-                        fr->listedForcesGpu->updateInteractionListsAndDeviceBuffers(
-                                nbv->getGridIndices(), levelIdef, gpuGetNBAtomData(nbv->gpuNbv()));
-                    }
-                }
-
-                if (traceExactGpuListedFtypeSplit)
-                {
-                    for (const InteractionFunction tracedFtype :
-                         c_exactGpuListedFtypesForTraceOrSequentialValidation)
-                    {
-                        const char* traceLabel = exactGpuListedFunctionTraceLabel(tracedFtype);
-                        if (traceLabel == nullptr || levelIdef.il[tracedFtype].empty())
-                        {
-                            continue;
-                        }
-
-                        const InteractionDefinitions singleFtypeIdef =
-                                makeSingleInteractionFunctionDefinitions(levelIdef, tracedFtype);
-                        fr->listedForcesGpu->updateHaveInteractions(singleFtypeIdef);
-                        if (!fr->listedForcesGpu->haveInteractions())
-                        {
-                            continue;
-                        }
-
-                        fr->listedForcesGpu->updateInteractionListsAndDeviceBuffers(
-                                nbv->getGridIndices(), singleFtypeIdef, gpuGetNBAtomData(nbv->gpuNbv()));
-                        gpu_clear_outputs(nbv->gpuNbv(), false);
-
-                        StepWorkload splitStepWork = stepWork;
-                        splitStepWork.computeEnergy = false;
-                        splitStepWork.computeVirial = false;
-
-                        fr->listedForcesGpu->setPbcAndlaunchKernel(
-                                fr->pbcType, box, fr->bMolPBC, splitStepWork);
-                        gpu_launch_cpyback(nbv->gpuNbv(), &nbv->nbat(), splitStepWork, AtomLocality::Local);
-                        gpu_wait_finish_task(nbv->gpuNbv(),
-                                             splitStepWork,
-                                             AtomLocality::Local,
-                                             false,
-                                             enerd,
-                                             forceOutPtr->forceWithShiftForces().shiftForces(),
-                                             wcycle);
-
-                        const auto splitGpuOutput = captureNbatOutputForceBufferPair(nbv);
-                        const std::string outputStage = std::string(traceLabel) + "_nbat_output_buffer";
-                        appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                           step,
-                                                           exactLevel,
-                                                           outputStage.c_str(),
-                                                           splitGpuOutput);
-
-                        std::vector<RVec> splitReducedStorage(forceOutPtr->forceWithShiftForces().force().ssize());
-                        for (auto& forceValue : splitReducedStorage)
-                        {
-                            clear_rvec(forceValue);
-                        }
-                        nbv->atomdata_add_nbat_f_to_f(AtomLocality::Local, makeArrayRef(splitReducedStorage));
-                        const std::string reducedStage = std::string(traceLabel) + "_after_reduce";
-                        appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                           step,
-                                                           exactLevel,
-                                                           reducedStage.c_str(),
-                                                           makeConstArrayRef(splitReducedStorage));
-                        nbv->nbat().clearForceBuffer(0);
-                    }
-
-                    fr->listedForcesGpu->updateHaveInteractions(levelIdef);
-                }
-
-                if (traceExactGpuListedClass2SubtermSplit)
-                {
-                    for (const InteractionFunction tracedFtype :
-                         c_exactGpuListedFtypesForTraceOrSequentialValidation)
-                    {
-                        const auto subtermModes = exactGpuListedClass2SubtermTraceModes(tracedFtype);
-                        if (subtermModes.empty() || levelIdef.il[tracedFtype].empty())
-                        {
-                            continue;
-                        }
-
-                        const InteractionDefinitions singleFtypeIdef =
-                                makeSingleInteractionFunctionDefinitions(levelIdef, tracedFtype);
-                        fr->listedForcesGpu->updateHaveInteractions(singleFtypeIdef);
-                        if (!fr->listedForcesGpu->haveInteractions())
-                        {
-                            continue;
-                        }
-
-                        for (const auto& subtermMode : subtermModes)
-                        {
-                            fr->listedForcesGpu->setPcffClass2DebugMode(subtermMode.mode);
-                            fr->listedForcesGpu->updateInteractionListsAndDeviceBuffers(
-                                    nbv->getGridIndices(),
-                                    singleFtypeIdef,
-                                    gpuGetNBAtomData(nbv->gpuNbv()));
-                            gpu_clear_outputs(nbv->gpuNbv(), false);
-
-                            StepWorkload splitStepWork = stepWork;
-                            splitStepWork.computeEnergy = false;
-                            splitStepWork.computeVirial = false;
-
-                            fr->listedForcesGpu->setPbcAndlaunchKernel(
-                                    fr->pbcType, box, fr->bMolPBC, splitStepWork);
-                            gpu_launch_cpyback(
-                                    nbv->gpuNbv(), &nbv->nbat(), splitStepWork, AtomLocality::Local);
-                            gpu_wait_finish_task(nbv->gpuNbv(),
-                                                 splitStepWork,
-                                                 AtomLocality::Local,
-                                                 false,
-                                                 enerd,
-                                                 forceOutPtr->forceWithShiftForces().shiftForces(),
-                                                 wcycle);
-
-                            const auto splitGpuOutput = captureNbatOutputForceBufferPair(nbv);
-                            const std::string outputStage =
-                                    std::string(subtermMode.label) + "_nbat_output_buffer";
-                            appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                               step,
-                                                               exactLevel,
-                                                               outputStage.c_str(),
-                                                               splitGpuOutput);
-
-                            std::vector<RVec> splitReducedStorage(
-                                    forceOutPtr->forceWithShiftForces().force().ssize());
-                            for (auto& forceValue : splitReducedStorage)
-                            {
-                                clear_rvec(forceValue);
-                            }
-                            nbv->atomdata_add_nbat_f_to_f(AtomLocality::Local,
-                                                          makeArrayRef(splitReducedStorage));
-                            const std::string reducedStage =
-                                    std::string(subtermMode.label) + "_after_reduce";
-                            appendExactGpuBondedReductionTrace(activeM2pTraceDirPath(),
-                                                               step,
-                                                               exactLevel,
-                                                               reducedStage.c_str(),
-                                                               makeConstArrayRef(splitReducedStorage));
-                            nbv->nbat().clearForceBuffer(0);
-                            fr->listedForcesGpu->clearPcffClass2DebugMode();
-                        }
-                        fr->listedForcesGpu->clearPcffClass2DebugMode();
-                    }
-
-                    fr->listedForcesGpu->updateHaveInteractions(levelIdef);
-                }
-            }
-
-            fr->listedForcesGpu->updateHaveInteractions(top->idef);
+            ListedForces& listedForces = fr->listedForces[mtsIndex];
+            ForceOutputs& forceOut     = *forceOutByMtsLevel[mtsIndex];
+            listedForces.calculate(wcycle,
+                                   box,
+                                   x,
+                                   xWholeMolecules,
+                                   fr->fcdata.get(),
+                                   hist,
+                                   &forceOut,
+                                   fr,
+                                   &pbc,
+                                   enerd,
+                                   nrnb,
+                                   lambda,
+                                   mdatoms->chargeA,
+                                   mdatoms->chargeB,
+                                   makeConstArrayRef(mdatoms->bPerturbed),
+                                   mdatoms->cENER,
+                                   mdatoms->nPerturbed,
+                                   haveDDAtomOrdering(*cr) ? cr->dd->globalAtomIndices.data() : nullptr,
+                                   stepWork);
         }
 
-        if (useExactRespaForceOutputs)
+        if (simulationWork.useGpuBonded && useExactLammpsRespaNonbonded)
         {
-            for (int exactLevel = 0; exactLevel < exactRespaForceOutputs.numActiveLevels(); ++exactLevel)
-            {
-                ListedForces& listedForces = fr->listedForces[exactLevel];
-                ForceOutputs* forceOutPtr  = exactRespaForceOutputs.levelOrNull(exactLevel);
-                GMX_RELEASE_ASSERT(forceOutPtr != nullptr,
-                                   "Need force output for active exact r-RESPA level");
-                listedForces.calculate(wcycle,
-                                       box,
-                                       x,
-                                       xWholeMolecules,
-                                       fr->fcdata.get(),
-                                       hist,
-                                       forceOutPtr,
-                                       fr,
-                                       &pbc,
-                                       enerd,
-                                       nrnb,
-                                       lambda,
-                                       mdatoms->chargeA,
-                                       mdatoms->chargeB,
-                                       makeConstArrayRef(mdatoms->bPerturbed),
-                                       mdatoms->cENER,
-                                       mdatoms->nPerturbed,
-                                       haveDDAtomOrdering(*cr) ? cr->dd->globalAtomIndices.data() : nullptr,
-                                       stepWork);
-
-                if (shouldTracePcffClass2SubtermEnergiesStep(step))
-                {
-                    const auto class2Subterms = evaluatePcffClass2SubtermEnergies(
-                            listedForces.interactionDefinitions(),
-                            x.unpaddedConstArrayRef(),
-                            needMolPbc ? &pbc : nullptr,
-                            haveDDAtomOrdering(*cr) ? cr->dd->globalAtomIndices.data() : nullptr);
-                    appendPcffClass2SubtermEnergyTrace(activeM2pTraceDirPath(),
-                                                      step,
-                                                      exactLevel,
-                                                      simulationWork.useGpuBonded ? "gpu_offload_enabled"
-                                                                                  : "cpu_only",
-                                                      class2Subterms);
-                }
-            }
+            computeLammpsRespaBondedGpuPair14Narrow(
+                    inputrec, fr, box, forceOutByMtsLevel, enerd, stepWork, wcycle);
         }
-        else
+
+        if (shouldTraceExactPair14Delta)
         {
-            const int numActiveMtsLevels =
-                    useSubstepLevels ? (stepWork.highestActiveMtsLevel + 1) : 1;
-            for (int mtsIndex = 0; mtsIndex < numActiveMtsLevels; mtsIndex++)
-            {
-                ListedForces& listedForces = fr->listedForces[mtsIndex];
-                ForceOutputs* forceOutPtr =
-                        (mtsIndex >= 0 && mtsIndex < static_cast<int>(forceOutByMtsLevel.size()))
-                                ? forceOutByMtsLevel[mtsIndex]
-                                : nullptr;
-                GMX_RELEASE_ASSERT(forceOutPtr != nullptr, "Need force output for active MTS level");
-                listedForces.calculate(wcycle,
-                                       box,
-                                       x,
-                                       xWholeMolecules,
-                                       fr->fcdata.get(),
-                                       hist,
-                                       forceOutPtr,
-                                       fr,
-                                       &pbc,
-                                       enerd,
-                                       nrnb,
-                                       lambda,
-                                       mdatoms->chargeA,
-                                       mdatoms->chargeB,
-                                       makeConstArrayRef(mdatoms->bPerturbed),
-                                       mdatoms->cENER,
-                                       mdatoms->nPerturbed,
-                                       haveDDAtomOrdering(*cr) ? cr->dd->globalAtomIndices.data() : nullptr,
-                                       stepWork);
-            }
+            const auto tracedPair14AfterListed = captureDistinctForceOutput(forceOutByMtsLevel[pair14Level]);
+            tracedPair14Delta                  = subtractTracedForcePairs(tracedPair14AfterListed, tracedPair14BeforeListed);
+            haveTracedPair14Delta              = true;
         }
     }
-
-    if (traceStep1Subset01ForceGroupAudit)
-    {
-        if (useExactRespaForceOutputs)
-        {
-            appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
-                                                       step1Subset01TraceSide,
-                                                       step,
-                                                       "after_listed",
-                                                       exactRespaForceOutputs,
-                                                       step1Subset01Level0Role,
-                                                       "src/gromacs/mdlib/sim_util.cpp:after_listed_stage");
-        }
-        else
-        {
-            appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
-                                                       step1Subset01TraceSide,
-                                                       step,
-                                                       "after_listed",
-                                                       forceOutByMtsLevel,
-                                                       stepWork.highestActiveMtsLevel,
-                                                       step1Subset01Level0Role,
-                                                       "src/gromacs/mdlib/sim_util.cpp:after_listed_stage");
-        }
-    }
-
-    const bool needToReceivePmeResultsFromSeparateRank = stepWork.computePmeOnSeparateRank;
-    const bool needToReceivePmeResults =
-            (stepWork.haveGpuPmeOnThisRank || needToReceivePmeResultsFromSeparateRank);
-    const bool needEarlyPmeResults = (awh != nullptr && awh->hasFepLambdaDimension() && needToReceivePmeResults
-                                      && stepWork.computeEnergy && stepWork.computeLongRangeNonbondedForces);
-    const bool deferReciprocalTraceUntilPmeReduction =
-            traceForceComponents && stepWork.computeLongRangeNonbondedForces && needToReceivePmeResults;
-    const auto captureCurrentDistinctForceOutputsForTrace = [&]()
-    {
-        return useExactRespaForceOutputs ? captureDistinctForceOutputs(exactRespaForceOutputs)
-                                         : captureDistinctForceOutputs(forceOutByMtsLevel,
-                                                                       highestActiveSubstepLevel);
-    };
-    const auto refreshDeferredReciprocalTrace = [&](const TracedForcePair& tracedForceOutputsBeforePmeReduction)
-    {
-        if (!traceForceComponents)
-        {
-            return;
-        }
-        const auto tracedForceOutputsAfterPmeReduction = captureCurrentDistinctForceOutputsForTrace();
-        tracedCoulombRecipDelta = subtractTracedForcePairs(tracedForceOutputsAfterPmeReduction,
-                                                           tracedForceOutputsBeforePmeReduction);
-    };
 
     TracedForcePair tracedForceOutputsBeforeLongRange;
     if (traceForceComponents)
     {
         const auto tracedForceOutputsAfterListed =
-                useExactRespaForceOutputs ? captureDistinctForceOutputs(exactRespaForceOutputs)
-                                          : captureDistinctForceOutputs(forceOutByMtsLevel,
-                                                                        stepWork.highestActiveMtsLevel);
+                captureDistinctForceOutputs(forceOutByMtsLevel, stepWork.highestActiveMtsLevel);
         tracedBondedDelta =
                 subtractTracedForcePairs(tracedForceOutputsAfterListed, tracedForceOutputsBeforeListed);
         tracedForceOutputsBeforeLongRange = tracedForceOutputsAfterListed;
     }
+    const auto refreshTracedCoulombRecipDelta = [&]()
+    {
+        if (!traceForceComponents)
+        {
+            return;
+        }
+
+        const auto tracedForceOutputsAfterLongRange =
+                captureDistinctForceOutputs(forceOutByMtsLevel, stepWork.highestActiveMtsLevel);
+        tracedCoulombRecipDelta =
+                subtractTracedForcePairs(tracedForceOutputsAfterLongRange, tracedForceOutputsBeforeLongRange);
+    };
 
     if (stepWork.computeLongRangeNonbondedForces)
     {
@@ -8611,77 +6790,40 @@ void do_force(FILE*                         fplog,
         const bool dumpEarlyAccumTrace =
                 (earlyAccumTraceDirPath != nullptr && *earlyAccumTraceDirPath != '\0' && step == 0);
         const bool outerAliasesShift =
-                (forceOutLongrange != nullptr && forceOutLongrange->haveForceWithVirial()
-                 && forceOutLongrange->forceWithVirial().force_.data()
-                            == forceOutLongrange->forceWithShiftForces().force().data());
-        if (dumpEarlyAccumTrace && forceOutLongrange != nullptr)
+                (forceOutMtsLevel1 != nullptr && forceOutMtsLevel1->haveForceWithVirial()
+                 && forceOutMtsLevel1->forceWithVirial().force_.data()
+                            == forceOutMtsLevel1->forceWithShiftForces().force().data());
+        if (dumpEarlyAccumTrace && forceOutMtsLevel1 != nullptr)
         {
             dumpRespaMergeTraceVector(
                     earlyAccumTraceDirPath,
                     "step0_level2_before_longrange_virial.tsv",
                     "stage=before_longrange_nonbonded mts_index=2 mts_user=3 buffer=forceWithVirial alias_with_shift="
                             + std::string(outerAliasesShift ? "true" : "false"),
-                    forceOutLongrange->forceWithVirial().force_);
+                    forceOutMtsLevel1->forceWithVirial().force_);
         }
         longRangeNonbondeds->calculate(fr->pmedata,
                                        cr,
                                        x.unpaddedConstArrayRef(),
-                                       &forceOutLongrange->forceWithVirial(),
+                                       &forceOutMtsLevel1->forceWithVirial(),
                                        enerd,
                                        box,
                                        lambda,
                                        dipoleData.muStateAB,
                                        stepWork,
                                        ddBalanceRegionHandler);
-        if (dumpEarlyAccumTrace && forceOutLongrange != nullptr)
+        if (dumpEarlyAccumTrace && forceOutMtsLevel1 != nullptr)
         {
             dumpRespaMergeTraceVector(
                     earlyAccumTraceDirPath,
                     "step0_level2_after_longrange_virial.tsv",
                     "stage=after_longrange_nonbonded mts_index=2 mts_user=3 buffer=forceWithVirial alias_with_shift="
                             + std::string(outerAliasesShift ? "true" : "false"),
-                    forceOutLongrange->forceWithVirial().force_);
+                    forceOutMtsLevel1->forceWithVirial().force_);
         }
     }
 
-    if (traceStep1Subset01ForceGroupAudit)
-    {
-        if (useExactRespaForceOutputs)
-        {
-            appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
-                                                       step1Subset01TraceSide,
-                                                       step,
-                                                       "after_longrange",
-                                                       exactRespaForceOutputs,
-                                                       step1Subset01Level0Role,
-                                                       "src/gromacs/mdlib/sim_util.cpp:after_longrange_stage");
-        }
-        else
-        {
-            appendStep1Subset01ForceGroupBufferSnapshot(activeM2pTraceDirPath(),
-                                                       step1Subset01TraceSide,
-                                                       step,
-                                                       "after_longrange",
-                                                       forceOutByMtsLevel,
-                                                       highestActiveSubstepLevel,
-                                                       step1Subset01Level0Role,
-                                                       "src/gromacs/mdlib/sim_util.cpp:after_longrange_stage");
-        }
-    }
-
-    if (traceForceComponents)
-    {
-        const auto tracedForceOutputsAfterLongRange = captureCurrentDistinctForceOutputsForTrace();
-        if (deferReciprocalTraceUntilPmeReduction)
-        {
-            tracedForceOutputsBeforeLongRange = tracedForceOutputsAfterLongRange;
-        }
-        else
-        {
-            tracedCoulombRecipDelta =
-                    subtractTracedForcePairs(tracedForceOutputsAfterLongRange, tracedForceOutputsBeforeLongRange);
-        }
-    }
+    refreshTracedCoulombRecipDelta();
 
     wallcycle_stop(wcycle, WallCycleCounter::Force);
 
@@ -8706,41 +6848,42 @@ void do_force(FILE*                         fplog,
         }
     }
 
+    const bool needToReceivePmeResultsFromSeparateRank = stepWork.computePmeOnSeparateRank;
+    const bool needToReceivePmeResults =
+            (stepWork.haveGpuPmeOnThisRank || needToReceivePmeResultsFromSeparateRank);
+
+    /* When running free energy perturbations steered by AWH and doing PME calculations on the
+     * GPU we must wait for the PME calculation (dhdl) results to finish before sampling the
+     * FEP dimension with AWH. */
+    const bool needEarlyPmeResults = (awh != nullptr && awh->hasFepLambdaDimension() && needToReceivePmeResults
+                                      && stepWork.computeEnergy && stepWork.computeLongRangeNonbondedForces);
     if (needEarlyPmeResults)
     {
         if (stepWork.haveGpuPmeOnThisRank)
         {
-            const auto tracedForceOutputsBeforePmeReduction =
-                    traceForceComponents ? captureCurrentDistinctForceOutputsForTrace() : TracedForcePair{};
             pmeGpuWaitAndReduce(fr->pmedata,
                                 stepWork,
                                 wcycle,
-                                &forceOutLongrange->forceWithVirial(),
+                                &forceOutMtsLevel1->forceWithVirial(),
                                 enerd,
                                 lambda[static_cast<int>(FreeEnergyPerturbationCouplingType::Coul)]);
-            if (traceForceComponents)
-            {
-                refreshDeferredReciprocalTrace(tracedForceOutputsBeforePmeReduction);
-            }
         }
         else if (needToReceivePmeResultsFromSeparateRank)
         {
             /* In case of node-splitting, the PP nodes receive the long-range
              * forces, virial and energy from the PME nodes here.
              */
-            const auto tracedForceOutputsBeforePmeReduction =
-                    traceForceComponents ? captureCurrentDistinctForceOutputsForTrace() : TracedForcePair{};
             pme_receive_force_ener(fr,
                                    cr->dd,
-                                   &forceOutLongrange->forceWithVirial(),
+                                   &forceOutMtsLevel1->forceWithVirial(),
                                    enerd,
                                    simulationWork.useGpuPmePpCommunication,
                                    stepWork.useGpuPmeFReduction,
                                    wcycle);
-            if (traceForceComponents)
-            {
-                refreshDeferredReciprocalTrace(tracedForceOutputsBeforePmeReduction);
-            }
+        }
+        if (useExactLammpsRespaHybridGpuNonbonded && simulationWork.useGpuPme)
+        {
+            refreshTracedCoulombRecipDelta();
         }
     }
 
@@ -8760,17 +6903,16 @@ void do_force(FILE*                         fplog,
                              step,
                              t,
                              wcycle,
-                            fr->forceProviders,
-                            box,
-                            x.unpaddedArrayRef(),
-                            mdatoms,
-                            lambda,
-                            stepWork,
-                            gmx::useExactRespa(inputrec) ? &exactRespaStepWork : nullptr,
-                            forceWithVirialByLevel,
-                            enerd,
-                            ed,
-                            stepWork.doNeighborSearch);
+                             fr->forceProviders,
+                             box,
+                             x.unpaddedArrayRef(),
+                             mdatoms,
+                             lambda,
+                             stepWork,
+                             forceWithVirialByMtsLevel,
+                             enerd,
+                             ed,
+                             stepWork.doNeighborSearch);
     }
 
     if (simulationWork.havePpDomainDecomposition && stepWork.computeForces && stepWork.useGpuFHalo
@@ -8779,7 +6921,7 @@ void do_force(FILE*                         fplog,
         stateGpu->copyForcesToGpu(forceOutMtsLevel0.forceWithShiftForces().force(), AtomLocality::Local);
     }
 
-    GMX_ASSERT(!(simulationWork.nonbondedSubstepLevel > 0 && stepWork.useGpuFBufferOps),
+    GMX_ASSERT(!(nonbondedAtMtsNonzeroLevel && stepWork.useGpuFBufferOps),
                "The schedule below does not allow for nonbonded MTS with GPU buffer ops");
     GMX_ASSERT(!(nonbondedAtMtsNonzeroLevel && stepWork.useGpuFHalo),
                "The schedule below does not allow for nonbonded MTS with GPU halo exchange");
@@ -8849,15 +6991,13 @@ void do_force(FILE*                         fplog,
     /* Combining the forces for multiple time stepping before the halo exchange, when possible,
      * avoids an extra halo exchange (when DD is used) and post-processing step.
      */
-    if (combineSubstepForcesBeforeHaloExchange)
+    if (stepWork.combineMtsForcesBeforeHaloExchange)
     {
-        wallcycle_start_nocount(wcycle, WallCycleCounter::Force);
         const std::vector<ArrayRef<const RVec>> slowLevelForces = {
             forceOutByMtsLevel[1]->forceWithShiftForces().force()
         };
-        const std::array<int, 1> slowLevelFactors = {
-            inputrec.mtsLevels[1].stepFactor
-        };
+        const std::array<int, 1> slowLevelFactors = { inputrec.mtsLevels[1].stepFactor };
+        wallcycle_start_nocount(wcycle, WallCycleCounter::Force);
         combineMtsForces(getLocalAtomCount(cr->dd, *mdatoms, simulationWork.havePpDomainDecomposition),
                          force.unpaddedArrayRef(),
                          forceView->forceMtsCombined(),
@@ -8871,9 +7011,9 @@ void do_force(FILE*                         fplog,
     // When running free energy perturbations steered by AWH and calculating PME on GPU,
     // i.e. if needEarlyPmeResults == true, the PME results have already been reduced above.
     const bool alternateGpuWait = (!c_disableAlternatingWait && stepWork.haveGpuPmeOnThisRank
-                                   && simulationWork.useGpuNonbonded && !useExactLammpsRespaGpuNonbonded
-                                   && !simulationWork.havePpDomainDecomposition
-                                   && !stepWork.useGpuFBufferOps && !needEarlyPmeResults);
+                                   && simulationWork.useGpuNonbonded && !simulationWork.havePpDomainDecomposition
+                                   && !stepWork.useGpuFBufferOps && !needEarlyPmeResults
+                                   && !useExactLammpsRespaNonbonded);
 
 
     const int expectedLocalFReadyOnDeviceConsumptionCount = getExpectedLocalFReadyOnDeviceConsumptionCount(
@@ -8921,25 +7061,14 @@ void do_force(FILE*                         fplog,
 
                 // Without MTS or with MTS at slow steps with uncombined forces we need to
                 // communicate the fast forces
-                if (!useSubstepLevels || !combineSubstepForcesBeforeHaloExchange)
+                if (!simulationWork.useMts || !stepWork.combineMtsForcesBeforeHaloExchange)
                 {
                     dd_move_f(cr->dd, &forceOutMtsLevel0.forceWithShiftForces(), wcycle);
                 }
-                // With MTS we need to communicate the slow or combined forces.
-                if (haveExactSlowForceOutputs)
+                // With MTS we need to communicate the slow or combined (in forceOutMtsLevel1) forces
+                if (simulationWork.useMts && stepWork.computeSlowForces)
                 {
-                    for (int mtsLevel = 1; mtsLevel < exactRespaForceOutputs.numActiveLevels(); mtsLevel++)
-                    {
-                        ForceOutputs* outputs = exactRespaForceOutputs.levelOrNull(mtsLevel);
-                        if (outputs != nullptr)
-                        {
-                            dd_move_f(cr->dd, &outputs->forceWithShiftForces(), wcycle);
-                        }
-                    }
-                }
-                else if (haveLegacySlowForceOutputs)
-                {
-                    for (int mtsLevel = 1; mtsLevel <= highestActiveSubstepLevel; mtsLevel++)
+                    for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; mtsLevel++)
                     {
                         dd_move_f(cr->dd, &forceOutByMtsLevel[mtsLevel]->forceWithShiftForces(), wcycle);
                     }
@@ -8950,42 +7079,34 @@ void do_force(FILE*                         fplog,
 
     if (alternateGpuWait)
     {
-        const auto tracedForceOutputsBeforePmeReduction =
-                traceForceComponents ? captureCurrentDistinctForceOutputsForTrace() : TracedForcePair{};
         alternatePmeNbGpuWaitReduce(fr->nbv.get(),
                                     fr->pmedata,
                                     forceOutNonbonded,
-                                    forceOutLongrange,
+                                    forceOutMtsLevel1,
                                     enerd,
                                     lambda[static_cast<int>(FreeEnergyPerturbationCouplingType::Coul)],
                                     stepWork,
                                     simulationWork,
                                     wcycle);
-        if (traceForceComponents)
-        {
-            refreshDeferredReciprocalTrace(tracedForceOutputsBeforePmeReduction);
-        }
     }
 
     if (!alternateGpuWait && stepWork.haveGpuPmeOnThisRank && !needEarlyPmeResults)
     {
-        const auto tracedForceOutputsBeforePmeReduction =
-                traceForceComponents ? captureCurrentDistinctForceOutputsForTrace() : TracedForcePair{};
         pmeGpuWaitAndReduce(fr->pmedata,
                             stepWork,
                             wcycle,
-                            &forceOutLongrange->forceWithVirial(),
+                            &forceOutMtsLevel1->forceWithVirial(),
                             enerd,
                             lambda[static_cast<int>(FreeEnergyPerturbationCouplingType::Coul)]);
-        if (traceForceComponents)
+        if (useExactLammpsRespaHybridGpuNonbonded && simulationWork.useGpuPme)
         {
-            refreshDeferredReciprocalTrace(tracedForceOutputsBeforePmeReduction);
+            refreshTracedCoulombRecipDelta();
         }
     }
 
     /* Wait for local GPU NB outputs on the non-alternating wait path */
     if (!alternateGpuWait && stepWork.computeNonbondedForces && simulationWork.useGpuNonbonded
-        && !useExactLammpsRespaGpuNonbonded)
+        && !useExactLammpsRespaNonbonded)
     {
         /* Measured overhead on CUDA and OpenCL with(out) GPU sharing
          * is between 0.5 and 1.5 Mcycles. So 2 MCycles is an overestimate,
@@ -9046,18 +7167,16 @@ void do_force(FILE*                         fplog,
         /* In case of node-splitting, the PP nodes receive the long-range
          * forces, virial and energy from the PME nodes here.
          */
-        const auto tracedForceOutputsBeforePmeReduction =
-                traceForceComponents ? captureCurrentDistinctForceOutputsForTrace() : TracedForcePair{};
         pme_receive_force_ener(fr,
                                cr->dd,
-                               &forceOutLongrange->forceWithVirial(),
+                               &forceOutMtsLevel1->forceWithVirial(),
                                enerd,
                                simulationWork.useGpuPmePpCommunication,
                                stepWork.useGpuPmeFReduction,
                                wcycle);
-        if (traceForceComponents)
+        if (useExactLammpsRespaHybridGpuNonbonded && simulationWork.useGpuPme)
         {
-            refreshDeferredReciprocalTrace(tracedForceOutputsBeforePmeReduction);
+            refreshTracedCoulombRecipDelta();
         }
     }
 
@@ -9132,13 +7251,10 @@ void do_force(FILE*                         fplog,
         dd_force_flop_stop(cr->dd, nrnb);
     }
 
-    const bool haveCombinedMtsForces = (stepWork.computeForces && useLegacyMtsForceOutputs
-                                        && computeLegacySlowSubstepForces
-                                        && combineSubstepForcesBeforeHaloExchange);
+    const bool haveCombinedMtsForces = (stepWork.computeForces && simulationWork.useMts && stepWork.computeSlowForces
+                                        && stepWork.combineMtsForcesBeforeHaloExchange);
     const char* mergeTraceDirPath = std::getenv("GMX_PCFF_RESPA_MERGE_TRACE_DIR");
-    const bool  dumpMergeTrace =
-            (mergeTraceDirPath != nullptr && *mergeTraceDirPath != '\0'
-             && (step == 0 || shouldTraceRespaForceComponentsStep(step)));
+    const bool  dumpMergeTrace    = (mergeTraceDirPath != nullptr && *mergeTraceDirPath != '\0' && step == 0);
     const auto dumpForceOutputsStage = [&](const char* stageLabel, int mtsLevelIndex, ForceOutputs* outputs)
     {
         if (!dumpMergeTrace || outputs == nullptr)
@@ -9148,25 +7264,13 @@ void do_force(FILE*                         fplog,
 
         const std::string commonHeader = "stage=" + std::string(stageLabel) + " mts_index="
                                          + std::to_string(mtsLevelIndex) + " mts_user="
-                                         + std::to_string(mtsLevelIndex + 1) + " step="
-                                         + std::to_string(step);
-        const std::string levelLabel   = "step" + std::to_string(step) + "_level"
-                                       + std::to_string(mtsLevelIndex) + "_" + stageLabel;
+                                         + std::to_string(mtsLevelIndex + 1);
+        const std::string levelLabel   = "step0_level" + std::to_string(mtsLevelIndex) + "_" + stageLabel;
 
         dumpRespaMergeTraceVector(mergeTraceDirPath,
                                   (levelLabel + "_shift.tsv").c_str(),
                                   commonHeader + " buffer=forceWithShiftForces",
                                   outputs->forceWithShiftForces().force());
-        if (mtsLevelIndex == 0 && std::strcmp(stageLabel, "post_postprocess") == 0
-            && activeM2pTraceDirPath() != nullptr)
-        {
-            appendExplicitLevel0SnapshotForTracedAtoms(activeM2pTraceDirPath(),
-                                                       step,
-                                                       stageLabel,
-                                                       x.unpaddedConstArrayRef(),
-                                                       outputs->forceWithShiftForces().force(),
-                                                       "src/gromacs/mdlib/sim_util.cpp:dumpForceOutputsStage");
-        }
         if (outputs->haveForceWithVirial())
         {
             dumpRespaMergeTraceVector(mergeTraceDirPath,
@@ -9180,35 +7284,9 @@ void do_force(FILE*                         fplog,
         postProcessForceWithShiftForces(
                 nrnb, wcycle, box, x.unpaddedArrayRef(), &forceOutMtsLevel0, vir_force, *mdatoms, *fr, vsite, stepWork);
 
-        if (useExactRespaForceOutputs)
+        if (simulationWork.useMts && stepWork.computeSlowForces && !haveCombinedMtsForces)
         {
-            for (int mtsLevel = 1; mtsLevel < exactRespaForceOutputs.numActiveLevels(); mtsLevel++)
-            {
-                ForceOutputs* outputs = exactRespaForceOutputs.levelOrNull(mtsLevel);
-                if (outputs == nullptr)
-                {
-                    continue;
-                }
-                dumpForceOutputsStage("pre_postprocess", mtsLevel, outputs);
-                postProcessForceWithShiftForces(nrnb,
-                                                wcycle,
-                                                box,
-                                                x.unpaddedArrayRef(),
-                                                outputs,
-                                                vir_force,
-                                                *mdatoms,
-                                                *fr,
-                                                vsite,
-                                                stepWork);
-                dumpForceOutputsStage("post_postprocess", mtsLevel, outputs);
-            }
-            // Exact r-RESPA must defer force combining until postProcessForces().
-            // Before that point, the outer level can still reside in forceWithVirial(),
-            // so an early combine would add the middle level once here and again later.
-        }
-        else if (haveLegacySlowForceOutputs && !haveCombinedMtsForces)
-        {
-            for (int mtsLevel = 1; mtsLevel <= highestActiveSubstepLevel; mtsLevel++)
+            for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; mtsLevel++)
             {
                 postProcessForceWithShiftForces(nrnb,
                                                 wcycle,
@@ -9232,18 +7310,16 @@ void do_force(FILE*                         fplog,
         /* In case of node-splitting, the PP nodes receive the long-range
          * forces, virial and energy from the PME nodes here.
          */
-        const auto tracedForceOutputsBeforePmeReduction =
-                traceForceComponents ? captureCurrentDistinctForceOutputsForTrace() : TracedForcePair{};
         pme_receive_force_ener(fr,
                                cr->dd,
-                               &forceOutLongrange->forceWithVirial(),
+                               &forceOutMtsLevel1->forceWithVirial(),
                                enerd,
                                simulationWork.useGpuPmePpCommunication,
                                false,
                                wcycle);
-        if (traceForceComponents)
+        if (useExactLammpsRespaHybridGpuNonbonded && simulationWork.useGpuPme)
         {
-            refreshDeferredReciprocalTrace(tracedForceOutputsBeforePmeReduction);
+            refreshTracedCoulombRecipDelta();
         }
     }
 
@@ -9259,80 +7335,11 @@ void do_force(FILE*                         fplog,
                 cr->dd, step, nrnb, wcycle, box, x.unpaddedArrayRef(), &forceOutCombined, vir_force, mdatoms, fr, vsite, stepWork);
         dumpForceOutputsStage("post_postprocess", 0, &forceOutCombined);
 
-        if (useExactRespaForceOutputs && !haveCombinedMtsForces)
-        {
-            GMX_RELEASE_ASSERT(exactRespaForceStore != nullptr,
-                               "Exact r-RESPA force combining requires persisted slow-level totals");
-            for (int mtsLevel = 1; mtsLevel < exactRespaForceOutputs.numActiveLevels(); mtsLevel++)
-            {
-                ForceOutputs* outputs = exactRespaForceOutputs.levelOrNull(mtsLevel);
-                if (outputs == nullptr)
-                {
-                    continue;
-                }
-                dumpForceOutputsStage("pre_postprocess", mtsLevel, outputs);
-                postProcessForces(cr->dd,
-                                  step,
-                                  nrnb,
-                                  wcycle,
-                                  box,
-                                  x.unpaddedArrayRef(),
-                                  outputs,
-                                  vir_force,
-                                  mdatoms,
-                                  fr,
-                                  vsite,
-                                  stepWork);
-                dumpForceOutputsStage("post_postprocess", mtsLevel, outputs);
-            }
-
-            std::vector<ArrayRef<const RVec>> slowLevelForces;
-            std::vector<int>                  slowLevelFactors;
-            for (int mtsLevel = 1; mtsLevel < exactRespaNumLevels(inputrec); ++mtsLevel)
-            {
-                ArrayRef<const RVec> slowForce;
-                if (exactRespaForceOutputs.hasLevel(mtsLevel))
-                {
-                    slowForce = exactRespaForceOutputs.level(mtsLevel).forceWithShiftForces().force();
-                }
-                else if (exactRespaForceStore->hasLevel(mtsLevel))
-                {
-                    slowForce = exactRespaForceStore->levelTotal(mtsLevel);
-                }
-                if (!slowForce.empty())
-                {
-                    slowLevelForces.push_back(slowForce);
-                    slowLevelFactors.push_back(gmx::exactRespaLevelStepFactor(inputrec, mtsLevel));
-                }
-            }
-
-            if (!slowLevelForces.empty())
-            {
-                combineMtsForces(mdatoms->homenr,
-                                 force.unpaddedArrayRef(),
-                                 forceView->forceMtsCombined(),
-                                 slowLevelForces,
-                                 slowLevelFactors);
-                if (dumpMergeTrace)
-                {
-                    dumpRespaMergeTraceVector(mergeTraceDirPath,
-                                              ("step" + std::to_string(step) + "_physical_postcombine.tsv").c_str(),
-                                              "stage=post_combine buffer=physical_total step="
-                                                      + std::to_string(step),
-                                              force.unpaddedArrayRef());
-                    dumpRespaMergeTraceVector(mergeTraceDirPath,
-                                              ("step" + std::to_string(step) + "_impulse_postcombine.tsv").c_str(),
-                                              "stage=post_combine buffer=impulse_total step="
-                                                      + std::to_string(step),
-                                              forceView->forceMtsCombined());
-                }
-            }
-        }
-        else if (haveLegacySlowForceOutputs && !haveCombinedMtsForces)
+        if (simulationWork.useMts && stepWork.computeSlowForces && !haveCombinedMtsForces)
         {
             std::vector<ArrayRef<const RVec>> slowLevelForces;
             std::vector<int>                  slowLevelFactors;
-            for (int mtsLevel = 1; mtsLevel <= highestActiveSubstepLevel; mtsLevel++)
+            for (int mtsLevel = 1; mtsLevel <= stepWork.highestActiveMtsLevel; mtsLevel++)
             {
                 dumpForceOutputsStage("pre_postprocess", mtsLevel, forceOutByMtsLevel[mtsLevel]);
                 postProcessForces(cr->dd,
@@ -9349,9 +7356,7 @@ void do_force(FILE*                         fplog,
                                   stepWork);
                 dumpForceOutputsStage("post_postprocess", mtsLevel, forceOutByMtsLevel[mtsLevel]);
                 slowLevelForces.push_back(forceOutByMtsLevel[mtsLevel]->forceWithShiftForces().force());
-                slowLevelFactors.push_back(gmx::useExactRespa(inputrec)
-                                                   ? gmx::exactRespaLevelStepFactor(inputrec, mtsLevel)
-                                                   : inputrec.mtsLevels[mtsLevel].stepFactor);
+                slowLevelFactors.push_back(inputrec.mtsLevels[mtsLevel].stepFactor);
             }
 
             combineMtsForces(mdatoms->homenr,
@@ -9362,14 +7367,12 @@ void do_force(FILE*                         fplog,
             if (dumpMergeTrace)
             {
                 dumpRespaMergeTraceVector(mergeTraceDirPath,
-                                          ("step" + std::to_string(step) + "_physical_postcombine.tsv").c_str(),
-                                          "stage=post_combine buffer=physical_total step="
-                                                  + std::to_string(step),
+                                          "step0_physical_postcombine.tsv",
+                                          "stage=post_combine buffer=physical_total",
                                           force.unpaddedArrayRef());
                 dumpRespaMergeTraceVector(mergeTraceDirPath,
-                                          ("step" + std::to_string(step) + "_impulse_postcombine.tsv").c_str(),
-                                          "stage=post_combine buffer=impulse_total step="
-                                                  + std::to_string(step),
+                                          "step0_impulse_postcombine.tsv",
+                                          "stage=post_combine buffer=impulse_total",
                                           forceView->forceMtsCombined());
             }
         }
@@ -9448,12 +7451,6 @@ void do_force(FILE*                         fplog,
                     traceEnergyTermsRead(enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::LJSR]);
             const auto coulReadTrace =
                     traceEnergyTermsRead(enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR]);
-            const auto lj14ReadTrace =
-                    traceEnergyTermsRead(enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::LJ14]);
-            const auto coul14ReadTrace =
-                    traceEnergyTermsRead(enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::Coulomb14]);
-            const auto buckinghamReadTrace =
-                    traceEnergyTermsRead(enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::BuckinghamSR]);
             const std::string ljSrCaseLabel =
                     (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0') ? ljSrCaseLabelEnv : "unknown";
             const bool emitRawReadRows = (dumpM2uLjSrTrace || dumpM2sLjSrTrace) && ljSrCaseLabel != "plain_verlet";
@@ -9503,54 +7500,6 @@ void do_force(FILE*                         fplog,
                                 + ljSrCaseLabel
                                 + " execution_path=pre_sum_epot_grpp_plain plain_coulomb_sr="
                                 + formatString("%.15f", coulReadTrace.finalTotal));
-            }
-            if (step == 0)
-            {
-                const bool isExactRespaProbe =
-                        gmx::useExactRespa(inputrec);
-                double preSumNonElectroResidual = 0.0;
-                for (int i = static_cast<int>(InteractionFunction::Bonds);
-                     i < static_cast<int>(InteractionFunction::PotentialEnergy);
-                     ++i)
-                {
-                    if (i == static_cast<int>(InteractionFunction::DistanceRestraintViolations)
-                        || i == static_cast<int>(InteractionFunction::OrientationRestraintDeviations)
-                        || i == static_cast<int>(InteractionFunction::CoulombShortRange)
-                        || i == static_cast<int>(InteractionFunction::Coulomb14)
-                        || i == static_cast<int>(InteractionFunction::CoulombReciprocalSpace)
-                        || i == static_cast<int>(InteractionFunction::LennardJonesShortRange)
-                        || i == static_cast<int>(InteractionFunction::LennardJones14)
-                        || i == static_cast<int>(InteractionFunction::BuckinghamShortRange))
-                    {
-                        continue;
-                    }
-                    preSumNonElectroResidual += static_cast<double>(enerd->term[static_cast<InteractionFunction>(i)]);
-                }
-                preSumNonElectroResidual += ljReadTrace.finalTotal + lj14ReadTrace.finalTotal
-                                            + buckinghamReadTrace.finalTotal;
-                const double preSumElectroTotal =
-                        coulReadTrace.finalTotal + coul14ReadTrace.finalTotal
-                        + static_cast<double>(enerd->term[InteractionFunction::CoulombReciprocalSpace]);
-                appendRespaTraceTextLine(
-                        ljSrTraceDirPath,
-                        "step0_pre_sum_potential_hypothesis_probe.txt",
-                        "stage=PRE_SUM_POTENTIAL_HYPOTHESIS_PROBE code_location=src/gromacs/mdlib/sim_util.cpp:before_accumulatePotentialEnergies"
-                                + std::string(" case_label=") + ljSrCaseLabel
-                                + " execution_path=step0_pre_sum_probe run_kind="
-                                + std::string(isExactRespaProbe ? "exact_respa" : "single_step")
-                                + " step=0"
-                                + " pre_sum_coulomb_sr=" + formatString("%.15f", coulReadTrace.finalTotal)
-                                + " pre_sum_coulomb14=" + formatString("%.15f", coul14ReadTrace.finalTotal)
-                                + " pre_sum_coulomb_recip="
-                                + formatString("%.15f", static_cast<double>(enerd->term[InteractionFunction::CoulombReciprocalSpace]))
-                                + " pre_sum_electro_total=" + formatString("%.15f", preSumElectroTotal)
-                                + " pre_sum_lj_sr=" + formatString("%.15f", ljReadTrace.finalTotal)
-                                + " pre_sum_lj14=" + formatString("%.15f", lj14ReadTrace.finalTotal)
-                                + " pre_sum_buckingham_sr=" + formatString("%.15f", buckinghamReadTrace.finalTotal)
-                                + " pre_sum_non_electro_residual="
-                                + formatString("%.15f", preSumNonElectroResidual)
-                                + " pre_sum_component_total="
-                                + formatString("%.15f", preSumElectroTotal + preSumNonElectroResidual));
             }
         }
 
@@ -9626,84 +7575,27 @@ void do_force(FILE*                         fplog,
                             + formatString("%.15f", static_cast<double>(enerd->term[InteractionFunction::CoulombShortRange]))
                             + " potential="
                             + formatString("%.15f", static_cast<double>(enerd->term[InteractionFunction::PotentialEnergy])));
-            if (step == 0)
-            {
-                const bool isExactRespaLedger =
-                        gmx::useExactRespa(inputrec);
-                constexpr double c_barToAtmTrace = 0.9869232667160128;
-                const double volumeNm3 = static_cast<double>(box[XX][XX] * box[YY][YY] * box[ZZ][ZZ]);
-                const auto virialPressureAtm = [volumeNm3, c_barToAtmTrace](const double virialKjPerMol)
-                {
-                    return ((-virialKjPerMol) * (2.0 * gmx::c_presfac) / volumeNm3)
-                           * c_barToAtmTrace;
-                };
-                const double virialXx = static_cast<double>(vir_force[XX][XX]);
-                const double virialXy = static_cast<double>(vir_force[XX][YY]);
-                const double virialXz = static_cast<double>(vir_force[XX][ZZ]);
-                const double virialYx = static_cast<double>(vir_force[YY][XX]);
-                const double virialYy = static_cast<double>(vir_force[YY][YY]);
-                const double virialYz = static_cast<double>(vir_force[YY][ZZ]);
-                const double virialZx = static_cast<double>(vir_force[ZZ][XX]);
-                const double virialZy = static_cast<double>(vir_force[ZZ][YY]);
-                const double virialZz = static_cast<double>(vir_force[ZZ][ZZ]);
-                appendRespaTraceTextLine(
-                        ljSrTraceDirPath,
-                        "step0_potential_ledger_trace.txt",
-                        "stage=FINAL_INTERNAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:after_accumulatePotentialEnergies"
-                                + std::string(" case_label=")
-                                + std::string(
-                                        (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0')
-                                                ? ljSrCaseLabelEnv
-                                                : "unknown")
-                                + " execution_path=post_sum_epot_enerd_term run_kind="
-                                + std::string(isExactRespaLedger ? "exact_respa" : "single_step")
-                                + " step=0"
-                                + " bond=" + formatString("%.15f", tracedBondEnergy) + " angle="
-                                + formatString("%.15f", tracedAngleEnergy) + " proper_dih="
-                                + formatString("%.15f", tracedProperDihedralEnergy) + " improper_dih="
-                                + formatString("%.15f", tracedImproperDihedralEnergy) + " lj14="
-                                + formatString("%.15f", tracedLj14Energy) + " coul14="
-                                + formatString("%.15f", tracedCoul14Energy) + " lj_sr="
-                                + formatString("%.15f", tracedLjSrEnergy) + " coul_sr="
-                                + formatString("%.15f", tracedCoulSrEnergy) + " coul_recip="
-                                + formatString("%.15f", tracedCoulRecipEnergy) + " buckingham_sr="
-                                + formatString("%.15f", tracedBuckinghamSrEnergy) + " other_terms="
-                                + formatString("%.15f", tracedOtherPotentialTerms) + " component_sum="
-                                + formatString("%.15f", static_cast<double>(tracedPotentialComponentSum))
-                                + " potential="
-                                + formatString("%.15f", static_cast<double>(enerd->term[InteractionFunction::PotentialEnergy])));
-                appendRespaTraceTextLine(
-                        ljSrTraceDirPath,
-                        "step0_virial_pressure_ledger_trace.txt",
-                        "stage=FINAL_INTERNAL_VIRIAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:after_accumulatePotentialEnergies"
-                                + std::string(" case_label=")
-                                + std::string(
-                                        (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0')
-                                                ? ljSrCaseLabelEnv
-                                                : "unknown")
-                                + " execution_path=post_sum_virial_force_tensor run_kind="
-                                + std::string(isExactRespaLedger ? "exact_respa" : "single_step")
-                                + " step=0"
-                                + " volume_nm3=" + formatString("%.15f", volumeNm3)
-                                + " vir_xx=" + formatString("%.15f", virialXx)
-                                + " vir_xy=" + formatString("%.15f", virialXy)
-                                + " vir_xz=" + formatString("%.15f", virialXz)
-                                + " vir_yx=" + formatString("%.15f", virialYx)
-                                + " vir_yy=" + formatString("%.15f", virialYy)
-                                + " vir_yz=" + formatString("%.15f", virialYz)
-                                + " vir_zx=" + formatString("%.15f", virialZx)
-                                + " vir_zy=" + formatString("%.15f", virialZy)
-                                + " vir_zz=" + formatString("%.15f", virialZz)
-                                + " pressure_xx_atm=" + formatString("%.15f", virialPressureAtm(virialXx))
-                                + " pressure_yy_atm=" + formatString("%.15f", virialPressureAtm(virialYy))
-                                + " pressure_zz_atm=" + formatString("%.15f", virialPressureAtm(virialZz))
-                                + " pressure_xy_atm="
-                                + formatString("%.15f", 0.5 * (virialPressureAtm(virialXy) + virialPressureAtm(virialYx)))
-                                + " pressure_xz_atm="
-                                + formatString("%.15f", 0.5 * (virialPressureAtm(virialXz) + virialPressureAtm(virialZx)))
-                                + " pressure_yz_atm="
-                                + formatString("%.15f", 0.5 * (virialPressureAtm(virialYz) + virialPressureAtm(virialZy))));
-            }
+            appendRespaTraceTextLine(
+                    ljSrTraceDirPath,
+                    "step0_potential_ledger_trace.txt",
+                    "stage=FINAL_INTERNAL_LEDGER code_location=src/gromacs/mdlib/sim_util.cpp:5410 case_label="
+                            + std::string(
+                                    (ljSrCaseLabelEnv != nullptr && *ljSrCaseLabelEnv != '\0') ? ljSrCaseLabelEnv :
+                                                                                                "unknown")
+                            + " execution_path=post_sum_epot_enerd_term bond="
+                            + formatString("%.15f", tracedBondEnergy) + " angle="
+                            + formatString("%.15f", tracedAngleEnergy) + " proper_dih="
+                            + formatString("%.15f", tracedProperDihedralEnergy) + " improper_dih="
+                            + formatString("%.15f", tracedImproperDihedralEnergy) + " lj14="
+                            + formatString("%.15f", tracedLj14Energy) + " coul14="
+                            + formatString("%.15f", tracedCoul14Energy) + " lj_sr="
+                            + formatString("%.15f", tracedLjSrEnergy) + " coul_sr="
+                            + formatString("%.15f", tracedCoulSrEnergy) + " coul_recip="
+                            + formatString("%.15f", tracedCoulRecipEnergy) + " buckingham_sr="
+                            + formatString("%.15f", tracedBuckinghamSrEnergy) + " other_terms="
+                            + formatString("%.15f", tracedOtherPotentialTerms) + " component_sum="
+                            + formatString("%.15f", static_cast<double>(tracedPotentialComponentSum)) + " potential="
+                            + formatString("%.15f", static_cast<double>(enerd->term[InteractionFunction::PotentialEnergy])));
         }
 
         if (!EI_TPI(inputrec.eI))
@@ -9714,6 +7606,8 @@ void do_force(FILE*                         fplog,
 
     if (traceForceComponents)
     {
+        const auto* exactRealspaceTrace =
+                useExactLammpsRespaNonbonded ? activeExactRespaRealspaceTraceCapture(step) : nullptr;
         appendForceComponentTracePair(activeM2pTraceDirPath(),
                                       traceSide,
                                       step,
@@ -9723,20 +7617,70 @@ void do_force(FILE*                         fplog,
                                       "src/gromacs/mdlib/sim_util.cpp:do_force.listed_forces_delta",
                                       "true_source_component",
                                       true);
-        appendForceComponentUnavailablePair(activeM2pTraceDirPath(),
-                                           traceSide,
-                                           step,
-                                           "lj_sr_force",
-                                           "not_separately_retained_in_do_force",
-                                           "src/gromacs/mdlib/sim_util.cpp:do_force.nonbonded_stage",
-                                           "runtime_force_component_unavailable");
-        appendForceComponentUnavailablePair(activeM2pTraceDirPath(),
-                                           traceSide,
-                                           step,
-                                           "coulomb_sr_force",
-                                           "not_separately_retained_in_do_force",
-                                           "src/gromacs/mdlib/sim_util.cpp:do_force.nonbonded_stage",
-                                           "runtime_force_component_unavailable");
+        if (useExactLammpsRespaNonbonded)
+        {
+            if (haveTracedPair14Delta)
+            {
+                appendForceComponentTracePair(activeM2pTraceDirPath(),
+                                              traceSide,
+                                              step,
+                                              "pair14_force",
+                                              tracedPair14Delta,
+                                              "exact_pair14_level_delta",
+                                              "src/gromacs/mdlib/sim_util.cpp:do_force.exact_pair14_level_delta",
+                                              "true_source_component",
+                                              true);
+            }
+            else
+            {
+                appendForceComponentUnavailablePair(
+                        activeM2pTraceDirPath(),
+                        traceSide,
+                        step,
+                        "pair14_force",
+                        "exact_pair14_level_delta",
+                        "src/gromacs/mdlib/sim_util.cpp:do_force.exact_pair14_level_delta",
+                        "pair14_level_inactive_for_step");
+            }
+        }
+        if (exactRealspaceTrace != nullptr)
+        {
+            appendForceComponentTracePair(activeM2pTraceDirPath(),
+                                          traceSide,
+                                          step,
+                                          "lj_sr_force",
+                                          exactRealspaceTrace->ljSrForce,
+                                          "computeLammpsRespaNonbondedCpu.exact_pairlist_truth",
+                                          "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                          "true_source_component",
+                                          true);
+            appendForceComponentTracePair(activeM2pTraceDirPath(),
+                                          traceSide,
+                                          step,
+                                          "coulomb_sr_force",
+                                          exactRealspaceTrace->coulombSrForce,
+                                          "computeLammpsRespaNonbondedCpu.exact_pairlist_truth",
+                                          "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                          "true_source_component",
+                                          true);
+        }
+        else
+        {
+            appendForceComponentUnavailablePair(activeM2pTraceDirPath(),
+                                               traceSide,
+                                               step,
+                                               "lj_sr_force",
+                                               "not_separately_retained_in_do_force",
+                                               "src/gromacs/mdlib/sim_util.cpp:do_force.nonbonded_stage",
+                                               "runtime_force_component_unavailable");
+            appendForceComponentUnavailablePair(activeM2pTraceDirPath(),
+                                               traceSide,
+                                               step,
+                                               "coulomb_sr_force",
+                                               "not_separately_retained_in_do_force",
+                                               "src/gromacs/mdlib/sim_util.cpp:do_force.nonbonded_stage",
+                                               "runtime_force_component_unavailable");
+        }
         appendForceComponentTracePair(activeM2pTraceDirPath(),
                                       traceSide,
                                       step,
@@ -9746,13 +7690,28 @@ void do_force(FILE*                         fplog,
                                       "src/gromacs/mdlib/sim_util.cpp:do_force.longrange_delta",
                                       "true_source_component",
                                       true);
-        appendForceComponentUnavailablePair(activeM2pTraceDirPath(),
-                                           traceSide,
-                                           step,
-                                           "exclusion_correction_force",
-                                           "not_separately_retained_in_do_force",
-                                           "src/gromacs/mdlib/sim_util.cpp:do_force.nonbonded_stage",
-                                           "runtime_force_component_unavailable");
+        if (exactRealspaceTrace != nullptr)
+        {
+            appendForceComponentTracePair(activeM2pTraceDirPath(),
+                                          traceSide,
+                                          step,
+                                          "exclusion_correction_force",
+                                          exactRealspaceTrace->exclusionCorrectionForce,
+                                          "computeLammpsRespaNonbondedCpu.exact_pairlist_truth",
+                                          "src/gromacs/mdlib/sim_util.cpp:computeLammpsRespaNonbondedCpu",
+                                          "true_source_component",
+                                          true);
+        }
+        else
+        {
+            appendForceComponentUnavailablePair(activeM2pTraceDirPath(),
+                                               traceSide,
+                                               step,
+                                               "exclusion_correction_force",
+                                               "not_separately_retained_in_do_force",
+                                               "src/gromacs/mdlib/sim_util.cpp:do_force.nonbonded_stage",
+                                               "runtime_force_component_unavailable");
+        }
         appendForceComponentTracePair(activeM2pTraceDirPath(),
                                       traceSide,
                                       step,
@@ -9771,33 +7730,6 @@ void do_force(FILE*                         fplog,
                                       "src/gromacs/mdlib/sim_util.cpp:do_force.exit",
                                       "combined_total",
                                       false);
-    }
-
-    if (exactRespaForceStore != nullptr)
-    {
-        GMX_RELEASE_ASSERT(gmx::useExactRespa(inputrec),
-                           "Exact force-store updates should only be active for exact r-RESPA");
-        const ArrayRef<const RVec> recomputedLevel1 =
-                (useExactRespaForceOutputs && exactRespaForceOutputs.hasLevel(1))
-                        ? exactRespaForceOutputs.level(1).forceWithShiftForces().force()
-                        : ArrayRef<const RVec>{};
-        const ArrayRef<const RVec> recomputedLevel2 =
-                (useExactRespaForceOutputs && exactRespaForceOutputs.hasLevel(2))
-                        ? exactRespaForceOutputs.level(2).forceWithShiftForces().force()
-                        : ArrayRef<const RVec>{};
-        if (traceForceComponents)
-        {
-            appendForceStoreUpdateInputTrace(
-                    activeM2pTraceDirPath(), step, "physical_total", force.unpaddedConstArrayRef());
-            appendForceStoreUpdateInputTrace(
-                    activeM2pTraceDirPath(), step, "recomputed_level1", recomputedLevel1);
-            appendForceStoreUpdateInputTrace(
-                    activeM2pTraceDirPath(), step, "recomputed_level2", recomputedLevel2);
-        }
-        exactRespaForceStore->update(force.unpaddedConstArrayRef(),
-                                     recomputedLevel1,
-                                     recomputedLevel2,
-                                     exactRespaNumLevels(inputrec));
     }
 
     /* In case we don't have constraints and are using GPUs, the next balancing

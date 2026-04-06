@@ -224,6 +224,7 @@ auto bondedKernel(CommandGroupHandler              cgh,
                                                      pbcAiuc,
                                                      kernelParams_.repulsionPower,
                                                      electrostaticsScaleFactor,
+                                                     kernelParams.repulsionPower,
                                                      &vtot_loc,
                                                      &vtotElec_loc,
                                                      localId);

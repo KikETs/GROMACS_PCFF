@@ -50,6 +50,7 @@
 #include <vector>
 
 enum class PmeRunMode;
+struct t_inputrec;
 
 namespace gmx
 {
@@ -82,6 +83,7 @@ void reportGpuUsage(const MDLogger&                   mdlog,
                     size_t                            numPpRanks,
                     bool                              printHostName,
                     PmeRunMode                        pmeRunMode,
+                    const t_inputrec&                inputrec,
                     const SimulationWorkload&         simulationWork);
 
 } // namespace gmx

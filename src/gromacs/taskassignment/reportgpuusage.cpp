@@ -47,6 +47,7 @@
 #include "gromacs/ewald/pme.h"
 #include "gromacs/gpu_utils/gpu_utils.h"
 #include "gromacs/mdtypes/simulation_workload.h"
+#include "gromacs/taskassignment/decidegpuusage.h"
 #include "gromacs/taskassignment/taskassignment.h"
 #include "gromacs/utility/arrayref.h"
 #include "gromacs/utility/cstringutil.h"
@@ -79,6 +80,11 @@ size_t countUniqueGpuIdsUsed(ArrayRef<const GpuTaskAssignment> gpuTaskAssignment
     return uniqueIds.size();
 }
 
+bool isAuditedExactRespaHybridGpuReport(const t_inputrec& inputrec, const SimulationWorkload& simulationWork)
+{
+    return simulationWork.useGpuNonbonded && isSupportedExactRespaHybridNbGpuInput(inputrec);
+}
+
 } // namespace
 
 void reportGpuUsage(const MDLogger&                   mdlog,
@@ -87,6 +93,7 @@ void reportGpuUsage(const MDLogger&                   mdlog,
                     size_t                            numRanks,
                     bool                              printHostName,
                     PmeRunMode                        pmeRunMode,
+                    const t_inputrec&                inputrec,
                     const SimulationWorkload&         simulationWork)
 {
     size_t numGpusInUse = countUniqueGpuIdsUsed(gpuTaskAssignmentOnRanksOfThisNode);
@@ -138,12 +145,24 @@ void reportGpuUsage(const MDLogger&                   mdlog,
                 (numRanks > 1) ? "s" : "",
                 gpuIdsString.c_str());
         // Because there is a GPU in use, there must be a PP task on a GPU.
-        output += gmx::formatString(
-                "PP tasks will do %s short-ranged%s interactions on the GPU\n",
-                simulationWork.useGpuNonbondedFE ? "all (non-perturbed and perturbed)" : "non-perturbed",
-                simulationWork.useGpuBonded ? " and most bonded" : "");
-        output += gmx::formatString("PP task will update and constrain coordinates on the %s\n",
-                                    simulationWork.useGpuUpdate ? "GPU" : "CPU");
+        if (isAuditedExactRespaHybridGpuReport(inputrec, simulationWork))
+        {
+            output += gmx::formatString(
+                    "PP tasks will do non-perturbed short-ranged%s interactions on the GPU\n",
+                    simulationWork.useGpuBonded ? " and Lennard-Jones 1-4 listed-pair" : "");
+            output += gmx::formatString("PP task will update coordinates on the %s\n",
+                                        simulationWork.useGpuUpdate ? "GPU" : "CPU");
+        }
+        else
+        {
+            output += gmx::formatString(
+                    "PP tasks will do %s short-ranged%s interactions on the GPU\n",
+                    simulationWork.useGpuNonbondedFE ? "all (non-perturbed and perturbed)"
+                                                     : "non-perturbed",
+                    simulationWork.useGpuBonded ? " and most bonded" : "");
+            output += gmx::formatString("PP task will update and constrain coordinates on the %s\n",
+                                        simulationWork.useGpuUpdate ? "GPU" : "CPU");
+        }
         if (pmeRunMode == PmeRunMode::Mixed)
         {
             output += gmx::formatString("PME tasks will do only spread and gather on the GPU\n");

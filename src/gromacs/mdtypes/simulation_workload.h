@@ -42,6 +42,8 @@
 #ifndef GMX_MDTYPES_SIMULATION_WORKLOAD_H
 #define GMX_MDTYPES_SIMULATION_WORKLOAD_H
 
+#include "gromacs/mdtypes/multipletimestepping.h"
+
 namespace gmx
 {
 
@@ -109,6 +111,25 @@ public:
     bool combineMtsForcesBeforeHaloExchange = false;
     //! Whether to clear local force buffer on the device early on in the step
     bool clearGpuFBufferEarly = false;
+    //! Which exact LAMMPS-style real-space nonbonded contribution a single kernel launch is computing
+    MtsNonbondedRespaContribution nonbondedRespaContribution = MtsNonbondedRespaContribution::Full;
+
+    /*! \brief Returns a per-launch workload for a single exact LAMMPS-style nonbonded contribution.
+     *
+     * Exact split real-space execution can require multiple kernel launches within one MD step.
+     * Inner and middle launches must not request per-launch energy or virial accumulation.
+     */
+    StepWorkload withExactNonbondedContribution(const MtsNonbondedRespaContribution contribution) const
+    {
+        StepWorkload contributionWorkload = *this;
+        contributionWorkload.nonbondedRespaContribution = contribution;
+
+        const bool isOuterLike = (contribution == MtsNonbondedRespaContribution::Outer
+                                  || contribution == MtsNonbondedRespaContribution::Full);
+        contributionWorkload.computeEnergy = computeEnergy && isOuterLike;
+        contributionWorkload.computeVirial = computeVirial && isOuterLike;
+        return contributionWorkload;
+    }
 };
 
 /*! \libinternal

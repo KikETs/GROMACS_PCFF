@@ -93,6 +93,7 @@ class MDAtoms;
 
 
 bool canUseGpusForNonbonded(const t_inputrec& ir, bool doRerun, std::string* error);
+bool isSupportedExactRespaHybridNbGpuInput(const t_inputrec& ir);
 
 /*! \brief Decide whether this thread-MPI simulation will run
  * nonbonded tasks on GPUs.
@@ -189,6 +190,7 @@ bool decideWhetherToUseGpusForNonbonded(TaskTarget              nonbondedTarget,
                                         const std::vector<int>& userGpuTaskAssignment,
                                         EmulateGpuNonbonded     emulateGpuNonbonded,
                                         bool                    canUseNonbondedOnGpu,
+                                        const std::string&      nonbondedNotSupportedReason,
                                         bool                    binaryReproducibilityRequested,
                                         bool                    gpusWereDetected);
 
@@ -306,6 +308,7 @@ bool decideWhetherToUseGpuForUpdate(bool                 isDomainDecomposition,
                                     PmeRunMode           pmeRunMode,
                                     bool                 havePmeOnlyRank,
                                     bool                 useGpuForNonbonded,
+                                    bool                 useGpuForBonded,
                                     TaskTarget           updateTarget,
                                     bool                 gpusWereDetected,
                                     const t_inputrec&    inputrec,

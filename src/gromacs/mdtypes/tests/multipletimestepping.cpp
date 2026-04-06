@@ -53,6 +53,7 @@
 
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/md_enums.h"
+#include "gromacs/mdtypes/simulation_workload.h"
 #include "gromacs/utility/enumerationhelpers.h"
 #include "gromacs/utility/gmxassert.h"
 #include "gromacs/utility/smalloc.h"
@@ -435,6 +436,121 @@ TEST(MultipleTimeStepping, ParsesExactLammpsRespaSchedule)
     EXPECT_EQ(nonbondedRespaContributionMtsLevel(ir, MtsNonbondedRespaContribution::Middle), 1);
     EXPECT_EQ(nonbondedRespaContributionMtsLevel(ir, MtsNonbondedRespaContribution::Outer), 2);
     EXPECT_EQ(nonbondedMtsFactor(ir), 4);
+}
+
+TEST(MultipleTimeStepping, ComputesExactLammpsRespaPairSplitWeightsAcrossTransitionRegions)
+{
+    const GromppMtsOpts mtsOpts = exactLammpsRespaOpts();
+
+    t_inputrec ir;
+    configureExactLammpsRespaInputRecord(&ir);
+
+    setAndCheckMtsLevels(mtsOpts, &ir, 0);
+    constexpr double splitWeightTolerance = 1e-6;
+
+    const auto innerOnlyWeights = computeLammpsRespaPairSplitWeights(ir, 0.25_real);
+    EXPECT_NEAR(innerOnlyWeights.inner, 1.0, splitWeightTolerance);
+    EXPECT_NEAR(innerOnlyWeights.middle, 0.0, splitWeightTolerance);
+    EXPECT_NEAR(innerOnlyWeights.outer, 0.0, splitWeightTolerance);
+
+    const auto innerMiddleBlend = computeLammpsRespaPairSplitWeights(ir, 0.375_real);
+    EXPECT_NEAR(innerMiddleBlend.inner, 0.5, splitWeightTolerance);
+    EXPECT_NEAR(innerMiddleBlend.middle, 0.5, splitWeightTolerance);
+    EXPECT_NEAR(innerMiddleBlend.outer, 0.0, splitWeightTolerance);
+
+    const auto middleOuterBlend = computeLammpsRespaPairSplitWeights(ir, 0.70_real);
+    EXPECT_NEAR(middleOuterBlend.inner, 0.0, splitWeightTolerance);
+    EXPECT_NEAR(middleOuterBlend.middle, 0.5, splitWeightTolerance);
+    EXPECT_NEAR(middleOuterBlend.outer, 0.5, splitWeightTolerance);
+
+    const auto outerOnlyWeights = computeLammpsRespaPairSplitWeights(ir, 0.90_real);
+    EXPECT_NEAR(outerOnlyWeights.inner, 0.0, splitWeightTolerance);
+    EXPECT_NEAR(outerOnlyWeights.middle, 0.0, splitWeightTolerance);
+    EXPECT_NEAR(outerOnlyWeights.outer, 1.0, splitWeightTolerance);
+}
+
+TEST(MultipleTimeStepping, ReportsActiveExactLammpsRespaNonbondedOutputSinks)
+{
+    const GromppMtsOpts mtsOpts = exactLammpsRespaOpts();
+
+    t_inputrec ir;
+    configureExactLammpsRespaInputRecord(&ir);
+
+    setAndCheckMtsLevels(mtsOpts, &ir, 0);
+
+    const auto sinks = activeLammpsRespaNonbondedOutputSinks(ir, 2, true, true);
+    ASSERT_EQ(sinks.size(), 3);
+
+    EXPECT_EQ(sinks[0].contribution, MtsNonbondedRespaContribution::Inner);
+    EXPECT_EQ(sinks[0].mtsLevel, 0);
+    EXPECT_EQ(sinks[0].sinkKind, LammpsRespaNonbondedOutputSinkKind::ShiftForce);
+    EXPECT_FALSE(sinks[0].accumulateEnergy);
+
+    EXPECT_EQ(sinks[1].contribution, MtsNonbondedRespaContribution::Middle);
+    EXPECT_EQ(sinks[1].mtsLevel, 1);
+    EXPECT_EQ(sinks[1].sinkKind, LammpsRespaNonbondedOutputSinkKind::ShiftForce);
+    EXPECT_FALSE(sinks[1].accumulateEnergy);
+
+    EXPECT_EQ(sinks[2].contribution, MtsNonbondedRespaContribution::Outer);
+    EXPECT_EQ(sinks[2].mtsLevel, 2);
+    EXPECT_EQ(sinks[2].sinkKind, LammpsRespaNonbondedOutputSinkKind::ForceWithVirial);
+    EXPECT_TRUE(sinks[2].accumulateEnergy);
+}
+
+TEST(MultipleTimeStepping, FiltersExactLammpsRespaNonbondedOutputSinksByActiveLevelAndVirialNeed)
+{
+    const GromppMtsOpts mtsOpts = exactLammpsRespaOpts();
+
+    t_inputrec ir;
+    configureExactLammpsRespaInputRecord(&ir);
+
+    setAndCheckMtsLevels(mtsOpts, &ir, 0);
+
+    const auto sinks = activeLammpsRespaNonbondedOutputSinks(ir, 1, false, false);
+    ASSERT_EQ(sinks.size(), 2);
+
+    EXPECT_EQ(sinks[0].contribution, MtsNonbondedRespaContribution::Inner);
+    EXPECT_EQ(sinks[0].mtsLevel, 0);
+    EXPECT_EQ(sinks[0].sinkKind, LammpsRespaNonbondedOutputSinkKind::ShiftForce);
+    EXPECT_FALSE(sinks[0].accumulateEnergy);
+
+    EXPECT_EQ(sinks[1].contribution, MtsNonbondedRespaContribution::Middle);
+    EXPECT_EQ(sinks[1].mtsLevel, 1);
+    EXPECT_EQ(sinks[1].sinkKind, LammpsRespaNonbondedOutputSinkKind::ShiftForce);
+    EXPECT_FALSE(sinks[1].accumulateEnergy);
+}
+
+TEST(MultipleTimeStepping, DerivesPerLaunchWorkloadForExactNonbondedContribution)
+{
+    StepWorkload stepWork;
+    stepWork.computeForces             = true;
+    stepWork.computeNonbondedForces    = true;
+    stepWork.computeEnergy             = true;
+    stepWork.computeVirial             = true;
+    stepWork.computeSlowForces         = true;
+    stepWork.highestActiveMtsLevel     = 2;
+
+    const auto innerWork = stepWork.withExactNonbondedContribution(MtsNonbondedRespaContribution::Inner);
+    EXPECT_EQ(innerWork.nonbondedRespaContribution, MtsNonbondedRespaContribution::Inner);
+    EXPECT_TRUE(innerWork.computeForces);
+    EXPECT_TRUE(innerWork.computeNonbondedForces);
+    EXPECT_FALSE(innerWork.computeEnergy);
+    EXPECT_FALSE(innerWork.computeVirial);
+
+    const auto middleWork = stepWork.withExactNonbondedContribution(MtsNonbondedRespaContribution::Middle);
+    EXPECT_EQ(middleWork.nonbondedRespaContribution, MtsNonbondedRespaContribution::Middle);
+    EXPECT_FALSE(middleWork.computeEnergy);
+    EXPECT_FALSE(middleWork.computeVirial);
+
+    const auto outerWork = stepWork.withExactNonbondedContribution(MtsNonbondedRespaContribution::Outer);
+    EXPECT_EQ(outerWork.nonbondedRespaContribution, MtsNonbondedRespaContribution::Outer);
+    EXPECT_TRUE(outerWork.computeEnergy);
+    EXPECT_TRUE(outerWork.computeVirial);
+
+    const auto fullWork = stepWork.withExactNonbondedContribution(MtsNonbondedRespaContribution::Full);
+    EXPECT_EQ(fullWork.nonbondedRespaContribution, MtsNonbondedRespaContribution::Full);
+    EXPECT_TRUE(fullWork.computeEnergy);
+    EXPECT_TRUE(fullWork.computeVirial);
 }
 
 TEST(MultipleTimeStepping, RejectsLegacyForceListsInExactLammpsRespaMode)

@@ -119,14 +119,14 @@ public:
                    float                             dtPressureCouple,
                    const gmx::Matrix3x3&             prVelocityScalingMatrix);
 
-    /*! \brief Advance coordinates on the GPU using the current device velocities only.
+    /*! \brief Drift coordinates on the GPU using the current device-side velocities.
      *
-     * This is intended for unconstrained exact r-RESPA drift, where host-side kicks remain
-     * authoritative and the GPU should not reinterpret the step as a generic leap-frog update.
+     * This exact r-RESPA HG6 helper intentionally updates coordinates only. Velocities remain
+     * host-authored and are synchronized to the device separately around the exact half-kick stages.
      *
      * \param[in] dt Timestep.
      */
-    void driftOnly(real dt);
+    void driftCoordinates(real dt);
 
     /*! \brief Scale coordinates on the GPU for the pressure coupling.
      *
