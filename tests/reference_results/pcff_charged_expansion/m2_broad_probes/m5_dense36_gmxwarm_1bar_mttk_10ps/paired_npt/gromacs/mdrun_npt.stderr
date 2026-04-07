@@ -1,0 +1,30 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_dense36_gmxwarm_1bar_mttk_10ps/paired_npt/gromacs
+Command line:
+  gmx mdrun -s npt.tpr -deffnm npt -nt 4 -pin off -reprod
+
+Reading file npt.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Can not increase nstlist because verlet-buffer-tolerance is not set or used
+Using 1 MPI thread
+Using 4 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'monoglyme_ethane_litfsi_1to1_dense36'
+10000 steps,     10.0 ps.
+
+
+Received the TERM signal, stopping within 10 steps
+
+
+               Core t (s)   Wall t (s)        (%)
+       Time:      554.111      138.528      400.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:        2.944        8.151       29.343            0.049 
+
+GROMACS reminds you: "First rule of atomics: Thou shalt not make generalized statements about atomics!" (Noah Wolfe, on discussing GPU atomic operations)
+

@@ -1,0 +1,11 @@
+; deterministic PT6 GROMACS emitter output
+; molecule_name=LI
+; residue_name=LI
+
+[ moleculetype ]
+; Name nrexcl
+LI 1
+
+[ atoms ]
+; nr type resnr residue atom cgnr charge mass
+  1 nb_lithium_cation      1 LI     Li1     1  1.00000000  6.941000

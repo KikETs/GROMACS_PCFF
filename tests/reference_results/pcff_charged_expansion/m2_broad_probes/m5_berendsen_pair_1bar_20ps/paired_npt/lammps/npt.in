@@ -1,0 +1,152 @@
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2/coul/long 9.0 9.0
+pair_modify mix sixthpower
+bond_style class2
+angle_style class2
+dihedral_style class2
+improper_style none
+kspace_style pppm 1.0e-4
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+neighbor 2.0 bin
+neigh_modify every 1 delay 0 check no
+
+read_data minimized.data
+
+pair_coeff 1 1 0.1 3.5
+pair_coeff 2 2 0.09 3.45
+pair_coeff 3 3 0.05 2.85
+pair_coeff 4 4 0.08 3.4
+pair_coeff 5 5 0.07 3
+pair_coeff 6 6 0.02 2.5
+pair_coeff 7 7 0.018 2.45
+pair_coeff 8 8 0.018 2.45
+pair_coeff 9 9 0.02 2.2
+pair_coeff 10 10 0.08 3.4
+pair_coeff 11 11 0.08 3.3
+pair_coeff 12 12 0.06 2.95
+pair_coeff 13 13 0.1 4.1
+bond_coeff 1 1.53 250 -35 8
+bond_coeff 2 1.101 338 -44 6.2
+bond_coeff 3 1.43 320 -42 5.5
+bond_coeff 4 1.101 340 -45 6.5
+bond_coeff 5 1.34 390 -50 7.4
+bond_coeff 6 1.57 310 -28 6
+bond_coeff 7 1.44 570 -68 10
+bond_coeff 8 1.82 260 -36 7
+angle_coeff 1 112.1 41 -5.3 1.2
+angle_coeff 1 bb 5.8 1.43 1.43
+angle_coeff 1 ba 1.75 1.75 1.43 1.43
+angle_coeff 2 110.7 34.5 -4.2 0.9
+angle_coeff 2 bb 4.6 1.101 1.53
+angle_coeff 2 ba 1.1 1.35 1.101 1.53
+angle_coeff 3 107.6 35 -4.4 1
+angle_coeff 3 bb 5 1.101 1.101
+angle_coeff 3 ba 1.08 1.08 1.101 1.101
+angle_coeff 4 110.4 36 -4.2 0.95
+angle_coeff 4 bb 4.75 1.43 1.53
+angle_coeff 4 ba 1.42 1.35 1.43 1.53
+angle_coeff 5 109.4 37.1 -4.1 0.9
+angle_coeff 5 bb 4.9 1.43 1.101
+angle_coeff 5 ba 1.42 1.28 1.43 1.101
+angle_coeff 6 110.7 34.5 -4.2 0.9
+angle_coeff 6 bb 4.6 1.53 1.101
+angle_coeff 6 ba 1.35 1.35 1.53 1.101
+angle_coeff 7 107.8 35.2 -4.5 1.1
+angle_coeff 7 bb 5.1 1.101 1.101
+angle_coeff 7 ba 1.1 1.1 1.101 1.101
+angle_coeff 8 108.8 48.2 -5.9 1.6
+angle_coeff 8 bb 6.3 1.34 1.34
+angle_coeff 8 ba 1.85 1.85 1.34 1.34
+angle_coeff 9 111.9 44.6 -5.4 1.3
+angle_coeff 9 bb 5.7 1.34 1.82
+angle_coeff 9 ba 1.62 1.95 1.34 1.82
+angle_coeff 10 101.4 55.4 -6.5 1.7
+angle_coeff 10 bb 6.2 1.57 1.82
+angle_coeff 10 ba 2.05 1.92 1.57 1.82
+angle_coeff 11 106.2 72 -8.2 2.1
+angle_coeff 11 bb 6.8 1.57 1.44
+angle_coeff 11 ba 2.2 2.35 1.57 1.44
+angle_coeff 12 107.1 61.2 -7.1 1.8
+angle_coeff 12 bb 6.9 1.44 1.82
+angle_coeff 12 ba 2.26 2.01 1.44 1.82
+angle_coeff 13 118.6 79.8 -9 2.3
+angle_coeff 13 bb 7.5 1.44 1.44
+angle_coeff 13 ba 2.48 2.48 1.44 1.44
+angle_coeff 14 124.2 66.5 -7.7 2
+angle_coeff 14 bb 7.2 1.57 1.57
+angle_coeff 14 ba 2.6 2.6 1.57 1.57
+dihedral_coeff 1 0.72 0 0.45 180 0.18 0
+dihedral_coeff 1 mbt 0.1 -0.06 0.03 1.43
+dihedral_coeff 1 ebt 0.08 -0.04 0.02 0.07 -0.03 0.015 1.43 1.53
+dihedral_coeff 1 at 0.04 -0.02 0.01 0.03 -0.015 0.008 112.1 110.4
+dihedral_coeff 1 aat 0.17 112.1 110.4
+dihedral_coeff 1 bb13 0.11 1.43 1.53
+dihedral_coeff 2 0.72 0 0.45 180 0.18 0
+dihedral_coeff 2 mbt 0.1 -0.06 0.03 1.43
+dihedral_coeff 2 ebt 0.08 -0.04 0.02 0.07 -0.03 0.015 1.43 1.101
+dihedral_coeff 2 at 0.04 -0.02 0.01 0.03 -0.015 0.008 112.1 109.4
+dihedral_coeff 2 aat 0.17 112.1 109.4
+dihedral_coeff 2 bb13 0.11 1.43 1.101
+dihedral_coeff 3 0.85 0 0.6 180 0.35 0
+dihedral_coeff 3 mbt 0.11 -0.07 0.03 1.101
+dihedral_coeff 3 ebt 0.09 -0.045 0.02 0.09 -0.045 0.02 1.101 1.101
+dihedral_coeff 3 at 0.05 -0.025 0.012 0.05 -0.025 0.012 110.7 110.7
+dihedral_coeff 3 aat 0.2 110.7 110.7
+dihedral_coeff 3 bb13 0.12 1.101 1.101
+dihedral_coeff 4 0.72 0 0.45 180 0.18 0
+dihedral_coeff 4 mbt 0.1 -0.06 0.03 1.53
+dihedral_coeff 4 ebt 0.08 -0.04 0.02 0.07 -0.03 0.015 1.53 1.101
+dihedral_coeff 4 at 0.04 -0.02 0.01 0.03 -0.015 0.008 110.4 109.4
+dihedral_coeff 4 aat 0.17 110.4 109.4
+dihedral_coeff 4 bb13 0.11 1.53 1.101
+dihedral_coeff 5 0.72 0 0.45 180 0.18 0
+dihedral_coeff 5 mbt 0.1 -0.06 0.03 1.53
+dihedral_coeff 5 ebt 0.08 -0.04 0.02 0.07 -0.03 0.015 1.53 1.53
+dihedral_coeff 5 at 0.04 -0.02 0.01 0.03 -0.015 0.008 110.4 110.4
+dihedral_coeff 5 aat 0.17 110.4 110.4
+dihedral_coeff 5 bb13 0.11 1.53 1.53
+dihedral_coeff 6 0.85 0 0.6 180 0.35 0
+dihedral_coeff 6 mbt 0.11 -0.07 0.03 1.53
+dihedral_coeff 6 ebt 0.09 -0.045 0.02 0.09 -0.045 0.02 1.101 1.101
+dihedral_coeff 6 at 0.05 -0.025 0.012 0.05 -0.025 0.012 110.7 110.7
+dihedral_coeff 6 aat 0.2 110.7 110.7
+dihedral_coeff 6 bb13 0.12 1.101 1.101
+dihedral_coeff 7 0.95 0 0.52 180 0.24 0
+dihedral_coeff 7 mbt 0.14 -0.08 0.04 1.82
+dihedral_coeff 7 ebt 0.12 -0.06 0.03 0.1 -0.04 0.02 1.34 1.57
+dihedral_coeff 7 at 0.06 -0.03 0.015 0.05 -0.02 0.01 111.9 101.4
+dihedral_coeff 7 aat 0.28 111.9 101.4
+dihedral_coeff 7 bb13 0.16 1.34 1.57
+dihedral_coeff 8 1.05 0 0.58 180 0.26 0
+dihedral_coeff 8 mbt 0.15 -0.09 0.045 1.82
+dihedral_coeff 8 ebt 0.13 -0.065 0.032 0.11 -0.045 0.022 1.34 1.44
+dihedral_coeff 8 at 0.07 -0.035 0.018 0.06 -0.025 0.013 111.9 107.1
+dihedral_coeff 8 aat 0.31 111.9 107.1
+dihedral_coeff 8 bb13 0.18 1.34 1.44
+dihedral_coeff 9 1.12 0 0.64 180 0.29 0
+dihedral_coeff 9 mbt 0.17 -0.1 0.05 1.44
+dihedral_coeff 9 ebt 0.15 -0.07 0.035 0.12 -0.05 0.025 1.44 1.57
+dihedral_coeff 9 at 0.08 -0.04 0.02 0.07 -0.03 0.015 106.2 124.2
+dihedral_coeff 9 aat 0.34 106.2 124.2
+dihedral_coeff 9 bb13 0.21 1.44 1.57
+dihedral_coeff 10 1 0 0.57 180 0.25 0
+dihedral_coeff 10 mbt 0.16 -0.09 0.045 1.57
+dihedral_coeff 10 ebt 0.14 -0.065 0.032 0.12 -0.045 0.022 1.57 1.82
+dihedral_coeff 10 at 0.07 -0.035 0.017 0.06 -0.025 0.012 124.2 101.4
+dihedral_coeff 10 aat 0.29 124.2 101.4
+dihedral_coeff 10 bb13 0.19 1.57 1.82
+
+velocity all create 300.0 20260407 dist gaussian mom yes rot yes
+reset_timestep 0
+timestep 1.0
+fix 1 all nve
+fix 2 all temp/berendsen 300.0 300.0 100
+fix 3 all press/berendsen iso 0.9869232667 0.9869232667 1000
+thermo 100
+thermo_style custom step temp pe ke etotal press vol density
+thermo_modify flush yes
+run 20000
+write_data final.data

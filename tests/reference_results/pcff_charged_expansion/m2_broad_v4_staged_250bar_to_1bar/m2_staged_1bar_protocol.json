@@ -1,0 +1,69 @@
+{
+  "anti_cherry_pick_rule": "No best-case reporting: all required systems must pass the staged target gate, otherwise staged 1 bar PASS is forbidden.",
+  "barostat_thermostat": {
+    "compressibility_bar_inv": 4.5e-05,
+    "gmx_integrator": "md-vv",
+    "gmx_pcoupl": "mttk",
+    "gmx_tcoupl": "nose-hoover",
+    "lmp_neighbor_every": 1,
+    "lmp_neighbor_skin_angstrom": 4.0,
+    "lmp_target_barostat": "npt",
+    "tau_p_ps": 1.0,
+    "tau_t_ps": 0.1,
+    "thermal_start": "generated"
+  },
+  "claim_boundary_if_pass": "pressure-preconditioned 1 bar staged dense charged density/volume parity only; not ambient 1 bar equilibrium parity and not generic dense charged readiness",
+  "execution_resources": {
+    "gmx_threads": 8,
+    "lmp_omp_threads": 1,
+    "lmp_ranks": 1
+  },
+  "milestone": "M2 ambient root-cause follow-up, staged protocol candidate",
+  "non_claims": [
+    "ambient 1 bar equilibrium dense parity",
+    "fully generic dense charged PCFF readiness",
+    "charged transport readiness",
+    "TP1 thermal recovery as M2 evidence",
+    "M5 smoke/grompp success as M2 dense-parity evidence"
+  ],
+  "predeclared_before_target_result_interpretation": true,
+  "required_systems": [
+    {
+      "role": "existing dense scaffold",
+      "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
+      "system_id": "gate_h_dense_salt_polymer_2x2x2"
+    },
+    {
+      "role": "second strict paired dense chemistry",
+      "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/fixtures/monoglyme_ethane_litfsi_1to1_dense18/fixture_manifest.json",
+      "system_id": "monoglyme_ethane_litfsi_1to1_dense18"
+    }
+  ],
+  "schema_name": "pcff_charged_m2_staged_1bar_protocol",
+  "schema_version": 1,
+  "stages": {
+    "precondition": {
+      "duration_ps": 100.0,
+      "ensemble": "NPT",
+      "purpose": "drive both paired systems into the dense basin before the staged 1 bar target",
+      "ref_p_bar": 250.0,
+      "warmup_ps": 0.0,
+      "warmup_scope": null
+    },
+    "target": {
+      "analysis_window_ps": 50.0,
+      "density_relative_difference_max": 0.05,
+      "duration_ps": 100.0,
+      "ensemble": "NPT",
+      "fail_rule": "campaign PASS requires every predeclared system to pass the staged target density and volume thresholds; one failure makes campaign FAIL",
+      "ref_p_bar": 1.0,
+      "volume_relative_difference_max": 0.05
+    }
+  },
+  "strict_qualification_rule": {
+    "acpype_gaff2_allowed": false,
+    "gromacs_side_must_be_pcff_derived": true,
+    "lammps_side_must_be_pcff_class2": true,
+    "same_pcff_source_required": true
+  }
+}

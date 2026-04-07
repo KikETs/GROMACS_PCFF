@@ -1,0 +1,109 @@
+{
+  "artifacts": {
+    "gromacs_energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_mttk_taut1_20ps/paired_npt/gromacs/npt_energy.xvg",
+    "gromacs_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_mttk_taut1_20ps/paired_npt/gromacs",
+    "gromacs_warmup_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_mttk_taut1_20ps/paired_npt/gromacs/warmup.log",
+    "lammps_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_mttk_taut1_20ps/paired_npt/lammps/npt.log",
+    "lammps_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_mttk_taut1_20ps/paired_npt/lammps",
+    "lammps_warmup_log": null
+  },
+  "gromacs": {
+    "density_kg_m3": {
+      "max": 288.558289,
+      "mean": 84.80962667326733,
+      "min": 10.449704,
+      "sem_block5": 41.69260080475084
+    },
+    "potential_energy_kj_mol": {
+      "max": -10901.495117,
+      "mean": -11161.885510148515,
+      "min": -11411.035156,
+      "sem_block5": 23.463134020115927
+    },
+    "pressure_bar": {
+      "max": 448.892242,
+      "mean": 9.751516168316831,
+      "min": -652.180725,
+      "sem_block5": 5.221629272263025
+    },
+    "temperature_k": {
+      "max": 317.848907,
+      "mean": 298.0417226732673,
+      "min": 271.482849,
+      "sem_block5": 0.8758071238202876
+    },
+    "volume_nm3": {
+      "max": 1164.947632,
+      "mean": 478.33436795049505,
+      "min": 42.186825,
+      "sem_block5": 203.02387322164728
+    }
+  },
+  "lammps": {
+    "density_kg_m3": {
+      "max": 511.25737000000004,
+      "mean": 421.95962534653466,
+      "min": 311.29951,
+      "sem_block5": 27.24071094750876
+    },
+    "potential_energy_kj_mol": {
+      "max": -10501.866777600002,
+      "mean": -11135.037980728714,
+      "min": -11612.3062352,
+      "sem_block5": 162.15655736244005
+    },
+    "pressure_atm": {
+      "max": 1769.0833,
+      "mean": 42.621343673267326,
+      "min": -1255.1467,
+      "sem_block5": 44.348741791655016
+    },
+    "temperature_k": {
+      "max": 338.4618,
+      "mean": 303.08883653465347,
+      "min": 275.73308,
+      "sem_block5": 3.9714180951673534
+    },
+    "volume_nm3": {
+      "max": 39.104969,
+      "mean": 29.410834980198022,
+      "min": 23.810625,
+      "sem_block5": 2.0045797268974788
+    }
+  },
+  "parity_metrics": {
+    "density_rel_diff": 0.7990100910635292,
+    "volume_rel_diff": 15.263882622596471
+  },
+  "protocol": {
+    "analysis_window_ps": 10.0,
+    "compressibility_bar_inv": 4.5e-05,
+    "duration_ps": 20.0,
+    "ensemble": "NPT",
+    "gmx_integrator": "md-vv",
+    "gmx_nonbonded_modifiers": {
+      "coulomb-modifier": "none",
+      "vdw-modifier": "none"
+    },
+    "gmx_pressure_coupling": "mttk",
+    "gmx_temperature_coupling": "nose-hoover",
+    "lammps_omp_threads": 1,
+    "lammps_ranks": 2,
+    "lammps_target_barostat": "npt",
+    "lammps_velocity_initialization": "velocity create 300 K with fixed seed",
+    "ref_p_bar": 1.0,
+    "tau_p_ps": 1.0,
+    "tau_t_ps": 1.0,
+    "thermal_start": "generated",
+    "thresholds": {
+      "density_rel_diff_max": 0.05,
+      "relative_diff_reference": "LAMMPS mean over final analysis window",
+      "volume_rel_diff_max": 0.05
+    },
+    "warmup_protocol": "GROMACS md/v-rescale/Berendsen only",
+    "warmup_ps": 5.0,
+    "warmup_scope": "gmx-only"
+  },
+  "status": "FAIL",
+  "system_id": "monoglyme_ethane_litfsi_1to1_dense18"
+}

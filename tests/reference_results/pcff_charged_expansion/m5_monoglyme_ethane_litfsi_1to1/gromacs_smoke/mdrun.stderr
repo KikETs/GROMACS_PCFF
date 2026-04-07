@@ -1,0 +1,35 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m5_monoglyme_ethane_litfsi_1to1/gromacs_smoke
+Command line:
+  gmx mdrun -s m5_smoke.tpr -rerun system.gro -deffnm m5_smoke -nt 1 -pin off -reprod
+
+Reading file m5_smoke.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+
+NOTE: Parallelization is limited by the small number of atoms,
+      only starting 1 thread-MPI ranks.
+      You can use the -nt and/or -ntmpi option to optimize the number of threads.
+
+Can not increase nstlist because an NVE ensemble is used
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting md rerun 'monoglyme_ethane_litfsi_1to1', reading coordinates from input trajectory 'system.gro'
+
+Reading frames from gro file 'M5 monoglyme ethane LiTFSI smoke coordinates', 40 atoms.
+
+Reading frame       0 time    0.000   
+Last frame          0 time    0.000   
+
+               Core t (s)   Wall t (s)        (%)
+       Time:        0.001        0.001       98.5
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:      115.447        0.208        0.748            0.053 
+
+GROMACS reminds you: "Protons give an atom its identity, electrons its personality." (Bill Bryson)
+

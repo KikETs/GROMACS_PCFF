@@ -1,0 +1,32 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/paired_npt/gromacs
+Command line:
+  gmx mdrun -s min.tpr -deffnm min -nt 8 -pin off -reprod
+
+Reading file min.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Using 1 MPI thread
+Using 8 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+Steepest Descents:
+   Tolerance (Fmax)   =  1.00000e+02
+   Number of steps    =          500
+
+Energy minimization reached the maximum number of steps before the forces
+reached the requested precision Fmax < 100.
+
+writing lowest energy coordinates.
+
+Steepest Descents did not converge to Fmax < 100 in 501 steps.
+Potential Energy  = -4.3721851e+03
+Maximum force     =  1.2497166e+03 on atom 433
+Norm of force     =  9.7869382e+01
+
+GROMACS reminds you: "Millions saw the apple fall, Newton was the only one who asked why?" (Bernard Baruch)
+

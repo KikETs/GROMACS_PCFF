@@ -1,0 +1,61 @@
+{
+  "schema_name": "pcff_polymer_workflow_spec",
+  "schema_version": 1,
+  "system_id": "monoglyme_ethane_litfsi_1to1",
+  "description": "M5 monoglyme + ethane neutral additive + one LiTFSI pair.",
+  "components": [
+    {
+      "component_id": "EO_TMPL",
+      "role": "polymer_template",
+      "workflow_kind": "repeat_unit_template",
+      "path": "../../../polymer_workflow_golden/components/repeat_unit_du/structure.mol",
+      "input_format": "mol_v2000",
+      "source_id": "repeat_unit_du",
+      "count": 1
+    },
+    {
+      "component_id": "MONOGLY",
+      "role": "polymer_fragment",
+      "workflow_kind": "capped_oligomer",
+      "path": "../../../polymer_workflow_golden/components/monoglyme_capped/structure.mol",
+      "input_format": "mol_v2000",
+      "source_id": "monoglyme_capped",
+      "count": 1,
+      "molecule_name": "MONOGLY",
+      "residue_name": "MGLY"
+    },
+    {
+      "component_id": "ETHANE",
+      "role": "neutral_additive",
+      "workflow_kind": "neutral_additive",
+      "path": "../../../typing_golden/cases/ethane_neutral/inputs/structure.mol",
+      "input_format": "mol_v2000",
+      "source_id": "ethane_neutral",
+      "count": 1,
+      "molecule_name": "ETHANE",
+      "residue_name": "ETH"
+    },
+    {
+      "component_id": "LI",
+      "role": "salt_cation",
+      "workflow_kind": "salt_species",
+      "path": "../../../typing_golden/cases/lithium_cation/inputs/structure.mol",
+      "input_format": "mol_v2000",
+      "source_id": "lithium_cation",
+      "count": 1,
+      "molecule_name": "LI",
+      "residue_name": "LI"
+    },
+    {
+      "component_id": "TFSI",
+      "role": "salt_anion",
+      "workflow_kind": "salt_species",
+      "path": "../../../typing_golden/cases/tfsi_anion_explicit/inputs/structure.mol",
+      "input_format": "mol_v2000",
+      "source_id": "tfsi_anion_explicit",
+      "count": 1,
+      "molecule_name": "TFSI",
+      "residue_name": "TFSI"
+    }
+  ]
+}

@@ -15,6 +15,7 @@ from tools.pcff_fixture_bridge.common import (
     render_gromacs_topology,
     parse_lammps_data,
     ANGSTROM_TO_NM,
+    angstrom_per_fs_to_nm_per_ps,
 )
 
 def create_gro_from_lammps(lammps_data_path: Path, gro_path: Path):
@@ -22,15 +23,27 @@ def create_gro_from_lammps(lammps_data_path: Path, gro_path: Path):
     box_x = (data["box"]["x"]["hi"] - data["box"]["x"]["lo"]) * ANGSTROM_TO_NM
     box_y = (data["box"]["y"]["hi"] - data["box"]["y"]["lo"]) * ANGSTROM_TO_NM
     box_z = (data["box"]["z"]["hi"] - data["box"]["z"]["lo"]) * ANGSTROM_TO_NM
+    velocities_by_atom_id = {entry["atom_id"]: entry for entry in data.get("velocities", [])}
+    emit_velocities = len(velocities_by_atom_id) == len(data["atoms"])
+    molecule_local_index: dict[int, int] = {}
     
     with gro_path.open("w") as f:
         f.write("Generated from LAMMPS data\n")
         f.write(f"{len(data['atoms']):>5d}\n")
-        for i, atom in enumerate(data["atoms"], start=1):
+        for atom in data["atoms"]:
             x = atom["x_angstrom"] * ANGSTROM_TO_NM
             y = atom["y_angstrom"] * ANGSTROM_TO_NM
             z = atom["z_angstrom"] * ANGSTROM_TO_NM
-            f.write(f"{1:>5d}{'MOL':<5s}{f'A{i}':>5s}{atom['id']:>5d}{x:8.3f}{y:8.3f}{z:8.3f}\n")
+            local_index = molecule_local_index.get(atom["molecule_id"], 0) + 1
+            molecule_local_index[atom["molecule_id"]] = local_index
+            line = f"{1:>5d}{'MOL':<5s}{f'A{local_index}':>5s}{atom['id']:>5d}{x:8.3f}{y:8.3f}{z:8.3f}"
+            if emit_velocities:
+                velocity = velocities_by_atom_id[atom["id"]]
+                vx = angstrom_per_fs_to_nm_per_ps(velocity["vx_angstrom_per_fs"])
+                vy = angstrom_per_fs_to_nm_per_ps(velocity["vy_angstrom_per_fs"])
+                vz = angstrom_per_fs_to_nm_per_ps(velocity["vz_angstrom_per_fs"])
+                line += f"{vx:8.4f}{vy:8.4f}{vz:8.4f}"
+            f.write(f"{line}\n")
         f.write(f"{box_x:10.5f}{box_y:10.5f}{box_z:10.5f}\n")
 
 def write_mdp(path: Path, content: str):

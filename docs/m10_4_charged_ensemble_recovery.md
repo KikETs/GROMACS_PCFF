@@ -1,30 +1,46 @@
-# M10.4 — Charged/Salt System Ensemble Recovery Findings
+# M10.4 — Charged Dense-Box Recovery Findings
 
-## Overview
-This document summarizes the ensemble-level recovery for a charged polymer-plus-salt system (`dense_salt_polymer`) using the GROMACS-PCFF bridge. The objective was to evaluate statistical consistency in a system where long-range electrostatics and ionic packing are significant.
+## Current Readout
 
-## System & Protocol
-- **System:** `dense_salt_polymer` (270 atoms, 27 molecules, replicated 3x3x3 from `small_salt_polymer_box`).
-- **Initial State:** Compressed to liquid-like density in LAMMPS (~0.7 g/cm³).
-- **Duration:** 20 ps NPT Equilibration + 100 ps NPT Production.
-- **Ensemble:** NPT (300 K, 1 bar).
-- **Electrostatics:** PME (GROMACS) vs. PPPM (LAMMPS) with 1e-4 accuracy.
+This file now records a narrower conclusion than the original wording.
 
-## Statistical Results Summary
-Averages and uncertainties (SEM) calculated over the 100 ps production window:
+The 100 ps `dense_salt_polymer` run remains useful as a short-horizon charged diagnostic, but it does not support a charged readiness claim.
 
-| Observable | GROMACS (Avg +/- SEM) | LAMMPS (Avg +/- SEM) | Rel. Diff | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| Potential Energy (kJ/mol) | -26605.0 +/- 59.0 | -26580.0 +/- 37.0 | **0.09%** | **PASS** |
-| Temperature (K) | 299.00 +/- 0.66 | 299.52 +/- 0.42 | 0.52 K | PASS |
-| Volume (nm³) | 7.31 +/- 0.51 | 4.57 +/- 0.02 | 37.5% | CAVEATED |
-| Density (kg/m³) | 1026.4 +/- 79.5 | 1594.6 +/- 6.6 | 55.4% | CAVEATED |
+## What The Artifact Shows
 
-## Observations & Caveats
-1.  **Energy Parity:** The **0.09% potential energy agreement** is exceptional for a charged system. This confirms that the bonded terms (Class2) and non-bonded mappings (LJ 9-6, Coulomb) are implemented with high fidelity across both engines.
-2.  **Density Discrepancy:** While energy and temperature match well, GROMACS shows a significantly lower mean density and is still exhibiting a slow compression drift (795 to 1360 kg/m³ over 100 ps). LAMMPS equilibrated faster to ~1600 kg/m³.
-3.  **Reciprocal-Space Effects:** The difference in density is likely attributed to the distinct implementations of PME (GMX) and PPPM (LAMMPS), specifically how they handle virial stress and grid optimization in a small, highly charged box.
-4.  **Equilibration Timescale:** For this ionic polymer fixture, 100 ps is insufficient for full volume convergence in GROMACS. However, the energy parity indicates that the underlying force field mapping is correct.
+| Observable | GROMACS | LAMMPS | Current Interpretation |
+| :--- | :--- | :--- | :--- |
+| Mean potential energy | close | close | short-horizon diagnostic only |
+| Mean temperature | close | close | short-horizon diagnostic only |
+| Volume | unstable / drifting | converged enough | not parity-supporting |
+| Density | unstable / drifting | converged enough | not parity-supporting |
 
-## Conclusion
-The GROMACS-PCFF bridge successfully recovers the potential energy surface for charged systems with sub-0.1% accuracy. Density and volume parity are subject to engine-specific reciprocal-space sensitivities and longer equilibration timescales, but the system remains stable and physically sensible. Milestone M10.4 is considered **PASS (with caveats)**.
+Direct machine-readable basis:
+
+- [M10.4 summary](../tests/reference_results/m10_4_charged_ensemble_gate/m10_4_summary.json)
+  - `parity_status = partial`
+  - `density_parity_rel_diff = 0.5536`
+  - `volume_parity_rel_diff = 0.3749`
+  - GROMACS density / volume status = `failed / unstable`
+
+## Current Boundary
+
+What survives:
+
+- a short-horizon dense charged-box energy / temperature sanity artifact
+
+What does not survive:
+
+- dense charged ensemble parity from this M10.4 artifact
+- charged density readiness
+- charged production or transport entry
+
+## Superseding Evidence
+
+Later evidence supersedes only parts of the old blocker:
+
+- [M11.1 Charged Subset Expansion](validation_report_m11_1_pcff_charged_subset.md) closes density / volume parity only for the explicit `gate_h_dense_salt_polymer_2x2x2` subset.
+- [M11.2 Strict Charged M4 Validation](validation_report_m11_2_pcff_charged_m4.md) closes separated M4 validation only for that same subset.
+- [TP1 exact recovery audit](../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json) resolves the exact TP1 thermal-runaway blocker only for the corrected 5 ns rerun.
+
+None of those later results turns this M10.4 artifact into a `PASS (with caveats)` claim.

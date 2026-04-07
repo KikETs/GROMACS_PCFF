@@ -1,0 +1,64 @@
+LAMMPS (10 Sep 2025 - Development - patch_10Sep2025-660-g792d014343)
+  using 1 OpenMP thread(s) per MPI task
+Reading data file ...
+  orthogonal box = (0 0 0) to (24 24 24)
+  1 by 1 by 2 MPI processor grid
+  reading atoms ...
+  720 atoms
+  reading velocities ...
+  720 velocities
+  scanning bonds ...
+  4 = max bonds/atom
+  scanning angles ...
+  6 = max angles/atom
+  scanning dihedrals ...
+  9 = max dihedrals/atom
+  orthogonal box = (0 0 0) to (24 24 24)
+  1 by 1 by 2 MPI processor grid
+  reading bonds ...
+  648 bonds
+  reading angles ...
+  1134 angles
+  reading dihedrals ...
+  972 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     4 = max # of 1-2 neighbors
+     6 = max # of 1-3 neighbors
+     8 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.005 seconds
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.25069868
+  grid = 9 9 9
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.021980742
+  estimated relative force accuracy = 6.6194351e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 1960 405
+Generated 78 of 78 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = no
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 11
+  ghost atom cutoff = 11
+  binsize = 5.5, bins = 5 5 5
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/class2/coul/long, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Setting up Verlet run ...
+  Unit style    : real
+  Current step  : 0
+  Time step     : 1
+Per MPI rank memory allocation (min/avg/max) = 11.54 | 11.54 | 11.54 Mbytes
+   Step          Temp          PotEng         KinEng         TotEng         Press          Volume        Density    
+         0   300           -1265.3034      642.96073     -622.3427       2361.2943      13824          0.8805959    
+ERROR on proc 1: Non-numeric atom coords - simulation unstable
+For more information see https://docs.lammps.org/err0006 (src/lammps/src/domain.cpp:790)
+ERROR on proc 0: Non-numeric atom coords - simulation unstable
+For more information see https://docs.lammps.org/err0006 (src/lammps/src/domain.cpp:790)

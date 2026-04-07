@@ -1,0 +1,34 @@
+{
+  "box_nm": [
+    3.023810519747997,
+    3.023810519747997,
+    3.023810519747997
+  ],
+  "components": [
+    {
+      "atom_count_per_molecule": 16,
+      "count": 36,
+      "molecule_name": "MONOGLY"
+    },
+    {
+      "atom_count_per_molecule": 8,
+      "count": 36,
+      "molecule_name": "ETHANE"
+    },
+    {
+      "atom_count_per_molecule": 1,
+      "count": 36,
+      "molecule_name": "LI"
+    },
+    {
+      "atom_count_per_molecule": 15,
+      "count": 36,
+      "molecule_name": "TFSI"
+    }
+  ],
+  "formula_count": 36,
+  "schema_name": "m2_broad_generated_dense_pair",
+  "schema_version": 1,
+  "source_spec": "testdata/polymer_workflow_m5/cases/monoglyme_ethane_litfsi_1to1/spec.json",
+  "system_id": "monoglyme_ethane_litfsi_1to1_dense36"
+}

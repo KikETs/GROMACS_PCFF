@@ -1,0 +1,29 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v2_250bar_mttk/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/gromacs
+Command line:
+  gmx mdrun -s min.tpr -deffnm min -nt 8 -pin off -reprod
+
+Reading file min.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Using 1 MPI thread
+Using 8 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+Steepest Descents:
+   Tolerance (Fmax)   =  1.00000e+02
+   Number of steps    =          500
+
+writing lowest energy coordinates.
+
+Steepest Descents converged to Fmax < 100 in 6 steps
+Potential Energy  = -1.7988578e+05
+Maximum force     =  9.9375099e+01 on atom 4
+Norm of force     =  4.2926138e+01
+
+GROMACS reminds you: "Mendeleev's first attempt, the perfluoric table, was a total disaster, and his subsequent attempts, the perchloric and perbromic tables, were not favorably received. Only his fourth attempt, the periodic table, gained general acceptance." (Anonymous)
+

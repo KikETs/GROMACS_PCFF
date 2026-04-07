@@ -1,0 +1,30 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v2b_250bar_mttk_lmp2/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/gromacs
+Command line:
+  gmx mdrun -s npt.tpr -deffnm npt -nt 8 -pin off -reprod
+
+Reading file npt.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Can not increase nstlist because verlet-buffer-tolerance is not set or used
+Using 1 MPI thread
+Using 8 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'gate_h_dense_salt_polymer_2x2x2'
+100000 steps,    100.0 ps.
+
+
+Received the TERM signal, stopping within 10 steps
+
+
+               Core t (s)   Wall t (s)        (%)
+       Time:      444.800       55.600      800.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:        1.447       16.589       59.721            0.036 
+
+GROMACS reminds you: "Men love to wonder, and that is the seed of science." (Ralph Waldo Emerson)
+

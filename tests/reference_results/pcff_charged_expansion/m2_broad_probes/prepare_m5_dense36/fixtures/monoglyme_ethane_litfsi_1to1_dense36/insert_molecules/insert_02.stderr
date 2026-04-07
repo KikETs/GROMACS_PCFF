@@ -1,0 +1,101 @@
+ :-) GROMACS - gmx insert-molecules, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/prepare_m5_dense36/fixtures/monoglyme_ethane_litfsi_1to1_dense36/insert_molecules
+Command line:
+  gmx insert-molecules -ci ethane.gro -nmol 36 -o packed_02_ethane.gro -try 10000 -seed 20260408 -radius 0.04 -scale 0.35 -f packed_01_monogly.gro
+
+Reading solute configuration
+Initialising inter-atomic distances...
+Using random seed 20260408
+
+Try 1
+Try 2 success (now 584 atoms)!
+
+Try 3 success (now 592 atoms)!
+
+Try 4 success (now 600 atoms)!
+
+Try 5 success (now 608 atoms)!
+
+Try 6 success (now 616 atoms)!
+
+Try 7 success (now 624 atoms)!
+
+Try 8
+Try 9 success (now 632 atoms)!
+
+Try 10
+Try 11 success (now 640 atoms)!
+
+Try 12 success (now 648 atoms)!
+
+Try 13
+Try 14 success (now 656 atoms)!
+
+Try 15 success (now 664 atoms)!
+
+Try 16 success (now 672 atoms)!
+
+Try 17 success (now 680 atoms)!
+
+Try 18 success (now 688 atoms)!
+
+Try 19 success (now 696 atoms)!
+
+Try 20 success (now 704 atoms)!
+
+Try 21 success (now 712 atoms)!
+
+Try 22 success (now 720 atoms)!
+
+Try 23 success (now 728 atoms)!
+
+Try 24 success (now 736 atoms)!
+
+Try 25
+Try 26 success (now 744 atoms)!
+
+Try 27 success (now 752 atoms)!
+
+Try 28 success (now 760 atoms)!
+
+Try 29 success (now 768 atoms)!
+
+Try 30 success (now 776 atoms)!
+
+Try 31 success (now 784 atoms)!
+
+Try 32 success (now 792 atoms)!
+
+Try 33
+Try 34 success (now 800 atoms)!
+
+Try 35
+Try 36 success (now 808 atoms)!
+
+Try 37 success (now 816 atoms)!
+
+Try 38
+Try 39 success (now 824 atoms)!
+
+Try 40 success (now 832 atoms)!
+
+Try 41 success (now 840 atoms)!
+
+Try 42 success (now 848 atoms)!
+
+Try 43
+Try 44 success (now 856 atoms)!
+
+Try 45
+Try 46 success (now 864 atoms)!
+
+Added 36 molecules (out of 36 requested)
+Writing generated configuration to packed_02_ethane.gro
+
+Output configuration contains 864 atoms in 72 residues
+
+GROMACS reminds you: "Success is going from one failure to another without loss of enthusiasm" (Winston Churchill)
+

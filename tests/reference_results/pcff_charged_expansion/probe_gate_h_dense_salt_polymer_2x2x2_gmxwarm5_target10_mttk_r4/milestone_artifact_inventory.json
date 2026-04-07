@@ -1,0 +1,53 @@
+{
+  "artifacts": {
+    "dense_npt_parity_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/dense_npt_parity_report.json",
+    "initial_20ps_long_nvt_stability_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability/long_nvt_stability_report.json",
+    "long_nvt_stability_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/m3_recovery_report.json",
+    "m3_recovery_protocol": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/m3_recovery_protocol.json",
+    "m1_m3_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m1_m3_summary.json",
+    "public_report": "/home/kiket/Desktop/test/GROMACS_PCFF/docs/validation_report_m11_1_pcff_charged_subset.md"
+  },
+  "milestone_subset": "M1-M3 explicit subset",
+  "milestone_track": "PCFF charged capability expansion",
+  "milestones": {
+    "M1_strict_pcff_qualified_charged_pair": {
+      "artifact": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/qualified_pair_manifest.json",
+      "status": "PASS"
+    },
+    "M2_dense_charged_parity_closure": {
+      "artifact": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/dense_npt_parity_report.json",
+      "density_rel_diff": 0.04539570154423199,
+      "status": "PASS",
+      "volume_rel_diff": 0.0480657063244706
+    },
+    "M3_long_horizon_charged_stability_recovery": {
+      "analysis_window_ps": 25.0,
+      "artifact": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/m3_recovery_report.json",
+      "duration_ps": 50.0,
+      "initial_20ps_artifact": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability/long_nvt_stability_report.json",
+      "limitation": "This is not an ns-scale replacement for the historical TP1 dense_salt_polymer failure.",
+      "max_temperature_k": 312.878052,
+      "mean_temperature_k": 300.3762365298805,
+      "status": "PASS"
+    },
+    "M4_strict_charged_validation_rerun": {
+      "blocking_reason": "mechanical parity and transport-facing parity have not yet been rerun on this qualified pair",
+      "status": "NOT_STARTED"
+    },
+    "M5_chemistry_scope_expansion": {
+      "added_system": "gate_h_dense_salt_polymer_2x2x2",
+      "basis": "validated charged dense-box subset beyond the prior PT8-only boundary",
+      "status": "PASS_EXPLICIT_SUBSET"
+    }
+  },
+  "new_boundary": {
+    "dense_parity_pass": true,
+    "long_nvt_stability_duration_ps": 50.0,
+    "long_nvt_stability_pass": true,
+    "qualified_charged_pair": "gate_h_dense_salt_polymer_2x2x2"
+  },
+  "overall_track_status": "PARTIAL_PASS_M1_M3_SUBSET",
+  "previous_boundary": "PT8 supported SPE typing/export plus frozen small charged fixtures only",
+  "schema_version": 1,
+  "system_id": "gate_h_dense_salt_polymer_2x2x2"
+}

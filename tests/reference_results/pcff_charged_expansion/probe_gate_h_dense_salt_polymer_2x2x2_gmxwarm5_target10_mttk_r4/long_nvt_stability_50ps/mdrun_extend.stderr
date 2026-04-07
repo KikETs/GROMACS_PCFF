@@ -1,0 +1,32 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps
+Command line:
+  gmx mdrun -s nvt_extend50.tpr -deffnm nvt -cpi nvt.cpt -append -ntmpi 1 -ntomp 8 -pin off -reprod
+
+Reading file nvt_extend50.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Can not increase nstlist because verlet-buffer-tolerance is not set or used
+Using 1 MPI thread
+Using 8 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'gate_h_dense_salt_polymer_2x2x2'
+50000 steps,     50.0 ps (continuing from step 20000,     20.0 ps).
+
+Writing final coordinates.
+
+Back Off! I just backed up nvt.gro to ./#nvt.gro.1#
+
+               Core t (s)   Wall t (s)        (%)
+       Time:    16378.998     2047.375      800.0
+                         34:07
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:        1.266       18.957       68.244            0.032 
+
+GROMACS reminds you: "Whatever Happened to Pong ?" (F. Black)
+
+elapsed_s 2047.38

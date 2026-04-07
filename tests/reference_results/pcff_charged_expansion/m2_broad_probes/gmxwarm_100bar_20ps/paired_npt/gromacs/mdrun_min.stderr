@@ -1,0 +1,32 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gmxwarm_100bar_20ps/paired_npt/gromacs
+Command line:
+  gmx mdrun -s min.tpr -deffnm min -nt 4 -pin off -reprod
+
+Reading file min.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Using 1 MPI thread
+Using 4 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+Steepest Descents:
+   Tolerance (Fmax)   =  1.00000e+02
+   Number of steps    =          500
+
+Energy minimization reached the maximum number of steps before the forces
+reached the requested precision Fmax < 100.
+
+writing lowest energy coordinates.
+
+Steepest Descents did not converge to Fmax < 100 in 501 steps.
+Potential Energy  = -6.2255859e+03
+Maximum force     =  1.1029001e+03 on atom 614
+Norm of force     =  1.1221037e+02
+
+GROMACS reminds you: "We will always have STEM with us. Some things will drop out of the public eye and will go away, but there will always be science, engineering, and technology. And there will always, always be mathematics." (Katherine Johnson)
+

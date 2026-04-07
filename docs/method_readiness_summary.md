@@ -4,22 +4,28 @@
 
 The current fork is **not** scientifically ready for PCFF-based polymer-electrolyte transport claims.
 
-This is now blocked first by provenance, not by missing summary tables.
+M11.2 adds one strict-PCFF-qualified charged subset for mechanical, structural / density, and short-horizon transport-facing CPU/GPU observable validation. M11.3 adds one workflow-level acyclic-alkane neutral-additive chemistry subset. Neither closes LAMMPS-vs-GROMACS charged transport parity.
 
 ## Why It Is Blocked
 
 Direct evidence:
 
-- [pcff_paired_provenance_gate.csv](/home/user/바탕화면/gromacs/tests/reference_results/m10/pcff_paired_provenance_gate.csv)
+- [pcff_paired_provenance_gate.csv](../tests/reference_results/m10/pcff_paired_provenance_gate.csv)
   - `14748` is rejected because the paired GROMACS topology is ACPYPE/GAFF2, not PCFF
   - `27670` is rejected because the paired GROMACS topology is missing and the preserved typing attempt is ACPYPE/GAFF2
-- [strict_parity_summary.json](/home/user/바탕화면/gromacs/tests/reference_results/m10/strict_parity_summary.json)
+- [strict_parity_summary.json](../tests/reference_results/m10/strict_parity_summary.json)
   - candidate paired systems exist
   - retained PCFF-qualified paired systems: `0`
   - strict status: `blocked_by_pcff_provenance`
-- [comparison_summary.json](/home/user/바탕화면/gromacs/tests/reference_results/m10/comparison_summary.json)
+- [comparison_summary.json](../tests/reference_results/m10/comparison_summary.json)
   - overall readiness: `pcff_provenance_blocked`
   - screening usefulness: `not_pcff_qualified`
+- [M11.2 Strict Charged M4 Validation](validation_report_m11_2_pcff_charged_m4.md)
+  - one strict-PCFF-qualified charged subset now passes M4 separated validation
+  - the transport-facing branch is short-horizon CPU/GPU observable consistency, not LAMMPS-vs-GROMACS transport parity
+- [M11.3 M5 Chemistry-Scope Expansion](validation_report_m11_3_pcff_charged_m5.md)
+  - one charged assembly with an acyclic alkane neutral additive passes workflow-level typing/export and GROMACS smoke validation
+  - it is not dense ensemble or transport evidence
 
 ## What The Current M10 Data Can Still Be Used For
 
@@ -37,19 +43,18 @@ Direct evidence:
 
 ## Transport Protocol (TP) Status
 
-The TP milestone set is currently blocked by the audit failure of TP1.
+TP1 exact thermal-runaway status is no longer the blocker for the corrected 5 ns rerun, but transport entry is still blocked.
 
-### TP1 — Charged Long-Equilibration Recovery
-- **Status:** **FAIL / NOT VERIFIED** (Milestone TP1.1 in progress for record repair).
-- **Audit Findings:**
-  - Raw logs and energy files are missing for the reported 5 ns run.
-  - System identity mismatch: claimed 2,500-atom LiTFSI system, but actual system is 270-atom Na/Cl polymer.
-  - No runner script found in the repository.
-- **Requirement:** A full TP1.2 rerun is mandatory to restore the integrity of the transport-validation thread.
+### TP1 - Charged Long-Equilibration Recovery
+- **Status:** thermal-runaway blocker `PASS` only for the corrected 5 ns `dense_salt_polymer` NPT rerun.
+- **Remaining audit finding:** the corrected final box is smaller than twice the 0.9 nm cutoff, so endpoint continuation / transport entry remains unsupported.
+- **Basis:** [TP1 exact recovery audit](../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json).
 
 ## Remaining Blocking Gaps
 
-- no paired system currently passes the GROMACS PCFF provenance gate
+- no M10 screening paired system currently passes the GROMACS PCFF provenance gate
+- M11.2 has only one explicit strict-PCFF-qualified subset and no LAMMPS-vs-GROMACS transport parity
+- M11.3 has only one workflow-level chemistry expansion and no dense/transport validation for that chemistry
 - screening cohort is prepared with ACPYPE/GAFF2 rather than PCFF
 - paired density provenance is unresolved
 - paired GROMACS chain-size artifacts are unavailable
@@ -57,6 +62,6 @@ The TP milestone set is currently blocked by the audit failure of TP1.
 
 ## Immediate Next Steps
 
-1. rebuild at least one paired GROMACS system with verified PCFF provenance
-2. remove ACPYPE/GAFF2-prepared systems from the strict paired set until rebuilt
-3. only after that, rerun density/RDF/conductivity/transference strict comparisons
+1. extend the strict M11.2 pair, or build a second strict PCFF pair, to a predeclared transport-grade protocol
+2. exclude ACPYPE/GAFF2-prepared M10 screening systems from any strict PCFF transport claim
+3. only after that, rerun density/RDF/conductivity/transference strict comparisons with LAMMPS-vs-GROMACS transport-facing evidence

@@ -1,43 +1,94 @@
-# TP1 — Charged Long-Equilibration Recovery Validation Report
+# TP1 - Charged Long-Equilibration Recovery Validation Report
 
 ## 1. Executive Summary
-**Milestone TP1 is currently marked as FAIL.**
-A real 5 ns equilibration rerun (TP1.2) was attempted on the authoritative 270-atom Na/Cl `dense_salt_polymer` system using the custom GROMACS 2027.0-dev binary. The simulation failed at 3.017 ns due to a severe thermal runaway event (T > 500K). The system is considered **unresolved / unstable** and is NOT ready for transport-production entry.
 
-## 2. System Details (Verified)
-- **System ID:** `dense_salt_polymer`
-- **Composition:** Na/Cl salt in polymer electrolyte matrix.
-- **Size:** 270 atoms.
-- **Provenance:** M10.4 fixtures (Verified).
-- **Source:** `testdata/lammps_golden/systems/dense_salt_polymer/`
+The historical TP1 `dense_salt_polymer` thermal-runaway blocker is now superseded for the exact corrected protocol.
 
-## 3. Results Summary (TP1.2 Rerun)
+This is not a charged transport-readiness claim.
 
-### 3.1 Block-wise Stability (Actual 3ns Rerun)
-*Analysis of the first 3 ns of the failed rerun.*
+The earlier TP1.2 artifact remains a real failed historical run: it stopped at `3.017 ns` with thermal runaway. That failure is no longer treated as the current exact-system verdict because the processed `mdout.mdp` shows the intended thermostat and barostat were not applied:
 
-| Block (ns) | Potential Energy (kJ/mol) | Pot. Eng. Drift / 100ps | Temp (K) | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| 0.0 - 1.0 | -26002.5 | -15.2 | 412.4 | Drifting |
-| 1.0 - 2.0 | -26045.2 | -8.1 | 485.6 | Unstable |
-| 2.0 - 3.0 | -26115.8 | -42.5 | 532.1 | **Explosion** |
+- historical `mdout.mdp`: `tcoupl = No`
+- historical `mdout.mdp`: `pcoupl = No`
+- historical runner defect: `tcouple` / `pcouple` / `gen_vel` were used instead of GROMACS keys `tcoupl` / `pcoupl` / `gen-vel`
 
-### 3.2 Recovery Classification
-- **Overall Status:** **FAIL / UNSTABLE** (NOT Ready for TP2/TP3)
-- **Density/Volume:** Not extracted (Run crashed).
-- **Potential Energy:** Unresolved (decreasing sharply).
-- **Temperature:** FAILED (Thermal runaway observed).
+The corrected direct rerun completes `5.000 ns` on the same authoritative 270-atom `dense_salt_polymer` system with the intended `tcoupl = v-rescale`, `pcoupl = Berendsen`, and `gen-vel = yes` contract applied.
 
-## 4. Documentation of Failure
-- **Thermal Instability:** The system exhibited a steady increase in temperature despite the V-rescale thermostat. This suggests possible issues with the initial structure, the force-field implementation of PCFF 9-6 in GROMACS, or timestep sensitivity.
-- **Incomplete Run:** The simulation stopped at 3017 ps.
-- **Artifact integrity:** Full raw logs (`tp1_equil.log`) and energy outputs (`energy_raw.xvg`) are now present in the repository, satisfying the TP1.1 audit requirements for evidence but resulting in a physical FAIL.
+## 2. System Details
 
-## 5. Artifacts Status
-- **Summary:** `tests/reference_results/tp1_charged_recovery/dense_salt_polymer/recovery_summary.json`
-- **Drift Data:** `tests/reference_results/tp1_charged_recovery/dense_salt_polymer/drift_analysis.csv`
-- **Engine Log:** `tests/reference_results/tp1_charged_recovery/dense_salt_polymer/tp1_equil.log`
-- **System Manifest:** `tests/reference_results/tp1_charged_recovery/dense_salt_polymer/system_manifest.json`
+- System ID: `dense_salt_polymer`
+- Composition: Na/Cl salt in polymer electrolyte matrix
+- Size: 270 atoms
+- Source: `testdata/lammps_golden/systems/dense_salt_polymer/`
+- Corrected runner: `tools/run_tp1_exact_recovery/run_tp1_exact.py`
+- Audit script: `tools/run_tp1_exact_recovery/audit_tp1_exact.py`
 
-## 6. Conclusion
-The `dense_salt_polymer` system has **FAILED** TP1 validation. It cannot proceed to TP2 or TP3. The transport protocol thread is blocked by charged-system instability.
+## 3. Corrected Protocol
+
+- Duration: `5000 ps`
+- Time step: `0.001 ps`
+- Steps: `5,000,000`
+- Thermostat: `tcoupl = v-rescale`
+- Barostat: `pcoupl = Berendsen`
+- Velocity generation: `gen-vel = yes`
+- Electrostatics: `PME`, `rcoulomb = 0.9 nm`
+- VdW: `Cut-off`, `rvdw = 0.9 nm`
+- Analysis window: final `1000 ps`
+- Thermal thresholds: mean temperature `300 +/- 20 K`, max temperature `<= 400 K`
+
+The Berendsen warning was explicitly allowed with `-maxwarn 1` because this rerun is a historical-protocol recovery, not a production NPT protocol recommendation.
+
+## 4. Results
+
+Corrected 5 ns recovery:
+
+- Status: `PASS` for the exact TP1 thermal-runaway blocker
+- Completed duration: `5000.0 ps`
+- Final-window mean temperature: `299.8209499100899 K`
+- Final-window max temperature: `360.481812 K`
+- Final-window mean density: `1571.6190931828173 kg/m^3`
+- Final-window mean volume: `4.636349732267733 nm^3`
+- Corrected `mdout` contract: `PASS`
+- Raw artifact bundle: `PASS`
+
+Important caveat:
+
+- Final box: `1.66790 1.66790 1.66790 nm`
+- Active cutoffs: `rlist = 0.9 nm`, `rcoulomb = 0.9 nm`, `rvdw = 0.9 nm`
+- Half-box margin: `-0.06605000000000005 nm`
+- Endpoint cutoff-margin verdict: `FAIL`
+
+This means the corrected 5 ns run resolves the historical thermal-runaway blocker, but the final coordinates are not continuation-safe or transport-entry-ready as-is.
+
+## 5. Artifacts
+
+Historical failed run:
+
+- Summary: `tests/reference_results/tp1_charged_recovery/dense_salt_polymer/recovery_summary.json`
+- Engine log: `tests/reference_results/tp1_charged_recovery/dense_salt_polymer/tp1_equil.log`
+- Historical `mdout`: `tests/reference_results/tp1_charged_recovery/dense_salt_polymer/mdout.mdp`
+- Drift data: `tests/reference_results/tp1_charged_recovery/dense_salt_polymer/drift_analysis.csv`
+- Energy trace: `tests/reference_results/tp1_charged_recovery/dense_salt_polymer/energy_raw.xvg`
+
+Corrected 5 ns run:
+
+- Audit: `tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json`
+- Report: `tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_report.json`
+- Protocol: `tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_protocol.json`
+- Engine log: `tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.log`
+- Energy file: `tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.edr`
+- Energy trace: `tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_energy.xvg`
+- Checkpoint: `tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.cpt`
+- Final coordinates: `tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.gro`
+- Processed MDP: `tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil_mdout.mdp`
+- SHA-256 manifest: `tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/sha256_manifest.txt`
+
+## 6. Verdict
+
+- Exact TP1 thermal-runaway blocker: `PASS`
+- Corrected protocol contract: `PASS`
+- Raw artifact bundle: `PASS`
+- Endpoint continuation safety: `FAIL`
+- Charged transport readiness: `FAIL`
+
+The correct present-tense claim is narrow: the exact TP1 thermal-runaway blocker is resolved for the corrected 5 ns `dense_salt_polymer` NPT rerun only. It does not establish dense GROMACS-vs-LAMMPS parity, endpoint continuation safety, production readiness, or charged transport readiness.

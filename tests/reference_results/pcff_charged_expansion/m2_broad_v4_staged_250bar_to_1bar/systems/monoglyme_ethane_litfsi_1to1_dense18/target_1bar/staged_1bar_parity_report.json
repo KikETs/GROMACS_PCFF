@@ -1,0 +1,92 @@
+{
+  "artifacts": {
+    "gromacs_energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/gromacs/target_1bar_energy.xvg",
+    "gromacs_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/gromacs",
+    "lammps_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/lammps/target_1bar.log",
+    "lammps_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/lammps"
+  },
+  "claim_boundary_if_pass": "pressure-preconditioned 1 bar staged dense parity only",
+  "gromacs": {
+    "density_kg_m3": {
+      "max": 1495.828735,
+      "mean": 1330.1174711157685,
+      "min": 1144.869873,
+      "sem_block5": 17.652268073559696
+    },
+    "pressure_bar": {
+      "max": 5427.159668,
+      "mean": -66.31607349301397,
+      "min": -5664.108887,
+      "sem_block5": 296.9953955410059
+    },
+    "temperature_k": {
+      "max": 325.668732,
+      "mean": 299.6267806247505,
+      "min": 277.467865,
+      "sem_block5": 0.50995705755156
+    },
+    "volume_nm3": {
+      "max": 10.632962,
+      "mean": 9.17097538722555,
+      "min": 8.138204,
+      "sem_block5": 0.12283025974434701
+    }
+  },
+  "lammps": {
+    "density_kg_m3": {
+      "max": 1500.6856,
+      "mean": 1382.3204031936127,
+      "min": 1220.9777,
+      "sem_block5": 17.436492744160745
+    },
+    "pressure_atm": {
+      "max": 6260.9703,
+      "mean": 24.810537797405193,
+      "min": -5380.1906,
+      "sem_block5": 73.0803661365089
+    },
+    "temperature_k": {
+      "max": 325.48317,
+      "mean": 300.5262018762475,
+      "min": 267.2985,
+      "sem_block5": 0.4702250320273282
+    },
+    "volume_nm3": {
+      "max": 9.970171700000002,
+      "mean": 8.82014696267465,
+      "min": 8.111863999999999,
+      "sem_block5": 0.11295466475563742
+    }
+  },
+  "non_claims": [
+    "ambient 1 bar equilibrium parity",
+    "transport readiness",
+    "generic dense charged readiness"
+  ],
+  "parity_metrics": {
+    "density_rel_diff": 0.037764712115395525,
+    "volume_rel_diff": 0.03977580260686641
+  },
+  "precondition_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/paired_npt/dense_npt_parity_report.json",
+  "protocol": {
+    "analysis_window_ps": 50.0,
+    "density_rel_diff_max": 0.05,
+    "gmx_time_window_ps": [
+      50.0,
+      100.0
+    ],
+    "lammps_time_window_ps": [
+      50.0,
+      100.0
+    ],
+    "precondition_duration_ps": 100.0,
+    "precondition_ref_p_bar": 250.0,
+    "target_duration_ps": 100.0,
+    "target_ref_p_bar": 1.0,
+    "volume_rel_diff_max": 0.05
+  },
+  "schema_name": "pcff_charged_m2_staged_1bar_target_report",
+  "schema_version": 1,
+  "status": "PASS",
+  "system_id": "monoglyme_ethane_litfsi_1to1_dense18"
+}

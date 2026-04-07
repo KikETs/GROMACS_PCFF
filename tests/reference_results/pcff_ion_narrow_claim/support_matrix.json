@@ -1,0 +1,635 @@
+{
+  "schema_name": "pcff_ion_support_matrix",
+  "schema_version": 1,
+  "claim_status_as_of": "2026-04-07",
+  "status_definitions": {
+    "exact": "Reproducible checked-in artifact directly supports the statement within the frozen scope.",
+    "approximate": "Evidence exists, but only as a short-horizon or caveated diagnostic; it does not justify readiness language.",
+    "unsupported": "Direct evidence or explicit project scope says the item must not be claimed as supported now.",
+    "unvalidated": "The repository exposes the path or mentions the feature, but the checked-in evidence is absent or insufficient."
+  },
+  "top_level_claim": "Current evidence supports a bounded PCFF / ion-compatible claim: the bridge can deterministically type and export the frozen PT8 supported SPE subset, and it preserves charged Class2/LJ 9-6/long-range Coulomb mechanics on frozen small fixtures. Beyond that baseline, one strict-PCFF-qualified charged dense-box pair (`gate_h_dense_salt_polymer_2x2x2`) has mechanical parity and short-horizon transport-facing CPU/GPU observable parity evidence, and M11.4 broadens dense density/volume parity to two strict-PCFF-qualified dense charged pairs at 250 bar over a 100 ps target / final 50 ps window: `gate_h_dense_salt_polymer_2x2x2` and `monoglyme_ethane_litfsi_1to1_dense18`. M11.6 adds pressure-preconditioned staged 1 bar dense parity for those same pairs over a 100 ps 250 bar precondition, 100 ps 1 bar target, and final 50 ps target window. M5 also adds one workflow-level charged assembly containing an acyclic alkane neutral additive (`monoglyme_ethane_litfsi_1to1`). It does not support broad PCFF chemistry coverage, direct ambient 1 bar equilibrium dense charged parity, generic dense charged ensemble readiness, or charged transport readiness.",
+  "items": [
+    {
+      "id": "chemistry.pt8_supported_spe_typing_export",
+      "domain": "chemistry",
+      "status": "exact",
+      "supported_scope": {
+        "case_count": 3,
+        "case_ids": [
+          "diglyme_litfsi_1to1",
+          "monoglyme_litfsi_1to1",
+          "triglyme_litfsi_2to2"
+        ],
+        "component_families": [
+          "acyclic_polyether_oligomer",
+          "lithium_cation",
+          "tfsi_like_sulfonimide"
+        ]
+      },
+      "claimable_statement": "Deterministic typing/export is validated for the three frozen PT8 SPE cases only.",
+      "non_claimable_statement": "This is not chemistry-complete PCFF support for arbitrary polymer electrolytes.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pt8_typing_validation/validation_summary.json",
+          "key": "overall_status",
+          "value": "supported_spe_scope_validated_for_m10_dependency_handoff"
+        },
+        {
+          "path": "tests/reference_results/pt8_typing_validation/per_case_results.json",
+          "key": "case_count",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "chemistry.csv_snapshot_release_target",
+      "domain": "chemistry",
+      "status": "unsupported",
+      "claimable_statement": "The broader CSV-snapshot chemistry target is not release-ready.",
+      "non_claimable_statement": "Do not describe the current PCFF path as broadly covering the CSV snapshot or general polymer chemistry.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/csv_scope_audit/coverage_audit_summary.json",
+          "key": "release_readiness.status",
+          "value": "not_ready"
+        },
+        {
+          "path": "tests/reference_results/csv_scope_audit/coverage_audit_summary.json",
+          "key": "totals.supported_unique_smiles_count",
+          "value": 0
+        },
+        {
+          "path": "tests/reference_results/csv_scope_audit/coverage_audit_summary.json",
+          "key": "totals.unique_smiles_count",
+          "value": 6042
+        }
+      ]
+    },
+    {
+      "id": "chemistry.m5_acyclic_alkane_neutral_additive_charged_assembly",
+      "domain": "chemistry",
+      "status": "exact",
+      "supported_scope": {
+        "system_id": "monoglyme_ethane_litfsi_1to1",
+        "new_component_family": "acyclic_alkane",
+        "new_role": "neutral_additive",
+        "charged_context": "Li/TFSI salt balance retained with monoglyme polyether fragment."
+      },
+      "claimable_statement": "M5 validates one acyclic-alkane neutral-additive charged assembly: monoglyme + ethane + Li/TFSI.",
+      "non_claimable_statement": "This is not broad alkane, arbitrary co-solvent, dense ensemble, or transport readiness support.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m5_monoglyme_ethane_litfsi_1to1/m5_chemistry_expansion_report.json",
+          "key": "status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m5_monoglyme_ethane_litfsi_1to1/m5_chemistry_expansion_report.json",
+          "key": "family_counts",
+          "value": {
+            "acyclic_alkane": 1,
+            "acyclic_polyether_oligomer": 1,
+            "lithium_cation": 1,
+            "tfsi_like_sulfonimide": 1
+          }
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m5_monoglyme_ethane_litfsi_1to1/m5_chemistry_expansion_report.json",
+          "key": "workflow_status.existing_output_matches_rendered",
+          "value": true
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m5_monoglyme_ethane_litfsi_1to1/m5_chemistry_expansion_report.json",
+          "key": "gromacs_smoke.status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m5_monoglyme_ethane_litfsi_1to1/m5_chemistry_expansion_report.json",
+          "key": "gromacs_smoke.grompp_warning_count",
+          "value": 0
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m5_monoglyme_ethane_litfsi_1to1/m5_chemistry_scope_manifest.json",
+          "key": "status",
+          "value": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.long_range_pair_style_contract",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "Charged emitted topologies preserve the `lj/class2/coul/long` pair-style contract on the frozen PT8 SPE cases.",
+      "non_claimable_statement": "Contract preservation alone does not prove dense-box ensemble or transport validity.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json",
+          "key": "reference_system.pair_style",
+          "value": "lj/class2/coul/long"
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.sixthpower_mixing",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "Sixth-power mixing is numerically and contractually preserved on the frozen charged path.",
+      "non_claimable_statement": "This does not imply broad pair-override coverage or dense-system readiness.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pt8_4_1_mixing_parity/mixing_parity_summary.json",
+          "key": "mixing_toy.status",
+          "value": "pass"
+        },
+        {
+          "path": "tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json",
+          "key": "reference_system.relies_on_mixing",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.special_bonds_and_14",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "The `special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no` exclusion/1-4 contract is numerically preserved on the frozen path.",
+      "non_claimable_statement": "This is not evidence for every charged topology outside the frozen fixtures.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pt8_4_nonbonded_parity/nonbonded_parity_summary.json",
+          "key": "exclusion_toy.status",
+          "value": "pass"
+        },
+        {
+          "path": "tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json",
+          "key": "reference_system.special_bonds",
+          "value": "lj/coul 0.0 0.0 1.0 angle no dihedral no"
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.kspace_required_for_salt_systems",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "The frozen charged path explicitly requires long-range electrostatics semantics for salt systems.",
+      "non_claimable_statement": "This is not a claim that PME/PPPM ensemble outcomes already match at dense-box scale.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json",
+          "key": "checks[*].checks.requires_kspace_for_salt_system",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.self_only_pair_coeff_policy",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "The emitted charged path preserves the self-only pair-coefficient contract expected by the frozen charged reference.",
+      "non_claimable_statement": "Explicit cross-pair override behavior is not covered by this statement.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json",
+          "key": "reference_system.pair_coeff_source",
+          "value": "explicit_self_only"
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.explicit_pair_overrides",
+      "domain": "charged_semantics",
+      "status": "unvalidated",
+      "claimable_statement": "No present-tense support claim is made for explicit charged cross-pair overrides.",
+      "non_claimable_statement": "Do not imply that arbitrary charged `[ pairtypes ]` or LAMMPS `pair_coeff` overrides are validated.",
+      "evidence": [
+        {
+          "path": "docs/validation_report_pt8_4.md",
+          "key": "remaining_gaps",
+          "value": "Pair overrides were not tested in PT8.4."
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.small_fixture_combined_mechanics",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "Combined charged mechanics are numerically consistent on the frozen `small_salt_polymer_box` fixture.",
+      "non_claimable_statement": "This is a frozen small-fixture mechanics claim, not broad chemistry readiness or transport readiness.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pt8_5_combined_parity/combined_parity_summary.json",
+          "key": "small_salt_polymer_box.status",
+          "value": "pass"
+        },
+        {
+          "path": "tests/reference_results/pt8_5_combined_parity/combined_parity_summary.json",
+          "key": "small_salt_polymer_box.relative_force_diff",
+          "value": 0.00036841964578978865
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.short_time_trajectory_gate",
+      "domain": "charged_semantics",
+      "status": "unvalidated",
+      "claimable_statement": "No exact charged short-time trajectory gate claim survives without a checked-in charged NVE artifact bundle.",
+      "non_claimable_statement": "Do not cite M10.1 as an exact charged trajectory gate until the missing charged NVE artifacts are restored.",
+      "evidence": [
+        {
+          "path": "docs/validation_report_m10_1.md",
+          "key": "validated_outcomes",
+          "value": "Document cites `small_salt_polymer_box_nve_dt0.0001`, but the checked-in artifact bundle is absent."
+        },
+        {
+          "path": "tests/reference_results/m10_1_trajectory_gate/small_salt_polymer_box_nve_dt0.0001",
+          "key": "exists",
+          "value": false
+        },
+        {
+          "path": "tests/reference_results/m10_1_trajectory_gate/m10_1_gate_decision.json",
+          "key": "exists",
+          "value": false
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.dense_box_short_horizon_energy_temperature",
+      "domain": "charged_semantics",
+      "status": "approximate",
+      "claimable_statement": "A single 100 ps dense charged-box run showed close mean potential energy and temperature, but only as a partial, caveated diagnostic.",
+      "non_claimable_statement": "Do not promote this to charged ensemble readiness, density parity, or transport readiness.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/m10_4_charged_ensemble_gate/m10_4_summary.json",
+          "key": "dense_salt_polymer.parity_status",
+          "value": "partial"
+        },
+        {
+          "path": "tests/reference_results/m10_4_charged_ensemble_gate/m10_4_summary.json",
+          "key": "dense_salt_polymer.gmx.potential_energy.status",
+          "value": "failed / unstable"
+        },
+        {
+          "path": "tests/reference_results/m10_4_charged_ensemble_gate/m10_4_summary.json",
+          "key": "dense_salt_polymer.gmx.temperature.status",
+          "value": "converged enough"
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.m11_dense_box_density_volume_parity",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "The explicit strict-PCFF-qualified `gate_h_dense_salt_polymer_2x2x2` pair passes dense charged density/volume parity within the predeclared 5% thresholds.",
+      "non_claimable_statement": "This is one explicit subset; do not generalize it to generic dense charged ensemble readiness.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/dense_npt_parity_report.json",
+          "key": "status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/dense_npt_parity_report.json",
+          "key": "parity_metrics.density_rel_diff",
+          "value": 0.04539570154423199
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/dense_npt_parity_report.json",
+          "key": "parity_metrics.volume_rel_diff",
+          "value": 0.0480657063244706
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.m11_4_broader_high_pressure_dense_parity",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "M11.4 closes broader M2 dense charged density/volume parity for two strict-PCFF-qualified dense charged pairs at 250 bar over a 100 ps target / final 50 ps window.",
+      "non_claimable_statement": "This is not ambient 1 bar broader dense parity, generic dense charged ensemble readiness, or charged transport readiness.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/m2_broad_campaign_summary.json",
+          "key": "status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/m2_broad_campaign_summary.json",
+          "key": "systems",
+          "value": [
+            {
+              "analysis_window_ps": 50.0,
+              "dense_npt_parity_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/dense_npt_parity_report.json",
+              "density_rel_diff": 0.01838659601828917,
+              "duration_ps": 100.0,
+              "qualified_pair_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/gate_h_dense_salt_polymer_2x2x2/qualified_pair_manifest.json",
+              "status": "PASS",
+              "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
+              "system_id": "gate_h_dense_salt_polymer_2x2x2",
+              "volume_rel_diff": 0.018277706713654057
+            },
+            {
+              "analysis_window_ps": 50.0,
+              "dense_npt_parity_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
+              "density_rel_diff": 0.03978330099184161,
+              "duration_ps": 100.0,
+              "qualified_pair_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/qualified_pair_manifest.json",
+              "status": "PASS",
+              "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/fixtures/monoglyme_ethane_litfsi_1to1_dense18/fixture_manifest.json",
+              "system_id": "monoglyme_ethane_litfsi_1to1_dense18",
+              "volume_rel_diff": 0.04393341199598194
+            }
+          ]
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/dense_npt_parity_report.json",
+          "key": "parity_metrics.density_rel_diff",
+          "value": 0.01838659601828917
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/dense_npt_parity_report.json",
+          "key": "parity_metrics.volume_rel_diff",
+          "value": 0.018277706713654057
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
+          "key": "parity_metrics.density_rel_diff",
+          "value": 0.03978330099184161
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
+          "key": "parity_metrics.volume_rel_diff",
+          "value": 0.04393341199598194
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.m11_6_pressure_preconditioned_staged_1bar_dense_parity",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "M11.6 closes pressure-preconditioned staged 1 bar dense charged density/volume parity for two strict-PCFF-qualified dense charged pairs over a 100 ps 250 bar precondition followed by a 100 ps 1 bar target / final 50 ps target window.",
+      "non_claimable_statement": "This is not ambient 1 bar equilibrium dense parity, generic dense charged ensemble readiness, or charged transport readiness.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/m2_staged_1bar_campaign_summary.json",
+          "key": "status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/m2_staged_1bar_campaign_summary.json",
+          "key": "systems",
+          "value": [
+            {
+              "analysis_window_ps": 50.0,
+              "density_rel_diff": 0.02789669955166171,
+              "precondition_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/gate_h_dense_salt_polymer_2x2x2/precondition_250bar/paired_npt/dense_npt_parity_report.json",
+              "precondition_status": "PASS",
+              "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
+              "system_id": "gate_h_dense_salt_polymer_2x2x2",
+              "target_duration_ps": 100.0,
+              "target_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/gate_h_dense_salt_polymer_2x2x2/target_1bar/staged_1bar_parity_report.json",
+              "target_status": "PASS",
+              "volume_rel_diff": 0.027156417682212955
+            },
+            {
+              "analysis_window_ps": 50.0,
+              "density_rel_diff": 0.037764712115395525,
+              "precondition_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/paired_npt/dense_npt_parity_report.json",
+              "precondition_status": "PASS",
+              "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/fixtures/monoglyme_ethane_litfsi_1to1_dense18/fixture_manifest.json",
+              "system_id": "monoglyme_ethane_litfsi_1to1_dense18",
+              "target_duration_ps": 100.0,
+              "target_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/staged_1bar_parity_report.json",
+              "target_status": "PASS",
+              "volume_rel_diff": 0.03977580260686641
+            }
+          ]
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/gate_h_dense_salt_polymer_2x2x2/target_1bar/staged_1bar_parity_report.json",
+          "key": "parity_metrics.density_rel_diff",
+          "value": 0.02789669955166171
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/gate_h_dense_salt_polymer_2x2x2/target_1bar/staged_1bar_parity_report.json",
+          "key": "parity_metrics.volume_rel_diff",
+          "value": 0.027156417682212955
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/staged_1bar_parity_report.json",
+          "key": "parity_metrics.density_rel_diff",
+          "value": 0.037764712115395525
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/staged_1bar_parity_report.json",
+          "key": "parity_metrics.volume_rel_diff",
+          "value": 0.03977580260686641
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.legacy_m10_dense_box_density_volume_parity",
+      "domain": "charged_semantics",
+      "status": "unsupported",
+      "claimable_statement": "The legacy M10 `dense_salt_polymer` density/volume parity path is not supportable.",
+      "non_claimable_statement": "Do not cite the legacy M10 density/volume mismatch as a passing dense charged parity path; use only explicit M11 subset evidence for those subsets.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/m10_4_charged_ensemble_gate/m10_4_summary.json",
+          "key": "dense_salt_polymer.density_parity_rel_diff",
+          "value": 0.5536010653093915
+        },
+        {
+          "path": "tests/reference_results/m10_4_charged_ensemble_gate/m10_4_summary.json",
+          "key": "dense_salt_polymer.volume_parity_rel_diff",
+          "value": 0.3748927919232695
+        },
+        {
+          "path": "tests/reference_results/m10_4_charged_ensemble_gate/m10_4_summary.json",
+          "key": "dense_salt_polymer.gmx.density.status",
+          "value": "failed / unstable"
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.m4_strict_charged_validation",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "M4 strict charged validation passes on the explicit `gate_h_dense_salt_polymer_2x2x2` strict-PCFF-qualified pair.",
+      "non_claimable_statement": "This does not establish broad chemistry, LAMMPS-vs-GROMACS transport parity, charged transport readiness, or production readiness.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/m4_strict_validation_inventory.json",
+          "key": "status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/m4_strict_validation_inventory.json",
+          "key": "component_status",
+          "value": {
+            "mechanical_parity": "PASS",
+            "structural_density_parity": "PASS",
+            "transport_facing_parity": "PASS"
+          }
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/mechanical_parity/mechanical_parity_report.json",
+          "key": "metrics.energy_rel_diff",
+          "value": 0.00027196319022261913
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/mechanical_parity/mechanical_parity_report.json",
+          "key": "metrics.force_rms_rel_diff",
+          "value": 0.03722166875460191
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/structural_density_parity/structural_density_parity_report.json",
+          "key": "parity_metrics.density_rel_diff",
+          "value": 0.04539570154423199
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_parity/transport_facing_parity_report.json",
+          "key": "fresh_m4_rerun",
+          "value": true
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_parity/transport_facing_parity_report.json",
+          "key": "primary_observables",
+          "value": {
+            "anion_diffusivity_cm2_s": true,
+            "cation_diffusivity_cm2_s": true,
+            "conductivity_cne_s_cm": true,
+            "transference_ne": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.long_horizon_stability",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "The corrected 5 ns TP1 dense_salt_polymer NPT rerun resolves the historical thermal-runaway blocker for that exact system/protocol.",
+      "non_claimable_statement": "Do not promote this to dense parity, endpoint continuation safety, charged transport readiness, or production readiness.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/tp1_charged_recovery/dense_salt_polymer/recovery_summary.json",
+          "key": "recovery_status.overall",
+          "value": "unresolved / unstable (Thermal Runaway)"
+        },
+        {
+          "path": "tests/reference_results/tp1_charged_recovery/dense_salt_polymer/recovery_summary.json",
+          "key": "equilibration_duration_ns",
+          "value": 3.017
+        },
+        {
+          "path": "tests/reference_results/tp1_charged_recovery/dense_salt_polymer/recovery_summary.json",
+          "key": "max_block_temperature_mean_K",
+          "value": 528.011369727
+        },
+        {
+          "path": "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json",
+          "key": "verdicts.thermal_runaway_exact_blocker",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json",
+          "key": "duration_completed_ps",
+          "value": 5000.0
+        },
+        {
+          "path": "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json",
+          "key": "temperature_k.mean",
+          "value": 299.8209499100899
+        },
+        {
+          "path": "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json",
+          "key": "temperature_k.max",
+          "value": 360.481812
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.endpoint_cutoff_margin_after_tp1_exact",
+      "domain": "charged_semantics",
+      "status": "unsupported",
+      "claimable_statement": "Endpoint continuation safety from the corrected TP1 final coordinates is not supportable.",
+      "non_claimable_statement": "Do not use the corrected TP1 endpoint as transport-entry or continuation-ready evidence until the cutoff/box margin is resolved.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json",
+          "key": "verdicts.endpoint_cutoff_margin",
+          "value": "FAIL"
+        },
+        {
+          "path": "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json",
+          "key": "final_box_nm",
+          "value": [
+            1.6679,
+            1.6679,
+            1.6679
+          ]
+        },
+        {
+          "path": "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json",
+          "key": "half_box_margin_nm",
+          "value": -0.06605000000000005
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.transport_observables",
+      "domain": "charged_semantics",
+      "status": "unsupported",
+      "claimable_statement": "Charged diffusion, conductivity, and transference are not currently supportable as PCFF claims.",
+      "non_claimable_statement": "Do not claim charged transport readiness, cNE readiness, or publication-grade transport validity.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/m10/method_readiness_summary.json",
+          "key": "overall_status",
+          "value": "pcff_provenance_blocked"
+        },
+        {
+          "path": "tests/reference_results/m10/method_readiness_summary.json",
+          "key": "recommended_use[-1]",
+          "value": "rebuild M10 on GROMACS systems prepared with actual PCFF parameters before making any transport claim"
+        }
+      ]
+    },
+    {
+      "id": "charged_semantics.provenance_qualified_strict_pcff_parity",
+      "domain": "charged_semantics",
+      "status": "exact",
+      "claimable_statement": "One provenance-qualified strict PCFF charged validation path now survives for the explicit `gate_h_dense_salt_polymer_2x2x2` pair.",
+      "non_claimable_statement": "ACPYPE/GAFF2-prepared charged artifacts remain disqualified; do not generalize this one strict PCFF pair to broad charged support.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/m4_strict_validation_inventory.json",
+          "key": "status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/m4_strict_validation_inventory.json",
+          "key": "component_status",
+          "value": {
+            "mechanical_parity": "PASS",
+            "structural_density_parity": "PASS",
+            "transport_facing_parity": "PASS"
+          }
+        },
+        {
+          "path": "tests/reference_results/m10/method_readiness_summary.json",
+          "key": "strict_parity_readiness.status",
+          "value": "blocked_by_provenance"
+        },
+        {
+          "path": "tests/reference_results/m10/method_readiness_summary.json",
+          "key": "pcff_provenance_gate_status_counts",
+          "value": {
+            "acpype_gaff2_atomtyping_failed": 1,
+            "acpype_gaff2_topology": 1
+          }
+        }
+      ]
+    }
+  ]
+}

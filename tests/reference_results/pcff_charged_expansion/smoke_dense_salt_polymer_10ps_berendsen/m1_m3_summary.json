@@ -1,0 +1,19 @@
+{
+  "artifacts": {
+    "dense_npt_parity_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps_berendsen/paired_npt/dense_npt_parity_report.json",
+    "long_nvt_stability_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps_berendsen/long_nvt_stability/long_nvt_stability_report.json",
+    "qualified_pair_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps_berendsen/qualified_pair_manifest.json"
+  },
+  "capability_subset_status": "FAIL",
+  "dense_parity_status": "FAIL",
+  "long_stability_status": "PASS",
+  "milestone_subset": "M1-M3",
+  "new_candidate_boundary": {
+    "dense_parity": "FAIL",
+    "long_horizon_stability": "PASS",
+    "qualified_charged_pair": "dense_salt_polymer"
+  },
+  "old_boundary": "frozen PT8 SPE subset and small charged fixtures only",
+  "qualified_pair_manifest_status": "strict_pcff_qualified",
+  "system_id": "dense_salt_polymer"
+}

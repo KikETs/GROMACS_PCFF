@@ -1,0 +1,35 @@
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen/long_nvt_stability
+Command line:
+  gmx grompp -f nvt.mdp -c system.gro -t system.cpt -p system.top -o nvt.tpr -po nvt_mdout.mdp -maxwarn 1
+
+
+NOTE 1 [file nvt.mdp]:
+  You have set rlist larger than the interaction cut-off, but you also have
+  verlet-buffer-tolerance > 0. Will set rlist using
+  verlet-buffer-tolerance.
+
+Generating 1-4 interactions: fudge = 1
+
+ERROR 1 [file system.top, line 263]:
+  ERROR: The cut-off length is longer than half the shortest box vector or
+  longer than the smallest box diagonal element. Increase the box size or
+  decrease rlist.
+
+
+
+There was 1 NOTE
+
+-------------------------------------------------------
+Program:     gmx grompp, version 2027.0-dev-20260329-1811cfe56e-dirty-unknown
+Source file: src/gromacs/gmxpreprocess/grompp.cpp (line 2413)
+
+Fatal error:
+There was 1 error in input file(s)
+
+For more information and tips for troubleshooting, please check the GROMACS
+website at https://manual.gromacs.org/current/user-guide/run-time-errors.html
+-------------------------------------------------------

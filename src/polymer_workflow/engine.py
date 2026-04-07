@@ -33,13 +33,15 @@ SPEC_SCHEMA_VERSION = 1
 REPORT_SCHEMA_NAME = "pcff_polymer_workflow_report"
 REPORT_SCHEMA_VERSION = 1
 
-EXPORTABLE_WORKFLOW_KINDS = {"capped_oligomer", "salt_species"}
+EXPORTABLE_WORKFLOW_KINDS = {"capped_oligomer", "neutral_additive", "salt_species"}
 ROLE_BY_WORKFLOW_KIND = {
     "capped_oligomer": {"polymer_fragment"},
+    "neutral_additive": {"neutral_additive"},
     "repeat_unit_template": {"polymer_template"},
     "salt_species": {"salt_cation", "salt_anion"},
 }
 EXPECTED_ROLE_FAMILY = {
+    "neutral_additive": "acyclic_alkane",
     "polymer_fragment": POLYETHER_COMPONENT_FAMILY,
     "salt_cation": "lithium_cation",
     "salt_anion": "tfsi_like_sulfonimide",
@@ -484,6 +486,17 @@ def _assembly_checks_payload(processed_components: list[dict]) -> dict:
         for item in exportable
         if item["component_spec"]["role"] == "polymer_fragment"
     ]
+    fragment_consistency = {
+        "status": "pass",
+        "polymer_component_ids": polymer_components,
+    }
+    neutral_additive_components = [
+        item["component_spec"]["component_id"]
+        for item in exportable
+        if item["component_spec"]["role"] == "neutral_additive"
+    ]
+    if neutral_additive_components:
+        fragment_consistency["neutral_additive_component_ids"] = neutral_additive_components
     return {
         "charge_neutrality": {
             "status": "pass" if abs(total_charge) < 1.0e-8 else "fail",
@@ -494,10 +507,7 @@ def _assembly_checks_payload(processed_components: list[dict]) -> dict:
             "cation_count": cation_count,
             "anion_count": anion_count,
         },
-        "fragment_consistency": {
-            "status": "pass",
-            "polymer_component_ids": polymer_components,
-        },
+        "fragment_consistency": fragment_consistency,
     }
 
 

@@ -1,0 +1,35 @@
+# This file was created Mon Apr  6 22:34:42 2026
+# Created by:
+#   :-) GROMACS - gmx energy, 2027.0-dev-20260405-81d472fe4c-dirty-unknown (-:
+# 
+# Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
+# Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+# Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+# Command line:
+#   gmx energy -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_02/prod.edr -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_02/production_observables.xvg
+# gmx energy is part of G R O M A C S:
+#
+# Good ROcking Metal Altar for Chronical Sinners
+#
+@    title "GROMACS Energies"
+@    xaxis  label "Time (ps)"
+@    yaxis  label "(K)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "Temperature"
+    0.000000  205.251251
+    0.500000  303.327118
+    1.000000  381.376556
+    1.500000  430.975433
+    2.000000  455.180817
+    2.500000  444.741699
+    3.000000  414.580444
+    3.500000  378.741577
+    4.000000  372.002380
+    4.500000  355.593475
+    5.000000  350.324341

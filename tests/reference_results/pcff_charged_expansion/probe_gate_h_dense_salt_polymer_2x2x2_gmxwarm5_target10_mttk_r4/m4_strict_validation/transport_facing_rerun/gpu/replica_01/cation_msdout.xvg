@@ -1,0 +1,75 @@
+# This file was created Mon Apr  6 22:32:27 2026
+# Created by:
+#    :-) GROMACS - gmx msd, 2027.0-dev-20260405-81d472fe4c-dirty-unknown (-:
+# 
+# Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
+# Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+# Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+# Command line:
+#   gmx msd -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_01/prod.xtc -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_01/prod.tpr -n /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_01/cation.ndx -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_01/cation_msdout.xvg -mol /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_01/cation_diff_mol.xvg -trestart 0.5 -maxtau 5.0 -beginfit 0.5 -endfit 4.5
+# gmx msd is part of G R O M A C S:
+#
+# Gromacs Runs On Most of All Computer Systems
+#
+@    title "Mean Squared Displacement"
+@    xaxis  label "tau (ps)"
+@    yaxis  label "MSD (nm\\S2\\N)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "D[    CATION] = 15.0988 (+/- 1.52) (1e-5 cm^2/s)"
+      0.000          0
+      0.100 0.00335498
+      0.200 0.00768012
+      0.300   0.012972
+      0.400  0.0193165
+      0.500  0.0265136
+      0.600  0.0348751
+      0.700  0.0423841
+      0.800  0.0504752
+      0.900  0.0589867
+      1.000  0.0674601
+      1.100   0.079941
+      1.200  0.0879749
+      1.300  0.0967313
+      1.400   0.105418
+      1.500   0.113819
+      1.600   0.128552
+      1.700   0.135727
+      1.800   0.144154
+      1.900    0.15242
+      2.000    0.15987
+      2.100   0.176869
+      2.200   0.183433
+      2.300   0.191535
+      2.400   0.198073
+      2.500   0.204085
+      2.600   0.221781
+      2.700   0.228166
+      2.800   0.236202
+      2.900   0.242955
+      3.000   0.248959
+      3.100   0.268637
+      3.200   0.275168
+      3.300   0.282644
+      3.400   0.289282
+      3.500   0.294359
+      3.600   0.320255
+      3.700   0.325665
+      3.800   0.332424
+      3.900   0.338316
+      4.000   0.343429
+      4.100   0.370946
+      4.200   0.376003
+      4.300   0.380545
+      4.400   0.386269
+      4.500   0.391764
+      4.600   0.421661
+      4.700   0.429854
+      4.800   0.431392
+      4.900   0.437177
+      5.000   0.445421

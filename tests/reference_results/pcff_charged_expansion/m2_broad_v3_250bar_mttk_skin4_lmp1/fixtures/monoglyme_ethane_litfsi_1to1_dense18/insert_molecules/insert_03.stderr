@@ -1,0 +1,56 @@
+ :-) GROMACS - gmx insert-molecules, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/fixtures/monoglyme_ethane_litfsi_1to1_dense18/insert_molecules
+Command line:
+  gmx insert-molecules -ci li.gro -nmol 18 -o packed_03_li.gro -try 10000 -seed 20260410 -radius 0.04 -scale 0.35 -f packed_02_ethane.gro
+
+Reading solute configuration
+Initialising inter-atomic distances...
+Using random seed 20260410
+
+Try 1 success (now 433 atoms)!
+
+Try 2 success (now 434 atoms)!
+
+Try 3
+Try 4 success (now 435 atoms)!
+
+Try 5 success (now 436 atoms)!
+
+Try 6 success (now 437 atoms)!
+
+Try 7 success (now 438 atoms)!
+
+Try 8 success (now 439 atoms)!
+
+Try 9 success (now 440 atoms)!
+
+Try 10 success (now 441 atoms)!
+
+Try 11 success (now 442 atoms)!
+
+Try 12 success (now 443 atoms)!
+
+Try 13 success (now 444 atoms)!
+
+Try 14 success (now 445 atoms)!
+
+Try 15 success (now 446 atoms)!
+
+Try 16 success (now 447 atoms)!
+
+Try 17 success (now 448 atoms)!
+
+Try 18 success (now 449 atoms)!
+
+Try 19 success (now 450 atoms)!
+
+Added 18 molecules (out of 18 requested)
+Writing generated configuration to packed_03_li.gro
+
+Output configuration contains 450 atoms in 54 residues
+
+GROMACS reminds you: "Why is it that programmers always confuse Halloween with Christmas? Because 31 OCT = 25 DEC." (Anonymous)
+

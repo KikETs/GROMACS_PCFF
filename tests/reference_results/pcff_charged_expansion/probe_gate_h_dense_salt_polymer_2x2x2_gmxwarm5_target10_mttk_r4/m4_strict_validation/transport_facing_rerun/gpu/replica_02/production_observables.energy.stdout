@@ -1,0 +1,7 @@
+
+Statistics over 10001 steps [ 0.0000 through 5.0000 ps ], 1 data sets
+All statistics are over 11 points (frames)
+
+Energy                      Average   Err.Est.       RMSD  Tot-Drift
+-------------------------------------------------------------------------------
+Temperature                 373.864         23     63.628    66.3664  (K)

@@ -1,0 +1,176 @@
+{
+  "caveats": [
+    "GROMACS endpoint-to-1bar probe is 20 ps only; it is root-cause evidence, not formal parity evidence.",
+    "The 250 bar precondition path cannot be presented as ambient 1 bar equilibrium unless a predeclared staged ambient protocol is validated.",
+    "Pressure means differ and fluctuate; density retention alone is not transport or production readiness."
+  ],
+  "interpretation": {
+    "ambient_1bar_broader_m2_status": "UNRESOLVED",
+    "gmx_only_warmup_not_primary_cause": true,
+    "most_supported_current_failure_mode": "The direct 1 bar release from the generated dense18 state expands/cavitates to gas-like volumes, while 250 bar preconditioned coordinates remain condensed in short 1 bar probes. The likely blocker is pressure-path/initial-basin dependence rather than LAMMPS neighbor-list settings or parser/emitter provenance.",
+    "neighbor_skin_not_primary_cause": true,
+    "one_bar_behavior_is_path_dependent": true
+  },
+  "probes": {
+    "formal_v1_1bar_initial_100ps": {
+      "gromacs": {
+        "density_kg_m3_mean": 12.763570504990021,
+        "pressure_bar_mean": 1.7602824730538922,
+        "volume_nm3_mean": 982.4377786367265
+      },
+      "lammps": {
+        "density_kg_m3_mean": 22.0575029500998,
+        "pressure_atm_mean": 2.102012176666667,
+        "volume_nm3_mean": 625.4371996606786
+      },
+      "parity_metrics": {
+        "density_rel_diff": 0.42135016217090554,
+        "volume_rel_diff": 0.5708016395087039
+      },
+      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
+      "protocol": {
+        "analysis_window_ps": 50.0,
+        "duration_ps": 100.0,
+        "lammps_neighbor_every": null,
+        "lammps_neighbor_skin_angstrom": null,
+        "ref_p_bar": 1.0,
+        "warmup_ps": 5.0,
+        "warmup_scope": "gmx-only"
+      },
+      "status": "FAIL"
+    },
+    "formal_v3_250bar_100ps": {
+      "gromacs": {
+        "density_kg_m3_mean": 1405.2603501556887,
+        "pressure_bar_mean": 401.7510902055888,
+        "volume_nm3_mean": 8.691774115768464
+      },
+      "lammps": {
+        "density_kg_m3_mean": 1463.4825155688623,
+        "pressure_atm_mean": 236.0641849706587,
+        "volume_nm3_mean": 8.325985178642714
+      },
+      "parity_metrics": {
+        "density_rel_diff": 0.03978330099184161,
+        "volume_rel_diff": 0.04393341199598194
+      },
+      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
+      "protocol": {
+        "analysis_window_ps": 50.0,
+        "duration_ps": 100.0,
+        "lammps_neighbor_every": 1,
+        "lammps_neighbor_skin_angstrom": 4.0,
+        "ref_p_bar": 250.0,
+        "warmup_ps": 5.0,
+        "warmup_scope": "gmx-only"
+      },
+      "status": "PASS"
+    },
+    "gromacs_250bar_endpoint_to_1bar_mttk_20ps_window_from10ps": {
+      "first": {
+        "density_kg_m3": 1429.80249,
+        "pressure_bar": -292.066559,
+        "temperature_k": 297.223663,
+        "time_ps": 0.0,
+        "volume_nm3": 8.514014
+      },
+      "last": {
+        "density_kg_m3": 1158.897217,
+        "pressure_bar": 1249.905029,
+        "temperature_k": 292.699829,
+        "time_ps": 20.0,
+        "volume_nm3": 10.50426
+      },
+      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_250bar_endpoint_to_1bar_gmx_mttk_20ps/gromacs/npt_1bar_from_250bar_final_energy.xvg",
+      "rows": 201,
+      "window_end_ps": 20.0,
+      "window_mean": {
+        "density_kg_m3": 1255.4987043663366,
+        "pressure_bar": 299.394772,
+        "temperature_k": 300.3786013762376,
+        "volume_nm3": 9.720653336633664
+      },
+      "window_start_ps": 10.0
+    },
+    "lammps_1bar_initial_skin4_100ps": {
+      "first": {
+        "density_kg_m3": 880.5959,
+        "pressure_atm": 2112.4615,
+        "temperature_k": 300.0,
+        "time_ps": 0.0,
+        "volume_nm3": 13.824
+      },
+      "last": {
+        "density_kg_m3": 14.317396,
+        "pressure_atm": -2.9264567,
+        "temperature_k": 303.82877,
+        "time_ps": 100.0,
+        "volume_nm3": 850.24941
+      },
+      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_1bar_lmp1_skin4_100ps_lammps_only/lammps/npt.log",
+      "rows": 1001,
+      "window_end_ps": null,
+      "window_mean": {
+        "density_kg_m3": 23.378330289421157,
+        "pressure_atm": 2.6391179013948105,
+        "temperature_k": 298.78872610778444,
+        "volume_nm3": 617.9430510578842
+      },
+      "window_start_ps": 50.0
+    },
+    "lammps_250bar_endpoint_to_1bar_skin4_100ps": {
+      "first": {
+        "density_kg_m3": 1513.7331000000001,
+        "pressure_atm": -803.39975,
+        "temperature_k": 300.0,
+        "time_ps": 0.0,
+        "volume_nm3": 8.041944599999999
+      },
+      "last": {
+        "density_kg_m3": 1367.5067000000001,
+        "pressure_atm": -1285.2911,
+        "temperature_k": 312.5196,
+        "time_ps": 100.0,
+        "volume_nm3": 8.9018634
+      },
+      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_250bar_endpoint_to_1bar_lmp_skin4_100ps/lammps/npt_1bar_from_250bar_final.log",
+      "rows": 1001,
+      "window_end_ps": null,
+      "window_mean": {
+        "density_kg_m3": 1332.7929123752494,
+        "pressure_atm": -116.0204801035928,
+        "temperature_k": 299.30656215568865,
+        "volume_nm3": 9.147503436127744
+      },
+      "window_start_ps": 50.0
+    },
+    "lammps_250bar_endpoint_to_1bar_skin4_20ps_window_from10ps": {
+      "first": {
+        "density_kg_m3": 1513.7331000000001,
+        "pressure_atm": -803.39975,
+        "temperature_k": 300.0,
+        "time_ps": 0.0,
+        "volume_nm3": 8.041944599999999
+      },
+      "last": {
+        "density_kg_m3": 1367.5067000000001,
+        "pressure_atm": -1285.2911,
+        "temperature_k": 312.5196,
+        "time_ps": 100.0,
+        "volume_nm3": 8.9018634
+      },
+      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_250bar_endpoint_to_1bar_lmp_skin4_100ps/lammps/npt_1bar_from_250bar_final.log",
+      "rows": 1001,
+      "window_end_ps": 20.0,
+      "window_mean": {
+        "density_kg_m3": 1354.2896227722772,
+        "pressure_atm": -50.44726635643563,
+        "temperature_k": 301.6560398019802,
+        "volume_nm3": 8.997083543564356
+      },
+      "window_start_ps": 10.0
+    }
+  },
+  "purpose": "ambient 1 bar dense-parity root-cause probes; non-formal evidence, not M2 PASS evidence",
+  "system": "monoglyme_ethane_litfsi_1to1_dense18"
+}

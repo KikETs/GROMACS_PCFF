@@ -1,0 +1,29 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/gate_h_dense_salt_polymer_2x2x2/target_1bar/gromacs
+Command line:
+  gmx mdrun -s target_1bar.tpr -deffnm target_1bar -nt 8 -pin off -reprod
+
+Reading file target_1bar.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Can not increase nstlist because verlet-buffer-tolerance is not set or used
+Using 1 MPI thread
+Using 8 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'gate_h_dense_salt_polymer_2x2x2'
+100000 steps,    100.0 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:    72461.727     9057.716      800.0
+                         2h30:57
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:        0.954       25.160       90.576            0.024 
+
+GROMACS reminds you: "Does college pay? They do if you are a good open-field runner." (Will Rogers)
+

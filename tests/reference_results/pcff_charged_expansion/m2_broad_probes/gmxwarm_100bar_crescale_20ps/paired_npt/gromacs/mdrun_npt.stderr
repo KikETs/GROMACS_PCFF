@@ -1,0 +1,28 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gmxwarm_100bar_crescale_20ps/paired_npt/gromacs
+Command line:
+  gmx mdrun -s npt.tpr -deffnm npt -nt 4 -pin off -reprod
+
+Reading file npt.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Can not increase nstlist because verlet-buffer-tolerance is not set or used
+Using 1 MPI thread
+Using 4 OpenMP threads 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'monoglyme_ethane_litfsi_1to1_dense18'
+20000 steps,     20.0 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:     1407.806      351.952      400.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:        4.910        4.888       17.597            0.041 
+
+GROMACS reminds you: "I was a bit of an artist, and somewhere along the way had gotten the idea that computers could be used for animation and artists, because in-betweening was so tedious... Of course, everyone thought I was nuts." (Carla Meninsky, Atari engineer)
+

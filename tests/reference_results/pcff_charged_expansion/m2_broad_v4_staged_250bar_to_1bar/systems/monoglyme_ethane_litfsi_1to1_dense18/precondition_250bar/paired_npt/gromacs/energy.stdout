@@ -1,0 +1,11 @@
+
+Statistics over 100001 steps [ 0.0000 through 100.0000 ps ], 5 data sets
+All statistics are over 1001 points (frames)
+
+Energy                      Average   Err.Est.       RMSD  Tot-Drift
+-------------------------------------------------------------------------------
+Potential                  -12037.1        200    657.007   -1139.59  (kJ/mol)
+Temperature                 300.805       0.26    9.09011   0.324783  (K)
+Pressure                    270.389         39    1841.02    274.712  (bar)
+Volume                      9.20524       0.49    1.15595   -2.80484  (nm^3)
+Density                      1339.9         60    140.337    352.471  (kg/m^3)

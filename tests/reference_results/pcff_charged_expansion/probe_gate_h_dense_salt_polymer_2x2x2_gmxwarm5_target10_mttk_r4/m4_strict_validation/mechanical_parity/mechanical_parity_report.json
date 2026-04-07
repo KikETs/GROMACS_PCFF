@@ -1,0 +1,62 @@
+{
+  "artifacts": {
+    "gromacs_energy_xvg": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/mechanical_parity/gromacs_energy.xvg",
+    "gromacs_force_dump": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/mechanical_parity/gromacs_dump.stdout",
+    "gromacs_mdout": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/mechanical_parity/mechanical_mdout.mdp",
+    "lammps_forces": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/mechanical_parity/lammps_forces.dump",
+    "lammps_log": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/mechanical_parity/lammps_run0.log",
+    "root": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/mechanical_parity"
+  },
+  "metrics": {
+    "atom_count": 2160,
+    "energy_abs_diff_kj_mol": 48.902857999986736,
+    "energy_rel_diff": 0.00027196319022261913,
+    "force_max_abs_diff_kj_mol_nm": 3.6297686880000004,
+    "force_max_diff_atom_id": 1490,
+    "force_max_reference_magnitude_kj_mol_nm": 47.36372391128778,
+    "force_max_rel_diff": 0.07663604945418892,
+    "force_rms_abs_diff_kj_mol_nm": 0.662104095538036,
+    "force_rms_reference_kj_mol_nm": 17.78813572016909,
+    "force_rms_rel_diff": 0.03722166875460191,
+    "gromacs_potential_energy_kj_mol": -179863.15625,
+    "lammps_potential_energy_kj_mol": -179814.253392
+  },
+  "protocol": {
+    "gromacs": {
+      "binary": "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+      "coulombtype": "PME",
+      "cutoffs_nm": 0.9,
+      "ewald_rtol": 0.0001,
+      "fourierspacing": 0.12,
+      "pme_order": 4,
+      "vdw_type": "Cut-off"
+    },
+    "lammps": {
+      "angle_style": "class2",
+      "atom_style": "full",
+      "bond_style": "class2",
+      "dihedral_style": "class2",
+      "improper_style": "none",
+      "kspace_style": "pppm 1.0e-4",
+      "pair_modify": "mix sixthpower",
+      "pair_style": {
+        "args": [
+          "9.0",
+          "9.0"
+        ],
+        "kind": "lj/class2/coul/long"
+      },
+      "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+      "units": "real"
+    },
+    "thresholds": {
+      "energy_rel_diff_max": 0.001,
+      "force_max_abs_diff_kj_mol_nm_max": 5.0,
+      "force_max_rel_diff_max": 0.15,
+      "force_rms_rel_diff_max": 0.05
+    }
+  },
+  "scope": "GROMACS-vs-LAMMPS run-0 mechanical parity on the strict PCFF-qualified charged pair.",
+  "status": "PASS",
+  "system_id": "gate_h_dense_salt_polymer_2x2x2"
+}

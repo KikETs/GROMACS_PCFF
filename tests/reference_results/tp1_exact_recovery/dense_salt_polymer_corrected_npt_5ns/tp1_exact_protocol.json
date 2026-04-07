@@ -1,0 +1,25 @@
+{
+  "analysis_window_ps": 1000.0,
+  "artifacts": {
+    "coordinates": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.gro",
+    "lammps_data": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.data",
+    "lammps_input": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.in",
+    "system_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.json",
+    "topology": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.top",
+    "typed_system": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/typed_system.json"
+  },
+  "corrected_old_runner_defect": "tcouple/pcouple/gen_vel typo corrected to tcoupl/pcoupl/gen-vel",
+  "duration_ps": 5000.0,
+  "grompp_maxwarn": {
+    "reason": "Berendsen is retained to rerun the historical TP1 intended protocol; GROMACS emits a non-production ensemble warning.",
+    "tp1_equil": 1
+  },
+  "milestone": "TP1 exact blocker recovery",
+  "source": "testdata/lammps_golden/systems/dense_salt_polymer",
+  "system_id": "dense_salt_polymer",
+  "thresholds": {
+    "max_temperature_k": 400.0,
+    "mean_temperature_target_k": 300.0,
+    "mean_temperature_tolerance_k": 20.0
+  }
+}

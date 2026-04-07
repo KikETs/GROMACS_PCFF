@@ -1,0 +1,19 @@
+{
+  "added_scope": {
+    "charged_context": "Li/TFSI salt balance retained with monoglyme polyether fragment.",
+    "new_component_family": "acyclic_alkane",
+    "new_component_id": "ETHANE",
+    "new_role": "neutral_additive",
+    "not_claimed": [
+      "broad alkane chemistry",
+      "arbitrary neutral co-solvents",
+      "dense ensemble parity",
+      "charged transport readiness"
+    ]
+  },
+  "evidence_report": "tests/reference_results/pcff_charged_expansion/m5_monoglyme_ethane_litfsi_1to1/m5_chemistry_expansion_report.json",
+  "schema_name": "pcff_charged_m5_chemistry_scope_manifest",
+  "schema_version": 1,
+  "status": "PASS",
+  "system_id": "monoglyme_ethane_litfsi_1to1"
+}

@@ -1,0 +1,167 @@
+ :-) GROMACS - gmx insert-molecules, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/prepare_m5_dense36/fixtures/monoglyme_ethane_litfsi_1to1_dense36/insert_molecules
+Command line:
+  gmx insert-molecules -ci tfsi.gro -nmol 36 -o packed_04_tfsi.gro -try 10000 -seed 20260410 -radius 0.04 -scale 0.35 -f packed_03_li.gro
+
+Reading solute configuration
+Initialising inter-atomic distances...
+Using random seed 20260410
+
+Try 1 success (now 915 atoms)!
+
+Try 2 success (now 930 atoms)!
+
+Try 3
+Try 4
+Try 5
+Try 6
+Try 7
+Try 8
+Try 9
+Try 10 success (now 945 atoms)!
+
+Try 11 success (now 960 atoms)!
+
+Try 12 success (now 975 atoms)!
+
+Try 13
+Try 14 success (now 990 atoms)!
+
+Try 15 success (now 1005 atoms)!
+
+Try 16 success (now 1020 atoms)!
+
+Try 17
+Try 18 success (now 1035 atoms)!
+
+Try 19
+Try 20 success (now 1050 atoms)!
+
+Try 21
+Try 22 success (now 1065 atoms)!
+
+Try 23
+Try 24
+Try 25
+Try 26
+Try 27 success (now 1080 atoms)!
+
+Try 28
+Try 29 success (now 1095 atoms)!
+
+Try 30
+Try 31 success (now 1110 atoms)!
+
+Try 32
+Try 33 success (now 1125 atoms)!
+
+Try 34
+Try 35
+Try 36 success (now 1140 atoms)!
+
+Try 37 success (now 1155 atoms)!
+
+Try 38
+Try 39
+Try 40
+Try 41
+Try 42 success (now 1170 atoms)!
+
+Try 43
+Try 44
+Try 45 success (now 1185 atoms)!
+
+Try 46
+Try 47
+Try 48 success (now 1200 atoms)!
+
+Try 49 success (now 1215 atoms)!
+
+Try 50 success (now 1230 atoms)!
+
+Try 51 success (now 1245 atoms)!
+
+Try 52
+Try 53
+Try 54 success (now 1260 atoms)!
+
+Try 55 success (now 1275 atoms)!
+
+Try 56
+Try 57
+Try 58
+Try 59
+Try 60
+Try 61 success (now 1290 atoms)!
+
+Try 62
+Try 63
+Try 64
+Try 65
+Try 66
+Try 67 success (now 1305 atoms)!
+
+Try 68 success (now 1320 atoms)!
+
+Try 69
+Try 70
+Try 71
+Try 72
+Try 73 success (now 1335 atoms)!
+
+Try 74 success (now 1350 atoms)!
+
+Try 75
+Try 76 success (now 1365 atoms)!
+
+Try 77
+Try 78
+Try 79 success (now 1380 atoms)!
+
+Try 80
+Try 81
+Try 82
+Try 83
+Try 84
+Try 85
+Try 86
+Try 87
+Try 88
+Try 89 success (now 1395 atoms)!
+
+Try 90
+Try 91
+Try 92
+Try 93
+Try 94 success (now 1410 atoms)!
+
+Try 95
+Try 96
+Try 97
+Try 98
+Try 99
+Try 100
+Try 101
+Try 102
+Try 103
+Try 104
+Try 105
+Try 106
+Try 107
+Try 108 success (now 1425 atoms)!
+
+Try 109
+Try 110
+Try 111
+Try 112 success (now 1440 atoms)!
+
+Added 36 molecules (out of 36 requested)
+Writing generated configuration to packed_04_tfsi.gro
+
+Output configuration contains 1440 atoms in 144 residues
+
+GROMACS reminds you: "Success is going from one failure to another without loss of enthusiasm" (Winston Churchill)
+

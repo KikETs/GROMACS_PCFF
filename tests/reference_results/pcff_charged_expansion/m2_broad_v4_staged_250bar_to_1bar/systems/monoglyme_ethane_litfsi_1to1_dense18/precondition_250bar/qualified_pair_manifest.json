@@ -1,0 +1,87 @@
+{
+  "acpype_gaff2_dependency": false,
+  "artifacts": {
+    "gromacs_coordinates": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/generated_pair/system.gro",
+    "gromacs_topology": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/generated_pair/system.top",
+    "lammps_data": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/generated_pair/system.data",
+    "lammps_input": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/generated_pair/system.in",
+    "system_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/generated_pair/system.json",
+    "typed_system": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/generated_pair/typed_system.json"
+  },
+  "audit_basis": [
+    "GROMACS topology is generated directly from the repository PCFF/Class2 LAMMPS golden fixture.",
+    "No ACPYPE, GAFF2, or surrogate GROMACS topology path is used.",
+    "Typed IR retains per-record source provenance to raw LAMMPS files."
+  ],
+  "chemistry_scope_delta": {
+    "candidate_expansion": "monoglyme_ethane_litfsi_1to1_dense18",
+    "previous_boundary": "frozen PT8 SPE subset and small charged fixtures"
+  },
+  "derived_fixture": {
+    "box_nm": [
+      2.4,
+      2.4,
+      2.4
+    ],
+    "natoms": 720,
+    "replicate": null,
+    "seed_system": "monoglyme_ethane_litfsi_1to1"
+  },
+  "fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/fixtures/monoglyme_ethane_litfsi_1to1_dense18/fixture_manifest.json",
+  "gromacs_preparation": "pcff_fixture_bridge_generated_topology",
+  "lammps_reference": "pcff_class2_fixture",
+  "lammps_styles": {
+    "angle_style": "class2",
+    "atom_style": "full",
+    "bond_style": "class2",
+    "dihedral_style": "class2",
+    "improper_style": "none",
+    "kspace_style": "pppm 1.0e-4",
+    "pair_modify": "mix sixthpower",
+    "pair_style": {
+      "args": [
+        "9.0",
+        "9.0"
+      ],
+      "kind": "lj/class2/coul/long"
+    },
+    "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "units": "real"
+  },
+  "milestone_subset": "M2 staged 250bar precondition",
+  "pair_status": "strict_pcff_qualified",
+  "system_id": "monoglyme_ethane_litfsi_1to1_dense18",
+  "system_metadata": {
+    "category": "polymer_box",
+    "derived_from": {
+      "formula_count": 18,
+      "packing": "gmx insert-molecules deterministic seeded pack; LAMMPS data converted from the same coordinates",
+      "source_spec": "/home/kiket/Desktop/test/GROMACS_PCFF/testdata/polymer_workflow_m5/cases/monoglyme_ethane_litfsi_1to1/spec.json",
+      "source_system": "monoglyme_ethane_litfsi_1to1"
+    },
+    "description": "M2 broader dense charged scaffold generated from the strict PCFF M5 workflow components.",
+    "display_name": "monoglyme ethane LiTFSI dense charged M2 scaffold",
+    "id": "monoglyme_ethane_litfsi_1to1_dense18",
+    "reference_terms": [
+      "bond/class2",
+      "angle/class2",
+      "dihedral/class2",
+      "lj/class2/coul/long",
+      "special_bonds",
+      "kspace/pppm"
+    ],
+    "schema_version": 1,
+    "styles": {
+      "angle_style": "class2",
+      "atom_style": "full",
+      "bond_style": "class2",
+      "dihedral_style": "class2",
+      "improper_style": "none",
+      "kspace_style": "pppm 1.0e-4",
+      "pair_modify": "mix sixthpower",
+      "pair_style": "lj/class2/coul/long",
+      "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+      "units": "real"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 # PT8.5 — Combined Small-System Parity Validation Report
 
 ## Overview
-This report documents the validation of combined bonded and nonbonded PCFF interactions in small realistic systems for milestone PT8.5. Numeric parity between LAMMPS and GROMACS was established for both neutral and charged systems.
+This report documents combined bonded and nonbonded parity on frozen small fixtures for milestone PT8.5. It supports a small-fixture mechanics claim only; it does not by itself justify broad chemistry readiness, dense charged ensemble readiness, or charged transport readiness.
 
 ## Validated Outcomes
 1.  **Neutral Combined System Parity:**
@@ -24,6 +24,7 @@ This report documents the validation of combined bonded and nonbonded PCFF inter
 - **Large-Scale Dynamics:** Trajectory-level parity over long timescales was not part of this milestone.
 - **Thermodynamic Integration:** Free energy and transport property validation are deferred to later stages.
 - **Extreme Density/Charge:** Only dilute salt/small box scenarios were validated.
+- **Broad Chemistry Readiness:** The charged fixture is a frozen mechanics fixture, not a chemistry-complete PCFF readiness claim.
 
 ## Artifacts Produced
 - `tools/run_pt8_5_combined_parity/run_combined_parity.py`: Combined parity runner.

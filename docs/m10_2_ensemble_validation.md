@@ -77,4 +77,4 @@ Final machine-readable decision:
 
 It does **not** mean:
 - NPT parity is solved
-- transport-production readiness is established
+- any transport-production readiness claim follows

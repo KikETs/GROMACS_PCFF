@@ -1,0 +1,92 @@
+LAMMPS (10 Sep 2025 - Development - patch_10Sep2025-660-g792d014343)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+Reading data file ...
+  orthogonal box = (-11 -11 -11) to (33 33 33)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  2160 atoms
+  reading velocities ...
+  2160 velocities
+  scanning bonds ...
+  1 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  scanning dihedrals ...
+  1 = max dihedrals/atom
+  orthogonal box = (-11 -11 -11) to (33 33 33)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  1512 bonds
+  reading angles ...
+  1296 angles
+  reading dihedrals ...
+  1080 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     2 = max # of 1-2 neighbors
+     2 = max # of 1-3 neighbors
+     4 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.008 seconds
+WARNING: No fixes with time integration, atoms won't move
+For more information see https://docs.lammps.org/err0028 (src/lammps/src/verlet.cpp:60)
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.27031924
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.031086349
+  estimated relative force accuracy = 9.3615616e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 15625 8000
+Generated 6 of 6 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 11
+  ghost atom cutoff = 11
+  binsize = 5.5, bins = 8 8 8
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/class2/coul/long, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Setting up Verlet run ...
+  Unit style    : real
+  Current step  : 0
+  Time step     : 1
+Per MPI rank memory allocation (min/avg/max) = 9.315 | 9.315 | 9.315 Mbytes
+   Step         PotEng    
+         0  -42976.638    
+Loop time of 7.2e-07 on 1 procs for 0 steps with 2160 atoms
+
+138.9% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Bond    | 0          | 0          | 0          |   0.0 |  0.00
+Kspace  | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 7.2e-07    |            |       |100.00
+
+Nlocal:           2160 ave        2160 max        2160 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           5130 ave        5130 max        5130 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:         165240 ave      165240 max      165240 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 165240
+Ave neighs/atom = 76.5
+Ave special neighs/atom = 2.6
+Neighbor list builds = 0
+Dangerous builds = 0
+Total wall time: 0:00:00

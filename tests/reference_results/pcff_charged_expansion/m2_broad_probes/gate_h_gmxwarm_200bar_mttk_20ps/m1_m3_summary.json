@@ -1,0 +1,19 @@
+{
+  "artifacts": {
+    "dense_npt_parity_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/dense_npt_parity_report.json",
+    "long_nvt_stability_report": null,
+    "qualified_pair_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/qualified_pair_manifest.json"
+  },
+  "capability_subset_status": "PASS",
+  "dense_parity_status": "PASS",
+  "long_stability_status": "SKIPPED",
+  "milestone_subset": "M1-M3",
+  "new_candidate_boundary": {
+    "dense_parity": "PASS",
+    "long_horizon_stability": "SKIPPED",
+    "qualified_charged_pair": "gate_h_dense_salt_polymer_2x2x2"
+  },
+  "old_boundary": "frozen PT8 SPE subset and small charged fixtures only",
+  "qualified_pair_manifest_status": "strict_pcff_qualified",
+  "system_id": "gate_h_dense_salt_polymer_2x2x2"
+}

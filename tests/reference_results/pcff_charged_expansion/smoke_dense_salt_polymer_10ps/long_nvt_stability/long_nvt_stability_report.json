@@ -1,0 +1,32 @@
+{
+  "artifacts": {
+    "checkpoint": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability/nvt.cpt",
+    "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability/nvt_energy.xvg",
+    "gromacs_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability",
+    "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability/nvt.log"
+  },
+  "potential_energy_kj_mol": {
+    "max": -25993.308594,
+    "mean": -26090.064027722772,
+    "min": -26213.443359,
+    "sem_block5": 11.881064207725775
+  },
+  "protocol": {
+    "analysis_window_ps": 10.0,
+    "duration_ps": 20.0,
+    "ensemble": "NVT",
+    "thresholds": {
+      "max_temperature_k": 400.0,
+      "mean_temperature_target_k": 300.0,
+      "mean_temperature_tolerance_k": 20.0
+    }
+  },
+  "status": "PASS",
+  "system_id": "dense_salt_polymer",
+  "temperature_k": {
+    "max": 343.478516,
+    "mean": 300.8661227128713,
+    "min": 266.752197,
+    "sem_block5": 2.360453455048351
+  }
+}

@@ -2,24 +2,41 @@
   "bridge_id": "gromacs-pcff",
   "version": "1.0.0-rc1",
   "handoff_date": "2026-03-15",
+  "status_as_of": "2026-04-06",
+  "legacy_handoff_state": "withdrawn_for_present_tense_readiness_claims",
+  "current_source_of_truth": {
+    "status_note": "docs/current_status_note.md",
+    "m11_2_m4_report": "docs/validation_report_m11_2_pcff_charged_m4.md",
+    "m11_3_m5_report": "docs/validation_report_m11_3_pcff_charged_m5.md",
+    "narrow_claim_summary": "tests/reference_results/pcff_ion_narrow_claim/narrow_claim_summary.json",
+    "support_matrix": "tests/reference_results/pcff_ion_narrow_claim/support_matrix.json"
+  },
   "readiness_matrix": {
     "neutral_dense": {
-      "status": "ready",
-      "density_parity": "0.71%",
-      "energy_parity": "2.07%",
-      "evidence_milestone": "M10.3"
+      "status": "historical_scope_not_reassessed_here",
+      "note": "This legacy handoff file is no longer the source of truth for present-tense claims."
     },
     "charged_salt": {
-      "status": "qualified",
-      "energy_parity": "0.09%",
-      "density_caveat": "55% discrepancy in small boxes",
-      "evidence_milestone": "M10.4",
-      "monitoring_required": true
+      "status": "explicit_subset_validated_not_transport_ready",
+      "exact_scope": [
+        "frozen charged topology/semantics contract",
+        "frozen small-fixture charged combined mechanics",
+        "M11.2 strict validation for gate_h_dense_salt_polymer_2x2x2 only",
+        "M11.3 workflow-level monoglyme_ethane_litfsi_1to1 chemistry expansion only",
+        "corrected dense_salt_polymer 5 ns TP1 thermal-runaway recovery only"
+      ],
+      "blocked_by": [
+        "generic dense charged-box density/volume parity remains unresolved outside explicit subset evidence",
+        "no dense ensemble or transport evidence for the M11.3 chemistry",
+        "corrected TP1 final coordinates fail endpoint cutoff/box continuation-safety audit",
+        "no LAMMPS-vs-GROMACS charged transport parity or production transport readiness claim"
+      ]
     }
   },
   "unvalidated_features": [
     "transport_properties",
     "long_range_entanglement",
-    "multi_component_transference"
+    "multi_component_transference",
+    "broad_pcff_chemistry_outside_pt8_supported_subset"
   ]
 }

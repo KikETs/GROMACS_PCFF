@@ -1,0 +1,63 @@
+ :-) GROMACS - gmx insert-molecules, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v2_250bar_mttk/fixtures/monoglyme_ethane_litfsi_1to1_dense18/insert_molecules
+Command line:
+  gmx insert-molecules -ci ethane.gro -nmol 18 -o packed_02_ethane.gro -try 10000 -seed 20260409 -radius 0.04 -scale 0.35 -f packed_01_monogly.gro
+
+Reading solute configuration
+Initialising inter-atomic distances...
+Using random seed 20260409
+
+Try 1 success (now 296 atoms)!
+
+Try 2 success (now 304 atoms)!
+
+Try 3
+Try 4 success (now 312 atoms)!
+
+Try 5
+Try 6 success (now 320 atoms)!
+
+Try 7 success (now 328 atoms)!
+
+Try 8 success (now 336 atoms)!
+
+Try 9 success (now 344 atoms)!
+
+Try 10 success (now 352 atoms)!
+
+Try 11
+Try 12
+Try 13
+Try 14 success (now 360 atoms)!
+
+Try 15 success (now 368 atoms)!
+
+Try 16
+Try 17
+Try 18 success (now 376 atoms)!
+
+Try 19 success (now 384 atoms)!
+
+Try 20
+Try 21 success (now 392 atoms)!
+
+Try 22 success (now 400 atoms)!
+
+Try 23 success (now 408 atoms)!
+
+Try 24 success (now 416 atoms)!
+
+Try 25 success (now 424 atoms)!
+
+Try 26 success (now 432 atoms)!
+
+Added 18 molecules (out of 18 requested)
+Writing generated configuration to packed_02_ethane.gro
+
+Output configuration contains 432 atoms in 36 residues
+
+GROMACS reminds you: "Mendeleev's first attempt, the perfluoric table, was a total disaster, and his subsequent attempts, the perchloric and perbromic tables, were not favorably received. Only his fourth attempt, the periodic table, gained general acceptance." (Anonymous)
+

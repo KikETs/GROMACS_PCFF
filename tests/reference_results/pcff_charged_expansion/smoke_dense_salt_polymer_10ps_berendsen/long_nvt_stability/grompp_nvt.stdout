@@ -1,0 +1,196 @@
+Setting the LD random seed to -85212258
+
+Generated 10 of the 10 non-bonded parameter combinations
+
+Generated 10 of the 10 1-4 parameter combinations
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL10'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL10'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL10'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL28'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL28'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL28'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL10'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL10'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL10'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL28'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL28'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL28'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL10'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL10'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL10'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Excluding 1 bonded neighbours molecule type 'CAT'
+
+Excluding 1 bonded neighbours molecule type 'ANI'
+
+Taking velocities from 'system.gro'
+Analysing residue names:
+There are:    81      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.394 nm between atom 121 and 124
+
+Determining Verlet buffer for a tolerance of 0.005 kJ/mol/ps at 300 K
+
+Calculated rlist for 1x1 atom pair-list as 0.904 nm, buffer size 0.004 nm
+
+Set rlist, assuming 4x4 atom pair-list, to 0.900 nm, buffer size 0.000 nm
+
+Note that mdrun will redetermine rlist based on the actual pair-list setup
+
+Reading Coordinates, Velocities and Box size from old trajectory
+
+Will read whole trajectory
+
+Using frame at t = 10 ps
+
+Starting time for run is 0 ps
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 20x20x20, spacing 0.098 0.098 0.098
+
+Estimate for the relative computational load of the PME mesh part: 0.53
+
+This run will generate roughly 1 Mb of data

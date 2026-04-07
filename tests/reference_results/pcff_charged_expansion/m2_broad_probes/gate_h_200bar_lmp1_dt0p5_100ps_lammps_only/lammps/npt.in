@@ -1,0 +1,40 @@
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2/coul/long 9.0 9.0
+pair_modify mix sixthpower
+bond_style class2
+angle_style class2
+dihedral_style class2
+improper_style none
+kspace_style pppm 1.0e-4
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+
+read_data minimized.data
+
+pair_coeff 1 1 0.10 3.50
+pair_coeff 2 2 0.08 3.10
+pair_coeff 3 3 0.05 2.40
+pair_coeff 4 4 0.06 4.10
+bond_coeff 1 1.49 235.0 -33.0 7.5
+angle_coeff 1 111.5 31.0 -3.4 1.0
+angle_coeff 1 bb 5.2 1.49 1.49
+angle_coeff 1 ba 1.8 1.5 1.49 1.49
+dihedral_coeff 1 0.95 0.0 0.55 180.0 0.35 0.0
+dihedral_coeff 1 mbt 0.15 -0.09 0.05 1.49
+dihedral_coeff 1 ebt 0.13 -0.06 0.03 0.11 -0.04 0.02 1.49 1.49
+dihedral_coeff 1 at 0.05 -0.03 0.02 0.04 -0.02 0.01 111.5 111.5
+dihedral_coeff 1 aat 0.24 111.5 111.5
+dihedral_coeff 1 bb13 0.17 1.49 1.49
+
+velocity all create 300.0 20260407 dist gaussian mom yes rot yes
+reset_timestep 0
+timestep 0.5
+neigh_modify delay 0 every 1 check yes
+fix 1 all npt temp 300.0 300.0 100 iso 197.3846533 197.3846533 1000
+thermo 100
+thermo_style custom step temp pe ke etotal press vol density
+thermo_modify flush yes
+run 200000
+write_data final.data

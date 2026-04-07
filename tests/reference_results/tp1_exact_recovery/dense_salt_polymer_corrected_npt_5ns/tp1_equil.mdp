@@ -1,0 +1,36 @@
+; Corrected TP1 exact-blocker NPT protocol.
+; This intentionally fixes the old TP1.2 tcouple/pcouple/gen_vel key typo.
+integrator = md
+dt = 0.001
+nsteps = 5000000
+cutoff-scheme = Verlet
+nstlist = 10
+verlet-buffer-tolerance = -1
+rlist = 0.9
+coulombtype = PME
+coulomb-modifier = none
+rcoulomb = 0.9
+pme-order = 4
+fourierspacing = 0.12
+ewald-rtol = 1e-5
+vdw-type = Cut-off
+vdw-modifier = none
+rvdw = 0.9
+DispCorr = no
+pbc = xyz
+nstenergy = 1000
+nstlog = 1000
+nstxout-compressed = 0
+tcoupl = v-rescale
+tc-grps = System
+tau-t = 0.5
+ref-t = 300
+pcoupl = Berendsen
+pcoupltype = isotropic
+tau-p = 5.0
+compressibility = 4.5e-5
+ref-p = 1.0
+gen-vel = yes
+gen-temp = 300
+gen-seed = 20260406
+constraints = none

@@ -3,6 +3,8 @@
 ## 1. Executive Summary
 Milestone TP1.3 performed a structured diagnostic analysis of the thermal runaway observed in the `dense_salt_polymer` (270-atom Na/Cl) system. Despite multiple stabilization attempts—including reducing the timestep to 0.5 fs, using NVT-only ensembles, and applying a very strong thermostat ($\tau_t = 0.01$ ps)—all trials exhibited systematic heating to $> 700$ K.
 
+Supersession note: this root-cause conclusion is historical and must not be used as the current exact-system verdict. The TP1.3 runner used wrong GROMACS key names for the intended coupling controls, and the later corrected exact TP1 rerun completes `5 ns` without thermal runaway for `dense_salt_polymer`. See [TP1 Charged Long-Equilibration Recovery](validation_report_tp1.md).
+
 ## 2. Baseline Capture (TRL-0)
 - **Settings:** 1.0 fs, NPT, V-rescale (300K).
 - **Behavior:** Temperature increased from 300K to 700K+ within 500 ps.
@@ -27,5 +29,5 @@ The systematic heating across all diagnostic axes points to a fundamental issue 
 - **Non-bonded Interactions:** The severe regression in TRL-5 (Cut-off only) suggests that the real-space non-bonded interactions (Function Type 11 for bonds/angles/LJ) are generating unphysical forces.
 
 ## 5. Final Decision
-**Status: STILL BLOCKED.**
-The authoritative charged system is not equilibratable under the current implementation. TP1 cannot proceed until the bridge implementation or the GROMACS custom kernel is repaired.
+**Status: SUPERSEDED.**
+The authoritative charged system is no longer classified from this historical TP1.3 matrix. The current exact TP1 thermal-runaway verdict is `PASS` for the corrected 5 ns NPT rerun only; endpoint continuation safety and charged transport readiness remain unsupported.

@@ -1,0 +1,348 @@
+LAMMPS (10 Sep 2025 - Development - patch_10Sep2025-660-g792d014343)
+  using 1 OpenMP thread(s) per MPI task
+units real
+atom_style full
+boundary p p p
+
+pair_style lj/class2/coul/long 9.0 9.0
+pair_modify mix sixthpower
+bond_style class2
+angle_style class2
+dihedral_style class2
+improper_style none
+kspace_style pppm 1.0e-4
+special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no
+neighbor 2.0 bin
+neigh_modify every 1 delay 0 check no
+
+read_data system.data
+Reading data file ...
+  orthogonal box = (0 0 0) to (24 24 24)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  720 atoms
+  scanning bonds ...
+  4 = max bonds/atom
+  scanning angles ...
+  6 = max angles/atom
+  scanning dihedrals ...
+  9 = max dihedrals/atom
+  orthogonal box = (0 0 0) to (24 24 24)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  648 bonds
+  reading angles ...
+  1134 angles
+  reading dihedrals ...
+  972 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     4 = max # of 1-2 neighbors
+     6 = max # of 1-3 neighbors
+     8 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.005 seconds
+
+pair_coeff 1 1 0.1 3.5
+pair_coeff 2 2 0.09 3.45
+pair_coeff 3 3 0.05 2.85
+pair_coeff 4 4 0.08 3.4
+pair_coeff 5 5 0.07 3
+pair_coeff 6 6 0.02 2.5
+pair_coeff 7 7 0.018 2.45
+pair_coeff 8 8 0.018 2.45
+pair_coeff 9 9 0.02 2.2
+pair_coeff 10 10 0.08 3.4
+pair_coeff 11 11 0.08 3.3
+pair_coeff 12 12 0.06 2.95
+pair_coeff 13 13 0.1 4.1
+bond_coeff 1 1.53 250 -35 8
+bond_coeff 2 1.101 338 -44 6.2
+bond_coeff 3 1.43 320 -42 5.5
+bond_coeff 4 1.101 340 -45 6.5
+bond_coeff 5 1.34 390 -50 7.4
+bond_coeff 6 1.57 310 -28 6
+bond_coeff 7 1.44 570 -68 10
+bond_coeff 8 1.82 260 -36 7
+angle_coeff 1 112.1 41 -5.3 1.2
+angle_coeff 1 bb 5.8 1.43 1.43
+angle_coeff 1 ba 1.75 1.75 1.43 1.43
+angle_coeff 2 110.7 34.5 -4.2 0.9
+angle_coeff 2 bb 4.6 1.101 1.53
+angle_coeff 2 ba 1.1 1.35 1.101 1.53
+angle_coeff 3 107.6 35 -4.4 1
+angle_coeff 3 bb 5 1.101 1.101
+angle_coeff 3 ba 1.08 1.08 1.101 1.101
+angle_coeff 4 110.4 36 -4.2 0.95
+angle_coeff 4 bb 4.75 1.43 1.53
+angle_coeff 4 ba 1.42 1.35 1.43 1.53
+angle_coeff 5 109.4 37.1 -4.1 0.9
+angle_coeff 5 bb 4.9 1.43 1.101
+angle_coeff 5 ba 1.42 1.28 1.43 1.101
+angle_coeff 6 110.7 34.5 -4.2 0.9
+angle_coeff 6 bb 4.6 1.53 1.101
+angle_coeff 6 ba 1.35 1.35 1.53 1.101
+angle_coeff 7 107.8 35.2 -4.5 1.1
+angle_coeff 7 bb 5.1 1.101 1.101
+angle_coeff 7 ba 1.1 1.1 1.101 1.101
+angle_coeff 8 108.8 48.2 -5.9 1.6
+angle_coeff 8 bb 6.3 1.34 1.34
+angle_coeff 8 ba 1.85 1.85 1.34 1.34
+angle_coeff 9 111.9 44.6 -5.4 1.3
+angle_coeff 9 bb 5.7 1.34 1.82
+angle_coeff 9 ba 1.62 1.95 1.34 1.82
+angle_coeff 10 101.4 55.4 -6.5 1.7
+angle_coeff 10 bb 6.2 1.57 1.82
+angle_coeff 10 ba 2.05 1.92 1.57 1.82
+angle_coeff 11 106.2 72 -8.2 2.1
+angle_coeff 11 bb 6.8 1.57 1.44
+angle_coeff 11 ba 2.2 2.35 1.57 1.44
+angle_coeff 12 107.1 61.2 -7.1 1.8
+angle_coeff 12 bb 6.9 1.44 1.82
+angle_coeff 12 ba 2.26 2.01 1.44 1.82
+angle_coeff 13 118.6 79.8 -9 2.3
+angle_coeff 13 bb 7.5 1.44 1.44
+angle_coeff 13 ba 2.48 2.48 1.44 1.44
+angle_coeff 14 124.2 66.5 -7.7 2
+angle_coeff 14 bb 7.2 1.57 1.57
+angle_coeff 14 ba 2.6 2.6 1.57 1.57
+dihedral_coeff 1 0.72 0 0.45 180 0.18 0
+dihedral_coeff 1 mbt 0.1 -0.06 0.03 1.43
+dihedral_coeff 1 ebt 0.08 -0.04 0.02 0.07 -0.03 0.015 1.43 1.53
+dihedral_coeff 1 at 0.04 -0.02 0.01 0.03 -0.015 0.008 112.1 110.4
+dihedral_coeff 1 aat 0.17 112.1 110.4
+dihedral_coeff 1 bb13 0.11 1.43 1.53
+dihedral_coeff 2 0.72 0 0.45 180 0.18 0
+dihedral_coeff 2 mbt 0.1 -0.06 0.03 1.43
+dihedral_coeff 2 ebt 0.08 -0.04 0.02 0.07 -0.03 0.015 1.43 1.101
+dihedral_coeff 2 at 0.04 -0.02 0.01 0.03 -0.015 0.008 112.1 109.4
+dihedral_coeff 2 aat 0.17 112.1 109.4
+dihedral_coeff 2 bb13 0.11 1.43 1.101
+dihedral_coeff 3 0.85 0 0.6 180 0.35 0
+dihedral_coeff 3 mbt 0.11 -0.07 0.03 1.101
+dihedral_coeff 3 ebt 0.09 -0.045 0.02 0.09 -0.045 0.02 1.101 1.101
+dihedral_coeff 3 at 0.05 -0.025 0.012 0.05 -0.025 0.012 110.7 110.7
+dihedral_coeff 3 aat 0.2 110.7 110.7
+dihedral_coeff 3 bb13 0.12 1.101 1.101
+dihedral_coeff 4 0.72 0 0.45 180 0.18 0
+dihedral_coeff 4 mbt 0.1 -0.06 0.03 1.53
+dihedral_coeff 4 ebt 0.08 -0.04 0.02 0.07 -0.03 0.015 1.53 1.101
+dihedral_coeff 4 at 0.04 -0.02 0.01 0.03 -0.015 0.008 110.4 109.4
+dihedral_coeff 4 aat 0.17 110.4 109.4
+dihedral_coeff 4 bb13 0.11 1.53 1.101
+dihedral_coeff 5 0.72 0 0.45 180 0.18 0
+dihedral_coeff 5 mbt 0.1 -0.06 0.03 1.53
+dihedral_coeff 5 ebt 0.08 -0.04 0.02 0.07 -0.03 0.015 1.53 1.53
+dihedral_coeff 5 at 0.04 -0.02 0.01 0.03 -0.015 0.008 110.4 110.4
+dihedral_coeff 5 aat 0.17 110.4 110.4
+dihedral_coeff 5 bb13 0.11 1.53 1.53
+dihedral_coeff 6 0.85 0 0.6 180 0.35 0
+dihedral_coeff 6 mbt 0.11 -0.07 0.03 1.53
+dihedral_coeff 6 ebt 0.09 -0.045 0.02 0.09 -0.045 0.02 1.101 1.101
+dihedral_coeff 6 at 0.05 -0.025 0.012 0.05 -0.025 0.012 110.7 110.7
+dihedral_coeff 6 aat 0.2 110.7 110.7
+dihedral_coeff 6 bb13 0.12 1.101 1.101
+dihedral_coeff 7 0.95 0 0.52 180 0.24 0
+dihedral_coeff 7 mbt 0.14 -0.08 0.04 1.82
+dihedral_coeff 7 ebt 0.12 -0.06 0.03 0.1 -0.04 0.02 1.34 1.57
+dihedral_coeff 7 at 0.06 -0.03 0.015 0.05 -0.02 0.01 111.9 101.4
+dihedral_coeff 7 aat 0.28 111.9 101.4
+dihedral_coeff 7 bb13 0.16 1.34 1.57
+dihedral_coeff 8 1.05 0 0.58 180 0.26 0
+dihedral_coeff 8 mbt 0.15 -0.09 0.045 1.82
+dihedral_coeff 8 ebt 0.13 -0.065 0.032 0.11 -0.045 0.022 1.34 1.44
+dihedral_coeff 8 at 0.07 -0.035 0.018 0.06 -0.025 0.013 111.9 107.1
+dihedral_coeff 8 aat 0.31 111.9 107.1
+dihedral_coeff 8 bb13 0.18 1.34 1.44
+dihedral_coeff 9 1.12 0 0.64 180 0.29 0
+dihedral_coeff 9 mbt 0.17 -0.1 0.05 1.44
+dihedral_coeff 9 ebt 0.15 -0.07 0.035 0.12 -0.05 0.025 1.44 1.57
+dihedral_coeff 9 at 0.08 -0.04 0.02 0.07 -0.03 0.015 106.2 124.2
+dihedral_coeff 9 aat 0.34 106.2 124.2
+dihedral_coeff 9 bb13 0.21 1.44 1.57
+dihedral_coeff 10 1 0 0.57 180 0.25 0
+dihedral_coeff 10 mbt 0.16 -0.09 0.045 1.57
+dihedral_coeff 10 ebt 0.14 -0.065 0.032 0.12 -0.045 0.022 1.57 1.82
+dihedral_coeff 10 at 0.07 -0.035 0.017 0.06 -0.025 0.012 124.2 101.4
+dihedral_coeff 10 aat 0.29 124.2 101.4
+dihedral_coeff 10 bb13 0.19 1.57 1.82
+
+thermo 1
+thermo_style custom step temp pe ke etotal press vol density
+minimize 1.0e-4 1.0e-6 100 1000
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.25069868
+  grid = 9 9 9
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.021980742
+  estimated relative force accuracy = 6.6194351e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 2744 729
+Generated 78 of 78 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = no
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 11
+  ghost atom cutoff = 11
+  binsize = 5.5, bins = 5 5 5
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/class2/coul/long, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 13.12 | 13.12 | 13.12 Mbytes
+   Step          Temp          PotEng         KinEng         TotEng         Press          Volume        Density    
+         0   0              22139.649      0              22139.649      173660.51      13824          0.8805959    
+         1   0              18326.132      0              18326.132      120422.22      13824          0.8805959    
+         2   0              15767.5        0              15767.5        92793.806      13824          0.8805959    
+         3   0              13030.318      0              13030.318      75097.564      13824          0.8805959    
+         4   0              10534.725      0              10534.725      61840.309      13824          0.8805959    
+         5   0              8676.0135      0              8676.0135      48043.863      13824          0.8805959    
+         6   0              7317.9532      0              7317.9532      35693.962      13824          0.8805959    
+         7   0              6178.8094      0              6178.8094      25028.898      13824          0.8805959    
+         8   0              5289.7065      0              5289.7065      18624.538      13824          0.8805959    
+         9   0              4511.3563      0              4511.3563      14474.1        13824          0.8805959    
+        10   0              4097.7569      0              4097.7569      12887.274      13824          0.8805959    
+        11   0              3624.1841      0              3624.1841      11003.386      13824          0.8805959    
+        12   0              3092.174       0              3092.174       8894.6816      13824          0.8805959    
+        13   0              2844.0064      0              2844.0064      7852.0413      13824          0.8805959    
+        14   0              2436.1768      0              2436.1768      6180.8423      13824          0.8805959    
+        15   0              2179.6357      0              2179.6357      4573.8537      13824          0.8805959    
+        16   0              1956.0089      0              1956.0089      3378.7941      13824          0.8805959    
+        17   0              1698.0829      0              1698.0829      1532.1996      13824          0.8805959    
+        18   0              1536.3609      0              1536.3609      194.02266      13824          0.8805959    
+        19   0              1411.6467      0              1411.6467     -508.96356      13824          0.8805959    
+        20   0              1357.5257      0              1357.5257      670.79297      13824          0.8805959    
+        21   0              1288.403       0              1288.403       1330.5236      13824          0.8805959    
+        22   0              1247.5855      0              1247.5855      679.63333      13824          0.8805959    
+        23   0              1159.1323      0              1159.1323     -295.75479      13824          0.8805959    
+        24   0              1065.5675      0              1065.5675     -374.04427      13824          0.8805959    
+        25   0              979.99122      0              979.99122     -654.94377      13824          0.8805959    
+        26   0              929.6605       0              929.6605      -551.03872      13824          0.8805959    
+        27   0              891.87841      0              891.87841     -43.621258      13824          0.8805959    
+        28   0              808.3684       0              808.3684       818.3221       13824          0.8805959    
+        29   0              778.14216      0              778.14216      631.65149      13824          0.8805959    
+        30   0              741.4218       0              741.4218      -723.05606      13824          0.8805959    
+        31   0              681.29092      0              681.29092     -1821.3455      13824          0.8805959    
+        32   0              654.40051      0              654.40051     -1184.4242      13824          0.8805959    
+        33   0              633.15424      0              633.15424     -113.81698      13824          0.8805959    
+        34   0              593.58567      0              593.58567      894.88442      13824          0.8805959    
+        35   0              575.38498      0              575.38498      351.79287      13824          0.8805959    
+        36   0              546.95695      0              546.95695     -1048.8876      13824          0.8805959    
+        37   0              509.58952      0              509.58952     -1624.0922      13824          0.8805959    
+        38   0              483.51319      0              483.51319     -508.5102       13824          0.8805959    
+        39   0              453.21937      0              453.21937      145.72739      13824          0.8805959    
+        40   0              422.60461      0              422.60461     -448.73135      13824          0.8805959    
+        41   0              397.06698      0              397.06698     -764.81283      13824          0.8805959    
+        42   0              371.18809      0              371.18809     -580.21638      13824          0.8805959    
+        43   0              340.40183      0              340.40183     -344.87347      13824          0.8805959    
+        44   0              301.36251      0              301.36251     -36.26667       13824          0.8805959    
+        45   0              264.77963      0              264.77963     -171.38723      13824          0.8805959    
+        46   0              225.50954      0              225.50954     -487.73156      13824          0.8805959    
+        47   0              207.55578      0              207.55578     -437.5198       13824          0.8805959    
+        48   0              177.69388      0              177.69388     -475.50427      13824          0.8805959    
+        49   0              150.82166      0              150.82166     -539.28254      13824          0.8805959    
+        50   0              125.86043      0              125.86043     -389.24446      13824          0.8805959    
+        51   0              93.179112      0              93.179112      44.986388      13824          0.8805959    
+        52   0              59.560331      0              59.560331     -27.363248      13824          0.8805959    
+        53   0              27.879302      0              27.879302     -147.86018      13824          0.8805959    
+        54   0              6.7286952      0              6.7286952      123.16273      13824          0.8805959    
+        55   0             -26.907384      0             -26.907384      117.87409      13824          0.8805959    
+        56   0             -59.002488      0             -59.002488     -143.75212      13824          0.8805959    
+        57   0             -91.395424      0             -91.395424     -241.64858      13824          0.8805959    
+        58   0             -118.47537      0             -118.47537     -96.064397      13824          0.8805959    
+        59   0             -144.45882      0             -144.45882     -93.302377      13824          0.8805959    
+        60   0             -167.74144      0             -167.74144     -197.71206      13824          0.8805959    
+        61   0             -190.18593      0             -190.18593     -99.071627      13824          0.8805959    
+        62   0             -201.56226      0             -201.56226      19.19859       13824          0.8805959    
+        63   0             -223.08188      0             -223.08188      81.524778      13824          0.8805959    
+        64   0             -241.12429      0             -241.12429     -20.845672      13824          0.8805959    
+        65   0             -259.48221      0             -259.48221     -84.254279      13824          0.8805959    
+        66   0             -272.06265      0             -272.06265     -65.116012      13824          0.8805959    
+        67   0             -288.74861      0             -288.74861      65.456872      13824          0.8805959    
+        68   0             -308.48523      0             -308.48523      9.5708467      13824          0.8805959    
+        69   0             -320.08951      0             -320.08951      141.13779      13824          0.8805959    
+        70   0             -334.56932      0             -334.56932      398.13143      13824          0.8805959    
+        71   0             -343.92619      0             -343.92619      405.74607      13824          0.8805959    
+        72   0             -357.62061      0             -357.62061      335.57848      13824          0.8805959    
+        73   0             -382.54221      0             -382.54221     -22.542813      13824          0.8805959    
+        74   0             -403.46811      0             -403.46811     -93.001244      13824          0.8805959    
+        75   0             -419.60366      0             -419.60366      45.718028      13824          0.8805959    
+        76   0             -438.42003      0             -438.42003      85.158387      13824          0.8805959    
+        77   0             -461.30662      0             -461.30662      405.16368      13824          0.8805959    
+        78   0             -478.17357      0             -478.17357      355.02542      13824          0.8805959    
+        79   0             -486.81376      0             -486.81376      243.86009      13824          0.8805959    
+        80   0             -507.29835      0             -507.29835      41.000888      13824          0.8805959    
+        81   0             -517.73367      0             -517.73367      144.20116      13824          0.8805959    
+        82   0             -532.22509      0             -532.22509      282.90873      13824          0.8805959    
+        83   0             -555.64219      0             -555.64219      73.655921      13824          0.8805959    
+        84   0             -580.49866      0             -580.49866     -37.805605      13824          0.8805959    
+        85   0             -597.90497      0             -597.90497     -22.927578      13824          0.8805959    
+        86   0             -614.2442       0             -614.2442       50.700014      13824          0.8805959    
+        87   0             -622.6529       0             -622.6529      -0.123215       13824          0.8805959    
+        88   0             -638.36003      0             -638.36003     -115.62919      13824          0.8805959    
+        89   0             -645.22407      0             -645.22407      39.464829      13824          0.8805959    
+        90   0             -655.10178      0             -655.10178      156.64681      13824          0.8805959    
+        91   0             -666.96563      0             -666.96563     -79.852829      13824          0.8805959    
+        92   0             -679.59302      0             -679.59302     -121.96065      13824          0.8805959    
+        93   0             -687.95447      0             -687.95447      107.91806      13824          0.8805959    
+        94   0             -697.50965      0             -697.50965      46.945145      13824          0.8805959    
+        95   0             -709.52312      0             -709.52312     -47.106179      13824          0.8805959    
+        96   0             -720.79878      0             -720.79878      97.601866      13824          0.8805959    
+        97   0             -731.77048      0             -731.77048      0.1996916      13824          0.8805959    
+        98   0             -741.84544      0             -741.84544     -49.088492      13824          0.8805959    
+        99   0             -752.41393      0             -752.41393     -45.053355      13824          0.8805959    
+       100   0             -763.21455      0             -763.21455     -63.349998      13824          0.8805959    
+Loop time of 0.38152 on 1 procs for 100 steps with 720 atoms
+
+99.9% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = max iterations
+  Energy initial, next-to-last, final = 
+      22139.6491792568  -752.413934485051  -763.214546690624
+  Force two-norm initial, final = 16634.681 89.706456
+  Force max component initial, final = 4099.5346 64.383983
+  Final line search alpha, max atom move = 0.00084860476 0.054636555
+  Iterations, force evaluations = 100 126
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.1222     | 0.1222     | 0.1222     |   0.0 | 32.03
+Bond    | 0.030655   | 0.030655   | 0.030655   |   0.0 |  8.03
+Kspace  | 0.014238   | 0.014238   | 0.014238   |   0.0 |  3.73
+Neigh   | 0.20686    | 0.20686    | 0.20686    |   0.0 | 54.22
+Comm    | 0.0044225  | 0.0044225  | 0.0044225  |   0.0 |  1.16
+Output  | 0.00093881 | 0.00093881 | 0.00093881 |   0.0 |  0.25
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.002204   |            |       |  0.58
+
+Nlocal:            720 ave         720 max         720 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           4265 ave        4265 max        4265 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:         105632 ave      105632 max      105632 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 105632
+Ave neighs/atom = 146.71111
+Ave special neighs/atom = 4.95
+Neighbor list builds = 126
+Dangerous builds not checked
+write_data minimized.data
+System init for write_data ...
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.25069868
+  grid = 9 9 9
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.021980742
+  estimated relative force accuracy = 6.6194351e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 2744 729
+Generated 78 of 78 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Total wall time: 0:00:00

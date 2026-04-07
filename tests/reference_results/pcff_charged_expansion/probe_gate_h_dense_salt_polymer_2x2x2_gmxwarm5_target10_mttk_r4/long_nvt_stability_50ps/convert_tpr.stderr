@@ -1,0 +1,12 @@
+ :-) GROMACS - gmx convert-tpr, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps
+Command line:
+  gmx convert-tpr -s nvt.tpr -extend 30 -o nvt_extend50.tpr
+
+Reading file nvt.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+
+GROMACS reminds you: "I can switch from GROMACS version 5.1 to 2016 in the middle of the paper, of course, Newton's equations of motion did not change between them." (Davide Mercadante)
+

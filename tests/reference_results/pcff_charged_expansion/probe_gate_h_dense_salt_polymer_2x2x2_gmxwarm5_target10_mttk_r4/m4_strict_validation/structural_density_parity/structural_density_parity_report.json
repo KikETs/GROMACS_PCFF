@@ -1,0 +1,76 @@
+{
+  "artifacts": {
+    "gromacs_energy_xvg": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/gromacs/npt_energy.xvg",
+    "lammps_log": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/lammps/npt.log"
+  },
+  "gromacs": {
+    "density_kg_m3": {
+      "max": 1297.905029,
+      "mean": 1219.3907279607843,
+      "min": 1128.195801
+    },
+    "temperature_k": {
+      "max": 310.960144,
+      "mean": 300.43495507843136,
+      "min": 288.504028
+    },
+    "volume_nm3": {
+      "max": 51.665878,
+      "mean": 47.86239107843137,
+      "min": 44.91024
+    }
+  },
+  "lammps": {
+    "density_kg_m3": {
+      "max": 1328.6258,
+      "mean": 1277.3782078431373,
+      "min": 1212.7141
+    },
+    "temperature_k": {
+      "max": 319.30661,
+      "mean": 300.67302392156864,
+      "min": 289.42381
+    },
+    "volume_nm3": {
+      "max": 48.065096,
+      "mean": 45.66735729411764,
+      "min": 43.871811
+    }
+  },
+  "parity_metrics": {
+    "density_rel_diff": 0.04539570154423199,
+    "volume_rel_diff": 0.0480657063244706
+  },
+  "protocol": {
+    "analysis_window_ps": 5.0,
+    "compressibility_bar_inv": 4.5e-05,
+    "duration_ps": 10.0,
+    "ensemble": "NPT",
+    "gmx_integrator": "md-vv",
+    "gmx_nonbonded_modifiers": {
+      "coulomb-modifier": "none",
+      "vdw-modifier": "none"
+    },
+    "gmx_pressure_coupling": "mttk",
+    "gmx_temperature_coupling": "nose-hoover",
+    "lammps_omp_threads": 1,
+    "lammps_ranks": 4,
+    "lammps_velocity_initialization": "velocity create 300 K with fixed seed",
+    "ref_p_bar": 1.0,
+    "tau_p_ps": 1.0,
+    "tau_t_ps": 1.0,
+    "thermal_start": "generated",
+    "thresholds": {
+      "density_rel_diff_max": 0.05,
+      "relative_diff_reference": "LAMMPS mean over final analysis window",
+      "volume_rel_diff_max": 0.05
+    },
+    "warmup_protocol": "GROMACS md/v-rescale/Berendsen only",
+    "warmup_ps": 5.0,
+    "warmup_scope": "gmx-only"
+  },
+  "scope": "M4 reanalysis of structural/density parity from the strict qualified paired NPT raw artifacts.",
+  "source_report": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/dense_npt_parity_report.json",
+  "status": "PASS",
+  "system_id": "gate_h_dense_salt_polymer_2x2x2"
+}

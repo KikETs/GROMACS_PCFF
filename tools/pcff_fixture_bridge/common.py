@@ -84,6 +84,10 @@ def angstrom_to_nm(value: float) -> float:
     return value * ANGSTROM_TO_NM
 
 
+def angstrom_per_fs_to_nm_per_ps(value: float) -> float:
+    return value * 100.0
+
+
 def bond_k2_to_gromacs(value: float) -> float:
     return kcal_to_kj(value) / (ANGSTROM_TO_NM**2)
 
@@ -155,6 +159,7 @@ def parse_lammps_data(path: Path) -> dict:
         "Angles": [],
         "Dihedrals": [],
         "Impropers": [],
+        "Velocities": [],
     }
 
     current_section = None
@@ -246,6 +251,17 @@ def parse_lammps_data(path: Path) -> dict:
                         "source": src,
                     }
                 )
+            elif current_section == "Velocities":
+                require(len(data_tokens) >= 4, f"Malformed Velocities line at {path}:{line_number}")
+                sections[current_section].append(
+                    {
+                        "atom_id": int(data_tokens[0]),
+                        "vx_angstrom_per_fs": float(data_tokens[1]),
+                        "vy_angstrom_per_fs": float(data_tokens[2]),
+                        "vz_angstrom_per_fs": float(data_tokens[3]),
+                        "source": src,
+                    }
+                )
 
     require(set(box) == {"x", "y", "z"}, f"Missing box bounds in {path}")
     require(len(sections["Masses"]) == type_counts["atom types"], f"Mass count mismatch in {path}")
@@ -265,6 +281,7 @@ def parse_lammps_data(path: Path) -> dict:
         "angles": sorted(sections["Angles"], key=lambda item: item["id"]),
         "dihedrals": sorted(sections["Dihedrals"], key=lambda item: item["id"]),
         "impropers": sorted(sections["Impropers"], key=lambda item: item["id"]),
+        "velocities": sorted(sections["Velocities"], key=lambda item: item["atom_id"]),
     }
 
 

@@ -1,0 +1,111 @@
+{
+  "artifacts": {
+    "gromacs_energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/gromacs/npt_energy.xvg",
+    "gromacs_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/gromacs",
+    "gromacs_warmup_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/gromacs/warmup.log",
+    "lammps_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/lammps/npt.log",
+    "lammps_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/lammps",
+    "lammps_warmup_log": null
+  },
+  "gromacs": {
+    "density_kg_m3": {
+      "max": 1570.301758,
+      "mean": 1534.4095746566866,
+      "min": 1493.962769,
+      "sem_block5": 3.8237003446201214
+    },
+    "potential_energy_kj_mol": {
+      "max": -213385.0625,
+      "mean": -214407.15784056886,
+      "min": -215315.3125,
+      "sem_block5": 206.77356861235154
+    },
+    "pressure_bar": {
+      "max": 2500.411377,
+      "mean": 285.81020326347306,
+      "min": -1613.592285,
+      "sem_block5": 41.42080186323699
+    },
+    "temperature_k": {
+      "max": 316.217438,
+      "mean": 300.4864537984032,
+      "min": 285.152496,
+      "sem_block5": 0.39352326253623815
+    },
+    "volume_nm3": {
+      "max": 39.016521,
+      "mean": 37.991190409181634,
+      "min": 37.119762,
+      "sem_block5": 0.09475997137084644
+    }
+  },
+  "lammps": {
+    "density_kg_m3": {
+      "max": 1564.7246,
+      "mean": 1506.706373253493,
+      "min": 1440.3582,
+      "sem_block5": 11.369910609396605
+    },
+    "potential_energy_kj_mol": {
+      "max": -213585.06212000002,
+      "mean": -215099.4574124551,
+      "min": -216458.470144,
+      "sem_block5": 332.12242935967987
+    },
+    "pressure_atm": {
+      "max": 2209.2546,
+      "mean": 237.46526350147704,
+      "min": -1522.0979,
+      "sem_block5": 21.649603321422383
+    },
+    "temperature_k": {
+      "max": 315.66546,
+      "mean": 300.20709027944116,
+      "min": 284.2693,
+      "sem_block5": 0.3925341374434086
+    },
+    "volume_nm3": {
+      "max": 40.46856,
+      "mean": 38.698510433133734,
+      "min": 37.252064,
+      "sem_block5": 0.2958980507751848
+    }
+  },
+  "parity_metrics": {
+    "density_rel_diff": 0.01838659601828917,
+    "volume_rel_diff": 0.018277706713654057
+  },
+  "protocol": {
+    "analysis_window_ps": 50.0,
+    "compressibility_bar_inv": 4.5e-05,
+    "duration_ps": 100.0,
+    "ensemble": "NPT",
+    "gmx_integrator": "md-vv",
+    "gmx_nonbonded_modifiers": {
+      "coulomb-modifier": "none",
+      "vdw-modifier": "none"
+    },
+    "gmx_pressure_coupling": "mttk",
+    "gmx_temperature_coupling": "nose-hoover",
+    "lammps_neighbor_every": 1,
+    "lammps_neighbor_skin_angstrom": 4.0,
+    "lammps_omp_threads": 1,
+    "lammps_ranks": 1,
+    "lammps_target_barostat": "npt",
+    "lammps_velocity_initialization": "velocity create 300 K with fixed seed",
+    "ref_p_bar": 250.0,
+    "tau_p_ps": 1.0,
+    "tau_t_ps": 0.1,
+    "thermal_start": "generated",
+    "thresholds": {
+      "density_rel_diff_max": 0.05,
+      "relative_diff_reference": "LAMMPS mean over final analysis window",
+      "volume_rel_diff_max": 0.05
+    },
+    "warmup_protocol": "GROMACS md/v-rescale/Berendsen only",
+    "warmup_ps": 5.0,
+    "warmup_scope": "gmx-only"
+  },
+  "status": "PASS",
+  "system_id": "gate_h_dense_salt_polymer_2x2x2"
+}

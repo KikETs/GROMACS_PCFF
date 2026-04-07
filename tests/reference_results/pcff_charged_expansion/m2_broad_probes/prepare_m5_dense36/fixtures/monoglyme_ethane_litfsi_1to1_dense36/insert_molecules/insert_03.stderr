@@ -1,0 +1,94 @@
+ :-) GROMACS - gmx insert-molecules, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/prepare_m5_dense36/fixtures/monoglyme_ethane_litfsi_1to1_dense36/insert_molecules
+Command line:
+  gmx insert-molecules -ci li.gro -nmol 36 -o packed_03_li.gro -try 10000 -seed 20260409 -radius 0.04 -scale 0.35 -f packed_02_ethane.gro
+
+Reading solute configuration
+Initialising inter-atomic distances...
+Using random seed 20260409
+
+Try 1 success (now 865 atoms)!
+
+Try 2 success (now 866 atoms)!
+
+Try 3 success (now 867 atoms)!
+
+Try 4 success (now 868 atoms)!
+
+Try 5 success (now 869 atoms)!
+
+Try 6 success (now 870 atoms)!
+
+Try 7 success (now 871 atoms)!
+
+Try 8
+Try 9 success (now 872 atoms)!
+
+Try 10 success (now 873 atoms)!
+
+Try 11 success (now 874 atoms)!
+
+Try 12
+Try 13 success (now 875 atoms)!
+
+Try 14 success (now 876 atoms)!
+
+Try 15 success (now 877 atoms)!
+
+Try 16 success (now 878 atoms)!
+
+Try 17 success (now 879 atoms)!
+
+Try 18 success (now 880 atoms)!
+
+Try 19 success (now 881 atoms)!
+
+Try 20 success (now 882 atoms)!
+
+Try 21 success (now 883 atoms)!
+
+Try 22 success (now 884 atoms)!
+
+Try 23 success (now 885 atoms)!
+
+Try 24 success (now 886 atoms)!
+
+Try 25 success (now 887 atoms)!
+
+Try 26
+Try 27 success (now 888 atoms)!
+
+Try 28 success (now 889 atoms)!
+
+Try 29 success (now 890 atoms)!
+
+Try 30 success (now 891 atoms)!
+
+Try 31 success (now 892 atoms)!
+
+Try 32 success (now 893 atoms)!
+
+Try 33 success (now 894 atoms)!
+
+Try 34 success (now 895 atoms)!
+
+Try 35 success (now 896 atoms)!
+
+Try 36 success (now 897 atoms)!
+
+Try 37 success (now 898 atoms)!
+
+Try 38 success (now 899 atoms)!
+
+Try 39 success (now 900 atoms)!
+
+Added 36 molecules (out of 36 requested)
+Writing generated configuration to packed_03_li.gro
+
+Output configuration contains 900 atoms in 108 residues
+
+GROMACS reminds you: "Success is going from one failure to another without loss of enthusiasm" (Winston Churchill)
+

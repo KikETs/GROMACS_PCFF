@@ -1,0 +1,29 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns
+Command line:
+  gmx mdrun -s min.tpr -deffnm min -ntmpi 1 -ntomp 1 -pin off -reprod
+
+Reading file min.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+
+Steepest Descents:
+   Tolerance (Fmax)   =  1.00000e+02
+   Number of steps    =          500
+
+writing lowest energy coordinates.
+
+Steepest Descents converged to Fmax < 100 in 6 steps
+Potential Energy  = -2.2485713e+04
+Maximum force     =  9.9364326e+01 on atom 4
+Norm of force     =  4.2941640e+01
+
+GROMACS reminds you: "Do the Dog On the Ground" (Red Hot Chili Peppers)
+

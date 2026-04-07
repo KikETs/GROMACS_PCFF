@@ -1,0 +1,35 @@
+Setting the LD random seed to 810175994
+
+Generated 91 of the 91 non-bonded parameter combinations
+
+Generated 91 of the 91 1-4 parameter combinations
+
+Excluding 3 bonded neighbours molecule type 'MONOGLY'
+
+Excluding 3 bonded neighbours molecule type 'ETHANE'
+
+Excluding 1 bonded neighbours molecule type 'LI'
+
+Excluding 3 bonded neighbours molecule type 'TFSI'
+
+Taking velocities from 'warmup.gro'
+Analysing residue names:
+There are:    54      Other residues
+There are:    18        Ion residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.444 nm between atom 511 and 525
+
+Reading Coordinates, Velocities and Box size from old trajectory
+
+Will read whole trajectory
+
+Using frame at t = 5 ps
+
+Starting time for run is 0 ps
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 20x20x20, spacing 0.120 0.120 0.120
+
+Estimate for the relative computational load of the PME mesh part: 0.15
+
+This run will generate roughly 1 Mb of data

@@ -1,0 +1,16 @@
+; deterministic PT7 polymer workflow topol.top
+#include "forcefield_pcff.itp"
+#include "molecule_monogly.itp"
+#include "molecule_ethane.itp"
+#include "molecule_li.itp"
+#include "molecule_tfsi.itp"
+
+[ system ]
+monoglyme_ethane_litfsi_1to1
+
+[ molecules ]
+; Name number
+MONOGLY 1
+ETHANE 1
+LI 1
+TFSI 1

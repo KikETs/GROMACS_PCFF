@@ -4,13 +4,15 @@
 Milestone TP1.1 (Evidence Recovery & Documentation Repair) has been completed.
 The purpose of this milestone was to address the failures identified in the TP1 hostile audit. All unsupported success claims have been withdrawn, the system identity mismatch has been corrected, and the requirements for a future TP1 rerun have been codified.
 
+Supersession note: TP1.1 is a historical documentation-repair milestone. The later corrected exact TP1 rerun now resolves the thermal-runaway blocker for the exact 5 ns `dense_salt_polymer` NPT protocol only; see [TP1 Charged Long-Equilibration Recovery](validation_report_tp1.md).
+
 ## 2. Key Corrections
 
 ### 2.1 System Identity
 The system identity has been corrected across all TP1-related documentation to reflect the actual 270-atom Sodium-salt polymer system (`dense_salt_polymer`) present in the repository.
 
 ### 2.2 Status Downgrade
-TP1 is now explicitly marked as **FAIL / NOT VERIFIED** in both the primary validation report and the equilibration plan. All claims of "Transport Production Readiness" for charged systems have been revoked.
+At the time of TP1.1, TP1 was marked as **FAIL / NOT VERIFIED** in both the primary validation report and the equilibration plan. All claims of "Transport Production Readiness" for charged systems were revoked. The later corrected exact TP1 rerun changes only the thermal-runaway verdict, not transport readiness.
 
 ### 2.3 Evidence Audit
 The lack of a runner script and raw simulation logs for the 5 ns equilibration has been documented and acknowledged. Existing summary artifacts (`recovery_summary.json`) are now explicitly marked as **UNTRUSTED / UNVERIFIED**.

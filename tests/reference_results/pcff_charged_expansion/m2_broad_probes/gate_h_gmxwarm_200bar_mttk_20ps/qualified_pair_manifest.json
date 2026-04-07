@@ -1,0 +1,95 @@
+{
+  "acpype_gaff2_dependency": false,
+  "artifacts": {
+    "gromacs_coordinates": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/generated_pair/system.gro",
+    "gromacs_topology": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/generated_pair/system.top",
+    "lammps_data": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/generated_pair/system.data",
+    "lammps_input": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/generated_pair/system.in",
+    "system_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/generated_pair/system.json",
+    "typed_system": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/generated_pair/typed_system.json"
+  },
+  "audit_basis": [
+    "GROMACS topology is generated directly from the repository PCFF/Class2 LAMMPS golden fixture.",
+    "No ACPYPE, GAFF2, or surrogate GROMACS topology path is used.",
+    "Typed IR retains per-record source provenance to raw LAMMPS files."
+  ],
+  "chemistry_scope_delta": {
+    "candidate_expansion": "gate_h_dense_salt_polymer_2x2x2",
+    "previous_boundary": "frozen PT8 SPE subset and small charged fixtures"
+  },
+  "derived_fixture": {
+    "box_nm": [
+      4.4,
+      4.4,
+      4.4
+    ],
+    "natoms": 2160,
+    "replicate": [
+      2,
+      2,
+      2
+    ],
+    "seed_system": "dense_salt_polymer"
+  },
+  "fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
+  "gromacs_preparation": "pcff_fixture_bridge_generated_topology",
+  "lammps_reference": "pcff_class2_fixture",
+  "lammps_styles": {
+    "angle_style": "class2",
+    "atom_style": "full",
+    "bond_style": "class2",
+    "dihedral_style": "class2",
+    "improper_style": "none",
+    "kspace_style": "pppm 1.0e-4",
+    "pair_modify": "mix sixthpower",
+    "pair_style": {
+      "args": [
+        "9.0",
+        "9.0"
+      ],
+      "kind": "lj/class2/coul/long"
+    },
+    "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "units": "real"
+  },
+  "milestone_subset": "M1-M3",
+  "pair_status": "strict_pcff_qualified",
+  "system_id": "gate_h_dense_salt_polymer_2x2x2",
+  "system_metadata": {
+    "category": "polymer_box",
+    "derived_from": {
+      "replicate": [
+        2,
+        2,
+        2
+      ],
+      "seed_system": "dense_salt_polymer",
+      "source_data": "/home/kiket/Desktop/test/GROMACS_PCFF/testdata/lammps_golden/systems/dense_salt_polymer/lammps/system.data",
+      "source_input": "/home/kiket/Desktop/test/GROMACS_PCFF/testdata/lammps_golden/systems/dense_salt_polymer/lammps/system.in"
+    },
+    "description": "Derived from dense_salt_polymer via LAMMPS replicate 2x2x2 for Gate H transport-scope scaffolding.",
+    "display_name": "dense salt-containing polymer box transport scaffold",
+    "id": "gate_h_dense_salt_polymer_2x2x2",
+    "reference_terms": [
+      "bond/class2",
+      "angle/class2",
+      "dihedral/class2",
+      "lj/class2/coul/long",
+      "special_bonds",
+      "kspace/pppm"
+    ],
+    "schema_version": 1,
+    "styles": {
+      "angle_style": "class2",
+      "atom_style": "full",
+      "bond_style": "class2",
+      "dihedral_style": "class2",
+      "improper_style": "none",
+      "kspace_style": "pppm 1.0e-4",
+      "pair_modify": "mix sixthpower",
+      "pair_style": "lj/class2/coul/long",
+      "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+      "units": "real"
+    }
+  }
+}

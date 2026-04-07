@@ -1,0 +1,75 @@
+{
+  "anti_cherry_pick_rule": "No best-case reporting: all required_systems must pass, otherwise broader M2 PASS is forbidden.",
+  "milestone": "M2.1-M2.5",
+  "old_boundary": {
+    "analysis_window_ps": 5.0,
+    "status": "narrow explicit-subset M2 PASS only",
+    "system": "gate_h_dense_salt_polymer_2x2x2",
+    "target_horizon_ps": 10.0,
+    "weaknesses": [
+      "single system",
+      "short horizon",
+      "near 5 percent thresholds",
+      "GROMACS-only warmup",
+      "M5 smoke is not M2 dense parity evidence"
+    ]
+  },
+  "predeclared_before_result_interpretation": true,
+  "protocol": {
+    "barostat_thermostat": {
+      "compressibility_bar_inv": 4.5e-05,
+      "gmx_integrator": "md-vv",
+      "gmx_pcoupl": "mttk",
+      "gmx_tcoupl": "nose-hoover",
+      "lmp_target_barostat": "npt",
+      "ref_p_bar": 250.0,
+      "tau_p_ps": 1.0,
+      "tau_t_ps": 0.1,
+      "thermal_start": "generated"
+    },
+    "density_relative_difference_max": 0.05,
+    "ensemble": "NPT",
+    "execution_resources": {
+      "gmx_threads": 8,
+      "lmp_ranks": 2
+    },
+    "fail_rule": "campaign PASS requires every predeclared required system to pass density and volume thresholds with final_analysis_window_ps >= 50; one failure makes campaign FAIL",
+    "final_analysis_window_ps": 50.0,
+    "raw_artifact_inventory": [
+      "strict paired manifest",
+      "GROMACS topology and coordinates",
+      "LAMMPS data and input",
+      "GROMACS mdp/tpr/log/edr/gro/cpt/xvg/stdout/stderr",
+      "LAMMPS input/log/final data/stdout/stderr",
+      "dense_npt_parity_report.json",
+      "campaign summary"
+    ],
+    "target_horizon_ps": 100.0,
+    "volume_relative_difference_max": 0.05,
+    "warmup_policy": {
+      "claim_caveat": "GROMACS-only warmup is explicitly predeclared; if used, the result is broader dense parity evidence but not a fully symmetric-paired equilibration claim.",
+      "warmup_ps": 5.0,
+      "warmup_scope": "gmx-only"
+    }
+  },
+  "required_systems": [
+    {
+      "role": "existing dense scaffold strengthening",
+      "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
+      "system_id": "gate_h_dense_salt_polymer_2x2x2"
+    },
+    {
+      "role": "second strict paired dense chemistry promoted from M5 workflow",
+      "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v2b_250bar_mttk_lmp2/fixtures/monoglyme_ethane_litfsi_1to1_dense18/fixture_manifest.json",
+      "system_id": "monoglyme_ethane_litfsi_1to1_dense18"
+    }
+  ],
+  "schema_name": "pcff_charged_m2_broad_protocol",
+  "schema_version": 1,
+  "strict_qualification_rule": {
+    "acpype_gaff2_allowed": false,
+    "gromacs_side_must_be_pcff_derived": true,
+    "lammps_side_must_be_pcff_class2": true,
+    "same_pcff_source_required": true
+  }
+}

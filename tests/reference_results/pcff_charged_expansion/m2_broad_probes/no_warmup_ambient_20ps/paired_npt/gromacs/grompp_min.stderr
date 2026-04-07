@@ -1,0 +1,33 @@
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/no_warmup_ambient_20ps/paired_npt/gromacs
+Command line:
+  gmx grompp -f min.mdp -c system.gro -p system.top -o min.tpr -po min_mdout.mdp
+
+
+NOTE 1 [file min.mdp]:
+  With Verlet lists and no buffer tolerance, the optimal nstlist is >= 10,
+  with GPUs >= 20. Note that with the Verlet scheme, nstlist has no effect
+  on the accuracy of your simulation.
+
+
+NOTE 2 [file min.mdp]:
+  rlist is equal to rvdw and/or rcoulomb: there is no explicit Verlet
+  buffer. The cluster pair list does have a buffering effect, but choosing
+  a larger rlist might be necessary for good energy conservation.
+
+
+NOTE 3 [file min.mdp]:
+  verlet-buffer-pressure-tolerance is ignored when verlet-buffer-tolerance
+  < 0
+
+Generating 1-4 interactions: fudge = 1
+Number of degrees of freedom in T-Coupling group rest is 2157.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+There were 3 NOTEs
+
+GROMACS reminds you: "Move Over Hogey Bear" (Urban Dance Squad)
+

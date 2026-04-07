@@ -1,0 +1,110 @@
+LAMMPS (10 Sep 2025 - Development - patch_10Sep2025-660-g792d014343)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+Reading data file ...
+  orthogonal box = (-11 -11 -11) to (11 11 11)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  270 atoms
+  reading velocities ...
+  270 velocities
+  scanning bonds ...
+  1 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  scanning dihedrals ...
+  1 = max dihedrals/atom
+  orthogonal box = (-11 -11 -11) to (11 11 11)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  189 bonds
+  reading angles ...
+  162 angles
+  reading dihedrals ...
+  135 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     2 = max # of 1-2 neighbors
+     2 = max # of 1-3 neighbors
+     4 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.002 seconds
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.28818131
+  grid = 12 12 12
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.013854549
+  estimated relative force accuracy = 4.1722564e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 6859 1728
+Generated 6 of 6 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 11
+  ghost atom cutoff = 11
+  binsize = 5.5, bins = 4 4 4
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/class2/coul/long, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Setting up cg style minimization ...
+  Unit style    : real
+  Current step  : 0
+Per MPI rank memory allocation (min/avg/max) = 8.936 | 8.936 | 8.936 Mbytes
+   Step          Temp          PotEng         KinEng         TotEng         Press          Volume        Density    
+         0   0             -5373.5751      0             -5373.5751     -622.23347      10648          0.68427428   
+         1   0             -5373.8068      0             -5373.8068     -886.74884      10648          0.68427428   
+Loop time of 0.000733225 on 1 procs for 1 steps with 270 atoms
+
+100.1% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -5373.57512437742  -5373.57512437742   -5373.8068331065
+  Force two-norm initial, final = 12.106424 16.984444
+  Force max component initial, final = 1.0382084 1.8944342
+  Final line search alpha, max atom move = 0.096319776 0.18247148
+  Iterations, force evaluations = 1 2
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.00041976 | 0.00041976 | 0.00041976 |   0.0 | 57.25
+Bond    | 8.8051e-05 | 8.8051e-05 | 8.8051e-05 |   0.0 | 12.01
+Kspace  | 0.00020512 | 0.00020512 | 0.00020512 |   0.0 | 27.98
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 9.63e-06   | 9.63e-06   | 9.63e-06   |   0.0 |  1.31
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 1.066e-05  |            |       |  1.45
+
+Nlocal:            270 ave         270 max         270 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           1890 ave        1890 max        1890 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          20655 ave       20655 max       20655 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 20655
+Ave neighs/atom = 76.5
+Ave special neighs/atom = 2.6
+Neighbor list builds = 0
+Dangerous builds = 0
+System init for write_data ...
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.28818131
+  grid = 12 12 12
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.013854549
+  estimated relative force accuracy = 4.1722564e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 6859 1728
+Generated 6 of 6 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Total wall time: 0:00:00

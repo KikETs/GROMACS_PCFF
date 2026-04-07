@@ -1,0 +1,38 @@
+{
+  "anti_cherry_pick_rule_enforced": true,
+  "claim_honesty": {
+    "m5_smoke_counted_as_m2": false,
+    "single_system_short_horizon_counted_as_broad_m2": false,
+    "tp1_thermal_recovery_counted_as_m2": false
+  },
+  "new_candidate_boundary": "broader M2 only if both predeclared strict-PCFF dense charged pairs pass 100 ps target / 50 ps final-window density and volume thresholds",
+  "old_narrow_boundary": "single gate_h_dense_salt_polymer_2x2x2 10 ps target / 5 ps analysis result",
+  "protocol": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v2b_250bar_mttk_lmp2/m2_broad_protocol.json",
+  "schema_name": "pcff_charged_m2_broad_campaign_summary",
+  "schema_version": 1,
+  "status": "PENDING",
+  "systems": [
+    {
+      "analysis_window_ps": null,
+      "dense_npt_parity_report": null,
+      "density_rel_diff": null,
+      "duration_ps": null,
+      "qualified_pair_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v2b_250bar_mttk_lmp2/systems/gate_h_dense_salt_polymer_2x2x2/qualified_pair_manifest.json",
+      "status": "NOT_RUN",
+      "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
+      "system_id": "gate_h_dense_salt_polymer_2x2x2",
+      "volume_rel_diff": null
+    },
+    {
+      "analysis_window_ps": null,
+      "dense_npt_parity_report": null,
+      "density_rel_diff": null,
+      "duration_ps": null,
+      "qualified_pair_manifest": null,
+      "status": "NOT_RUN",
+      "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v2b_250bar_mttk_lmp2/fixtures/monoglyme_ethane_litfsi_1to1_dense18/fixture_manifest.json",
+      "system_id": "monoglyme_ethane_litfsi_1to1_dense18",
+      "volume_rel_diff": null
+    }
+  ]
+}

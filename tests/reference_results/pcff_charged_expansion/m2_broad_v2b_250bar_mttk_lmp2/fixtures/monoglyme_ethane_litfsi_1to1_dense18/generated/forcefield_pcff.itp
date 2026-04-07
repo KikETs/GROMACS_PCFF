@@ -1,0 +1,24 @@
+; deterministic PT7 polymer workflow shared GROMACS forcefield
+; system_id=monoglyme_ethane_litfsi_1to1
+; component_count=4
+; typed_ir_sha256_chain=3607fffae4e02959fed94b4ceddb2eda2e9ff872ee67c7a28de6a7a4431dd2c0,4948b5e4bdc8942e84223be7b697073e288431584595bf020e47663355195300,96bfbb7db1829bd21bcd55798d52b0cca3b43d7db3f06ac00423752fe64e6789,9988bde8b1a381ca2c3d0672fd59d88d4c7112119a95925aea850521625a05a8
+
+[ defaults ]
+; nbfunc comb-rule gen-pairs fudgeLJ fudgeQQ rep-pow
+1 4 yes 1.0 1.0 9.0
+
+[ atomtypes ]
+; name mass charge ptype sigma epsilon
+nb_alkane_c_sp3          12.011 0.0 A 0.35000000 0.41840000
+nb_cf3_c                 12.011 0.0 A 0.34500000 0.37656000
+nb_cf3_f                 18.998 0.0 A 0.28500000 0.20920000
+nb_ether_c_alpha         12.011 0.0 A 0.34000000 0.33472000
+nb_ether_o_sp3           15.999 0.0 A 0.30000000 0.29288000
+nb_h_alkane               1.008 0.0 A 0.25000000 0.08368000
+nb_h_ether_alpha          1.008 0.0 A 0.24500000 0.07531200
+nb_h_polyether_backbone    1.008 0.0 A 0.24500000 0.07531200
+nb_lithium_cation         6.941 0.0 A 0.22000000 0.08368000
+nb_polyether_c_backbone   12.011 0.0 A 0.34000000 0.33472000
+nb_sulfonimide_n         14.007 0.0 A 0.33000000 0.33472000
+nb_sulfonyl_o            15.999 0.0 A 0.29500000 0.25104000
+nb_sulfonyl_s            32.065 0.0 A 0.41000000 0.41840000

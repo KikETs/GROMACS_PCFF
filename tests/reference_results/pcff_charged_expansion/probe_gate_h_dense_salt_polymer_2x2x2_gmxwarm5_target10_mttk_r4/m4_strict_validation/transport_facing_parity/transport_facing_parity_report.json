@@ -1,0 +1,116 @@
+{
+  "fresh_m4_rerun": true,
+  "gmx_binary": "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+  "gpu_support": "CUDA",
+  "non_claimable_statement": "Do not use this as charged transport readiness; it only shows short-horizon transport-facing observable generation/comparison on the qualified scaffold.",
+  "observable_comparisons": {
+    "anion_diffusivity_cm2_s": {
+      "available": true,
+      "classification": "stochastic",
+      "combined_uncertainty": 3.756757245284822e-05,
+      "cpu_mean": 0.0001628475,
+      "cpu_uncertainty": 3.1150000000000005e-05,
+      "gpu_mean": 0.00015732050000000003,
+      "gpu_uncertainty": 2.1000000000000002e-05,
+      "mean_diff": -5.5269999999999625e-06,
+      "passes": true,
+      "replica_diffs": [
+        -1.0732000000000005e-05,
+        -3.219999999999742e-07
+      ]
+    },
+    "cation_diffusivity_cm2_s": {
+      "available": true,
+      "classification": "stochastic",
+      "combined_uncertainty": 3.843022898708776e-05,
+      "cpu_mean": 0.00015997950000000002,
+      "cpu_uncertainty": 3.2600000000000006e-05,
+      "gpu_mean": 0.00015509600000000002,
+      "gpu_uncertainty": 2.035e-05,
+      "mean_diff": -4.883499999999995e-06,
+      "passes": true,
+      "replica_diffs": [
+        -6.205000000000013e-06,
+        -3.561999999999977e-06
+      ]
+    },
+    "conductivity_cne_s_cm": {
+      "available": true,
+      "classification": "stochastic",
+      "combined_uncertainty": 0.14980533222463382,
+      "cpu_mean": 4.070962005251598,
+      "cpu_uncertainty": 0.06823712936055015,
+      "gpu_mean": 3.9363157323001143,
+      "gpu_uncertainty": 0.13336165768152575,
+      "mean_diff": -0.13464627295148368,
+      "passes": true,
+      "replica_diffs": [
+        -0.1997708012724595,
+        -0.06952174463050831
+      ]
+    },
+    "polymer_diffusivity_cm2_s": {
+      "available": true,
+      "classification": "stochastic",
+      "combined_uncertainty": 5.682800805940677e-05,
+      "cpu_mean": 0.0001677655,
+      "cpu_uncertainty": 3.935000000000001e-05,
+      "gpu_mean": 0.00015511300000000002,
+      "gpu_uncertainty": 4.100000000000001e-05,
+      "mean_diff": -1.2652499999999994e-05,
+      "passes": true,
+      "replica_diffs": [
+        -2.0000000000000486e-07,
+        -2.5104999999999984e-05
+      ]
+    },
+    "transference_ne": {
+      "available": true,
+      "classification": "stochastic",
+      "combined_uncertainty": 0.0042968675407292455,
+      "cpu_mean": 0.4955249363967734,
+      "cpu_uncertainty": 0.0028171483207074517,
+      "gpu_mean": 0.49654696644002816,
+      "gpu_uncertainty": 0.003244494722095842,
+      "mean_diff": 0.0010220300432547402,
+      "passes": true,
+      "replica_diffs": [
+        0.007083673086058007,
+        -0.005039612999548582
+      ]
+    }
+  },
+  "primary_observables": {
+    "anion_diffusivity_cm2_s": true,
+    "cation_diffusivity_cm2_s": true,
+    "conductivity_cne_s_cm": true,
+    "transference_ne": true
+  },
+  "run_settings": {
+    "coord_stride_ps": 0.1,
+    "cpu_shape": "nb cpu / bonded cpu / pme cpu / update cpu",
+    "dlb": "no",
+    "energy_stride_ps": 0.5,
+    "equil_ps": 0.5,
+    "gpu_shape": "nb gpu / bonded gpu / pme gpu / update gpu",
+    "maxtau_ps": 5.0,
+    "ntmpi": 1,
+    "ntomp": 1,
+    "prod_ps": 5.0,
+    "replicas": 2,
+    "tau_t_ps": 0.5,
+    "temperature_k": 300.0,
+    "trestart_ps": 0.5
+  },
+  "scaffold_manifest_matches_qualified_pair": true,
+  "scope": "Fresh M4 transport-facing CPU/GPU observable parity rerun on the strict charged scaffold; this is not LAMMPS transport parity and not production readiness.",
+  "source_result": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/summaries/candidate_result.json",
+  "status": "PASS",
+  "system_id": "gate_h_dense_salt_polymer_2x2x2",
+  "temperature_caveat": {
+    "interpretation": "Temperature is not used as thermophysical transport evidence for this short-horizon M4 smoke rerun.",
+    "replica_average_temperature_max_k": 375.76927045454545,
+    "replica_average_temperature_min_k": 372.00864463636367
+  },
+  "transport_result_status": "PASS"
+}

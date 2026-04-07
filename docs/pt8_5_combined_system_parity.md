@@ -15,4 +15,4 @@ This document summarizes the numeric parity verification for combined Class2 int
 3.  **Force Stability:** The relative force errors remain extremely low ($< 0.04\%$), proving that the combined force distribution is physically consistent across the system.
 
 ## Conclusion
-The GROMACS-PCFF bridge is now verified for combined interaction sets in realistic (though small) system topologies. The interplay between all primary PCFF terms is numerically robust.
+The GROMACS-PCFF bridge is numerically consistent for combined interaction sets on these frozen small fixtures. This is a small-fixture mechanics result, not a claim of broad PCFF charged readiness, dense charged ensemble parity, or charged transport validity.

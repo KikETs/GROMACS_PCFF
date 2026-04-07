@@ -1,0 +1,38 @@
+   :-) GROMACS - gmx grompp, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_250bar_endpoint_to_1bar_gmx_mttk_20ps/gromacs
+Command line:
+  gmx grompp -f npt_1bar_from_250bar_final.mdp -c npt.gro -t npt.cpt -p system.top -o npt_1bar_from_250bar_final.tpr -po npt_1bar_from_250bar_final_mdout.mdp -maxwarn 1
+
+
+NOTE 1 [file npt_1bar_from_250bar_final.mdp]:
+  With Verlet lists and no buffer tolerance, the optimal nstlist is >= 10,
+  with GPUs >= 20. Note that with the Verlet scheme, nstlist has no effect
+  on the accuracy of your simulation.
+
+
+NOTE 2 [file npt_1bar_from_250bar_final.mdp]:
+  rlist is equal to rvdw and/or rcoulomb: there is no explicit Verlet
+  buffer. The cluster pair list does have a buffering effect, but choosing
+  a larger rlist might be necessary for good energy conservation.
+
+
+NOTE 3 [file npt_1bar_from_250bar_final.mdp]:
+  verlet-buffer-pressure-tolerance is ignored when verlet-buffer-tolerance
+  < 0
+
+Generating 1-4 interactions: fudge = 1
+
+NOTE 4 [file npt_1bar_from_250bar_final.mdp]:
+  MTTK coupling is deprecated and will soon be removed
+
+Number of degrees of freedom in T-Coupling group System is 2157.00
+
+Last frame         -1 time  100.000   
+
+There were 4 NOTEs
+
+GROMACS reminds you: "Get Down In 3D" (George Clinton)
+

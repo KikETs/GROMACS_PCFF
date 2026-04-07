@@ -1,0 +1,32 @@
+   :-) GROMACS - gmx energy, 2027.0-dev-20260405-81d472fe4c-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
+Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Command line:
+  gmx energy -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_02/prod.edr -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_02/production_observables.xvg
+
+Opened /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_02/prod.edr as single precision energy file
+
+Select the terms you want from the following list by
+selecting either (part of) the name or the number or a combination.
+End your selection with an empty line or a zero.
+-------------------------------------------------------------------
+  1  Class2-Bond      2  Class2-Angle     3  Class2-Dih.      4  LJ-14         
+  5  Coulomb-14       6  LJ-(SR)          7  Coulomb-(SR)     8  Coul.-recip.  
+  9  Potential       10  Kinetic-En.     11  Total-Energy    12  Conserved-En. 
+ 13  Temperature     14  Pressure        15  Vir-XX          16  Vir-XY        
+ 17  Vir-XZ          18  Vir-YX          19  Vir-YY          20  Vir-YZ        
+ 21  Vir-ZX          22  Vir-ZY          23  Vir-ZZ          24  Pres-XX       
+ 25  Pres-XY         26  Pres-XZ         27  Pres-YX         28  Pres-YY       
+ 29  Pres-YZ         30  Pres-ZX         31  Pres-ZY         32  Pres-ZZ       
+ 33  #Surf*SurfTen   34  T-System        35  Lamb-System   
+
+String 'Volume' does not match anything
+String 'Box-X' does not match anything
+String 'Box-Y' does not match anything
+String 'Box-Z' does not match anything
+Reading energy frame      0 time    0.000         Reading energy frame      1 time    0.500         Reading energy frame      2 time    1.000         Reading energy frame      3 time    1.500         Reading energy frame      4 time    2.000         Reading energy frame      5 time    2.500         Reading energy frame      6 time    3.000         Reading energy frame      7 time    3.500         Reading energy frame      8 time    4.000         Reading energy frame      9 time    4.500         Reading energy frame     10 time    5.000         Last energy frame read 10 time    5.000         
+
+GROMACS reminds you: "You Can Be Too Early, You Can Be Too Late and You Can Be On Time" (J. Cruijff)
+

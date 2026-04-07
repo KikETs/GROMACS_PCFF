@@ -1,0 +1,33 @@
+{
+  "category": "polymer_box",
+  "derived_from": {
+    "formula_count": 36,
+    "packing": "gmx insert-molecules deterministic seeded pack; LAMMPS data converted from the same coordinates",
+    "source_spec": "/home/kiket/Desktop/test/GROMACS_PCFF/testdata/polymer_workflow_m5/cases/monoglyme_ethane_litfsi_1to1/spec.json",
+    "source_system": "monoglyme_ethane_litfsi_1to1"
+  },
+  "description": "M2 broader dense charged scaffold generated from the strict PCFF M5 workflow components.",
+  "display_name": "monoglyme ethane LiTFSI dense charged M2 scaffold",
+  "id": "monoglyme_ethane_litfsi_1to1_dense36",
+  "reference_terms": [
+    "bond/class2",
+    "angle/class2",
+    "dihedral/class2",
+    "lj/class2/coul/long",
+    "special_bonds",
+    "kspace/pppm"
+  ],
+  "schema_version": 1,
+  "styles": {
+    "angle_style": "class2",
+    "atom_style": "full",
+    "bond_style": "class2",
+    "dihedral_style": "class2",
+    "improper_style": "none",
+    "kspace_style": "pppm 1.0e-4",
+    "pair_modify": "mix sixthpower",
+    "pair_style": "lj/class2/coul/long",
+    "special_bonds": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "units": "real"
+  }
+}

@@ -1,0 +1,2068 @@
+LAMMPS (10 Sep 2025 - Development - patch_10Sep2025-660-g792d014343)
+  using 1 OpenMP thread(s) per MPI task
+Reading data file ...
+  orthogonal box = (-11 -11 -11) to (33 33 33)
+  1 by 2 by 2 MPI processor grid
+  reading atoms ...
+  2160 atoms
+  reading velocities ...
+  2160 velocities
+  scanning bonds ...
+  1 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  scanning dihedrals ...
+  1 = max dihedrals/atom
+  orthogonal box = (-11 -11 -11) to (33 33 33)
+  1 by 2 by 2 MPI processor grid
+  reading bonds ...
+  1512 bonds
+  reading angles ...
+  1296 angles
+  reading dihedrals ...
+  1080 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     2 = max # of 1-2 neighbors
+     2 = max # of 1-3 neighbors
+     4 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.013 seconds
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb
+  G vector (1/distance) = 0.27031924
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.031086349
+  estimated relative force accuracy = 9.3615616e-05
+  using double precision FFTW3
+  3d grid and FFT values/proc = 5625 2000
+Generated 6 of 6 mixed pair_coeff terms from sixthpower/sixthpower mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 11
+  ghost atom cutoff = 11
+  binsize = 5.5, bins = 8 8 8
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/class2/coul/long, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Setting up Verlet run ...
+  Unit style    : real
+  Current step  : 0
+  Time step     : 1
+Per MPI rank memory allocation (min/avg/max) = 7.872 | 7.872 | 7.872 Mbytes
+   Step          Temp          PotEng         KinEng         TotEng         Press          Volume        Density    
+         0   300           -42978.504      1930.6707     -41047.833      159.01569      85184          0.68427428   
+WARNING: Dihedral problem: 1 5 1081 1082 1083 1084
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1082 1083 1084 1085
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1083 1084 1085 1086
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1084 1085 1086 1087
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1085 1086 1087 1088
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1091 1092 1093 1094
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1092 1093 1094 1095
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 541 542 543 544
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 542 543 544 545
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 543 544 545 546
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 544 545 546 547
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 545 546 547 548
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 551 552 553 554
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 552 553 554 555
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 553 554 555 556
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1621 1622 1623 1624
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1622 1623 1624 1625
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1623 1624 1625 1626
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1624 1625 1626 1627
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1625 1626 1627 1628
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1631 1632 1633 1634
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1632 1633 1634 1635
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1633 1634 1635 1636
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1634 1635 1636 1637
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1635 1636 1637 1638
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1641 1642 1643 1644
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1642 1643 1644 1645
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 1 2 3 4
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 2 3 4 5
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 3 4 5 6
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 4 5 6 7
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 5 6 7 8
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 11 12 13 14
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 12 13 14 15
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 13 14 15 16
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 14 15 16 17
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 15 16 17 18
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 21 22 23 24
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 22 23 24 25
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 23 24 25 26
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 24 25 26 27
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 25 26 27 28
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 271 272 273 274
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 272 273 274 275
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dWARNING: Dihedral problem: 1 5 1093 1094 1095 1096
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1094 1095 1096 1097
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1095 1096 1097 1098
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1101 1102 1103 1104
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1102 1103 1104 1105
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1103 1104 1105 1106
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1104 1105 1106 1107
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1105 1106 1107 1108
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1351 1352 1353 1354
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1352 1353 1354 1355
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1353 1354 1355 1356
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 554 555 556 557
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 555 556 557 558
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 561 562 563 564
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 562 563 564 565
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 563 564 565 566
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 564 565 566 567
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 565 566 567 568
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 811 812 813 814
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+ihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 273 274 275 276
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 274 275 276 277
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 275 276 277 278
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 281 282 283 284
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 282 283 284 285
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 283 284 285 286
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1643 1644 1645 1646
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1644 1645 1646 1647
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1645 1646 1647 1648
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1891 1892 1893 1894
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1892 1893 1894 1895
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1893 1894 1895 1896
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1894 1895 1896 1897
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1895 1896 1897 1898
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1901 1902 1903 1904
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 284 285 286 287
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 285 286 287 288
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 291 292 293 294
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 292 293 294 295
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 812 813 814 815
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 813 814 815 816
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 814 815 816 817
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 815 816 817 818
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 821 822 823 824
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 822 823 824 825
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1354 1355 1356 1357
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1355 1356 1357 1358
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1361 1362 1363 1364
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1362 1363 1364 1365
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1363 1364 1365 1366
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1364 1365 1366 1367
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1365 1366 1367 1368
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1371 1372 1373 1374
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1902 1903 1904 1905
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1903 1904 1905 1906
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1904 1905 1906 1907
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1905 1906 1907 1908
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1911 1912 1913 1914
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1912 1913 1914 1915
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1913 1914 1915 1916
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 823 824 825 826
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 824 825 826 827
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 825 826 827 828
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 831 832 833 834
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 832 833 834 835
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 833 834 835 836
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 834 835 836 837
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1914 1915 1916 1917
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1915 1916 1917 1918
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1652 1653 1654 1655
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1654 1655 1656 1657
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1372 1373 1374 1375
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1373 1374 1375 1376
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1374 1375 1376 1377
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1375 1376 1377 1378
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1112 1113 1114 1115
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 293 294 295 296
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 294 295 296 297
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 295 296 297 298
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 32 33 34 35
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 34 35 36 37
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 31 32 33 34
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 42 43 44 45
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 41 42 43 44
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 44 45 46 47
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 51 52 53 54
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1651 1652 1653 1654
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1662 1663 1664 1665
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1661 1662 1663 1664
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1664 1665 1666 1667
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1671 1672 1673 1674
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1672 1673 1674 1675
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1674 1675 1676 1677
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1922 1923 1924 1925
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1114 1115 1116 1117
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1111 1112 1113 1114
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1122 1123 1124 1125
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1121 1122 1123 1124
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 835 836 837 838
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 572 573 574 575
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 574 575 576 577
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 571 572 573 574
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 582 583 584 585
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 581 582 583 584
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 584 585 586 587
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 591 592 593 594
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 52 53 54 55
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 54 55 56 57
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 302 303 304 305
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 304 305 306 307
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 301 302 303 304
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 312 313 314 315
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 311 312 313 314
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 314 315 316 317
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 321 322 323 324
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 322 323 324 325
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 324 325 326 327
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 33 34 35 36
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 592 593 594 595
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1924 1925 1926 1927
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1921 1922 1923 1924
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1932 1933 1934 1935
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1931 1932 1933 1934
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1934 1935 1936 1937
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1941 1942 1943 1944
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1942 1943 1944 1945
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1944 1945 1946 1947
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1124 1125 1126 1127
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1131 1132 1133 1134
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1132 1133 1134 1135
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1134 1135 1136 1137
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1382 1383 1384 1385
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1384 1385 1386 1387
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1381 1382 1383 1384
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 35 36 37 38
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 43 44 45 46
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 45 46 47 48
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 53 54 55 56
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 55 56 57 58
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 303 304 305 306
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 305 306 307 308
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1392 1393 1394 1395
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1391 1392 1393 1394
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1394 1395 1396 1397
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 594 595 596 597
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 842 843 844 845
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 844 845 846 847
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 841 842 843 844
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 852 853 854 855
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 851 852 853 854
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 854 855 856 857
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1653 1654 1655 1656
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1655 1656 1657 1658
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1663 1664 1665 1666
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1665 1666 1667 1668
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1673 1674 1675 1676
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1675 1676 1677 1678
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1923 1924 1925 1926
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 313 314 315 316
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 315 316 317 318
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 323 324 325 326
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 325 326 327 328
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 61 62 63 64
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 62 63 64 65
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 63 64 65 66
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1925 1926 1927 1928
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1933 1934 1935 1936
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1935 1936 1937 1938
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1401 1402 1403 1404
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1402 1403 1404 1405
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1404 1405 1406 1407
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1113 1114 1115 1116
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1115 1116 1117 1118
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1123 1124 1125 1126
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1125 1126 1127 1128
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1133 1134 1135 1136
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 861 862 863 864
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 862 863 864 865
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 864 865 866 867
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 573 574 575 576
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 575 576 577 578
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 64 65 66 67
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 65 66 67 68
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 71 72 73 74
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 72 73 74 75
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 73 74 75 76
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 74 75 76 77
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 583 584 585 586
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 585 586 587 588
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1943 1944 1945 1946
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1945 1946 1947 1948
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1681 1682 1683 1684
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1682 1683 1684 1685
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1683 1684 1685 1686
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1135 1136 1137 1138
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1383 1384 1385 1386
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 75 76 77 78
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 81 82 83 84
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 82 83 84 85
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 83 84 85 86
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 84 85 86 87
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1684 1685 1686 1687
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1685 1686 1687 1688
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1691 1692 1693 1694
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1692 1693 1694 1695
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1693 1694 1695 1696
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1694 1695 1696 1697
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1695 1696 1697 1698
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1701 1702 1703 1704
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1702 1703 1704 1705
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1703 1704 1705 1706
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1704 1705 1706 1707
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1705 1706 1707 1708
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1951 1952 1953 1954
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1952 1953 1954 1955
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1953 1954 1955 1956
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1954 1955 1956 1957
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1955 1956 1957 1958
+WARNING:   1st atom: 3 -nan WARNING: Dihedral problem: 0 5 85 86 87 88
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 331 332 333 334
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 332 333 334 335
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 333 334 335 336
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 334 335 336 337
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 335 336 337 338
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 341 342 343 344
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 342 343 344 345
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 343 344 345 346
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 344 345 346 347
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 345 346 347 348
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 351 352 353 354
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 352 353 354 355
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 353 354 355 356
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 354 355 356 357
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 355 356 357 358
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 92 93 94 95
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -WARNING: Dihedral problem: 1 5 1385 1386 1387 1388
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1393 1394 1395 1396
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1395 1396 1397 1398
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1403 1404 1405 1406
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1405 1406 1407 1408
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1141 1142 1143 1144
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1142 1143 1144 1145
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1143 1144 1145 1146
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1144 1145 1146 1147
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1145 1146 1147 1148
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1151 1152 1153 1154
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1152 1153 1154 1155
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1153 1154 1155 1156
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1154 1155 1156 1157
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1155 1156 1157 1158
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1161 1162 1163 1164
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1162 1163 1164 1165
+WARNING:   1st atom: 1 -nan -WARNING: Dihedral problem: 2 5 593 594 595 596
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 595 596 597 598
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 843 844 845 846
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 845 846 847 848
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 853 854 855 856
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 855 856 857 858
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 863 864 865 866
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 865 866 867 868
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 601 602 603 604
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 602 603 604 605
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 603 604 605 606
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 604 605 606 607
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 605 606 607 608
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 611 612 613 614
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 612 613 614 615
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 613 614 615 616
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 614 615 616 617
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom:nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 91 92 93 94
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 102 103 104 105
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 101 102 103 104
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 111 112 113 114
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 112 113 114 115
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 362 363 364 365
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 361 362 363 364
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 372 373 374 375
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 0 5 371 372 373 374
+WARNING:   1st atom: 0 -nan -nan -nan
+WARNING:   2nd atom: 0 -nan -nan -nan
+WARNING:   3rd atom: 0 -nan -nan -nan
+WARNING:   4th atom: 0 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1163 1164 1165 1166
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1164 1165 1166 1167
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1165 1166 1167 1168
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1411 1412 1413 1414
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1412 1413 1414 1415
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1413 1414 1415 1416
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1414 1415 1416 1417
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1415 1416 1417 1418
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1421 1422 1423 1424
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1422 1423 1424 1425
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1423 1424 1425 1426
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1424 1425 1426 1427
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1425 1426 1427 1428
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1431 1432 1433 1434
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1432 1433 1434 1435
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1433 1434 1435 1436
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1961 1962 1963 1964
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1962 1963 1964 1965
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1963 1964 1965 1966
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1964 1965 1966 1967
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1965 1966 1967 1968
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1971 1972 1973 1974
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1972 1973 1974 1975
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1973 1974 1975 1976
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1974 1975 1976 1977
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1975 1976 1977 1978
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1712 1713 1714 1715
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1711 1712 1713 1714
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1722 1723 1724 1725
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1721 1722 1723 1724
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1731 1732 1733 1734
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1732 1733 1734 1735
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 615 616 617 618
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 621 622 623 624
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 622 623 624 625
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 623 624 625 626
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 624 625 626 627
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 625 626 627 628
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 871 872 873 874
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 872 873 874 875
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 873 874 875 876
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 874 875 876 877
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 875 876 877 878
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 881 882 883 884
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 882 883 884 885
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 883 884 885 886
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 884 885 886 887
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 885 886 887 888
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 891 892 8-nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1434 1435 1436 1437
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1435 1436 1437 1438
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1172 1173 1174 1175
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1171 1172 1173 1174
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1182 1183 1184 1185
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1181 1182 1183 1184
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1191 1192 1193 1194
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1192 1193 1194 1195
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1442 1443 1444 1445
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1441 1442 1443 1444
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1452 1453 1454 1455
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 1 5 1451 1452 1453 1454
+WARNING:   1st atom: 1 -nan -nan -nan
+WARNING:   2nd atom: 1 -nan -nan -nan
+WARNING:   3rd atom: 1 -nan -nan -nan
+WARNING:   4th atom: 1 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+93 894
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 892 893 894 895
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 893 894 895 896
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 894 895 896 897
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 895 896 897 898
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 632 633 634 635
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 631 632 633 634
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 642 643 644 645
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 641 642 643 644
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 651 652 653 654
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 652 653 654 655
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 902 903 904 905
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 901 902 903 904
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 912 913 914 915
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 2 5 911 912 913 914
+WARNING:   1st atom: 2 -nan -nan -nan
+WARNING:   2nd atom: 2 -nan -nan -nan
+WARNING:   3rd atom: 2 -nan -nan -nan
+WARNING:   4th atom: 2 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+ -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1982 1983 1984 1985
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1981 1982 1983 1984
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1992 1993 1994 1995
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+WARNING: Dihedral problem: 3 5 1991 1992 1993 1994
+WARNING:   1st atom: 3 -nan -nan -nan
+WARNING:   2nd atom: 3 -nan -nan -nan
+WARNING:   3rd atom: 3 -nan -nan -nan
+WARNING:   4th atom: 3 -nan -nan -nan (src/lammps/src/CLASS2/dihedral_class2.cpp:210)
+ERROR on proc 0: Non-numeric box dimensions - simulation unstable
+For more information see https://docs.lammps.org/err0006 (src/lammps/src/KSPACE/pppm.cpp:1798)
+ERROR on proc 3: Non-numeric box dimensions - simulation unstable
+For more information see https://docs.lammps.org/err0006 (src/lammps/src/KSPACE/pppm.cpp:1798)
+ERROR on proc 1: Non-numeric box dimensions - simulation unstable
+For more information see https://docs.lammps.org/err0006 (src/lammps/src/KSPACE/pppm.cpp:1798)
+ERROR on proc 2: Non-numeric box dimensions - simulation unstable
+For more information see https://docs.lammps.org/err0006 (src/lammps/src/KSPACE/pppm.cpp:1798)

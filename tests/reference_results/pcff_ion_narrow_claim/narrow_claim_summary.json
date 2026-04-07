@@ -1,0 +1,141 @@
+{
+  "schema_name": "pcff_ion_narrow_claim_summary",
+  "schema_version": 1,
+  "claim_status_as_of": "2026-04-07",
+  "public_facing_claim": "Current evidence supports a bounded PCFF / ion-compatible claim: the bridge can deterministically type and export the frozen PT8 supported SPE subset, and it preserves charged Class2/LJ 9-6/long-range Coulomb mechanics on frozen small fixtures. Beyond that baseline, one strict-PCFF-qualified charged dense-box pair (`gate_h_dense_salt_polymer_2x2x2`) has mechanical parity and short-horizon transport-facing CPU/GPU observable parity evidence, and M11.4 broadens dense density/volume parity to two strict-PCFF-qualified dense charged pairs at 250 bar over a 100 ps target / final 50 ps window: `gate_h_dense_salt_polymer_2x2x2` and `monoglyme_ethane_litfsi_1to1_dense18`. M11.6 adds pressure-preconditioned staged 1 bar dense parity for those same pairs over a 100 ps 250 bar precondition, 100 ps 1 bar target, and final 50 ps target window. M5 also adds one workflow-level charged assembly containing an acyclic alkane neutral additive (`monoglyme_ethane_litfsi_1to1`). It does not support broad PCFF chemistry coverage, direct ambient 1 bar equilibrium dense charged parity, generic dense charged ensemble readiness, or charged transport readiness.",
+  "chemistry_scope_statement": "Baseline deterministic typing/export is validated for three frozen, net-neutral SPE cases (monoglyme_litfsi_1to1, diglyme_litfsi_1to1, triglyme_litfsi_2to2): linear methoxy-capped acyclic polyether oligomers with explicit Li+ and explicit TFSI-like sulfonimide. M5 adds one workflow-level charged assembly with an acyclic alkane neutral additive: `monoglyme_ethane_litfsi_1to1`. Broader chemistry is not supported; the CSV-snapshot release target still covers 0 of 6042 unique SMILES.",
+  "charged_semantic_scope_statement": "Charged support is exact only at the topology/semantics/mechanics level on frozen small fixtures and emitted PT8 SPE cases: `lj/class2/coul/long`, sixth-power mixing, `special_bonds lj/coul 0.0 0.0 1.0 angle no dihedral no`, k-space-required salt semantics, and small-fixture combined force/energy parity. For the explicit `gate_h_dense_salt_polymer_2x2x2` expansion subset, strict PCFF-qualified M4 evidence now separates GROMACS-vs-LAMMPS run-0 mechanical parity, structural density/volume parity, and short-horizon transport-facing CPU/GPU observable parity. M11.4 adds high-pressure dense charged density/volume parity across two strict-PCFF-qualified dense charged pairs at 250 bar over a 100 ps target / final 50 ps window. M11.6 adds pressure-preconditioned staged 1 bar dense charged density/volume parity across those same pairs after a 100 ps 250 bar precondition, 100 ps 1 bar target, and final 50 ps target window. M5 adds workflow-level support for one acyclic alkane neutral-additive charged assembly: `monoglyme_ethane_litfsi_1to1`. The historical dense_salt_polymer TP1 thermal-runaway blocker is superseded only for the corrected 5 ns NPT rerun. Direct ambient 1 bar equilibrium dense charged parity and generic dense charged ensemble behavior remain unclaimed, the corrected TP1 endpoint has a cutoff/box caveat, and no charged transport readiness claim survives.",
+  "supported_case_details": [
+    {
+      "case_id": "diglyme_litfsi_1to1",
+      "display_name": "diglyme + LiTFSI 1:1",
+      "description": "Two-repeat capped glyme fragment with one lithium cation and one explicit TFSI-like anion."
+    },
+    {
+      "case_id": "monoglyme_litfsi_1to1",
+      "display_name": "monoglyme + LiTFSI 1:1",
+      "description": "Minimal SPE-style capped glyme fragment with one lithium cation and one explicit TFSI-like anion."
+    },
+    {
+      "case_id": "triglyme_litfsi_2to2",
+      "display_name": "triglyme + LiTFSI 2:2",
+      "description": "Three-repeat capped glyme fragment with two lithium cations and two explicit TFSI-like anions."
+    }
+  ],
+  "surviving_support_paths": [
+    {
+      "id": "pt8_supported_spe_typing_export",
+      "status": "exact",
+      "summary": "Three frozen glyme + Li/TFSI SPE cases pass deterministic typing/export validation.",
+      "evidence_paths": [
+        "tests/reference_results/pt8_typing_validation/validation_summary.json",
+        "tests/reference_results/pt8_typing_validation/per_case_results.json"
+      ]
+    },
+    {
+      "id": "small_fixture_charged_mechanics",
+      "status": "exact",
+      "summary": "Frozen small charged fixtures preserve long-range charged semantics and combined energy/force parity.",
+      "evidence_paths": [
+        "tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json",
+        "tests/reference_results/pt8_4_1_mixing_parity/mixing_parity_summary.json",
+        "tests/reference_results/pt8_4_nonbonded_parity/nonbonded_parity_summary.json",
+        "tests/reference_results/pt8_5_combined_parity/combined_parity_summary.json"
+      ]
+    },
+    {
+      "id": "m11_m4_strict_charged_subset_validation",
+      "status": "exact",
+      "summary": "The explicit strict-PCFF-qualified `gate_h_dense_salt_polymer_2x2x2` subset passes M4 separated mechanical, structural/density, and short-horizon transport-facing validation.",
+      "evidence_paths": [
+        "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/m4_strict_validation_inventory.json",
+        "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/mechanical_parity/mechanical_parity_report.json",
+        "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/structural_density_parity/structural_density_parity_report.json",
+        "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_parity/transport_facing_parity_report.json"
+      ]
+    },
+    {
+      "id": "m11_4_broader_high_pressure_dense_parity",
+      "status": "exact",
+      "summary": "M11.4 broadens M2 dense charged parity to two strict-PCFF-qualified dense charged pairs at 250 bar over a 100 ps target / final 50 ps window.",
+      "evidence_paths": [
+        "tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/m2_broad_campaign_summary.json",
+        "tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/gate_h_dense_salt_polymer_2x2x2/paired_npt/dense_npt_parity_report.json",
+        "tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json"
+      ]
+    },
+    {
+      "id": "m11_6_pressure_preconditioned_staged_1bar_dense_parity",
+      "status": "exact",
+      "summary": "M11.6 closes pressure-preconditioned staged 1 bar dense charged parity for two strict-PCFF-qualified dense charged pairs over 100 ps precondition / 100 ps target / final 50 ps target window.",
+      "evidence_paths": [
+        "tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/m2_staged_1bar_campaign_summary.json",
+        "tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/gate_h_dense_salt_polymer_2x2x2/target_1bar/staged_1bar_parity_report.json",
+        "tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/staged_1bar_parity_report.json"
+      ]
+    },
+    {
+      "id": "m5_acyclic_alkane_neutral_additive_charged_assembly",
+      "status": "exact",
+      "summary": "M5 adds one validated charged assembly containing an acyclic alkane neutral additive: monoglyme + ethane + Li/TFSI.",
+      "evidence_paths": [
+        "tests/reference_results/pcff_charged_expansion/m5_monoglyme_ethane_litfsi_1to1/m5_chemistry_expansion_report.json",
+        "tests/reference_results/pcff_charged_expansion/m5_monoglyme_ethane_litfsi_1to1/m5_chemistry_scope_manifest.json"
+      ]
+    },
+    {
+      "id": "tp1_corrected_5ns_thermal_stability",
+      "status": "exact",
+      "summary": "The authoritative dense_salt_polymer TP1 thermal-runaway blocker is superseded by a corrected 5 ns NPT rerun with tcoupl/pcoupl/gen-vel applied.",
+      "evidence_paths": [
+        "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json"
+      ]
+    }
+  ],
+  "blocked_paths": [
+    {
+      "id": "broad_pcff_chemistry",
+      "status": "unsupported",
+      "summary": "The broader CSV-snapshot chemistry target remains uncovered.",
+      "evidence_paths": [
+        "tests/reference_results/csv_scope_audit/coverage_audit_summary.json"
+      ]
+    },
+    {
+      "id": "legacy_m10_dense_charged_ensemble_parity",
+      "status": "unsupported",
+      "summary": "The legacy M10 dense charged-box path still fails density parity by about 55.36% and volume parity by about 37.49%; only explicit M11 subsets have passing density/volume evidence.",
+      "evidence_paths": [
+        "tests/reference_results/m10_4_charged_ensemble_gate/m10_4_summary.json"
+      ]
+    },
+    {
+      "id": "ambient_1bar_broader_dense_parity",
+      "status": "unsupported",
+      "summary": "Ambient 1 bar equilibrium dense charged parity remains unsupported; M11.6 only supports pressure-preconditioned staged 1 bar parity and M11.5 still marks direct ambient 1 bar behavior as unresolved.",
+      "evidence_paths": [
+        "tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/m2_broad_campaign_summary.json",
+        "tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m2_1bar_root_cause_summary.json",
+        "tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/m2_staged_1bar_campaign_summary.json"
+      ]
+    },
+    {
+      "id": "tp1_corrected_endpoint_continuation_safety",
+      "status": "unsupported",
+      "summary": "The corrected TP1 5 ns endpoint is not continuation/transport-entry safe as-is because the final box is smaller than twice the 0.9 nm cutoff.",
+      "evidence_paths": [
+        "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_audit.json"
+      ]
+    },
+    {
+      "id": "charged_transport_readiness",
+      "status": "unsupported",
+      "summary": "M4 adds a short-horizon transport-facing CPU/GPU observable check, but it is not LAMMPS-vs-GROMACS transport parity or charged transport readiness.",
+      "evidence_paths": [
+        "tests/reference_results/m10/method_readiness_summary.json",
+        "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_parity/transport_facing_parity_report.json"
+      ]
+    }
+  ],
+  "support_matrix_path": "tests/reference_results/pcff_ion_narrow_claim/support_matrix.json"
+}

@@ -1,0 +1,55 @@
+ :-) GROMACS - gmx insert-molecules, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/insert_molecules
+Command line:
+  gmx insert-molecules -ci monogly.gro -nmol 18 -o packed_01_monogly.gro -try 10000 -seed 20260407 -radius 0.04 -scale 0.35 -box 2.4 2.4 2.4
+
+Initialising inter-atomic distances...
+Using random seed 20260407
+
+Try 1 success (now 16 atoms)!
+
+Try 2 success (now 32 atoms)!
+
+Try 3 success (now 48 atoms)!
+
+Try 4 success (now 64 atoms)!
+
+Try 5 success (now 80 atoms)!
+
+Try 6 success (now 96 atoms)!
+
+Try 7 success (now 112 atoms)!
+
+Try 8 success (now 128 atoms)!
+
+Try 9 success (now 144 atoms)!
+
+Try 10 success (now 160 atoms)!
+
+Try 11 success (now 176 atoms)!
+
+Try 12 success (now 192 atoms)!
+
+Try 13 success (now 208 atoms)!
+
+Try 14 success (now 224 atoms)!
+
+Try 15
+Try 16 success (now 240 atoms)!
+
+Try 17 success (now 256 atoms)!
+
+Try 18 success (now 272 atoms)!
+
+Try 19 success (now 288 atoms)!
+
+Added 18 molecules (out of 18 requested)
+Writing generated configuration to packed_01_monogly.gro
+
+Output configuration contains 288 atoms in 18 residues
+
+GROMACS reminds you: "error: too many template-parameter-lists" (g++)
+

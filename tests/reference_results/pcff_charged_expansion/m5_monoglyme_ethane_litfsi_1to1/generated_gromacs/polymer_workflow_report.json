@@ -1,0 +1,210 @@
+{
+  "assembly_checks": {
+    "charge_neutrality": {
+      "status": "pass",
+      "total_charge": 0.0
+    },
+    "fragment_consistency": {
+      "neutral_additive_component_ids": [
+        "ETHANE"
+      ],
+      "polymer_component_ids": [
+        "MONOGLY"
+      ],
+      "status": "pass"
+    },
+    "salt_balance": {
+      "anion_count": 1,
+      "cation_count": 1,
+      "status": "pass"
+    }
+  },
+  "components": [
+    {
+      "component_id": "EO_TMPL",
+      "count": 1,
+      "exportable": false,
+      "path": "testdata/polymer_workflow_golden/components/repeat_unit_du/structure.mol",
+      "role": "polymer_template",
+      "source_id": "repeat_unit_du",
+      "template_metadata": {
+        "chem_perception_sha256": "0769caba2d19e440b8cf1b05452cdb17a2136415a395330a6423e34fb851ecd3",
+        "connection_point_count": 2,
+        "connection_points": [
+          {
+            "placeholder_atom_index": 3,
+            "tag": "Du",
+            "tag_source": "placeholder_atom",
+            "target_atom_index": 1
+          },
+          {
+            "placeholder_atom_index": 4,
+            "tag": "Du",
+            "tag_source": "placeholder_atom",
+            "target_atom_index": 2
+          }
+        ],
+        "placeholder_count": 2,
+        "placeholder_indices": [
+          3,
+          4
+        ],
+        "status": "valid",
+        "typed_ir_sha256": "4f512475edb60e1b1f26dbc946909b1e606348db764d6fd2c8a97aeb674de473"
+      },
+      "workflow_kind": "repeat_unit_template"
+    },
+    {
+      "classification_family": "acyclic_polyether_oligomer",
+      "component_id": "MONOGLY",
+      "count": 1,
+      "exportable": true,
+      "molecule_name": "MONOGLY",
+      "net_charge_per_molecule": 0.0,
+      "output_filename": "molecule_monogly.itp",
+      "path": "testdata/polymer_workflow_golden/components/monoglyme_capped/structure.mol",
+      "polymer_fragment_metadata": {
+        "backbone_methylene_count": 2,
+        "end_group_model": "methyl_ether_caps",
+        "fragment_model": "linear_methoxy_capped_polyether",
+        "oxygen_count": 2,
+        "repeat_unit_count": 1,
+        "status": "valid",
+        "terminal_cap_atom_indices": [
+          3,
+          4
+        ],
+        "terminal_cap_source_indices": [
+          6,
+          1
+        ],
+        "typed_ir_sha256": "9988bde8b1a381ca2c3d0672fd59d88d4c7112119a95925aea850521625a05a8",
+        "typing_report_sha256": "4ead6d5612d5e894fae02c79868bb820bb62205a99a30fad233ed4e76f7d1739"
+      },
+      "residue_name": "MGLY",
+      "role": "polymer_fragment",
+      "source_chain": {
+        "bonded_assignment_sha256": "4e06a419c0ee0394f4477f399e9da85f8fb4a93df0837cb69d19de6c8840fdda",
+        "chem_perception_sha256": "76f2306867fba08f57f7fc16c21fc4125f6af9cee818d66fd332260780940dba",
+        "nonbonded_assignment_sha256": "fcab834a0bc47a79b17189ebffbcf1ce116297815991e89dd641f310b49bb2d4",
+        "typed_ir_sha256": "9988bde8b1a381ca2c3d0672fd59d88d4c7112119a95925aea850521625a05a8",
+        "typing_report_sha256": "4ead6d5612d5e894fae02c79868bb820bb62205a99a30fad233ed4e76f7d1739"
+      },
+      "source_id": "monoglyme_capped",
+      "total_charge": 0.0,
+      "workflow_kind": "capped_oligomer"
+    },
+    {
+      "classification_family": "acyclic_alkane",
+      "component_id": "ETHANE",
+      "count": 1,
+      "exportable": true,
+      "molecule_name": "ETHANE",
+      "net_charge_per_molecule": 0.0,
+      "output_filename": "molecule_ethane.itp",
+      "path": "testdata/typing_golden/cases/ethane_neutral/inputs/structure.mol",
+      "residue_name": "ETH",
+      "role": "neutral_additive",
+      "source_chain": {
+        "bonded_assignment_sha256": "66cb77b81fec4b15279ee2bee18eab632bc07a7f2e6b901b9719dbc420d9068e",
+        "chem_perception_sha256": "e9087cb5c1d5964c051a45642f3d843b1937717563d169cce8e88157e85e9efd",
+        "nonbonded_assignment_sha256": "340dbb446ea463871658ecf550dfd52d0049ad6cf001db02c8bc8d31746fc89c",
+        "typed_ir_sha256": "3607fffae4e02959fed94b4ceddb2eda2e9ff872ee67c7a28de6a7a4431dd2c0",
+        "typing_report_sha256": "45c619c52298a297eceed7c97e0b25487a062aa29ecfac9a6eeeb3b2f56ada73"
+      },
+      "source_id": "ethane_neutral",
+      "total_charge": 0.0,
+      "workflow_kind": "neutral_additive"
+    },
+    {
+      "classification_family": "lithium_cation",
+      "component_id": "LI",
+      "count": 1,
+      "exportable": true,
+      "molecule_name": "LI",
+      "net_charge_per_molecule": 1.0,
+      "output_filename": "molecule_li.itp",
+      "path": "testdata/typing_golden/cases/lithium_cation/inputs/structure.mol",
+      "residue_name": "LI",
+      "role": "salt_cation",
+      "source_chain": {
+        "bonded_assignment_sha256": "e2938797fd7384346b55c29a6e78354313ba3ffa0a520ef4c9a0051cdb321bab",
+        "chem_perception_sha256": "ac40b5f91a65b40126153fd4f1e16bb8c3ea8c295febebff5386ecc71708d93b",
+        "nonbonded_assignment_sha256": "72cdbd758043429bec35d4c15371d9931bbffc18dc06029abdc721a3f9407141",
+        "typed_ir_sha256": "4948b5e4bdc8942e84223be7b697073e288431584595bf020e47663355195300",
+        "typing_report_sha256": "32829c1861e9b6cd660b4a63bbbd9f19b6dd725307987a2eec996967c586c7c6"
+      },
+      "source_id": "lithium_cation",
+      "total_charge": 1.0,
+      "workflow_kind": "salt_species"
+    },
+    {
+      "classification_family": "tfsi_like_sulfonimide",
+      "component_id": "TFSI",
+      "count": 1,
+      "exportable": true,
+      "molecule_name": "TFSI",
+      "net_charge_per_molecule": -1.0,
+      "output_filename": "molecule_tfsi.itp",
+      "path": "testdata/typing_golden/cases/tfsi_anion_explicit/inputs/structure.mol",
+      "residue_name": "TFSI",
+      "role": "salt_anion",
+      "source_chain": {
+        "bonded_assignment_sha256": "f40af396bdf3919c6fb096cdd6b1af6847e1c65d9b763f712450e29779da5bc3",
+        "chem_perception_sha256": "102767c29d6fe73e3afa5a188b0fa89179ee7e1582eb64f86c7714390afb584e",
+        "nonbonded_assignment_sha256": "502b5692c30dfdd19ab489d8e098951fade237f7ed7bd51732a0ab45dea6fd15",
+        "typed_ir_sha256": "96bfbb7db1829bd21bcd55798d52b0cca3b43d7db3f06ac00423752fe64e6789",
+        "typing_report_sha256": "d8c3e167101398beede2c4adbdcb0579224e98eb37d6b56c6b2bc6b663c83c68"
+      },
+      "source_id": "tfsi_anion_explicit",
+      "total_charge": -1.0,
+      "workflow_kind": "salt_species"
+    }
+  ],
+  "outputs": {
+    "forcefield_pcff.itp": {
+      "bytes": 1331,
+      "line_count": 24,
+      "sha256": "2286786c0873dc4135af8a362fb9b5028e56c6b41958f87a1c4116cce3ba2bb3"
+    },
+    "molecule_ethane.itp": {
+      "bytes": 6705,
+      "line_count": 67,
+      "sha256": "2be63ec781c714d8d885a34b0656d8bb1e7765709240cf712fd5975d52d28914"
+    },
+    "molecule_li.itp": {
+      "bytes": 242,
+      "line_count": 11,
+      "sha256": "45d9b721f99e60bbb59ec76ee339c528cb4e7d3d03d2ea1a4838c618cefc4f9c"
+    },
+    "molecule_monogly.itp": {
+      "bytes": 14652,
+      "line_count": 121,
+      "sha256": "83d8666124e408b828f49b38638237c1fe2ade9ded0e00e826ad71142d17d14f"
+    },
+    "molecule_tfsi.itp": {
+      "bytes": 15560,
+      "line_count": 124,
+      "sha256": "ccd4ec91b61f04187b4878fd2690b49a38accef782202f88d55432b1870bed19"
+    },
+    "topol.top": {
+      "bytes": 298,
+      "line_count": 16,
+      "sha256": "0326902a0a7f6ee81ce268704f957f5c85d4b955b782f7ca07faa145f47f0d11"
+    }
+  },
+  "schema_name": "pcff_polymer_workflow_report",
+  "schema_version": 1,
+  "source": {
+    "spec_path": "testdata/polymer_workflow_m5/cases/monoglyme_ethane_litfsi_1to1/spec.json",
+    "spec_sha256": "0946866bd1d87047342d684ad3593204349735dd9aff3380b56b38579ade0180",
+    "system_id": "monoglyme_ethane_litfsi_1to1"
+  },
+  "workflow": {
+    "dry_run": false,
+    "existing_output_matches_rendered": null,
+    "export_kind": "gromacs",
+    "status": "written",
+    "validate_existing": false
+  }
+}

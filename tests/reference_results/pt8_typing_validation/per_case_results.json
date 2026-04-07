@@ -76,15 +76,15 @@
               1
             ],
             "typed_ir_sha256": "1e8d5d52139b4a2fe6cd97d7cc40da42da91b5766998d34377f2cd3069cdba69",
-            "typing_report_sha256": "84f1eab816f88f3d94bbcd0e35b50bb7943342c05fc22f4643baca119c09a19c"
+            "typing_report_sha256": "7a280e61606947851d242ab146bb27c668f6ceb2b3872a88a537f7e55ba00a0c"
           },
           "role": "polymer_fragment",
           "source_chain": {
-            "bonded_assignment_sha256": "cb09ca2d9c089e741971fd751d12937ff645db4c6eebb302b899e3c85c238986",
+            "bonded_assignment_sha256": "abe138e74c85e5e976ba5f4bc9d2b5240458ad4e82fe042c6d4381e52b4ea3e7",
             "chem_perception_sha256": "0a388172e23a19ba9f4c354a4120d437f35c1d7b7a68e414799bf05831808576",
-            "nonbonded_assignment_sha256": "44389fd03cefea44c564311d6fd4b21403b365813bcad5dbd3621d4b3cc88245",
+            "nonbonded_assignment_sha256": "cdf8758e40d751e4806371f72ecfdd3158713bc6f7b175898e5573e84ab86321",
             "typed_ir_sha256": "1e8d5d52139b4a2fe6cd97d7cc40da42da91b5766998d34377f2cd3069cdba69",
-            "typing_report_sha256": "84f1eab816f88f3d94bbcd0e35b50bb7943342c05fc22f4643baca119c09a19c"
+            "typing_report_sha256": "7a280e61606947851d242ab146bb27c668f6ceb2b3872a88a537f7e55ba00a0c"
           },
           "total_charge": 0.0,
           "workflow_kind": "capped_oligomer"
@@ -98,11 +98,11 @@
           "output_filename": "molecule_li.itp",
           "role": "salt_cation",
           "source_chain": {
-            "bonded_assignment_sha256": "f163c30fa92bd466da8e7427a8c00ee042e75be7b041b787ab694d69b7a2f12d",
+            "bonded_assignment_sha256": "e2938797fd7384346b55c29a6e78354313ba3ffa0a520ef4c9a0051cdb321bab",
             "chem_perception_sha256": "ac40b5f91a65b40126153fd4f1e16bb8c3ea8c295febebff5386ecc71708d93b",
-            "nonbonded_assignment_sha256": "92afaa9027d113fd2b5d155a1dd8c7780b9887838c54e5f21d8c85f0b52757a4",
+            "nonbonded_assignment_sha256": "72cdbd758043429bec35d4c15371d9931bbffc18dc06029abdc721a3f9407141",
             "typed_ir_sha256": "4948b5e4bdc8942e84223be7b697073e288431584595bf020e47663355195300",
-            "typing_report_sha256": "4d211c7ba2a79cd34d4974ac5d3128120c5f3425a62db1487efb23530cd626f6"
+            "typing_report_sha256": "32829c1861e9b6cd660b4a63bbbd9f19b6dd725307987a2eec996967c586c7c6"
           },
           "total_charge": 1.0,
           "workflow_kind": "salt_species"
@@ -116,11 +116,11 @@
           "output_filename": "molecule_tfsi.itp",
           "role": "salt_anion",
           "source_chain": {
-            "bonded_assignment_sha256": "9763f65445c88b893a5ecd60d317866d23076ae68f30978c86cfe8989da0c85b",
+            "bonded_assignment_sha256": "f40af396bdf3919c6fb096cdd6b1af6847e1c65d9b763f712450e29779da5bc3",
             "chem_perception_sha256": "102767c29d6fe73e3afa5a188b0fa89179ee7e1582eb64f86c7714390afb584e",
-            "nonbonded_assignment_sha256": "9912e1ebecc5915ecb36e898761b3ddc77671afefbca9d81385c829e0a232718",
+            "nonbonded_assignment_sha256": "502b5692c30dfdd19ab489d8e098951fade237f7ed7bd51732a0ab45dea6fd15",
             "typed_ir_sha256": "96bfbb7db1829bd21bcd55798d52b0cca3b43d7db3f06ac00423752fe64e6789",
-            "typing_report_sha256": "c51569a734275702e348116bc8eed4254c72f56d444f3eb0bd32173cbee9ee9e"
+            "typing_report_sha256": "d8c3e167101398beede2c4adbdcb0579224e98eb37d6b56c6b2bc6b663c83c68"
           },
           "total_charge": -1.0,
           "workflow_kind": "salt_species"
@@ -276,15 +276,15 @@
               1
             ],
             "typed_ir_sha256": "9988bde8b1a381ca2c3d0672fd59d88d4c7112119a95925aea850521625a05a8",
-            "typing_report_sha256": "d1fba108af727fedec9cef85e3c772acc8463ab43b81e25167240b96689490f4"
+            "typing_report_sha256": "4ead6d5612d5e894fae02c79868bb820bb62205a99a30fad233ed4e76f7d1739"
           },
           "role": "polymer_fragment",
           "source_chain": {
-            "bonded_assignment_sha256": "99c53a6a0604b7357547e270d9b7a09d1f2a00fdabb547b7c0341e165ef4223c",
+            "bonded_assignment_sha256": "4e06a419c0ee0394f4477f399e9da85f8fb4a93df0837cb69d19de6c8840fdda",
             "chem_perception_sha256": "76f2306867fba08f57f7fc16c21fc4125f6af9cee818d66fd332260780940dba",
-            "nonbonded_assignment_sha256": "63cc3a5fd51d6507bcf698024efdbaaafc1c02ea7e6e8167da0675e2c114f8b2",
+            "nonbonded_assignment_sha256": "fcab834a0bc47a79b17189ebffbcf1ce116297815991e89dd641f310b49bb2d4",
             "typed_ir_sha256": "9988bde8b1a381ca2c3d0672fd59d88d4c7112119a95925aea850521625a05a8",
-            "typing_report_sha256": "d1fba108af727fedec9cef85e3c772acc8463ab43b81e25167240b96689490f4"
+            "typing_report_sha256": "4ead6d5612d5e894fae02c79868bb820bb62205a99a30fad233ed4e76f7d1739"
           },
           "total_charge": 0.0,
           "workflow_kind": "capped_oligomer"
@@ -298,11 +298,11 @@
           "output_filename": "molecule_li.itp",
           "role": "salt_cation",
           "source_chain": {
-            "bonded_assignment_sha256": "f163c30fa92bd466da8e7427a8c00ee042e75be7b041b787ab694d69b7a2f12d",
+            "bonded_assignment_sha256": "e2938797fd7384346b55c29a6e78354313ba3ffa0a520ef4c9a0051cdb321bab",
             "chem_perception_sha256": "ac40b5f91a65b40126153fd4f1e16bb8c3ea8c295febebff5386ecc71708d93b",
-            "nonbonded_assignment_sha256": "92afaa9027d113fd2b5d155a1dd8c7780b9887838c54e5f21d8c85f0b52757a4",
+            "nonbonded_assignment_sha256": "72cdbd758043429bec35d4c15371d9931bbffc18dc06029abdc721a3f9407141",
             "typed_ir_sha256": "4948b5e4bdc8942e84223be7b697073e288431584595bf020e47663355195300",
-            "typing_report_sha256": "4d211c7ba2a79cd34d4974ac5d3128120c5f3425a62db1487efb23530cd626f6"
+            "typing_report_sha256": "32829c1861e9b6cd660b4a63bbbd9f19b6dd725307987a2eec996967c586c7c6"
           },
           "total_charge": 1.0,
           "workflow_kind": "salt_species"
@@ -316,11 +316,11 @@
           "output_filename": "molecule_tfsi.itp",
           "role": "salt_anion",
           "source_chain": {
-            "bonded_assignment_sha256": "9763f65445c88b893a5ecd60d317866d23076ae68f30978c86cfe8989da0c85b",
+            "bonded_assignment_sha256": "f40af396bdf3919c6fb096cdd6b1af6847e1c65d9b763f712450e29779da5bc3",
             "chem_perception_sha256": "102767c29d6fe73e3afa5a188b0fa89179ee7e1582eb64f86c7714390afb584e",
-            "nonbonded_assignment_sha256": "9912e1ebecc5915ecb36e898761b3ddc77671afefbca9d81385c829e0a232718",
+            "nonbonded_assignment_sha256": "502b5692c30dfdd19ab489d8e098951fade237f7ed7bd51732a0ab45dea6fd15",
             "typed_ir_sha256": "96bfbb7db1829bd21bcd55798d52b0cca3b43d7db3f06ac00423752fe64e6789",
-            "typing_report_sha256": "c51569a734275702e348116bc8eed4254c72f56d444f3eb0bd32173cbee9ee9e"
+            "typing_report_sha256": "d8c3e167101398beede2c4adbdcb0579224e98eb37d6b56c6b2bc6b663c83c68"
           },
           "total_charge": -1.0,
           "workflow_kind": "salt_species"
@@ -476,15 +476,15 @@
               1
             ],
             "typed_ir_sha256": "2df39084d1f519a6d9a10c5fcff55f4d9b7b0ed51cf5ab5c8b4879b8cc650134",
-            "typing_report_sha256": "2dd1c6aa46171b0b90f1aedc341e44899b25b51ebdb366ecbaa8f312ae15aee8"
+            "typing_report_sha256": "91214e6edc403bee2afc0260f17f75341c6ad5e1f0ffe2f6917cf4acccb9df5e"
           },
           "role": "polymer_fragment",
           "source_chain": {
-            "bonded_assignment_sha256": "b529a77f06ac19df0a584ac7b331b9bc251ba98da85905d362f081edcb001253",
+            "bonded_assignment_sha256": "14e0138fe9648c997281d4ab531aba144d703122478a88e84bd7bbc9f3d72410",
             "chem_perception_sha256": "b7bbe98e889bfd14d746f46c7cb7d8d1e3bba0a175a7579e436673210ef21b28",
-            "nonbonded_assignment_sha256": "d42e2a122c9b00981255225f2833f7718a8d9bd3466227ccac0630e5df026650",
+            "nonbonded_assignment_sha256": "67078cfc412988d2a84efcc54d1528b4e2d9e0d9149c05646d3dbeee7d697108",
             "typed_ir_sha256": "2df39084d1f519a6d9a10c5fcff55f4d9b7b0ed51cf5ab5c8b4879b8cc650134",
-            "typing_report_sha256": "2dd1c6aa46171b0b90f1aedc341e44899b25b51ebdb366ecbaa8f312ae15aee8"
+            "typing_report_sha256": "91214e6edc403bee2afc0260f17f75341c6ad5e1f0ffe2f6917cf4acccb9df5e"
           },
           "total_charge": 0.0,
           "workflow_kind": "capped_oligomer"
@@ -498,11 +498,11 @@
           "output_filename": "molecule_li.itp",
           "role": "salt_cation",
           "source_chain": {
-            "bonded_assignment_sha256": "f163c30fa92bd466da8e7427a8c00ee042e75be7b041b787ab694d69b7a2f12d",
+            "bonded_assignment_sha256": "e2938797fd7384346b55c29a6e78354313ba3ffa0a520ef4c9a0051cdb321bab",
             "chem_perception_sha256": "ac40b5f91a65b40126153fd4f1e16bb8c3ea8c295febebff5386ecc71708d93b",
-            "nonbonded_assignment_sha256": "92afaa9027d113fd2b5d155a1dd8c7780b9887838c54e5f21d8c85f0b52757a4",
+            "nonbonded_assignment_sha256": "72cdbd758043429bec35d4c15371d9931bbffc18dc06029abdc721a3f9407141",
             "typed_ir_sha256": "4948b5e4bdc8942e84223be7b697073e288431584595bf020e47663355195300",
-            "typing_report_sha256": "4d211c7ba2a79cd34d4974ac5d3128120c5f3425a62db1487efb23530cd626f6"
+            "typing_report_sha256": "32829c1861e9b6cd660b4a63bbbd9f19b6dd725307987a2eec996967c586c7c6"
           },
           "total_charge": 2.0,
           "workflow_kind": "salt_species"
@@ -516,11 +516,11 @@
           "output_filename": "molecule_tfsi.itp",
           "role": "salt_anion",
           "source_chain": {
-            "bonded_assignment_sha256": "9763f65445c88b893a5ecd60d317866d23076ae68f30978c86cfe8989da0c85b",
+            "bonded_assignment_sha256": "f40af396bdf3919c6fb096cdd6b1af6847e1c65d9b763f712450e29779da5bc3",
             "chem_perception_sha256": "102767c29d6fe73e3afa5a188b0fa89179ee7e1582eb64f86c7714390afb584e",
-            "nonbonded_assignment_sha256": "9912e1ebecc5915ecb36e898761b3ddc77671afefbca9d81385c829e0a232718",
+            "nonbonded_assignment_sha256": "502b5692c30dfdd19ab489d8e098951fade237f7ed7bd51732a0ab45dea6fd15",
             "typed_ir_sha256": "96bfbb7db1829bd21bcd55798d52b0cca3b43d7db3f06ac00423752fe64e6789",
-            "typing_report_sha256": "c51569a734275702e348116bc8eed4254c72f56d444f3eb0bd32173cbee9ee9e"
+            "typing_report_sha256": "d8c3e167101398beede2c4adbdcb0579224e98eb37d6b56c6b2bc6b663c83c68"
           },
           "total_charge": -2.0,
           "workflow_kind": "salt_species"

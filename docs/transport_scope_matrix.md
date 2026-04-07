@@ -1,31 +1,40 @@
-# TP0 — Transport Scope Matrix
+# Current Charged Transport Status
 
-## 1. Overview
-This matrix defines the boundaries of transport validation. Items marked "Deferred" or "Out-of-Scope" are not covered by the current TP0 protocol and must be re-evaluated in later milestones.
+The older TP0 wording overstated the present charged path and is withdrawn.
 
-## 2. Validation Scope Matrix
+This file now freezes only the current charged-transport boundary. It is not a neutral transport sign-off.
 
-| System / Observable | Diffusion ($D$) | Conductivity ($\sigma$) | Transference ($t_+$) | Viscosity ($\eta$) |
-| :--- | :--- | :--- | :--- | :--- |
-| **Neutral Melt** | **VALIDATED** | N/A | N/A | **DEFERRED** |
-| **Charged Salt-in-Polymer** | **VALIDATED** | **VALIDATED (cNE)** | **VALIDATED (cNE)** | **DEFERRED** |
-| **Infinite Dilution** | **VALIDATED** | **DEFERRED** | **DEFERRED** | **DEFERRED** |
-| **Net-Charged Box** | **OUT-OF-SCOPE** | **OUT-OF-SCOPE** | **OUT-OF-SCOPE** | **OUT-OF-SCOPE** |
-| **Ionic Liquids** | **DEFERRED** | **DEFERRED** | **DEFERRED** | **DEFERRED** |
+Source of truth:
 
-## 3. Method Scope
+- [Current Status Note](current_status_note.md)
+- [Machine-Readable Support Matrix](../tests/reference_results/pcff_ion_narrow_claim/support_matrix.json)
 
-| Method / Estimator | Status | Reason |
+## Charged Salt-in-Polymer Status
+
+| Observable / Claim | Current Status | Basis |
 | :--- | :--- | :--- |
-| **Einstein (MSD)** | **FROZEN** | Primary estimator for $D$ and $\sigma_{cNE}$. |
-| **Green-Kubo (GK)** | **DEFERRED** | High sensitivity to sampling length and noise. |
-| **Einstein-Helfand (EH)** | **DEFERRED** | Requires long trajectories for collective terms. |
-| **NEMD (Wall)** | **OUT-OF-SCOPE** | Not part of current equilibrium validation. |
-| **Periodic Perturbation** | **OUT-OF-SCOPE** | Requires specific code paths in GROMACS. |
+| Diffusion ($D$) | `unsupported` | M10 method-readiness remains provenance-blocked |
+| Conductivity ($\sigma$) | `unsupported` | No provenance-qualified charged transport claim survives |
+| Transference ($t_+$) | `unsupported` | M11.2 adds only short-horizon CPU/GPU observable consistency, not transport readiness |
+| cNE-style charged transport language | `unsupported` | Do not promote M11.2 transport-facing outputs to readiness claims |
+| Long NPT conditioning for charged transport entry | `unsupported` | Corrected TP1 5 ns rerun resolves the thermal-runaway blocker only; its final box/cutoff margin fails endpoint continuation safety |
 
-## 4. Parameter Sensitivity
-The protocol freezes the following sensitivities for subsequent analysis:
-- **PME Tolerance:** $10^{-5}$ is the baseline. Sensitivities at $10^{-4}$ or $10^{-6}$ are **Deferred**.
-- **Timestep:** 1 fs is the baseline. 2 fs or RESPA are **Deferred**.
-- **Cutoff:** 0.9 nm is the baseline. 1.0 nm or 1.2 nm are **Deferred**.
-- **Ensemble:** NVT is the baseline. NPT production is **Deferred**.
+## Estimator Status
+
+No charged transport estimator currently has a defensible PCFF-readiness claim in this repository, including:
+
+- Einstein / MSD
+- cNE-derived conductivity or transference
+- Green-Kubo
+- Einstein-Helfand
+
+## What Survives
+
+Only a narrower charged mechanics claim survives:
+
+- frozen small-fixture charged mechanics
+- frozen topology/semantics contract preservation
+- corrected TP1 exact-system thermal-runaway recovery only
+- M11.2 short-horizon transport-facing CPU/GPU observable consistency only on the strict `gate_h_dense_salt_polymer_2x2x2` subset
+
+That survival path does not close charged transport.

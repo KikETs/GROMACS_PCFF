@@ -1,0 +1,20 @@
+{
+  "claimable_statement": "M4 strict charged validation passes only if all three component reports pass on the strict-PCFF-qualified charged scaffold.",
+  "component_status": {
+    "mechanical_parity": "PASS",
+    "structural_density_parity": "PASS",
+    "transport_facing_parity": "PASS"
+  },
+  "non_claimable_statement": "M4 does not establish broad PCFF chemistry, LAMMPS-vs-GROMACS transport parity, charged transport readiness, or production readiness.",
+  "qualified_pair_manifest": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/qualified_pair_manifest.json",
+  "reports": {
+    "mechanical_parity": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/mechanical_parity/mechanical_parity_report.json",
+    "structural_density_parity": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/structural_density_parity/structural_density_parity_report.json",
+    "transport_facing_parity": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_parity/transport_facing_parity_report.json"
+  },
+  "schema_name": "pcff_charged_m4_strict_validation_inventory",
+  "schema_version": 1,
+  "sha256_manifest": "tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/sha256_manifest.txt",
+  "status": "PASS",
+  "system_id": "gate_h_dense_salt_polymer_2x2x2"
+}

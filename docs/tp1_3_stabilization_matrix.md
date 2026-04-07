@@ -2,6 +2,8 @@
 
 The following matrix defines the diagnostic trials for identifying the root cause of the `dense_salt_polymer` (270-atom Na/Cl) thermal runaway.
 
+Supersession note: this matrix is historical. The TP1.3 runner used wrong GROMACS key names for coupling controls, so these trials must not be cited as the current exact-system stability verdict. The corrected TP1 exact rerun is documented in [TP1 Charged Long-Equilibration Recovery](validation_report_tp1.md).
+
 ## Target System
 - **ID:** `dense_salt_polymer`
 - **Identity:** 270 atoms, Na/Cl salt in polymer matrix.
@@ -19,4 +21,4 @@ The following matrix defines the diagnostic trials for identifying the root caus
 | **TRL-6** | 1.0 | NPT | V-rescale (0.01)| Berendsen | PME | **RUNAWAY** (705K) |
 
 ## Conclusion
-Stability could not be recovered by protocol adjustments. The issue is implementation-level.
+This historical matrix is superseded for current TP1 stability claims. The corrected exact TP1 rerun resolves the thermal-runaway blocker only for the exact 5 ns `dense_salt_polymer` NPT protocol; it does not establish endpoint continuation safety or charged transport readiness.

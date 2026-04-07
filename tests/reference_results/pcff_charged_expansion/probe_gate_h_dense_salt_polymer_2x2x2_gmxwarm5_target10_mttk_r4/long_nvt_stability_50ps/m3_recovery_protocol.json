@@ -1,0 +1,46 @@
+{
+  "milestone": "M3",
+  "system_id": "gate_h_dense_salt_polymer_2x2x2",
+  "claim_scope": "extended NVT stability evidence for the strict-PCFF-qualified charged 2x2x2 dense-box subset only",
+  "source_bundle": "../long_nvt_stability",
+  "source_state": {
+    "checkpoint": "../long_nvt_stability/nvt.cpt",
+    "run_input": "../long_nvt_stability/nvt.tpr",
+    "prior_duration_ps": 20.0,
+    "paired_endpoint_source": "../paired_npt/gromacs/npt.gro"
+  },
+  "extension_protocol": {
+    "command": "gmx convert-tpr -s nvt.tpr -extend 30 -o nvt_extend50.tpr; gmx mdrun -s nvt_extend50.tpr -deffnm nvt -cpi nvt.cpt -append -ntmpi 1 -ntomp 8 -pin off -reprod",
+    "target_total_duration_ps": 50.0,
+    "added_duration_ps": 30.0,
+    "ensemble": "NVT",
+    "integrator": "md-vv",
+    "temperature_coupling": "nose-hoover",
+    "pressure_coupling": "none",
+    "dt_ps": 0.001,
+    "threading": {
+      "ntmpi": 1,
+      "ntomp": 8,
+      "selection_basis": "local 200-step CPU-only benchmark; 1x8 and 2x4 were equivalent and 16-thread layouts were slower"
+    }
+  },
+  "analysis_protocol": {
+    "analysis_window_ps": 25.0,
+    "window_definition": "final half of the 50 ps NVT trajectory",
+    "thresholds": {
+      "mean_temperature_target_k": 300.0,
+      "mean_temperature_tolerance_k": 20.0,
+      "max_temperature_k": 400.0
+    },
+    "pass_requirements": [
+      "mdrun completes without fatal error",
+      "temperature mean over final 25 ps is within 300 +/- 20 K",
+      "maximum sampled temperature over final 25 ps is <= 400 K",
+      "raw log, edr, cpt, gro, mdp, tpr, and energy xvg artifacts are preserved"
+    ]
+  },
+  "known_limitations": [
+    "This still does not replace an ns-scale TP1 rerun on the historical dense_salt_polymer identity.",
+    "This supports only the explicit strict-PCFF-qualified charged 2x2x2 subset, not charged transport readiness."
+  ]
+}

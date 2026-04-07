@@ -1,0 +1,29 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns
+Command line:
+  gmx mdrun -s tp1_equil.tpr -deffnm tp1_equil -ntmpi 1 -ntomp 1 -pin off -reprod
+
+Reading file tp1_equil.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Can not increase nstlist because verlet-buffer-tolerance is not set or used
+Using 1 MPI thread
+Using 1 OpenMP thread 
+
+
+WARNING: Using the slow plain-C-4x4 kernels. This should
+not happen during routine usage on common platforms.
+starting mdrun 'dense_salt_polymer'
+5000000 steps,   5000.0 ps.
+
+Writing final coordinates.
+
+               Core t (s)   Wall t (s)        (%)
+       Time:    15502.088    15502.088      100.0
+                         4h18:22
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:       27.867        0.861        3.100            0.087 
+
+GROMACS reminds you: "There is only one thing worse than coming home from the lab to a sink full of dirty dishes, and that is not going to the lab at all!" (Chien-Shiung Wu)
+

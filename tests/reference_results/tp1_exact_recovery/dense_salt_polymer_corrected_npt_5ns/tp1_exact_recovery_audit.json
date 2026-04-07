@@ -1,0 +1,56 @@
+{
+  "analysis_window_ps": 1000.0,
+  "bundle": "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns",
+  "claimable_statement": "The exact TP1 thermal-runaway blocker is resolved for the corrected 5 ns dense_salt_polymer NPT rerun.",
+  "cutoffs_nm": {
+    "rcoulomb": 0.9,
+    "rlist": 0.9,
+    "rvdw": 0.9
+  },
+  "density_kg_m3": {
+    "max": 1610.015869,
+    "mean": 1571.6190931828173,
+    "min": 1515.546631,
+    "sem_block5": 2.1605780648845037
+  },
+  "duration_completed_ps": 5000.0,
+  "final_box_nm": [
+    1.6679,
+    1.6679,
+    1.6679
+  ],
+  "half_box_margin_nm": -0.06605000000000005,
+  "historical_blocker_addressed": "The old TP1.2 3.017 ns thermal runaway is superseded only for the corrected dense_salt_polymer NPT protocol with tcoupl/pcoupl/gen-vel applied.",
+  "mdout_contract": {
+    "all_pass": true,
+    "gen_vel_yes": true,
+    "pcoupl_berendsen": true,
+    "tcoupl_v_rescale": true
+  },
+  "min_half_box_nm": 0.83395,
+  "missing_artifacts": [],
+  "non_claimable_statement": "This does not establish dense GROMACS-vs-LAMMPS parity, transport readiness, or endpoint continuation safety; the final box is smaller than twice the 0.9 nm cutoff.",
+  "schema_name": "tp1_exact_recovery_audit",
+  "schema_version": 1,
+  "source_report": "tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_exact_recovery_report.json",
+  "system_id": "dense_salt_polymer",
+  "temperature_k": {
+    "max": 360.481812,
+    "mean": 299.8209499100899,
+    "min": 255.213043,
+    "sem_block5": 0.9356754922400816
+  },
+  "verdicts": {
+    "corrected_protocol_contract": "PASS",
+    "endpoint_cutoff_margin": "FAIL",
+    "raw_artifact_bundle": "PASS",
+    "thermal_runaway_exact_blocker": "PASS",
+    "transport_or_production_readiness": "FAIL"
+  },
+  "volume_nm3": {
+    "max": 4.807608,
+    "mean": 4.636349732267733,
+    "min": 4.525517,
+    "sem_block5": 0.0064044957145241435
+  }
+}
