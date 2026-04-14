@@ -71,7 +71,6 @@
 #include "gromacs/ewald/pme_pp.h"
 #include "gromacs/ewald/pme_pp_comm_gpu.h"
 #include "gromacs/gpu_utils/device_stream_manager.h"
-#include "gromacs/gpu_utils/devicebuffer.h"
 #include "gromacs/gmxlib/network.h"
 #include "gromacs/gmxlib/nrnb.h"
 #include "gromacs/gpu_utils/devicebuffer_datatype.h"
@@ -121,7 +120,6 @@
 #include "gromacs/mdtypes/state_propagator_data_gpu.h"
 #include "gromacs/nbnxm/atomdata.h"
 #include "gromacs/nbnxm/gpu_data_mgmt.h"
-#include "gromacs/nbnxm/gpu_types_common.h"
 #if GMX_GPU_CUDA
 #    include "gromacs/nbnxm/cuda/nbnxm_cuda_types.h"
 #endif
@@ -162,6 +160,11 @@
 #include "gromacs/utility/vectypes.h"
 
 #include "gpuforcereduction.h"
+
+#if GMX_GPU
+#    include "gromacs/gpu_utils/devicebuffer.h"
+#    include "gromacs/nbnxm/gpu_types_common.h"
+#endif
 
 class GpuEventSynchronizer;
 struct gmx_edsam;
@@ -5933,8 +5936,9 @@ static void replayExactRespaNonbondedTraceShadow(const t_inputrec&             i
             inputrec, idef, fr, mdatoms, coordinates, shadowOutputs, enerd, stepWork, step, true);
 }
 
-static void setExactRespaGpuLaunchParameters(NbnxmGpu*                               gpuNbv,
-                                             const t_inputrec&                       inputrec,
+#if GMX_GPU
+static void setExactRespaGpuLaunchParameters(NbnxmGpu*                         gpuNbv,
+                                             const t_inputrec&                 inputrec,
                                              const MtsNonbondedRespaContribution contribution)
 {
     const auto toGpuExactRespaContribution = [](const MtsNonbondedRespaContribution hostContribution) -> int
@@ -6056,6 +6060,25 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
             inputrec, idef, fr, mdatoms, coordinates, enerd, stepWork, exactRespaStepWork, step);
     setExactRespaGpuLaunchParameters(gpu, inputrec, MtsNonbondedRespaContribution::Full);
 }
+#else
+static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&,
+                                                const InteractionDefinitions&,
+                                                t_forcerec*,
+                                                const t_mdatoms&,
+                                                ArrayRef<const RVec>,
+                                                const interaction_const_t*,
+                                                const ExactRespaForceOutputs&,
+                                                gmx_enerdata_t*,
+                                                const StepWorkload&,
+                                                const ExactRespaStepWork&,
+                                                const int64_t,
+                                                t_nrnb*,
+                                                gmx_wallcycle*)
+{
+    GMX_RELEASE_ASSERT(false,
+                       "Exact LAMMPS-style r-RESPA GPU narrow mode was compiled without GPU support");
+}
+#endif
 
 static inline void clearRVecs(ArrayRef<RVec> v, const bool useOpenmpThreading)
 {

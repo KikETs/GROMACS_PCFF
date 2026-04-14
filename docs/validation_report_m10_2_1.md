@@ -2,6 +2,7 @@
 
 ## Scope
 M10.2.1 extends the medium-scale neutral oligomer gate to a longer `100 ps` NPT production horizon.
+It is not exact `r-RESPA` evidence: the checked-in runner writes plain `integrator = md` inputs, so this report remains a non-exact convergence diagnostic.
 
 Its purpose is narrower than a transport-production claim:
 - check whether longer-horizon NPT temperature remains well behaved
@@ -62,6 +63,6 @@ Its purpose is narrower than a transport-production claim:
 `M10.2.1` is **not a pass for production handoff**.
 
 It is a longer-horizon diagnostic that narrows the bottleneck:
-- exact/runtime path is not the current blocker
+- no generic runtime failure signal dominates this plain-`md` diagnostic path
 - temperature control is not the current blocker
 - density/volume convergence remains the blocker before conductivity work

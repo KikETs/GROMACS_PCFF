@@ -844,8 +844,8 @@ def derive_host_local_rule(
             "rule_ready_for_cross_host_aggregation": True,
             "production_candidate": {
                 "rule_text": (
-                    "Within one L3 or CCD-equivalent locality group, production-supported "
-                    "ntomp extends up to the host-local throughput plateau knee, defined as "
+                    "Within one L3 or CCD-equivalent locality group, the shared OpenMP "
+                    "thread-scaling ceiling extends up to the host-local throughput plateau knee, defined as "
                     "the highest tested thread count still within 95% of the best exact rate "
                     "observed in that locality group"
                 ),
@@ -857,7 +857,7 @@ def derive_host_local_rule(
                 "plateau_threshold_ns_per_day": plateau_threshold,
             },
             "correctness_only_candidate": {
-                "rule_text": "Above the production locality plateau but within mechanically validated thread counts on this host",
+                "rule_text": "Above the locality plateau knee but within mechanically validated thread counts on this host",
                 "max_mechanically_validated_threads_on_this_host": topology["logical_cpus"],
             },
             "unsupported_or_unproven": {
@@ -882,7 +882,7 @@ def derive_host_local_rule(
         "rule_ready_for_cross_host_aggregation": False,
         "reason": (
             "This host does not expose enough one-L3 locality-group evidence to derive a "
-            "plateau-based production envelope."
+            "plateau-based OpenMP thread-scaling envelope."
         ),
         "host_local_observation": {
             "global_best_shape": global_best_shape,

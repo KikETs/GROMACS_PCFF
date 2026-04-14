@@ -1,0 +1,18 @@
+{
+  "system_id": "small_oligomer_medium",
+  "evidence_class": "non_exact_diagnostic",
+  "integrator_family": "plain_md",
+  "required_passes": [
+    "small_oligomer_medium.nvt_parity"
+  ],
+  "non_blocking_diagnostics": [
+    "small_oligomer_medium.npt_stability"
+  ],
+  "overall_status": "pass",
+  "failure_reason": null,
+  "note": "M10.2 blocks on medium-scale NVT thermal parity. Short NPT remains a longer stability/trend diagnostic and does not certify transport-production readiness. This runner generates plain `integrator = md` inputs, so the result is diagnostic-only and not exact-r-RESPA evidence.",
+  "reports": {
+    "nvt_parity": "pass",
+    "npt_stability": "partial"
+  }
+}

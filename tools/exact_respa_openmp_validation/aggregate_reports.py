@@ -184,6 +184,8 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
         "pass": production_rule_allowed and g1_infra_allowed and g4_infra_allowed,
         "mechanics_claim_allowed": mechanics_claim_allowed,
         "production_rule_allowed": production_rule_allowed,
+        "thread_scaling_rule_allowed": production_rule_allowed,
+        "scientific_md_production_handoff_implied": False,
         "g1_infra_allowed": g1_infra_allowed,
         "g4_infra_allowed": g4_infra_allowed,
         "reports": [
@@ -222,25 +224,30 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
         "production_rule_blockers": production_rule_blockers,
         "infra_blockers": infra_blockers,
         "final_allowed_claim": (
-            "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed and a shared one-L3 plateau-knee production envelope is allowed across the tested hosts. This statement does not cover server CPUs and does not imply MPI or GPU coexistence support."
+            "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed and a shared one-L3 plateau-knee OpenMP thread-scaling envelope is allowed across the tested hosts. This is a host-local throughput statement only; it does not imply MD production handoff, ensemble readiness, transport readiness, does not cover server CPUs, and does not imply MPI or GPU coexistence support."
             if production_rule_allowed and g1_infra_allowed and g4_infra_allowed
             else (
-                "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed and a shared one-L3 plateau-knee production envelope is allowed across the tested hosts, but multi-host TSAN-backed race evidence or recurring automation infrastructure is still incomplete. This statement does not cover server CPUs and does not imply MPI or GPU coexistence support."
+                "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed and a shared one-L3 plateau-knee OpenMP thread-scaling envelope is allowed across the tested hosts, but multi-host TSAN-backed race evidence or recurring automation infrastructure is still incomplete. This is a host-local throughput statement only; it does not imply MD production handoff, ensemble readiness, transport readiness, does not cover server CPUs, and does not imply MPI or GPU coexistence support."
                 if production_rule_allowed
                 else (
-                    "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed, but the production envelope remains host-local. This statement does not cover server CPUs and does not imply MPI or GPU coexistence support, and multi-host TSAN-backed race evidence is still incomplete."
+                    "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed, but the OpenMP thread-scaling envelope remains host-local. This is not an MD production handoff or ensemble claim. It does not cover server CPUs and does not imply MPI or GPU coexistence support, and multi-host TSAN-backed race evidence is still incomplete."
                     if mechanics_claim_allowed
                     else "Keep the claim host-local until the blockers are closed"
                 )
             )
+        ),
+        "scope_note": (
+            "In this summary, the legacy `production_rule` name refers only to an OpenMP thread-scaling or throughput envelope derived from host-local benchmarks. "
+            "It does not mean MD production handoff, ensemble convergence, or transport readiness."
         ),
         "desktop_mechanics_claim": (
             {
                 "rule_text": (
                     "Across the tested desktop/workstation topology classes, single-rank CPU-only "
                     "standalone exact r-RESPA preserved exact affinity-enabled mechanical checks on every host. "
-                    "This mechanics claim is separate from the shared production-envelope decision, "
-                    "does not cover server CPUs, and does not imply MPI or GPU coexistence support."
+                    "This mechanics claim is separate from the shared OpenMP thread-scaling decision, "
+                    "does not cover server CPUs, and does not imply MD production handoff, ensemble readiness, "
+                    "transport readiness, MPI, or GPU coexistence support."
                 ),
                 "server_cpu_status": "unvalidated",
                 "tsan_requirement_relaxed": bool(allow_missing_tsan),
@@ -257,7 +264,12 @@ def summarize_reports(reports: list[dict[str, Any]], allow_missing_tsan: bool) -
         "aggregated_rule": (
             {
                 "production_rule": common_rule_text,
+                "thread_scaling_rule": common_rule_text,
                 "production_basis": common_basis,
+                "scope_note": (
+                    "This rule governs host-local OpenMP thread scaling only. "
+                    "It is not a scientific MD production-readiness or transport-readiness statement."
+                ),
                 "correctness_only_rule": (
                     "Above the production locality ceiling but within mechanically validated "
                     "thread counts on each tested host"

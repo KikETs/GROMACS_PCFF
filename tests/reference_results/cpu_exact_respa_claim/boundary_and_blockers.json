@@ -1,0 +1,88 @@
+{
+  "schema_name": "cpu_exact_respa_boundary_and_blockers",
+  "schema_version": 1,
+  "claim_status_as_of": "2026-04-11",
+  "exact_scope": {
+    "mechanics": {
+      "status": "closed",
+      "statement": "Exact CPU mechanics are frozen by Gate A on `small_oligomer` and `small_salt_polymer_box`, then broadened to tested desktop/workstation OpenMP topology classes by the checked-in exact OpenMP host-report inventory. This is a mechanical correctness claim, not a transport or generic ensemble claim.",
+      "basis": [
+        "tests/reference_results/gate_a_cpu_oracle/oracle_manifest.json",
+        "tests/reference_results/cpu_exact_respa_claim/openmp_validation_summary.json"
+      ]
+    },
+    "small_fixture_ensemble": {
+      "status": "closed_but_narrow",
+      "statement": "Gate G closes a narrow exact-r-RESPA long-run ensemble boundary on small fixtures only.",
+      "basis": [
+        "tests/reference_results/gate_g_long_ensemble_validation/gate_g_manifest.json"
+      ]
+    },
+    "medium_scale_exact_nvt": {
+      "status": "scaffold_only",
+      "statement": "Gate H large/medium confirms exact-NVT scaffold reuse only; it remains a NO-GO for production transport.",
+      "basis": [
+        "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json"
+      ]
+    },
+    "medium_scale_exact_npt": {
+      "status": "missing",
+      "statement": "No checked-in exact-r-RESPA charged medium-scale long-NPT density/volume convergence artifact is available.",
+      "basis": [
+        "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json",
+        "tests/reference_results/gate_h_transport_validation/gate_h_manifest.json",
+        "tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_manifest.json"
+      ]
+    },
+    "legacy_non_exact_medium_scale_diagnostics": {
+      "status": "diagnostic_only",
+      "statement": "M10 medium-scale NVT/NPT files remain useful diagnostics, but they are not exact-r-RESPA evidence.",
+      "basis": [
+        "tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json",
+        "tests/reference_results/m10_2_1_convergence_gate/m10_2_1_gate_decision.json"
+      ]
+    }
+  },
+  "sole_immediate_blocker": {
+    "id": "exact_medium_scale_charged_long_npt_density_conditioning",
+    "statement": "The sole immediate blocker for promoting the current exact CPU claim toward transport-valid charged use is the absence of a checked-in exact-r-RESPA charged medium-scale long-NPT density/volume convergence artifact. Gate H already says the charged scaffold still requires long NPT density conditioning; M10.2.1 independently shows density/volume convergence is the bottleneck, but only as a non-exact diagnostic.",
+    "basis": [
+      {
+        "path": "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json",
+        "key": "protocol_caveat",
+        "value": "Gate H reuses the mechanically validated exact-r-RESPA NVT path; small mode is out of TP0 transport scope by size/box/duration, while large mode fixes size/box but still requires TP0-scale production length and charged-side long NPT density conditioning."
+      },
+      {
+        "path": "tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_manifest.json",
+        "key": "status",
+        "value": "DECLARED_PENDING_EXECUTION"
+      },
+      {
+        "path": "tests/reference_results/gate_h_transport_validation/gate_h_manifest.json",
+        "key": "systems[small_salt_polymer_box].failure_reasons[-1]",
+        "value": "Charged-system TP0 freeze expects long NPT density conditioning and larger boxes; this Gate H run stays on the already validated NVT exact-r-RESPA path instead."
+      },
+      {
+        "path": "tests/reference_results/m10_2_1_convergence_gate/m10_2_1_gate_decision.json",
+        "key": "overall_status",
+        "value": "partial"
+      }
+    ]
+  },
+  "next_gate": {
+    "id": "gate_i_cpu_exact_charged_long_npt_conditioning",
+    "statement": "Next gate: Gate I is now frozen as a predeclared single-rank CPU exact-r-RESPA long-NPT conditioning campaign on the charged large/medium scaffold. It must still be executed and passed, with density/volume block-drift and cross-replica criteria frozen in the checked-in Gate I contract, before any TP0-scale conductivity production campaign or readiness wording is reopened.",
+    "must_prove": [
+      "single-rank CPU exact-r-RESPA charged large/medium long-NPT run remains stable on the intended scaffold",
+      "density and volume block-drift fall within predeclared convergence thresholds across replicas",
+      "the resulting conditioned state is frozen before any TP0-scale transport production campaign"
+    ],
+    "still_not_implied_even_if_passes": [
+      "TP0-scale production length is still required afterward",
+      "LAMMPS-vs-GROMACS transport parity is still a separate question",
+      "conductivity-production readiness still requires transport-side uncertainty and linearity gates"
+    ],
+    "frozen_contract": "tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_contract.json",
+    "current_manifest": "tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_manifest.json"
+  }
+}

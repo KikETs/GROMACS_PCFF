@@ -1,22 +1,14 @@
 [
   {
     "system_id": "small_oligomer_medium",
-    "nsteps_prod": 8000,
-    "potential_energy": {
-      "gmx": -2256.865234407407,
-      "lmp": -1862.2958069530866,
-      "diff_rel": 0.17483074374085253
-    },
-    "temperature": {
-      "gmx": 299.3293457037038,
-      "lmp": 302.5060137037036,
-      "diff": 3.176667999999836
-    },
-    "density": {
-      "gmx": 16.208173617283954,
-      "lmp": 19.498344308641983,
-      "diff_rel": 0.20299453652504562
-    },
-    "status": "pass"
+    "evidence_class": "non_exact_diagnostic",
+    "integrator_family": "plain_md",
+    "nvt_parity_status": "pass",
+    "npt_stability_status": "partial",
+    "overall_status": "pass",
+    "temperature_diff_k": 0.6469723456790462,
+    "density_recomputed_diff_rel": 2.1928348949299382e-16,
+    "npt_density_drift_rel": 0.14666685828582185,
+    "non_claimable_statement": "This is a plain-md medium-scale diagnostic handoff summary, not exact-r-RESPA evidence and not a CPU completion claim."
   }
 ]

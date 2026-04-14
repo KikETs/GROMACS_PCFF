@@ -1,0 +1,67 @@
+{
+  "acceptance_criteria": {
+    "density_cross_replica_span_rel_max": 0.05,
+    "density_max_replica_abs_block_drift_rel_max": 0.08,
+    "density_mean_abs_block_drift_rel_max": 0.05,
+    "gate_scope_note": "These are predeclared conditioning criteria only. A Gate I PASS closes the density/volume conditioning blocker, not TP0 production or transport readiness.",
+    "relative_metric_note": "Relative block-drift and cross-replica span metrics are normalized by the absolute aggregate mean of the same observable.",
+    "replicas_min": 3,
+    "required_conditioned_state_files": [
+      "prod.gro",
+      "prod.cpt",
+      "prod.tpr",
+      "replica_summary.json"
+    ],
+    "temperature_mean_abs_error_k_max": 20.0,
+    "volume_cross_replica_span_rel_max": 0.05,
+    "volume_max_replica_abs_block_drift_rel_max": 0.08,
+    "volume_mean_abs_block_drift_rel_max": 0.05
+  },
+  "conditioned_state_handoff": {
+    "available": false,
+    "candidates": [],
+    "selected": null
+  },
+  "contract_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_contract.json",
+  "executed": false,
+  "failure_reasons": [
+    "Checked-in repository now freezes the Gate I contract, but no completed CPU-only exact long-NPT campaign has been checked in yet."
+  ],
+  "first_failing_metric": "execution_state.not_run",
+  "gate_id": "gate_i_cpu_exact_charged_long_npt_conditioning",
+  "non_claims": [
+    "A declared Gate I contract is not a passed gate.",
+    "A Gate I PASS still does not imply conductivity-production readiness.",
+    "A Gate I PASS would still not imply LAMMPS-vs-GROMACS transport parity.",
+    "A Gate I PASS would still not imply TP0-scale production length or uncertainty closure."
+  ],
+  "performance_reference": {
+    "available": true,
+    "estimated_hours_if_replicas_run_fully_in_parallel": 11.334999999999999,
+    "estimated_hours_per_replica": 11.334999999999999,
+    "estimated_hours_serial_for_all_replicas": 34.004999999999995,
+    "hour_per_ns": 9.068,
+    "ns_per_day": 2.647,
+    "reference_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log"
+  },
+  "prepared_only": true,
+  "run_settings": {
+    "compressibility_bar_inv": 4.5e-05,
+    "equil_ps": 250.0,
+    "mdrun_shape": "nb cpu / bonded cpu / pme cpu / update cpu / reprod / single rank",
+    "ntmpi": 1,
+    "ntomp": 1,
+    "pressure_bar": 1.0,
+    "prod_ps": 1000.0,
+    "replicas": 3,
+    "sample_interval_base_steps": 400,
+    "tau_p_ps": 5.0,
+    "tau_t_ps": 0.5,
+    "temperature_k": 300.0
+  },
+  "schema_name": "gate_i_charged_long_npt_conditioning",
+  "schema_version": 1,
+  "scope": "CPU-only single-rank exact-r-RESPA charged large/medium long-NPT conditioning gate",
+  "status": "DECLARED_PENDING_EXECUTION",
+  "system_id": "gate_h_dense_salt_polymer_2x2x2"
+}

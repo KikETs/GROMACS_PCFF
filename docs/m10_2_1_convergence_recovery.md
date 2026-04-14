@@ -3,6 +3,9 @@
 ## Overview
 The original `M10.2.1` interpretation was too optimistic.
 
+`M10.2.1` is also not exact `r-RESPA` evidence.
+The checked-in runner writes plain `integrator = md` inputs, so this is a longer-horizon convergence diagnostic only.
+
 After aligning the runner with the current `M10.2` semantics:
 - shared initial velocities
 - molecule-local atom naming
@@ -41,7 +44,7 @@ This is the real blocker.
 
 ## Interpretation
 The 100 ps run changed the diagnosis:
-- it did **not** reveal an exact r-RESPA runtime failure
+- it did **not** reveal a generic runtime failure in this plain-`md` diagnostic path
 - it did **not** reveal a temperature-control failure
 - it **did** show that density/volume relaxation is still not converged strongly enough
 

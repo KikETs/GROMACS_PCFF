@@ -1,0 +1,12 @@
+{
+  "system_id": "small_oligomer_medium_100ps",
+  "evidence_class": "non_exact_diagnostic",
+  "integrator_family": "plain_md",
+  "required_passes": [
+    "small_oligomer_medium_100ps.temperature_convergence",
+    "small_oligomer_medium_100ps.density_convergence"
+  ],
+  "overall_status": "partial",
+  "failure_reason": "npt_convergence_not_yet_sufficient",
+  "note": "Longer NPT convergence is necessary before conductivity production, but even pass here is still not a transport-production claim. This is a plain-md convergence diagnostic, not exact-r-RESPA evidence."
+}

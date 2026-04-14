@@ -3,6 +3,9 @@
 ## Overview
 The original short-horizon `NPT vs NPT` parity interpretation was too weak.
 
+This gate is also not exact `r-RESPA` evidence.
+The checked-in runner writes plain `integrator = md` inputs, so `M10.2` is a medium-scale diagnostic gate only.
+
 The updated gate separates two different questions:
 - **Can both engines maintain medium-scale thermal behavior under the same fixed-volume setup?**
 - **Do short NPT runs remain numerically stable enough to justify longer convergence work?**
@@ -72,9 +75,10 @@ Final machine-readable decision:
 
 ## Practical Interpretation
 `M10.2` now means:
-- medium-scale NVT parity is acceptable
+- medium-scale NVT parity passes in this plain-`md` diagnostic setup
 - short NPT runs are stable enough to continue diagnostics
 
 It does **not** mean:
+- exact `r-RESPA` medium-scale closure exists
 - NPT parity is solved
 - any transport-production readiness claim follows

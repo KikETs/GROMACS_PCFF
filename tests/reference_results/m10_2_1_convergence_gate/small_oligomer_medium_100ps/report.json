@@ -1,39 +1,77 @@
 {
   "system_id": "small_oligomer_medium_100ps",
+  "evidence_class": "non_exact_diagnostic",
+  "integrator_family": "plain_md",
   "duration_ps": 100.0,
+  "equilibration_ps": 10.0,
+  "total_mass_amu": 4995.456000000003,
   "gmx": {
-    "potential_energy": {
-      "mean": -2326.9382565269466,
-      "sem": 14.21710419222679,
-      "status": "trending but not converged"
+    "potential_energy_kj_mol": {
+      "mean": -2226.6893101077844,
+      "sem": 54.23876599467626,
+      "drift_rel": 0.14130404656892592
     },
-    "temperature": {
-      "mean": 298.48625114371276,
-      "sem": 0.5911668499997286,
-      "status": "converged enough"
+    "temperature_k": {
+      "mean": 299.3526530219561,
+      "sem": 0.3821554634370147,
+      "drift_rel": 0.0027898538782576204,
+      "status": "pass"
     },
-    "density": {
-      "mean": 16.29288896207586,
-      "sem": 0.028039115659533213,
-      "status": "failed / unstable"
+    "pressure": {
+      "mean": 2.869756852295409,
+      "sem": 1.2389267850327885,
+      "drift_rel": 2.2422993937110056
+    },
+    "volume": {
+      "mean": 506.89393635329344,
+      "sem": 0.7557950789064369,
+      "drift_rel": 0.008488634310671785
+    },
+    "density_kg_m3": {
+      "mean": 16.364862994007176,
+      "sem": 0.02435472655347745,
+      "drift_rel": 0.008467528830234777,
+      "raw_mean": 16.364863201596805,
+      "internal_consistency_max_rel": 9.425969623018661e-08,
+      "status": "pass"
     }
   },
   "lmp": {
-    "potential_energy": {
-      "mean": -2225.24073803944,
-      "sem": 85.4328106364519,
-      "status": "converged enough"
+    "potential_energy_kj_mol": {
+      "mean": -2180.5507429695813,
+      "sem": 7.204078854546397,
+      "drift_rel": 0.02153851874138907
     },
-    "temperature": {
-      "mean": 300.921156287425,
-      "sem": 1.820814450025261,
-      "status": "converged enough"
+    "temperature_k": {
+      "mean": 298.64405395209576,
+      "sem": 0.3329936863797399,
+      "drift_rel": 0.000677680661381626,
+      "status": "pass"
     },
-    "density": {
-      "mean": 42.50630283053892,
-      "sem": 18.020764395861836,
-      "status": "trending but not converged"
+    "pressure": {
+      "mean": 1.0010787753772452,
+      "sem": 0.24552358734557012,
+      "drift_rel": 1.5602768523400106
+    },
+    "volume": {
+      "mean": 1019653.0550698602,
+      "sem": 163694.1084800067,
+      "drift_rel": 0.9561353761973517
+    },
+    "density_kg_m3": {
+      "mean": 11.529443712531945,
+      "sem": 3.846517342461677,
+      "drift_rel": 1.9133208309400946,
+      "raw_mean": 11.529442719161677,
+      "internal_consistency_max_rel": 1.352205814525924e-07,
+      "status": "fail"
     }
   },
-  "parity_status": "partial"
+  "cross_engine": {
+    "temperature_diff_k": 0.7085990698603268,
+    "density_diff_rel": 0.2954756959007823,
+    "status": "partial"
+  },
+  "skipped_lammps_rows": [],
+  "note": "M10.2.1 evaluates longer-horizon NPT convergence and does not by itself certify transport-production readiness. This runner generates plain `integrator = md` inputs, so the result is diagnostic-only and not exact-r-RESPA evidence."
 }

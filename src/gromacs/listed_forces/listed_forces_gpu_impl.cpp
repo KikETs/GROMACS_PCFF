@@ -273,6 +273,10 @@ void ListedForcesGpu::waitAccumulateEnergyTerms(gmx_enerdata_t* /* enerd */) {}
 
 void ListedForcesGpu::clearEnergies() {}
 
+void ListedForcesGpu::setPcffClass2DebugMode(PcffClass2DebugMode /* mode */) {}
+
+void ListedForcesGpu::clearPcffClass2DebugMode() {}
+
 #endif // !GMX_GPU || GMX_GPU_OPENCL
 
 } // namespace gmx

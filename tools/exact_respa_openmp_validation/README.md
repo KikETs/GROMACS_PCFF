@@ -24,7 +24,7 @@ That is still not enough for a broader desktop-class CPU OpenMP claim.
 The remaining gaps are:
 
 - host diversity
-- topology-aware production rules
+- topology-aware OpenMP thread-scaling rules
 - multi-host TSAN-backed race evidence
 - recurring automation beyond one-off local replay
 
@@ -35,16 +35,16 @@ The remaining gaps are:
   - optionally runs the exact TSAN suite
   - collects CPU topology metadata
   - runs a locality benchmark under `-pin inherit`
-  - emits one host-local JSON report, including a host-local production-envelope candidate
+  - emits one host-local JSON report, including a host-local OpenMP thread-scaling candidate
   - enforces canonical CPU-distinguishing report filenames
 - `aggregate_reports.py`
   - loads multiple host reports
   - rejects stale schema versions and non-canonical report filenames
   - checks the required topology classes
   - checks exact mechanical evidence on every host
-  - re-derives the host-local production candidate from raw benchmark data for every report
-  - separates a broader desktop/workstation mechanics claim from a shared production-envelope claim
-  - refuses a shared production-envelope claim unless the reports share a common locality-based production rule
+  - re-derives the host-local thread-scaling candidate from raw benchmark data for every report
+  - separates a broader desktop/workstation mechanics claim from a shared OpenMP thread-scaling claim
+  - refuses a shared OpenMP thread-scaling claim unless the reports share a common locality-based rule
   - tracks whether multi-host TSAN-backed race evidence and recurring automation are actually present
 - `run_host_profile.py`
   - loads one host profile from `report_set_manifest.json`
@@ -142,7 +142,8 @@ Important:
 - `schema_version >= 3` reports are required for aggregation.
 - the host-local rule that `collect_host_report.py` emits is only a candidate
 - it is not a broader desktop/workstation support claim by itself
-- the current production candidate is plateau-based: it tracks the highest tested thread count within one L3/CCD-equivalent locality group that remains within 95% of the best exact rate observed in that locality group
+- the current thread-scaling candidate is plateau-based: it tracks the highest tested thread count within one L3/CCD-equivalent locality group that remains within 95% of the best exact rate observed in that locality group
+- this is a throughput/thread-scaling envelope only, not an MD production-handoff, ensemble, or transport-readiness statement
 - if infra semantics, TSAN workflow semantics, or report naming policy changes, previously collected reports are stale and must be regenerated
 - direct collection is allowed, but the final active inventory should still be managed through `report_set_manifest.json`
 - recurring `ci` or `scheduled` reports now record an attestation block; reports without that attestation are stale for strict aggregation
@@ -176,7 +177,7 @@ In strict mode, the command exits nonzero unless the active inventory still defe
 - multi-host TSAN-backed evidence
 - recurring automation evidence
 - the broader desktop/workstation mechanics claim
-- the shared plateau-knee production-envelope rule
+- the shared plateau-knee OpenMP thread-scaling rule
 
 ## Example: aggregate multiple host reports
 
@@ -190,12 +191,12 @@ python3 tools/exact_respa_openmp_validation/aggregate_reports.py \
 
 The aggregator exits nonzero when the full broader claim is not earned.
 
-This is stricter than the mechanics and production-envelope summaries. A summary can still
+This is stricter than the mechanics and thread-scaling summaries. A summary can still
 report that a broader desktop/workstation mechanics claim is allowed, or even that a
-shared production-envelope rule exists across the tested hosts, while the process exits
+shared OpenMP thread-scaling rule exists across the tested hosts, while the process exits
 nonzero because multi-host TSAN-backed race evidence or recurring automation is still incomplete.
 
-The aggregator fails the production-envelope step when:
+The aggregator fails the shared thread-scaling step when:
 
 - any required topology class is missing
 - any checked-in report is stale or uses a non-canonical filename
@@ -254,12 +255,12 @@ Each host report separates:
 The aggregate summary separates:
 
 - broader desktop/workstation mechanics claim
-- production rule
+- OpenMP thread-scaling rule
 - infrastructure readiness for G1/G4
 - correctness-only rule
 - unsupported or unproven region
 
-If the aggregate step fails, the broader desktop/workstation production-envelope claim is not earned.
+If the aggregate step fails, the broader desktop/workstation OpenMP thread-scaling claim is not earned.
 That does not automatically mean the broader mechanics claim failed; check the summary fields.
 If `validate_report_set.py` reports only pending external host recollection work, that is a backend-state issue, not automatically a stale-data failure.
 If `validate_report_set.py --strict` fails, the repo should be treated as not currently
@@ -277,3 +278,4 @@ Any broader wording must stay inside these boundaries:
 - GPU coexistence out of scope
 - multi-host TSAN-backed race evidence may still be incomplete when `--allow-missing-tsan` is used
 - recurring automation may still be incomplete when reports are collected in `manual` mode
+- any shared OpenMP rule is a throughput/thread-scaling statement only, not an MD production-handoff, ensemble, or transport-readiness claim

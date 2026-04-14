@@ -609,13 +609,16 @@ def build_gate_decision(system_id: str, nvt_report: dict, npt_report: dict):
 
     return {
         "system_id": system_id,
+        "evidence_class": "non_exact_diagnostic",
+        "integrator_family": "plain_md",
         "required_passes": required_passes,
         "non_blocking_diagnostics": non_blocking_diagnostics,
         "overall_status": overall_status,
         "failure_reason": failure_reason,
         "note": (
             "M10.2 blocks on medium-scale NVT thermal parity. Short NPT remains a longer stability/trend diagnostic "
-            "and does not certify transport-production readiness."
+            "and does not certify transport-production readiness. This runner generates plain `integrator = md` "
+            "inputs, so the result is diagnostic-only and not exact-r-RESPA evidence."
         ),
         "reports": {
             "nvt_parity": nvt_report["status"],
@@ -658,6 +661,9 @@ def check_system(sid: str, corpus_root: Path, results_root: Path):
 
     report = {
         "system_id": sid,
+        "evidence_class": "non_exact_diagnostic",
+        "integrator_family": "plain_md",
+        "non_claimable_statement": "This report is useful for medium-scale thermal and density diagnostics, but it is not exact-r-RESPA evidence because the generated MDPs use plain `integrator = md`.",
         "scale": {
             "atoms": parsed_data["header_counts"]["atoms"],
             "molecules": len({atom["molecule_id"] for atom in parsed_data["atoms"]}),
@@ -673,12 +679,15 @@ def check_system(sid: str, corpus_root: Path, results_root: Path):
 
     summary = {
         "system_id": sid,
+        "evidence_class": "non_exact_diagnostic",
+        "integrator_family": "plain_md",
         "nvt_parity_status": nvt_report["status"],
         "npt_stability_status": npt_report["status"],
         "overall_status": gate_decision["overall_status"],
         "temperature_diff_k": nvt_report.get("temperature", {}).get("diff_k"),
         "density_recomputed_diff_rel": nvt_report.get("density", {}).get("recomputed_diff_rel"),
         "npt_density_drift_rel": npt_report.get("lmp", {}).get("density_drift_rel"),
+        "non_claimable_statement": "This is a plain-md medium-scale diagnostic handoff summary, not exact-r-RESPA evidence and not a CPU completion claim.",
     }
 
     print(f"NVT parity: {nvt_report['status']}")

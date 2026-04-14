@@ -1,0 +1,37 @@
+{
+  "schema_name": "cpu_exact_respa_mechanical_evidence_index",
+  "schema_version": 1,
+  "claim_status_as_of": "2026-04-11",
+  "gate_a": {
+    "status": "PASS",
+    "objective": "Freeze a CPU-only oracle for the standalone exact r-RESPA path before GPU validation.",
+    "single_rank": true,
+    "cpu_only": true,
+    "systems": [
+      {
+        "system_id": "small_oligomer",
+        "event_trace": "tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/event_trace.json",
+        "per_level_force_totals": "tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/per_level_force_totals.json",
+        "restart_summary": "tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/restart_summary.json",
+        "total_force_summary": "tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/total_force_summary.json"
+      },
+      {
+        "system_id": "small_salt_polymer_box",
+        "event_trace": "tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/event_trace.json",
+        "per_level_force_totals": "tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/per_level_force_totals.json",
+        "restart_summary": "tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/restart_summary.json",
+        "total_force_summary": "tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/total_force_summary.json"
+      }
+    ]
+  },
+  "openmp_inventory": {
+    "summary": "tests/reference_results/cpu_exact_respa_claim/openmp_validation_summary.json",
+    "status": true,
+    "final_allowed_claim": "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed and a shared one-L3 plateau-knee OpenMP thread-scaling envelope is allowed across the tested hosts. This is a host-local throughput statement only; it does not imply MD production handoff, ensemble readiness, transport readiness, does not cover server CPUs, and does not imply MPI or GPU coexistence support.",
+    "host_reports": [
+      "tests/reference_results/exact_respa_openmp_validation/host_reports/amd_ryzen_7_5800x_low_core_workstation_lab.json",
+      "tests/reference_results/exact_respa_openmp_validation/host_reports/amd_ryzen_9_9900x_numa_or_chiplet.json",
+      "tests/reference_results/exact_respa_openmp_validation/host_reports/intel_i9_12900k_mid_core_hybrid_desktop.json"
+    ]
+  }
+}

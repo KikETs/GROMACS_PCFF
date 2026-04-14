@@ -1,0 +1,85 @@
+{
+  "schema_version": 2,
+  "pass": true,
+  "mechanics_claim_allowed": true,
+  "production_rule_allowed": true,
+  "thread_scaling_rule_allowed": true,
+  "scientific_md_production_handoff_implied": false,
+  "g1_infra_allowed": true,
+  "g4_infra_allowed": true,
+  "reports": [
+    {
+      "host_label": "Lab",
+      "topology_class": "low-core-workstation",
+      "model_name": "AMD Ryzen 7 5800X 8-Core Processor",
+      "logical_cpus": 16,
+      "numa_nodes": 1,
+      "l3_group_count": 1,
+      "release_suite_ok": true,
+      "tsan_suite_ok": true,
+      "tsan_status": "backed",
+      "collection_mode": "scheduled",
+      "recurring_backend_attested": true,
+      "report_filename": "amd_ryzen_7_5800x_low_core_workstation_lab.json",
+      "canonical_filename_ok": true,
+      "rule_candidate_ready": true
+    },
+    {
+      "host_label": "9900x-kiket-local",
+      "topology_class": "numa-or-chiplet",
+      "model_name": "AMD Ryzen 9 9900X 12-Core Processor",
+      "logical_cpus": 24,
+      "numa_nodes": 1,
+      "l3_group_count": 2,
+      "release_suite_ok": true,
+      "tsan_suite_ok": true,
+      "tsan_status": "backed",
+      "collection_mode": "scheduled",
+      "recurring_backend_attested": true,
+      "report_filename": "amd_ryzen_9_9900x_numa_or_chiplet.json",
+      "canonical_filename_ok": true,
+      "rule_candidate_ready": true
+    },
+    {
+      "host_label": "user-Z690-AORUS-PRO",
+      "topology_class": "mid-core-hybrid-desktop",
+      "model_name": "12th Gen Intel(R) Core(TM) i9-12900K",
+      "logical_cpus": 24,
+      "numa_nodes": 1,
+      "l3_group_count": 1,
+      "release_suite_ok": true,
+      "tsan_suite_ok": true,
+      "tsan_status": "backed",
+      "collection_mode": "scheduled",
+      "recurring_backend_attested": true,
+      "report_filename": "intel_i9_12900k_mid_core_hybrid_desktop.json",
+      "canonical_filename_ok": true,
+      "rule_candidate_ready": true
+    }
+  ],
+  "blockers": [],
+  "mechanics_blockers": [],
+  "production_rule_blockers": [],
+  "infra_blockers": [],
+  "final_allowed_claim": "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed and a shared one-L3 plateau-knee OpenMP thread-scaling envelope is allowed across the tested hosts. This is a host-local throughput statement only; it does not imply MD production handoff, ensemble readiness, transport readiness, does not cover server CPUs, and does not imply MPI or GPU coexistence support.",
+  "scope_note": "In this summary, the legacy `production_rule` name refers only to an OpenMP thread-scaling or throughput envelope derived from host-local benchmarks. It does not mean MD production handoff, ensemble convergence, or transport readiness.",
+  "desktop_mechanics_claim": {
+    "rule_text": "Across the tested desktop/workstation topology classes, single-rank CPU-only standalone exact r-RESPA preserved exact affinity-enabled mechanical checks on every host. This mechanics claim is separate from the shared OpenMP thread-scaling decision, does not cover server CPUs, and does not imply MD production handoff, ensemble readiness, transport readiness, MPI, or GPU coexistence support.",
+    "server_cpu_status": "unvalidated",
+    "tsan_requirement_relaxed": false
+  },
+  "infrastructure_status": {
+    "g1_infra_allowed": true,
+    "g4_infra_allowed": true,
+    "tsan_requirement_relaxed": false,
+    "recurring_automation_required": true
+  },
+  "aggregated_rule": {
+    "production_rule": "Within one L3 or CCD-equivalent locality group, the shared OpenMP thread-scaling ceiling extends up to the host-local throughput plateau knee, defined as the highest tested thread count still within 95% of the best exact rate observed in that locality group",
+    "thread_scaling_rule": "Within one L3 or CCD-equivalent locality group, the shared OpenMP thread-scaling ceiling extends up to the host-local throughput plateau knee, defined as the highest tested thread count still within 95% of the best exact rate observed in that locality group",
+    "production_basis": "one_l3_group_plateau_95pct",
+    "scope_note": "This rule governs host-local OpenMP thread scaling only. It is not a scientific MD production-readiness or transport-readiness statement.",
+    "correctness_only_rule": "Above the production locality ceiling but within mechanically validated thread counts on each tested host",
+    "unsupported_or_unproven_rule": "Server CPUs, untested topology classes, unvalidated affinity/runtime shapes, or thread counts beyond measured host limits"
+  }
+}

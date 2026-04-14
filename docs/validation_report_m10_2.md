@@ -2,6 +2,7 @@
 
 ## Scope
 M10.2 is no longer treated as a short cross-engine NPT parity claim.
+It is also not exact `r-RESPA` evidence: the checked-in runner writes plain `integrator = md` inputs, so this report is diagnostic-only.
 
 The gate is now split into:
 - **Required:** medium-scale **NVT thermal parity**
@@ -73,10 +74,11 @@ Interpretation:
 - detailed report: [report.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/small_oligomer_medium/report.json)
 
 ## Conclusion
-`M10.2` is complete only as a **medium-scale NVT parity + NPT stability handoff gate**.
+`M10.2` is closed only as a **plain-`md` medium-scale NVT parity + NPT stability handoff gate**.
 
 It may be cited as evidence that:
-- the medium-scale bridge is thermally consistent under fixed volume
+- the medium-scale bridge is thermally consistent under fixed volume in this diagnostic setup
 - short NPT runs remain finite and diagnostically usable
 
 It must **not** be cited as proof that the system is ready for conductivity production. That requires the longer convergence path.
+It must **not** be cited as exact `r-RESPA` medium-scale evidence.

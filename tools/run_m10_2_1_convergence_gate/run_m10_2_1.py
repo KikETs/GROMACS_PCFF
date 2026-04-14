@@ -501,6 +501,8 @@ def check_system(sid: str, results_root: Path):
 
     report = {
         "system_id": sid,
+        "evidence_class": "non_exact_diagnostic",
+        "integrator_family": "plain_md",
         "duration_ps": NPT_PROD_STEPS * DEFAULT_DT_PS,
         "equilibration_ps": NPT_EQUIL_STEPS * DEFAULT_DT_PS,
         "total_mass_amu": total_mass_amu_value,
@@ -512,18 +514,20 @@ def check_system(sid: str, results_root: Path):
             "status": status,
         },
         "skipped_lammps_rows": skipped_rows,
-        "note": "M10.2.1 evaluates longer-horizon NPT convergence and does not by itself certify transport-production readiness.",
+        "note": "M10.2.1 evaluates longer-horizon NPT convergence and does not by itself certify transport-production readiness. This runner generates plain `integrator = md` inputs, so the result is diagnostic-only and not exact-r-RESPA evidence.",
     }
 
     gate_decision = {
         "system_id": sid,
+        "evidence_class": "non_exact_diagnostic",
+        "integrator_family": "plain_md",
         "required_passes": [
             f"{sid}.temperature_convergence",
             f"{sid}.density_convergence",
         ],
         "overall_status": status,
         "failure_reason": None if status == "pass" else "npt_convergence_not_yet_sufficient",
-        "note": "Longer NPT convergence is necessary before conductivity production, but even pass here is still not a transport-production claim.",
+        "note": "Longer NPT convergence is necessary before conductivity production, but even pass here is still not a transport-production claim. This is a plain-md convergence diagnostic, not exact-r-RESPA evidence.",
     }
 
     dump_json(work_dir / "report.json", report)
@@ -537,12 +541,15 @@ def check_system(sid: str, results_root: Path):
 
     return {
         "system_id": sid,
+        "evidence_class": "non_exact_diagnostic",
+        "integrator_family": "plain_md",
         "duration_ps": NPT_PROD_STEPS * DEFAULT_DT_PS,
         "overall_status": status,
         "temperature_diff_k": temp_diff,
         "density_diff_rel": dens_diff_rel,
         "gmx_density_drift_rel": gmx_summary["density_kg_m3"]["drift_rel"],
         "lmp_density_drift_rel": lmp_summary["density_kg_m3"]["drift_rel"],
+        "non_claimable_statement": "This is a plain-md longer-horizon convergence diagnostic, not exact-r-RESPA evidence and not a production handoff.",
     }
 
 

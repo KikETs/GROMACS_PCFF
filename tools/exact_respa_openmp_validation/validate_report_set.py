@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Require the full broader desktop-class claim gate to pass. This fails on "
             "inventory drift, missing TSAN-backed evidence, missing recurring automation, "
-            "or a missing shared production-envelope rule."
+            "or a missing shared OpenMP thread-scaling rule."
         ),
     )
     return parser.parse_args()

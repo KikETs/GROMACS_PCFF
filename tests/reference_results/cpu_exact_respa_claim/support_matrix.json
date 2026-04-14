@@ -1,0 +1,367 @@
+{
+  "schema_name": "cpu_exact_respa_support_matrix",
+  "schema_version": 1,
+  "claim_status_as_of": "2026-04-11",
+  "status_definitions": {
+    "exact": "Checked-in artifacts directly support the statement inside the frozen exact-r-RESPA CPU scope.",
+    "approximate": "Evidence exists, but only as a scaffold or caveated short-horizon diagnostic; it does not justify readiness language.",
+    "non_exact_diagnostic": "Artifact is useful for blocker diagnosis, but it is not exact-r-RESPA evidence and must not broaden the exact claim.",
+    "unsupported": "The repository explicitly says the statement must not be claimed as supported now."
+  },
+  "top_level_claim": "Current evidence supports a narrow CPU exact-r-RESPA claim: for single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, exact event order, restart continuity, and small-fixture mechanical behavior are frozen on the Gate A oracle, and a desktop-class exact CPU OpenMP mechanics claim is allowed across the tested low-core, hybrid-desktop, and chiplet workstation classes. Exact long-run ensemble evidence is still narrow: Gate G passes a 40 ps NVT `small_oligomer` check and a 40 ps NPT `small_salt_polymer_box` check, but those are small-fixture gates only. Gate H reuses the exact NVT path on larger transport scaffolds, yet transport production remains NO-GO, and charged medium-scale long-NPT density conditioning is still missing. This claim does not imply conductivity-production readiness, LAMMPS-vs-GROMACS transport parity, generic medium-scale NPT convergence, server-CPU coverage, MPI support, or GPU coexistence support.",
+  "items": [
+    {
+      "id": "mechanics.gate_a_cpu_oracle_event_order_restart",
+      "domain": "mechanics",
+      "status": "exact",
+      "claimable_statement": "Gate A freezes single-rank CPU-only exact-r-RESPA event order, per-level force totals, total-force ledgers, and restart continuity on the two frozen fixtures.",
+      "non_claimable_statement": "This is a frozen small-fixture correctness oracle, not medium-scale ensemble or transport readiness evidence.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/gate_a_cpu_oracle/oracle_manifest.json",
+          "key": "status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/gate_a_cpu_oracle/oracle_manifest.json",
+          "key": "objective",
+          "value": "Freeze a CPU-only oracle for the standalone exact r-RESPA path before GPU validation."
+        },
+        {
+          "path": "tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/event_trace.json",
+          "key": "system_id",
+          "value": "small_oligomer"
+        },
+        {
+          "path": "tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/event_trace.json",
+          "key": "system_id",
+          "value": "small_salt_polymer_box"
+        }
+      ]
+    },
+    {
+      "id": "mechanics.desktop_cpu_openmp_inventory",
+      "domain": "mechanics",
+      "status": "exact",
+      "claimable_statement": "Across the tested desktop/workstation topology classes, a single-rank CPU-only exact OpenMP mechanics claim is allowed, together with a shared one-L3 plateau-knee OpenMP thread-scaling envelope.",
+      "non_claimable_statement": "Do not read this thread-scaling envelope as MD production handoff, ensemble readiness, transport readiness, server CPU support, MPI support, or GPU coexistence support.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/cpu_exact_respa_claim/openmp_validation_summary.json",
+          "key": "pass",
+          "value": true
+        },
+        {
+          "path": "tests/reference_results/cpu_exact_respa_claim/openmp_validation_summary.json",
+          "key": "final_allowed_claim",
+          "value": "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed and a shared one-L3 plateau-knee OpenMP thread-scaling envelope is allowed across the tested hosts. This is a host-local throughput statement only; it does not imply MD production handoff, ensemble readiness, transport readiness, does not cover server CPUs, and does not imply MPI or GPU coexistence support."
+        },
+        {
+          "path": "tests/reference_results/cpu_exact_respa_claim/openmp_validation_summary.json",
+          "key": "scope_note",
+          "value": "In this summary, the legacy `production_rule` name refers only to an OpenMP thread-scaling or throughput envelope derived from host-local benchmarks. It does not mean MD production handoff, ensemble convergence, or transport readiness."
+        },
+        {
+          "path": "tests/reference_results/cpu_exact_respa_claim/openmp_validation_summary.json",
+          "key": "reports",
+          "value": [
+            {
+              "host_label": "Lab",
+              "topology_class": "low-core-workstation",
+              "model_name": "AMD Ryzen 7 5800X 8-Core Processor",
+              "logical_cpus": 16,
+              "numa_nodes": 1,
+              "l3_group_count": 1,
+              "release_suite_ok": true,
+              "tsan_suite_ok": true,
+              "tsan_status": "backed",
+              "collection_mode": "scheduled",
+              "recurring_backend_attested": true,
+              "report_filename": "amd_ryzen_7_5800x_low_core_workstation_lab.json",
+              "canonical_filename_ok": true,
+              "rule_candidate_ready": true
+            },
+            {
+              "host_label": "9900x-kiket-local",
+              "topology_class": "numa-or-chiplet",
+              "model_name": "AMD Ryzen 9 9900X 12-Core Processor",
+              "logical_cpus": 24,
+              "numa_nodes": 1,
+              "l3_group_count": 2,
+              "release_suite_ok": true,
+              "tsan_suite_ok": true,
+              "tsan_status": "backed",
+              "collection_mode": "scheduled",
+              "recurring_backend_attested": true,
+              "report_filename": "amd_ryzen_9_9900x_numa_or_chiplet.json",
+              "canonical_filename_ok": true,
+              "rule_candidate_ready": true
+            },
+            {
+              "host_label": "user-Z690-AORUS-PRO",
+              "topology_class": "mid-core-hybrid-desktop",
+              "model_name": "12th Gen Intel(R) Core(TM) i9-12900K",
+              "logical_cpus": 24,
+              "numa_nodes": 1,
+              "l3_group_count": 1,
+              "release_suite_ok": true,
+              "tsan_suite_ok": true,
+              "tsan_status": "backed",
+              "collection_mode": "scheduled",
+              "recurring_backend_attested": true,
+              "report_filename": "intel_i9_12900k_mid_core_hybrid_desktop.json",
+              "canonical_filename_ok": true,
+              "rule_candidate_ready": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ensemble.gate_g_small_oligomer_exact_nvt",
+      "domain": "ensemble",
+      "status": "exact",
+      "claimable_statement": "Gate G provides narrow exact-r-RESPA long-run NVT evidence on the `small_oligomer` fixture.",
+      "non_claimable_statement": "This is not medium-scale transport readiness, and it does not certify charged NPT density conditioning.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/gate_g_long_ensemble_validation/gate_g_manifest.json",
+          "key": "status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/gate_g_long_ensemble_validation/gate_g_manifest.json",
+          "key": "systems[small_oligomer].status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/gate_g_long_ensemble_validation/gate_g_manifest.json",
+          "key": "systems[small_oligomer].ensemble",
+          "value": "nvt"
+        },
+        {
+          "path": "tests/reference_results/gate_g_long_ensemble_validation/gate_g_manifest.json",
+          "key": "systems[small_oligomer].required_observables",
+          "value": [
+            "Temperature",
+            "Pressure",
+            "Potential"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ensemble.gate_g_small_salt_polymer_box_exact_npt",
+      "domain": "ensemble",
+      "status": "exact",
+      "claimable_statement": "Gate G provides narrow exact-r-RESPA NPT evidence on the `small_salt_polymer_box` fixture, including temperature, pressure, box, volume, and density observables.",
+      "non_claimable_statement": "This is still a small-fixture gate only; do not relabel it as medium-scale density convergence or conductivity readiness.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/gate_g_long_ensemble_validation/gate_g_manifest.json",
+          "key": "systems[small_salt_polymer_box].status",
+          "value": "PASS"
+        },
+        {
+          "path": "tests/reference_results/gate_g_long_ensemble_validation/gate_g_manifest.json",
+          "key": "systems[small_salt_polymer_box].ensemble",
+          "value": "npt"
+        },
+        {
+          "path": "tests/reference_results/gate_g_long_ensemble_validation/gate_g_manifest.json",
+          "key": "systems[small_salt_polymer_box].required_observables",
+          "value": [
+            "Temperature",
+            "Pressure",
+            "Potential",
+            "Volume",
+            "Density",
+            "Box-X",
+            "Box-Y",
+            "Box-Z"
+          ]
+        },
+        {
+          "path": "tests/reference_results/gate_g_long_ensemble_validation/gate_g_manifest.json",
+          "key": "systems[small_salt_polymer_box].layout_aggregates.cpu.observables.Density.mean_abs_block_drift",
+          "value": 0.6092909666666664
+        }
+      ]
+    },
+    {
+      "id": "ensemble.gate_h_large_medium_exact_nvt_scaffold",
+      "domain": "ensemble",
+      "status": "approximate",
+      "claimable_statement": "Gate H shows that the exact NVT path can be reused on larger transport scaffolds and can generate transport-facing CPU/GPU observables, but only as a NO-GO scaffold exercise.",
+      "non_claimable_statement": "Do not turn Gate H PASS-like observable comparisons into transport-production readiness or LAMMPS-vs-GROMACS transport parity.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json",
+          "key": "status",
+          "value": "FAIL"
+        },
+        {
+          "path": "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json",
+          "key": "production_recommendation",
+          "value": "NO-GO"
+        },
+        {
+          "path": "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json",
+          "key": "protocol_caveat",
+          "value": "Gate H reuses the mechanically validated exact-r-RESPA NVT path; small mode is out of TP0 transport scope by size/box/duration, while large mode fixes size/box but still requires TP0-scale production length and charged-side long NPT density conditioning."
+        },
+        {
+          "path": "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json",
+          "key": "systems[gate_h_dense_oligomer_2x2x2].status",
+          "value": "FAIL"
+        },
+        {
+          "path": "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json",
+          "key": "systems[gate_h_dense_salt_polymer_2x2x2].status",
+          "value": "FAIL"
+        }
+      ]
+    },
+    {
+      "id": "ensemble.gate_i_declared_long_npt_conditioning_contract",
+      "domain": "ensemble",
+      "status": "approximate",
+      "claimable_statement": "The repository now freezes Gate I as the exact CPU-only charged long-NPT conditioning contract for the remaining blocker.",
+      "non_claimable_statement": "A declared Gate I contract is not a pass and does not create new ensemble or transport evidence by itself.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_contract.json",
+          "key": "gate_id",
+          "value": "gate_i_cpu_exact_charged_long_npt_conditioning"
+        },
+        {
+          "path": "tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_contract.json",
+          "key": "status",
+          "value": "DECLARED"
+        },
+        {
+          "path": "tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_manifest.json",
+          "key": "status",
+          "value": "DECLARED_PENDING_EXECUTION"
+        },
+        {
+          "path": "tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_contract.json",
+          "key": "acceptance_criteria",
+          "value": {
+            "density_cross_replica_span_rel_max": 0.05,
+            "density_max_replica_abs_block_drift_rel_max": 0.08,
+            "density_mean_abs_block_drift_rel_max": 0.05,
+            "gate_scope_note": "These are predeclared conditioning criteria only. A Gate I PASS closes the density/volume conditioning blocker, not TP0 production or transport readiness.",
+            "relative_metric_note": "Relative block-drift and cross-replica span metrics are normalized by the absolute aggregate mean of the same observable.",
+            "replicas_min": 3,
+            "required_conditioned_state_files": [
+              "prod.gro",
+              "prod.cpt",
+              "prod.tpr",
+              "replica_summary.json"
+            ],
+            "temperature_mean_abs_error_k_max": 20.0,
+            "volume_cross_replica_span_rel_max": 0.05,
+            "volume_max_replica_abs_block_drift_rel_max": 0.08,
+            "volume_mean_abs_block_drift_rel_max": 0.05
+          }
+        }
+      ]
+    },
+    {
+      "id": "ensemble.exact_medium_scale_charged_long_npt_density_conditioning",
+      "domain": "ensemble",
+      "status": "unsupported",
+      "claimable_statement": "No checked-in exact-r-RESPA medium-scale charged long-NPT density/volume convergence claim survives today.",
+      "non_claimable_statement": "Do not hide the missing charged long-NPT density conditioning behind temperature agreement, short NPT behavior, or NVT-only scaffold runs.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json",
+          "key": "protocol_caveat",
+          "value": "Gate H reuses the mechanically validated exact-r-RESPA NVT path; small mode is out of TP0 transport scope by size/box/duration, while large mode fixes size/box but still requires TP0-scale production length and charged-side long NPT density conditioning."
+        },
+        {
+          "path": "tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_manifest.json",
+          "key": "status",
+          "value": "DECLARED_PENDING_EXECUTION"
+        },
+        {
+          "path": "tests/reference_results/gate_h_transport_validation/gate_h_manifest.json",
+          "key": "systems[small_salt_polymer_box].failure_reasons[-1]",
+          "value": "Charged-system TP0 freeze expects long NPT density conditioning and larger boxes; this Gate H run stays on the already validated NVT exact-r-RESPA path instead."
+        }
+      ]
+    },
+    {
+      "id": "diagnostics.m10_medium_scale_plain_md_gates",
+      "domain": "diagnostics",
+      "status": "non_exact_diagnostic",
+      "claimable_statement": "The M10 medium-scale diagnostics still support the blocker narrative only: fixed-volume NVT parity passes, short NPT remains partial, and longer NPT density/volume convergence remains blocked.",
+      "non_claimable_statement": "Do not cite M10 as exact-r-RESPA evidence; its generated mdp inputs use plain `integrator = md` and omit the exact-r-RESPA ownership contract.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/m10_1_trajectory_gate/m10_1_gate_decision.json",
+          "key": "status",
+          "value": "pass"
+        },
+        {
+          "path": "tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json",
+          "key": "overall_status",
+          "value": "pass"
+        },
+        {
+          "path": "tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json",
+          "key": "reports",
+          "value": {
+            "nvt_parity": "pass",
+            "npt_stability": "partial"
+          }
+        },
+        {
+          "path": "tests/reference_results/m10_2_1_convergence_gate/m10_2_1_gate_decision.json",
+          "key": "overall_status",
+          "value": "partial"
+        },
+        {
+          "path": "tests/reference_results/m10_2_1_convergence_gate/m10_2_1_summary.json",
+          "key": "[0].density_diff_rel",
+          "value": 0.2954756959007823
+        },
+        {
+          "path": "tools/run_m10_2_ensemble_gate/run_m10_2.py",
+          "key": "mdp_basis",
+          "value": "get_mdp_nvt/get_mdp_npt write plain integrator = md inputs; this is diagnostic-only, not exact-r-RESPA."
+        },
+        {
+          "path": "tools/run_m10_2_1_convergence_gate/run_m10_2_1.py",
+          "key": "mdp_basis",
+          "value": "get_mdp_npt writes plain integrator = md inputs; this is diagnostic-only, not exact-r-RESPA."
+        }
+      ]
+    },
+    {
+      "id": "transport.cpu_exactness_not_transport_readiness",
+      "domain": "transport",
+      "status": "unsupported",
+      "claimable_statement": "CPU exactness, small-fixture exact NPT, and NVT-only scaffold reuse do not establish conductivity-production readiness.",
+      "non_claimable_statement": "Do not use CPU exactness language as a shortcut to conductivity, cNE, transference, or production-readiness wording.",
+      "evidence": [
+        {
+          "path": "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json",
+          "key": "production_recommendation",
+          "value": "NO-GO"
+        },
+        {
+          "path": "tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json",
+          "key": "status",
+          "value": "FAIL"
+        },
+        {
+          "path": "tests/reference_results/cpu_exact_respa_claim/boundary_and_blockers.json",
+          "key": "sole_immediate_blocker.id",
+          "value": "exact_medium_scale_charged_long_npt_density_conditioning"
+        }
+      ]
+    }
+  ]
+}
