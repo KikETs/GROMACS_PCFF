@@ -17,17 +17,778 @@
     "volume_max_replica_abs_block_drift_rel_max": 0.08,
     "volume_mean_abs_block_drift_rel_max": 0.05
   },
+  "aggregates": {
+    "Box-X": {
+      "available": true,
+      "mean_abs_block_drift": 0.06005395666666683,
+      "mean_block_sem": 0.011329420675452825,
+      "mean_block_span": 0.060957759000000035,
+      "mean_of_means": 3.4069200291941613,
+      "pooled_mean": 3.4069200291941613,
+      "pooled_q10": 3.3767332,
+      "pooled_q50": 3.402754,
+      "pooled_q90": 3.4388422000000003,
+      "pooled_std": 0.03264676090768137,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 0.03821375200000032,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.446290868,
+            3.407630948,
+            3.408389408591409,
+            3.4095158839999997,
+            3.408077116
+          ],
+          "block_sem": 0.007583906756262897,
+          "block_span": 0.03865992000000018,
+          "frame_count": 5001,
+          "max": 3.51156,
+          "mean": 3.415979326934613,
+          "min": 3.376922,
+          "q10": 3.395591,
+          "q50": 3.410678,
+          "q90": 3.441578,
+          "sem": 0.00031231174796429793,
+          "std": 0.02208598375011836
+        },
+        {
+          "abs_block_drift": 0.12135629199999975,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.487815745,
+            3.403747597,
+            3.3909215984015986,
+            3.383050287,
+            3.366459453
+          ],
+          "block_sem": 0.021231575633714445,
+          "block_span": 0.12135629199999975,
+          "frame_count": 5001,
+          "max": 3.603919,
+          "mean": 3.4063958412317534,
+          "min": 3.332551,
+          "q10": 3.364042,
+          "q50": 3.392148,
+          "q90": 3.465294,
+          "sem": 0.000688864836446439,
+          "std": 0.04871497048366947
+        },
+        {
+          "abs_block_drift": 0.020591826000000424,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.40683775,
+            3.408135443,
+            3.405420066933067,
+            3.3852783779999998,
+            3.386245924
+          ],
+          "block_sem": 0.005172779636381136,
+          "block_span": 0.022857065000000176,
+          "frame_count": 5001,
+          "max": 3.4509,
+          "mean": 3.398384919416117,
+          "min": 3.363174,
+          "q10": 3.381421,
+          "q50": 3.398701,
+          "q90": 3.414842,
+          "sem": 0.0001906091142503263,
+          "std": 0.013479447466825374
+        }
+      ],
+      "sem_abs_block_drift": 0.031070432391464325,
+      "sem_of_means": 0.00508582585056005,
+      "std_of_means": 0.008808908771617207
+    },
+    "Box-Y": {
+      "available": true,
+      "mean_abs_block_drift": 0.06005395666666683,
+      "mean_block_sem": 0.011329420675452825,
+      "mean_block_span": 0.060957759000000035,
+      "mean_of_means": 3.4069200291941613,
+      "pooled_mean": 3.4069200291941613,
+      "pooled_q10": 3.3767332,
+      "pooled_q50": 3.402754,
+      "pooled_q90": 3.4388422000000003,
+      "pooled_std": 0.03264676090768137,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 0.03821375200000032,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.446290868,
+            3.407630948,
+            3.408389408591409,
+            3.4095158839999997,
+            3.408077116
+          ],
+          "block_sem": 0.007583906756262897,
+          "block_span": 0.03865992000000018,
+          "frame_count": 5001,
+          "max": 3.51156,
+          "mean": 3.415979326934613,
+          "min": 3.376922,
+          "q10": 3.395591,
+          "q50": 3.410678,
+          "q90": 3.441578,
+          "sem": 0.00031231174796429793,
+          "std": 0.02208598375011836
+        },
+        {
+          "abs_block_drift": 0.12135629199999975,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.487815745,
+            3.403747597,
+            3.3909215984015986,
+            3.383050287,
+            3.366459453
+          ],
+          "block_sem": 0.021231575633714445,
+          "block_span": 0.12135629199999975,
+          "frame_count": 5001,
+          "max": 3.603919,
+          "mean": 3.4063958412317534,
+          "min": 3.332551,
+          "q10": 3.364042,
+          "q50": 3.392148,
+          "q90": 3.465294,
+          "sem": 0.000688864836446439,
+          "std": 0.04871497048366947
+        },
+        {
+          "abs_block_drift": 0.020591826000000424,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.40683775,
+            3.408135443,
+            3.405420066933067,
+            3.3852783779999998,
+            3.386245924
+          ],
+          "block_sem": 0.005172779636381136,
+          "block_span": 0.022857065000000176,
+          "frame_count": 5001,
+          "max": 3.4509,
+          "mean": 3.398384919416117,
+          "min": 3.363174,
+          "q10": 3.381421,
+          "q50": 3.398701,
+          "q90": 3.414842,
+          "sem": 0.0001906091142503263,
+          "std": 0.013479447466825374
+        }
+      ],
+      "sem_abs_block_drift": 0.031070432391464325,
+      "sem_of_means": 0.00508582585056005,
+      "std_of_means": 0.008808908771617207
+    },
+    "Box-Z": {
+      "available": true,
+      "mean_abs_block_drift": 0.06005395666666683,
+      "mean_block_sem": 0.011329420675452825,
+      "mean_block_span": 0.060957759000000035,
+      "mean_of_means": 3.4069200291941613,
+      "pooled_mean": 3.4069200291941613,
+      "pooled_q10": 3.3767332,
+      "pooled_q50": 3.402754,
+      "pooled_q90": 3.4388422000000003,
+      "pooled_std": 0.03264676090768137,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 0.03821375200000032,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.446290868,
+            3.407630948,
+            3.408389408591409,
+            3.4095158839999997,
+            3.408077116
+          ],
+          "block_sem": 0.007583906756262897,
+          "block_span": 0.03865992000000018,
+          "frame_count": 5001,
+          "max": 3.51156,
+          "mean": 3.415979326934613,
+          "min": 3.376922,
+          "q10": 3.395591,
+          "q50": 3.410678,
+          "q90": 3.441578,
+          "sem": 0.00031231174796429793,
+          "std": 0.02208598375011836
+        },
+        {
+          "abs_block_drift": 0.12135629199999975,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.487815745,
+            3.403747597,
+            3.3909215984015986,
+            3.383050287,
+            3.366459453
+          ],
+          "block_sem": 0.021231575633714445,
+          "block_span": 0.12135629199999975,
+          "frame_count": 5001,
+          "max": 3.603919,
+          "mean": 3.4063958412317534,
+          "min": 3.332551,
+          "q10": 3.364042,
+          "q50": 3.392148,
+          "q90": 3.465294,
+          "sem": 0.000688864836446439,
+          "std": 0.04871497048366947
+        },
+        {
+          "abs_block_drift": 0.020591826000000424,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.40683775,
+            3.408135443,
+            3.405420066933067,
+            3.3852783779999998,
+            3.386245924
+          ],
+          "block_sem": 0.005172779636381136,
+          "block_span": 0.022857065000000176,
+          "frame_count": 5001,
+          "max": 3.4509,
+          "mean": 3.398384919416117,
+          "min": 3.363174,
+          "q10": 3.381421,
+          "q50": 3.398701,
+          "q90": 3.414842,
+          "sem": 0.0001906091142503263,
+          "std": 0.013479447466825374
+        }
+      ],
+      "sem_abs_block_drift": 0.031070432391464325,
+      "sem_of_means": 0.00508582585056005,
+      "std_of_means": 0.008808908771617207
+    },
+    "Density": {
+      "available": true,
+      "mean_abs_block_drift": 75.84745768366663,
+      "mean_block_sem": 14.280288628060175,
+      "mean_block_span": 77.06851102966668,
+      "mean_of_means": 1474.8024151231086,
+      "pooled_mean": 1474.8024151231086,
+      "pooled_q10": 1433.34812,
+      "pooled_q50": 1479.43811,
+      "pooled_q90": 1513.903076,
+      "pooled_std": 40.753511464699905,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 47.934208861000116,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            1424.663938964,
+            1473.1807072739998,
+            1472.1516597512489,
+            1470.797800068,
+            1472.598147825
+          ],
+          "block_sem": 9.511746450081203,
+          "block_span": 48.51676830999986,
+          "frame_count": 5001,
+          "max": 1513.648926,
+          "mean": 1462.6803450393923,
+          "min": 1346.133057,
+          "q10": 1429.932617,
+          "q50": 1469.149536,
+          "q90": 1488.819946,
+          "sem": 0.39207012733637414,
+          "std": 27.72631678987587
+        },
+        {
+          "abs_block_drift": 152.64636328899996,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            1375.279411623,
+            1478.280170896,
+            1495.098769153846,
+            1505.576922841,
+            1527.925774912
+          ],
+          "block_sem": 26.537469287354707,
+          "block_span": 152.64636328899996,
+          "frame_count": 5001,
+          "max": 1574.918579,
+          "mean": 1476.43594245051,
+          "min": 1245.268921,
+          "q10": 1400.77356,
+          "q50": 1493.357666,
+          "q90": 1531.102173,
+          "sem": 0.8535314347515701,
+          "std": 60.35982162378777
+        },
+        {
+          "abs_block_drift": 26.961800900999833,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            1474.239558829,
+            1472.486003933,
+            1476.0087436963036,
+            1502.528405423,
+            1501.20135973
+          ],
+          "block_sem": 6.791650146744613,
+          "block_span": 30.042401490000202,
+          "frame_count": 5001,
+          "max": 1532.287842,
+          "mean": 1485.290957879424,
+          "min": 1418.37561,
+          "q10": 1463.781738,
+          "q50": 1484.73645,
+          "q90": 1507.615967,
+          "sem": 0.2495664194972842,
+          "std": 17.648775371147224
+        }
+      ],
+      "sem_abs_block_drift": 38.87378894380653,
+      "sem_of_means": 6.578025587704299,
+      "std_of_means": 11.393474531391968
+    },
+    "Potential": {
+      "available": true,
+      "mean_abs_block_drift": 1269.7412083333377,
+      "mean_block_sem": 216.9649523538329,
+      "mean_block_span": 1269.7412083333377,
+      "mean_of_means": -218312.2631681997,
+      "pooled_mean": -218312.2631681997,
+      "pooled_q10": -218994.596875,
+      "pooled_q50": -218336.703125,
+      "pooled_q90": -217627.1375,
+      "pooled_std": 619.7918550735881,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 911.0221718749963,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            -218010.67396875,
+            -218544.706453125,
+            -218591.71734515484,
+            -218697.258875,
+            -218921.696140625
+          ],
+          "block_sem": 150.40488445604987,
+          "block_span": 911.0221718749963,
+          "frame_count": 5001,
+          "max": -216852.578125,
+          "mean": -218553.21825634874,
+          "min": -219414.0625,
+          "q10": -218964.953125,
+          "q50": -218604.875,
+          "q90": -218059.046875,
+          "sem": 5.343548508639705,
+          "std": 377.88372131065955
+        },
+        {
+          "abs_block_drift": 2356.014781250007,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            -217063.12,
+            -218187.064109375,
+            -218580.21770417082,
+            -218850.7900625,
+            -219419.13478125
+          ],
+          "block_sem": 394.01158256974367,
+          "block_span": 2356.014781250007,
+          "frame_count": 5001,
+          "max": -215435.890625,
+          "mean": -218420.09735552888,
+          "min": -220023.96875,
+          "q10": -219471.296875,
+          "q50": -218591.328125,
+          "q90": -217304.09375,
+          "sem": 12.20619786556055,
+          "std": 863.194834861984
+        },
+        {
+          "abs_block_drift": 542.1866718750098,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            -217695.151296875,
+            -217792.97275,
+            -217909.8389423077,
+            -218182.122140625,
+            -218237.33796875
+          ],
+          "block_sem": 106.47839003570516,
+          "block_span": 542.1866718750098,
+          "frame_count": 5001,
+          "max": -216912.0625,
+          "mean": -217963.47389272146,
+          "min": -218702.53125,
+          "q10": -218309.40625,
+          "q50": -217964.96875,
+          "q90": -217615.265625,
+          "sem": 3.8284097921477844,
+          "std": 270.7365221107079
+        }
+      ],
+      "sem_abs_block_drift": 553.4746645595503,
+      "sem_of_means": 178.57842588551543,
+      "std_of_means": 309.3069067693859
+    },
+    "Pressure": {
+      "available": true,
+      "mean_abs_block_drift": 38.982393039,
+      "mean_block_sem": 17.497041640643797,
+      "mean_block_span": 99.42196028366665,
+      "mean_of_means": 21.98724821822302,
+      "pooled_mean": 21.987248218223023,
+      "pooled_q10": -838.0447752,
+      "pooled_q50": 28.655151,
+      "pooled_q90": 889.0911740000001,
+      "pooled_std": 672.8927822050414,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 16.428758548,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            1.6586222810000004,
+            45.663476342,
+            16.89591770929071,
+            -20.252590868,
+            18.087380829
+          ],
+          "block_sem": 10.818009898063249,
+          "block_span": 65.91606721,
+          "frame_count": 5001,
+          "max": 2378.126221,
+          "mean": 12.411458150569885,
+          "min": -2213.428711,
+          "q10": -835.554626,
+          "q50": 26.172293,
+          "q90": 852.39386,
+          "sem": 9.401621121599568,
+          "std": 664.8614810998225
+        },
+        {
+          "abs_block_drift": 64.80914076,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            0.634556953000001,
+            65.164929034,
+            15.33502913086913,
+            14.484833284,
+            -64.174583807
+          ],
+          "block_sem": 20.751465869859718,
+          "block_span": 129.339512841,
+          "frame_count": 5001,
+          "max": 2483.201416,
+          "mean": 6.290761772445511,
+          "min": -2491.664795,
+          "q10": -872.323242,
+          "q50": 7.124207,
+          "q90": 889.03717,
+          "sem": 9.632802612867138,
+          "std": 681.210115734109
+        },
+        {
+          "abs_block_drift": 35.709279809,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            36.549494824,
+            103.850515815,
+            7.038664457542456,
+            88.058954407,
+            0.840215014999999
+          ],
+          "block_sem": 20.92164915400842,
+          "block_span": 103.0103008,
+          "frame_count": 5001,
+          "max": 2536.427734,
+          "mean": 47.25952473165367,
+          "min": -2144.500977,
+          "q10": -800.301086,
+          "q50": 53.36198,
+          "q90": 913.952637,
+          "sem": 9.50136787346172,
+          "std": 671.9153468449126
+        }
+      ],
+      "sem_abs_block_drift": 14.061772036353295,
+      "sem_of_means": 12.75907129805784,
+      "std_of_means": 22.099359745629965
+    },
+    "Temperature": {
+      "available": true,
+      "mean_abs_block_drift": 0.3372358729999784,
+      "mean_block_sem": 0.12800293335424692,
+      "mean_block_span": 0.7026375760662708,
+      "mean_of_means": 299.9804079494101,
+      "pooled_mean": 299.9804079494101,
+      "pooled_q10": 293.2717098,
+      "pooled_q50": 299.987793,
+      "pooled_q90": 306.7939942,
+      "pooled_std": 5.297850546184555,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 0.31939791899998227,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            299.836346892,
+            299.36244923000004,
+            299.3257791728272,
+            299.77325652599995,
+            299.516948973
+          ],
+          "block_sem": 0.10429318044849269,
+          "block_span": 0.5105677191727978,
+          "frame_count": 5001,
+          "max": 318.779175,
+          "mean": 299.56290873285343,
+          "min": 281.029541,
+          "q10": 292.981476,
+          "q50": 299.55777,
+          "q90": 306.320618,
+          "sem": 0.07495675156085678,
+          "std": 5.300772730214396
+        },
+        {
+          "abs_block_drift": 0.3648139509999737,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            300.102112389,
+            299.529753698,
+            300.609494974026,
+            300.18468191,
+            300.46692634
+          ],
+          "block_sem": 0.18650622304297698,
+          "block_span": 1.0797412760260272,
+          "frame_count": 5001,
+          "max": 323.651337,
+          "mean": 300.178680025195,
+          "min": 283.541473,
+          "q10": 293.30484,
+          "q50": 300.158722,
+          "q90": 307.058746,
+          "sem": 0.07552146326405879,
+          "std": 5.3407078706044615
+        },
+        {
+          "abs_block_drift": 0.32749574899997924,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            300.085672304,
+            299.89556432,
+            300.2716712347652,
+            300.332027503,
+            300.413168053
+          ],
+          "block_sem": 0.09320939657127111,
+          "block_span": 0.5176037329999872,
+          "frame_count": 5001,
+          "max": 319.868347,
+          "mean": 300.19963509018197,
+          "min": 281.233978,
+          "q10": 293.617828,
+          "q50": 300.213531,
+          "q90": 306.854095,
+          "sem": 0.07392474668998325,
+          "std": 5.227791668961582
+        }
+      ],
+      "sem_abs_block_drift": 0.013985784476955898,
+      "sem_of_means": 0.20883723770458495,
+      "std_of_means": 0.36171670621667995
+    },
+    "Volume": {
+      "available": true,
+      "mean_abs_block_drift": 2.1219810663333285,
+      "mean_block_sem": 0.40073917883429183,
+      "mean_block_span": 2.1528178439999954,
+      "mean_of_means": 39.55544459828034,
+      "pooled_mean": 39.555444598280346,
+      "pooled_q10": 38.502615999999996,
+      "pooled_q50": 39.39957,
+      "pooled_q90": 40.6664842,
+      "pooled_std": 1.1612937724776538,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 1.3539604919999988,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            40.939845682,
+            39.570392351,
+            39.5962060989011,
+            39.63688764,
+            39.58588519
+          ],
+          "block_sem": 0.2687260535958399,
+          "block_span": 1.3694533309999954,
+          "frame_count": 5001,
+          "max": 43.301239,
+          "mean": 39.86578947570486,
+          "min": 38.509079,
+          "q10": 39.151295,
+          "q50": 39.675491,
+          "q90": 40.763618,
+          "sem": 0.011063872373493431,
+          "std": 0.7824121476285071
+        },
+        {
+          "abs_block_drift": 4.2980216259999935,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            42.451772516,
+            39.435950416,
+            38.99156621578422,
+            38.720899209,
+            38.153750890000005
+          ],
+          "block_sem": 0.7543890219527537,
+          "block_span": 4.2980216259999935,
+          "frame_count": 5001,
+          "max": 46.808548,
+          "mean": 39.55067602739452,
+          "min": 37.010948,
+          "q10": 38.07011,
+          "q50": 39.03233,
+          "q90": 41.612171,
+          "sem": 0.02459823259617765,
+          "std": 1.7395316344709395
+        },
+        {
+          "abs_block_drift": 0.7139610809999937,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            39.543171287999996,
+            39.58742492,
+            39.49284572127872,
+            38.796446345,
+            38.829210207
+          ],
+          "block_sem": 0.17910246095428187,
+          "block_span": 0.7909785749999969,
+          "frame_count": 5001,
+          "max": 41.095764,
+          "mean": 39.24986829174165,
+          "min": 38.040653,
+          "q10": 38.663181,
+          "q50": 39.258972,
+          "q90": 39.820984,
+          "sem": 0.006609309437172504,
+          "std": 0.4673954847372018
+        }
+      ],
+      "sem_abs_block_drift": 1.1035947625080953,
+      "sem_of_means": 0.17781711640979164,
+      "std_of_means": 0.3079882800771487
+    }
+  },
   "conditioned_state_handoff": {
-    "available": false,
-    "candidates": [],
-    "selected": null
+    "available": true,
+    "candidates": [
+      {
+        "all_required_files_present": true,
+        "density_distance_rel": 0.0011076245269540696,
+        "density_mean": 1476.43594245051,
+        "files": {
+          "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_02/prod.cpt",
+          "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_02/prod.gro",
+          "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_02/prod.tpr",
+          "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_02/replica_summary.json"
+        },
+        "replica_index": 2,
+        "selection_score": 0.0012281786234695897,
+        "volume_distance_rel": 0.00012055409651552002,
+        "volume_mean": 39.55067602739452
+      },
+      {
+        "all_required_files_present": true,
+        "density_distance_rel": 0.007111829116064917,
+        "density_mean": 1485.290957879424,
+        "files": {
+          "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_03/prod.cpt",
+          "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_03/prod.gro",
+          "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_03/prod.tpr",
+          "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_03/replica_summary.json"
+        },
+        "replica_index": 3,
+        "selection_score": 0.014837094490833948,
+        "volume_distance_rel": 0.007725265374769032,
+        "volume_mean": 39.24986829174165
+      },
+      {
+        "all_required_files_present": true,
+        "density_distance_rel": 0.008219453643018678,
+        "density_mean": 1462.6803450393923,
+        "files": {
+          "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_01/prod.cpt",
+          "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_01/prod.gro",
+          "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_01/prod.tpr",
+          "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_01/replica_summary.json"
+        },
+        "replica_index": 1,
+        "selection_score": 0.01606527311430359,
+        "volume_distance_rel": 0.00784581947128491,
+        "volume_mean": 39.86578947570486
+      }
+    ],
+    "selected": {
+      "all_required_files_present": true,
+      "density_distance_rel": 0.0011076245269540696,
+      "density_mean": 1476.43594245051,
+      "files": {
+        "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_02/prod.cpt",
+        "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_02/prod.gro",
+        "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_02/prod.tpr",
+        "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_02/replica_summary.json"
+      },
+      "replica_index": 2,
+      "selection_score": 0.0012281786234695897,
+      "volume_distance_rel": 0.00012055409651552002,
+      "volume_mean": 39.55067602739452
+    }
   },
   "contract_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_contract.json",
-  "executed": false,
+  "executed": true,
   "failure_reasons": [
-    "Checked-in repository now freezes the Gate I contract, but no completed CPU-only exact long-NPT campaign has been checked in yet."
+    "Density mean relative block drift 0.051429 exceeds 0.050000.",
+    "Density worst-replica relative block drift 0.103388 exceeds 0.080000.",
+    "Volume mean relative block drift 0.053646 exceeds 0.050000.",
+    "Volume worst-replica relative block drift 0.108671 exceeds 0.080000."
   ],
-  "first_failing_metric": "execution_state.not_run",
+  "first_failing_metric": "Density.mean_abs_block_drift_rel",
   "gate_id": "gate_i_cpu_exact_charged_long_npt_conditioning",
   "non_claims": [
     "A declared Gate I contract is not a passed gate.",
@@ -44,7 +805,82 @@
     "ns_per_day": 2.647,
     "reference_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log"
   },
-  "prepared_only": true,
+  "prepared_only": false,
+  "primary_gate_metrics": {
+    "Density": {
+      "available": true,
+      "cross_replica_span_rel": 0.015331282759083596,
+      "max_replica_abs_block_drift_rel": 0.1033884091413039,
+      "mean_abs_block_drift": 75.84745768366663,
+      "mean_abs_block_drift_rel": 0.051428894410466025,
+      "mean_of_means": 1474.8024151231086,
+      "per_replica_abs_block_drift_rel": [
+        0.03277148628103646,
+        0.1033884091413039,
+        0.018152538233649297
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 22.610612840031763,
+      "replica_means": [
+        1462.6803450393923,
+        1476.43594245051,
+        1485.290957879424
+      ],
+      "sem_of_means": 6.578025587704299,
+      "std_of_means": 11.393474531391968
+    },
+    "Temperature": {
+      "available": true,
+      "cross_replica_span_rel": 0.002122559808758982,
+      "max_replica_abs_block_drift_rel": 0.0012153226570566361,
+      "mean_abs_block_drift": 0.3372358729999784,
+      "mean_abs_block_drift_rel": 0.001124192994153309,
+      "mean_abs_error_k": 0.01959205058989255,
+      "mean_of_means": 299.9804079494101,
+      "per_replica_abs_block_drift_rel": [
+        0.0010662131715539504,
+        0.0012153226570566361,
+        0.0010909265392730985
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 0.6367263573285413,
+      "replica_means": [
+        299.56290873285343,
+        300.178680025195,
+        300.19963509018197
+      ],
+      "sem_of_means": 0.20883723770458495,
+      "std_of_means": 0.36171670621667995,
+      "target_temperature_k": 300.0
+    },
+    "Volume": {
+      "available": true,
+      "cross_replica_span_rel": 0.015571084846053943,
+      "max_replica_abs_block_drift_rel": 0.10867125565750119,
+      "mean_abs_block_drift": 2.1219810663333285,
+      "mean_abs_block_drift_rel": 0.05364573923726245,
+      "mean_of_means": 39.55544459828034,
+      "per_replica_abs_block_drift_rel": [
+        0.03396296699015917,
+        0.10867125565750119,
+        0.018190152274987745
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 0.6159211839632093,
+      "replica_means": [
+        39.86578947570486,
+        39.55067602739452,
+        39.24986829174165
+      ],
+      "sem_of_means": 0.17781711640979164,
+      "std_of_means": 0.3079882800771487
+    }
+  },
+  "replica_summaries": [
+    "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_01/replica_summary.json",
+    "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_02/replica_summary.json",
+    "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning/cpu/replica_03/replica_summary.json"
+  ],
   "run_settings": {
     "compressibility_bar_inv": 4.5e-05,
     "equil_ps": 250.0,
@@ -62,6 +898,118 @@
   "schema_name": "gate_i_charged_long_npt_conditioning",
   "schema_version": 1,
   "scope": "CPU-only single-rank exact-r-RESPA charged large/medium long-NPT conditioning gate",
-  "status": "DECLARED_PENDING_EXECUTION",
+  "status": "FAIL",
+  "support_metrics": {
+    "Box-X": {
+      "available": true,
+      "cross_replica_span_rel": 0.005164314796862822,
+      "max_replica_abs_block_drift_rel": 0.03562600991084973,
+      "mean_abs_block_drift": 0.06005395666666683,
+      "mean_abs_block_drift_rel": 0.0176270520446796,
+      "mean_of_means": 3.4069200291941613,
+      "per_replica_abs_block_drift_rel": [
+        0.011186763250787025,
+        0.03562600991084973,
+        0.006059297721794959
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 0.017594407518495725,
+      "replica_means": [
+        3.415979326934613,
+        3.4063958412317534,
+        3.398384919416117
+      ],
+      "sem_of_means": 0.00508582585056005,
+      "std_of_means": 0.008808908771617207
+    },
+    "Box-Y": {
+      "available": true,
+      "cross_replica_span_rel": 0.005164314796862822,
+      "max_replica_abs_block_drift_rel": 0.03562600991084973,
+      "mean_abs_block_drift": 0.06005395666666683,
+      "mean_abs_block_drift_rel": 0.0176270520446796,
+      "mean_of_means": 3.4069200291941613,
+      "per_replica_abs_block_drift_rel": [
+        0.011186763250787025,
+        0.03562600991084973,
+        0.006059297721794959
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 0.017594407518495725,
+      "replica_means": [
+        3.415979326934613,
+        3.4063958412317534,
+        3.398384919416117
+      ],
+      "sem_of_means": 0.00508582585056005,
+      "std_of_means": 0.008808908771617207
+    },
+    "Box-Z": {
+      "available": true,
+      "cross_replica_span_rel": 0.005164314796862822,
+      "max_replica_abs_block_drift_rel": 0.03562600991084973,
+      "mean_abs_block_drift": 0.06005395666666683,
+      "mean_abs_block_drift_rel": 0.0176270520446796,
+      "mean_of_means": 3.4069200291941613,
+      "per_replica_abs_block_drift_rel": [
+        0.011186763250787025,
+        0.03562600991084973,
+        0.006059297721794959
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 0.017594407518495725,
+      "replica_means": [
+        3.415979326934613,
+        3.4063958412317534,
+        3.398384919416117
+      ],
+      "sem_of_means": 0.00508582585056005,
+      "std_of_means": 0.008808908771617207
+    },
+    "Potential": {
+      "available": true,
+      "cross_replica_span_rel": 0.0027013799182362417,
+      "max_replica_abs_block_drift_rel": 0.010786620873147273,
+      "mean_abs_block_drift": 1269.7412083333377,
+      "mean_abs_block_drift_rel": 0.005816169874777303,
+      "mean_of_means": -218312.2631681997,
+      "per_replica_abs_block_drift_rel": [
+        0.004168422588984374,
+        0.010786620873147273,
+        0.002487511610050161
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 589.7443636272801,
+      "replica_means": [
+        -218553.21825634874,
+        -218420.09735552888,
+        -217963.47389272146
+      ],
+      "sem_of_means": 178.57842588551543,
+      "std_of_means": 309.3069067693859
+    },
+    "Pressure": {
+      "available": true,
+      "cross_replica_span_rel": 1.8632965140791593,
+      "max_replica_abs_block_drift_rel": 10.302272300927664,
+      "mean_abs_block_drift": 38.982393039,
+      "mean_abs_block_drift_rel": 1.7729546076935365,
+      "mean_of_means": 21.98724821822302,
+      "per_replica_abs_block_drift_rel": [
+        1.3236767468168644,
+        10.302272300927664,
+        0.7555996386286656
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 40.968762959208156,
+      "replica_means": [
+        12.411458150569885,
+        6.290761772445511,
+        47.25952473165367
+      ],
+      "sem_of_means": 12.75907129805784,
+      "std_of_means": 22.099359745629965
+    }
+  },
   "system_id": "gate_h_dense_salt_polymer_2x2x2"
 }

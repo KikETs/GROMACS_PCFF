@@ -90,6 +90,24 @@ PERFORMANCE_RE = re.compile(
 )
 
 
+def rehome_repo_artifact_path(path_value: str | Path) -> Path:
+    """Map checked-in absolute artifact paths onto the current repository root."""
+
+    candidate = Path(path_value)
+    if candidate.exists():
+        return candidate
+
+    if candidate.is_absolute():
+        parts = candidate.parts
+        if "GROMACS_PCFF" in parts:
+            repo_index = parts.index("GROMACS_PCFF")
+            rebased = REPO_ROOT.joinpath(*parts[repo_index + 1 :])
+            if rebased.exists():
+                return rebased
+
+    return candidate
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Freeze and optionally execute the CPU-only exact-r-RESPA charged long-NPT conditioning gate."
@@ -800,8 +818,8 @@ def main() -> int:
     logs_dir.mkdir(parents=True, exist_ok=True)
 
     gmx = Path(args.gmx)
-    top_path = Path(str(scaffold_manifest["artifacts"]["topology"]))
-    gro_path = Path(str(scaffold_manifest["artifacts"]["gro"]))
+    top_path = rehome_repo_artifact_path(scaffold_manifest["artifacts"]["topology"])
+    gro_path = rehome_repo_artifact_path(scaffold_manifest["artifacts"]["gro"])
     env = base_env(args)
     commands: list[dict[str, object]] = []
     replica_runs: list[dict[str, object]] = []
