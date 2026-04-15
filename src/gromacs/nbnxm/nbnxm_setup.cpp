@@ -416,7 +416,7 @@ static std::optional<LJCombinationRule> chooseLJCombinationRule(const t_forcerec
 {
     if (!gmx_within_tol(forcerec.ic->vdw.repulsionPower, 12.0, 10 * GMX_DOUBLE_EPS))
     {
-        /* Non-12 repulsion uses the explicit pair matrix as the CPU reference path. */
+        /* Non-12 repulsion uses the explicit pair matrix. This now also covers the admitted CPU SIMD 9-6 path. */
         return LJCombinationRule::None;
     }
 

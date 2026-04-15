@@ -1438,6 +1438,40 @@ bool exactRespaLogMentionsThreadAffinityNotSet(const std::string& logContents)
     return logContents.find("NOTE: Thread affinity was not set.") != std::string::npos;
 }
 
+bool logMentionsCpuSimdNonbondedKernel(const std::string& logContents)
+{
+    return logContents.find("Using SIMD4xM") != std::string::npos
+           || logContents.find("Using SIMD2xMM") != std::string::npos;
+}
+
+bool logMentionsPlainCNonbondedKernel(const std::string& logContents)
+{
+    return logContents.find("Using plain-C-4x4") != std::string::npos
+           || logContents.find("Using plain-C-1x1") != std::string::npos;
+}
+
+void expectRepulsionPower9CpuSimdAdmissionLog(const std::string& systemId, const std::string& logContents)
+{
+    EXPECT_NE(logContents.find("Detected LJ repulsion power 9."), std::string::npos)
+            << systemId << " log is missing the repulsion-power-9 marker";
+    EXPECT_NE(logContents.find("Enabling the validated CPU SIMD short-range exact LJ 9-6 non-bonded path."),
+              std::string::npos)
+            << systemId << " log is missing the repulsion-power-9 SIMD admission marker";
+    EXPECT_TRUE(logMentionsCpuSimdNonbondedKernel(logContents))
+            << systemId << " log is missing the CPU SIMD nonbonded kernel selection";
+    EXPECT_EQ(logContents.find("Disabling SIMD non-bonded kernels"), std::string::npos)
+            << systemId << " log still reports the legacy plain-C fallback";
+}
+
+void expectPlainCReferenceLog(const std::string& systemId, const std::string& logContents)
+{
+    EXPECT_NE(logContents.find("Found environment variable GMX_DISABLE_SIMD_KERNELS."),
+              std::string::npos)
+            << systemId << " log is missing the explicit plain-C reference marker";
+    EXPECT_TRUE(logMentionsPlainCNonbondedKernel(logContents))
+            << systemId << " log is missing the plain-C nonbonded kernel selection";
+}
+
 void expectExactRespaAffinityLogEvidence(const std::string&   systemId,
                                          const std::string&   logContents,
                                          const ExactRespaPinMode pinMode,
@@ -1692,6 +1726,122 @@ TEST_P(PcffSinglePointParityTest, MatchesFrozenLammpsSinglePointForces)
     }
 
     EXPECT_LE(maxAbsDelta, componentTolerance) << systemId << " maximum force component delta";
+}
+
+CommandLine makeCpuSinglePointMdrunCaller()
+{
+    CommandLine caller;
+    caller.addOption("-notunepme");
+    caller.addOption("-nb", "cpu");
+    caller.addOption("-pme", "cpu");
+    caller.addOption("-bonded", "cpu");
+    caller.addOption("-update", "cpu");
+    return caller;
+}
+
+struct RuntimeSinglePointParityResult
+{
+    std::map<std::string, double> breakdownKcalMol;
+    std::vector<RVec>             forces;
+    std::string                   logContents;
+};
+
+RuntimeSinglePointParityResult runSinglePointParitySimulation(SimulationRunner* runner,
+                                                              const CommandLine& caller)
+{
+    EXPECT_EQ(0, runner->callMdrun(caller));
+
+    RuntimeSinglePointParityResult result;
+    result.breakdownKcalMol = readStep0EnergyBreakdown(runner->edrFileName_);
+    TrajectoryFrameReader reader(runner->fullPrecisionTrajectoryFileName_);
+    const auto            frameForces = reader.frame().f();
+    std::ifstream         logInput(runner->logFileName_);
+    GMX_RELEASE_ASSERT(logInput.is_open(), "Could not open file for reading");
+    std::ostringstream logContents;
+    result.forces.assign(frameForces.begin(), frameForces.end());
+    logContents << logInput.rdbuf();
+    result.logContents = logContents.str();
+    return result;
+}
+
+TEST_P(PcffSinglePointParityTest, CpuSimdNineSixMatchesPlainCReference)
+{
+    const std::string systemId(GetParam());
+    const auto        fixtureRoot = m4ReferenceRoot(systemId);
+
+    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
+    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
+    runner_.useStringAsMdpFile(makeSinglePointMdp());
+    runner_.setMaxWarn(1);
+    runner_.tprFileName_ = fileManager_.getTemporaryFilePath(systemId + "-single-point-simd-admission.tpr").string();
+
+    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId;
+
+    SimulationRunner simdRunner  = runner_;
+    SimulationRunner plainRunner = runner_;
+    assignRunnerOutputs(&simdRunner, &fileManager_, systemId + "-single-point-simd");
+    assignRunnerOutputs(&plainRunner, &fileManager_, systemId + "-single-point-plainc");
+
+    const auto simdResult = runSinglePointParitySimulation(&simdRunner, makeCpuSinglePointMdrunCaller());
+
+    RuntimeSinglePointParityResult plainResult;
+    {
+        const ScopedEnvironmentVariable disableSimd("GMX_DISABLE_SIMD_KERNELS", std::string("1"));
+        plainResult = runSinglePointParitySimulation(&plainRunner, makeCpuSinglePointMdrunCaller());
+    }
+
+    expectRepulsionPower9CpuSimdAdmissionLog(systemId + " simd", simdResult.logContents);
+    expectPlainCReferenceLog(systemId + " plainC", plainResult.logContents);
+
+    const double breakdownToleranceKcalMol = 5e-4;
+    for (const auto& [name, plainValue] : plainResult.breakdownKcalMol)
+    {
+        const auto simdIt = simdResult.breakdownKcalMol.find(name);
+        ASSERT_NE(simdIt, simdResult.breakdownKcalMol.end()) << "Missing single-point breakdown term " << name;
+        EXPECT_NEAR(simdIt->second, plainValue, breakdownToleranceKcalMol)
+                << systemId << " single-point energy drift for " << name;
+    }
+
+    ASSERT_EQ(gmx::ssize(simdResult.forces), gmx::ssize(plainResult.forces)) << systemId;
+    const double forceToleranceKjMolNm = 3e-4;
+    for (Index atom = 0; atom < ssize(simdResult.forces); ++atom)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            EXPECT_NEAR(simdResult.forces[atom][d], plainResult.forces[atom][d], forceToleranceKjMolNm)
+                    << systemId << " atom=" << atom << " dim=" << d;
+        }
+    }
+
+    const std::vector<std::string> virialTerms = {
+        "Vir-XX",
+        "Vir-XY",
+        "Vir-XZ",
+        "Vir-YX",
+        "Vir-YY",
+        "Vir-YZ",
+        "Vir-ZX",
+        "Vir-ZY",
+        "Vir-ZZ",
+    };
+    const auto simdEnergyFrames  = readEnergyFrames(simdRunner.edrFileName_, virialTerms);
+    const auto plainEnergyFrames = readEnergyFrames(plainRunner.edrFileName_, virialTerms);
+    ASSERT_EQ(simdEnergyFrames.size(), 1U) << systemId;
+    ASSERT_EQ(plainEnergyFrames.size(), 1U) << systemId;
+
+    TrajectoryFrameReader simdTrajectoryReader(simdRunner.fullPrecisionTrajectoryFileName_);
+    TrajectoryFrameReader plainTrajectoryReader(plainRunner.fullPrecisionTrajectoryFileName_);
+    const auto simdVirial  = step0VirialPressureTensorAtm(simdEnergyFrames.front(), simdTrajectoryReader.frame().box());
+    const auto plainVirial = step0VirialPressureTensorAtm(plainEnergyFrames.front(), plainTrajectoryReader.frame().box());
+
+    const double virialToleranceAtm = 5e-2;
+    for (const auto& [name, plainValue] : plainVirial)
+    {
+        const auto simdIt = simdVirial.find(name);
+        ASSERT_NE(simdIt, simdVirial.end()) << "Missing virial-pressure term " << name;
+        EXPECT_NEAR(simdIt->second, plainValue, virialToleranceAtm)
+                << systemId << " single-point virial drift for " << name;
+    }
 }
 
 #if GMX_GPU_CUDA
@@ -3837,6 +3987,45 @@ void expectExactRespaOpenMpParityAgainstOracle(const std::string&               
     EXPECT_LE(coordinateMax, coordinateMaxToleranceNm) << systemId << " exact r-RESPA coordinate max drift";
     EXPECT_LE(velocityRms, velocityRmsToleranceNmPerPs) << systemId << " exact r-RESPA velocity RMS drift";
     EXPECT_LE(velocityMax, velocityMaxToleranceNmPerPs) << systemId << " exact r-RESPA velocity max drift";
+}
+
+TEST_P(PcffRespaObservableDumpTest, ExactRespaCpuSimdMatchesPlainCReference)
+{
+    const std::string systemId(GetParam());
+    const auto        fixtureRoot = repoRoot() / "tests" / "reference_results" / "m6_respa" / systemId;
+
+    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
+    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
+    runner_.useStringAsMdpFile(makeRespaNveMdp());
+    runner_.setMaxWarn(1);
+    runner_.tprFileName_ = fileManager_.getTemporaryFilePath(systemId + "-exact-respa-simd-admission.tpr").string();
+
+    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " exact respa";
+
+    CommandLine cpuOnlyCaller = makeExactRespaCpuOnlyCaller("off");
+
+    ExactRespaOpenMpParityResult plainResult;
+    {
+        const ScopedMdrunTestOpenMPThreads plainThreads(1);
+        const ScopedEnvironmentVariable    disableSimd("GMX_DISABLE_SIMD_KERNELS", std::string("1"));
+        plainResult = runExactRespaOpenMpParitySimulation(
+                &runner_, &fileManager_, systemId + "-exact-respa-plainc", cpuOnlyCaller, systemId);
+    }
+
+    ExactRespaOpenMpParityResult simdResult;
+    {
+        const ScopedMdrunTestOpenMPThreads simdThreads(1);
+        simdResult = runExactRespaOpenMpParitySimulation(
+                &runner_, &fileManager_, systemId + "-exact-respa-simd", cpuOnlyCaller, systemId);
+    }
+
+    expectPlainCReferenceLog(systemId + " exact plainC", plainResult.logContents);
+    expectRepulsionPower9CpuSimdAdmissionLog(systemId + " exact simd", simdResult.logContents);
+    expectExactRespaPerLevelOwnershipAudit(systemId + " exact plainC", plainResult);
+    expectExactRespaPerLevelOwnershipAudit(systemId + " exact simd", simdResult);
+    expectExactRespaHybridPerTermForceVisibility(systemId + " exact plainC", plainResult);
+    expectExactRespaHybridPerTermForceVisibility(systemId + " exact simd", simdResult);
+    expectExactRespaOpenMpParityAgainstOracle(systemId, plainResult, simdResult);
 }
 
 void expectExactRespaRestartParityOutputs(const std::string& systemId,

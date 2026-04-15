@@ -927,7 +927,15 @@ void init_forcerec(FILE*                            fplog,
 
     if (!gmx_within_tol(interactionConst->vdw.repulsionPower, 12.0, 10 * GMX_DOUBLE_EPS))
     {
-        if (usingLJPme(interactionConst->vdw.type) && !gmx_within_tol(interactionConst->vdw.repulsionPower, 9.0, 10 * GMX_DOUBLE_EPS))
+        const bool repulsionPowerIsNine =
+                gmx_within_tol(interactionConst->vdw.repulsionPower, 9.0, 10 * GMX_DOUBLE_EPS);
+        const bool validatedCpuSimdShortRangeNineSixPath =
+                repulsionPowerIsNine && !forcerec->haveBuckingham
+                && interactionConst->vdw.type == VanDerWaalsType::Cut
+                && (interactionConst->vdw.modifier == InteractionModifiers::None
+                    || interactionConst->vdw.modifier == InteractionModifiers::PotShift);
+
+        if (usingLJPme(interactionConst->vdw.type) && !repulsionPowerIsNine)
         {
             gmx_fatal(FARGS, "Only LJ repulsion power 12 or 9 is supported with LJ-PME in this build");
         }
@@ -941,12 +949,24 @@ void init_forcerec(FILE*                            fplog,
             gmx_fatal(FARGS, "Non-12 LJ repulsion power is not supported with free-energy perturbation");
         }
 
-        forcerec->use_simd_kernels = FALSE;
-        if (fplog != nullptr)
+        if (!validatedCpuSimdShortRangeNineSixPath)
+        {
+            forcerec->use_simd_kernels = FALSE;
+            if (fplog != nullptr)
+            {
+                fprintf(fplog,
+                        "\nDetected LJ repulsion power %.0f.\n"
+                        "No validated SIMD non-bonded path is available for this runtime shape.\n"
+                        "Disabling SIMD non-bonded kernels and using plain-C reference kernels.\n\n",
+                        interactionConst->vdw.repulsionPower);
+            }
+        }
+        else if (forcerec->use_simd_kernels && fplog != nullptr)
         {
             fprintf(fplog,
                     "\nDetected LJ repulsion power %.0f.\n"
-                    "Disabling SIMD non-bonded kernels and using plain-C reference kernels.\n\n",
+                    "Enabling the validated CPU SIMD short-range exact LJ 9-6 non-bonded path.\n"
+                    "Unsupported modes remain outside this admission scope.\n\n",
                     interactionConst->vdw.repulsionPower);
         }
     }
