@@ -1,9 +1,10 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "pass": true,
+  "support_claim_allowed": true,
   "mechanics_claim_allowed": true,
-  "production_rule_allowed": true,
-  "thread_scaling_rule_allowed": true,
+  "production_rule_allowed": false,
+  "thread_scaling_rule_allowed": false,
   "scientific_md_production_handoff_implied": false,
   "g1_infra_allowed": true,
   "g4_infra_allowed": true,
@@ -22,7 +23,20 @@
       "recurring_backend_attested": true,
       "report_filename": "amd_ryzen_7_5800x_low_core_workstation_lab.json",
       "canonical_filename_ok": true,
-      "rule_candidate_ready": true
+      "validated_pin_modes": [
+        "auto",
+        "on",
+        "inherit"
+      ],
+      "supported_thread_counts": [
+        2,
+        6
+      ],
+      "correctness_only_scope_statement": "None. No checked-in parity/restart artifact extends support beyond the discrete audited ntomp buckets.",
+      "support_scope_ready": true,
+      "host_local_benchmark_ready": true,
+      "host_local_benchmark_ceiling_threads": 8,
+      "host_local_benchmark_basis": "one_l3_group_plateau_95pct"
     },
     {
       "host_label": "9900x-kiket-local",
@@ -38,7 +52,20 @@
       "recurring_backend_attested": true,
       "report_filename": "amd_ryzen_9_9900x_numa_or_chiplet.json",
       "canonical_filename_ok": true,
-      "rule_candidate_ready": true
+      "validated_pin_modes": [
+        "auto",
+        "on",
+        "inherit"
+      ],
+      "supported_thread_counts": [
+        2,
+        6
+      ],
+      "correctness_only_scope_statement": "None. No checked-in parity/restart artifact extends support beyond the discrete audited ntomp buckets.",
+      "support_scope_ready": true,
+      "host_local_benchmark_ready": true,
+      "host_local_benchmark_ceiling_threads": 6,
+      "host_local_benchmark_basis": "one_l3_group_plateau_95pct"
     },
     {
       "host_label": "user-Z690-AORUS-PRO",
@@ -54,17 +81,119 @@
       "recurring_backend_attested": true,
       "report_filename": "intel_i9_12900k_mid_core_hybrid_desktop.json",
       "canonical_filename_ok": true,
-      "rule_candidate_ready": true
+      "validated_pin_modes": [
+        "auto",
+        "on",
+        "inherit"
+      ],
+      "supported_thread_counts": [
+        2,
+        6
+      ],
+      "correctness_only_scope_statement": "None. No checked-in parity/restart artifact extends support beyond the discrete audited ntomp buckets.",
+      "support_scope_ready": true,
+      "host_local_benchmark_ready": true,
+      "host_local_benchmark_ceiling_threads": 1,
+      "host_local_benchmark_basis": "one_l3_group_plateau_95pct"
     }
   ],
   "blockers": [],
   "mechanics_blockers": [],
-  "production_rule_blockers": [],
+  "host_local_observation_blockers": [],
   "infra_blockers": [],
-  "final_allowed_claim": "For single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, an affinity-enabled desktop-class exact CPU OpenMP mechanics claim is allowed and a shared one-L3 plateau-knee OpenMP thread-scaling envelope is allowed across the tested hosts. This is a host-local throughput statement only; it does not imply MD production handoff, ensemble readiness, transport readiness, does not cover server CPUs, and does not imply MPI or GPU coexistence support.",
-  "scope_note": "In this summary, the legacy `production_rule` name refers only to an OpenMP thread-scaling or throughput envelope derived from host-local benchmarks. It does not mean MD production handoff, ensemble convergence, or transport readiness.",
+  "final_allowed_claim": "For single-rank, CPU-only, standalone exact r-RESPA on the tested low-core-workstation, mid-core-hybrid-desktop, and numa-or-chiplet desktop/workstation hosts, exact CPU OpenMP support is limited to the audited ntomp>1 buckets `ntompSmall` and `ntompCeiling` under `-pin auto`, `-pin on`, and `-pin inherit`, backed by oracle parity and restart parity on `small_oligomer` and `small_salt_polymer_box` in both release and TSAN suites. In the current checked-in host inventory, those audited buckets resolve to `ntomp=2` and `ntomp=6` on every tested host. This is a discrete mechanics claim only: `ntomp=1` remains the oracle baseline, host-local throughput benchmarks do not broaden the envelope, intermediate or larger ntomp counts remain unsupported, and the claim does not imply MD production handoff, ensemble readiness, transport readiness, does not cover server CPUs, and does not imply MPI or GPU coexistence support.",
+  "scope_note": "This summary freezes a bounded CPU OpenMP mechanics claim only. Host-local benchmark throughput observations are reported separately and do not create supported or correctness-only ntomp counts.",
+  "supported_envelope": {
+    "statement": "Supported CPU OpenMP mechanics are limited to the audited discrete ntomp>1 buckets `ntompSmall` and `ntompCeiling` under `-pin auto`, `-pin on`, and `-pin inherit` on the tested low-core-workstation, mid-core-hybrid-desktop, and numa-or-chiplet desktop/workstation hosts. In the current checked-in host inventory, those audited buckets resolve to `ntomp=2` and `ntomp=6` on every tested host.",
+    "single_rank_only": true,
+    "cpu_only": true,
+    "tested_topology_classes": [
+      "low-core-workstation",
+      "mid-core-hybrid-desktop",
+      "numa-or-chiplet"
+    ],
+    "validated_systems": [
+      "small_oligomer",
+      "small_salt_polymer_box"
+    ],
+    "validated_pin_modes": [
+      "auto",
+      "on",
+      "inherit"
+    ],
+    "validated_probe_labels": [
+      "ntompSmall",
+      "ntompCeiling"
+    ],
+    "shared_resolved_thread_counts": [
+      2,
+      6
+    ],
+    "resolved_thread_counts_by_host": {
+      "Lab": [
+        2,
+        6
+      ],
+      "9900x-kiket-local": [
+        2,
+        6
+      ],
+      "user-Z690-AORUS-PRO": [
+        2,
+        6
+      ]
+    }
+  },
+  "correctness_only_envelope": {
+    "status": "none",
+    "statement": "None. No checked-in parity/restart artifact extends CPU OpenMP support from the audited discrete ntomp buckets to intermediate counts, larger counts, or benchmark-only runs."
+  },
+  "unsupported_or_weak_shapes": [
+    "ntomp=1 is the oracle baseline and is not counted as CPU OpenMP support.",
+    "Intermediate ntomp>1 counts between the audited buckets are mechanically unvalidated.",
+    "Counts above the audited ntomp ceiling are mechanically unvalidated.",
+    "Host-local `-pin inherit` throughput scans are benchmark observations only and do not create supported or correctness-only ntomp counts.",
+    "Server CPUs, untested topology classes, MPI, GPU coexistence, and non-audited affinity/runtime shapes remain unsupported or unproven."
+  ],
+  "host_local_throughput_observations": {
+    "scope_note": "These host-local throughput observations come from benchmark-only `-pin inherit` scans. They are throughput notes only and do not broaden the supported CPU OpenMP mechanics envelope.",
+    "shared_basis": "one_l3_group_plateau_95pct",
+    "shared_rule_text": "Within one L3 or CCD-equivalent locality group, host-local throughput often plateaus before larger thread counts, but those benchmark observations do not expand the mechanically supported CPU OpenMP envelope.",
+    "per_host": [
+      {
+        "host_label": "Lab",
+        "topology_class": "low-core-workstation",
+        "basis": "one_l3_group_plateau_95pct",
+        "ceiling_threads_on_this_host": 8,
+        "best_shape": "one_l3_phys",
+        "best_ntomp": 6,
+        "best_ns_per_day": 785.78,
+        "plateau_threshold_ns_per_day": 746.491
+      },
+      {
+        "host_label": "9900x-kiket-local",
+        "topology_class": "numa-or-chiplet",
+        "basis": "one_l3_group_plateau_95pct",
+        "ceiling_threads_on_this_host": 6,
+        "best_shape": "one_l3_all_threads",
+        "best_ntomp": 6,
+        "best_ns_per_day": 1325.995,
+        "plateau_threshold_ns_per_day": 1259.6952499999998
+      },
+      {
+        "host_label": "user-Z690-AORUS-PRO",
+        "topology_class": "mid-core-hybrid-desktop",
+        "basis": "one_l3_group_plateau_95pct",
+        "ceiling_threads_on_this_host": 1,
+        "best_shape": "one_l3_phys",
+        "best_ntomp": 1,
+        "best_ns_per_day": 535.166,
+        "plateau_threshold_ns_per_day": 508.40770000000003
+      }
+    ]
+  },
   "desktop_mechanics_claim": {
-    "rule_text": "Across the tested desktop/workstation topology classes, single-rank CPU-only standalone exact r-RESPA preserved exact affinity-enabled mechanical checks on every host. This mechanics claim is separate from the shared OpenMP thread-scaling decision, does not cover server CPUs, and does not imply MD production handoff, ensemble readiness, transport readiness, MPI, or GPU coexistence support.",
+    "rule_text": "Across the tested desktop/workstation topology classes, single-rank CPU-only standalone exact r-RESPA preserved exact ntomp>1 oracle parity and restart parity on the audited `ntompSmall` and `ntompCeiling` buckets under `-pin auto`, `-pin on`, and `-pin inherit`. This is a discrete mechanics claim only; it does not interpolate to intermediate or larger ntomp counts, does not cover server CPUs, and does not imply MD production handoff, ensemble readiness, transport readiness, MPI, or GPU coexistence support.",
     "server_cpu_status": "unvalidated",
     "tsan_requirement_relaxed": false
   },
@@ -74,12 +203,5 @@
     "tsan_requirement_relaxed": false,
     "recurring_automation_required": true
   },
-  "aggregated_rule": {
-    "production_rule": "Within one L3 or CCD-equivalent locality group, the shared OpenMP thread-scaling ceiling extends up to the host-local throughput plateau knee, defined as the highest tested thread count still within 95% of the best exact rate observed in that locality group",
-    "thread_scaling_rule": "Within one L3 or CCD-equivalent locality group, the shared OpenMP thread-scaling ceiling extends up to the host-local throughput plateau knee, defined as the highest tested thread count still within 95% of the best exact rate observed in that locality group",
-    "production_basis": "one_l3_group_plateau_95pct",
-    "scope_note": "This rule governs host-local OpenMP thread scaling only. It is not a scientific MD production-readiness or transport-readiness statement.",
-    "correctness_only_rule": "Above the production locality ceiling but within mechanically validated thread counts on each tested host",
-    "unsupported_or_unproven_rule": "Server CPUs, untested topology classes, unvalidated affinity/runtime shapes, or thread counts beyond measured host limits"
-  }
+  "aggregated_rule": null
 }

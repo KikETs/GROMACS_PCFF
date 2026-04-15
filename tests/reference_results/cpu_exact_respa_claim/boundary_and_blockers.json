@@ -5,7 +5,7 @@
   "exact_scope": {
     "mechanics": {
       "status": "closed",
-      "statement": "Exact CPU mechanics are frozen by Gate A on `small_oligomer` and `small_salt_polymer_box`, then broadened to tested desktop/workstation OpenMP topology classes by the checked-in exact OpenMP host-report inventory. This is a mechanical correctness claim, not a transport or generic ensemble claim.",
+      "statement": "Exact CPU mechanics are frozen by Gate A on `small_oligomer` and `small_salt_polymer_box`, then extended to a bounded OpenMP claim on the tested desktop/workstation topology classes by the checked-in exact OpenMP host-report inventory. That OpenMP claim is limited to the discrete audited ntomp>1 buckets `ntompSmall` and `ntompCeiling` under `-pin auto`, `-pin on`, and `-pin inherit`; there is no correctness-only envelope beyond those buckets. This is a mechanical correctness claim, not a transport or generic ensemble claim.",
       "basis": [
         "tests/reference_results/gate_a_cpu_oracle/oracle_manifest.json",
         "tests/reference_results/cpu_exact_respa_claim/openmp_validation_summary.json"

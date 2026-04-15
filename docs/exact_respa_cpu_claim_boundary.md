@@ -9,16 +9,26 @@ It is also intentionally narrower than any transport-facing discussion.
 
 Use this sentence for the current CPU exact `r-RESPA` state:
 
-> Current evidence supports a narrow CPU exact-r-RESPA claim: for single-rank, CPU-only, standalone exact r-RESPA on tested desktop/workstation CPUs, exact event order, restart continuity, and small-fixture mechanical behavior are frozen on the Gate A oracle, and a desktop-class exact CPU OpenMP mechanics claim is allowed across the tested low-core, hybrid-desktop, and chiplet workstation classes. Exact long-run ensemble evidence is still narrow: Gate G passes a 40 ps NVT `small_oligomer` check and a 40 ps NPT `small_salt_polymer_box` check, but those are small-fixture gates only. Gate H reuses the exact NVT path on larger transport scaffolds, yet transport production remains NO-GO, and charged medium-scale long-NPT density conditioning is still missing. This claim does not imply conductivity-production readiness, LAMMPS-vs-GROMACS transport parity, generic medium-scale NPT convergence, server-CPU coverage, MPI support, or GPU coexistence support.
+> Current evidence supports a narrow CPU exact-r-RESPA claim: for single-rank, CPU-only, standalone exact r-RESPA, exact event order, restart continuity, and small-fixture mechanical behavior are frozen on the Gate A oracle, and a bounded exact CPU OpenMP mechanics claim is allowed across the tested low-core, hybrid-desktop, and chiplet workstation classes only for the audited ntomp>1 buckets `ntompSmall` and `ntompCeiling` under `-pin auto`, `-pin on`, and `-pin inherit`. That OpenMP claim is discrete, not a continuous ntomp envelope: ntomp=1 remains the oracle baseline, host-local throughput benchmarks do not broaden support, and intermediate or larger ntomp counts remain unsupported. Exact long-run ensemble evidence is still narrow: Gate G passes a 40 ps NVT `small_oligomer` check and a 40 ps NPT `small_salt_polymer_box` check, but those are small-fixture gates only. Gate H reuses the exact NVT path on larger transport scaffolds, yet transport production remains NO-GO, and charged medium-scale long-NPT density conditioning is still missing. This claim does not imply conductivity-production readiness, LAMMPS-vs-GROMACS transport parity, generic medium-scale NPT convergence, server-CPU coverage, MPI support, or GPU coexistence support.
 
 ## What Is Closed
 
 - Gate A freezes CPU-only exact event order, per-level force totals, total-force ledgers, and restart continuity on `small_oligomer` and `small_salt_polymer_box`.
-- The checked-in exact OpenMP host inventory supports a desktop/workstation CPU mechanics claim on the tested low-core, hybrid-desktop, and chiplet classes.
-  Its shared plateau-knee rule is an OpenMP thread-scaling envelope only, not an MD production handoff.
+- The checked-in exact OpenMP host inventory supports a bounded desktop/workstation CPU mechanics claim on the tested low-core, hybrid-desktop, and chiplet classes.
+  That claim is limited to the audited ntomp>1 buckets `ntompSmall` and `ntompCeiling` under `-pin auto`, `-pin on`, and `-pin inherit`.
+- No correctness-only OpenMP envelope is currently closed beyond those discrete buckets.
 - Gate G closes a narrow exact ensemble boundary on small fixtures:
   `small_oligomer` NVT `PASS`
   `small_salt_polymer_box` NPT `PASS`
+
+## CPU OpenMP Envelope
+
+- Supported:
+  On the tested low-core-workstation, mid-core-hybrid-desktop, and numa-or-chiplet desktop/workstation hosts, single-rank CPU-only standalone exact `r-RESPA` passes ntomp>1 oracle parity and restart parity for the audited `ntompSmall` and `ntompCeiling` buckets under `-pin auto`, `-pin on`, and `-pin inherit`.
+- Correctness-only:
+  None. No checked-in artifact extends support from those audited buckets to intermediate ntomp values, larger ntomp values, or benchmark-only runs.
+- Weak or unsupported:
+  `ntomp=1` is the oracle baseline only; benchmark-only `-pin inherit` throughput scans remain host-local observations only; intermediate counts, counts above the audited ceiling, server CPUs, MPI, GPU coexistence, and non-audited affinity/runtime shapes remain unsupported or unproven.
 
 Primary machine-readable artifacts:
 
@@ -42,7 +52,7 @@ Primary machine-readable artifacts:
 Mechanical parity and transport readiness must stay separate.
 
 - Mechanical exactness:
-  Gate A oracle plus the checked-in CPU OpenMP inventory show that the exact CPU path is mechanically controlled on the frozen scope.
+  Gate A oracle plus the checked-in CPU OpenMP inventory show that the exact CPU path is mechanically controlled on the frozen scope, but only for the audited discrete OpenMP buckets.
 - Ensemble exactness:
   Gate G adds only small-fixture long-run ensemble evidence.
 - Transport readiness:

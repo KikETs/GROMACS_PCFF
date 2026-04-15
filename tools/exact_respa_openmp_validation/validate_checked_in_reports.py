@@ -23,13 +23,13 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Validate the checked-in exact OpenMP host-report inventory. Use --strict to "
-            "require the full broader desktop/workstation claim gate."
+            "require the bounded desktop/workstation CPU OpenMP claim gate."
         )
     )
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Fail unless the strict broader desktop/workstation claim gate passes.",
+        help="Fail unless the strict bounded desktop/workstation CPU OpenMP claim gate passes.",
     )
     return parser.parse_args()
 

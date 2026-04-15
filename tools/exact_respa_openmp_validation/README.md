@@ -3,7 +3,7 @@
 This toolchain exists for one job only:
 
 - turn host-local exact `r-RESPA` CPU OpenMP evidence into structured reports
-- refuse a broader desktop-class CPU OpenMP claim until enough topology-diverse reports exist
+- freeze the narrowest cross-host CPU OpenMP mechanics claim the checked-in evidence actually supports
 
 It does not replace the in-tree exact OpenMP regression tests.
 It orchestrates them, adds host-topology evidence, and aggregates multiple host reports into a claim decision.
@@ -21,12 +21,18 @@ The exact standalone `mts-mode = lammps-respa` path already has strong in-tree m
 
 That is still not enough for a broader desktop-class CPU OpenMP claim.
 
-The remaining gaps are:
+The remaining gaps used to be:
 
 - host diversity
-- topology-aware OpenMP thread-scaling rules
 - multi-host TSAN-backed race evidence
 - recurring automation beyond one-off local replay
+
+The remaining non-claimable territory is now explicit:
+
+- benchmark-only host-local throughput observations
+- intermediate `ntomp` counts between the audited parity buckets
+- `ntomp` counts above the audited ceiling bucket
+- server CPUs, MPI, and GPU coexistence
 
 ## Files
 
@@ -42,9 +48,9 @@ The remaining gaps are:
   - rejects stale schema versions and non-canonical report filenames
   - checks the required topology classes
   - checks exact mechanical evidence on every host
-  - re-derives the host-local thread-scaling candidate from raw benchmark data for every report
-  - separates a broader desktop/workstation mechanics claim from a shared OpenMP thread-scaling claim
-  - refuses a shared OpenMP thread-scaling claim unless the reports share a common locality-based rule
+  - reconstructs the audited affinity/parity/restart matrix from the stored GTest output on every host
+  - freezes a discrete desktop/workstation OpenMP mechanics claim only for the audited ntomp buckets
+  - keeps host-local throughput observations separate from the supported mechanics envelope
   - tracks whether multi-host TSAN-backed race evidence and recurring automation are actually present
 - `run_host_profile.py`
   - loads one host profile from `report_set_manifest.json`
@@ -142,8 +148,8 @@ Important:
 - `schema_version >= 3` reports are required for aggregation.
 - the host-local rule that `collect_host_report.py` emits is only a candidate
 - it is not a broader desktop/workstation support claim by itself
-- the current thread-scaling candidate is plateau-based: it tracks the highest tested thread count within one L3/CCD-equivalent locality group that remains within 95% of the best exact rate observed in that locality group
-- this is a throughput/thread-scaling envelope only, not an MD production-handoff, ensemble, or transport-readiness statement
+- the current host-local candidate is plateau-based: it tracks the highest tested thread count within one L3/CCD-equivalent locality group that remains within 95% of the best exact rate observed in that locality group
+- this is a throughput observation only, not a correctness envelope, MD production-handoff, ensemble, or transport-readiness statement
 - if infra semantics, TSAN workflow semantics, or report naming policy changes, previously collected reports are stale and must be regenerated
 - direct collection is allowed, but the final active inventory should still be managed through `report_set_manifest.json`
 - recurring `ci` or `scheduled` reports now record an attestation block; reports without that attestation are stale for strict aggregation
@@ -176,8 +182,8 @@ In strict mode, the command exits nonzero unless the active inventory still defe
 
 - multi-host TSAN-backed evidence
 - recurring automation evidence
-- the broader desktop/workstation mechanics claim
-- the shared plateau-knee OpenMP thread-scaling rule
+- the bounded desktop/workstation OpenMP mechanics claim
+- the explicit exclusion of unvalidated ntomp shapes from that claim
 
 ## Example: aggregate multiple host reports
 
@@ -189,21 +195,20 @@ python3 tools/exact_respa_openmp_validation/aggregate_reports.py \
   tests/reference_results/exact_respa_openmp_validation/host_reports/amd_ryzen_9_9900x_numa_or_chiplet.json
 ```
 
-The aggregator exits nonzero when the full broader claim is not earned.
+The aggregator exits nonzero when the bounded cross-host support claim is not earned.
 
-This is stricter than the mechanics and thread-scaling summaries. A summary can still
-report that a broader desktop/workstation mechanics claim is allowed, or even that a
-shared OpenMP thread-scaling rule exists across the tested hosts, while the process exits
-nonzero because multi-host TSAN-backed race evidence or recurring automation is still incomplete.
+This is stricter than the raw host-local benchmark observations. A summary can still
+report that host-local throughput observations exist on the tested hosts while the process exits
+nonzero because the cross-host discrete affinity/parity/restart claim is not yet earned, or
+because multi-host TSAN-backed race evidence or recurring automation is incomplete.
 
-The aggregator fails the shared thread-scaling step when:
+The aggregator fails the bounded support step when:
 
 - any required topology class is missing
 - any checked-in report is stale or uses a non-canonical filename
 - any host lacks release exact-suite evidence
 - any host lacks TSAN exact evidence unless `--allow-missing-tsan` is set
-- any host lacks locality benchmark evidence
-- the collected hosts do not share one common locality-based production rule
+- any host lacks the audited affinity parity and restart parity matrix for the discrete ntomp buckets
 - any host report lacks the recurring infra metadata needed for G1/G4 accounting
 
 ## Checked-in report guard
@@ -216,11 +221,17 @@ That workflow:
 - regenerates the strict aggregate summary from checked-in reports
 - fails if stale or mixed-era report files remain in the tracked inventory
 
-It is wired to `validate_report_set.py --strict`, so a green report guard means the
-checked-in active inventory still passes the broader desktop/workstation claim gate.
+It is wired to `validate_checked_in_reports.py --strict`, so a green report guard means the
+checked-in active inventory still passes the bounded desktop/workstation claim gate.
 It does **not** prove that every external host has been recollected under GitHub-hosted CI.
 It is a repo-side strict gate against stale data, inventory drift, and broadened claims
 that outrun the checked-in evidence.
+
+The checked-in inventory may also include
+`tests/reference_results/exact_respa_openmp_validation/host_local_explicit_counts/*.json`.
+Those files are host-local explicit ntomp artifacts only. They are allowed to record extra
+counts such as `ntomp=2,4,6,8,10,12` on one host, but they do **not** broaden the bounded cross-host
+CPU OpenMP claim unless matching evidence is collected and frozen across the audited host set.
 
 ## Recurring backend
 
@@ -250,21 +261,22 @@ Each host report separates:
 
 - exact mechanical evidence
 - locality benchmark evidence
-- a host-local rule candidate
+- a host-local throughput candidate
 
 The aggregate summary separates:
 
-- broader desktop/workstation mechanics claim
-- OpenMP thread-scaling rule
+- bounded desktop/workstation mechanics claim
+- correctness-only envelope status
+- unsupported or weak ntomp shapes
 - infrastructure readiness for G1/G4
-- correctness-only rule
+- host-local throughput observations
 - unsupported or unproven region
 
-If the aggregate step fails, the broader desktop/workstation OpenMP thread-scaling claim is not earned.
-That does not automatically mean the broader mechanics claim failed; check the summary fields.
+If the aggregate step fails, the bounded desktop/workstation OpenMP mechanics claim is not earned.
+That does not automatically mean every host-local benchmark observation failed; check the summary fields.
 If `validate_report_set.py` reports only pending external host recollection work, that is a backend-state issue, not automatically a stale-data failure.
 If `validate_report_set.py --strict` fails, the repo should be treated as not currently
-defending the broader desktop/workstation claim, even if relaxed summaries still contain
+defending the bounded desktop/workstation claim, even if relaxed summaries still contain
 useful host-local evidence.
 
 Any broader wording must stay inside these boundaries:

@@ -32,6 +32,31 @@ DEFAULT_BENCH_COUNTS = (1, 2, 4, 6, 8, 12, 16, 24)
 DEFAULT_SYSTEM = "small_salt_polymer_box"
 REPORT_SCHEMA_VERSION = 3
 REPORT_FILENAME_POLICY_VERSION = 1
+SUPPORTED_OPENMP_SYSTEM_IDS = ("small_oligomer", "small_salt_polymer_box")
+SUPPORTED_PIN_MODES = (
+    {"label": "pinAuto", "cli_value": "auto"},
+    {"label": "pinOn", "cli_value": "on"},
+    {"label": "pinInherit", "cli_value": "inherit"},
+)
+AFFINITY_SUITE_DEFINITIONS = {
+    "restart_affinity": {
+        "suite_label": "restart parity",
+        "case_prefix": (
+            "PcffRespaRestartAffinityParity/"
+            "PcffRespaRestartAffinityParityTest."
+            "RestartFromCheckpointMatchesFullExactRunWithAffinity"
+        ),
+    },
+    "openmp_affinity": {
+        "suite_label": "ntomp>1 oracle parity",
+        "case_prefix": (
+            "PcffRespaOpenMPAffinityParity/"
+            "PcffRespaOpenMPAffinityParityTest."
+            "ExactRespaCpuMatchesNtompOneOracleWithAffinity"
+        ),
+    },
+}
+GTEST_CASE_STATUS_RE = re.compile(r"^\[\s*(OK|FAILED|SKIPPED)\s*\]\s+(.+?)(?: \(\d+ ms\))?$")
 
 
 def pick_existing_path(candidates: list[Path]) -> Path | None:
@@ -84,7 +109,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Collect one host-local exact r-RESPA CPU OpenMP validation report "
-            "that can later be aggregated into a broader desktop-class CPU support claim."
+            "that can later be aggregated into a bounded cross-host CPU OpenMP mechanics claim."
         )
     )
     parser.add_argument(
@@ -545,6 +570,285 @@ def parse_performance_ns_per_day(log_text: str) -> float | None:
     return float(matches[-1])
 
 
+def suite_output_text(suite_result: dict[str, Any] | None) -> str:
+    if not suite_result:
+        return ""
+    command_record = suite_result.get("command_record", {})
+    stdout = command_record.get("stdout", "")
+    stderr = command_record.get("stderr", "")
+    return "\n".join(part for part in (stderr, stdout) if part)
+
+
+def parse_gtest_case_statuses(output_text: str) -> dict[str, Any]:
+    case_statuses: dict[str, str] = {}
+    counts = {"ok": 0, "failed": 0, "skipped": 0}
+    for raw_line in output_text.splitlines():
+        line = raw_line.strip()
+        match = GTEST_CASE_STATUS_RE.match(line)
+        if not match:
+            continue
+        status_raw, case_name = match.groups()
+        if "/" not in case_name:
+            continue
+        status = status_raw.lower()
+        case_statuses[case_name] = status
+        counts[status] += 1
+    return {
+        "total_cases_with_status_lines": sum(counts.values()),
+        "counts": counts,
+        "case_statuses": case_statuses,
+    }
+
+
+def resolved_thread_probe_definitions(topology: dict[str, Any]) -> list[dict[str, Any]]:
+    logical_cpus = max(1, int(topology.get("logical_cpus", 0) or 0))
+    probes = [
+        {
+            "label": "ntompSmall",
+            "resolved_threads": min(2, logical_cpus),
+            "scope_note": "Minimal audited ntomp>1 OpenMP bucket from exact affinity parity tests.",
+        },
+        {
+            "label": "ntompCeiling",
+            "resolved_threads": min(6, logical_cpus),
+            "scope_note": "Audited ceiling bucket from exact affinity parity tests.",
+        },
+    ]
+    seen_thread_counts: set[int] = set()
+    resolved: list[dict[str, Any]] = []
+    for probe in probes:
+        threads = int(probe["resolved_threads"])
+        probe = dict(probe)
+        probe["redundant"] = threads in seen_thread_counts or threads <= 1
+        if threads > 1:
+            seen_thread_counts.add(threads)
+        resolved.append(probe)
+    return resolved
+
+
+def required_affinity_case_names(topology: dict[str, Any]) -> dict[str, Any]:
+    probe_definitions = [probe for probe in resolved_thread_probe_definitions(topology) if not probe["redundant"]]
+    suite_cases: dict[str, list[str]] = {}
+    for suite_key, suite_def in AFFINITY_SUITE_DEFINITIONS.items():
+        cases = []
+        for system_id in SUPPORTED_OPENMP_SYSTEM_IDS:
+            for pin_mode in SUPPORTED_PIN_MODES:
+                for probe in probe_definitions:
+                    cases.append(
+                        f"{suite_def['case_prefix']}/"
+                        f"{system_id}_{pin_mode['label']}_{probe['label']}"
+                    )
+        suite_cases[suite_key] = cases
+    return {
+        "probe_definitions": probe_definitions,
+        "suite_cases": suite_cases,
+    }
+
+
+def derive_affinity_case_matrix(
+    topology: dict[str, Any],
+    suite_result: dict[str, Any] | None,
+    suite_key: str,
+) -> dict[str, Any]:
+    suite_def = AFFINITY_SUITE_DEFINITIONS[suite_key]
+    required = required_affinity_case_names(topology)
+    required_cases = required["suite_cases"][suite_key]
+    probe_definitions = required["probe_definitions"]
+    parsed = parse_gtest_case_statuses(suite_output_text(suite_result))
+    case_statuses = parsed["case_statuses"]
+
+    passed_cases = sorted(case for case in required_cases if case_statuses.get(case) == "ok")
+    failed_cases = sorted(case for case in required_cases if case_statuses.get(case) == "failed")
+    skipped_cases = sorted(case for case in required_cases if case_statuses.get(case) == "skipped")
+    missing_cases = sorted(case for case in required_cases if case not in case_statuses)
+
+    validated_pin_modes = []
+    for pin_mode in SUPPORTED_PIN_MODES:
+        pin_cases = [case for case in required_cases if f"_{pin_mode['label']}_" in case]
+        if pin_cases and all(case_statuses.get(case) == "ok" for case in pin_cases):
+            validated_pin_modes.append(pin_mode)
+
+    validated_systems = []
+    for system_id in SUPPORTED_OPENMP_SYSTEM_IDS:
+        system_cases = [case for case in required_cases if f"/{system_id}_" in case]
+        if system_cases and all(case_statuses.get(case) == "ok" for case in system_cases):
+            validated_systems.append(system_id)
+
+    validated_thread_probes = []
+    for probe in probe_definitions:
+        probe_cases = [case for case in required_cases if case.endswith(f"_{probe['label']}")]
+        if probe_cases and all(case_statuses.get(case) == "ok" for case in probe_cases):
+            validated_thread_probes.append(probe)
+
+    blockers: list[str] = []
+    if suite_result is None:
+        blockers.append(f"{suite_def['suite_label']}: suite result is missing")
+    elif not suite_result.get("ok", False):
+        blockers.append(f"{suite_def['suite_label']}: suite returned nonzero")
+    if failed_cases:
+        blockers.append(
+            f"{suite_def['suite_label']}: required cases failed: {', '.join(failed_cases)}"
+        )
+    if skipped_cases:
+        blockers.append(
+            f"{suite_def['suite_label']}: required cases were skipped: {', '.join(skipped_cases)}"
+        )
+    if missing_cases:
+        blockers.append(
+            f"{suite_def['suite_label']}: required cases missing from suite output: {', '.join(missing_cases)}"
+        )
+
+    return {
+        "suite_key": suite_key,
+        "suite_label": suite_def["suite_label"],
+        "required_cases": required_cases,
+        "passed_cases": passed_cases,
+        "failed_cases": failed_cases,
+        "skipped_cases": skipped_cases,
+        "missing_cases": missing_cases,
+        "validated_pin_modes": validated_pin_modes,
+        "validated_systems": validated_systems,
+        "validated_thread_probes": validated_thread_probes,
+        "case_status_counts": parsed["counts"],
+        "ok": not blockers,
+        "blockers": blockers,
+    }
+
+
+def annotate_suite_result(
+    topology: dict[str, Any],
+    suite_result: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if suite_result is None:
+        return None
+    if "gtest_case_summary" in suite_result and "exact_openmp_affinity_cases" in suite_result:
+        return suite_result
+    annotated = dict(suite_result)
+    annotated["gtest_case_summary"] = parse_gtest_case_statuses(suite_output_text(suite_result))
+    annotated["exact_openmp_affinity_cases"] = {
+        suite_key: derive_affinity_case_matrix(topology, suite_result, suite_key)
+        for suite_key in AFFINITY_SUITE_DEFINITIONS
+    }
+    return annotated
+
+
+def derive_exact_openmp_support_scope(
+    topology: dict[str, Any],
+    release_suite: dict[str, Any] | None,
+    tsan_suite: dict[str, Any] | None,
+) -> dict[str, Any]:
+    release_suite = annotate_suite_result(topology, release_suite)
+    tsan_suite = annotate_suite_result(topology, tsan_suite)
+    probe_definitions = [probe for probe in resolved_thread_probe_definitions(topology) if not probe["redundant"]]
+
+    blockers: list[str] = []
+    if not probe_definitions:
+        blockers.append("No audited ntomp>1 bucket exists on this host.")
+
+    suite_groups = {
+        "release": release_suite,
+        "tsan": tsan_suite,
+    }
+    for suite_family, suite_result in suite_groups.items():
+        if suite_result is None:
+            blockers.append(f"{suite_family}: exact affinity suite result is missing")
+            continue
+        matrices = suite_result["exact_openmp_affinity_cases"]
+        for suite_key in AFFINITY_SUITE_DEFINITIONS:
+            blockers.extend(
+                f"{suite_family}: {blocker}" for blocker in matrices[suite_key]["blockers"]
+            )
+
+    supported_pin_modes = []
+    for pin_mode in SUPPORTED_PIN_MODES:
+        pin_label = pin_mode["label"]
+        if all(
+            suite_result is not None
+            and all(
+                any(validated["label"] == pin_label for validated in suite_result["exact_openmp_affinity_cases"][suite_key]["validated_pin_modes"])
+                for suite_key in AFFINITY_SUITE_DEFINITIONS
+            )
+            for suite_result in suite_groups.values()
+        ):
+            supported_pin_modes.append(pin_mode)
+
+    supported_systems = []
+    for system_id in SUPPORTED_OPENMP_SYSTEM_IDS:
+        if all(
+            suite_result is not None
+            and all(
+                system_id in suite_result["exact_openmp_affinity_cases"][suite_key]["validated_systems"]
+                for suite_key in AFFINITY_SUITE_DEFINITIONS
+            )
+            for suite_result in suite_groups.values()
+        ):
+            supported_systems.append(system_id)
+
+    supported_thread_probes = []
+    for probe in probe_definitions:
+        if all(
+            suite_result is not None
+            and all(
+                any(validated["label"] == probe["label"] for validated in suite_result["exact_openmp_affinity_cases"][suite_key]["validated_thread_probes"])
+                for suite_key in AFFINITY_SUITE_DEFINITIONS
+            )
+            for suite_result in suite_groups.values()
+        ):
+            supported_thread_probes.append(probe)
+
+    supported_threads = sorted({probe["resolved_threads"] for probe in supported_thread_probes})
+    support_ready = (
+        not blockers
+        and len(supported_pin_modes) == len(SUPPORTED_PIN_MODES)
+        and len(supported_systems) == len(SUPPORTED_OPENMP_SYSTEM_IDS)
+        and len(supported_thread_probes) == len(probe_definitions)
+    )
+    if not support_ready and not blockers:
+        blockers.append("The audited affinity/pin-mode matrix is incomplete on this host.")
+
+    pin_scope_text = ", ".join(f"`-pin {pin_mode['cli_value']}`" for pin_mode in SUPPORTED_PIN_MODES)
+    thread_scope_text = ", ".join(
+        f"`{probe['label']}` (`ntomp={probe['resolved_threads']}`)"
+        for probe in supported_thread_probes
+    )
+    supported_scope_statement = (
+        "On this host, standalone exact r-RESPA CPU OpenMP support is limited to the audited "
+        f"affinity modes {pin_scope_text} and the discrete ntomp>1 buckets {thread_scope_text}. "
+        "Those buckets are supported only because checked-in release and TSAN suites both pass "
+        "ntomp>1 oracle parity and restart parity on the two frozen fixtures."
+        if support_ready
+        else "This host does not currently earn a bounded CPU OpenMP support claim."
+    )
+
+    return {
+        "support_ready": support_ready,
+        "supported_scope_statement": supported_scope_statement,
+        "scope_note": (
+            "The supported OpenMP mechanics envelope is discrete. "
+            "It does not interpolate from the audited ntomp buckets to intermediate or larger "
+            "thread counts, and it does not treat benchmark-only no-crash runs as proof."
+        ),
+        "supported_pin_modes": supported_pin_modes,
+        "supported_systems": list(supported_systems),
+        "supported_thread_probes": supported_thread_probes,
+        "supported_thread_counts": supported_threads,
+        "correctness_only_scope_statement": (
+            "None. No checked-in parity/restart artifact extends support beyond the discrete "
+            "audited ntomp buckets."
+        ),
+        "unsupported_or_weak_shapes": [
+            "ntomp=1 is the oracle baseline and is not counted as OpenMP support evidence.",
+            "Intermediate ntomp>1 counts between the audited buckets are mechanically unvalidated.",
+            "Counts above the audited ntomp ceiling are mechanically unvalidated.",
+            "Benchmark-only `-pin inherit` throughput scans are host-local observations only and do not create supported or correctness-only ntomp counts.",
+            "MPI, GPU coexistence, server CPUs, and untested topology classes remain outside this scope.",
+        ],
+        "release_suite": release_suite,
+        "tsan_suite": tsan_suite,
+        "blockers": blockers,
+    }
+
+
 def run_release_suite(binary: Path, gtest_filter: str) -> dict[str, Any]:
     record = command_record(
         [str(binary), f"--gtest_filter={gtest_filter}"],
@@ -922,15 +1226,21 @@ def main() -> None:
     if not args.skip_release_gtests:
         if not args.release_binary:
             raise ValueError("--release-binary is required unless --skip-release-gtests is set")
-        release_suite = run_release_suite(Path(args.release_binary), args.release_filter)
+        release_suite = annotate_suite_result(
+            topology,
+            run_release_suite(Path(args.release_binary), args.release_filter),
+        )
 
     if not args.skip_tsan_gtests:
         if not args.tsan_binary:
             raise ValueError("--tsan-binary is required unless --skip-tsan-gtests is set")
-        tsan_suite = run_tsan_suite(
-            Path(args.tsan_binary),
-            args.tsan_filter,
-            parse_tsan_env(args.tsan_env),
+        tsan_suite = annotate_suite_result(
+            topology,
+            run_tsan_suite(
+                Path(args.tsan_binary),
+                args.tsan_filter,
+                parse_tsan_env(args.tsan_env),
+            ),
         )
 
     if not args.skip_benchmark:
@@ -987,6 +1297,11 @@ def main() -> None:
         "mechanics": {
             "release_suite": release_suite,
             "tsan_suite": tsan_suite,
+            "openmp_support_scope": derive_exact_openmp_support_scope(
+                topology,
+                release_suite,
+                tsan_suite,
+            ),
         },
         "benchmark": benchmark,
     }

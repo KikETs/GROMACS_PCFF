@@ -4,12 +4,22 @@ on:
   push:
     paths:
       - ".github/workflows/exact_openmp_report_guard.yml"
+      - "docs/exact_respa_cpu_claim_boundary.md"
+      - "tools/freeze_cpu_exact_respa_claim/**"
       - "tools/exact_respa_openmp_validation/**"
+      - "tests/reference_schema/test_cpu_exact_respa_claim_schema.py"
+      - "tests/reference_schema/test_exact_openmp_host_local_explicit_counts_schema.py"
+      - "tests/reference_results/cpu_exact_respa_claim/**"
       - "tests/reference_results/exact_respa_openmp_validation/**"
   pull_request:
     paths:
       - ".github/workflows/exact_openmp_report_guard.yml"
+      - "docs/exact_respa_cpu_claim_boundary.md"
+      - "tools/freeze_cpu_exact_respa_claim/**"
       - "tools/exact_respa_openmp_validation/**"
+      - "tests/reference_schema/test_cpu_exact_respa_claim_schema.py"
+      - "tests/reference_schema/test_exact_openmp_host_local_explicit_counts_schema.py"
+      - "tests/reference_results/cpu_exact_respa_claim/**"
       - "tests/reference_results/exact_respa_openmp_validation/**"
   workflow_dispatch:
 
@@ -25,9 +35,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate exact OpenMP report set backend
+      - name: Install pytest
+        run: python3 -m pip install pytest
+
+      - name: Validate checked-in exact OpenMP reports
         run: |
-          python3 tools/exact_respa_openmp_validation/validate_report_set.py \
-            --manifest tests/reference_results/exact_respa_openmp_validation/report_set_manifest.json \
-            --out-dir /tmp/exact-openmp-report-guard \
+          python3 tools/exact_respa_openmp_validation/validate_checked_in_reports.py \
             --strict
+
+      - name: Regenerate frozen CPU exact claim artifacts
+        run: |
+          python3 tools/freeze_cpu_exact_respa_claim/generate.py
+          git diff --exit-code -- tests/reference_results/cpu_exact_respa_claim
+
+      - name: Validate frozen CPU exact claim schema and boundary doc
+        run: |
+          python3 -m pytest \
+            tests/reference_schema/test_cpu_exact_respa_claim_schema.py \
+            tests/reference_schema/test_exact_openmp_host_local_explicit_counts_schema.py

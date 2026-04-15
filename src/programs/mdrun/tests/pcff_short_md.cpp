@@ -1243,6 +1243,36 @@ const char* exactRespaThreadProbeLabel(const ExactRespaThreadProbe probe)
     return "ntompUnsupported";
 }
 
+const char* exactRespaThreadProbeOverrideEnvName(const ExactRespaThreadProbe probe)
+{
+    switch (probe)
+    {
+        case ExactRespaThreadProbe::Small: return "GMX_TEST_EXACT_RESPA_NTOMP_SMALL_OVERRIDE";
+        case ExactRespaThreadProbe::ProductionCeiling:
+            return "GMX_TEST_EXACT_RESPA_NTOMP_CEILING_OVERRIDE";
+    }
+    GMX_RELEASE_ASSERT(false, "Unsupported exact r-RESPA thread probe override");
+    return "";
+}
+
+std::optional<int> exactRespaThreadProbeOverride(const ExactRespaThreadProbe probe)
+{
+    const char* rawValue = std::getenv(exactRespaThreadProbeOverrideEnvName(probe));
+    if (rawValue == nullptr || *rawValue == '\0')
+    {
+        return std::nullopt;
+    }
+
+    char*      end   = nullptr;
+    const long value = std::strtol(rawValue, &end, 10);
+    GMX_RELEASE_ASSERT(end != rawValue && *end == '\0',
+                       "Exact r-RESPA thread-probe override must be an integer");
+    GMX_RELEASE_ASSERT(value > 0, "Exact r-RESPA thread-probe override must be positive");
+    GMX_RELEASE_ASSERT(value <= std::numeric_limits<int>::max(),
+                       "Exact r-RESPA thread-probe override exceeds supported integer range");
+    return static_cast<int>(value);
+}
+
 #if GMX_TEST_HAS_PROCESS_AFFINITY
 std::vector<int> currentProcessAffinityCpuList()
 {
@@ -1325,6 +1355,17 @@ int exactRespaThreadCountForProbe(const ExactRespaThreadProbe probe)
     if (availableCpus < 2)
     {
         return 1;
+    }
+
+    if (const auto override = exactRespaThreadProbeOverride(probe))
+    {
+        const std::string message = formatString(
+                "Exact r-RESPA thread-probe override %s=%d exceeds the current affinity-visible CPU count %d",
+                exactRespaThreadProbeOverrideEnvName(probe),
+                *override,
+                availableCpus);
+        GMX_RELEASE_ASSERT(*override <= availableCpus, message.c_str());
+        return *override;
     }
 
     switch (probe)

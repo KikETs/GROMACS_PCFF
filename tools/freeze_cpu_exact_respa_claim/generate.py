@@ -20,6 +20,18 @@ def load_json(relative_path: str):
         return json.load(handle)
 
 
+def existing_claim_date() -> str | None:
+    path = OUT_ROOT / "cpu_exact_claim_summary.json"
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    value = payload.get("claim_status_as_of")
+    return value if isinstance(value, str) and value else None
+
+
 def write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
@@ -46,7 +58,7 @@ def find_manifest_system(manifest: dict, system_id: str) -> dict:
 
 
 def main() -> None:
-    claim_date = date.today().isoformat()
+    claim_date = existing_claim_date() or date.today().isoformat()
 
     gate_a_path = "tests/reference_results/gate_a_cpu_oracle/oracle_manifest.json"
     gate_g_path = "tests/reference_results/gate_g_long_ensemble_validation/gate_g_manifest.json"
@@ -87,10 +99,13 @@ def main() -> None:
 
     public_claim = (
         "Current evidence supports a narrow CPU exact-r-RESPA claim: for single-rank, CPU-only, standalone exact "
-        "r-RESPA on tested desktop/workstation CPUs, exact event order, restart continuity, and small-fixture "
-        "mechanical behavior are frozen on the Gate A oracle, and a desktop-class exact CPU OpenMP mechanics claim "
-        "is allowed across the tested low-core, hybrid-desktop, and chiplet workstation classes. Exact long-run "
-        "ensemble evidence is still narrow: Gate G passes a 40 ps NVT `small_oligomer` check and a 40 ps NPT "
+        "r-RESPA, exact event order, restart continuity, and small-fixture mechanical behavior are frozen on the "
+        "Gate A oracle, and a bounded exact CPU OpenMP mechanics claim is allowed across the tested low-core, "
+        "hybrid-desktop, and chiplet workstation classes only for the audited ntomp>1 buckets `ntompSmall` and "
+        "`ntompCeiling` under `-pin auto`, `-pin on`, and `-pin inherit`. That OpenMP claim is discrete, not a "
+        "continuous ntomp envelope: ntomp=1 remains the oracle baseline, host-local throughput benchmarks do not "
+        "broaden support, and intermediate or larger ntomp counts remain unsupported. Exact long-run ensemble "
+        "evidence is still narrow: Gate G passes a 40 ps NVT `small_oligomer` check and a 40 ps NPT "
         "`small_salt_polymer_box` check, but those are small-fixture gates only. Gate H reuses the exact NVT path on "
         "larger transport scaffolds, yet transport production remains NO-GO, and charged medium-scale long-NPT "
         "density conditioning is still missing. This claim does not imply conductivity-production readiness, "
@@ -99,10 +114,16 @@ def main() -> None:
     )
 
     mechanical_statement = (
-        "Exact CPU mechanics are frozen by Gate A on `small_oligomer` and `small_salt_polymer_box`, then broadened "
-        "to tested desktop/workstation OpenMP topology classes by the checked-in exact OpenMP host-report inventory. "
-        "This is a mechanical correctness claim, not a transport or generic ensemble claim."
+        "Exact CPU mechanics are frozen by Gate A on `small_oligomer` and `small_salt_polymer_box`, then extended "
+        "to a bounded OpenMP claim on the tested desktop/workstation topology classes by the checked-in exact OpenMP "
+        "host-report inventory. That OpenMP claim is limited to the discrete audited ntomp>1 buckets "
+        "`ntompSmall` and `ntompCeiling` under `-pin auto`, `-pin on`, and `-pin inherit`; there is no "
+        "correctness-only envelope beyond those buckets. This is a mechanical correctness claim, not a transport or "
+        "generic ensemble claim."
     )
+
+    openmp_scope_statement = openmp_summary["supported_envelope"]["statement"]
+    openmp_weak_shapes_statement = " ".join(openmp_summary["unsupported_or_weak_shapes"])
 
     ensemble_statement = (
         "Exact ensemble evidence is split deliberately. Gate G gives small-fixture exact-r-RESPA NVT/NPT evidence "
@@ -138,6 +159,8 @@ def main() -> None:
         "claim_status_as_of": claim_date,
         "public_claim": public_claim,
         "mechanical_scope_statement": mechanical_statement,
+        "openmp_supported_envelope_statement": openmp_scope_statement,
+        "openmp_weak_shapes_statement": openmp_weak_shapes_statement,
         "ensemble_boundary_statement": ensemble_statement,
         "transport_boundary_statement": transport_statement,
         "sole_immediate_blocker": blocker_statement,
@@ -182,6 +205,10 @@ def main() -> None:
             "summary": repo_rel(openmp_summary_path),
             "status": openmp_summary["pass"],
             "final_allowed_claim": openmp_summary["final_allowed_claim"],
+            "supported_envelope": openmp_summary["supported_envelope"],
+            "correctness_only_envelope": openmp_summary["correctness_only_envelope"],
+            "unsupported_or_weak_shapes": openmp_summary["unsupported_or_weak_shapes"],
+            "host_local_throughput_observations": openmp_summary["host_local_throughput_observations"],
             "host_reports": [repo_rel(path) for path in host_reports],
         },
     }
@@ -217,13 +244,35 @@ def main() -> None:
                 "id": "mechanics.desktop_cpu_openmp_inventory",
                 "domain": "mechanics",
                 "status": "exact",
-                "claimable_statement": "Across the tested desktop/workstation topology classes, a single-rank CPU-only exact OpenMP mechanics claim is allowed, together with a shared one-L3 plateau-knee OpenMP thread-scaling envelope.",
-                "non_claimable_statement": "Do not read this thread-scaling envelope as MD production handoff, ensemble readiness, transport readiness, server CPU support, MPI support, or GPU coexistence support.",
+                "claimable_statement": "Across the tested desktop/workstation topology classes, a single-rank CPU-only exact OpenMP mechanics claim is allowed only for the discrete audited ntomp>1 buckets `ntompSmall` and `ntompCeiling` under `-pin auto`, `-pin on`, and `-pin inherit`.",
+                "non_claimable_statement": "Do not extend this discrete bucket claim to intermediate or larger ntomp counts, benchmark-only host-local throughput scans, server CPU support, MPI support, or GPU coexistence support.",
                 "evidence": [
                     {"path": repo_rel(openmp_summary_path), "key": "pass", "value": openmp_summary["pass"]},
                     {"path": repo_rel(openmp_summary_path), "key": "final_allowed_claim", "value": openmp_summary["final_allowed_claim"]},
-                    {"path": repo_rel(openmp_summary_path), "key": "scope_note", "value": openmp_summary["scope_note"]},
+                    {"path": repo_rel(openmp_summary_path), "key": "supported_envelope", "value": openmp_summary["supported_envelope"]},
                     {"path": repo_rel(openmp_summary_path), "key": "reports", "value": openmp_summary["reports"]},
+                ],
+            },
+            {
+                "id": "mechanics.host_local_openmp_throughput_observations",
+                "domain": "mechanics",
+                "status": "approximate",
+                "claimable_statement": "Checked-in `-pin inherit` benchmark scans provide host-local throughput observations on the tested hosts, including locality-knee notes where available.",
+                "non_claimable_statement": "Do not treat these host-local throughput observations as a supported or correctness-only ntomp envelope.",
+                "evidence": [
+                    {"path": repo_rel(openmp_summary_path), "key": "host_local_throughput_observations", "value": openmp_summary["host_local_throughput_observations"]},
+                    {"path": repo_rel(openmp_summary_path), "key": "scope_note", "value": openmp_summary["scope_note"]},
+                ],
+            },
+            {
+                "id": "mechanics.desktop_cpu_openmp_outside_audited_buckets",
+                "domain": "mechanics",
+                "status": "unsupported",
+                "claimable_statement": "No current claim extends exact CPU OpenMP support beyond the audited discrete ntomp buckets.",
+                "non_claimable_statement": "Do not interpolate from ntomp=1 oracle correctness, no-crash runs, or benchmark throughput probes to intermediate or larger ntomp counts.",
+                "evidence": [
+                    {"path": repo_rel(openmp_summary_path), "key": "correctness_only_envelope", "value": openmp_summary["correctness_only_envelope"]},
+                    {"path": repo_rel(openmp_summary_path), "key": "unsupported_or_weak_shapes", "value": openmp_summary["unsupported_or_weak_shapes"]},
                 ],
             },
             {

@@ -40,9 +40,9 @@ def parse_args() -> argparse.Namespace:
         "--strict",
         action="store_true",
         help=(
-            "Require the full broader desktop-class claim gate to pass. This fails on "
-            "inventory drift, missing TSAN-backed evidence, missing recurring automation, "
-            "or a missing shared OpenMP thread-scaling rule."
+            "Require the bounded desktop/workstation CPU OpenMP claim gate to pass. "
+            "This fails on inventory drift, missing TSAN-backed evidence, missing recurring automation, "
+            "or missing audited affinity/restart parity coverage for the supported ntomp buckets."
         ),
     )
     return parser.parse_args()

@@ -1,0 +1,262 @@
+{
+  "claim_scope_statement": "This checked-in artifact freezes host-local explicit ntomp evidence on one audited host. It is not a cross-host CPU OpenMP support claim and it does not broaden the bounded desktop/workstation claim frozen in cpu_exact_respa_claim.",
+  "collection": {
+    "binary": "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/mdrun-non-integrator-test",
+    "finished_at": "2026-04-15T13:14:22+09:00",
+    "overall_blockers": [],
+    "overall_ok": true,
+    "requested_ntomp_counts": [
+      2,
+      4,
+      6,
+      8,
+      10,
+      12
+    ],
+    "started_at": "2026-04-15T13:14:11+09:00"
+  },
+  "counts": [
+    {
+      "blockers": [],
+      "category": "host_local_explicit_count",
+      "host_local_mechanics_ok": true,
+      "note": "This count passed on one checked-in host only. It does not widen the cross-host bounded CPU OpenMP claim by itself.",
+      "ntomp": 2,
+      "ok": true,
+      "openmp_affinity_ok": true,
+      "openmp_affinity_required_cases": [
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "openmp_oracle_parity_ok": true,
+      "openmp_oracle_required_cases": [
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/0",
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/1"
+      ],
+      "restart_affinity_ok": true,
+      "restart_affinity_required_cases": [
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "support_claimable": false,
+      "validated_pin_modes": [
+        "auto",
+        "on",
+        "inherit"
+      ]
+    },
+    {
+      "blockers": [],
+      "category": "host_local_explicit_count",
+      "host_local_mechanics_ok": true,
+      "note": "This count passed on one checked-in host only. It does not widen the cross-host bounded CPU OpenMP claim by itself.",
+      "ntomp": 4,
+      "ok": true,
+      "openmp_affinity_ok": true,
+      "openmp_affinity_required_cases": [
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "openmp_oracle_parity_ok": true,
+      "openmp_oracle_required_cases": [
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/0",
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/1"
+      ],
+      "restart_affinity_ok": true,
+      "restart_affinity_required_cases": [
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "support_claimable": false,
+      "validated_pin_modes": [
+        "auto",
+        "on",
+        "inherit"
+      ]
+    },
+    {
+      "blockers": [],
+      "category": "host_local_explicit_count",
+      "host_local_mechanics_ok": true,
+      "note": "This count passed on one checked-in host only. It does not widen the cross-host bounded CPU OpenMP claim by itself.",
+      "ntomp": 6,
+      "ok": true,
+      "openmp_affinity_ok": true,
+      "openmp_affinity_required_cases": [
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "openmp_oracle_parity_ok": true,
+      "openmp_oracle_required_cases": [
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/0",
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/1"
+      ],
+      "restart_affinity_ok": true,
+      "restart_affinity_required_cases": [
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "support_claimable": false,
+      "validated_pin_modes": [
+        "auto",
+        "on",
+        "inherit"
+      ]
+    },
+    {
+      "blockers": [],
+      "category": "host_local_explicit_count",
+      "host_local_mechanics_ok": true,
+      "note": "This count passed on one checked-in host only. It does not widen the cross-host bounded CPU OpenMP claim by itself.",
+      "ntomp": 8,
+      "ok": true,
+      "openmp_affinity_ok": true,
+      "openmp_affinity_required_cases": [
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "openmp_oracle_parity_ok": true,
+      "openmp_oracle_required_cases": [
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/0",
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/1"
+      ],
+      "restart_affinity_ok": true,
+      "restart_affinity_required_cases": [
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "support_claimable": false,
+      "validated_pin_modes": [
+        "auto",
+        "on",
+        "inherit"
+      ]
+    },
+    {
+      "blockers": [],
+      "category": "host_local_explicit_count",
+      "host_local_mechanics_ok": true,
+      "note": "This count passed on one checked-in host only. It does not widen the cross-host bounded CPU OpenMP claim by itself.",
+      "ntomp": 10,
+      "ok": true,
+      "openmp_affinity_ok": true,
+      "openmp_affinity_required_cases": [
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "openmp_oracle_parity_ok": true,
+      "openmp_oracle_required_cases": [
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/0",
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/1"
+      ],
+      "restart_affinity_ok": true,
+      "restart_affinity_required_cases": [
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "support_claimable": false,
+      "validated_pin_modes": [
+        "auto",
+        "on",
+        "inherit"
+      ]
+    },
+    {
+      "blockers": [],
+      "category": "host_local_explicit_count",
+      "host_local_mechanics_ok": true,
+      "note": "This count passed on one checked-in host only. It does not widen the cross-host bounded CPU OpenMP claim by itself.",
+      "ntomp": 12,
+      "ok": true,
+      "openmp_affinity_ok": true,
+      "openmp_affinity_required_cases": [
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaOpenMPAffinityParity/PcffRespaOpenMPAffinityParityTest.ExactRespaCpuMatchesNtompOneOracleWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "openmp_oracle_parity_ok": true,
+      "openmp_oracle_required_cases": [
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/0",
+        "PcffRespaOpenMPParity/PcffRespaOpenMPParityTest.ExactRespaCpuMatchesNtompOneOracle/1"
+      ],
+      "restart_affinity_ok": true,
+      "restart_affinity_required_cases": [
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_oligomer_pinInherit_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinAuto_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinOn_ntompSmall",
+        "PcffRespaRestartAffinityParity/PcffRespaRestartAffinityParityTest.RestartFromCheckpointMatchesFullExactRunWithAffinity/small_salt_polymer_box_pinInherit_ntompSmall"
+      ],
+      "support_claimable": false,
+      "validated_pin_modes": [
+        "auto",
+        "on",
+        "inherit"
+      ]
+    }
+  ],
+  "host_identity": {
+    "affinity_visible_cpus": 24,
+    "cpu_model_slug": "amd_ryzen_9_9900x",
+    "host_label": "9900x-kiket-local",
+    "logical_cpus": 24,
+    "model_name": "AMD Ryzen 9 9900X 12-Core Processor",
+    "profile_id": "amd_ryzen_9_9900x_numa_or_chiplet",
+    "topology_class": "numa-or-chiplet"
+  },
+  "non_claimable_statement": "Do not use this file to claim a continuous ntomp envelope, cross-host generality, server-CPU support, MPI support, GPU coexistence support, or any broader CPU OpenMP wording.",
+  "passing_explicit_ntomp_counts_on_this_host": [
+    2,
+    4,
+    6,
+    8,
+    10,
+    12
+  ],
+  "schema_name": "exact_respa_openmp_host_local_explicit_counts",
+  "schema_version": 1
+}
