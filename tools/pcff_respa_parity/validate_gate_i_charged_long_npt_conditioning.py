@@ -239,8 +239,16 @@ def write_json(path: Path, payload: object) -> None:
 
 
 def validate_args(args: argparse.Namespace) -> None:
-    if args.ntmpi != 1:
-        raise ValueError("Gate I is restricted to single-rank runs (ntmpi=1).")
+    if args.ntmpi < 1:
+        raise ValueError("ntmpi must be positive.")
+    if args.ntomp < 1:
+        raise ValueError("ntomp must be positive.")
+    if args.npme is not None and (args.npme < 1 or args.npme >= args.ntmpi):
+        raise ValueError("npme must be positive and smaller than ntmpi when explicit PME ranks are requested.")
+    if args.ntomp_pme is not None and args.ntomp_pme < 1:
+        raise ValueError("ntomp-pme must be positive when provided.")
+    if args.ntomp_pme is not None and args.npme is None:
+        raise ValueError("ntomp-pme requires explicit npme so the PME OpenMP split is unambiguous.")
     if args.replicas < 3:
         raise ValueError("Gate I requires at least 3 replicas; otherwise cross-replica conditioning is too weak.")
     if args.sample_interval <= 0 or args.sample_interval % EXACT_RESPA_FACTOR != 0:
