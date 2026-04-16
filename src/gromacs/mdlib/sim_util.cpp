@@ -201,6 +201,28 @@ static bool exactRespaPairLoopVectorRequested()
     return env != nullptr && std::strcmp(env, "0") != 0;
 }
 
+static const char* exactRespaPairLoopForceDumpDirPath()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_DIR");
+    return (env != nullptr && *env != '\0') ? env : nullptr;
+}
+
+static const char* exactRespaPairLoopForceDumpLabel()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_LABEL");
+    return (env != nullptr && *env != '\0') ? env : "unspecified";
+}
+
+static int exactRespaPairLoopForceDumpMax()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_MAX");
+    if (env == nullptr || *env == '\0')
+    {
+        return 1;
+    }
+    return std::max(0, std::atoi(env));
+}
+
 static bool useRepulsionPower9ExactRespaCpuSpecialization(const interaction_const_t& interactionConst)
 {
     return gmx_within_tol(interactionConst.vdw.repulsionPower, 9.0, 10 * GMX_DOUBLE_EPS)
@@ -4219,6 +4241,8 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
     static std::mutex        pairLoopOmpScratchMutex;
     static PairLoopOmpScratch pairLoopOmpScratch;
+    static std::mutex        pairLoopForceDumpMutex;
+    static int               pairLoopForceDumpOrdinal = 0;
 
     const bool pairLoopOmpRequested    = exactRespaPairLoopOmpRequested();
     const bool pairLoopVectorRequested = exactRespaPairLoopVectorRequested();
@@ -4229,6 +4253,10 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             && (!pairLoopOmpRequested || pairLoopOmpThreads > 1) && !traceOnlyDiagnostics
             && !computePairEnergies && !stepWork.computeVirial && !dumpExcludedCorrectionForce
             && !useDispatchProbe;
+    const char* pairLoopForceDumpDirPath = exactRespaPairLoopForceDumpDirPath();
+    const int   pairLoopForceDumpMax     = exactRespaPairLoopForceDumpMax();
+    const bool  pairLoopForceDumpEnabled =
+            !traceOnlyDiagnostics && pairLoopForceDumpDirPath != nullptr && pairLoopForceDumpMax > 0;
 
     std::unique_lock<std::mutex> pairLoopOmpScratchLock;
     PairLoopOmpScratch*         pairLoopOmpScratchPtr = nullptr;
@@ -4644,6 +4672,123 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
         reducePairLoopOmpScratch();
         return true;
+    };
+
+    struct PairLoopForceDumpBefore
+    {
+        ExactRespaNonbondedContribution contribution;
+        std::vector<RVec>               force;
+    };
+    std::vector<PairLoopForceDumpBefore> pairLoopForceDumpBefore;
+    const auto capturePairLoopForceDumpBefore = [&]()
+    {
+        if (!pairLoopForceDumpEnabled)
+        {
+            return;
+        }
+        pairLoopForceDumpBefore.clear();
+        pairLoopForceDumpBefore.reserve(activeContributions.size());
+        for (const auto& accumulator : activeContributions)
+        {
+            PairLoopForceDumpBefore snapshot;
+            snapshot.contribution = accumulator.contribution;
+            snapshot.force.assign(accumulator.force.begin(), accumulator.force.end());
+            pairLoopForceDumpBefore.push_back(std::move(snapshot));
+        }
+    };
+    const auto writePairLoopForceDeltaDump = [&](const bool pairFastPathUsed,
+                                                 const bool excludedPairFastPathUsed)
+    {
+        if (!pairLoopForceDumpEnabled || pairLoopForceDumpBefore.empty())
+        {
+            return;
+        }
+
+        int dumpOrdinal = 0;
+        {
+            std::lock_guard<std::mutex> lock(pairLoopForceDumpMutex);
+            if (pairLoopForceDumpOrdinal >= pairLoopForceDumpMax)
+            {
+                return;
+            }
+            pairLoopForceDumpOrdinal++;
+            dumpOrdinal = pairLoopForceDumpOrdinal;
+        }
+
+        std::filesystem::path dumpDir(pairLoopForceDumpDirPath);
+        std::filesystem::create_directories(dumpDir);
+        char fileName[64];
+        std::snprintf(fileName, sizeof(fileName), "pairloop_force_delta_%06d.tsv", dumpOrdinal);
+        const std::filesystem::path outputPath = dumpDir / fileName;
+
+        FILE* dumpFile = std::fopen(outputPath.string().c_str(), "w");
+        if (dumpFile == nullptr)
+        {
+            gmx_fatal(FARGS,
+                      "Could not open exact r-RESPA pair-loop force delta output '%s' for writing",
+                      outputPath.string().c_str());
+        }
+
+        std::fprintf(dumpFile, "# schema exact_respa_pairloop_force_delta_v1\n");
+        std::fprintf(dumpFile, "# label %s\n", exactRespaPairLoopForceDumpLabel());
+        std::fprintf(dumpFile, "# ordinal %d\n", dumpOrdinal);
+        std::fprintf(dumpFile, "# step %" PRId64 "\n", static_cast<int64_t>(step));
+        std::fprintf(dumpFile,
+                     "# pair_fast_path_used %s\n",
+                     pairFastPathUsed ? "true" : "false");
+        std::fprintf(dumpFile,
+                     "# excluded_pair_fast_path_used %s\n",
+                     excludedPairFastPathUsed ? "true" : "false");
+        std::fprintf(dumpFile,
+                     "# pairloop_omp_requested %s\n",
+                     pairLoopOmpRequested ? "true" : "false");
+        std::fprintf(dumpFile,
+                     "# pairloop_vector_requested %s\n",
+                     pairLoopVectorRequested ? "true" : "false");
+        std::fprintf(dumpFile,
+                     "# pairloop_worker_threads %d\n",
+                     pairLoopWorkerThreads);
+        std::fprintf(dumpFile,
+                     "# compute_pair_energies %s\n",
+                     computePairEnergies ? "true" : "false");
+        std::fprintf(dumpFile,
+                     "# compute_virial %s\n",
+                     stepWork.computeVirial ? "true" : "false");
+        std::fprintf(dumpFile,
+                     "# plain_pair_count %ld\n",
+                     static_cast<long>(gmx::ssize(plainPairlist.pairs)));
+        std::fprintf(dumpFile,
+                     "# excluded_pair_count %ld\n",
+                     static_cast<long>(gmx::ssize(plainPairlist.excludedPairs)));
+        std::fprintf(dumpFile, "contribution_index\tcontribution\tatom\tfx\tfy\tfz\n");
+
+        GMX_RELEASE_ASSERT(pairLoopForceDumpBefore.size() == activeContributions.size(),
+                           "Pair-loop force dump snapshots should match active contribution count");
+        for (int contributionIndex = 0; contributionIndex < gmx::ssize(activeContributions);
+             ++contributionIndex)
+        {
+            const auto& before      = pairLoopForceDumpBefore[contributionIndex];
+            const auto& accumulator = activeContributions[contributionIndex];
+            GMX_RELEASE_ASSERT(before.contribution == accumulator.contribution,
+                               "Pair-loop force dump snapshots should preserve contribution order");
+            GMX_RELEASE_ASSERT(before.force.size() == accumulator.force.size(),
+                               "Pair-loop force dump snapshots should preserve force-buffer size");
+            for (int atom = 0; atom < gmx::ssize(accumulator.force); ++atom)
+            {
+                const RVec delta = { accumulator.force[atom][XX] - before.force[atom][XX],
+                                     accumulator.force[atom][YY] - before.force[atom][YY],
+                                     accumulator.force[atom][ZZ] - before.force[atom][ZZ] };
+                std::fprintf(dumpFile,
+                             "%d\t%s\t%d\t%.17g\t%.17g\t%.17g\n",
+                             contributionIndex,
+                             contributionLabel(accumulator.contribution),
+                             atom,
+                             delta[XX],
+                             delta[YY],
+                             delta[ZZ]);
+            }
+        }
+        std::fclose(dumpFile);
     };
 
     const auto processPairlist = [&](const auto& pairEntries,
@@ -5572,10 +5717,13 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             (ljSrTraceDirPath != nullptr && *ljSrTraceDirPath != '\0') ? sumEnergyTermsOnce(coulEnergyTerms) : 0.0;
     const double patchLjCombinedBeforePairs =
             (ljSrTraceDirPath != nullptr && *ljSrTraceDirPath != '\0') ? sumEnergyTermsOnce(vdwEnergyTerms) : 0.0;
-    if (!processPairlistOmp(plainPairlist.pairs,
-                            1.0_real,
-                            1.0_real,
-                            [](const int, const int) { return true; }))
+    capturePairLoopForceDumpBefore();
+    const bool pairLoopFastPathUsedPairs =
+            processPairlistOmp(plainPairlist.pairs,
+                               1.0_real,
+                               1.0_real,
+                               [](const int, const int) { return true; });
+    if (!pairLoopFastPathUsedPairs)
     {
         processPairlist(plainPairlist.pairs,
                         1.0_real,
@@ -5597,10 +5745,12 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
     }
     /* PME real-space bookkeeping for exact PME parity requires all excluded pairs,
      * not only the listed 1-4 subset. */
-    if (!processPairlistOmp(plainPairlist.excludedPairs,
-                            0.0_real,
-                            0.0_real,
-                            [](const int, const int) { return true; }))
+    const bool pairLoopFastPathUsedExcludedPairs =
+            processPairlistOmp(plainPairlist.excludedPairs,
+                               0.0_real,
+                               0.0_real,
+                               [](const int, const int) { return true; });
+    if (!pairLoopFastPathUsedExcludedPairs)
     {
         processPairlist(plainPairlist.excludedPairs,
                         0.0_real,
@@ -5608,6 +5758,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                         [](const int, const int) { return true; },
                         (debugExactRespa || dumpLjSrTrace || traceCpuCorrectionEnergies) ? &excludedStats : nullptr);
     }
+    writePairLoopForceDeltaDump(pairLoopFastPathUsedPairs, pairLoopFastPathUsedExcludedPairs);
     if (traceRealspaceForceSubcomponents)
     {
         appendRealspaceForceSubcomponentTracePair(activeM2pTraceDirPath(),

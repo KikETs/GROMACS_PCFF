@@ -105,10 +105,37 @@ Minimum exactness checks after each stage:
 - exact r-RESPA runtime event/order tests remain passing
 
 Trace/debug observable dumps remain serial until explicitly made parallel-safe.
-The existing force-dump parity tests are therefore diagnostic-contract tests, not
-proof that the new fast path itself emitted force-component dumps. Fast-path
-force-component parity requires separate instrumentation that does not change
-the fast-path eligibility window.
+The legacy force-dump parity tests are diagnostic-contract tests because those
+trace paths intentionally disable the new fast path. Fast-path force-component
+parity is covered by the separate pair-loop force-delta harness:
+
+- tool: `tools/pcff_respa_parity/validate_exact_respa_pairloop_force_delta.py`
+- instrumentation env:
+  `GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_DIR`,
+  `GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_LABEL`, and
+  `GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_MAX`
+- measured object: per-active-level force-buffer delta across
+  `plainPairlist.pairs` and `plainPairlist.excludedPairs`
+- eligibility: the dump env is not included in `computePairEnergies` and does
+  not disable the no-energy/no-virial fast path
+- acceptance: bounded single-precision parity, not bitwise pair-loop parity;
+  a component passes if `abs_delta <= 1e-2` or `rel_delta <= 5e-5`
+
+Current Gate I 20-step `ntomp=6` force-delta evidence:
+
+- compared fast-path snapshots: 28 per candidate mode
+- compared components: 285120 per candidate mode
+- modes: `pairloop_omp`, `pairloop_vector`, `combined`
+- max absolute pair-loop force-delta difference: `0.00604248046875`
+- max relative difference occurs only on near-zero components with absolute
+  differences below `4e-5`
+- final `.gro` output is byte-identical across baseline and all three
+  candidate modes
+
+This closes the previous "fast-path force-component dump" evidence gap only for
+the audited Gate I host-local fixture and the no-energy/no-virial fast-path
+window. It does not make virial/energy fast paths validated, because those calls
+still deliberately fall back to the serial pair loop.
 
 ## P7/P8 Claim Decision
 

@@ -29,10 +29,25 @@ Supported with limitations:
 
 Validation limit:
 
-- Existing exact r-RESPA force-dump parity tests exercise the diagnostic serial
+- Legacy exact r-RESPA force-dump parity tests exercise the diagnostic serial
   fallback when trace/dump outputs are enabled.
-- The fast paths themselves are supported here by final-state bounded parity,
-  printed energy agreement, restart continuity, and exact-runtime performance rows.
-- Direct force-component dump parity for the fast path remains a follow-up gate
-  because enabling the current dump instrumentation intentionally disables the
-  fast path.
+- Fast-path direct force-component evidence now comes from
+  `tools/pcff_respa_parity/validate_exact_respa_pairloop_force_delta.py`, which
+  dumps pair-loop force-buffer deltas without entering the legacy trace flags
+  that disable the fast path.
+- The accepted Gate I `ntomp=6` force-delta criterion is bounded
+  single-precision parity: pass if `abs_delta <= 1e-2` or
+  `rel_delta <= 5e-5`.
+- The current force-delta evidence compares 28 fast-path snapshots per
+  candidate mode and 285120 force components per mode across `pairloop_omp`,
+  `pairloop_vector`, and `combined`.
+- Maximum observed absolute pair-loop force-delta difference is
+  `0.00604248046875`; the largest relative differences occur only on near-zero
+  force components with absolute differences below `4e-5`.
+- Final `.gro` output is byte-identical across baseline and all candidate modes
+  in the 20-step force-delta harness.
+
+Remaining validation limit:
+
+- This does not validate a parallel energy or virial fast path. Energy/virial
+  pair-loop calls still deliberately use the serial path.
