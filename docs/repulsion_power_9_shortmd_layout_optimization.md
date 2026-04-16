@@ -36,6 +36,10 @@ Runtime layout basis:
   [`output/repulsion_power_9_shortmd_layout_post_pmegather_opt/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmegather_opt/summary.md)
 - post-PME-gather-cleanup 6-repeat confirmation of the best 12-thread layout:
   [`output/repulsion_power_9_shortmd_layout_post_pmegather_split12_repeatdepth/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmegather_split12_repeatdepth/summary.md)
+- post-PME-spread-thread-merge 3-repeat layout sweep:
+  [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md)
+- post-PME-spread-thread-merge 6-repeat confirmation:
+  [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md)
 
 Important interpretation rule:
 
@@ -43,26 +47,34 @@ Important interpretation rule:
   and are not additive wall shares
 - final speed claims therefore use `Performance` and `Time:` wall seconds
 
-## Current Best Result After PME Gather Hot-Path Cleanup
+## Current Best Result After PME Gather Cleanup And PME Spread Thread-Merge
 
-After caching PME trace env lookups out of the gather hot path, the layout ordering did not change,
-but the current host-local best speed moved up.
+After the PME gather hot-path cleanup, a second PME-side cleanup merged the threaded spread/copy and
+overlap-reduction phases into a single OpenMP team for the threaded spread path. The layout ordering
+still did not change, but the best split layout moved up again.
 
-Current audited specialized results:
+Post-spread-merge specialized results:
 
-| layout | real wall s | ns/day |
-| --- | ---: | ---: |
-| pure OpenMP `-ntmpi 1 -ntomp 6` | `2.309` | `187.076` |
-| pure OpenMP `-ntmpi 1 -ntomp 12` | `2.667` | `161.980` |
-| split `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6` | `1.636` | `264.066` |
+| layout | basis | real wall s | ns/day |
+| --- | --- | ---: | ---: |
+| pure OpenMP `-ntmpi 1 -ntomp 6` | 3-repeat sweep | `2.317` | `186.480` |
+| pure OpenMP `-ntmpi 1 -ntomp 12` | 6-repeat confirmation | `2.6685` | `161.897` |
+| split `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6` | 6-repeat confirmation | `1.601` | `269.829` |
 
-This matters because the current best result is no longer the earlier `235.065 ns/day` point.
+Important honesty boundary:
+
+- the split `6 / 6` gain is stable in the 6-repeat confirmation: `264.066 -> 269.829 ns/day`
+- the pure OpenMP `12` point improved in the 3-repeat sweep, but that did not hold as a stable gain
+  in the 6-repeat confirmation
+- this means the spread-thread-merge change is a real best-layout improvement, but not a proven
+  pure-OpenMP-`12` fix
+
 The current best confirmed point is:
 
 - specialized path
 - `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6`
-- `264.066 ns/day`
-- `1.636 s` real wall time
+- `269.829 ns/day`
+- `1.601 s` real wall time
 
 ## What OpenMP Alone Gets You
 
@@ -96,8 +108,8 @@ The tested 12-thread runtime layouts were:
 
 | layout | runtime flags | specialized ns/day |
 | --- | --- | ---: |
-| pure OpenMP | `-ntmpi 1 -ntomp 12` | `161.980` |
-| split 2-way | `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6` | `265.160` in the post-cleanup 3-repeat sweep, `264.066` in the post-cleanup 6-repeat confirmation |
+| pure OpenMP | `-ntmpi 1 -ntomp 12` | `161.897` in the post-spread-merge 6-repeat confirmation |
+| split 2-way | `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6` | `272.692` in the post-spread-merge 3-repeat sweep, `269.829` in the post-spread-merge 6-repeat confirmation |
 
 The stable recommendation is the simpler 2-rank split:
 
@@ -116,7 +128,7 @@ For the `2-rank + 1 PME rank` family, the tested PP/PME thread partitions were:
 | --- | ---: |
 | `4 / 8` | `167.128` |
 | `5 / 7` | `181.011` |
-| `6 / 6` | `239.346` in the original sweep, `264.066` after the PME-gather hot-path cleanup |
+| `6 / 6` | `239.346` in the original sweep, `264.066` after the PME-gather cleanup, `269.829` after the PME-spread thread-merge cleanup |
 | `7 / 5` | `205.901` |
 | `8 / 4` | `170.607` |
 
@@ -134,15 +146,15 @@ Best confirmed result:
 
 - specialized path
 - `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6`
-- `264.066 ns/day`
-- `1.636 s` real wall time
+- `269.829 ns/day`
+- `1.601 s` real wall time
 
 Compared with the current pure-OpenMP baselines:
 
 | baseline | baseline ns/day | best-layout ns/day | speedup |
 | --- | ---: | ---: | ---: |
-| pure OpenMP `ntomp=6` specialized | `187.076` | `264.066` | `1.412x` |
-| pure OpenMP `ntomp=12` specialized | `161.980` | `264.066` | `1.630x` |
+| pure OpenMP `ntomp=6` specialized | `186.480` | `269.829` | `1.447x` |
+| pure OpenMP `ntomp=12` specialized | `161.897` | `269.829` | `1.667x` |
 
 This is the current host-local final-speed answer.
 
@@ -156,10 +168,13 @@ Priority 1: CPU PME / FFT scaling
 
 Priority 2: PME spread / gather
 
-- these also improve under the `6 / 6` PME split
+- these also improve under the `6 / 6` PME split, and one more spread-side cleanup moved the split
+  layout further
 - example, specialized path:
-  - pure OpenMP `ntomp=12`: `PME spread 0.381 s`, `PME gather 0.303 s`
-  - split `6 / 6`: `PME spread 0.174 s`, `PME gather 0.1965 s`
+  - pure OpenMP `ntomp=12` after the spread-thread-merge cleanup: `PME spread 0.338 s`,
+    `PME gather 0.2855 s`
+  - split `6 / 6` after the spread-thread-merge cleanup: `PME spread 0.162 s`,
+    `PME gather 0.1885 s`
 - the biggest absolute PME term is still `PME 3D-FFT`
 
 Priority 3: Update / buffer overhead
@@ -187,10 +202,17 @@ For this audited host and this cleaned short-MD shape:
 - if you use 12 total CPU threads, do not use pure OpenMP `-ntmpi 1 -ntomp 12`
 - use `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6`
 
+This is not a universal CPU setting. The fastest layout has to be tuned per CPU topology and workload.
+At minimum, re-sweep rank/thread/PME-rank layouts when the CPU L3 topology, hybrid P/E-core layout, FFT
+library, PME grid, or system size changes. A fixed `ntomp` value from this host should not be carried to
+another CPU without measurement.
+
 ## Future Recommendation
 
 If this needs productization beyond a host-local benchmark script:
 
 1. Do not change global GROMACS thread/rank heuristics from this single-host result alone.
-2. Add a bounded runtime-layout benchmark or recommendation path for PME-heavy charged PCFF short-MD CPU jobs.
-3. If core-code optimization resumes, target CPU PME/FFT first, not the repulsion-power-9 PP kernel.
+2. Add a bounded runtime-layout benchmark or recommendation path for PME-heavy charged PCFF short-MD CPU jobs,
+   because the fastest setting is CPU-specific and must be found by measurement.
+3. If core-code optimization resumes, target CPU PME/FFT first; the spread-side orchestration cleanup is
+   no longer the dominant remaining lever.

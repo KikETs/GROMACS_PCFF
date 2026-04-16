@@ -207,6 +207,55 @@ Updated priority after this cleanup:
 2. PME spread/gather memory behavior beyond the removed trace-control overhead
 3. thread-wait reduction after PME memory pressure is reduced
 
+## PME Spread Thread-Merge Follow-Up
+
+The next PME-side follow-up targeted `spread_on_grid()` itself:
+
+- [`src/gromacs/ewald/pme_spread.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/ewald/pme_spread.cpp)
+
+Applied change:
+
+- for the threaded CPU spread path, merge the spread/copy phase and the overlap-reduction phase into a
+  single OpenMP team
+- keep the old path as fallback when the threaded-grid assumptions are not met
+- this removes one extra OpenMP team launch and one extra inter-team synchronization from the hot path
+
+Post-change layout sweep:
+
+- [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md)
+- [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md)
+
+Representative impact:
+
+| layout | basis | ns/day | wall s | PME spread s | PME gather s | PME 3D-FFT s |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `omp6` | 3-repeat sweep | `186.480` | `2.317` | `0.141` | `0.163` | `0.942` |
+| `omp12` | 6-repeat confirmation | `161.897` | `2.6685` | `0.338` | `0.2855` | `1.117` |
+| `split12_pp6_pme6` | 6-repeat confirmation | `269.829` | `1.601` | `0.162` | `0.1885` | `0.968` |
+
+Compared to the post-PME-gather baseline:
+
+- `split12_pp6_pme6`
+  - `264.066 -> 269.829 ns/day`
+  - `1.636 -> 1.601 s`
+  - `PME spread 0.175 -> 0.162 s`
+  - `PME gather 0.195 -> 0.1885 s`
+- `omp12`
+  - the 3-repeat sweep looked better, but the 6-repeat confirmation fell back near the old baseline
+  - this is not stable evidence for a real pure-OpenMP-12 fix
+
+What this means:
+
+- the spread-thread-merge cleanup is a real improvement for the best audited split layout
+- it is not a general cure for the single-rank `omp12` collapse
+- after this change, `PME 3D-FFT` remains much larger than `PME spread`
+
+Updated priority after this cleanup:
+
+1. FFT / FFTW-side efficiency
+2. deeper PME memory behavior around spread/gather, not OpenMP team-launch overhead
+3. thread-wait reduction after PME memory pressure is reduced
+
 ## Deep PMU Follow-Up
 
 After lowering the host restrictions to allow broader PMU access, the same three representative
@@ -267,3 +316,10 @@ Current host-local explanation is therefore narrower and stronger than before:
 This does not prove a universal multi-CCD rule for all hosts.
 It does close the audited host-local question more tightly: on this machine, `omp12` loses because
 the PME-heavy single-rank CPU path scales poorly once it crosses the two-L3-group boundary.
+
+Operational boundary:
+
+- do not treat this as a universal OpenMP recommendation
+- CPU layout must be remeasured per host
+- at minimum, sweep pure OpenMP and PME-split layouts across the available L3/core topology
+- hybrid-core CPUs need a separate P-core/E-core affinity sweep before accepting any `ntomp` result

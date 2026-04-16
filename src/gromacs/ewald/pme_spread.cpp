@@ -48,6 +48,7 @@
 #include "gromacs/utility/exceptions.h"
 #include "gromacs/utility/fatalerror.h"
 #include "gromacs/utility/gmxassert.h"
+#include "gromacs/utility/gmxomp.h"
 
 #include "pme_grid.h"
 #include "pme_internal.h"
@@ -939,23 +940,20 @@ void spread_on_grid(const gmx_pme_t* pme,
 #ifdef PME_TIME_THREADS
     c2 = omp_cyc_start();
 #endif
-#pragma omp parallel for num_threads(nthread) schedule(static)
-    for (int thread = 0; thread < nthread; thread++)
+    /* Keep multi-node PME on the existing path, which performs overlap communication
+     * after reducing the thread-local grid overlap. */
+    const bool useMergedThreadedSpreadPath =
+            doSpreading && pme->bUseThreads && grids != nullptr && grids->pmeGrids.nthread == nthread
+            && pme->nnodes == 1;
+
+    if (useMergedThreadedSpreadPath)
     {
-        try
+#pragma omp parallel num_threads(nthread)
         {
-            splinedata_t* spline;
-
-            /* make local bsplines  */
-            if (grids == nullptr || !pme->bUseThreads)
+            try
             {
-                spline = &atc->spline[0];
-
-                spline->n = atc->numAtoms();
-            }
-            else
-            {
-                spline = &atc->spline[thread];
+                const int    thread = gmx_omp_get_thread_num();
+                splinedata_t* spline = &atc->spline[thread];
 
                 if (grids->pmeGrids.nthread == 1)
                 {
@@ -967,49 +965,116 @@ void spread_on_grid(const gmx_pme_t* pme,
                     /* Get the indices our thread should operate on */
                     make_thread_local_ind(atc, thread, spline);
                 }
-            }
 
-            if (calculateSplines)
-            {
-                make_bsplines(spline->theta.coefficients,
-                              spline->dtheta.coefficients,
-                              pme->pme_order,
-                              as_rvec_array(atc->fractx.data()),
-                              spline->n,
-                              spline->ind.data(),
-                              atc->coefficient.data(),
-                              computeAllSplineCoefficients);
-            }
+                if (calculateSplines)
+                {
+                    make_bsplines(spline->theta.coefficients,
+                                  spline->dtheta.coefficients,
+                                  pme->pme_order,
+                                  as_rvec_array(atc->fractx.data()),
+                                  spline->n,
+                                  spline->ind.data(),
+                                  atc->coefficient.data(),
+                                  computeAllSplineCoefficients);
+                }
 
-            if (doSpreading)
-            {
                 /* put local atoms on grid. */
-                pmegrid_t& grid =
-                        pme->bUseThreads ? grids->pmeGrids.grid_th[thread] : grids->pmeGrids.grid;
+                pmegrid_t& grid = grids->pmeGrids.grid_th[thread];
 
 #ifdef PME_TIME_SPREAD
                 ct1a = omp_cyc_start();
 #endif
                 spread_coefficients_bsplines_thread(&grid, atc, spline, *pme->spline_work);
-
-                if (pme->bUseThreads)
-                {
-                    copy_local_grid(grids, thread);
-                }
+                copy_local_grid(grids, thread);
 #ifdef PME_TIME_SPREAD
                 ct1a = omp_cyc_end(ct1a);
                 cs1a[thread] += (double)ct1a;
 #endif
+
+#pragma omp barrier
+                reduce_threadgrid_overlap(pme,
+                                          grids,
+                                          thread,
+                                          const_cast<real*>(pme->overlap[0].sendbuf.data()),
+                                          const_cast<real*>(pme->overlap[1].sendbuf.data()));
             }
+            GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
         }
-        GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
+    }
+    else
+    {
+#pragma omp parallel for num_threads(nthread) schedule(static)
+        for (int thread = 0; thread < nthread; thread++)
+        {
+            try
+            {
+                splinedata_t* spline;
+
+                /* make local bsplines  */
+                if (grids == nullptr || !pme->bUseThreads)
+                {
+                    spline = &atc->spline[0];
+
+                    spline->n = atc->numAtoms();
+                }
+                else
+                {
+                    spline = &atc->spline[thread];
+
+                    if (grids->pmeGrids.nthread == 1)
+                    {
+                        /* One thread, we operate on all coefficients */
+                        spline->n = atc->numAtoms();
+                    }
+                    else
+                    {
+                        /* Get the indices our thread should operate on */
+                        make_thread_local_ind(atc, thread, spline);
+                    }
+                }
+
+                if (calculateSplines)
+                {
+                    make_bsplines(spline->theta.coefficients,
+                                  spline->dtheta.coefficients,
+                                  pme->pme_order,
+                                  as_rvec_array(atc->fractx.data()),
+                                  spline->n,
+                                  spline->ind.data(),
+                                  atc->coefficient.data(),
+                                  computeAllSplineCoefficients);
+                }
+
+                if (doSpreading)
+                {
+                    /* put local atoms on grid. */
+                    pmegrid_t& grid =
+                            pme->bUseThreads ? grids->pmeGrids.grid_th[thread] : grids->pmeGrids.grid;
+
+#ifdef PME_TIME_SPREAD
+                    ct1a = omp_cyc_start();
+#endif
+                    spread_coefficients_bsplines_thread(&grid, atc, spline, *pme->spline_work);
+
+                    if (pme->bUseThreads)
+                    {
+                        copy_local_grid(grids, thread);
+                    }
+#ifdef PME_TIME_SPREAD
+                    ct1a = omp_cyc_end(ct1a);
+                    cs1a[thread] += (double)ct1a;
+#endif
+                }
+            }
+            GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
+        }
     }
 #ifdef PME_TIME_THREADS
     c2 = omp_cyc_end(c2);
     cs2 += (double)c2;
 #endif
 
-    if (doSpreading && pme->bUseThreads)
+    if (doSpreading && pme->bUseThreads && !useMergedThreadedSpreadPath)
     {
 #ifdef PME_TIME_THREADS
         c3 = omp_cyc_start();
