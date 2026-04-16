@@ -142,6 +142,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ntmpi", type=int, default=1, help="Thread-MPI ranks.")
     parser.add_argument("--ntomp", type=int, default=1, help="OpenMP threads.")
     parser.add_argument("--npme", type=int, default=None, help="Optional explicit -npme value; omitted by default.")
+    parser.add_argument(
+        "--ntomp-pme",
+        "--ntomp_pme",
+        dest="ntomp_pme",
+        type=int,
+        default=None,
+        help="Optional explicit -ntomp_pme value; omitted by default.",
+    )
     parser.add_argument("--replicas", type=int, default=DEFAULT_REPLICAS, help="Replica count.")
     parser.add_argument("--equil-ps", type=float, default=DEFAULT_EQ_PS, help="Equilibration duration in ps.")
     parser.add_argument("--prod-ps", type=float, default=DEFAULT_PROD_PS, help="Production duration in ps.")
@@ -535,7 +543,7 @@ def build_contract(
         "gate_id": GATE_ID,
         "status": "DECLARED",
         "execution_policy": {
-            "single_rank": True,
+            "single_rank": args.ntmpi == 1 and args.npme is None,
             "cpu_only": True,
             "exact_respa": True,
             "ensemble": "npt",
@@ -564,7 +572,12 @@ def build_contract(
             "compressibility_bar_inv": args.compressibility_bar_inv,
             "ntmpi": args.ntmpi,
             "ntomp": args.ntomp,
-            "mdrun_shape": "nb cpu / bonded cpu / pme cpu / update cpu / reprod / single rank",
+            "npme": args.npme,
+            "ntomp_pme": args.ntomp_pme,
+            "mdrun_shape": (
+                f"ntmpi {args.ntmpi} / ntomp {args.ntomp} / npme {args.npme} / "
+                f"ntomp_pme {args.ntomp_pme} / nb cpu / bonded cpu / pme cpu / update cpu / reprod"
+            ),
         },
         "requested_observables": list(REQUESTED_OBSERVABLES),
         "primary_gate_observables": list(PRIMARY_GATE_OBSERVABLES),

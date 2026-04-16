@@ -117,6 +117,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ntmpi", type=int, default=1, help="Thread-MPI ranks for mdrun.")
     parser.add_argument("--ntomp", type=int, default=1, help="OpenMP threads for mdrun.")
     parser.add_argument("--npme", type=int, default=None, help="Optional explicit -npme value; omitted in Gate G.")
+    parser.add_argument(
+        "--ntomp-pme",
+        "--ntomp_pme",
+        dest="ntomp_pme",
+        type=int,
+        default=None,
+        help="Optional explicit -ntomp_pme value; omitted by default.",
+    )
     parser.add_argument("--replicas", type=int, default=DEFAULT_REPLICAS, help="Replica count per layout.")
     parser.add_argument("--equil-ps", type=float, default=DEFAULT_EQ_PS, help="Equilibration duration in ps.")
     parser.add_argument("--prod-ps", type=float, default=DEFAULT_PROD_PS, help="Production duration in ps.")
@@ -272,7 +280,7 @@ def make_gate_g_mdp(
 
 
 def mdrun_args_cpu(args: argparse.Namespace, deffnm: Path) -> list[str]:
-    return [
+    argv = [
         "-s",
         str(deffnm.with_suffix(".tpr")),
         "-deffnm",
@@ -281,20 +289,29 @@ def mdrun_args_cpu(args: argparse.Namespace, deffnm: Path) -> list[str]:
         str(args.ntmpi),
         "-ntomp",
         str(args.ntomp),
-        "-dlb",
-        "no",
-        "-nb",
-        "cpu",
-        "-pme",
-        "cpu",
-        "-bonded",
-        "cpu",
-        "-update",
-        "cpu",
-        "-pin",
-        "off",
-        "-reprod",
     ]
+    if args.npme is not None:
+        argv.extend(["-npme", str(args.npme)])
+    if getattr(args, "ntomp_pme", None) is not None:
+        argv.extend(["-ntomp_pme", str(args.ntomp_pme)])
+    argv.extend(
+        [
+            "-dlb",
+            "no",
+            "-nb",
+            "cpu",
+            "-pme",
+            "cpu",
+            "-bonded",
+            "cpu",
+            "-update",
+            "cpu",
+            "-pin",
+            "off",
+            "-reprod",
+        ]
+    )
+    return argv
 
 
 def mdrun_args_gpu(args: argparse.Namespace, deffnm: Path) -> list[str]:
