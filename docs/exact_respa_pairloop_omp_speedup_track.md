@@ -66,13 +66,19 @@ This preserves physics but may change floating-point summation order relative to
 
 ## P4 Vectorization Design
 
-Vectorization is subordinate to correctness and profiling. It may be introduced only after the parallel path has a passing exactness suite.
+Vectorization is subordinate to correctness and profiling. The first vector path is an explicit
+default-off batch path selected by `GMX_PCFF_EXACT_RESPA_PAIRLOOP_VECTOR=1`.
 
-Allowed vectorization forms:
+Current implemented vectorization form:
 
-- compiler-vectorizable math-only helper extraction
-- explicit SIMD for the fixed repulsion-power-9 scalar math shape
+- fixed-width lane batching inside the same no-trace/no-energy/no-virial pair-loop fast path
+- `#pragma omp simd` over the per-lane distance, split-weight, repulsion-power-9, and PME real-space force scalar math
+- deterministic scatter after the vectorized math stage into the same thread-private force/shift buffers used by the OpenMP path
+
+Still allowed as follow-up work:
+
 - narrower branch-specialized kernels when profiling shows branch dispatch dominates
+- more explicit SIMD for the fixed repulsion-power-9 scalar math shape if the compiler-vectorized batch path is insufficient
 
 Forbidden:
 
@@ -80,6 +86,12 @@ Forbidden:
 - relaxed cutoffs or changed switching weights
 - hidden work skipping
 - vector-only microbenchmark claims without real exact-r-RESPA runtime evidence
+
+Observed first-stage result:
+
+- vector-only produces a real exact-runtime improvement on the audited host/fixture, but it is smaller than the OpenMP pair-loop gain
+- combined OpenMP+vector has negligible additional whole-run benefit over OpenMP alone in the first Gate I sweep
+- therefore vectorization is a limited capability, not a broad SIMD-performance claim
 
 ## P5/P6 Exactness and Integration Gates
 
@@ -107,8 +119,9 @@ At the end of each stage, the only allowed outcomes are:
 - no worthwhile gain
 
 Any public claim must name the host, fixture, runtime shape, thread counts, and whether the gain is whole-run, Force-proxy, or pair-loop-local.
-The first accepted wording must also state that vectorization is not implemented
-until a real `pairloop_vector` mode exists and passes the same exactness gates.
+The first accepted wording must state that vectorization is implemented only as
+the audited batch path, and that the measured combined benefit over OpenMP alone
+is marginal on the first Gate I host-local fixture.
 
 ## P10 Optimization Priority
 

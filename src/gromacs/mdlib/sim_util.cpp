@@ -195,6 +195,12 @@ static bool exactRespaPairLoopOmpRequested()
     return env != nullptr && std::strcmp(env, "0") != 0;
 }
 
+static bool exactRespaPairLoopVectorRequested()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_VECTOR");
+    return env != nullptr && std::strcmp(env, "0") != 0;
+}
+
 static bool useRepulsionPower9ExactRespaCpuSpecialization(const interaction_const_t& interactionConst)
 {
     return gmx_within_tol(interactionConst.vdw.repulsionPower, 9.0, 10 * GMX_DOUBLE_EPS)
@@ -4214,26 +4220,30 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
     static std::mutex        pairLoopOmpScratchMutex;
     static PairLoopOmpScratch pairLoopOmpScratch;
 
-    const int  pairLoopOmpThreads = gmx_omp_nthreads_get(ModuleMultiThread::Default);
-    const bool pairLoopOmpEligible =
-            exactRespaPairLoopOmpRequested() && pairLoopOmpThreads > 1 && !traceOnlyDiagnostics
+    const bool pairLoopOmpRequested    = exactRespaPairLoopOmpRequested();
+    const bool pairLoopVectorRequested = exactRespaPairLoopVectorRequested();
+    const int  pairLoopOmpThreads      = gmx_omp_nthreads_get(ModuleMultiThread::Default);
+    const int  pairLoopWorkerThreads   = pairLoopOmpRequested ? pairLoopOmpThreads : 1;
+    const bool pairLoopFastPathEligible =
+            (pairLoopOmpRequested || pairLoopVectorRequested) && pairLoopWorkerThreads >= 1
+            && (!pairLoopOmpRequested || pairLoopOmpThreads > 1) && !traceOnlyDiagnostics
             && !computePairEnergies && !stepWork.computeVirial && !dumpExcludedCorrectionForce
             && !useDispatchProbe;
 
     std::unique_lock<std::mutex> pairLoopOmpScratchLock;
     PairLoopOmpScratch*         pairLoopOmpScratchPtr = nullptr;
-    if (pairLoopOmpEligible)
+    if (pairLoopFastPathEligible)
     {
         pairLoopOmpScratchLock = std::unique_lock<std::mutex>(pairLoopOmpScratchMutex);
-        pairLoopOmpScratch.numThreads = pairLoopOmpThreads;
+        pairLoopOmpScratch.numThreads = pairLoopWorkerThreads;
         pairLoopOmpScratch.contributions.resize(activeContributions.size());
         for (int contributionIndex = 0; contributionIndex < gmx::ssize(activeContributions); ++contributionIndex)
         {
             auto& scratchContribution = pairLoopOmpScratch.contributions[contributionIndex];
             scratchContribution.forceSize = static_cast<int>(activeContributions[contributionIndex].force.size());
-            scratchContribution.forceByThread.resize(pairLoopOmpThreads);
-            scratchContribution.shiftByThread.resize(pairLoopOmpThreads);
-            for (int thread = 0; thread < pairLoopOmpThreads; ++thread)
+            scratchContribution.forceByThread.resize(pairLoopWorkerThreads);
+            scratchContribution.shiftByThread.resize(pairLoopWorkerThreads);
+            for (int thread = 0; thread < pairLoopWorkerThreads; ++thread)
             {
                 scratchContribution.forceByThread[thread].resize(scratchContribution.forceSize);
                 scratchContribution.shiftByThread[thread].resize(c_numShiftVectors);
@@ -4267,7 +4277,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             const auto& contributionScratch = pairLoopOmpScratchPtr->contributions[contributionIndex];
             const int   forceSize           = contributionScratch.forceSize;
 
-#pragma omp parallel for num_threads(pairLoopOmpThreads) schedule(static)
+#pragma omp parallel for num_threads(pairLoopWorkerThreads) schedule(static)
             for (int atom = 0; atom < forceSize; ++atom)
             {
                 RVec force = { 0.0_real, 0.0_real, 0.0_real };
@@ -4298,7 +4308,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                                         const real factorLj,
                                         const auto& includePair) -> bool
     {
-        if (!pairLoopOmpEligible || pairLoopOmpScratchPtr == nullptr
+        if (!pairLoopFastPathEligible || pairLoopOmpScratchPtr == nullptr
             || gmx::ssize(pairEntries) < 128)
         {
             return false;
@@ -4306,17 +4316,63 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
         clearPairLoopOmpScratch();
         const int numPairs = gmx::ssize(pairEntries);
-#pragma omp parallel for num_threads(pairLoopOmpThreads) schedule(static)
-        for (int pairIndex = 0; pairIndex < numPairs; ++pairIndex)
+        const auto accumulatePairScalars = [&](const int  thread,
+                                               const int  ai,
+                                               const int  aj,
+                                               const int  shiftIndex,
+                                               const RVec& dx,
+                                               const real rinvsq,
+                                               const real innerScalar,
+                                               const real middleScalar,
+                                               const real outerScalar)
         {
-            const int thread = ::gmx_omp_get_thread_num();
-            const auto& entry = pairEntries[pairIndex];
-            const int ai         = entry.first.first;
-            const int aj         = entry.first.second;
-            const int shiftIndex = entry.second;
+            for (int contributionIndex = 0; contributionIndex < gmx::ssize(activeContributions); ++contributionIndex)
+            {
+                const auto& accumulator = activeContributions[contributionIndex];
+                real        scalar      = 0;
+                switch (accumulator.contribution)
+                {
+                    case ExactRespaNonbondedContribution::Inner:
+                        scalar = innerScalar;
+                        break;
+                    case ExactRespaNonbondedContribution::Middle:
+                        scalar = middleScalar;
+                        break;
+                    case ExactRespaNonbondedContribution::Outer:
+                        scalar = outerScalar;
+                        break;
+                    default:
+                        GMX_RELEASE_ASSERT(false, "Unexpected nonbonded r-RESPA contribution");
+                }
+
+                if (scalar == 0.0_real)
+                {
+                    continue;
+                }
+
+                RVec force = { 0.0_real, 0.0_real, 0.0_real };
+                svmul(scalar * rinvsq, dx, force);
+                auto& contributionScratch = pairLoopOmpScratchPtr->contributions[contributionIndex];
+                rvec_inc(contributionScratch.forceByThread[thread][ai], force);
+                rvec_dec(contributionScratch.forceByThread[thread][aj], force);
+
+                if (!accumulator.shift.empty() && shiftIndex != c_centralShiftIndex)
+                {
+                    rvec_inc(contributionScratch.shiftByThread[thread][shiftIndex], force);
+                    rvec_dec(contributionScratch.shiftByThread[thread][c_centralShiftIndex], force);
+                }
+            }
+        };
+
+        const auto processPairIndex = [&](const int thread, const int pairIndex)
+        {
+            const auto& entry      = pairEntries[pairIndex];
+            const int   ai         = entry.first.first;
+            const int   aj         = entry.first.second;
+            const int   shiftIndex = entry.second;
             if (!includePair(ai, aj))
             {
-                continue;
+                return;
             }
 
             RVec dx;
@@ -4405,40 +4461,183 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                     correctionScalar + bareCoulombScalar * splitWeights.outer
                     + factorLj * rawLjScalar * splitWeights.outer;
 
-            for (int contributionIndex = 0; contributionIndex < gmx::ssize(activeContributions); ++contributionIndex)
+            accumulatePairScalars(
+                    thread, ai, aj, shiftIndex, dx, rinvsq, innerScalar, middleScalar, outerScalar);
+        };
+
+        if (!pairLoopVectorRequested)
+        {
+#pragma omp parallel for num_threads(pairLoopWorkerThreads) schedule(static)
+            for (int pairIndex = 0; pairIndex < numPairs; ++pairIndex)
             {
-                const auto& accumulator = activeContributions[contributionIndex];
-                real        scalar      = 0;
-                switch (accumulator.contribution)
+                processPairIndex(::gmx_omp_get_thread_num(), pairIndex);
+            }
+        }
+        else
+        {
+            constexpr int c_pairLoopVectorWidth = 4;
+            const int     numChunks = (numPairs + c_pairLoopVectorWidth - 1) / c_pairLoopVectorWidth;
+#pragma omp parallel for num_threads(pairLoopWorkerThreads) schedule(static)
+            for (int chunk = 0; chunk < numChunks; ++chunk)
+            {
+                const int thread = ::gmx_omp_get_thread_num();
+                bool      laneActive[c_pairLoopVectorWidth];
+                int       laneAi[c_pairLoopVectorWidth];
+                int       laneAj[c_pairLoopVectorWidth];
+                int       laneShiftIndex[c_pairLoopVectorWidth];
+                real      laneDxX[c_pairLoopVectorWidth];
+                real      laneDxY[c_pairLoopVectorWidth];
+                real      laneDxZ[c_pairLoopVectorWidth];
+                real      laneRinvSq[c_pairLoopVectorWidth];
+                real      laneInnerScalar[c_pairLoopVectorWidth];
+                real      laneMiddleScalar[c_pairLoopVectorWidth];
+                real      laneOuterScalar[c_pairLoopVectorWidth];
+
+                for (int lane = 0; lane < c_pairLoopVectorWidth; ++lane)
                 {
-                    case ExactRespaNonbondedContribution::Inner:
-                        scalar = innerScalar;
-                        break;
-                    case ExactRespaNonbondedContribution::Middle:
-                        scalar = middleScalar;
-                        break;
-                    case ExactRespaNonbondedContribution::Outer:
-                        scalar = outerScalar;
-                        break;
-                    default:
-                        GMX_RELEASE_ASSERT(false, "Unexpected nonbonded r-RESPA contribution");
+                    laneActive[lane]       = false;
+                    laneAi[lane]           = -1;
+                    laneAj[lane]           = -1;
+                    laneShiftIndex[lane]   = c_centralShiftIndex;
+                    laneDxX[lane]          = 0.0_real;
+                    laneDxY[lane]          = 0.0_real;
+                    laneDxZ[lane]          = 0.0_real;
+                    laneRinvSq[lane]       = 0.0_real;
+                    laneInnerScalar[lane]  = 0.0_real;
+                    laneMiddleScalar[lane] = 0.0_real;
+                    laneOuterScalar[lane]  = 0.0_real;
                 }
 
-                if (scalar == 0.0_real)
+                const int chunkBegin = chunk * c_pairLoopVectorWidth;
+                const int chunkEnd   = std::min(chunkBegin + c_pairLoopVectorWidth, numPairs);
+                for (int pairIndex = chunkBegin; pairIndex < chunkEnd; ++pairIndex)
                 {
-                    continue;
+                    const int   lane       = pairIndex - chunkBegin;
+                    const auto& entry      = pairEntries[pairIndex];
+                    const int   ai         = entry.first.first;
+                    const int   aj         = entry.first.second;
+                    laneAi[lane]           = ai;
+                    laneAj[lane]           = aj;
+                    laneShiftIndex[lane]   = entry.second;
+                    laneActive[lane]       = includePair(ai, aj);
                 }
 
-                RVec force = { 0.0_real, 0.0_real, 0.0_real };
-                svmul(scalar * rinvsq, dx, force);
-                auto& contributionScratch = pairLoopOmpScratchPtr->contributions[contributionIndex];
-                rvec_inc(contributionScratch.forceByThread[thread][ai], force);
-                rvec_dec(contributionScratch.forceByThread[thread][aj], force);
-
-                if (!accumulator.shift.empty() && shiftIndex != c_centralShiftIndex)
+#pragma omp simd
+                for (int lane = 0; lane < c_pairLoopVectorWidth; ++lane)
                 {
-                    rvec_inc(contributionScratch.shiftByThread[thread][shiftIndex], force);
-                    rvec_dec(contributionScratch.shiftByThread[thread][c_centralShiftIndex], force);
+                    if (!laneActive[lane])
+                    {
+                        continue;
+                    }
+
+                    const int  ai         = laneAi[lane];
+                    const int  aj         = laneAj[lane];
+                    const int  shiftIndex = laneShiftIndex[lane];
+                    const real dxX        = coordinates[ai][XX] + fr->shift_vec[shiftIndex][XX]
+                                     - coordinates[aj][XX];
+                    const real dxY = coordinates[ai][YY] + fr->shift_vec[shiftIndex][YY]
+                                     - coordinates[aj][YY];
+                    const real dxZ = coordinates[ai][ZZ] + fr->shift_vec[shiftIndex][ZZ]
+                                     - coordinates[aj][ZZ];
+
+                    real rsq = dxX * dxX + dxY * dxY + dxZ * dxZ;
+                    rsq      = std::max(rsq, c_nbnxnMinDistanceSquared);
+
+                    const real rinv   = gmx::invsqrt(rsq);
+                    const real rinvsq = rinv * rinv;
+                    const real r      = rsq * rinv;
+
+                    real innerWeight  = 0.0_real;
+                    real middleWeight = 0.0_real;
+                    real outerWeight  = 0.0_real;
+                    if (exactRespaHasMiddle)
+                    {
+                        const real switchIntoMiddle =
+                                respaSwitchIn(r, exactRespaForceLayout.innerOff, exactRespaForceLayout.innerOn);
+                        const real switchIntoOuter =
+                                respaSwitchIn(r, exactRespaForceLayout.outerOn, exactRespaForceLayout.outerOff);
+                        innerWeight  = 1.0_real - switchIntoMiddle;
+                        middleWeight = switchIntoMiddle * (1.0_real - switchIntoOuter);
+                        outerWeight  = switchIntoOuter;
+                    }
+                    else
+                    {
+                        const real switchIntoOuter =
+                                respaSwitchIn(r, exactRespaForceLayout.outerOn, exactRespaForceLayout.outerOff);
+                        innerWeight  = 1.0_real - switchIntoOuter;
+                        middleWeight = 0.0_real;
+                        outerWeight  = switchIntoOuter;
+                    }
+
+                    real rawLjScalar = 0.0_real;
+                    if (factorLj != 0.0_real && rsq < vdwCutoff2)
+                    {
+                        const int  typeI = mdatoms.typeA[ai];
+                        const int  typeJ = mdatoms.typeA[aj];
+                        const real c6    = fr->nbfp[typeI * ntype2 + typeJ * 2];
+                        const real cRepulsive = fr->nbfp[typeI * ntype2 + typeJ * 2 + 1];
+                        const real rinvsix = rinvsq * rinvsq * rinvsq;
+                        const real repulsiveTerm = usePower9SpecializedPath ? (rinvsix * rinvsq * rinv)
+                                                    : (repulsionPower == 12.0_real ? rinvsix * rinvsix
+                                                                                   : std::pow(rinv, repulsionPower));
+                        rawLjScalar = cRepulsive * repulsiveTerm - c6 * rinvsix;
+                    }
+
+                    real bareCoulombScalar = 0.0_real;
+                    real correctionScalar  = 0.0_real;
+                    if (rsq < coulombCutoff2)
+                    {
+                        const real qq = mdatoms.chargeA[ai] * mdatoms.chargeA[aj] * fr->ic->coulomb.epsfac;
+                        if (qq != 0.0_real)
+                        {
+                            const real scaledR = r * fr->ic->coulombEwaldTables->scale;
+                            const int  coulTableIndex = static_cast<int>(scaledR);
+                            const real coulFrac       = scaledR - coulTableIndex;
+#if !GMX_DOUBLE
+                            const real* table = fr->ic->coulombEwaldTables->tableFDV0.data();
+                            const real  coulFexcl =
+                                    table[coulTableIndex * 4] + coulFrac * table[coulTableIndex * 4 + 1];
+#else
+                            const real* tableF = fr->ic->coulombEwaldTables->tableF.data();
+                            const real  coulFexcl =
+                                    (1 - coulFrac) * tableF[coulTableIndex]
+                                    + coulFrac * tableF[coulTableIndex + 1];
+#endif
+                            bareCoulombScalar = factorCoulomb * qq * rinv;
+                            correctionScalar  = -qq * coulFexcl / rinv;
+                        }
+                    }
+
+                    laneDxX[lane]     = dxX;
+                    laneDxY[lane]     = dxY;
+                    laneDxZ[lane]     = dxZ;
+                    laneRinvSq[lane]  = rinvsq;
+                    laneInnerScalar[lane] =
+                            bareCoulombScalar * innerWeight + factorLj * rawLjScalar * innerWeight;
+                    laneMiddleScalar[lane] =
+                            bareCoulombScalar * middleWeight + factorLj * rawLjScalar * middleWeight;
+                    laneOuterScalar[lane] =
+                            correctionScalar + bareCoulombScalar * outerWeight
+                            + factorLj * rawLjScalar * outerWeight;
+                }
+
+                for (int lane = 0; lane < c_pairLoopVectorWidth; ++lane)
+                {
+                    if (!laneActive[lane])
+                    {
+                        continue;
+                    }
+
+                    const RVec dx = { laneDxX[lane], laneDxY[lane], laneDxZ[lane] };
+                    accumulatePairScalars(thread,
+                                          laneAi[lane],
+                                          laneAj[lane],
+                                          laneShiftIndex[lane],
+                                          dx,
+                                          laneRinvSq[lane],
+                                          laneInnerScalar[lane],
+                                          laneMiddleScalar[lane],
+                                          laneOuterScalar[lane]);
                 }
             }
         }
@@ -8456,6 +8655,11 @@ void do_force(FILE*                         fplog,
                 {
                     fprintf(fplog,
                             "Exact r-RESPA CPU pair-loop OpenMP experimental fast path requested; only no-trace/no-energy/no-virial pair-loop calls are eligible.\n");
+                }
+                if (exactRespaPairLoopVectorRequested())
+                {
+                    fprintf(fplog,
+                            "Exact r-RESPA CPU pair-loop vector-batch experimental fast path requested; only no-trace/no-energy/no-virial pair-loop calls are eligible.\n");
                 }
             }
             computeExactRespaNonbondedCpu(inputrec,

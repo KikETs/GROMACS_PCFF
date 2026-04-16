@@ -175,12 +175,6 @@ def benchmark_one(args: argparse.Namespace, mode: str, ntomp: int, repeat_index:
 
 def main() -> None:
     args = parse_args()
-    vector_modes = {"pairloop_vector", "combined"}.intersection(args.modes)
-    if vector_modes:
-        requested = ", ".join(sorted(vector_modes))
-        raise SystemExit(
-            f"Vector pair-loop mode is not implemented yet; refusing to collect fake evidence for: {requested}"
-        )
     if not args.tpr.exists():
         raise SystemExit(f"TPR not found: {args.tpr}")
     args.output_dir.mkdir(parents=True, exist_ok=True)
