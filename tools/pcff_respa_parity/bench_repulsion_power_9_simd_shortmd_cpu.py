@@ -95,9 +95,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--steps", type=int, default=200)
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--pin", choices=("on", "off", "auto"), default="on")
+    parser.add_argument("--dlb", choices=("auto", "no", "yes"), default="auto")
     parser.add_argument("--ntomp", type=int, nargs="+", default=list(DEFAULT_NTOMP))
     parser.add_argument("--systems", nargs="+", default=list(DEFAULT_SYSTEMS))
     parser.add_argument("--modes", nargs="+", choices=tuple(MODE_SPECS), default=list(DEFAULT_MODES))
+    parser.add_argument("--alternate-mode-order", action="store_true")
+    parser.add_argument("--warmup-cycles-per-ntomp", type=int, default=0)
     parser.add_argument("--report-affinity", action="store_true")
     return parser.parse_args()
 
@@ -215,6 +218,7 @@ def benchmark_one_run(
     tpr_path: Path,
     ntomp: int,
     pin_mode: str,
+    dlb_mode: str,
     mode: str,
     report_affinity: bool,
 ) -> dict:
@@ -246,6 +250,8 @@ def benchmark_one_run(
         "-update",
         "cpu",
         "-notunepme",
+        "-dlb",
+        dlb_mode,
         "-ntmpi",
         "1",
         "-ntomp",
@@ -344,6 +350,9 @@ def write_markdown(summary_path: Path, metadata: dict, summary_rows: list[dict],
         f"- steps per run: `{metadata['steps']}`",
         f"- repeats per point: `{metadata['repeats']}`",
         f"- pin mode: `{metadata['pin']}`",
+        f"- DLB mode: `{metadata['dlb']}`",
+        f"- alternate mode order: `{metadata['alternate_mode_order']}`",
+        f"- warmup cycles per ntomp: `{metadata['warmup_cycles_per_ntomp']}`",
         f"- modes: `{', '.join(modes)}`",
         "",
         "## Notes",
@@ -424,8 +433,27 @@ def main() -> int:
             stdout_path=grompp_stdout,
         )
         for ntomp in args.ntomp:
+            for warmup_cycle in range(args.warmup_cycles_per_ntomp):
+                warmup_modes = list(args.modes)
+                if args.alternate_mode_order and warmup_cycle % 2 == 1:
+                    warmup_modes.reverse()
+                for mode in warmup_modes:
+                    warmup_dir = system_dir / f"ntomp{ntomp}" / mode / f"warmup{warmup_cycle + 1}"
+                    benchmark_one_run(
+                        gmx=args.gmx,
+                        run_dir=warmup_dir,
+                        tpr_path=tpr_path,
+                        ntomp=ntomp,
+                        pin_mode=args.pin,
+                        dlb_mode=args.dlb,
+                        mode=mode,
+                        report_affinity=args.report_affinity,
+                    )
             for repeat in range(args.repeats):
-                for mode in args.modes:
+                modes_for_repeat = list(args.modes)
+                if args.alternate_mode_order and repeat % 2 == 1:
+                    modes_for_repeat.reverse()
+                for mode in modes_for_repeat:
                     run_dir = system_dir / f"ntomp{ntomp}" / mode / f"repeat{repeat + 1}"
                     row = benchmark_one_run(
                         gmx=args.gmx,
@@ -433,6 +461,7 @@ def main() -> int:
                         tpr_path=tpr_path,
                         ntomp=ntomp,
                         pin_mode=args.pin,
+                        dlb_mode=args.dlb,
                         mode=mode,
                         report_affinity=args.report_affinity,
                     )
@@ -448,6 +477,9 @@ def main() -> int:
         "steps": args.steps,
         "repeats": args.repeats,
         "pin": args.pin,
+        "dlb": args.dlb,
+        "alternate_mode_order": args.alternate_mode_order,
+        "warmup_cycles_per_ntomp": args.warmup_cycles_per_ntomp,
         "ntomp": args.ntomp,
         "systems": args.systems,
         "modes": args.modes,

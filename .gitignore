@@ -40,6 +40,7 @@ output/ntomp6_affinity_probe/**/run.gro
 output/repulsion_power_9_exact_respa_cpu_patch_perf/*/
 output/repulsion_power_9_simd_shortmd_cpu_perf/*/
 output/repulsion_power_9_simd_specialized_cpu_perf/*/
+output/repulsion_power_9_shortmd_*/*/
 
 output/repulsion_power_9_scaling_diagnostic/**/ntomp*/
 output/repulsion_power_9_scaling_diagnostic/**/ntomp*/**
