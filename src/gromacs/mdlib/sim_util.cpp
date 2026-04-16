@@ -683,8 +683,16 @@ static real respaSwitchIn(const real r, const real off, const real on)
 static LammpsRespaSplitWeights computeLammpsRespaSplitWeights(const t_inputrec& inputrec, const real r)
 {
     LammpsRespaSplitWeights weights;
-    const auto&             respa = gmx::useExactRespa(inputrec) ? inputrec.exactRespa.forceLayout
-                                                                  : inputrec.lammpsRespa;
+    if (!gmx::useExactRespa(inputrec))
+    {
+        GMX_RELEASE_ASSERT(
+                inputrec.mtsMode != gmx::MtsMode::LammpsRespa && !inputrec.lammpsRespa.enabled,
+                "Exact r-RESPA split weights should not be sourced from legacy GROMACS MTS state");
+        return weights;
+    }
+
+    gmx::assertExactRespaOwnsNoLegacyMtsState(inputrec);
+    const auto& respa = inputrec.exactRespa.forceLayout;
 
     if (!respa.hasPairSplitting())
     {
@@ -3517,6 +3525,8 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                                           const int64_t                     step,
                                           const bool                        traceOnlyDiagnostics = false)
 {
+    gmx::assertExactRespaOwnsNoLegacyMtsState(inputrec);
+
     enum class ExactRespaNonbondedContribution : int
     {
         Inner,

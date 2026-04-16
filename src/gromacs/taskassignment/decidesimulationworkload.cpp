@@ -98,6 +98,10 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
 {
     SimulationWorkload simulationWorkload;
     const bool         useExactLammpsRespa = useExactRespa(inputrec);
+    if (useExactLammpsRespa)
+    {
+        assertExactRespaOwnsNoLegacyMtsState(inputrec);
+    }
     const bool         useAnySubsteps      = useMtsSubstepping(inputrec) || useExactLammpsRespa;
     const bool exactLammpsRespaHasPairSplitting = exactRespaHasPairSplitting(inputrec);
     const bool useExactLammpsRespaHybridGpuNonbonded =
@@ -353,6 +357,7 @@ ExactRespaStepWork setupExactRespaStepWork(const int                   legacyFla
 {
     GMX_RELEASE_ASSERT(useExactRespa(inputrec),
                        "Exact step workload should only be queried for exact r-RESPA");
+    assertExactRespaOwnsNoLegacyMtsState(inputrec);
     GMX_UNUSED_VALUE(domainWork);
 
     ExactRespaStepWork flags;
@@ -380,6 +385,7 @@ StepWorkload setupExactRespaStepWorkload(const int                   legacyFlags
 {
     GMX_RELEASE_ASSERT(useExactRespa(inputrec),
                        "Exact step workload should only be queried for exact r-RESPA");
+    assertExactRespaOwnsNoLegacyMtsState(inputrec);
 
     const int  highestActiveLevel             = highestActiveExactRespaLevel(inputrec.exactRespa, step);
     const bool haveSlowForceLevels            = (highestActiveLevel > 0);

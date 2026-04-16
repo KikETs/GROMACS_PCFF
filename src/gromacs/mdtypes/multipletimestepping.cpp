@@ -348,7 +348,15 @@ bool mtsLevelIsActive(ArrayRef<const MtsLevel> mtsLevels, const int mtsLevel, co
 LammpsRespaPairSplitWeights computeLammpsRespaPairSplitWeights(const t_inputrec& ir, const real r)
 {
     LammpsRespaPairSplitWeights weights;
-    const auto&                 respa = useExactRespa(ir) ? ir.exactRespa.forceLayout : ir.lammpsRespa;
+    if (!useExactRespa(ir))
+    {
+        GMX_RELEASE_ASSERT(ir.mtsMode != MtsMode::LammpsRespa && !ir.lammpsRespa.enabled,
+                           "Exact LAMMPS-style r-RESPA pair splitting should not use legacy MTS state");
+        return weights;
+    }
+
+    assertExactRespaOwnsNoLegacyMtsState(ir);
+    const auto& respa = ir.exactRespa.forceLayout;
 
     if (!respa.hasPairSplitting())
     {
@@ -380,14 +388,15 @@ std::vector<LammpsRespaNonbondedOutputSink> activeLammpsRespaNonbondedOutputSink
                                                                                    const bool        computeEnergy)
 {
     std::vector<LammpsRespaNonbondedOutputSink> sinks;
-    const bool                                  useExactLammpsRespa = useExactRespa(ir);
-    const bool useLegacyLammpsRespa = ir.useMts && ir.mtsMode == MtsMode::LammpsRespa;
-    if (!useExactLammpsRespa && !useLegacyLammpsRespa)
+    if (!useExactRespa(ir))
     {
+        GMX_RELEASE_ASSERT(ir.mtsMode != MtsMode::LammpsRespa && !ir.lammpsRespa.enabled,
+                           "Exact LAMMPS-style r-RESPA output sinks should not use legacy MTS state");
         return sinks;
     }
 
-    const auto& respa = useExactLammpsRespa ? ir.exactRespa.forceLayout : ir.lammpsRespa;
+    assertExactRespaOwnsNoLegacyMtsState(ir);
+    const auto& respa = ir.exactRespa.forceLayout;
     const auto appendSink = [&](const MtsNonbondedRespaContribution contribution)
     {
         const int mtsLevel = nonbondedRespaContributionMtsLevel(ir, contribution);

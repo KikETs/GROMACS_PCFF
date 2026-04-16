@@ -84,6 +84,15 @@ bool useExactRespa(const t_inputrec& ir);
 //! Returns whether legacy multiple time stepping is enabled.
 bool useMtsSubstepping(const t_inputrec& ir);
 
+//! Returns whether an exact r-RESPA inputrec still retains legacy MTS runtime state.
+bool exactRespaRetainsLegacyMtsState(const t_inputrec& ir);
+
+//! Clears legacy MTS runtime state after canonicalizing a LAMMPS-style input into exact r-RESPA.
+void clearLegacyMtsStateForExactRespa(t_inputrec* ir);
+
+//! Asserts that exact r-RESPA owns the runtime state and no legacy MTS path can be taken.
+void assertExactRespaOwnsNoLegacyMtsState(const t_inputrec& ir);
+
 } // namespace gmx
 
 #endif

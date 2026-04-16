@@ -26,6 +26,7 @@
 #include "gromacs/mdtypes/exactrespaparameters.h"
 
 #include "gromacs/mdtypes/inputrec.h"
+#include "gromacs/utility/gmxassert.h"
 
 namespace gmx
 {
@@ -57,6 +58,42 @@ bool useExactRespa(const t_inputrec& ir)
 bool useMtsSubstepping(const t_inputrec& ir)
 {
     return ir.useMts;
+}
+
+bool exactRespaRetainsLegacyMtsState(const t_inputrec& ir)
+{
+    if (!ir.exactRespa.enabled())
+    {
+        return false;
+    }
+
+    return ir.useMts || ir.mtsMode == MtsMode::LammpsRespa || !ir.mtsLevels.empty()
+           || ir.lammpsRespa.enabled;
+}
+
+void clearLegacyMtsStateForExactRespa(t_inputrec* ir)
+{
+    if (ir == nullptr || !ir->exactRespa.enabled())
+    {
+        return;
+    }
+
+    ir->useMts      = false;
+    ir->mtsMode     = MtsMode::Legacy;
+    ir->mtsLevels.clear();
+    ir->lammpsRespa = {};
+}
+
+void assertExactRespaOwnsNoLegacyMtsState(const t_inputrec& ir)
+{
+    if (!ir.exactRespa.enabled())
+    {
+        return;
+    }
+
+    GMX_RELEASE_ASSERT(
+            !exactRespaRetainsLegacyMtsState(ir),
+            "Exact r-RESPA must own the runtime state; legacy GROMACS MTS fields should be cleared");
 }
 
 } // namespace gmx

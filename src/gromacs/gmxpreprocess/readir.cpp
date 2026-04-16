@@ -3329,10 +3329,7 @@ void get_ir(const char*     mdparin,
     if (standaloneExactRespa.enabled())
     {
         ir->exactRespa = standaloneExactRespa;
-        ir->useMts     = false;
-        ir->mtsMode    = gmx::MtsMode::Legacy;
-        ir->lammpsRespa = {};
-        ir->mtsLevels.clear();
+        gmx::clearLegacyMtsStateForExactRespa(ir);
         opts->mtsOpts = {};
     }
     else if (ir->useMts)
@@ -3346,6 +3343,12 @@ void get_ir(const char*     mdparin,
         for (const auto& errorMessage : errorMessages)
         {
             wi->addError(errorMessage);
+        }
+
+        if (ir->exactRespa.enabled())
+        {
+            gmx::clearLegacyMtsStateForExactRespa(ir);
+            opts->mtsOpts = {};
         }
     }
     else

@@ -456,6 +456,82 @@ TEST_F(GromppDirectiveTest, StandaloneExactRespaRoundTripsWithoutLegacyMtsTprFie
     EXPECT_FALSE(irAfter.lammpsRespa.enabled);
 }
 
+TEST_F(GromppDirectiveTest, LegacyLammpsRespaInputRoundTripsAsStandaloneExactRespaState)
+{
+    CommandLine cmdline;
+    cmdline.addOption("grompp");
+
+    std::string mdpString =
+            "title                   = Legacy lammps-respa alias test \n"
+            "integrator              = md-vv \n"
+            "nsteps                  = 1 \n"
+            "dt                      = 0.002 \n"
+            "mts                     = yes \n"
+            "mts-mode                = lammps-respa \n"
+            "mts-levels              = 3 \n"
+            "mts-level2-factor       = 2 \n"
+            "mts-level3-factor       = 4 \n"
+            "mts-respa-bond-level    = 1 \n"
+            "mts-respa-angle-level   = 2 \n"
+            "mts-respa-dihedral-level = 2 \n"
+            "mts-respa-improper-level = 2 \n"
+            "mts-respa-pair14-level  = 2 \n"
+            "mts-respa-pair-level    = 3 \n"
+            "mts-respa-kspace-level  = 2 \n"
+            "mts-respa-inner-level   = 1 \n"
+            "mts-respa-middle-level  = 2 \n"
+            "mts-respa-outer-level   = 3 \n"
+            "mts-respa-inner-off     = 0.30 \n"
+            "mts-respa-inner-on      = 0.45 \n"
+            "mts-respa-outer-on      = 0.60 \n"
+            "mts-respa-outer-off     = 0.80 \n"
+            "vdwtype                 = cutoff \n"
+            "vdw-modifier            = none \n"
+            "coulombtype             = PME \n"
+            "coulomb-modifier        = none \n"
+            "tcoupl                  = no \n"
+            "pcoupl                  = no \n"
+            "pbc                     = xyz \n"
+            "gen_vel                 = no \n"
+            "rlist                   = 0.99 \n"
+            "rcoulomb                = 0.9 \n"
+            "rvdw                    = 0.9 \n"
+            "verlet-buffer-tolerance = -1 \n"
+            "nstlist                 = 12 \n";
+
+    const std::string mdpInputFileName = fileManager_.getTemporaryFilePath("legacy-lammps-respa.mdp").string();
+    const std::string groInputFileName = TestFileManager::getInputFilePath("directives.gro").string();
+    const std::string topInputFileName = TestFileManager::getInputFilePath("directives.top").string();
+    const std::string outTprFilename =
+            fileManager_.getTemporaryFilePath("legacy-lammps-respa.tpr").string();
+
+    gmx::TextWriter::writeFileFromString(mdpInputFileName, mdpString);
+
+    cmdline.addOption("-f", mdpInputFileName);
+    cmdline.addOption("-maxwarn", 1);
+    cmdline.addOption("-c", groInputFileName);
+    cmdline.addOption("-p", topInputFileName);
+    cmdline.addOption("-o", outTprFilename);
+
+    ASSERT_EQ(gmx_grompp(cmdline.argc(), cmdline.argv()), 0);
+
+    gmx_mtop_t topAfter;
+    t_inputrec irAfter;
+    t_state    state;
+    read_tpx_state(outTprFilename, &irAfter, &state, &topAfter);
+
+    EXPECT_TRUE(irAfter.exactRespa.enabled());
+    EXPECT_EQ(irAfter.exactRespa.levelStepFactors, (std::vector<int>{ 1, 2, 4 }));
+    EXPECT_TRUE(irAfter.exactRespa.forceLayout.enabled);
+    EXPECT_EQ(irAfter.exactRespa.forceLayout.pairLevel, 2);
+    EXPECT_EQ(irAfter.exactRespa.forceLayout.kspaceLevel, 1);
+    EXPECT_EQ(irAfter.exactRespa.forceLayout.outerLevel, 2);
+    EXPECT_FALSE(irAfter.useMts);
+    EXPECT_EQ(irAfter.mtsMode, gmx::MtsMode::Legacy);
+    EXPECT_TRUE(irAfter.mtsLevels.empty());
+    EXPECT_FALSE(irAfter.lammpsRespa.enabled);
+}
+
 TEST_F(GromppDirectiveTest, NoteOnDihedralNotSumToZero)
 {
     CommandLine cmdline;

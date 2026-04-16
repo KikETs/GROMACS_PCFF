@@ -307,6 +307,19 @@ TEST_F(GetIrTest, MtsAcceptsExactLammpsRespaDefinitions)
                                    "verlet-buffer-tolerance = -1",
                                    "nstlist = 12" };
     runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::NoErrorAndDoNotCompareOutput);
+
+    EXPECT_TRUE(ir_.exactRespa.enabled());
+    EXPECT_EQ(ir_.exactRespa.levelStepFactors, (std::vector<int>{ 1, 2, 4 }));
+    EXPECT_TRUE(ir_.exactRespa.forceLayout.enabled);
+    EXPECT_FALSE(ir_.useMts);
+    EXPECT_EQ(ir_.mtsMode, gmx::MtsMode::Legacy);
+    EXPECT_TRUE(ir_.mtsLevels.empty());
+    EXPECT_FALSE(ir_.lammpsRespa.enabled);
+    EXPECT_EQ(opts_.mtsOpts.mode, gmx::MtsMode::Legacy);
+    EXPECT_EQ(opts_.mtsOpts.numLevels, 0);
+    EXPECT_TRUE(opts_.mtsOpts.levelForces.empty());
+    EXPECT_TRUE(opts_.mtsOpts.levelFactors.empty());
+    EXPECT_FALSE(opts_.mtsOpts.lammpsRespa.enabled);
 }
 
 TEST_F(GetIrTest, MtsAcceptsExactLammpsRespaWithVelocityVerletIntegrator)
@@ -340,6 +353,12 @@ TEST_F(GetIrTest, MtsAcceptsExactLammpsRespaWithVelocityVerletIntegrator)
                                    "verlet-buffer-tolerance = -1",
                                    "nstlist = 12" };
     runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::NoErrorAndDoNotCompareOutput);
+
+    EXPECT_TRUE(ir_.exactRespa.enabled());
+    EXPECT_FALSE(ir_.useMts);
+    EXPECT_EQ(ir_.mtsMode, gmx::MtsMode::Legacy);
+    EXPECT_TRUE(ir_.mtsLevels.empty());
+    EXPECT_FALSE(ir_.lammpsRespa.enabled);
 }
 
 TEST_F(GetIrTest, StandaloneExactRespaClearsLegacyMtsFieldsAfterParsing)

@@ -1241,17 +1241,15 @@ static void do_inputrec(gmx::ISerializer* serializer, t_inputrec* ir, int file_v
     if (file_version >= tpxv_StandaloneExactRespa)
     {
         do_exact_respa_parameters(serializer, &ir->exactRespa);
-        if (serializer->reading() && ir->exactRespa.enabled())
-        {
-            ir->useMts     = false;
-            ir->mtsMode    = gmx::MtsMode::Legacy;
-            ir->mtsLevels.clear();
-            ir->lammpsRespa = {};
-        }
     }
     else
     {
         ir->exactRespa = gmx::exactRespaParametersFromLegacyMts(ir->mtsMode, ir->mtsLevels, ir->lammpsRespa);
+    }
+
+    if (serializer->reading() && ir->exactRespa.enabled())
+    {
+        gmx::clearLegacyMtsStateForExactRespa(ir);
     }
 
     if (file_version >= tpxv_MassRepartitioning)

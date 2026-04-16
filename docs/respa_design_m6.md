@@ -85,6 +85,8 @@ Current level count:
 
 Legacy `mts-levelN-forces` input is rejected in exact mode on purpose. Mixing the two ownership models would make the schedule ambiguous.
 
+As of the exact-runtime hardening follow-up, `mts-mode = lammps-respa` is treated as a parser alias only. After the input is converted to standalone exact-r-RESPA metadata, the runtime `t_inputrec` is canonicalized so that `useMts = false`, `mtsLevels` is empty, `mtsMode = legacy`, and `lammpsRespa` is cleared. Any exact-r-RESPA runtime path that still sees legacy GROMACS MTS state now fails a release assertion instead of silently reusing the old path.
+
 ## Runtime Model
 
 ### Base-step trace model

@@ -436,6 +436,36 @@ TEST(MultipleTimeStepping, ParsesExactLammpsRespaSchedule)
     EXPECT_EQ(nonbondedRespaContributionMtsLevel(ir, MtsNonbondedRespaContribution::Middle), 1);
     EXPECT_EQ(nonbondedRespaContributionMtsLevel(ir, MtsNonbondedRespaContribution::Outer), 2);
     EXPECT_EQ(nonbondedMtsFactor(ir), 4);
+
+    clearLegacyMtsStateForExactRespa(&ir);
+    EXPECT_FALSE(ir.useMts);
+    EXPECT_EQ(ir.mtsMode, MtsMode::Legacy);
+    EXPECT_TRUE(ir.mtsLevels.empty());
+    EXPECT_FALSE(ir.lammpsRespa.enabled);
+}
+
+TEST(MultipleTimeStepping, CanonicalizesExactLammpsRespaAwayFromLegacyRuntimeState)
+{
+    const GromppMtsOpts mtsOpts = exactLammpsRespaOpts();
+
+    t_inputrec ir;
+    configureExactLammpsRespaInputRecord(&ir);
+    ir.useMts      = true;
+    ir.mtsMode     = mtsOpts.mode;
+    ir.lammpsRespa = mtsOpts.lammpsRespa;
+    ir.mtsLevels   = setupMtsLevels(mtsOpts, nullptr);
+    ir.exactRespa  = exactRespaParametersFromLegacyMts(ir.mtsMode, ir.mtsLevels, ir.lammpsRespa);
+
+    EXPECT_TRUE(exactRespaRetainsLegacyMtsState(ir));
+
+    clearLegacyMtsStateForExactRespa(&ir);
+
+    EXPECT_FALSE(exactRespaRetainsLegacyMtsState(ir));
+    EXPECT_TRUE(useExactRespa(ir));
+    EXPECT_FALSE(useMtsSubstepping(ir));
+    EXPECT_EQ(ir.mtsMode, MtsMode::Legacy);
+    EXPECT_TRUE(ir.mtsLevels.empty());
+    EXPECT_FALSE(ir.lammpsRespa.enabled);
 }
 
 TEST(MultipleTimeStepping, ComputesExactLammpsRespaPairSplitWeightsAcrossTransitionRegions)
@@ -446,6 +476,8 @@ TEST(MultipleTimeStepping, ComputesExactLammpsRespaPairSplitWeightsAcrossTransit
     configureExactLammpsRespaInputRecord(&ir);
 
     setAndCheckMtsLevels(mtsOpts, &ir, 0);
+    ir.exactRespa = exactRespaParametersFromLegacyMts(ir.mtsMode, ir.mtsLevels, ir.lammpsRespa);
+    clearLegacyMtsStateForExactRespa(&ir);
     constexpr double splitWeightTolerance = 1e-6;
 
     const auto innerOnlyWeights = computeLammpsRespaPairSplitWeights(ir, 0.25_real);
@@ -477,6 +509,8 @@ TEST(MultipleTimeStepping, ReportsActiveExactLammpsRespaNonbondedOutputSinks)
     configureExactLammpsRespaInputRecord(&ir);
 
     setAndCheckMtsLevels(mtsOpts, &ir, 0);
+    ir.exactRespa = exactRespaParametersFromLegacyMts(ir.mtsMode, ir.mtsLevels, ir.lammpsRespa);
+    clearLegacyMtsStateForExactRespa(&ir);
 
     const auto sinks = activeLammpsRespaNonbondedOutputSinks(ir, 2, true, true);
     ASSERT_EQ(sinks.size(), 3);
@@ -505,6 +539,8 @@ TEST(MultipleTimeStepping, FiltersExactLammpsRespaNonbondedOutputSinksByActiveLe
     configureExactLammpsRespaInputRecord(&ir);
 
     setAndCheckMtsLevels(mtsOpts, &ir, 0);
+    ir.exactRespa = exactRespaParametersFromLegacyMts(ir.mtsMode, ir.mtsLevels, ir.lammpsRespa);
+    clearLegacyMtsStateForExactRespa(&ir);
 
     const auto sinks = activeLammpsRespaNonbondedOutputSinks(ir, 1, false, false);
     ASSERT_EQ(sinks.size(), 2);
