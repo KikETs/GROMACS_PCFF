@@ -29,3 +29,35 @@ CMakeLists.txt.user
 Testing
 /.vs
 /CMakeSettings.json
+
+# Generated benchmark/runtime byproducts under committed output evidence trees.
+# Keep top-level summary artifacts tracked; hide repeat-run payloads and binary
+# intermediates that only add noise to `git status`.
+output/ntomp6_affinity_probe/**/run.cpt
+output/ntomp6_affinity_probe/**/run.edr
+output/ntomp6_affinity_probe/**/run.gro
+
+output/repulsion_power_9_exact_respa_cpu_patch_perf/*/
+output/repulsion_power_9_simd_shortmd_cpu_perf/*/
+output/repulsion_power_9_simd_specialized_cpu_perf/*/
+
+output/repulsion_power_9_scaling_diagnostic/**/ntomp*/
+output/repulsion_power_9_scaling_diagnostic/**/ntomp*/**
+output/repulsion_power_9_scaling_diagnostic/**/summary.json
+output/repulsion_power_9_scaling_diagnostic/**/grompp.stdout.txt
+output/repulsion_power_9_scaling_diagnostic/**/mdout.mdp
+output/repulsion_power_9_scaling_diagnostic/**/exact_respa_specialized_perf.mdp
+output/repulsion_power_9_scaling_diagnostic/**/exact_respa_specialized_perf.tpr
+output/repulsion_power_9_scaling_diagnostic/pin_off/*/
+output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/*/
+
+output/repulsion_power_9_subcounter_probe/**/ntomp*/
+output/repulsion_power_9_subcounter_probe/**/ntomp*/**
+
+output/**/grompp.stdout.txt
+output/**/mdrun.stdout.txt
+output/**/mdout.mdp
+output/**/run.cpt
+output/**/run.edr
+output/**/run.gro
+output/**/*_perf.tpr
