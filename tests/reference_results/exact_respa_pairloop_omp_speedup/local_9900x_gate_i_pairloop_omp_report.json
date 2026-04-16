@@ -1,39 +1,202 @@
 {
-  "schema_name": "exact_respa_pairloop_omp_speedup_report",
-  "schema_version": 1,
-  "track": "exact-r-RESPA OpenMP speedup via pair-loop parallelization and vectorization",
-  "claim_honesty_verdict": "PASS_WITH_LIMITATIONS",
-  "capability_expansion_verdict": "PARTIAL_PAIRLOOP_OMP_ONLY",
-  "host": "KikET",
-  "cpu_model": "AMD Ryzen 9 9900X 12-Core Processor",
-  "branch": "exact-respa-omp-pairloop-speedup",
   "base_commit": "34ce4cb1e61a72dec0fa941428fedc04faa4f024",
-  "target_path": {
-    "file": "src/gromacs/mdlib/sim_util.cpp",
-    "function": "computeExactRespaNonbondedCpu",
-    "loop": "processPairlist over plainPairlist.pairs and plainPairlist.excludedPairs",
-    "work_type": "short-range nonbonded-adjacent exact pair work, including excluded-pair PME real-space correction",
-    "listed_pair14_scope": "not optimized directly"
-  },
-  "runtime_shape": {
-    "fixture_id": "gate_i_eq750_prod10000_replica01_equil",
-    "tpr": "tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr",
-    "tpr_sha256": "54dab590e7e0d07828572c92618eb7dc574c0cfa80722a0f0aac8ca725ecd935",
-    "ntmpi": 1,
-    "pin": "off",
-    "reprod": true,
-    "cpu_only_flags": [
-      "-nb cpu",
-      "-pme cpu",
-      "-bonded cpu",
-      "-update cpu"
+  "branch": "exact-respa-omp-pairloop-speedup",
+  "capability_expansion_verdict": "HOST_LOCAL_PAIRLOOP_OMP_PLUS_LIMITED_VECTOR_BATCH",
+  "claim_boundary_delta": {
+    "not_supported": [
+      "broad CPU scaling guidance",
+      "GPU or hybrid speedup",
+      "LJ-PME SIMD speedup",
+      "chemistry expansion",
+      "density/volume blocker closure",
+      "production transport readiness"
     ],
-    "steps": 2000,
-    "repeats": 1
+    "supported": [
+      "host-local OpenMP pair-loop speedup for the exact r-RESPA CPU path on the audited 9900X Gate I fixture",
+      "real exact-r-RESPA runtime whole-run improvement for the audited 2000-step shape",
+      "limited vector-batch speedup in vector-only mode on the audited fixture",
+      "restart continuity for pairloop_omp, pairloop_vector, and combined ntomp=6 in the audited shape"
+    ],
+    "verdict": "partial capability expansion: OpenMP pair-loop speedup is real on the audited host/fixture; vector batch is real but limited; combined adds little over OpenMP alone"
   },
+  "claim_honesty_verdict": "PASS_WITH_LIMITATIONS",
+  "cpu_model": "AMD Ryzen 9 9900X 12-Core Processor",
+  "exact_next_gate": "Add non-intrusive fast-path force-component instrumentation or an isolated exact pair-loop parity harness, then repeat staged comparisons on at least one additional medium charged fixture and one additional host.",
+  "exactness_evidence": {
+    "restart_continuity_ntomp6": [
+      {
+        "continuous_steps": 1500,
+        "edr_byte_identical": true,
+        "final_gro_byte_identical": true,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.0,
+        "max_final_gro_velocity_delta": 0.0,
+        "mode": "pairloop_omp",
+        "ntomp": 6,
+        "restart_sequence": "500 steps + checkpoint restart for 1000 additional steps, final step 1500"
+      },
+      {
+        "continuous_steps": 1500,
+        "edr_byte_identical": true,
+        "final_gro_byte_identical": true,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.0,
+        "max_final_gro_velocity_delta": 0.0,
+        "mode": "pairloop_vector",
+        "ntomp": 6,
+        "restart_sequence": "500 steps + checkpoint restart for 1000 additional steps, final step 1500"
+      },
+      {
+        "continuous_steps": 1500,
+        "edr_byte_identical": true,
+        "final_gro_byte_identical": true,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.0,
+        "max_final_gro_velocity_delta": 0.0,
+        "mode": "combined",
+        "ntomp": 6,
+        "restart_sequence": "500 steps + checkpoint restart for 1000 additional steps, final step 1500"
+      }
+    ],
+    "runtime_2000_steps": [
+      {
+        "edr_byte_identical": true,
+        "final_gro_byte_identical": true,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.0,
+        "max_final_gro_velocity_delta": 0.0,
+        "max_printed_final_energy_temperature_pressure_delta": 0.0,
+        "mode": "pairloop_omp",
+        "ntomp": 1
+      },
+      {
+        "edr_byte_identical": false,
+        "final_gro_byte_identical": false,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.001000000000000334,
+        "max_final_gro_velocity_delta": 0.0020000000000000018,
+        "max_printed_final_energy_temperature_pressure_delta": 0.23999999999978172,
+        "mode": "pairloop_vector",
+        "ntomp": 1
+      },
+      {
+        "edr_byte_identical": true,
+        "final_gro_byte_identical": true,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.0,
+        "max_final_gro_velocity_delta": 0.0,
+        "max_printed_final_energy_temperature_pressure_delta": 0.0,
+        "mode": "combined",
+        "ntomp": 1
+      },
+      {
+        "edr_byte_identical": false,
+        "final_gro_byte_identical": false,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.001000000000000334,
+        "max_final_gro_velocity_delta": 0.0020999999999999908,
+        "max_printed_final_energy_temperature_pressure_delta": 0.1000000000003638,
+        "mode": "pairloop_omp",
+        "ntomp": 2
+      },
+      {
+        "edr_byte_identical": false,
+        "final_gro_byte_identical": false,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.001000000000000334,
+        "max_final_gro_velocity_delta": 0.0022999999999999965,
+        "max_printed_final_energy_temperature_pressure_delta": 0.11999999999989086,
+        "mode": "pairloop_vector",
+        "ntomp": 2
+      },
+      {
+        "edr_byte_identical": false,
+        "final_gro_byte_identical": false,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.001000000000000334,
+        "max_final_gro_velocity_delta": 0.0023999999999999577,
+        "max_printed_final_energy_temperature_pressure_delta": 0.1499999999996362,
+        "mode": "combined",
+        "ntomp": 2
+      },
+      {
+        "edr_byte_identical": false,
+        "final_gro_byte_identical": false,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.001000000000000334,
+        "max_final_gro_velocity_delta": 0.0014999999999999458,
+        "max_printed_final_energy_temperature_pressure_delta": 0.3999999999996362,
+        "mode": "pairloop_omp",
+        "ntomp": 6
+      },
+      {
+        "edr_byte_identical": false,
+        "final_gro_byte_identical": false,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.001000000000000334,
+        "max_final_gro_velocity_delta": 0.0022999999999999687,
+        "max_printed_final_energy_temperature_pressure_delta": 0.34600000000000364,
+        "mode": "pairloop_vector",
+        "ntomp": 6
+      },
+      {
+        "edr_byte_identical": false,
+        "final_gro_byte_identical": false,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.001000000000000334,
+        "max_final_gro_velocity_delta": 0.0017000000000000348,
+        "max_printed_final_energy_temperature_pressure_delta": 0.2999999999992724,
+        "mode": "combined",
+        "ntomp": 6
+      },
+      {
+        "edr_byte_identical": false,
+        "final_gro_byte_identical": false,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.001000000000000334,
+        "max_final_gro_velocity_delta": 0.0017999999999999683,
+        "max_printed_final_energy_temperature_pressure_delta": 1.0,
+        "mode": "pairloop_omp",
+        "ntomp": 12
+      },
+      {
+        "edr_byte_identical": false,
+        "final_gro_byte_identical": false,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.001000000000000334,
+        "max_final_gro_velocity_delta": 0.0015000000000000013,
+        "max_printed_final_energy_temperature_pressure_delta": 1.0,
+        "mode": "pairloop_vector",
+        "ntomp": 12
+      },
+      {
+        "edr_byte_identical": false,
+        "final_gro_byte_identical": false,
+        "max_final_box_delta_nm": 0.0,
+        "max_final_gro_coord_delta_nm": 0.001000000000000334,
+        "max_final_gro_velocity_delta": 0.0019000000000000128,
+        "max_printed_final_energy_temperature_pressure_delta": 1.0,
+        "mode": "combined",
+        "ntomp": 12
+      }
+    ],
+    "unit_tests": [
+      "MdlibUnitTest passed",
+      "MdtypesUnitTest passed",
+      "TaskAssignmentUnitTests passed"
+    ]
+  },
+  "git_status_short_at_benchmark": "?? gate_i_eq750_prod10000_ntmpi1_ntomp6_local_fastest.nohup.log\n?? gate_i_eq750_prod10000_split12_pp6_pme6_local.nohup.log\n?? output/exact_respa_pairloop_omp_speedup/\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_fastest/\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.cpt\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.edr\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.log\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.mdout.mdp\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil_prev.cpt\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/logs/",
+  "host": "KikET",
   "implementation": {
-    "mode": "pairloop_omp",
-    "toggle": "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP=1",
+    "combined": {
+      "mode": "combined",
+      "observed_result": "combined is close to pairloop_omp; vector adds marginal whole-run benefit on this fixture",
+      "toggles": [
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP=1",
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_VECTOR=1"
+      ]
+    },
     "default_enabled": false,
     "eligibility": [
       "not traceOnlyDiagnostics",
@@ -41,194 +204,324 @@
       "no direct virial computation on that call",
       "no excluded-correction dump side effect",
       "no dispatch probe mode",
-      "OpenMP thread count greater than 1",
-      "pair list length at least 128"
+      "pair list length at least 128",
+      "OpenMP mode requires more than one OpenMP thread; vector-only mode can run with one pair-loop worker"
     ],
-    "reduction_strategy": "thread-private force and shift-force buffers, then deterministic fixed thread-order reduction into existing ForceOutputs",
+    "pairloop_omp": {
+      "mode": "pairloop_omp",
+      "reduction_strategy": "thread-private force and shift-force buffers, then deterministic fixed thread-order reduction into existing ForceOutputs",
+      "toggle": "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP=1"
+    },
+    "pairloop_vector": {
+      "mode": "pairloop_vector",
+      "strategy": "fixed-width lane batching with #pragma omp simd over distance, split-weight, repulsion-power-9, and PME real-space force scalar math; deterministic scatter into fast-path force/shift buffers",
+      "toggle": "GMX_PCFF_EXACT_RESPA_PAIRLOOP_VECTOR=1"
+    },
     "serial_fallback": "all energy, virial, trace, probe, and diagnostic calls remain on the serial path"
   },
-  "performance_rows": [
-    {
-      "mode": "baseline",
-      "ntomp": 1,
-      "ns_per_day": 3.733,
-      "ms_per_step": 11.572,
-      "force_seconds": 19.405,
-      "update_seconds": 11.344,
-      "total_wallcycle_seconds": 23.155
-    },
-    {
-      "mode": "baseline",
-      "ntomp": 2,
-      "ns_per_day": 3.931,
-      "ms_per_step": 10.988,
-      "force_seconds": 19.049,
-      "update_seconds": 10.842,
-      "total_wallcycle_seconds": 21.988
-    },
-    {
-      "mode": "baseline",
-      "ntomp": 6,
-      "ns_per_day": 4.048,
-      "ms_per_step": 10.672,
-      "force_seconds": 18.995,
-      "update_seconds": 10.61,
-      "total_wallcycle_seconds": 21.354
-    },
-    {
-      "mode": "baseline",
-      "ntomp": 12,
-      "ns_per_day": 3.973,
-      "ms_per_step": 10.874,
-      "force_seconds": 19.265,
-      "update_seconds": 10.832,
-      "total_wallcycle_seconds": 21.759
-    },
-    {
-      "mode": "pairloop_omp",
-      "ntomp": 1,
-      "ns_per_day": 3.727,
-      "ms_per_step": 11.592,
-      "force_seconds": 19.422,
-      "update_seconds": 11.456,
-      "total_wallcycle_seconds": 23.195
-    },
-    {
-      "mode": "pairloop_omp",
-      "ntomp": 2,
-      "ns_per_day": 5.799,
-      "ms_per_step": 7.45,
-      "force_seconds": 12.003,
-      "update_seconds": 6.642,
-      "total_wallcycle_seconds": 14.907
-    },
-    {
-      "mode": "pairloop_omp",
-      "ntomp": 6,
-      "ns_per_day": 6.974,
-      "ms_per_step": 6.194,
-      "force_seconds": 10.121,
-      "update_seconds": 5.31,
-      "total_wallcycle_seconds": 12.395
-    },
-    {
-      "mode": "pairloop_omp",
-      "ntomp": 12,
-      "ns_per_day": 6.918,
-      "ms_per_step": 6.244,
-      "force_seconds": 10.088,
-      "update_seconds": 5.372,
-      "total_wallcycle_seconds": 12.495
-    }
-  ],
   "performance_ratios": [
     {
-      "ntomp": 1,
-      "whole_run_ns_per_day_ratio": 0.998,
       "force_seconds_ratio": 0.999,
-      "total_wallcycle_ratio": 0.998
+      "mode": "pairloop_omp",
+      "ntomp": 1,
+      "total_wallcycle_ratio": 1.002,
+      "whole_run_ns_per_day_ratio": 1.002
     },
     {
+      "force_seconds_ratio": 1.312,
+      "mode": "pairloop_vector",
+      "ntomp": 1,
+      "total_wallcycle_ratio": 1.253,
+      "whole_run_ns_per_day_ratio": 1.253
+    },
+    {
+      "force_seconds_ratio": 0.991,
+      "mode": "combined",
+      "ntomp": 1,
+      "total_wallcycle_ratio": 0.994,
+      "whole_run_ns_per_day_ratio": 0.994
+    },
+    {
+      "force_seconds_ratio": 1.628,
+      "mode": "pairloop_omp",
       "ntomp": 2,
-      "whole_run_ns_per_day_ratio": 1.475,
-      "force_seconds_ratio": 1.587,
-      "total_wallcycle_ratio": 1.475
+      "total_wallcycle_ratio": 1.506,
+      "whole_run_ns_per_day_ratio": 1.506
     },
     {
+      "force_seconds_ratio": 1.317,
+      "mode": "pairloop_vector",
+      "ntomp": 2,
+      "total_wallcycle_ratio": 1.266,
+      "whole_run_ns_per_day_ratio": 1.266
+    },
+    {
+      "force_seconds_ratio": 1.601,
+      "mode": "combined",
+      "ntomp": 2,
+      "total_wallcycle_ratio": 1.485,
+      "whole_run_ns_per_day_ratio": 1.485
+    },
+    {
+      "force_seconds_ratio": 1.883,
+      "mode": "pairloop_omp",
       "ntomp": 6,
-      "whole_run_ns_per_day_ratio": 1.723,
-      "force_seconds_ratio": 1.877,
-      "total_wallcycle_ratio": 1.723
+      "total_wallcycle_ratio": 1.72,
+      "whole_run_ns_per_day_ratio": 1.719
     },
     {
+      "force_seconds_ratio": 1.322,
+      "mode": "pairloop_vector",
+      "ntomp": 6,
+      "total_wallcycle_ratio": 1.279,
+      "whole_run_ns_per_day_ratio": 1.279
+    },
+    {
+      "force_seconds_ratio": 1.868,
+      "mode": "combined",
+      "ntomp": 6,
+      "total_wallcycle_ratio": 1.708,
+      "whole_run_ns_per_day_ratio": 1.709
+    },
+    {
+      "force_seconds_ratio": 1.926,
+      "mode": "pairloop_omp",
       "ntomp": 12,
-      "whole_run_ns_per_day_ratio": 1.741,
-      "force_seconds_ratio": 1.91,
-      "total_wallcycle_ratio": 1.741
+      "total_wallcycle_ratio": 1.751,
+      "whole_run_ns_per_day_ratio": 1.751
+    },
+    {
+      "force_seconds_ratio": 1.334,
+      "mode": "pairloop_vector",
+      "ntomp": 12,
+      "total_wallcycle_ratio": 1.289,
+      "whole_run_ns_per_day_ratio": 1.289
+    },
+    {
+      "force_seconds_ratio": 1.944,
+      "mode": "combined",
+      "ntomp": 12,
+      "total_wallcycle_ratio": 1.767,
+      "whole_run_ns_per_day_ratio": 1.767
     }
   ],
-  "exactness_evidence": {
-    "short_smoke_20_steps_ntomp6": {
-      "final_gro_byte_identical": true,
-      "edr_byte_identical": false,
-      "printed_energy_blocks_match": true
+  "performance_rows": [
+    {
+      "force_seconds": 20.632,
+      "mode": "baseline",
+      "ms_per_step": 12.371,
+      "neighbor_search_seconds": 0.912,
+      "ns_per_day": 3.492,
+      "ntomp": 1,
+      "pme_mesh_seconds": 0.957,
+      "total_wallcycle_seconds": 24.754,
+      "update_seconds": 12.18
     },
-    "runtime_2000_steps": [
-      {
-        "ntomp": 1,
-        "final_gro_byte_identical": true,
-        "edr_byte_identical": true
-      },
-      {
-        "ntomp": 2,
-        "final_gro_byte_identical": false,
-        "edr_byte_identical": false,
-        "max_final_gro_coord_delta_nm": 0.001,
-        "max_final_gro_velocity_delta": 0.0021,
-        "max_final_box_delta_nm": 0.0,
-        "max_printed_final_energy_temperature_pressure_delta": 0.1
-      },
-      {
-        "ntomp": 6,
-        "final_gro_byte_identical": false,
-        "edr_byte_identical": false,
-        "max_final_gro_coord_delta_nm": 0.001,
-        "max_final_gro_velocity_delta": 0.0015,
-        "max_final_box_delta_nm": 0.0,
-        "max_printed_final_energy_temperature_pressure_delta": 0.4
-      },
-      {
-        "ntomp": 12,
-        "final_gro_byte_identical": false,
-        "edr_byte_identical": false,
-        "max_final_gro_coord_delta_nm": 0.001,
-        "max_final_gro_velocity_delta": 0.0018,
-        "max_final_box_delta_nm": 0.0,
-        "max_printed_final_energy_temperature_pressure_delta": 1.0
-      }
-    ],
-    "restart_continuity_ntomp6": {
-      "continuous_steps": 3000,
-      "restart_sequence": "1000 steps + checkpoint restart to 3000 steps",
-      "final_gro_byte_identical": true,
-      "edr_byte_identical": true,
-      "max_final_gro_coord_delta_nm": 0.0,
-      "max_final_gro_velocity_delta": 0.0,
-      "max_final_box_delta_nm": 0.0
+    {
+      "force_seconds": 20.662,
+      "mode": "pairloop_omp",
+      "ms_per_step": 12.342,
+      "neighbor_search_seconds": 0.911,
+      "ns_per_day": 3.5,
+      "ntomp": 1,
+      "pme_mesh_seconds": 0.935,
+      "total_wallcycle_seconds": 24.697,
+      "update_seconds": 12.176
     },
-    "unit_tests": [
-      "MdlibUnitTest passed",
-      "MdtypesUnitTest passed",
-      "TaskAssignmentUnitTests passed"
-    ]
-  },
-  "validation_limits": [
-    "Existing exact r-RESPA force-dump parity tests exercise the diagnostic serial fallback when trace/dump outputs are enabled.",
-    "The fast path itself is supported by final-state bounded parity, printed energy agreement, restart continuity, and exact-runtime performance rows.",
-    "Direct force-component dump parity for the fast path is not collected because enabling current dump instrumentation intentionally disables the fast path.",
-    "Virial/pressure fast-path direct parity is bounded indirectly here because virial calls remain serial fallback."
+    {
+      "force_seconds": 15.726,
+      "mode": "pairloop_vector",
+      "ms_per_step": 9.874,
+      "neighbor_search_seconds": 0.906,
+      "ns_per_day": 4.375,
+      "ntomp": 1,
+      "pme_mesh_seconds": 0.962,
+      "total_wallcycle_seconds": 19.758,
+      "update_seconds": 9.195
+    },
+    {
+      "force_seconds": 20.817,
+      "mode": "combined",
+      "ms_per_step": 12.442,
+      "neighbor_search_seconds": 0.919,
+      "ns_per_day": 3.472,
+      "ntomp": 1,
+      "pme_mesh_seconds": 0.964,
+      "total_wallcycle_seconds": 24.897,
+      "update_seconds": 12.216
+    },
+    {
+      "force_seconds": 20.361,
+      "mode": "baseline",
+      "ms_per_step": 11.787,
+      "neighbor_search_seconds": 0.519,
+      "ns_per_day": 3.665,
+      "ntomp": 2,
+      "pme_mesh_seconds": 0.586,
+      "total_wallcycle_seconds": 23.585,
+      "update_seconds": 11.696
+    },
+    {
+      "force_seconds": 12.504,
+      "mode": "pairloop_omp",
+      "ms_per_step": 7.827,
+      "neighbor_search_seconds": 0.502,
+      "ns_per_day": 5.52,
+      "ntomp": 2,
+      "pme_mesh_seconds": 0.569,
+      "total_wallcycle_seconds": 15.661,
+      "update_seconds": 6.98
+    },
+    {
+      "force_seconds": 15.462,
+      "mode": "pairloop_vector",
+      "ms_per_step": 9.313,
+      "neighbor_search_seconds": 0.502,
+      "ns_per_day": 4.639,
+      "ntomp": 2,
+      "pme_mesh_seconds": 0.568,
+      "total_wallcycle_seconds": 18.635,
+      "update_seconds": 8.682
+    },
+    {
+      "force_seconds": 12.72,
+      "mode": "combined",
+      "ms_per_step": 7.939,
+      "neighbor_search_seconds": 0.507,
+      "ns_per_day": 5.441,
+      "ntomp": 2,
+      "pme_mesh_seconds": 0.573,
+      "total_wallcycle_seconds": 15.886,
+      "update_seconds": 7.1
+    },
+    {
+      "force_seconds": 20.326,
+      "mode": "baseline",
+      "ms_per_step": 11.489,
+      "neighbor_search_seconds": 0.216,
+      "ns_per_day": 3.76,
+      "ntomp": 6,
+      "pme_mesh_seconds": 0.35,
+      "total_wallcycle_seconds": 22.99,
+      "update_seconds": 11.415
+    },
+    {
+      "force_seconds": 10.793,
+      "mode": "pairloop_omp",
+      "ms_per_step": 6.682,
+      "neighbor_search_seconds": 0.197,
+      "ns_per_day": 6.465,
+      "ntomp": 6,
+      "pme_mesh_seconds": 0.308,
+      "total_wallcycle_seconds": 13.37,
+      "update_seconds": 5.729
+    },
+    {
+      "force_seconds": 15.376,
+      "mode": "pairloop_vector",
+      "ms_per_step": 8.983,
+      "neighbor_search_seconds": 0.201,
+      "ns_per_day": 4.809,
+      "ntomp": 6,
+      "pme_mesh_seconds": 0.318,
+      "total_wallcycle_seconds": 17.975,
+      "update_seconds": 8.373
+    },
+    {
+      "force_seconds": 10.879,
+      "mode": "combined",
+      "ms_per_step": 6.725,
+      "neighbor_search_seconds": 0.2,
+      "ns_per_day": 6.424,
+      "ntomp": 6,
+      "pme_mesh_seconds": 0.31,
+      "total_wallcycle_seconds": 13.457,
+      "update_seconds": 5.771
+    },
+    {
+      "force_seconds": 21.411,
+      "mode": "baseline",
+      "ms_per_step": 12.086,
+      "neighbor_search_seconds": 0.156,
+      "ns_per_day": 3.574,
+      "ntomp": 12,
+      "pme_mesh_seconds": 0.389,
+      "total_wallcycle_seconds": 24.183,
+      "update_seconds": 12.004
+    },
+    {
+      "force_seconds": 11.118,
+      "mode": "pairloop_omp",
+      "ms_per_step": 6.903,
+      "neighbor_search_seconds": 0.141,
+      "ns_per_day": 6.259,
+      "ntomp": 12,
+      "pme_mesh_seconds": 0.355,
+      "total_wallcycle_seconds": 13.812,
+      "update_seconds": 5.889
+    },
+    {
+      "force_seconds": 16.054,
+      "mode": "pairloop_vector",
+      "ms_per_step": 9.378,
+      "neighbor_search_seconds": 0.145,
+      "ns_per_day": 4.606,
+      "ntomp": 12,
+      "pme_mesh_seconds": 0.37,
+      "total_wallcycle_seconds": 18.766,
+      "update_seconds": 8.778
+    },
+    {
+      "force_seconds": 11.015,
+      "mode": "combined",
+      "ms_per_step": 6.839,
+      "neighbor_search_seconds": 0.14,
+      "ns_per_day": 6.317,
+      "ntomp": 12,
+      "pme_mesh_seconds": 0.348,
+      "total_wallcycle_seconds": 13.685,
+      "update_seconds": 5.846
+    }
   ],
-  "claim_boundary_delta": {
-    "supported": [
-      "experimental host-local OpenMP speedup candidate for exact r-RESPA CPU pair-loop work on the audited 9900X Gate I fixture",
-      "real exact-r-RESPA runtime whole-run improvement for the audited 2000-step shape",
-      "restart continuity for pairloop_omp ntomp=6 in the audited shape"
-    ],
-    "not_supported": [
-      "pair-loop vectorization or SIMD speedup",
-      "GPU or hybrid speedup",
-      "broad CPU scaling guidance",
-      "chemistry expansion",
-      "density/volume blocker closure",
-      "production transport readiness"
-    ],
-    "verdict": "partial capability expansion: pairloop_omp only; vectorization remains blocked"
-  },
   "remaining_blockers": [
-    "pair-loop vectorization is not implemented",
-    "direct force-component dump parity for the fast path is not yet available",
+    "direct fast-path force-component dump parity is not yet available",
     "multi-host and multi-fixture performance evidence is not collected",
+    "repeat-count is one for the staged performance table",
     "no density/volume blocker or transport-readiness implication is supported"
   ],
-  "exact_next_gate": "Add non-intrusive fast-path force-component instrumentation or an isolated exact pair-loop parity harness, then re-run staged baseline/pairloop_omp comparisons on at least one additional medium charged fixture."
+  "runtime_shape": {
+    "benchmark_summary": "output/exact_respa_pairloop_omp_speedup/pairloop_vector_local_2000_commit9bc/summary.json",
+    "cpu_only_flags": [
+      "-nb cpu",
+      "-pme cpu",
+      "-bonded cpu",
+      "-update cpu"
+    ],
+    "fixture_id": "gate_i_eq750_prod10000_replica01_equil",
+    "ntmpi": 1,
+    "pin": "off",
+    "repeats": 1,
+    "reprod": true,
+    "steps": 2000,
+    "tpr": "tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr",
+    "tpr_sha256": "54dab590e7e0d07828572c92618eb7dc574c0cfa80722a0f0aac8ca725ecd935"
+  },
+  "schema_name": "exact_respa_pairloop_omp_speedup_report",
+  "schema_version": 2,
+  "target_commit": "9bc89609c03fcad41c22839981ed035b4a7d97a0",
+  "target_path": {
+    "file": "src/gromacs/mdlib/sim_util.cpp",
+    "function": "computeExactRespaNonbondedCpu",
+    "listed_pair14_scope": "not optimized directly",
+    "loop": "processPairlist over plainPairlist.pairs and plainPairlist.excludedPairs",
+    "work_type": "short-range nonbonded-adjacent exact pair work, including excluded-pair PME real-space correction"
+  },
+  "track": "exact-r-RESPA OpenMP speedup via pair-loop parallelization and vectorization",
+  "validation_limits": [
+    "Existing exact r-RESPA force-dump parity tests exercise the diagnostic serial fallback when trace/dump outputs are enabled.",
+    "Fast paths are supported here by final-state bounded parity, printed energy agreement, restart continuity, and exact-runtime performance rows.",
+    "Direct force-component dump parity for the fast path is not collected because enabling current dump instrumentation intentionally disables the fast path.",
+    "Virial/pressure direct fast-path parity is bounded indirectly here because virial calls remain serial fallback.",
+    "Performance evidence is one host and one Gate I fixture with one repeat per ntomp point; it is not broad CPU guidance."
+  ]
 }
