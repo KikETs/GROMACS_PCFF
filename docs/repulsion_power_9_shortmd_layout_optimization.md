@@ -32,12 +32,37 @@ Runtime layout basis:
   [`output/repulsion_power_9_shortmd_layout_6t_sweep/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_6t_sweep/summary.md)
 - 6-repeat confirmation of the best 12-thread layout:
   [`output/repulsion_power_9_shortmd_layout_opt_split12_repeatdepth/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt_split12_repeatdepth/summary.md)
+- post-PME-gather-cleanup 3-repeat layout sweep:
+  [`output/repulsion_power_9_shortmd_layout_post_pmegather_opt/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmegather_opt/summary.md)
+- post-PME-gather-cleanup 6-repeat confirmation of the best 12-thread layout:
+  [`output/repulsion_power_9_shortmd_layout_post_pmegather_split12_repeatdepth/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmegather_split12_repeatdepth/summary.md)
 
 Important interpretation rule:
 
 - with separate PME ranks, the `Force`, `PME mesh`, and related wallcycle lines overlap across ranks
   and are not additive wall shares
 - final speed claims therefore use `Performance` and `Time:` wall seconds
+
+## Current Best Result After PME Gather Hot-Path Cleanup
+
+After caching PME trace env lookups out of the gather hot path, the layout ordering did not change,
+but the current host-local best speed moved up.
+
+Current audited specialized results:
+
+| layout | real wall s | ns/day |
+| --- | ---: | ---: |
+| pure OpenMP `-ntmpi 1 -ntomp 6` | `2.309` | `187.076` |
+| pure OpenMP `-ntmpi 1 -ntomp 12` | `2.667` | `161.980` |
+| split `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6` | `1.636` | `264.066` |
+
+This matters because the current best result is no longer the earlier `235.065 ns/day` point.
+The current best confirmed point is:
+
+- specialized path
+- `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6`
+- `264.066 ns/day`
+- `1.636 s` real wall time
 
 ## What OpenMP Alone Gets You
 
@@ -71,8 +96,8 @@ The tested 12-thread runtime layouts were:
 
 | layout | runtime flags | specialized ns/day |
 | --- | --- | ---: |
-| pure OpenMP | `-ntmpi 1 -ntomp 12` | `153.761` |
-| split 2-way | `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6` | `239.346` in the dedicated 3-repeat split sweep, `235.065` in the 6-repeat confirmation |
+| pure OpenMP | `-ntmpi 1 -ntomp 12` | `161.980` |
+| split 2-way | `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6` | `265.160` in the post-cleanup 3-repeat sweep, `264.066` in the post-cleanup 6-repeat confirmation |
 
 The stable recommendation is the simpler 2-rank split:
 
@@ -91,7 +116,7 @@ For the `2-rank + 1 PME rank` family, the tested PP/PME thread partitions were:
 | --- | ---: |
 | `4 / 8` | `167.128` |
 | `5 / 7` | `181.011` |
-| `6 / 6` | `239.346` |
+| `6 / 6` | `239.346` in the original sweep, `264.066` after the PME-gather hot-path cleanup |
 | `7 / 5` | `205.901` |
 | `8 / 4` | `170.607` |
 
@@ -109,15 +134,15 @@ Best confirmed result:
 
 - specialized path
 - `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6`
-- `235.065 ns/day`
-- `1.838 s` real wall time
+- `264.066 ns/day`
+- `1.636 s` real wall time
 
 Compared with the current pure-OpenMP baselines:
 
 | baseline | baseline ns/day | best-layout ns/day | speedup |
 | --- | ---: | ---: | ---: |
-| pure OpenMP `ntomp=6` specialized | `172.017` | `235.065` | `1.367x` |
-| pure OpenMP `ntomp=12` specialized | `153.761` | `235.065` | `1.529x` |
+| pure OpenMP `ntomp=6` specialized | `187.076` | `264.066` | `1.412x` |
+| pure OpenMP `ntomp=12` specialized | `161.980` | `264.066` | `1.630x` |
 
 This is the current host-local final-speed answer.
 
@@ -133,8 +158,8 @@ Priority 2: PME spread / gather
 
 - these also improve under the `6 / 6` PME split
 - example, specialized path:
-  - pure OpenMP `ntomp=12`: `PME spread 0.384 s`, `PME gather 0.430 s`
-  - split `6 / 6`: `PME spread 0.175 s`, `PME gather 0.421 s`
+  - pure OpenMP `ntomp=12`: `PME spread 0.381 s`, `PME gather 0.303 s`
+  - split `6 / 6`: `PME spread 0.174 s`, `PME gather 0.1965 s`
 - the biggest absolute PME term is still `PME 3D-FFT`
 
 Priority 3: Update / buffer overhead
@@ -146,14 +171,11 @@ Priority 3: Update / buffer overhead
 
 Under the best final-speed layout, specialized still helps, but only slightly:
 
-| layout | generic ns/day | specialized ns/day | speedup |
-| --- | ---: | ---: | ---: |
-| `-ntmpi 2 -npme 1 -ntomp 6 -ntomp_pme 6` | `231.981` | `235.065` | `1.013x` |
-
-So the current situation is:
-
-- the specialized PP kernel is still locally better
-- but once PME is split correctly, whole-run speed is dominated by runtime layout more than by PP microkernel differences
+- the last audited generic-vs-specialized point under the best split layout remained small:
+  - `231.981 -> 235.065 ns/day`
+  - `1.013x`
+- that comparison was not rerun after the PME-gather cleanup because this follow-up targeted PME control overhead, not PP microkernel math
+- the practical conclusion is unchanged: whole-run speed is currently dominated by runtime layout and PME-side work more than by PP microkernel differences
 
 ## Current Recommendation
 

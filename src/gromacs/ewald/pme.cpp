@@ -134,32 +134,52 @@ namespace
 
 const char* activeRespaTraceDirPath()
 {
-    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
-    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
+    static const char* const traceDir = []() -> const char*
+    {
+        const char* value = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+        return (value != nullptr && *value != '\0') ? value : nullptr;
+    }();
+    return traceDir;
 }
 
 bool shouldTracePmeComplexGrid()
 {
-    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_COMPLEX_GRID");
-    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+    static const bool enabled = []()
+    {
+        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_COMPLEX_GRID");
+        return value != nullptr && *value != '\0' && activeRespaTraceDirPath() != nullptr;
+    }();
+    return enabled;
 }
 
 bool shouldTracePmeRealGrid()
 {
-    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_REAL_GRID");
-    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+    static const bool enabled = []()
+    {
+        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_REAL_GRID");
+        return value != nullptr && *value != '\0' && activeRespaTraceDirPath() != nullptr;
+    }();
+    return enabled;
 }
 
 bool shouldTracePmeFftRealGrid()
 {
-    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_FFT_REAL_GRID");
-    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+    static const bool enabled = []()
+    {
+        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_FFT_REAL_GRID");
+        return value != nullptr && *value != '\0' && activeRespaTraceDirPath() != nullptr;
+    }();
+    return enabled;
 }
 
 bool shouldTracePmePreFftRealGrid()
 {
-    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_PME_PRE_FFT_REAL_GRID");
-    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+    static const bool enabled = []()
+    {
+        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_PME_PRE_FFT_REAL_GRID");
+        return value != nullptr && *value != '\0' && activeRespaTraceDirPath() != nullptr;
+    }();
+    return enabled;
 }
 
 int targetPmeComplexGridTraceStep()

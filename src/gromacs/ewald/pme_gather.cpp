@@ -67,14 +67,22 @@ namespace
 
 const char* activeRespaTraceDirPath()
 {
-    const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
-    return (traceDir != nullptr && *traceDir != '\0') ? traceDir : nullptr;
+    static const char* const traceDir = []() -> const char*
+    {
+        const char* value = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+        return (value != nullptr && *value != '\0') ? value : nullptr;
+    }();
+    return traceDir;
 }
 
 bool shouldTraceCpuPmeGatherPartials()
 {
-    const char* enabled = std::getenv("GMX_PCFF_RESPA_TRACE_CPU_PME_GATHER_PARTIALS");
-    return enabled != nullptr && *enabled != '\0' && activeRespaTraceDirPath() != nullptr;
+    static const bool enabled = []()
+    {
+        const char* value = std::getenv("GMX_PCFF_RESPA_TRACE_CPU_PME_GATHER_PARTIALS");
+        return value != nullptr && *value != '\0' && activeRespaTraceDirPath() != nullptr;
+    }();
+    return enabled;
 }
 
 int readCpuPmeGatherTraceEnvInt(const char* name, const int fallback)
@@ -107,10 +115,10 @@ int currentRespaGlobalAtomIndexForSplineSlot(const int nn, const int fallback)
                    : fallback;
 }
 
-bool shouldTraceCpuGatherForSplineSlot(const int nn, const int fallback)
+bool shouldTraceCurrentCpuPmeGatherStep()
 {
-    return shouldTraceCpuPmeGatherPartials() && gmx::g_respaCurrentDoForceStep == targetCpuPmeGatherTraceStep()
-           && currentRespaGlobalAtomIndexForSplineSlot(nn, fallback) == targetCpuPmeGatherTraceAtom();
+    return shouldTraceCpuPmeGatherPartials()
+           && gmx::g_respaCurrentDoForceStep == targetCpuPmeGatherTraceStep();
 }
 
 void appendCpuPmeGatherTraceLine(const std::string& line)
@@ -165,8 +173,15 @@ struct do_fspline
                const real* gmx_restrict         grid,
                const PmeAtomComm& gmx_restrict  atc,
                const splinedata_t& gmx_restrict spline,
-               int                              nn) :
-        pme_(pme), grid_(grid), atc_(atc), spline_(spline), nn_(nn)
+               int                              nn,
+               bool                             shouldTraceCurrentStep) :
+        pme_(pme),
+        grid_(grid),
+        atc_(atc),
+        spline_(spline),
+        nn_(nn),
+        globalAtomIndex_(currentRespaGlobalAtomIndexForSplineSlot(nn, spline.ind[nn])),
+        traceCurrentAtom_(shouldTraceCurrentStep && globalAtomIndex_ == targetCpuPmeGatherTraceAtom())
     {
     }
 
@@ -177,7 +192,7 @@ struct do_fspline
 
     bool shouldTraceCpuGatherForAtom() const
     {
-        return shouldTraceCpuGatherForSplineSlot(nn_, spline_.ind[nn_]);
+        return traceCurrentAtom_;
     }
 
     template<typename Int>
@@ -462,6 +477,8 @@ private:
     const PmeAtomComm&             atc_;
     const splinedata_t&            spline_;
     const int                      nn_;
+    const int                      globalAtomIndex_;
+    const bool                     traceCurrentAtom_;
 
     const int gridNY = pme_.pmegrid_ny;
     const int gridNZ = pme_.pmegrid_nz;
@@ -502,6 +519,7 @@ void gather_f_bsplines(const gmx_pme_t&          pme,
     /* Note that unrolling this loop by templating this function on order
      * deteriorates performance significantly with gcc5/6/7.
      */
+    const bool traceCurrentStep = shouldTraceCurrentCpuPmeGatherStep();
     for (int nn = 0; nn < spline.n; nn++)
     {
         const int  n           = spline.ind[nn];
@@ -516,7 +534,7 @@ void gather_f_bsplines(const gmx_pme_t&          pme,
         if (coefficient != 0)
         {
             RVec       f;
-            const auto spline_func = do_fspline(pme, gridPtr, *atc, spline, nn);
+            const auto spline_func = do_fspline(pme, gridPtr, *atc, spline, nn, traceCurrentStep);
 
             switch (order)
             {
@@ -533,13 +551,12 @@ void gather_f_bsplines(const gmx_pme_t&          pme,
             force[n][YY] += addFy;
             force[n][ZZ] += addFz;
 
-            if (shouldTraceCpuGatherForSplineSlot(nn, spline.ind[nn]))
+            if (spline_func.shouldTraceCpuGatherForAtom())
             {
                 std::ostringstream line;
                 line << std::setprecision(17);
                 line << "step=" << gmx::g_respaCurrentDoForceStep << " stage=post_transform local_atom=" << nn
-                     << " spline_atom=" << n << " global_atom="
-                     << currentRespaGlobalAtomIndexForSplineSlot(nn, spline.ind[nn]) << " coefficient="
+                     << " spline_atom=" << n << " global_atom=" << spline_func.globalAtomIndex() << " coefficient="
                      << coefficient << " scaleFactor=" << scaleFactor << " nkx=" << nx << " nky=" << ny
                      << " nkz=" << nz << " rxx=" << rxx << " ryx=" << ryx << " ryy=" << ryy
                      << " rzx=" << rzx << " rzy=" << rzy << " rzz=" << rzz << " gatherFx=" << f[XX]

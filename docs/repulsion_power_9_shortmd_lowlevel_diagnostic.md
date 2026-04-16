@@ -39,6 +39,7 @@ Perf stack:
 Summary evidence:
 
 - [`output/repulsion_power_9_shortmd_lowlevel_profile/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_lowlevel_profile/summary.md)
+- [`output/repulsion_power_9_shortmd_lowlevel_profile_post_pmegather/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_lowlevel_profile_post_pmegather/summary.md)
 
 Limits:
 
@@ -157,3 +158,112 @@ The next low-level optimization target should be CPU PME-side work, in this orde
 3. thread-wait reduction after PME memory pressure is reduced
 
 The repulsion-power-9 specialized PP kernel is no longer the right place to spend time first.
+
+## PME Gather Hot-Path Follow-Up
+
+One secondary PME-side cost was worth fixing immediately because it was not physics work at all:
+
+- [`src/gromacs/ewald/pme_gather.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/ewald/pme_gather.cpp)
+- [`src/gromacs/ewald/pme.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/ewald/pme.cpp)
+
+Applied change:
+
+- cache PME trace env lookups once per process instead of calling `getenv` in the hot path
+- compute the current-step trace gate once per `gather_f_bsplines()` call
+- precompute the traced global atom index and per-atom trace decision inside `do_fspline`
+
+Post-change representative profile:
+
+| layout | ns/day | wall s | PME gather s | `getenv` sample share |
+| --- | ---: | ---: | ---: | ---: |
+| `omp6` | `187.258` | `2.307` | `0.162` | `0.18%` |
+| `omp12` | `160.828` | `2.686` | `0.305` | `0.08%` |
+| `split12_pp6_pme6` | `263.032` | `1.643` | `0.195` | `0.12%` |
+
+Previous baseline for the same measurement stack:
+
+- `omp6`: `PME gather 0.359 s`, `getenv 7.56%`
+- `omp12`: `PME gather 0.424 s`, `getenv 3.78%`
+- `split12_pp6_pme6`: `PME gather 0.396 s`, `getenv 4.81%`
+
+What changed:
+
+- the PME gather wall time dropped sharply on all three audited layouts
+- `getenv` effectively disappeared from the hotspot list
+- final wall speed improved:
+  - `omp6`: `172.847 -> 187.258 ns/day`
+  - `omp12`: `155.522 -> 160.828 ns/day`
+  - `split12_pp6_pme6`: `240.140 -> 263.032 ns/day`
+
+What did not change:
+
+- pure OpenMP `12` is still much more memory-bound than pure OpenMP `6`
+- `fft5d_execute` and `libgomp` wait sites remain major hotspots
+- the remaining primary ceiling is still PME-side memory pressure and FFT-side work, not the PP kernel
+
+Updated priority after this cleanup:
+
+1. FFT / FFTW-side efficiency
+2. PME spread/gather memory behavior beyond the removed trace-control overhead
+3. thread-wait reduction after PME memory pressure is reduced
+
+## Deep PMU Follow-Up
+
+After lowering the host restrictions to allow broader PMU access, the same three representative
+specialized layouts were profiled again with additional branch, L1, and TLB events:
+
+- [`output/repulsion_power_9_shortmd_deep_profile_post_pmegather/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_deep_profile_post_pmegather/summary.md)
+
+Representative results:
+
+| layout | IPC | branch miss | cache miss | L1 miss | dTLB miss | iTLB miss | mem-bound backend | libfftw3f | libgomp | affinity |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `omp6` | `3.03` | `0.41%` | `8.37%` | `5.71%` | `0.31%` | `0.09%` | `21.8%` | `30.37%` | `9.73%` | `0-5` |
+| `omp12` | `1.42` | `0.34%` | `18.30%` | `6.16%` | `0.90%` | `0.29%` | `43.6%` | `28.40%` | `31.07%` | `0-11` |
+| `split12_pp6_pme6` | `2.32` | `0.24%` | `7.83%` | `5.66%` | `0.07%` | `0.47%` | `28.3%` | `22.04%` | `28.88%` | `0-5 / 6-11` |
+
+What this rules out more clearly:
+
+- the `omp12` failure is not a branch-misprediction story
+  - branch miss rate actually drops: `0.41% -> 0.34%`
+- it is not mainly an L1 miss story
+  - L1 miss rate only moves modestly: `5.71% -> 6.16%`
+
+What becomes stronger:
+
+- deep-cache / memory pressure is the main backend explanation
+  - cache miss rate jumps: `8.37% -> 18.30%`
+  - memory-bound backend doubles: `21.8% -> 43.6%`
+- TLB pressure also worsens materially
+  - dTLB miss rate rises about `3x`: `0.31% -> 0.90%`
+  - iTLB miss rate rises about `3.4x`: `0.09% -> 0.29%`
+
+## Host-Local Topology Interpretation
+
+The audited `Ryzen 9 9900X` host reports:
+
+- `L3 cache: 64 MiB (2 instances)`
+- CPUs `0-5` share `L3:0`
+- CPUs `6-11` share `L3:1`
+
+Observed affinity placement:
+
+- pure OpenMP `omp6`: `0-5`
+- pure OpenMP `omp12`: `0-11`
+- split `2 ranks + 1 PME rank`: rank 0 on `0-5`, rank 1 on `6-11`
+
+That means:
+
+- pure OpenMP `12` spans both 32 MiB L3 groups in one shared OpenMP team
+- the split layout keeps the two MPI ranks separated across the two L3 groups
+
+Current host-local explanation is therefore narrower and stronger than before:
+
+1. pure OpenMP `12` pushes the PME-heavy single-rank path across both L3 groups
+2. that coincides with much higher deep-cache miss cost, higher TLB miss cost, and much worse memory-bound backend pressure
+3. FFT and PME spread/gather still grow, but they are symptoms inside that memory-heavy regime
+4. the split layout wins because it restores locality and reduces cross-group contention by pinning PP and PME work to separate 6-core / 32 MiB-L3 clusters
+
+This does not prove a universal multi-CCD rule for all hosts.
+It does close the audited host-local question more tightly: on this machine, `omp12` loses because
+the PME-heavy single-rank CPU path scales poorly once it crosses the two-L3-group boundary.
