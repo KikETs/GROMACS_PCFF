@@ -25,9 +25,16 @@ Metrics used:
 - wallcycle `Update`
 - wallcycle subcounter `NB F kernel`
 - wallcycle subcounter `NB F buffer ops.`
+- `/usr/bin/time -v` process-level software counters where applicable
 
 The benchmark shape is CPU-only non-MTS short MD and does execute the admitted short-range nonbonded
 kernel path. This is not an exact-`r-RESPA` pair-splitting benchmark.
+
+Low-level limitation on this host:
+
+- hardware PMU access is blocked because `/proc/sys/kernel/perf_event_paranoid = 4`
+- `perf stat` cannot be used without elevated privileges
+- low-level evidence therefore comes from affinity reports, wallcycle counters, and `/usr/bin/time -v`
 
 ## Experiment Matrix
 
@@ -58,6 +65,20 @@ the dominant cause of the earlier mixed wall result.
 
 - [`output/repulsion_power_9_shortmd_ntomp2_warmup_clean/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp2_warmup_clean/summary.md)
 - `steps=2000`, `repeats=3`, `pin=on`, `dlb=no`, alternating mode order, `warmup-cycles-per-ntomp=1`
+
+### Longer sequential fixed-`ntomp` runs
+
+- [`output/repulsion_power_9_shortmd_ntomp2_long_seq/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp2_long_seq/summary.md)
+- [`output/repulsion_power_9_shortmd_ntomp6_long_seq/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp6_long_seq/summary.md)
+- `steps=10000`, `repeats=3`, `pin=on`, `dlb=no`, alternating mode order, `warmup-cycles-per-ntomp=1`
+
+### Representative software-level low-level runs
+
+- [`output/repulsion_power_9_shortmd_timev/ntomp2/generic/timev.stderr.txt`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_timev/ntomp2/generic/timev.stderr.txt)
+- [`output/repulsion_power_9_shortmd_timev/ntomp2/specialized/timev.stderr.txt`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_timev/ntomp2/specialized/timev.stderr.txt)
+- [`output/repulsion_power_9_shortmd_timev/ntomp6/generic/timev.stderr.txt`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_timev/ntomp6/generic/timev.stderr.txt)
+- [`output/repulsion_power_9_shortmd_timev/ntomp6/specialized/timev.stderr.txt`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_timev/ntomp6/specialized/timev.stderr.txt)
+- same `10000`-step TPRs, `pin=on`, `dlb=no`
 
 ## Findings
 
@@ -112,12 +133,45 @@ Measured on the audited `gate_h_dense_salt_polymer_2x2x2` short-MD host-local be
 The specialized path still does not justify a broad CPU-wide claim. But the earlier host-local
 `ntomp=2/6` regression claim is no longer defensible on the cleaned-up measurement basis.
 
+### 5. Longer sequential runs preserve the wall gain
+
+Measured on sequential fixed-`ntomp` `10000`-step runs:
+
+- `ntomp=2`
+  - wall `1.124x`
+  - `NB F kernel` `1.579x`
+- `ntomp=6`
+  - wall `1.113x`
+  - `NB F kernel` `1.577x`
+
+These longer runs are stable across repeats and remove the ambiguity that remained in the short
+2000-step campaign.
+
+### 6. The available low-level evidence does not point to a scheduler or affinity pathology
+
+What is directly supported:
+
+- affinity is identical between generic and specialized runs
+  - `ntomp=2`: both bind to `CPUs: 0,1`
+  - `ntomp=6`: both bind to `CPUs: 0-5`
+- `PME mesh` remains a large wall share, but it stays nearly unchanged on the cleaned long sequential
+  runs
+- `/usr/bin/time -v` shows similar:
+  - CPU utilization
+  - RSS
+  - page faults
+  - context-switch counts
+
+So there is no strong evidence that the remaining difference is caused by thread migration, affinity
+drift, or OS-level scheduler anomalies.
+
 ## Ranked Cause Analysis
 
 1. benchmark harness transition artifact after changing `ntomp`
 2. too-short run length and insufficient repeats in the original wall benchmark
 3. fixed mode ordering without warmup, which allowed cold-start effects to contaminate one mode more than the other
-4. DLB
+4. interpreting host-contented or parallel benchmark sessions as wall evidence
+5. DLB
 
 `PME mesh` remains a large share of wall time, but it is not the root cause of the old regression
 story. The old story was invalid because the benchmark protocol was weak.
@@ -130,6 +184,7 @@ Use the short-MD benchmark only with these controls for wall-clock interpretatio
 - alternating mode order
 - at least one warmup cycle per `ntomp`
 - multi-repeat medians
+- no competing benchmark sessions on the same host while collecting wall evidence
 - `NB F kernel` and total wall reported together
 
 Without those controls, the benchmark should be treated as kernel-reachability evidence only, not as
