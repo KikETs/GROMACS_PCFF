@@ -123,6 +123,7 @@ parity is covered by the separate pair-loop force-delta harness:
 
 Current Gate I 20-step `ntomp=6` force-delta evidence:
 
+- report: `tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_pairloop_force_delta_report.json`
 - compared fast-path snapshots: 28 per candidate mode
 - compared components: 285120 per candidate mode
 - modes: `pairloop_omp`, `pairloop_vector`, `combined`

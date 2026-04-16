@@ -41,6 +41,8 @@ Validation limit:
 - The current force-delta evidence compares 28 fast-path snapshots per
   candidate mode and 285120 force components per mode across `pairloop_omp`,
   `pairloop_vector`, and `combined`.
+- Machine-readable force-delta report:
+  `local_9900x_gate_i_pairloop_force_delta_report.json`.
 - Maximum observed absolute pair-loop force-delta difference is
   `0.00604248046875`; the largest relative differences occur only on near-zero
   force components with absolute differences below `4e-5`.
