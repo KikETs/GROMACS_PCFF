@@ -183,6 +183,17 @@ namespace gmx
 // PME-first ordering would suffice).
 static const bool c_disableAlternatingWait = (std::getenv("GMX_DISABLE_ALTERNATING_GPU_WAIT") != nullptr);
 
+static bool disableRepulsionPower9ExactRespaCpuSpecialization()
+{
+    return std::getenv("GMX_DISABLE_REPULSION_POWER_9_EXACT_RESPA_CPU_SPECIALIZATION") != nullptr;
+}
+
+static bool useRepulsionPower9ExactRespaCpuSpecialization(const interaction_const_t& interactionConst)
+{
+    return gmx_within_tol(interactionConst.vdw.repulsionPower, 9.0, 10 * GMX_DOUBLE_EPS)
+           && !disableRepulsionPower9ExactRespaCpuSpecialization();
+}
+
 static void sum_forces(ArrayRef<RVec> f, ArrayRef<const RVec> forceToAdd)
 {
     GMX_ASSERT(f.size() >= forceToAdd.size(), "Accumulation buffer should be sufficiently large");
@@ -3631,6 +3642,10 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
     const real coulombCutoff2   = gmx::square(fr->ic->coulomb.cutoff);
     const real vdwCutoff2       = gmx::square(fr->ic->vdw.cutoff);
     const real repulsionPower   = static_cast<real>(fr->ic->vdw.repulsionPower);
+    const bool usePower9SpecializedPath =
+            useRepulsionPower9ExactRespaCpuSpecialization(*fr->ic);
+    const real repulsionEnergyPrefactor =
+            usePower9SpecializedPath ? (1.0_real / 9.0_real) : (1.0_real / repulsionPower);
     const int  ntype2           = 2 * fr->ntype;
     auto&      vdwEnergyTerms   = enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::LJSR];
     auto&      coulEnergyTerms  = enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR];
@@ -4320,11 +4335,13 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                 typeJ = mdatoms.typeA[aj];
                 c6 = fr->nbfp[typeI * ntype2 + typeJ * 2];
                 cRepulsive = fr->nbfp[typeI * ntype2 + typeJ * 2 + 1];
-                const real rinvsix   = rinvsq * rinvsq * rinvsq;
-                const real repulsiveTerm =
-                        (repulsionPower == 12.0_real ? rinvsix * rinvsix : std::pow(rinv, repulsionPower));
+                const real rinvsix = rinvsq * rinvsq * rinvsq;
+                const real repulsiveTerm = usePower9SpecializedPath ? (rinvsix * rinvsq * rinv)
+                                            : (repulsionPower == 12.0_real ? rinvsix * rinvsix
+                                                                           : std::pow(rinv, repulsionPower));
                 rawLjScalar = cRepulsive * repulsiveTerm - c6 * rinvsix;
-                rawLjEnergy = cRepulsive * repulsiveTerm / repulsionPower - c6 * rinvsix / 6.0_real;
+                rawLjEnergy = cRepulsive * repulsiveTerm * repulsionEnergyPrefactor
+                              - c6 * rinvsix / 6.0_real;
             }
 
             real bareCoulombScalar = 0;
@@ -8186,6 +8203,22 @@ void do_force(FILE*                         fplog,
         }
         else
         {
+            if (fplog != nullptr
+                && gmx_within_tol(fr->ic->vdw.repulsionPower, 9.0, 10 * GMX_DOUBLE_EPS)
+                && step == 0)
+            {
+                if (useRepulsionPower9ExactRespaCpuSpecialization(*fr->ic))
+                {
+                    fprintf(fplog,
+                            "Exact r-RESPA CPU pair splitting will use the specialized exact repulsion-power-9 scalar patch path.\n");
+                }
+                else
+                {
+                    fprintf(fplog,
+                            "Found environment variable GMX_DISABLE_REPULSION_POWER_9_EXACT_RESPA_CPU_SPECIALIZATION.\n"
+                            "Exact r-RESPA CPU pair splitting will keep the generic repulsion-power-9 scalar patch path for baseline comparison.\n");
+                }
+            }
             computeExactRespaNonbondedCpu(inputrec,
                                           top->idef,
                                           fr,

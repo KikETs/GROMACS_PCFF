@@ -117,6 +117,8 @@ struct interaction_const_t
         InteractionModifiers modifier = InteractionModifiers::None;
         //! The exponent for the repulsive part of the Van der Waals potential
         double repulsionPower = 12;
+        //! Whether the admitted CPU SIMD repulsion-power-9 route should use the specialized exact fast path
+        bool useRepulsionPower9SpecializedSimd = false;
 
         // Range parameters
         //! Cutoff distance

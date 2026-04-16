@@ -98,6 +98,7 @@ gmx_inline void rInvSixAndRInvRepulsion(const std::array<SimdReal, inputSize>&  
                                         const std::array<SimdBool, interactSize>& interactV,
                                         const real                                 repulsionPower,
                                         const bool                                 useFastTwelveRepulsion,
+                                        const bool                                 useFastNineRepulsion,
                                         std::array<SimdReal, nR>&                  rInvSixV,
                                         std::array<SimdReal, nR>&                  rInvRepulsionV)
 {
@@ -111,6 +112,11 @@ gmx_inline void rInvSixAndRInvRepulsion(const std::array<SimdReal, inputSize>&  
     if (useFastTwelveRepulsion)
     {
         rInvRepulsionV = genArr<nR>([&](int i) { return rInvSixV[i] * rInvSixV[i]; });
+    }
+    else if (useFastNineRepulsion)
+    {
+        // Exact repulsion-power-9 specialization: r^-9 = r^-6 * r^-2 * r^-1.
+        rInvRepulsionV = genArr<nR>([&](int i) { return rInvSixV[i] * rInvSquaredV[i] * rInvV[i]; });
     }
     else
     {
@@ -196,7 +202,9 @@ class LennardJonesCalculator<false, InteractionModifiers::PotShift>
 public:
     inline LennardJonesCalculator(const interaction_const_t::VanDerWaalsSettings& vdwSettings) :
         repulsionPower_(vdwSettings.repulsionPower),
-        useFastTwelveRepulsion_(std::abs(vdwSettings.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS)
+        useFastTwelveRepulsion_(std::abs(vdwSettings.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS),
+        useFastNineRepulsion_(vdwSettings.useRepulsionPower9SpecializedSimd
+                              && std::abs(vdwSettings.repulsionPower - 9.0) < 10 * GMX_DOUBLE_EPS)
     {
     }
 
@@ -216,7 +224,14 @@ public:
         std::array<SimdReal, nR> rInvSixV;
         std::array<SimdReal, nR> rInvRepulsionV;
         rInvSixAndRInvRepulsion<nR, maskInteractions>(
-                rInvV, rInvSquaredV, interactV, repulsionPower_, useFastTwelveRepulsion_, rInvSixV, rInvRepulsionV);
+                rInvV,
+                rInvSquaredV,
+                interactV,
+                repulsionPower_,
+                useFastTwelveRepulsion_,
+                useFastNineRepulsion_,
+                rInvSixV,
+                rInvRepulsionV);
 
         frLJV = genArr<nR>([&](int i) { return fms(c12V[i], rInvRepulsionV[i], c6V[i] * rInvSixV[i]); });
 
@@ -248,6 +263,7 @@ public:
 private:
     const real repulsionPower_;
     const bool useFastTwelveRepulsion_;
+    const bool useFastNineRepulsion_;
 };
 
 //! Specialized calculator for LJ with potential shift and energy calculation
@@ -259,7 +275,9 @@ public:
         dispersionShift_(vdwSettings.dispersionShift.cpot),
         repulsionShift_(vdwSettings.repulsionShift.cpot),
         repulsionPower_(vdwSettings.repulsionPower),
-        useFastTwelveRepulsion_(std::abs(vdwSettings.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS)
+        useFastTwelveRepulsion_(std::abs(vdwSettings.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS),
+        useFastNineRepulsion_(vdwSettings.useRepulsionPower9SpecializedSimd
+                              && std::abs(vdwSettings.repulsionPower - 9.0) < 10 * GMX_DOUBLE_EPS)
     {
     }
 
@@ -282,7 +300,14 @@ public:
         std::array<SimdReal, nR> frLJ6V;
         std::array<SimdReal, nR> frLJRepulsionV;
         rInvSixAndRInvRepulsion<nR, maskInteractions>(
-                rInvV, rInvSquaredV, interactV, repulsionPower_, useFastTwelveRepulsion_, frLJ6V, frLJRepulsionV);
+                rInvV,
+                rInvSquaredV,
+                interactV,
+                repulsionPower_,
+                useFastTwelveRepulsion_,
+                useFastNineRepulsion_,
+                frLJ6V,
+                frLJRepulsionV);
 
         frLJ6V         = genArr<nR>([&](int i) { return c6V[i] * frLJ6V[i]; });
         frLJRepulsionV = genArr<nR>([&](int i) { return c12V[i] * frLJRepulsionV[i]; });
@@ -317,6 +342,7 @@ private:
     const SimdReal repulsionShift_;
     const real     repulsionPower_;
     const bool     useFastTwelveRepulsion_;
+    const bool     useFastNineRepulsion_;
 };
 
 //! Computes (r - r_switch), (r - r_switch)^2 and (r - r_switch)^2 * r
@@ -369,7 +395,9 @@ public:
         repulsionShiftC2_(vdwSettings.repulsionShift.c2),
         repulsionShiftC3_(vdwSettings.repulsionShift.c3),
         repulsionPower_(vdwSettings.repulsionPower),
-        useFastTwelveRepulsion_(std::abs(vdwSettings.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS)
+        useFastTwelveRepulsion_(std::abs(vdwSettings.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS),
+        useFastNineRepulsion_(vdwSettings.useRepulsionPower9SpecializedSimd
+                              && std::abs(vdwSettings.repulsionPower - 9.0) < 10 * GMX_DOUBLE_EPS)
     {
         if constexpr (calculateEnergies)
         {
@@ -404,7 +432,14 @@ public:
         std::array<SimdReal, nR> rInvSixV;
         std::array<SimdReal, nR> rInvRepulsionV;
         rInvSixAndRInvRepulsion<nR, maskInteractions>(
-                rInvV, rInvSquaredV, interactV, repulsionPower_, useFastTwelveRepulsion_, rInvSixV, rInvRepulsionV);
+                rInvV,
+                rInvSquaredV,
+                interactV,
+                repulsionPower_,
+                useFastTwelveRepulsion_,
+                useFastNineRepulsion_,
+                rInvSixV,
+                rInvRepulsionV);
 
         std::array<SimdReal, nR> rSwitchedV;
         std::array<SimdReal, nR> rSwitchedSquaredV;
@@ -491,6 +526,7 @@ private:
     const SimdReal                                  repulsionShiftC3_;
     const real                                      repulsionPower_;
     const bool                                      useFastTwelveRepulsion_;
+    const bool                                      useFastNineRepulsion_;
     std::array<SimdReal, calculateEnergies ? 6 : 0> potentialParams_;
 };
 
@@ -536,7 +572,9 @@ public:
         c4times4_(4.0_real * vdwSettings.switchConstants.c4),
         c5times5_(5.0_real * vdwSettings.switchConstants.c5),
         repulsionPower_(vdwSettings.repulsionPower),
-        useFastTwelveRepulsion_(std::abs(vdwSettings.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS)
+        useFastTwelveRepulsion_(std::abs(vdwSettings.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS),
+        useFastNineRepulsion_(vdwSettings.useRepulsionPower9SpecializedSimd
+                              && std::abs(vdwSettings.repulsionPower - 9.0) < 10 * GMX_DOUBLE_EPS)
     {
     }
 
@@ -560,7 +598,14 @@ public:
         std::array<SimdReal, nR> frLJ6V;
         std::array<SimdReal, nR> frLJRepulsionV;
         rInvSixAndRInvRepulsion<nR, maskInteractions>(
-                rInvV, rInvSquaredV, interactV, repulsionPower_, useFastTwelveRepulsion_, frLJ6V, frLJRepulsionV);
+                rInvV,
+                rInvSquaredV,
+                interactV,
+                repulsionPower_,
+                useFastTwelveRepulsion_,
+                useFastNineRepulsion_,
+                frLJ6V,
+                frLJRepulsionV);
 
         frLJ6V         = genArr<nR>([&](int i) { return c6V[i] * frLJ6V[i]; });
         frLJRepulsionV = genArr<nR>([&](int i) { return c12V[i] * frLJRepulsionV[i]; });
@@ -620,6 +665,7 @@ private:
     const SimdReal c5times5_;
     const real     repulsionPower_;
     const bool     useFastTwelveRepulsion_;
+    const bool     useFastNineRepulsion_;
 };
 
 //! Adds the Ewald long-range correction for r^-6

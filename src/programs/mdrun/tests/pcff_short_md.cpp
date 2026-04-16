@@ -1463,6 +1463,53 @@ void expectRepulsionPower9CpuSimdAdmissionLog(const std::string& systemId, const
             << systemId << " log still reports the legacy plain-C fallback";
 }
 
+void expectRepulsionPower9CpuSimdSpecializedLog(const std::string& systemId, const std::string& logContents)
+{
+    expectRepulsionPower9CpuSimdAdmissionLog(systemId, logContents);
+    EXPECT_NE(logContents.find("Selecting the specialized exact CPU SIMD repulsion-power-9 microkernel path."),
+              std::string::npos)
+            << systemId << " log is missing the specialized repulsion-power-9 SIMD marker";
+    EXPECT_EQ(logContents.find("GMX_DISABLE_REPULSION_POWER_9_SIMD_SPECIALIZATION"), std::string::npos)
+            << systemId << " specialized log unexpectedly reports the generic baseline override";
+}
+
+void expectRepulsionPower9CpuSimdGenericBaselineLog(const std::string& systemId, const std::string& logContents)
+{
+    expectRepulsionPower9CpuSimdAdmissionLog(systemId, logContents);
+    EXPECT_NE(logContents.find("Found environment variable GMX_DISABLE_REPULSION_POWER_9_SIMD_SPECIALIZATION."),
+              std::string::npos)
+            << systemId << " log is missing the generic baseline override marker";
+    EXPECT_NE(logContents.find("Keeping the admitted generic CPU SIMD repulsion-power-9 path for baseline comparison."),
+              std::string::npos)
+            << systemId << " log is missing the generic admitted SIMD baseline marker";
+    EXPECT_EQ(logContents.find("Selecting the specialized exact CPU SIMD repulsion-power-9 microkernel path."),
+              std::string::npos)
+            << systemId << " generic baseline log still reports the specialized path";
+}
+
+void expectExactRespaCpuPower9PatchSpecializedLog(const std::string& systemId, const std::string& logContents)
+{
+    EXPECT_NE(logContents.find("Exact r-RESPA CPU pair splitting will use the specialized exact repulsion-power-9 scalar patch path."),
+              std::string::npos)
+            << systemId << " log is missing the exact-r-RESPA CPU patch specialization marker";
+    EXPECT_EQ(logContents.find("GMX_DISABLE_REPULSION_POWER_9_EXACT_RESPA_CPU_SPECIALIZATION"),
+              std::string::npos)
+            << systemId << " specialized exact-r-RESPA CPU patch log unexpectedly reports the generic override";
+}
+
+void expectExactRespaCpuPower9PatchGenericBaselineLog(const std::string& systemId, const std::string& logContents)
+{
+    EXPECT_NE(logContents.find("Found environment variable GMX_DISABLE_REPULSION_POWER_9_EXACT_RESPA_CPU_SPECIALIZATION."),
+              std::string::npos)
+            << systemId << " log is missing the exact-r-RESPA CPU patch generic baseline override marker";
+    EXPECT_NE(logContents.find("Exact r-RESPA CPU pair splitting will keep the generic repulsion-power-9 scalar patch path for baseline comparison."),
+              std::string::npos)
+            << systemId << " log is missing the exact-r-RESPA CPU patch generic baseline marker";
+    EXPECT_EQ(logContents.find("Exact r-RESPA CPU pair splitting will use the specialized exact repulsion-power-9 scalar patch path."),
+              std::string::npos)
+            << systemId << " generic exact-r-RESPA CPU patch log still reports the specialized path";
+}
+
 void expectPlainCReferenceLog(const std::string& systemId, const std::string& logContents)
 {
     EXPECT_NE(logContents.find("Found environment variable GMX_DISABLE_SIMD_KERNELS."),
@@ -1841,6 +1888,91 @@ TEST_P(PcffSinglePointParityTest, CpuSimdNineSixMatchesPlainCReference)
         ASSERT_NE(simdIt, simdVirial.end()) << "Missing virial-pressure term " << name;
         EXPECT_NEAR(simdIt->second, plainValue, virialToleranceAtm)
                 << systemId << " single-point virial drift for " << name;
+    }
+}
+
+TEST_P(PcffSinglePointParityTest, CpuSimdPower9SpecializedMatchesGenericBaseline)
+{
+    const std::string systemId(GetParam());
+    const auto        fixtureRoot = m4ReferenceRoot(systemId);
+
+    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
+    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
+    runner_.useStringAsMdpFile(makeSinglePointMdp());
+    runner_.setMaxWarn(1);
+    runner_.tprFileName_ =
+            fileManager_.getTemporaryFilePath(systemId + "-single-point-simd-specialized.tpr").string();
+
+    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId;
+
+    SimulationRunner specializedRunner = runner_;
+    SimulationRunner genericRunner     = runner_;
+    assignRunnerOutputs(&specializedRunner, &fileManager_, systemId + "-single-point-specialized");
+    assignRunnerOutputs(&genericRunner, &fileManager_, systemId + "-single-point-generic");
+
+    RuntimeSinglePointParityResult genericResult;
+    {
+        const ScopedEnvironmentVariable disableSpecialization(
+                "GMX_DISABLE_REPULSION_POWER_9_SIMD_SPECIALIZATION", std::string("1"));
+        genericResult = runSinglePointParitySimulation(&genericRunner, makeCpuSinglePointMdrunCaller());
+    }
+    const auto specializedResult =
+            runSinglePointParitySimulation(&specializedRunner, makeCpuSinglePointMdrunCaller());
+
+    expectRepulsionPower9CpuSimdGenericBaselineLog(systemId + " generic", genericResult.logContents);
+    expectRepulsionPower9CpuSimdSpecializedLog(systemId + " specialized", specializedResult.logContents);
+
+    const double breakdownToleranceKcalMol = 5e-4;
+    for (const auto& [name, genericValue] : genericResult.breakdownKcalMol)
+    {
+        const auto specializedIt = specializedResult.breakdownKcalMol.find(name);
+        ASSERT_NE(specializedIt, specializedResult.breakdownKcalMol.end())
+                << "Missing single-point breakdown term " << name;
+        EXPECT_NEAR(specializedIt->second, genericValue, breakdownToleranceKcalMol)
+                << systemId << " specialized single-point energy drift for " << name;
+    }
+
+    ASSERT_EQ(gmx::ssize(specializedResult.forces), gmx::ssize(genericResult.forces)) << systemId;
+    const double forceToleranceKjMolNm = 3e-4;
+    for (Index atom = 0; atom < ssize(specializedResult.forces); ++atom)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            EXPECT_NEAR(specializedResult.forces[atom][d], genericResult.forces[atom][d], forceToleranceKjMolNm)
+                    << systemId << " atom=" << atom << " dim=" << d;
+        }
+    }
+
+    const std::vector<std::string> virialTerms = {
+        "Vir-XX",
+        "Vir-XY",
+        "Vir-XZ",
+        "Vir-YX",
+        "Vir-YY",
+        "Vir-YZ",
+        "Vir-ZX",
+        "Vir-ZY",
+        "Vir-ZZ",
+    };
+    const auto specializedEnergyFrames = readEnergyFrames(specializedRunner.edrFileName_, virialTerms);
+    const auto genericEnergyFrames     = readEnergyFrames(genericRunner.edrFileName_, virialTerms);
+    ASSERT_EQ(specializedEnergyFrames.size(), 1U) << systemId;
+    ASSERT_EQ(genericEnergyFrames.size(), 1U) << systemId;
+
+    TrajectoryFrameReader specializedTrajectoryReader(specializedRunner.fullPrecisionTrajectoryFileName_);
+    TrajectoryFrameReader genericTrajectoryReader(genericRunner.fullPrecisionTrajectoryFileName_);
+    const auto specializedVirial =
+            step0VirialPressureTensorAtm(specializedEnergyFrames.front(), specializedTrajectoryReader.frame().box());
+    const auto genericVirial =
+            step0VirialPressureTensorAtm(genericEnergyFrames.front(), genericTrajectoryReader.frame().box());
+
+    const double virialToleranceAtm = 5e-2;
+    for (const auto& [name, genericValue] : genericVirial)
+    {
+        const auto specializedIt = specializedVirial.find(name);
+        ASSERT_NE(specializedIt, specializedVirial.end()) << "Missing virial-pressure term " << name;
+        EXPECT_NEAR(specializedIt->second, genericValue, virialToleranceAtm)
+                << systemId << " specialized single-point virial drift for " << name;
     }
 }
 
@@ -4026,6 +4158,49 @@ TEST_P(PcffRespaObservableDumpTest, ExactRespaCpuSimdMatchesPlainCReference)
     expectExactRespaHybridPerTermForceVisibility(systemId + " exact plainC", plainResult);
     expectExactRespaHybridPerTermForceVisibility(systemId + " exact simd", simdResult);
     expectExactRespaOpenMpParityAgainstOracle(systemId, plainResult, simdResult);
+}
+
+TEST_P(PcffRespaObservableDumpTest, ExactRespaCpuPower9PatchSpecializedMatchesGenericBaseline)
+{
+    const std::string systemId(GetParam());
+    const auto        fixtureRoot = repoRoot() / "tests" / "reference_results" / "m6_respa" / systemId;
+
+    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
+    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
+    runner_.useStringAsMdpFile(makeRespaNveMdp());
+    runner_.setMaxWarn(1);
+    runner_.tprFileName_ =
+            fileManager_.getTemporaryFilePath(systemId + "-exact-respa-simd-specialized.tpr").string();
+
+    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " exact respa";
+
+    CommandLine cpuOnlyCaller = makeExactRespaCpuOnlyCaller("off");
+
+    ExactRespaOpenMpParityResult genericResult;
+    {
+        const ScopedMdrunTestOpenMPThreads genericThreads(1);
+        const ScopedEnvironmentVariable disableSpecialization(
+                "GMX_DISABLE_REPULSION_POWER_9_EXACT_RESPA_CPU_SPECIALIZATION", std::string("1"));
+        genericResult = runExactRespaOpenMpParitySimulation(
+                &runner_, &fileManager_, systemId + "-exact-respa-generic", cpuOnlyCaller, systemId);
+    }
+
+    ExactRespaOpenMpParityResult specializedResult;
+    {
+        const ScopedMdrunTestOpenMPThreads specializedThreads(1);
+        specializedResult = runExactRespaOpenMpParitySimulation(
+                &runner_, &fileManager_, systemId + "-exact-respa-specialized", cpuOnlyCaller, systemId);
+    }
+
+    expectRepulsionPower9CpuSimdAdmissionLog(systemId + " exact generic", genericResult.logContents);
+    expectRepulsionPower9CpuSimdAdmissionLog(systemId + " exact specialized", specializedResult.logContents);
+    expectExactRespaCpuPower9PatchGenericBaselineLog(systemId + " exact generic", genericResult.logContents);
+    expectExactRespaCpuPower9PatchSpecializedLog(systemId + " exact specialized", specializedResult.logContents);
+    expectExactRespaPerLevelOwnershipAudit(systemId + " exact generic", genericResult);
+    expectExactRespaPerLevelOwnershipAudit(systemId + " exact specialized", specializedResult);
+    expectExactRespaHybridPerTermForceVisibility(systemId + " exact generic", genericResult);
+    expectExactRespaHybridPerTermForceVisibility(systemId + " exact specialized", specializedResult);
+    expectExactRespaOpenMpParityAgainstOracle(systemId, genericResult, specializedResult);
 }
 
 void expectExactRespaRestartParityOutputs(const std::string& systemId,

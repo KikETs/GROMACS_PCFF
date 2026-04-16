@@ -102,7 +102,10 @@ CoulombInteractionType coulombInteractionType(CoulombKernelType coulombKernelTyp
     return CoulombInteractionType::Count;
 }
 
-interaction_const_t makeInteractionConst(CoulombKernelType coulombKernelType, const double repulsionPower, const real cutoff)
+interaction_const_t makeInteractionConst(CoulombKernelType coulombKernelType,
+                                         const double      repulsionPower,
+                                         const real        cutoff,
+                                         const bool        useRepulsionPower9SpecializedSimd = false)
 {
     t_inputrec ir;
 
@@ -123,11 +126,14 @@ interaction_const_t makeInteractionConst(CoulombKernelType coulombKernelType, co
     mtop.ffparams.functype[0] = InteractionFunction::LennardJonesShortRange;
 
     interaction_const_t ic = init_interaction_const(nullptr, ir, mtop, false, std::nullopt);
+    ic.vdw.useRepulsionPower9SpecializedSimd = useRepulsionPower9SpecializedSimd;
     init_interaction_const_tables(nullptr, &ic, cutoff, 0);
     return ic;
 }
 
-interaction_const_t makeCutoffInteractionConst(const double repulsionPower, const real cutoff)
+interaction_const_t makeCutoffInteractionConst(const double repulsionPower,
+                                               const real   cutoff,
+                                               const bool   useRepulsionPower9SpecializedSimd = false)
 {
     t_inputrec ir;
 
@@ -148,6 +154,7 @@ interaction_const_t makeCutoffInteractionConst(const double repulsionPower, cons
     mtop.ffparams.functype[0] = InteractionFunction::LennardJonesShortRange;
 
     interaction_const_t ic = init_interaction_const(nullptr, ir, mtop, false, std::nullopt);
+    ic.vdw.useRepulsionPower9SpecializedSimd = useRepulsionPower9SpecializedSimd;
     init_interaction_const_tables(nullptr, &ic, cutoff, 0);
     return ic;
 }
@@ -155,6 +162,20 @@ interaction_const_t makeCutoffInteractionConst(const double repulsionPower, cons
 std::vector<NbnxmKernelType> cpuKernelTypesToValidate()
 {
     std::vector<NbnxmKernelType> kernelTypes = { NbnxmKernelType::Cpu1x1_PlainC, NbnxmKernelType::Cpu4x4_PlainC };
+    if (sc_haveNbnxmSimd4xmKernels)
+    {
+        kernelTypes.push_back(NbnxmKernelType::Cpu4xN_Simd_4xN);
+    }
+    if (sc_haveNbnxmSimd2xmmKernels)
+    {
+        kernelTypes.push_back(NbnxmKernelType::Cpu4xN_Simd_2xNN);
+    }
+    return kernelTypes;
+}
+
+std::vector<NbnxmKernelType> cpuSimdKernelTypesToValidate()
+{
+    std::vector<NbnxmKernelType> kernelTypes;
     if (sc_haveNbnxmSimd4xmKernels)
     {
         kernelTypes.push_back(NbnxmKernelType::Cpu4xN_Simd_4xN);
@@ -679,6 +700,59 @@ TEST(PcffClass2NonbondedCurveTest, MakeNonBondedParameterListsUsesRepulsionPower
     ASSERT_EQ(nbfp.size(), 2);
     EXPECT_NEAR(nbfp[0], 18.0_real * epsilon * gmx::power6(sigma), 1e-7);
     EXPECT_NEAR(nbfp[1], 18.0_real * epsilon * std::pow(sigma, 9), 1e-7);
+}
+
+TEST(PcffClass2NonbondedCurveTest, SpecializedPower9SimdMatchesGenericSimdBaseline)
+{
+    constexpr real sigma    = 0.34_real;
+    constexpr real epsilon  = 0.50208_real;
+    constexpr real cutoff   = 1.2_real;
+    constexpr real distance = 0.52_real;
+
+    const auto simdKernelTypes = cpuSimdKernelTypesToValidate();
+    if (simdKernelTypes.empty())
+    {
+        GTEST_SKIP() << "No CPU SIMD kernels are available in this build";
+    }
+
+    const auto [c6, c9] = class2Coefficients(sigma, epsilon);
+    const auto genericIc = makeInteractionConst(CoulombKernelType::Table, 9.0, cutoff, false);
+    const auto specializedIc = makeInteractionConst(CoulombKernelType::Table, 9.0, cutoff, true);
+
+    const std::vector<PcffNonbondedSystem> systems = {
+        makeTwoAtomSystem(distance, c6, c9, 0.35_real, -0.40_real, false),
+        makeSmallOligomerNoPairsSystem(true, true)
+    };
+
+    const double energyTolerance = 5e-6;
+    const double forceTolerance  = 5e-5;
+
+    for (const NbnxmKernelType kernelType : simdKernelTypes)
+    {
+        SCOPED_TRACE(testing::Message() << "kernel=" << static_cast<int>(kernelType));
+        for (Index systemIndex = 0; systemIndex < ssize(systems); ++systemIndex)
+        {
+            SCOPED_TRACE(testing::Message() << "system=" << systemIndex);
+            const auto genericOutput = evaluateSystem(
+                    systems[systemIndex], genericIc, cutoff, CoulombKernelType::Table, kernelType);
+            const auto specializedOutput = evaluateSystem(
+                    systems[systemIndex], specializedIc, cutoff, CoulombKernelType::Table, kernelType);
+
+            EXPECT_NEAR(specializedOutput.vdwEnergy, genericOutput.vdwEnergy, energyTolerance);
+            EXPECT_NEAR(specializedOutput.coulombEnergy, genericOutput.coulombEnergy, energyTolerance);
+            ASSERT_EQ(specializedOutput.forces.size(), genericOutput.forces.size());
+            for (Index atom = 0; atom < ssize(specializedOutput.forces); ++atom)
+            {
+                for (int d = 0; d < DIM; ++d)
+                {
+                    EXPECT_NEAR(specializedOutput.forces[atom][d],
+                                genericOutput.forces[atom][d],
+                                forceTolerance)
+                            << "atom=" << atom << " dim=" << d;
+                }
+            }
+        }
+    }
 }
 
 TEST(PcffClass2NonbondedCurveTest, SmallOligomerChargeOnlyCutoffMatchesDirectCoulombWithExclusions)

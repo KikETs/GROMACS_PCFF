@@ -115,6 +115,11 @@
 namespace
 {
 
+bool disableRepulsionPower9SimdSpecialization()
+{
+    return std::getenv("GMX_DISABLE_REPULSION_POWER_9_SIMD_SPECIALIZATION") != nullptr;
+}
+
 std::vector<ListedForces::InteractionSelection> exactRespaListedForceSelections(
         const gmx::ExactRespaParameters& exactRespa)
 {
@@ -854,6 +859,7 @@ void init_forcerec(FILE*                            fplog,
     forcerec->ic = std::make_unique<interaction_const_t>(init_interaction_const(
             fplog, inputrec, mtop, systemHasNetCharge, anMDModuleProvidesDirectCoulomb));
     init_interaction_const_tables(fplog, forcerec->ic.get(), forcerec->rlist, inputrec.tabext);
+    forcerec->ic->vdw.useRepulsionPower9SpecializedSimd = false;
 
     const interaction_const_t* interactionConst = forcerec->ic.get();
 
@@ -961,13 +967,30 @@ void init_forcerec(FILE*                            fplog,
                         interactionConst->vdw.repulsionPower);
             }
         }
-        else if (forcerec->use_simd_kernels && fplog != nullptr)
+        else if (forcerec->use_simd_kernels)
         {
-            fprintf(fplog,
-                    "\nDetected LJ repulsion power %.0f.\n"
-                    "Enabling the validated CPU SIMD short-range exact LJ 9-6 non-bonded path.\n"
-                    "Unsupported modes remain outside this admission scope.\n\n",
-                    interactionConst->vdw.repulsionPower);
+            const bool useRepulsionPower9SpecializedSimd = !disableRepulsionPower9SimdSpecialization();
+            forcerec->ic->vdw.useRepulsionPower9SpecializedSimd = useRepulsionPower9SpecializedSimd;
+
+            if (fplog != nullptr)
+            {
+                fprintf(fplog,
+                        "\nDetected LJ repulsion power %.0f.\n"
+                        "Enabling the validated CPU SIMD short-range exact LJ 9-6 non-bonded path.\n"
+                        "Unsupported modes remain outside this admission scope.\n",
+                        interactionConst->vdw.repulsionPower);
+                if (useRepulsionPower9SpecializedSimd)
+                {
+                    fprintf(fplog,
+                            "Selecting the specialized exact CPU SIMD repulsion-power-9 microkernel path.\n\n");
+                }
+                else
+                {
+                    fprintf(fplog,
+                            "Found environment variable GMX_DISABLE_REPULSION_POWER_9_SIMD_SPECIALIZATION.\n"
+                            "Keeping the admitted generic CPU SIMD repulsion-power-9 path for baseline comparison.\n\n");
+                }
+            }
         }
     }
     /* Older tpr files can contain Coulomb user tables with the Verlet cutoff-scheme,
