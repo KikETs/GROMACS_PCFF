@@ -1,0 +1,228 @@
+{
+  "rows": [
+    {
+      "layout": "omp6",
+      "ns_per_day": 172.847,
+      "real_wall_seconds": 2.5,
+      "task_clock": 15437813723.0,
+      "cycles": 80209969632.0,
+      "ref_cycles": 67923228384.0,
+      "instructions": 261891285038.0,
+      "cache_references": 10664750064.0,
+      "cache_misses": 887370967.0,
+      "ipc": 3.2650714897355817,
+      "ghz": 5.195681919163159,
+      "cycles_per_ref_cycle": 1.1808915968854958,
+      "cache_miss_rate_percent": 8.32059787313174,
+      "cache_misses_per_kinst": 3.3883180452959474,
+      "backend_bound_percent": 39.2,
+      "backend_bound_by_memory_percent": 20.8,
+      "force_seconds": 0.814,
+      "pme_mesh_seconds": 1.513,
+      "update_seconds": 0.019,
+      "nb_f_kernel_seconds": 0.464,
+      "pme_3d_fft_seconds": 0.921,
+      "pme_spread_seconds": 0.151,
+      "pme_gather_seconds": 0.359,
+      "dso_overheads": {
+        "libgromacs.so.12.0.0": 50.88,
+        "libfftw3f.so.3.6.10": 27.9,
+        "libc.so.6": 10.53,
+        "libgomp.so.1.0.0": 8.29,
+        "libm.so.6": 2.07
+      },
+      "top_symbols": [
+        {
+          "overhead_percent": 18.76,
+          "symbol": "void gmx::nbnxmKernelSimd<(KernelLayout)1, (gmx::KernelCoulombType)1, (VdwCutoffCheck)0, (gmx::LJCombinationRule)2, (InteractionModifiers)1, (LJEwald)0, (EnergyOutput)0>(gmx::NbnxnPairlistCpu const&, gmx::nbnxn_atomdata_t const&, interaction_const_t const&, float const (*) [3], gmx::nbnxn_atomdata_output_t*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 9.21,
+          "symbol": "fft5d_execute(fft5d_plan_t*, int, gmx_wallcycle*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 7.56,
+          "symbol": "getenv",
+          "dso": "libc.so.6"
+        },
+        {
+          "overhead_percent": 4.84,
+          "symbol": "float (anonymous namespace)::dihedral_class2<(BondedKernelFlavor)0>(int, int const*, t_iparams const*, float const (*) [3], float (*) [4], float (*) [3], t_pbc const*, float, float*, gmx::ArrayRef<float const>, t_fcdata*, t_disresdata*, t_oriresdata*, int*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 4.45,
+          "symbol": "0x00000000000258a0",
+          "dso": "libgomp.so.1.0.0"
+        },
+        {
+          "overhead_percent": 3.24,
+          "symbol": "0x00000000000256c0",
+          "dso": "libgomp.so.1.0.0"
+        },
+        {
+          "overhead_percent": 2.85,
+          "symbol": "pbc_dx_aiuc(t_pbc const*, float const*, float const*, float*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 2.45,
+          "symbol": "PmeSolve::solveCoulombYZX(gmx_pme_t const&, t_complex*, float, bool, int)",
+          "dso": "libgromacs.so.12.0.0"
+        }
+      ]
+    },
+    {
+      "layout": "omp12",
+      "ns_per_day": 155.522,
+      "real_wall_seconds": 2.778,
+      "task_clock": 33612778734.0,
+      "cycles": 175314744652.0,
+      "ref_cycles": 147888696560.0,
+      "instructions": 272536774433.0,
+      "cache_references": 10657681776.0,
+      "cache_misses": 1931590848.0,
+      "ipc": 1.5545570623508356,
+      "ghz": 5.2157170949590554,
+      "cycles_per_ref_cycle": 1.1854506039335668,
+      "cache_miss_rate_percent": 18.123930593890908,
+      "cache_misses_per_kinst": 7.087450315718252,
+      "backend_bound_percent": 55.1,
+      "backend_bound_by_memory_percent": 41.7,
+      "force_seconds": 0.55,
+      "pme_mesh_seconds": 1.943,
+      "update_seconds": 0.051,
+      "nb_f_kernel_seconds": 0.288,
+      "pme_3d_fft_seconds": 1.086,
+      "pme_spread_seconds": 0.375,
+      "pme_gather_seconds": 0.424,
+      "dso_overheads": {
+        "libgromacs.so.12.0.0": 35.04,
+        "libgomp.so.1.0.0": 29.37,
+        "libfftw3f.so.3.6.10": 26.31,
+        "libc.so.6": 7.74,
+        "libm.so.6": 0.96,
+        "[unknown]": 0.57
+      },
+      "top_symbols": [
+        {
+          "overhead_percent": 19.48,
+          "symbol": "0x00000000000258a0",
+          "dso": "libgomp.so.1.0.0"
+        },
+        {
+          "overhead_percent": 9.03,
+          "symbol": "void gmx::nbnxmKernelSimd<(KernelLayout)1, (gmx::KernelCoulombType)1, (VdwCutoffCheck)0, (gmx::LJCombinationRule)2, (InteractionModifiers)1, (LJEwald)0, (EnergyOutput)0>(gmx::NbnxnPairlistCpu const&, gmx::nbnxn_atomdata_t const&, interaction_const_t const&, float const (*) [3], gmx::nbnxn_atomdata_output_t*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 8.56,
+          "symbol": "0x00000000000256c0",
+          "dso": "libgomp.so.1.0.0"
+        },
+        {
+          "overhead_percent": 8.33,
+          "symbol": "fft5d_execute(fft5d_plan_t*, int, gmx_wallcycle*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 3.78,
+          "symbol": "getenv",
+          "dso": "libc.so.6"
+        },
+        {
+          "overhead_percent": 2.9,
+          "symbol": "spread_on_grid(gmx_pme_t const*, PmeAtomComm*, PmeAndFftGrids*, bool, bool, bool) [clone ._omp_fn.2]",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 2.43,
+          "symbol": "float (anonymous namespace)::dihedral_class2<(BondedKernelFlavor)0>(int, int const*, t_iparams const*, float const (*) [3], float (*) [4], float (*) [3], t_pbc const*, float, float*, gmx::ArrayRef<float const>, t_fcdata*, t_disresdata*, t_oriresdata*, int*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 2.31,
+          "symbol": "spread_on_grid(gmx_pme_t const*, PmeAtomComm*, PmeAndFftGrids*, bool, bool, bool) [clone ._omp_fn.1]",
+          "dso": "libgromacs.so.12.0.0"
+        }
+      ]
+    },
+    {
+      "layout": "split12_pp6_pme6",
+      "ns_per_day": 240.14,
+      "real_wall_seconds": 1.799,
+      "task_clock": 22831993526.0,
+      "cycles": 116491349343.0,
+      "ref_cycles": 100454994552.0,
+      "instructions": 266470036551.0,
+      "cache_references": 10787168446.0,
+      "cache_misses": 884128694.0,
+      "ipc": 2.287466305900527,
+      "ghz": 5.102110300195431,
+      "cycles_per_ref_cycle": 1.1596372073137575,
+      "cache_miss_rate_percent": 8.196114656277983,
+      "cache_misses_per_kinst": 3.31792912045023,
+      "backend_bound_percent": 44.7,
+      "backend_bound_by_memory_percent": 27.6,
+      "force_seconds": 0.826,
+      "pme_mesh_seconds": 1.623,
+      "update_seconds": 0.034,
+      "nb_f_kernel_seconds": 0.486,
+      "pme_3d_fft_seconds": 0.969,
+      "pme_spread_seconds": 0.172,
+      "pme_gather_seconds": 0.396,
+      "dso_overheads": {
+        "libgromacs.so.12.0.0": 40.69,
+        "libgomp.so.1.0.0": 29.76,
+        "libfftw3f.so.3.6.10": 20.44,
+        "libc.so.6": 7.18,
+        "libm.so.6": 1.38,
+        "[unknown]": 0.55
+      },
+      "top_symbols": [
+        {
+          "overhead_percent": 23.77,
+          "symbol": "0x00000000000256c0",
+          "dso": "libgomp.so.1.0.0"
+        },
+        {
+          "overhead_percent": 12.85,
+          "symbol": "void gmx::nbnxmKernelSimd<(KernelLayout)1, (gmx::KernelCoulombType)1, (VdwCutoffCheck)0, (gmx::LJCombinationRule)2, (InteractionModifiers)1, (LJEwald)0, (EnergyOutput)0>(gmx::NbnxnPairlistCpu const&, gmx::nbnxn_atomdata_t const&, interaction_const_t const&, float const (*) [3], gmx::nbnxn_atomdata_output_t*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 5.68,
+          "symbol": "fft5d_execute(fft5d_plan_t*, int, gmx_wallcycle*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 5.63,
+          "symbol": "tMPI_Event_wait(tMPI_Event_t*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 4.93,
+          "symbol": "0x00000000000258a0",
+          "dso": "libgomp.so.1.0.0"
+        },
+        {
+          "overhead_percent": 4.81,
+          "symbol": "getenv",
+          "dso": "libc.so.6"
+        },
+        {
+          "overhead_percent": 3.22,
+          "symbol": "float (anonymous namespace)::dihedral_class2<(BondedKernelFlavor)0>(int, int const*, t_iparams const*, float const (*) [3], float (*) [4], float (*) [3], t_pbc const*, float, float*, gmx::ArrayRef<float const>, t_fcdata*, t_disresdata*, t_oriresdata*, int*)",
+          "dso": "libgromacs.so.12.0.0"
+        },
+        {
+          "overhead_percent": 1.77,
+          "symbol": "PmeSolve::solveCoulombYZX(gmx_pme_t const&, t_complex*, float, bool, int)",
+          "dso": "libgromacs.so.12.0.0"
+        }
+      ]
+    }
+  ]
+}
