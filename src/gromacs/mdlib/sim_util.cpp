@@ -680,44 +680,6 @@ static real respaSwitchIn(const real r, const real off, const real on)
     return x * x * (3.0_real - 2.0_real * x);
 }
 
-static LammpsRespaSplitWeights computeLammpsRespaSplitWeights(const t_inputrec& inputrec, const real r)
-{
-    LammpsRespaSplitWeights weights;
-    if (!gmx::useExactRespa(inputrec))
-    {
-        GMX_RELEASE_ASSERT(
-                inputrec.mtsMode != gmx::MtsMode::LammpsRespa && !inputrec.lammpsRespa.enabled,
-                "Exact r-RESPA split weights should not be sourced from legacy GROMACS MTS state");
-        return weights;
-    }
-
-    gmx::assertExactRespaOwnsNoLegacyMtsState(inputrec);
-    const auto& respa = inputrec.exactRespa.forceLayout;
-
-    if (!respa.hasPairSplitting())
-    {
-        return weights;
-    }
-
-    if (respa.hasMiddle())
-    {
-        const real switchIntoMiddle = respaSwitchIn(r, respa.innerOff, respa.innerOn);
-        const real switchIntoOuter  = respaSwitchIn(r, respa.outerOn, respa.outerOff);
-        weights.inner               = 1.0_real - switchIntoMiddle;
-        weights.middle              = switchIntoMiddle * (1.0_real - switchIntoOuter);
-        weights.outer               = switchIntoOuter;
-    }
-    else
-    {
-        const real switchIntoOuter = respaSwitchIn(r, respa.outerOn, respa.outerOff);
-        weights.inner              = 1.0_real - switchIntoOuter;
-        weights.middle             = 0.0_real;
-        weights.outer              = switchIntoOuter;
-    }
-
-    return weights;
-}
-
 static void accumulatePairVirial(const RVec& dx, const RVec& force, matrix virial)
 {
     for (int dim1 = 0; dim1 < DIM; dim1++)
@@ -739,39 +701,6 @@ static int energyGroupPairIndex(const int ai, const int aj, const t_forcerec& fr
     const int gidI = fr.atomInfo[ai] & gmx::sc_atomInfo_EnergyGroupIdMask;
     const int gidJ = fr.atomInfo[aj] & gmx::sc_atomInfo_EnergyGroupIdMask;
     return gidI * mdatoms.nenergrp + gidJ;
-}
-
-static void computePmeRealSpaceCoulombComponents(const interaction_const_t::CoulombSettings& coulomb,
-                                                 const EwaldCorrectionTables*                 coulombTables,
-                                                 const real                                   qq,
-                                                 const real                                   r,
-                                                 const real                                   rinv,
-                                                 const real                                   factorCoulomb,
-                                                 real*                                        bareCoulombScalar,
-                                                 real*                                        correctionScalar,
-                                                 real*                                        fullCoulombEnergy)
-{
-    GMX_RELEASE_ASSERT(coulombTables != nullptr, "PME real-space split requires Coulomb Ewald tables");
-
-    const real scaledR    = r * coulombTables->scale;
-    const int  tableIndex = static_cast<int>(scaledR);
-    const real frac       = scaledR - tableIndex;
-    const real halfsp     = 0.5_real / coulombTables->scale;
-
-#if !GMX_DOUBLE
-    const real* table = coulombTables->tableFDV0.data();
-    const real  fexcl = table[tableIndex * 4] + frac * table[tableIndex * 4 + 1];
-    const real  vcorr = table[tableIndex * 4 + 2] - halfsp * frac * (table[tableIndex * 4] + fexcl);
-#else
-    const real* tableF = coulombTables->tableF.data();
-    const real* tableV = coulombTables->tableV.data();
-    const real  fexcl  = (1 - frac) * tableF[tableIndex] + frac * tableF[tableIndex + 1];
-    const real  vcorr  = tableV[tableIndex] - halfsp * frac * (tableF[tableIndex] + fexcl);
-#endif
-
-    *bareCoulombScalar = factorCoulomb * qq * rinv;
-    *correctionScalar  = -qq * fexcl / rinv;
-    *fullCoulombEnergy = qq * (factorCoulomb * (rinv - coulomb.ewaldShift) - vcorr);
 }
 
 static real computePmeSelfEnergy(const interaction_const_t& ic)
@@ -3651,6 +3580,8 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
     const real coulombCutoff2   = gmx::square(fr->ic->coulomb.cutoff);
     const real vdwCutoff2       = gmx::square(fr->ic->vdw.cutoff);
+    const auto& exactRespaForceLayout = inputrec.exactRespa.forceLayout;
+    const bool  exactRespaHasMiddle   = exactRespaForceLayout.hasMiddle();
     const real repulsionPower   = static_cast<real>(fr->ic->vdw.repulsionPower);
     const bool usePower9SpecializedPath =
             useRepulsionPower9ExactRespaCpuSpecialization(*fr->ic);
@@ -3764,6 +3695,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
         ljSrTraceCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2P_CASE_LABEL");
     }
     const bool dumpLjSrTrace = (ljSrTraceDirPath != nullptr && *ljSrTraceDirPath != '\0');
+    const bool useDispatchProbe = dispatchProbeMode != "baseline";
     const bool dumpMultiStepCoulombStateTrace =
             dumpLjSrTrace && shouldTraceRespaMultiStepCoulombStep(step);
     const bool dumpLjAccumContractTrace =
@@ -3787,6 +3719,17 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
     const std::string ljSrTraceCaseLabel =
             (ljSrTraceCaseLabelEnv != nullptr && *ljSrTraceCaseLabelEnv != '\0') ? ljSrTraceCaseLabelEnv :
                                                                                    "unknown";
+    const bool computePairEnergies =
+            stepWork.computeEnergy || debugExactRespa || traceCpuCorrectionEnergies || dumpLjSrTrace
+            || dumpDownstreamContract || dumpBookkeepingResidualTrace || dumpDispatchInternalTrace
+            || dumpPairWriteProof || dumpEarlyAccumTrace || dumpM2xGeometryTrace
+            || traceRealspaceForceSubcomponents || traceStep1Subset01ForceGroupAudit
+            || traceExclusionEquivalence;
+    const bool needNamedPairChecks =
+            useDispatchProbe || dumpDispatchInternalTrace || dumpBookkeepingResidualTrace
+            || dumpDownstreamContract || dumpPairWriteProof || dumpEarlyAccumTrace
+            || traceExclusionEquivalence || traceRealspaceForceSubcomponents
+            || traceStep1Subset01ForceGroupAudit;
     const auto sumEnergyTermsOnce = [](gmx::ArrayRef<const real> values) -> double
     {
         double total = 0.0;
@@ -3976,6 +3919,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             (outerAccumulator != nullptr && outerAccumulator->outputs != nullptr
              && outerAccumulator->force.data()
                         == outerAccumulator->outputs->forceWithShiftForces().force().data());
+    const bool baselineOuterActive = (outerAccumulator != nullptr);
     const auto contributionLabel = [](const ExactRespaNonbondedContribution contribution) -> const char*
     {
         switch (contribution)
@@ -4263,26 +4207,27 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             const int aj         = entry.first.second;
             const int shiftIndex = entry.second;
             const bool isExcludedPairlist = (factorCoulomb == 0.0_real && factorLj == 0.0_real);
-            const bool isTargetPair       = (ai == 0 && aj == 1);
-            const bool isControlPair      = (ai == 0 && aj == 4);
+            const bool isTargetPair       = needNamedPairChecks && (ai == 0 && aj == 1);
+            const bool isControlPair      = needNamedPairChecks && (ai == 0 && aj == 4);
             const bool isM2lTracePair =
                     ((isExcludedPairlist && isTargetPair) || (!isExcludedPairlist && isControlPair));
             const bool isDispatchTracePair = dumpDispatchInternalTrace && isM2lTracePair;
             const bool isBookkeepingTracePair = dumpBookkeepingResidualTrace && isM2lTracePair;
             const bool probeIncludePairRestricted =
-                    (dispatchProbeMode == "includepair_restricted" && isExcludedPairlist && isTargetPair);
+                    (useDispatchProbe && dispatchProbeMode == "includepair_restricted" && isExcludedPairlist && isTargetPair);
             const bool probeActiveOuterNarrowed =
-                    (dispatchProbeMode == "active_outer_narrowed" && isExcludedPairlist && isTargetPair);
+                    (useDispatchProbe && dispatchProbeMode == "active_outer_narrowed" && isExcludedPairlist && isTargetPair);
             const bool probeOuterRoutingSuppressed =
-                    (dispatchProbeMode == "outer_routing_suppressed" && isExcludedPairlist && isTargetPair);
+                    (useDispatchProbe && dispatchProbeMode == "outer_routing_suppressed" && isExcludedPairlist && isTargetPair);
             const bool probeCorrectionOuterSuppressed =
-                    (dispatchProbeMode == "correction_outer_suppressed" && isExcludedPairlist && isTargetPair);
+                    (useDispatchProbe && dispatchProbeMode == "correction_outer_suppressed" && isExcludedPairlist && isTargetPair);
             const bool probeBookkeepingEnergySuppressed =
-                    (dispatchProbeMode == "patch_shape_b_bookkeeping_suppressed" && isExcludedPairlist
+                    (useDispatchProbe && dispatchProbeMode == "patch_shape_b_bookkeeping_suppressed" && isExcludedPairlist
                      && isTargetPair);
-            const bool patchShapeA = (dispatchProbeMode == "patch_shape_a" && isExcludedPairlist);
+            const bool patchShapeA = (useDispatchProbe && dispatchProbeMode == "patch_shape_a" && isExcludedPairlist);
             const bool patchShapeB =
-                    ((dispatchProbeMode == "patch_shape_b"
+                    (useDispatchProbe
+                     && (dispatchProbeMode == "patch_shape_b"
                       || dispatchProbeMode == "patch_shape_b_bookkeeping_suppressed")
                      && isExcludedPairlist);
             const bool includePairBase      = includePair(ai, aj);
@@ -4331,7 +4276,22 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             const real rinvsq = rinv * rinv;
             const real r      = rsq * rinv;
 
-            const auto splitWeights = computeLammpsRespaSplitWeights(inputrec, r);
+            LammpsRespaSplitWeights splitWeights;
+            if (exactRespaHasMiddle)
+            {
+                const real switchIntoMiddle = respaSwitchIn(r, exactRespaForceLayout.innerOff, exactRespaForceLayout.innerOn);
+                const real switchIntoOuter  = respaSwitchIn(r, exactRespaForceLayout.outerOn, exactRespaForceLayout.outerOff);
+                splitWeights.inner          = 1.0_real - switchIntoMiddle;
+                splitWeights.middle         = switchIntoMiddle * (1.0_real - switchIntoOuter);
+                splitWeights.outer          = switchIntoOuter;
+            }
+            else
+            {
+                const real switchIntoOuter = respaSwitchIn(r, exactRespaForceLayout.outerOn, exactRespaForceLayout.outerOff);
+                splitWeights.inner         = 1.0_real - switchIntoOuter;
+                splitWeights.middle        = 0.0_real;
+                splitWeights.outer         = switchIntoOuter;
+            }
 
             int  typeI       = -1;
             int  typeJ       = -1;
@@ -4350,8 +4310,11 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                                             : (repulsionPower == 12.0_real ? rinvsix * rinvsix
                                                                            : std::pow(rinv, repulsionPower));
                 rawLjScalar = cRepulsive * repulsiveTerm - c6 * rinvsix;
-                rawLjEnergy = cRepulsive * repulsiveTerm * repulsionEnergyPrefactor
-                              - c6 * rinvsix / 6.0_real;
+                if (computePairEnergies)
+                {
+                    rawLjEnergy = cRepulsive * repulsiveTerm * repulsionEnergyPrefactor
+                                  - c6 * rinvsix / 6.0_real;
+                }
             }
 
             real bareCoulombScalar = 0;
@@ -4374,25 +4337,26 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 #if !GMX_DOUBLE
                     const real* table = fr->ic->coulombEwaldTables->tableFDV0.data();
                     coulFexcl         = table[coulTableIndex * 4] + coulFrac * table[coulTableIndex * 4 + 1];
-                    coulVcorr = table[coulTableIndex * 4 + 2]
-                                - halfsp * coulFrac * (table[coulTableIndex * 4] + coulFexcl);
 #else
                     const real* tableF = fr->ic->coulombEwaldTables->tableF.data();
-                    const real* tableV = fr->ic->coulombEwaldTables->tableV.data();
                     coulFexcl          = (1 - coulFrac) * tableF[coulTableIndex]
                                 + coulFrac * tableF[coulTableIndex + 1];
-                    coulVcorr = tableV[coulTableIndex]
-                                - halfsp * coulFrac * (tableF[coulTableIndex] + coulFexcl);
 #endif
-                    computePmeRealSpaceCoulombComponents(fr->ic->coulomb,
-                                                         fr->ic->coulombEwaldTables.get(),
-                                                         qq,
-                                                         r,
-                                                         rinv,
-                                                         factorCoulomb,
-                                                         &bareCoulombScalar,
-                                                         &correctionScalar,
-                                                         &fullCoulombEnergy);
+                    bareCoulombScalar = factorCoulomb * qq * rinv;
+                    correctionScalar  = -qq * coulFexcl / rinv;
+                    if (computePairEnergies)
+                    {
+#if !GMX_DOUBLE
+                        coulVcorr = table[coulTableIndex * 4 + 2]
+                                    - halfsp * coulFrac * (table[coulTableIndex * 4] + coulFexcl);
+#else
+                        const real* tableV = fr->ic->coulombEwaldTables->tableV.data();
+                        coulVcorr = tableV[coulTableIndex]
+                                    - halfsp * coulFrac * (tableF[coulTableIndex] + coulFexcl);
+#endif
+                        fullCoulombEnergy =
+                                qq * (factorCoulomb * (rinv - fr->ic->coulomb.ewaldShift) - coulVcorr);
+                    }
                 }
             }
 
@@ -4534,14 +4498,6 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                 addPairContributionToTracedPair(&tracedPatchLjSrForce, ai, aj, ljForce);
                 addPairContributionToTracedPair(&tracedPatchCoulombSrForce, ai, aj, coulombSrForce);
             }
-            const bool baselineOuterActive =
-                    std::any_of(activeContributions.begin(),
-                                activeContributions.end(),
-                                [](const ContributionAccumulator& accumulator)
-                                {
-                                    return accumulator.contribution
-                                           == ExactRespaNonbondedContribution::Outer;
-                                });
             const bool effectiveOuterActive = baselineOuterActive && !probeActiveOuterNarrowed;
             const bool bookkeepingSinkEligible =
                     baselineOuterActive && isExcludedPairlist && fullCoulombEnergy != 0.0_real;
