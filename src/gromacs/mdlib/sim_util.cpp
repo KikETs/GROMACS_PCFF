@@ -36,6 +36,7 @@
 #include "config.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cinttypes>
 #include <cmath>
 #include <cstdint>
@@ -199,6 +200,24 @@ static bool exactRespaPairLoopVectorRequested()
 {
     const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_VECTOR");
     return env != nullptr && std::strcmp(env, "0") != 0;
+}
+
+static bool exactRespaPairLoopSparseReductionRequested()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_SPARSE_REDUCTION");
+    return env != nullptr && std::strcmp(env, "0") != 0;
+}
+
+static const char* exactRespaPairLoopTimingDirPath()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_TIMING_DIR");
+    return (env != nullptr && *env != '\0') ? env : nullptr;
+}
+
+static const char* exactRespaPairLoopTimingLabel()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_TIMING_LABEL");
+    return (env != nullptr && *env != '\0') ? env : "unspecified";
 }
 
 static const char* exactRespaPairLoopForceDumpDirPath()
@@ -4231,12 +4250,23 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
         int                             forceSize = 0;
         std::vector<std::vector<RVec>>  forceByThread;
         std::vector<std::vector<RVec>>  shiftByThread;
+        std::vector<std::vector<int>>   touchedAtomsByThread;
+        std::vector<std::vector<unsigned char>> touchedAtomSeenByThread;
+        std::vector<int>                reductionAtoms;
+        std::vector<unsigned char>      reductionAtomSeen;
     };
 
     struct PairLoopOmpScratch
     {
         int                                         numThreads = 0;
         std::vector<PairLoopOmpContributionScratch> contributions;
+    };
+
+    struct PairLoopReductionStats
+    {
+        int64_t touchedAtomSlots    = 0;
+        int64_t reducedAtomSlots    = 0;
+        bool    usedSparseReduction = false;
     };
 
     static std::mutex        pairLoopOmpScratchMutex;
@@ -4246,6 +4276,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
     const bool pairLoopOmpRequested    = exactRespaPairLoopOmpRequested();
     const bool pairLoopVectorRequested = exactRespaPairLoopVectorRequested();
+    const bool pairLoopSparseReductionRequested = exactRespaPairLoopSparseReductionRequested();
     const int  pairLoopOmpThreads      = gmx_omp_nthreads_get(ModuleMultiThread::Default);
     const int  pairLoopWorkerThreads   = pairLoopOmpRequested ? pairLoopOmpThreads : 1;
     const bool pairLoopFastPathEligible =
@@ -4257,11 +4288,15 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
     const int   pairLoopForceDumpMax     = exactRespaPairLoopForceDumpMax();
     const bool  pairLoopForceDumpEnabled =
             !traceOnlyDiagnostics && pairLoopForceDumpDirPath != nullptr && pairLoopForceDumpMax > 0;
+    const char* pairLoopTimingDirPath = exactRespaPairLoopTimingDirPath();
+    const bool  pairLoopTimingEnabled =
+            !traceOnlyDiagnostics && pairLoopTimingDirPath != nullptr;
 
     std::unique_lock<std::mutex> pairLoopOmpScratchLock;
     PairLoopOmpScratch*         pairLoopOmpScratchPtr = nullptr;
     if (pairLoopFastPathEligible)
     {
+        const RVec zero = { 0.0_real, 0.0_real, 0.0_real };
         pairLoopOmpScratchLock = std::unique_lock<std::mutex>(pairLoopOmpScratchMutex);
         pairLoopOmpScratch.numThreads = pairLoopWorkerThreads;
         pairLoopOmpScratch.contributions.resize(activeContributions.size());
@@ -4271,25 +4306,75 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             scratchContribution.forceSize = static_cast<int>(activeContributions[contributionIndex].force.size());
             scratchContribution.forceByThread.resize(pairLoopWorkerThreads);
             scratchContribution.shiftByThread.resize(pairLoopWorkerThreads);
+            if (pairLoopSparseReductionRequested)
+            {
+                scratchContribution.touchedAtomsByThread.resize(pairLoopWorkerThreads);
+                scratchContribution.touchedAtomSeenByThread.resize(pairLoopWorkerThreads);
+                scratchContribution.reductionAtomSeen.resize(scratchContribution.forceSize, 0);
+            }
             for (int thread = 0; thread < pairLoopWorkerThreads; ++thread)
             {
-                scratchContribution.forceByThread[thread].resize(scratchContribution.forceSize);
-                scratchContribution.shiftByThread[thread].resize(c_numShiftVectors);
+                if (scratchContribution.forceByThread[thread].size()
+                    != static_cast<size_t>(scratchContribution.forceSize))
+                {
+                    scratchContribution.forceByThread[thread].resize(scratchContribution.forceSize);
+                    std::fill(scratchContribution.forceByThread[thread].begin(),
+                              scratchContribution.forceByThread[thread].end(),
+                              zero);
+                }
+                if (scratchContribution.shiftByThread[thread].size() != c_numShiftVectors)
+                {
+                    scratchContribution.shiftByThread[thread].resize(c_numShiftVectors);
+                    std::fill(scratchContribution.shiftByThread[thread].begin(),
+                              scratchContribution.shiftByThread[thread].end(),
+                              zero);
+                }
+                if (pairLoopSparseReductionRequested)
+                {
+                    if (scratchContribution.touchedAtomSeenByThread[thread].size()
+                        != static_cast<size_t>(scratchContribution.forceSize))
+                    {
+                        scratchContribution.touchedAtomSeenByThread[thread].assign(
+                                scratchContribution.forceSize, 0);
+                        scratchContribution.touchedAtomsByThread[thread].clear();
+                    }
+                }
             }
         }
         pairLoopOmpScratchPtr = &pairLoopOmpScratch;
     }
 
-    const auto clearPairLoopOmpScratch = [&]()
+    const auto clearPairLoopOmpScratch = [&](const bool useSparseTrackingForPairlist)
     {
         const RVec zero = { 0.0_real, 0.0_real, 0.0_real };
         for (auto& contributionScratch : pairLoopOmpScratchPtr->contributions)
         {
             for (int thread = 0; thread < pairLoopOmpScratchPtr->numThreads; ++thread)
             {
-                std::fill(contributionScratch.forceByThread[thread].begin(),
-                          contributionScratch.forceByThread[thread].end(),
-                          zero);
+                if (useSparseTrackingForPairlist)
+                {
+                    for (const int atom : contributionScratch.touchedAtomsByThread[thread])
+                    {
+                        contributionScratch.forceByThread[thread][atom] = zero;
+                        contributionScratch.touchedAtomSeenByThread[thread][atom] = 0;
+                    }
+                    contributionScratch.touchedAtomsByThread[thread].clear();
+                }
+                else
+                {
+                    std::fill(contributionScratch.forceByThread[thread].begin(),
+                              contributionScratch.forceByThread[thread].end(),
+                              zero);
+                    if (pairLoopSparseReductionRequested
+                        && thread < gmx::ssize(contributionScratch.touchedAtomsByThread))
+                    {
+                        for (const int atom : contributionScratch.touchedAtomsByThread[thread])
+                        {
+                            contributionScratch.touchedAtomSeenByThread[thread][atom] = 0;
+                        }
+                        contributionScratch.touchedAtomsByThread[thread].clear();
+                    }
+                }
                 std::fill(contributionScratch.shiftByThread[thread].begin(),
                           contributionScratch.shiftByThread[thread].end(),
                           zero);
@@ -4297,23 +4382,82 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
         }
     };
 
-    const auto reducePairLoopOmpScratch = [&]()
+    const auto reducePairLoopOmpScratch =
+            [&](const bool useSparseTrackingForPairlist) -> PairLoopReductionStats
     {
+        PairLoopReductionStats stats;
         for (int contributionIndex = 0; contributionIndex < gmx::ssize(activeContributions); ++contributionIndex)
         {
             auto&       accumulator         = activeContributions[contributionIndex];
-            const auto& contributionScratch = pairLoopOmpScratchPtr->contributions[contributionIndex];
+            auto&       contributionScratch = pairLoopOmpScratchPtr->contributions[contributionIndex];
             const int   forceSize           = contributionScratch.forceSize;
+            bool        useSparseReductionForContribution = false;
 
-#pragma omp parallel for num_threads(pairLoopWorkerThreads) schedule(static)
-            for (int atom = 0; atom < forceSize; ++atom)
+            if (useSparseTrackingForPairlist)
             {
-                RVec force = { 0.0_real, 0.0_real, 0.0_real };
+                contributionScratch.reductionAtoms.clear();
+                if (contributionScratch.reductionAtomSeen.size() != static_cast<size_t>(forceSize))
+                {
+                    contributionScratch.reductionAtomSeen.assign(forceSize, 0);
+                }
                 for (int thread = 0; thread < pairLoopOmpScratchPtr->numThreads; ++thread)
                 {
-                    rvec_inc(force, contributionScratch.forceByThread[thread][atom]);
+                    for (const int atom : contributionScratch.touchedAtomsByThread[thread])
+                    {
+                        if (contributionScratch.reductionAtomSeen[atom] == 0)
+                        {
+                            contributionScratch.reductionAtomSeen[atom] = 1;
+                            contributionScratch.reductionAtoms.push_back(atom);
+                        }
+                    }
                 }
-                rvec_inc(accumulator.force[atom], force);
+                std::sort(contributionScratch.reductionAtoms.begin(),
+                          contributionScratch.reductionAtoms.end());
+                stats.touchedAtomSlots += contributionScratch.reductionAtoms.size();
+                useSparseReductionForContribution =
+                        contributionScratch.reductionAtoms.size() * 4 < static_cast<size_t>(forceSize) * 3;
+                stats.usedSparseReduction = stats.usedSparseReduction || useSparseReductionForContribution;
+                stats.reducedAtomSlots += useSparseReductionForContribution
+                                                  ? contributionScratch.reductionAtoms.size()
+                                                  : static_cast<size_t>(forceSize);
+            }
+            else
+            {
+                stats.reducedAtomSlots += forceSize;
+            }
+
+            if (useSparseReductionForContribution)
+            {
+                for (const int atom : contributionScratch.reductionAtoms)
+                {
+                    RVec force = { 0.0_real, 0.0_real, 0.0_real };
+                    for (int thread = 0; thread < pairLoopOmpScratchPtr->numThreads; ++thread)
+                    {
+                        rvec_inc(force, contributionScratch.forceByThread[thread][atom]);
+                    }
+                    rvec_inc(accumulator.force[atom], force);
+                }
+            }
+            else
+            {
+#pragma omp parallel for num_threads(pairLoopWorkerThreads) schedule(static)
+                for (int atom = 0; atom < forceSize; ++atom)
+                {
+                    RVec force = { 0.0_real, 0.0_real, 0.0_real };
+                    for (int thread = 0; thread < pairLoopOmpScratchPtr->numThreads; ++thread)
+                    {
+                        rvec_inc(force, contributionScratch.forceByThread[thread][atom]);
+                    }
+                    rvec_inc(accumulator.force[atom], force);
+                }
+            }
+
+            if (useSparseTrackingForPairlist)
+            {
+                for (const int atom : contributionScratch.reductionAtoms)
+                {
+                    contributionScratch.reductionAtomSeen[atom] = 0;
+                }
             }
 
             if (!accumulator.shift.empty())
@@ -4329,9 +4473,11 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                 }
             }
         }
+        return stats;
     };
 
-    const auto processPairlistOmp = [&](const auto& pairEntries,
+    const auto processPairlistOmp = [&](const char* pairListLabel,
+                                        const auto& pairEntries,
                                         const real factorCoulomb,
                                         const real factorLj,
                                         const auto& includePair) -> bool
@@ -4342,8 +4488,32 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             return false;
         }
 
-        clearPairLoopOmpScratch();
         const int numPairs = gmx::ssize(pairEntries);
+        int       maxForceSize = 0;
+        for (const auto& contributionScratch : pairLoopOmpScratchPtr->contributions)
+        {
+            maxForceSize = std::max(maxForceSize, contributionScratch.forceSize);
+        }
+        const bool useSparseTrackingForPairlist =
+                pairLoopSparseReductionRequested && numPairs < maxForceSize;
+
+        using PairLoopClock = std::chrono::steady_clock;
+        PairLoopClock::time_point clearStart;
+        PairLoopClock::time_point clearEnd;
+        PairLoopClock::time_point pairStart;
+        PairLoopClock::time_point pairEnd;
+        PairLoopClock::time_point reduceStart;
+        PairLoopClock::time_point reduceEnd;
+        if (pairLoopTimingEnabled)
+        {
+            clearStart = PairLoopClock::now();
+        }
+        clearPairLoopOmpScratch(useSparseTrackingForPairlist);
+        if (pairLoopTimingEnabled)
+        {
+            clearEnd  = PairLoopClock::now();
+            pairStart = clearEnd;
+        }
         const auto accumulatePairScalars = [&](const int  thread,
                                                const int  ai,
                                                const int  aj,
@@ -4383,6 +4553,21 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                 auto& contributionScratch = pairLoopOmpScratchPtr->contributions[contributionIndex];
                 rvec_inc(contributionScratch.forceByThread[thread][ai], force);
                 rvec_dec(contributionScratch.forceByThread[thread][aj], force);
+                if (useSparseTrackingForPairlist)
+                {
+                    auto& touchedAtoms = contributionScratch.touchedAtomsByThread[thread];
+                    auto& touchedSeen  = contributionScratch.touchedAtomSeenByThread[thread];
+                    if (touchedSeen[ai] == 0)
+                    {
+                        touchedSeen[ai] = 1;
+                        touchedAtoms.push_back(ai);
+                    }
+                    if (touchedSeen[aj] == 0)
+                    {
+                        touchedSeen[aj] = 1;
+                        touchedAtoms.push_back(aj);
+                    }
+                }
 
                 if (!accumulator.shift.empty() && shiftIndex != c_centralShiftIndex)
                 {
@@ -4669,8 +4854,47 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                 }
             }
         }
+        if (pairLoopTimingEnabled)
+        {
+            pairEnd     = PairLoopClock::now();
+            reduceStart = pairEnd;
+        }
 
-        reducePairLoopOmpScratch();
+        const PairLoopReductionStats reductionStats =
+                reducePairLoopOmpScratch(useSparseTrackingForPairlist);
+        if (pairLoopTimingEnabled)
+        {
+            reduceEnd = PairLoopClock::now();
+            const auto durationUs = [](const PairLoopClock::time_point& begin,
+                                       const PairLoopClock::time_point& end) -> int64_t
+            {
+                return std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+            };
+            appendRespaTraceTextLine(
+                    pairLoopTimingDirPath,
+                    "pairloop_timing.tsv",
+                    "schema=exact_respa_pairloop_timing_v1 label="
+                            + std::string(exactRespaPairLoopTimingLabel()) + " step="
+                            + std::to_string(step) + " pair_list=" + pairListLabel
+                            + " num_pairs=" + std::to_string(numPairs) + " worker_threads="
+                            + std::to_string(pairLoopWorkerThreads) + " omp_requested="
+                            + std::string(pairLoopOmpRequested ? "true" : "false")
+                            + " vector_requested="
+                            + std::string(pairLoopVectorRequested ? "true" : "false")
+                            + " sparse_requested="
+                            + std::string(pairLoopSparseReductionRequested ? "true" : "false")
+                            + " sparse_tracking="
+                            + std::string(useSparseTrackingForPairlist ? "true" : "false")
+                            + " sparse_used="
+                            + std::string(reductionStats.usedSparseReduction ? "true" : "false")
+                            + " touched_atom_slots="
+                            + std::to_string(reductionStats.touchedAtomSlots)
+                            + " reduced_atom_slots="
+                            + std::to_string(reductionStats.reducedAtomSlots)
+                            + " clear_us=" + std::to_string(durationUs(clearStart, clearEnd))
+                            + " pair_us=" + std::to_string(durationUs(pairStart, pairEnd))
+                            + " reduce_us=" + std::to_string(durationUs(reduceStart, reduceEnd)));
+        }
         return true;
     };
 
@@ -5719,7 +5943,8 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             (ljSrTraceDirPath != nullptr && *ljSrTraceDirPath != '\0') ? sumEnergyTermsOnce(vdwEnergyTerms) : 0.0;
     capturePairLoopForceDumpBefore();
     const bool pairLoopFastPathUsedPairs =
-            processPairlistOmp(plainPairlist.pairs,
+            processPairlistOmp("pairs",
+                               plainPairlist.pairs,
                                1.0_real,
                                1.0_real,
                                [](const int, const int) { return true; });
@@ -5746,7 +5971,8 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
     /* PME real-space bookkeeping for exact PME parity requires all excluded pairs,
      * not only the listed 1-4 subset. */
     const bool pairLoopFastPathUsedExcludedPairs =
-            processPairlistOmp(plainPairlist.excludedPairs,
+            processPairlistOmp("excludedPairs",
+                               plainPairlist.excludedPairs,
                                0.0_real,
                                0.0_real,
                                [](const int, const int) { return true; });

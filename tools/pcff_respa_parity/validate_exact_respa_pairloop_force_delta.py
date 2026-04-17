@@ -15,6 +15,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PAIRLOOP_OMP_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP"
 PAIRLOOP_VECTOR_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_VECTOR"
+PAIRLOOP_SPARSE_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_SPARSE_REDUCTION"
+UPDATE_OMP_ENV = "GMX_PCFF_EXACT_RESPA_UPDATE_OMP"
 FORCE_DUMP_DIR_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_DIR"
 FORCE_DUMP_LABEL_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_LABEL"
 FORCE_DUMP_MAX_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_MAX"
@@ -37,7 +39,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--modes",
         nargs="+",
-        choices=("pairloop_omp", "pairloop_vector", "combined"),
+        choices=(
+            "pairloop_omp",
+            "pairloop_vector",
+            "combined",
+            "pairloop_sparse",
+            "combined_sparse",
+            "pairloop_omp_update",
+            "pairloop_sparse_update",
+            "combined_update",
+        ),
         default=["pairloop_omp", "pairloop_vector", "combined"],
     )
     parser.add_argument("--fixture-id", default="unspecified")
@@ -81,12 +92,32 @@ def cpu_model() -> str:
 
 def mode_env(mode: str) -> dict[str, str]:
     env = os.environ.copy()
-    for name in (PAIRLOOP_OMP_ENV, PAIRLOOP_VECTOR_ENV, FORCE_DUMP_DIR_ENV, FORCE_DUMP_LABEL_ENV, FORCE_DUMP_MAX_ENV):
+    for name in (
+        PAIRLOOP_OMP_ENV,
+        PAIRLOOP_VECTOR_ENV,
+        PAIRLOOP_SPARSE_ENV,
+        UPDATE_OMP_ENV,
+        FORCE_DUMP_DIR_ENV,
+        FORCE_DUMP_LABEL_ENV,
+        FORCE_DUMP_MAX_ENV,
+    ):
         env.pop(name, None)
-    if mode in ("pairloop_omp", "combined"):
+    if mode in (
+        "pairloop_omp",
+        "combined",
+        "pairloop_sparse",
+        "combined_sparse",
+        "pairloop_omp_update",
+        "pairloop_sparse_update",
+        "combined_update",
+    ):
         env[PAIRLOOP_OMP_ENV] = "1"
-    if mode in ("pairloop_vector", "combined"):
+    if mode in ("pairloop_vector", "combined", "combined_sparse", "combined_update"):
         env[PAIRLOOP_VECTOR_ENV] = "1"
+    if mode in ("pairloop_sparse", "combined_sparse", "pairloop_sparse_update"):
+        env[PAIRLOOP_SPARSE_ENV] = "1"
+    if mode in ("pairloop_omp_update", "pairloop_sparse_update", "combined_update"):
+        env[UPDATE_OMP_ENV] = "1"
     return env
 
 
@@ -138,6 +169,8 @@ def run_mode(args: argparse.Namespace, mode: str) -> dict:
         "command": cmd,
         "pairloop_omp_env": env.get(PAIRLOOP_OMP_ENV, "0"),
         "pairloop_vector_env": env.get(PAIRLOOP_VECTOR_ENV, "0"),
+        "pairloop_sparse_reduction_env": env.get(PAIRLOOP_SPARSE_ENV, "0"),
+        "exact_respa_update_omp_env": env.get(UPDATE_OMP_ENV, "0"),
     }
 
 

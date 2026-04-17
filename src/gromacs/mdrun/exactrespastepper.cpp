@@ -13,6 +13,7 @@
 
 #include <cstdlib>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -28,6 +29,7 @@
 #include "gromacs/gpu_utils/gpueventsynchronizer.h"
 #include "gromacs/mdlib/force.h"
 #include "gromacs/mdlib/force_flags.h"
+#include "gromacs/mdlib/gmx_omp_nthreads.h"
 #include "gromacs/mdlib/md_support.h"
 #include "gromacs/mdlib/update_constrain_gpu.h"
 #include "gromacs/mdlib/update.h"
@@ -62,6 +64,12 @@ thread_local std::unique_ptr<std::ofstream> g_exactRespaRuntimeEventTraceStream;
 thread_local std::string                    g_exactRespaRuntimeEventTracePath;
 thread_local bool                           g_exactRespaRuntimeEventTraceHasContent = false;
 std::mutex                                  g_exactRespaStateTraceMutex;
+}
+
+static bool exactRespaUpdateOmpRequested()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_UPDATE_OMP");
+    return env != nullptr && std::strcmp(env, "0") != 0;
 }
 
 void setExactRespaRuntimeEventSinkForTesting(ExactRespaRuntimeEventSink* sink)
@@ -436,6 +444,9 @@ void applyRespaVelocityHalfKick(const int                             homenr,
                                 ArrayRef<RVec>                       velocity)
 {
     const real halfDt = 0.5 * dt;
+    const int  numThreads =
+            exactRespaUpdateOmpRequested() ? gmx_omp_nthreads_get(ModuleMultiThread::Update) : 1;
+#pragma omp parallel for num_threads(numThreads) schedule(static)
     for (int atom = 0; atom < homenr; atom++)
     {
         if (ptype[atom] == ParticleType::Shell)
@@ -460,6 +471,9 @@ void driftRespaPositions(const int                             homenr,
                          ArrayRef<RVec>                       position,
                          ArrayRef<const RVec>                 velocity)
 {
+    const int numThreads =
+            exactRespaUpdateOmpRequested() ? gmx_omp_nthreads_get(ModuleMultiThread::Update) : 1;
+#pragma omp parallel for num_threads(numThreads) schedule(static)
     for (int atom = 0; atom < homenr; atom++)
     {
         if (ptype[atom] == ParticleType::Shell)

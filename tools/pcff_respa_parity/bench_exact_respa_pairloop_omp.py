@@ -15,6 +15,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PAIRLOOP_OMP_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP"
 PAIRLOOP_VECTOR_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_VECTOR"
+PAIRLOOP_SPARSE_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_SPARSE_REDUCTION"
+UPDATE_OMP_ENV = "GMX_PCFF_EXACT_RESPA_UPDATE_OMP"
 
 WALLCYCLE_LABELS = {
     "Neighbor search": "neighbor_search_seconds",
@@ -39,7 +41,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--modes",
         nargs="+",
-        choices=("baseline", "pairloop_omp", "pairloop_vector", "combined"),
+        choices=(
+            "baseline",
+            "update_omp",
+            "pairloop_omp",
+            "pairloop_vector",
+            "combined",
+            "pairloop_sparse",
+            "combined_sparse",
+            "pairloop_omp_update",
+            "pairloop_sparse_update",
+            "combined_update",
+        ),
         default=["baseline"],
     )
     parser.add_argument("--fixture-id", default="unspecified")
@@ -102,10 +115,24 @@ def mode_env(mode: str) -> dict[str, str]:
     env = os.environ.copy()
     env.pop(PAIRLOOP_OMP_ENV, None)
     env.pop(PAIRLOOP_VECTOR_ENV, None)
-    if mode in ("pairloop_omp", "combined"):
+    env.pop(PAIRLOOP_SPARSE_ENV, None)
+    env.pop(UPDATE_OMP_ENV, None)
+    if mode in (
+        "pairloop_omp",
+        "combined",
+        "pairloop_sparse",
+        "combined_sparse",
+        "pairloop_omp_update",
+        "pairloop_sparse_update",
+        "combined_update",
+    ):
         env[PAIRLOOP_OMP_ENV] = "1"
-    if mode in ("pairloop_vector", "combined"):
+    if mode in ("pairloop_vector", "combined", "combined_sparse", "combined_update"):
         env[PAIRLOOP_VECTOR_ENV] = "1"
+    if mode in ("pairloop_sparse", "combined_sparse", "pairloop_sparse_update"):
+        env[PAIRLOOP_SPARSE_ENV] = "1"
+    if mode in ("update_omp", "pairloop_omp_update", "pairloop_sparse_update", "combined_update"):
+        env[UPDATE_OMP_ENV] = "1"
     return env
 
 
@@ -166,6 +193,8 @@ def benchmark_one(args: argparse.Namespace, mode: str, ntomp: int, repeat_index:
         "stdout_path": str(stdout_path),
         "pairloop_omp_env": env.get(PAIRLOOP_OMP_ENV, "0"),
         "pairloop_vector_env": env.get(PAIRLOOP_VECTOR_ENV, "0"),
+        "pairloop_sparse_reduction_env": env.get(PAIRLOOP_SPARSE_ENV, "0"),
+        "exact_respa_update_omp_env": env.get(UPDATE_OMP_ENV, "0"),
         "command": cmd,
     }
     for label, key in WALLCYCLE_LABELS.items():
