@@ -180,3 +180,44 @@ Before deeper SIMD/OpenMP surgery:
 1. Add isolated nonbonded-only timing or PMU-style profiling where practical.
 2. Decompose pair-loop, force-buffer reduction, accumulation, and update overhead.
 3. Only then pursue tighter dispatch, branch reduction, fixed-shape kernel variants, or more aggressive vectorization.
+
+## P11 Sparse Reduction And Update OMP Probe
+
+Two additional default-off knobs were added after the first two-host OpenMP
+evidence:
+
+- `GMX_PCFF_EXACT_RESPA_PAIRLOOP_SPARSE_REDUCTION=1` enables touched-atom
+  tracking for pair-loop reduction only when a pairlist is sparse enough to
+  justify the bookkeeping. Dense pairlists fall back to the existing full
+  reduction to avoid the measured slowdown from tracking nearly all atoms.
+- `GMX_PCFF_EXACT_RESPA_PAIRLOOP_TIMING_DIR=<dir>` writes per-call
+  clear/pair/reduce timing rows for the exact r-RESPA pair-loop fast path.
+- `GMX_PCFF_EXACT_RESPA_UPDATE_OMP=1` parallelizes the exact r-RESPA
+  velocity-half-kick and position-drift atom loops in
+  `src/gromacs/mdrun/exactrespastepper.cpp`.
+
+Current local Gate I evidence:
+
+- force-delta report:
+  `tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_update_sparse_force_delta_report.json`
+- `ntomp=6` performance report:
+  `tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_update_sparse_ntomp6_report.json`
+- `pairloop_omp_update` and `pairloop_sparse_update` both pass the same
+  bounded force-delta criterion as the earlier fast-path modes.
+- final `.gro` output is byte-identical across baseline,
+  `pairloop_omp_update`, and `pairloop_sparse_update` in the 20-step harness.
+- `ntomp=6`, 2000-step local performance:
+  baseline `3.820 ns/day`, `pairloop_omp` `6.568 ns/day`,
+  `pairloop_omp_update` `6.614 ns/day`, and `pairloop_sparse_update`
+  `6.589 ns/day`.
+
+Claim boundary:
+
+- Update OMP is a safe experimental knob for this audited exact-r-RESPA VV path,
+  but the current Gate I evidence shows only marginal whole-run improvement over
+  `pairloop_omp`.
+- Sparse reduction is not a useful Gate I density-run optimization because the
+  pairlist is dense; it is retained only as a guarded path for genuinely sparse
+  pairlists.
+- Neither knob supports stronger production, transport, density/volume, or
+  broad CPU scaling claims.

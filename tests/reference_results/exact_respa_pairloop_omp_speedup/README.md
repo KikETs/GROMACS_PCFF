@@ -71,3 +71,20 @@ Remaining validation limit:
   pair-loop calls still deliberately use the serial path.
 - Two measured hosts still do not justify broad CPU scaling guidance or
   production/transport readiness.
+
+Experimental sparse-reduction / update-OMP probe:
+
+- Machine-readable force-delta report:
+  `local_9900x_gate_i_update_sparse_force_delta_report.json`.
+- Machine-readable `ntomp=6` performance report:
+  `local_9900x_gate_i_update_sparse_ntomp6_report.json`.
+- `GMX_PCFF_EXACT_RESPA_UPDATE_OMP=1` parallelizes exact-r-RESPA VV half-kick
+  and drift atom loops.
+- `GMX_PCFF_EXACT_RESPA_PAIRLOOP_SPARSE_REDUCTION=1` enables guarded touched-atom
+  pair-loop reduction, but dense pairlists fall back to the full reduction.
+- Current local Gate I `ntomp=6` result: `pairloop_omp` `6.568 ns/day`,
+  `pairloop_omp_update` `6.614 ns/day`, and `pairloop_sparse_update`
+  `6.589 ns/day`.
+- Verdict: Update OMP is exactness-clean in the short harness but only marginal
+  for wall time here; sparse reduction is not useful for this dense Gate I
+  pairlist.
