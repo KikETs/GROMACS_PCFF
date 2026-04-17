@@ -139,6 +139,7 @@
     /* frcoul = qi*qj*(1/r - fsub)*r */
     std::array<SimdReal, nR> frCoulombV;
     std::array<SimdReal, nR> vCoulombV;
+    std::array<SimdReal, nR> rInvExclV;
 
     if constexpr (c_calculateCoulombInteractions)
     {
@@ -149,7 +150,6 @@
          */
 
         /* Only add 1/r for non-excluded atom pairs */
-        std::array<SimdReal, nR> rInvExclV;
         if constexpr (c_haveExclusionForces)
         {
             rInvExclV = genArr<nR>([&](int i) { return selectByMask(rInvV[i], interactV[i]); });
@@ -322,24 +322,132 @@
     energyAccumulator.template addEnergies<c_calculateCoulombInteractions ? nR : 0, c_nRLJ, kernelLayout, c_iClusterSize>(
             cj, vCoulombV, vLJV);
 
-    if constexpr (c_iLJInteractions != ILJInteractions::None)
+    if (exactRespaCpuPairSplitLaunchActive(ic))
     {
-        if constexpr (c_calculateCoulombInteractions)
+        const SimdReal one_S(1.0_real);
+        const SimdReal two_S(2.0_real);
+        const SimdReal three_S(3.0_real);
+        const auto exactRespaSwitchInV = [&](const SimdReal& r, const real off, const real on)
         {
-            fScalarV = genArr<nR>(
-                    [&](int i) {
-                        return rInvSquaredV[i] * (i < c_nRLJ ? frCoulombV[i] + frLJV[i] : frCoulombV[i]);
-                    });
-        }
-        else
-        {
-            // Note that here c_nRLJ=nR (otherwise this wouldn't compile)
-            fScalarV = genArr<c_nRLJ>([&](int i) { return rInvSquaredV[i] * frLJV[i]; });
-        }
+            const SimdReal off_S(off);
+            const SimdReal on_S(on);
+
+            if (on <= off)
+            {
+                return blend(zero_S, one_S, on_S <= r);
+            }
+
+            const SimdReal switchFraction = (r - off_S) / (on_S - off_S);
+            SimdReal       switched =
+                    switchFraction * switchFraction * (three_S - two_S * switchFraction);
+            switched                = blend(switched, zero_S, r <= off_S);
+            switched                = blend(switched, one_S, on_S <= r);
+            return switched;
+        };
+
+        const auto directWeightV = genArr<nR>(
+                [&](int i)
+                {
+                    const SimdReal rV = rSquaredV[i] * rInvV[i];
+                    switch (ic.exactRespaCpuPairSplit.contribution)
+                    {
+                        case MtsNonbondedRespaContribution::Inner:
+                            if (ic.exactRespaCpuPairSplit.hasMiddle)
+                            {
+                                return one_S
+                                       - exactRespaSwitchInV(rV,
+                                                             ic.exactRespaCpuPairSplit.innerOff,
+                                                             ic.exactRespaCpuPairSplit.innerOn);
+                            }
+                            return one_S
+                                   - exactRespaSwitchInV(rV,
+                                                         ic.exactRespaCpuPairSplit.outerOn,
+                                                         ic.exactRespaCpuPairSplit.outerOff);
+                        case MtsNonbondedRespaContribution::Middle:
+                        {
+                            if (!ic.exactRespaCpuPairSplit.hasMiddle)
+                            {
+                                return zero_S;
+                            }
+                            const SimdReal switchIntoMiddle = exactRespaSwitchInV(
+                                    rV, ic.exactRespaCpuPairSplit.innerOff, ic.exactRespaCpuPairSplit.innerOn);
+                            const SimdReal switchIntoOuter = exactRespaSwitchInV(
+                                    rV, ic.exactRespaCpuPairSplit.outerOn, ic.exactRespaCpuPairSplit.outerOff);
+                            return switchIntoMiddle * (one_S - switchIntoOuter);
+                        }
+                        case MtsNonbondedRespaContribution::Outer:
+                            return exactRespaSwitchInV(
+                                    rV, ic.exactRespaCpuPairSplit.outerOn, ic.exactRespaCpuPairSplit.outerOff);
+                        case MtsNonbondedRespaContribution::Full: return one_S;
+                        case MtsNonbondedRespaContribution::Count:
+                            GMX_RELEASE_ASSERT(false, "Invalid exact r-RESPA CPU contribution");
+                            return zero_S;
+                    }
+
+                    GMX_RELEASE_ASSERT(false, "Unhandled exact r-RESPA CPU contribution");
+                    return zero_S;
+                });
+
+        const auto directForceScalarV = genArr<nR>(
+                [&](int i)
+                {
+                    SimdReal directScalar = zero_S;
+                    if constexpr (c_iLJInteractions != ILJInteractions::None)
+                    {
+                        if (i < c_nRLJ)
+                        {
+                            directScalar = directScalar + rInvSquaredV[i] * frLJV[i];
+                        }
+                    }
+                    if constexpr (c_calculateCoulombInteractions)
+                    {
+                        directScalar = directScalar + rInvSquaredV[i] * qqV[i] * rInvExclV[i];
+                    }
+                    return directScalar;
+                });
+
+        const auto correctionForceScalarV = genArr<nR>(
+                [&](int i)
+                {
+                    if constexpr (c_calculateCoulombInteractions)
+                    {
+                        return rInvSquaredV[i] * frCoulombV[i] - rInvSquaredV[i] * qqV[i] * rInvExclV[i];
+                    }
+                    return zero_S;
+                });
+
+        fScalarV = genArr<nR>(
+                [&](int i)
+                {
+                    SimdReal fScalar = directWeightV[i] * directForceScalarV[i];
+                    if (exactRespaCpuPairSplitAddsCorrection(ic))
+                    {
+                        fScalar = fScalar + correctionForceScalarV[i];
+                    }
+                    return fScalar;
+                });
     }
     else
     {
-        fScalarV = genArr<nR>([&](int i) { return rInvSquaredV[i] * frCoulombV[i]; });
+        if constexpr (c_iLJInteractions != ILJInteractions::None)
+        {
+            if constexpr (c_calculateCoulombInteractions)
+            {
+                fScalarV = genArr<nR>(
+                        [&](int i) {
+                            return rInvSquaredV[i] * (i < c_nRLJ ? frCoulombV[i] + frLJV[i] : frCoulombV[i]);
+                        });
+            }
+            else
+            {
+                // Note that here c_nRLJ=nR (otherwise this wouldn't compile)
+                fScalarV = genArr<c_nRLJ>([&](int i) { return rInvSquaredV[i] * frLJV[i]; });
+            }
+        }
+        else
+        {
+            fScalarV = genArr<nR>([&](int i) { return rInvSquaredV[i] * frCoulombV[i]; });
+        }
     }
 
     /* Calculate temporary vectorial force */

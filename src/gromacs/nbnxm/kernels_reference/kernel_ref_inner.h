@@ -620,14 +620,31 @@ void noteM2pPlain4x4Step2PairTotal(int         ai,
 #endif
 
 #ifdef CALC_COULOMB
+            const real rForRespa = rsq * rinv;
             /* 2 flops for scalar LJ+Coulomb force if !HALF_LJ || (i < UNROLLI / 2) */
 #    ifdef HALF_LJ
-            const real fscal = (i < UNROLLI / 2) ? frLJ * rinvsq + fcoul : fcoul;
+            const real ljScalarUnsplit = (i < UNROLLI / 2) ? frLJ * rinvsq : 0;
 #    else
-            const real fscal = frLJ * rinvsq + fcoul;
+            const real ljScalarUnsplit = frLJ * rinvsq;
 #    endif
+            const real totalCoulombScalar = fcoul;
+            const real directCoulombScalar = interact * qq * rinvsq * rinv;
+            const real correctionScalar = totalCoulombScalar - directCoulombScalar;
+            real       fscal = ljScalarUnsplit + totalCoulombScalar;
+            if (exactRespaCpuPairSplitLaunchActive(ic))
+            {
+                const real directWeight = exactRespaCpuPairSplitWeight(ic, rForRespa);
+                fscal = directWeight * (ljScalarUnsplit + directCoulombScalar)
+                        + (exactRespaCpuPairSplitAddsCorrection(ic) ? correctionScalar : 0.0_real);
+            }
 #else
-            const real fscal = frLJ * rinvsq;
+            const real rForRespa = rsq * rinv;
+            const real ljScalarUnsplit = frLJ * rinvsq;
+            real       fscal           = ljScalarUnsplit;
+            if (exactRespaCpuPairSplitLaunchActive(ic))
+            {
+                fscal = exactRespaCpuPairSplitWeight(ic, rForRespa) * ljScalarUnsplit;
+            }
 #endif
             const real fx = fscal * dx;
             const real fy = fscal * dy;
@@ -635,19 +652,18 @@ void noteM2pPlain4x4Step2PairTotal(int         ai,
 
             if (m2pPlain4x4RealspaceForceSubcomponentTraceEnabled())
             {
-#ifdef HALF_LJ
-                const real ljScalar = (i < UNROLLI / 2) ? frLJ * rinvsq : 0;
-#else
-                const real ljScalar = frLJ * rinvsq;
-#endif
+                real ljScalar = ljScalarUnsplit;
 #ifdef CALC_COULOMB
-#    ifdef CALC_COUL_TAB
-                const real coulombSrScalar          = interact * rinvsq * qq * rinv;
-                const real exclusionCorrectionScalar = -interact * fexcl * qq * rinv;
-#    else
-                const real coulombSrScalar          = fcoul;
-                const real exclusionCorrectionScalar = 0;
-#    endif
+                real coulombSrScalar          = directCoulombScalar;
+                real exclusionCorrectionScalar = correctionScalar;
+                if (exactRespaCpuPairSplitLaunchActive(ic))
+                {
+                    const real directWeight = exactRespaCpuPairSplitWeight(ic, rForRespa);
+                    ljScalar *= directWeight;
+                    coulombSrScalar *= directWeight;
+                    exclusionCorrectionScalar =
+                            exactRespaCpuPairSplitAddsCorrection(ic) ? exclusionCorrectionScalar : 0.0_real;
+                }
 #else
                 const real coulombSrScalar          = 0;
                 const real exclusionCorrectionScalar = 0;
@@ -677,8 +693,15 @@ void noteM2pPlain4x4Step2PairTotal(int         ai,
 #endif
 #ifdef CALC_COULOMB
 #    ifdef CALC_COUL_TAB
-	                    const real plainBareCoulombScalar = interact * qq * rinv;
-	                    const real plainCorrectionScalar  = (rinv != 0.0) ? (-interact * qq * fexcl / rinv) : 0.0;
+	                    real plainBareCoulombScalar = directCoulombScalar / rinvsq;
+	                    real plainCorrectionScalar  = (rinv != 0.0) ? (correctionScalar / rinvsq) : 0.0;
+	                    if (exactRespaCpuPairSplitLaunchActive(ic))
+	                    {
+	                        const real directWeight = exactRespaCpuPairSplitWeight(ic, rForRespa);
+	                        plainBareCoulombScalar *= directWeight;
+	                        plainCorrectionScalar =
+	                                exactRespaCpuPairSplitAddsCorrection(ic) ? plainCorrectionScalar : 0.0_real;
+	                    }
 	                    const real plainQq               = qq;
 	                    const int  plainTableIndex        = ri;
 	                    const real plainFrac              = frac;
@@ -740,8 +763,12 @@ void noteM2pPlain4x4Step2PairTotal(int         ai,
 	            {
 #ifdef CALC_COULOMB
 #    ifdef CALC_COUL_TAB
-	                const real correctionScalarUnmasked = -qq * fexcl * rinv;
-	                const real correctionScalarEffective = -interact * qq * fexcl * rinv;
+	                const real correctionScalarUnmasked = correctionScalar;
+	                real       correctionScalarEffective = correctionScalar;
+	                if (exactRespaCpuPairSplitLaunchActive(ic) && !exactRespaCpuPairSplitAddsCorrection(ic))
+	                {
+	                    correctionScalarEffective = 0.0_real;
+	                }
 	                const real correctionQq              = qq;
 	                const int  correctionTableIndex      = ri;
 	                const real correctionFrac            = frac;

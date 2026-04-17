@@ -41,6 +41,7 @@
 #include <vector>
 
 #include "gromacs/mdtypes/md_enums.h"
+#include "gromacs/mdtypes/mtstypes.h"
 #include "gromacs/utility/alignedallocator.h"
 #include "gromacs/utility/real.h"
 
@@ -215,6 +216,28 @@ struct interaction_const_t
 
     // Free-energy parameters, only present when free-energy calculations are requested
     std::unique_ptr<SoftCoreParameters> softCoreParameters;
+
+    //! Exact r-RESPA CPU pair-splitting metadata shared with NBNXM kernels.
+    struct ExactRespaCpuPairSplit
+    {
+        //! Whether the inputrec configured exact pair splitting for this run.
+        bool configured = false;
+        //! Whether a middle contribution exists between inner and outer.
+        bool hasMiddle = false;
+        //! Transition geometry for the split weights.
+        real innerOff = 0;
+        real innerOn  = 0;
+        real outerOn  = 0;
+        real outerOff = 0;
+        //! Per-launch activation state, written by CPU NBNXM dispatch before kernel entry.
+        mutable bool active = false;
+        //! Which contribution the current CPU NBNXM launch is computing.
+        mutable gmx::MtsNonbondedRespaContribution contribution =
+                gmx::MtsNonbondedRespaContribution::Full;
+    };
+
+    //! Exact r-RESPA CPU pair-splitting configuration and active launch state.
+    ExactRespaCpuPairSplit exactRespaCpuPairSplit;
 
     /**
      * Indicates whether the NBNxM module handles short-range coulomb interactions.

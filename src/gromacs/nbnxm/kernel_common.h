@@ -44,15 +44,16 @@
 #ifndef GMX_NBXNM_KERNEL_COMMON_H
 #define GMX_NBXNM_KERNEL_COMMON_H
 
+#include "gromacs/mdtypes/interaction_const.h"
 #include "gromacs/utility/vectypes.h"
 /* nbnxn_atomdata_t and nbnxn_pairlist_t could be forward declared, but that requires modifications in all SIMD kernel files */
 #include "gromacs/nbnxm/atomdata.h"
+#include "gromacs/utility/gmxassert.h"
 #include "gromacs/utility/real.h"
 
 #include "nbnxm_enums.h"
 #include "pairlist.h"
 
-struct interaction_const_t;
 enum class CoulombInteractionType : int;
 enum class VanDerWaalsType : int;
 enum class InteractionModifiers : int;
@@ -112,6 +113,93 @@ void clear_fshift(real* fshift);
 /*! \brief Reduces the collected energy terms over the pair-lists/threads.
  */
 void reduce_energies_over_lists(const nbnxn_atomdata_t* nbat, int nlist, real* Vvdw, real* Vc);
+
+/*! \brief Returns whether the current CPU NBNXM launch should apply exact r-RESPA split weights. */
+inline bool exactRespaCpuPairSplitLaunchActive(const interaction_const_t& ic)
+{
+    return ic.exactRespaCpuPairSplit.configured && ic.exactRespaCpuPairSplit.active;
+}
+
+/*! \brief Cubic switch that matches the scalar exact r-RESPA split path. */
+inline real exactRespaSwitchIn(const real r, const real off, const real on)
+{
+    if (on <= off)
+    {
+        return (r >= on ? 1.0_real : 0.0_real);
+    }
+    if (r <= off)
+    {
+        return 0.0_real;
+    }
+    if (r >= on)
+    {
+        return 1.0_real;
+    }
+
+    const real x = (r - off) / (on - off);
+    return x * x * (3.0_real - 2.0_real * x);
+}
+
+/*! \brief Returns the exact r-RESPA direct-force weight for distance \p r. */
+inline real exactRespaCpuPairSplitWeight(const interaction_const_t& ic, const real r)
+{
+    if (!exactRespaCpuPairSplitLaunchActive(ic))
+    {
+        return 1.0_real;
+    }
+
+    GMX_RELEASE_ASSERT(ic.exactRespaCpuPairSplit.configured,
+                       "Exact r-RESPA CPU split launch must have configured split metadata");
+
+    const auto contribution = ic.exactRespaCpuPairSplit.contribution;
+    switch (contribution)
+    {
+        case MtsNonbondedRespaContribution::Inner:
+        {
+            if (ic.exactRespaCpuPairSplit.hasMiddle)
+            {
+                return 1.0_real - exactRespaSwitchIn(
+                                          r,
+                                          ic.exactRespaCpuPairSplit.innerOff,
+                                          ic.exactRespaCpuPairSplit.innerOn);
+            }
+            return 1.0_real - exactRespaSwitchIn(
+                                      r,
+                                      ic.exactRespaCpuPairSplit.outerOn,
+                                      ic.exactRespaCpuPairSplit.outerOff);
+        }
+        case MtsNonbondedRespaContribution::Middle:
+        {
+            if (!ic.exactRespaCpuPairSplit.hasMiddle)
+            {
+                return 0.0_real;
+            }
+            const real switchIntoMiddle = exactRespaSwitchIn(
+                    r, ic.exactRespaCpuPairSplit.innerOff, ic.exactRespaCpuPairSplit.innerOn);
+            const real switchIntoOuter = exactRespaSwitchIn(
+                    r, ic.exactRespaCpuPairSplit.outerOn, ic.exactRespaCpuPairSplit.outerOff);
+            return switchIntoMiddle * (1.0_real - switchIntoOuter);
+        }
+        case MtsNonbondedRespaContribution::Outer:
+            return exactRespaSwitchIn(
+                    r, ic.exactRespaCpuPairSplit.outerOn, ic.exactRespaCpuPairSplit.outerOff);
+        case MtsNonbondedRespaContribution::Full: return 1.0_real;
+        case MtsNonbondedRespaContribution::Count:
+            GMX_RELEASE_ASSERT(false, "Invalid exact r-RESPA CPU contribution");
+            return 0.0_real;
+    }
+
+    GMX_RELEASE_ASSERT(false, "Unhandled exact r-RESPA CPU contribution");
+    return 0.0_real;
+}
+
+/*! \brief Returns whether the current exact r-RESPA launch owns the correction term. */
+inline bool exactRespaCpuPairSplitAddsCorrection(const interaction_const_t& ic)
+{
+    return !exactRespaCpuPairSplitLaunchActive(ic)
+           || ic.exactRespaCpuPairSplit.contribution == MtsNonbondedRespaContribution::Outer
+           || ic.exactRespaCpuPairSplit.contribution == MtsNonbondedRespaContribution::Full;
+}
 
 } // namespace gmx
 

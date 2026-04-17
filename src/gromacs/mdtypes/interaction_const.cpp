@@ -48,6 +48,7 @@
 #include "gromacs/math/units.h"
 #include "gromacs/mdlib/rf_util.h"
 #include "gromacs/mdrunutility/mdmodulesnotifiers.h"
+#include "gromacs/mdtypes/exactrespaschedule.h"
 #include "gromacs/mdtypes/forcerec.h"
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/topology/atoms.h"
@@ -333,6 +334,18 @@ interaction_const_t init_interaction_const(FILE*               fp,
         GMX_RELEASE_ASSERT(ir.fepvals, "ir.fepvals should be set with free-energy");
         interactionConst.softCoreParameters =
                 std::make_unique<interaction_const_t::SoftCoreParameters>(*ir.fepvals);
+    }
+
+    if (gmx::useExactRespa(ir) && gmx::exactRespaHasPairSplitting(ir))
+    {
+        const auto& forceLayout = ir.exactRespa.forceLayout;
+        auto&       pairSplit   = interactionConst.exactRespaCpuPairSplit;
+        pairSplit.configured    = true;
+        pairSplit.hasMiddle     = forceLayout.hasMiddle();
+        pairSplit.innerOff      = forceLayout.innerOff;
+        pairSplit.innerOn       = forceLayout.innerOn;
+        pairSplit.outerOn       = forceLayout.outerOn;
+        pairSplit.outerOff      = forceLayout.outerOff;
     }
 
     if (GMX_USE_EXT_FMM)

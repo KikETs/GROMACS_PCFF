@@ -110,6 +110,103 @@ void nbnxn_atomdata_t::resizeForceBuffers()
     {
         outputBuffer.f.resize(paddedSize * fstride);
     }
+
+    for (nbnxn_atomdata_output_t& outputBuffer : nativeMultiContributionOutputBuffers_)
+    {
+        outputBuffer.f.resize(paddedSize * fstride);
+    }
+}
+
+void nbnxn_atomdata_t::ensureNativeMultiContributionOutputBuffers(const int numContributions)
+{
+    if (numContributions < 0)
+    {
+        GMX_THROW(InternalError(
+                "Native multi-contribution NBNXM output buffer count must not be negative"));
+    }
+
+    if (numContributions == numNativeMultiContributionOutputSets_)
+    {
+        return;
+    }
+
+    const int  numOutputBuffers    = gmx::ssize(outputBuffers_);
+    const auto outputPinningPolicy = params().type.get_allocator().pinningPolicy();
+
+    nativeMultiContributionOutputBuffers_.clear();
+    nativeMultiContributionOutputBuffers_.reserve(numContributions * numOutputBuffers);
+    for (int contributionOutputIndex = 0; contributionOutputIndex < numContributions;
+         contributionOutputIndex++)
+    {
+        for (int outputIndex = 0; outputIndex < numOutputBuffers; outputIndex++)
+        {
+            nativeMultiContributionOutputBuffers_.emplace_back(
+                    kernelType_, params().numEnergyGroups, outputPinningPolicy);
+        }
+    }
+
+    numNativeMultiContributionOutputSets_ = numContributions;
+    resizeForceBuffers();
+
+    for (nbnxn_atomdata_output_t& outputBuffer : nativeMultiContributionOutputBuffers_)
+    {
+        std::fill(outputBuffer.f.begin(), outputBuffer.f.end(), 0.0_real);
+        std::fill(outputBuffer.fshift.begin(), outputBuffer.fshift.end(), 0.0_real);
+        std::fill(outputBuffer.Vvdw.begin(), outputBuffer.Vvdw.end(), 0.0_real);
+        std::fill(outputBuffer.Vc.begin(), outputBuffer.Vc.end(), 0.0_real);
+    }
+}
+
+ArrayRef<nbnxn_atomdata_output_t>
+nbnxn_atomdata_t::nativeMultiContributionOutputBuffers(const int contributionOutputIndex)
+{
+    if (contributionOutputIndex < 0
+        || contributionOutputIndex >= numNativeMultiContributionOutputSets_)
+    {
+        GMX_THROW(InternalError(formatString(
+                "Native multi-contribution NBNXM output index %d is outside the allocated "
+                "range [0, %d)",
+                contributionOutputIndex,
+                numNativeMultiContributionOutputSets_)));
+    }
+
+    const int numOutputBuffers = gmx::ssize(outputBuffers_);
+    return makeArrayRef(nativeMultiContributionOutputBuffers_)
+            .subArray(contributionOutputIndex * numOutputBuffers, numOutputBuffers);
+}
+
+ArrayRef<const nbnxn_atomdata_output_t>
+nbnxn_atomdata_t::nativeMultiContributionOutputBuffers(const int contributionOutputIndex) const
+{
+    if (contributionOutputIndex < 0
+        || contributionOutputIndex >= numNativeMultiContributionOutputSets_)
+    {
+        GMX_THROW(InternalError(formatString(
+                "Native multi-contribution NBNXM output index %d is outside the allocated "
+                "range [0, %d)",
+                contributionOutputIndex,
+                numNativeMultiContributionOutputSets_)));
+    }
+
+    const int numOutputBuffers = gmx::ssize(outputBuffers_);
+    return makeConstArrayRef(nativeMultiContributionOutputBuffers_)
+            .subArray(contributionOutputIndex * numOutputBuffers, numOutputBuffers);
+}
+
+void nbnxn_atomdata_t::copyOutputBuffersToNativeMultiContributionOutputBuffers(
+        const int contributionOutputIndex)
+{
+    auto nativeOutputBuffers = nativeMultiContributionOutputBuffers(contributionOutputIndex);
+    GMX_RELEASE_ASSERT(nativeOutputBuffers.size() == outputBuffers_.size(),
+                       "Native multi-contribution output storage must match normal output buffer count");
+
+    for (int outputIndex = 0; outputIndex < nativeOutputBuffers.ssize(); outputIndex++)
+    {
+        nativeOutputBuffers[outputIndex].f      = outputBuffers_[outputIndex].f;
+        nativeOutputBuffers[outputIndex].fshift = outputBuffers_[outputIndex].fshift;
+        nativeOutputBuffers[outputIndex].Vvdw   = outputBuffers_[outputIndex].Vvdw;
+        nativeOutputBuffers[outputIndex].Vc     = outputBuffers_[outputIndex].Vc;
+    }
 }
 
 /* Initializes an nbnxn_atomdata_output_t data structure */
@@ -722,11 +819,13 @@ nbnxn_atomdata_t::nbnxn_atomdata_t(PinningPolicy                           pinni
                                    const int                               numEnergyGroups,
                                    const int                               numOutputBuffers) :
     params_(pinningPolicy),
+    kernelType_(kernelType),
     numAtoms_(0),
     numLocalAtoms_(0),
     shift_vec({}, { pinningPolicy }),
     x_({}, { pinningPolicy }),
     simdMasks_(kernelType),
+    numNativeMultiContributionOutputSets_(0),
     useBufferFlags_(numOutputBuffers > 1)
 {
     nbnxn_atomdata_params_init(mdlog,
@@ -1485,10 +1584,10 @@ static void addNbatFPackedToFPart(const nbnxn_atomdata_output_t& out,
     }
 }
 
-void nbnxn_atomdata_t::reduceForcesOverThreads()
+void nbnxn_atomdata_t::reduceForcesOverThreads(ArrayRef<nbnxn_atomdata_output_t> outputBuffers)
 {
     // The number of output buffers should match the number of OpenMP threads
-    const int nth = gmx::ssize(outputBuffers_);
+    const int nth = outputBuffers.ssize();
 
 #pragma omp parallel for num_threads(nth) schedule(static)
     for (int th = 0; th < nth; th++)
@@ -1509,11 +1608,11 @@ void nbnxn_atomdata_t::reduceForcesOverThreads()
                 const int i1 = (b + 1) * NBNXN_BUFFERFLAG_SIZE * fstride;
 
                 int nfptr = 0;
-                for (Index out = 1; out < gmx::ssize(outputBuffers_); out++)
+                for (Index out = 1; out < outputBuffers.ssize(); out++)
                 {
                     if (bitmask_is_set(flags[b], out))
                     {
-                        fptr[nfptr++] = outputBuffers_[out].f.data();
+                        fptr[nfptr++] = outputBuffers[out].f.data();
                     }
                 }
                 if (nfptr > 0)
@@ -1523,11 +1622,11 @@ void nbnxn_atomdata_t::reduceForcesOverThreads()
 #else
                     nbnxn_atomdata_reduce_reals
 #endif
-                            (outputBuffers_[0].f.data(), bitmask_is_set(flags[b], 0), fptr, nfptr, i0, i1);
+                            (outputBuffers[0].f.data(), bitmask_is_set(flags[b], 0), fptr, nfptr, i0, i1);
                 }
                 else if (!bitmask_is_set(flags[b], 0))
                 {
-                    nbnxn_atomdata_clear_reals(outputBuffers_[0].f, i0, i1);
+                    nbnxn_atomdata_clear_reals(outputBuffers[0].f, i0, i1);
                 }
             }
         }
@@ -1565,8 +1664,34 @@ static Range<int> getAtomRange(const AtomLocality locality, const GridSet& gridS
     return Range<int>(atomStart, atomEnd);
 }
 
+static bool threadedReductionSupportsLocality(const AtomLocality locality,
+                                              const GridSet&     gridSet,
+                                              const Range<int>&  atomRange)
+{
+    if (locality == AtomLocality::All)
+    {
+        return true;
+    }
+    if (locality != AtomLocality::Local)
+    {
+        return false;
+    }
+
+    const auto allAtomRange = getAtomRange(AtomLocality::All, gridSet);
+    return int(atomRange.begin()) == int(allAtomRange.begin())
+           && int(atomRange.end()) == int(allAtomRange.end());
+}
+
 /* Add the force array(s) from nbnxn_atomdata_t to f */
 void nbnxn_atomdata_t::reduceForces(const AtomLocality locality, const GridSet& gridSet, ArrayRef<RVec> f)
+{
+    reduceForceOutputBuffers(locality, gridSet, outputBuffers_, f);
+}
+
+void nbnxn_atomdata_t::reduceForceOutputBuffers(const AtomLocality                locality,
+                                                const GridSet&                    gridSet,
+                                                ArrayRef<nbnxn_atomdata_output_t> outputBuffers,
+                                                ArrayRef<RVec>                    f)
 {
     const auto atomRange = getAtomRange(locality, gridSet);
 
@@ -1576,21 +1701,22 @@ void nbnxn_atomdata_t::reduceForces(const AtomLocality locality, const GridSet& 
         return;
     }
 
+    GMX_RELEASE_ASSERT(!outputBuffers.empty(), "Need at least one NBNXM output buffer to reduce");
     GMX_ASSERT(ssize(f) >= atomRange.size(), "The force buffer needs to be sufficiently large");
 
     int nth = gmx_omp_nthreads_get(ModuleMultiThread::Nonbonded);
 
-    if (outputBuffers_.size() > 1)
+    if (outputBuffers.size() > 1)
     {
-        if (locality != AtomLocality::All)
-        {
-            gmx_incons("add_f_to_f called with nout>1 and locality!=eatAll");
-        }
+        GMX_RELEASE_ASSERT(
+                threadedReductionSupportsLocality(locality, gridSet, atomRange),
+                "NBNXM multi-buffer force reduction requires either all atoms or a local "
+                "range that covers the full single-rank atom span");
 
         /* Reduce the force thread output buffers into buffer 0, before adding
          * them to the, differently ordered, "real" force buffer.
          */
-        reduceForcesOverThreads();
+        reduceForcesOverThreads(outputBuffers);
     }
 
     const int* binIndices =
@@ -1616,16 +1742,16 @@ void nbnxn_atomdata_t::reduceForces(const AtomLocality locality, const GridSet& 
             switch (FFormat)
             {
                 case nbatXYZ:
-                    addNbatFXYZToFPart<STRIDE_XYZ>(outputBuffers_[0], atomStart, atomEnd, binIndices, f);
+                    addNbatFXYZToFPart<STRIDE_XYZ>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
                     break;
                 case nbatXYZQ:
-                    addNbatFXYZToFPart<STRIDE_XYZQ>(outputBuffers_[0], atomStart, atomEnd, binIndices, f);
+                    addNbatFXYZToFPart<STRIDE_XYZQ>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
                     break;
                 case nbatX4:
-                    addNbatFPackedToFPart<c_packX4>(outputBuffers_[0], atomStart, atomEnd, binIndices, f);
+                    addNbatFPackedToFPart<c_packX4>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
                     break;
                 case nbatX8:
-                    addNbatFPackedToFPart<c_packX8>(outputBuffers_[0], atomStart, atomEnd, binIndices, f);
+                    addNbatFPackedToFPart<c_packX8>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
                     break;
                 default: GMX_RELEASE_ASSERT(false, "Unsupported force format");
             }
@@ -1636,8 +1762,12 @@ void nbnxn_atomdata_t::reduceForces(const AtomLocality locality, const GridSet& 
 
 void nbnxn_atomdata_add_nbat_fshift_to_fshift(const nbnxn_atomdata_t& nbat, ArrayRef<RVec> fshift)
 {
-    ArrayRef<const nbnxn_atomdata_output_t> outputBuffers = nbat.outputBuffers();
+    nbnxn_atomdata_add_output_fshift_to_fshift(nbat.outputBuffers(), fshift);
+}
 
+void nbnxn_atomdata_add_output_fshift_to_fshift(
+        ArrayRef<const nbnxn_atomdata_output_t> outputBuffers, ArrayRef<RVec> fshift)
+{
     for (int s = 0; s < c_numShiftVectors; s++)
     {
         rvec sum;

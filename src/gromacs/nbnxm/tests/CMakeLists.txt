@@ -45,6 +45,12 @@ gmx_add_unit_test(NbnxmTests nbnxm-test
         )
 target_link_libraries(nbnxm-test PRIVATE nbnxm pbcutil simd timing)
 
+gmx_add_unit_test(NbnxmOutputContractTests nbnxm-output-contract-test
+    CPP_SOURCE_FILES
+        outputcontract.cpp
+        )
+target_link_libraries(nbnxm-output-contract-test PRIVATE nbnxm pbcutil timing)
+
 gmx_add_unit_test(NbnxmGpuTests nbnxm-gpu-test
     HARDWARE_DETECTION
     GPU_CPP_SOURCE_FILES

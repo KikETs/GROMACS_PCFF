@@ -159,6 +159,47 @@ interaction_const_t makeCutoffInteractionConst(const double repulsionPower,
     return ic;
 }
 
+interaction_const_t makeExactRespaInteractionConst(CoulombKernelType coulombKernelType,
+                                                   const double      repulsionPower,
+                                                   const real        cutoff,
+                                                   const bool        useRepulsionPower9SpecializedSimd = false)
+{
+    t_inputrec ir;
+
+    ir.vdwtype      = VanDerWaalsType::Cut;
+    ir.vdw_modifier = InteractionModifiers::None;
+    ir.rvdw         = cutoff;
+
+    ir.coulombtype      = coulombInteractionType(coulombKernelType);
+    ir.coulomb_modifier = InteractionModifiers::None;
+    ir.rcoulomb         = cutoff;
+    ir.ewald_rtol       = 1e-6;
+    ir.epsilon_r        = 1;
+    ir.epsilon_rf       = 0;
+
+    ir.exactRespa.levelStepFactors            = { 1, 2, 4 };
+    ir.exactRespa.forceLayout.enabled         = true;
+    ir.exactRespa.forceLayout.pairLevel       = 2;
+    ir.exactRespa.forceLayout.kspaceLevel     = 2;
+    ir.exactRespa.forceLayout.innerLevel      = 0;
+    ir.exactRespa.forceLayout.middleLevel     = 1;
+    ir.exactRespa.forceLayout.outerLevel      = 2;
+    ir.exactRespa.forceLayout.innerOff        = 0.35_real * cutoff;
+    ir.exactRespa.forceLayout.innerOn         = 0.50_real * cutoff;
+    ir.exactRespa.forceLayout.outerOn         = 0.65_real * cutoff;
+    ir.exactRespa.forceLayout.outerOff        = 0.85_real * cutoff;
+
+    gmx_mtop_t mtop;
+    mtop.ffparams.reppow = repulsionPower;
+    mtop.ffparams.functype.resize(1);
+    mtop.ffparams.functype[0] = InteractionFunction::LennardJonesShortRange;
+
+    interaction_const_t ic = init_interaction_const(nullptr, ir, mtop, false, std::nullopt);
+    ic.vdw.useRepulsionPower9SpecializedSimd = useRepulsionPower9SpecializedSimd;
+    init_interaction_const_tables(nullptr, &ic, cutoff, 0);
+    return ic;
+}
+
 std::vector<NbnxmKernelType> cpuKernelTypesToValidate()
 {
     std::vector<NbnxmKernelType> kernelTypes = { NbnxmKernelType::Cpu1x1_PlainC, NbnxmKernelType::Cpu4x4_PlainC };
@@ -246,20 +287,17 @@ std::unique_ptr<nonbonded_verlet_t> setupNbnxm(const PcffNonbondedSystem& system
     return nbv;
 }
 
-PcffNonbondedOutput evaluateSystem(const PcffNonbondedSystem& system,
-                                   const interaction_const_t& ic,
-                                   const real                 cutoff,
-                                   const CoulombKernelType    coulombKernelType,
-                                   const NbnxmKernelType      kernelType)
+PcffNonbondedOutput evaluateSystemWithWorkload(const PcffNonbondedSystem& system,
+                                               const interaction_const_t& ic,
+                                               const real                 cutoff,
+                                               const CoulombKernelType    coulombKernelType,
+                                               const NbnxmKernelType      kernelType,
+                                               const StepWorkload&        stepWork)
 {
     auto                    nbv = setupNbnxm(system, cutoff, coulombKernelType, kernelType);
 
     std::vector<RVec> shiftVectors(c_numShiftVectors);
     calc_shifts(system.box, shiftVectors);
-
-    StepWorkload stepWork;
-    stepWork.computeForces = true;
-    stepWork.computeEnergy = true;
 
     std::vector<real> vVdw(1, 0.0_real);
     std::vector<real> vCoulomb(1, 0.0_real);
@@ -294,6 +332,32 @@ PcffNonbondedOutput evaluateSystem(const PcffNonbondedSystem& system,
     }
 
     return output;
+}
+
+PcffNonbondedOutput evaluateSystem(const PcffNonbondedSystem& system,
+                                   const interaction_const_t& ic,
+                                   const real                 cutoff,
+                                   const CoulombKernelType    coulombKernelType,
+                                   const NbnxmKernelType      kernelType)
+{
+    StepWorkload stepWork;
+    stepWork.computeForces = true;
+    stepWork.computeEnergy = true;
+    return evaluateSystemWithWorkload(system, ic, cutoff, coulombKernelType, kernelType, stepWork);
+}
+
+PcffNonbondedOutput evaluateExactRespaContribution(const PcffNonbondedSystem&         system,
+                                                   const interaction_const_t&         ic,
+                                                   const real                         cutoff,
+                                                   const CoulombKernelType            coulombKernelType,
+                                                   const NbnxmKernelType              kernelType,
+                                                   const MtsNonbondedRespaContribution contribution)
+{
+    StepWorkload stepWork;
+    stepWork.computeForces = true;
+    stepWork.computeEnergy = true;
+    return evaluateSystemWithWorkload(
+            system, ic, cutoff, coulombKernelType, kernelType, stepWork.withExactNonbondedContribution(contribution));
 }
 
 std::pair<real, real> class2Coefficients(const real sigma, const real epsilon)
@@ -570,6 +634,21 @@ PcffNonbondedOutput pmeTableCoulombReference(const PcffNonbondedSystem& system,
     }
 
     return output;
+}
+
+PcffNonbondedOutput sumOutputs(const PcffNonbondedOutput& first, const PcffNonbondedOutput& second)
+{
+    GMX_RELEASE_ASSERT(first.forces.size() == second.forces.size(),
+                       "Summed PCFF nonbonded outputs must cover the same atoms");
+
+    PcffNonbondedOutput combined = first;
+    combined.vdwEnergy += second.vdwEnergy;
+    combined.coulombEnergy += second.coulombEnergy;
+    for (Index atom = 0; atom < ssize(combined.forces); ++atom)
+    {
+        rvec_inc(combined.forces[atom], second.forces[atom]);
+    }
+    return combined;
 }
 
 TEST(PcffClass2NonbondedCurveTest, NineSixPairCurveMatchesAnalyticEnergyAndForce)
@@ -853,6 +932,93 @@ TEST(PcffClass2NonbondedCurveTest, SmallOligomerChargeOnlyPmeMatchesTabulatedRef
             {
                 EXPECT_NEAR(output.forces[atom][d], reference.forces[atom][d], 5e-4)
                         << "atom=" << atom << " dim=" << d;
+            }
+        }
+    }
+}
+
+TEST(PcffClass2NonbondedCurveTest, ExactRespaContributionsRecomposeFullPmeNonbondedForce)
+{
+    constexpr real sigma    = 0.34_real;
+    constexpr real epsilon  = 0.50208_real;
+    constexpr real cutoff   = 1.2_real;
+    constexpr real distance = 0.52_real;
+
+    const auto [c6, c9] = class2Coefficients(sigma, epsilon);
+    const auto system   = makeTwoAtomSystem(distance, c6, c9, 0.35_real, -0.40_real, false);
+    const auto fullIc   = makeInteractionConst(CoulombKernelType::Table, 9.0, cutoff);
+    const auto splitIc  = makeExactRespaInteractionConst(CoulombKernelType::Table, 9.0, cutoff);
+
+    for (const NbnxmKernelType kernelType : cpuKernelTypesToValidate())
+    {
+        SCOPED_TRACE(testing::Message() << "kernel=" << static_cast<int>(kernelType));
+
+        const auto fullOutput = evaluateSystem(system, fullIc, cutoff, CoulombKernelType::Table, kernelType);
+        const auto innerOutput = evaluateExactRespaContribution(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, MtsNonbondedRespaContribution::Inner);
+        const auto middleOutput = evaluateExactRespaContribution(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, MtsNonbondedRespaContribution::Middle);
+        const auto outerOutput = evaluateExactRespaContribution(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, MtsNonbondedRespaContribution::Outer);
+        const auto recomposedOutput = sumOutputs(sumOutputs(innerOutput, middleOutput), outerOutput);
+
+        EXPECT_NEAR(innerOutput.vdwEnergy, 0.0_real, 1e-8);
+        EXPECT_NEAR(innerOutput.coulombEnergy, 0.0_real, 1e-8);
+        EXPECT_NEAR(middleOutput.vdwEnergy, 0.0_real, 1e-8);
+        EXPECT_NEAR(middleOutput.coulombEnergy, 0.0_real, 1e-8);
+        EXPECT_NEAR(outerOutput.vdwEnergy, fullOutput.vdwEnergy, 2e-4);
+        EXPECT_NEAR(outerOutput.coulombEnergy, fullOutput.coulombEnergy, 2e-4);
+
+        for (Index atom = 0; atom < ssize(system.coordinates); ++atom)
+        {
+            for (int d = 0; d < DIM; ++d)
+            {
+                EXPECT_NEAR(recomposedOutput.forces[atom][d], fullOutput.forces[atom][d], 2e-4)
+                        << "atom=" << atom << " dim=" << d;
+            }
+        }
+    }
+}
+
+TEST(PcffClass2NonbondedCurveTest, ExactRespaExcludedPmeCorrectionStaysOuterOnly)
+{
+    constexpr real cutoff   = 1.2_real;
+    constexpr real distance = 0.52_real;
+    constexpr real q0       = 0.35_real;
+    constexpr real q1       = -0.40_real;
+
+    const auto system  = makeTwoAtomSystem(distance, 0.0_real, 0.0_real, q0, q1, true);
+    const auto fullIc  = makeInteractionConst(CoulombKernelType::Table, 9.0, cutoff);
+    const auto splitIc = makeExactRespaInteractionConst(CoulombKernelType::Table, 9.0, cutoff);
+
+    for (const NbnxmKernelType kernelType : cpuKernelTypesToValidate())
+    {
+        SCOPED_TRACE(testing::Message() << "kernel=" << static_cast<int>(kernelType));
+
+        const auto fullOutput = evaluateSystem(system, fullIc, cutoff, CoulombKernelType::Table, kernelType);
+        const auto innerOutput = evaluateExactRespaContribution(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, MtsNonbondedRespaContribution::Inner);
+        const auto middleOutput = evaluateExactRespaContribution(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, MtsNonbondedRespaContribution::Middle);
+        const auto outerOutput = evaluateExactRespaContribution(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, MtsNonbondedRespaContribution::Outer);
+
+        EXPECT_NEAR(innerOutput.vdwEnergy, 0.0_real, 1e-8);
+        EXPECT_NEAR(innerOutput.coulombEnergy, 0.0_real, 1e-8);
+        EXPECT_NEAR(middleOutput.vdwEnergy, 0.0_real, 1e-8);
+        EXPECT_NEAR(middleOutput.coulombEnergy, 0.0_real, 1e-8);
+        EXPECT_NEAR(outerOutput.vdwEnergy, 0.0_real, 1e-8);
+        EXPECT_NEAR(outerOutput.coulombEnergy, fullOutput.coulombEnergy, 2e-4);
+
+        for (Index atom = 0; atom < ssize(system.coordinates); ++atom)
+        {
+            for (int d = 0; d < DIM; ++d)
+            {
+                EXPECT_NEAR(innerOutput.forces[atom][d], 0.0_real, 1e-8) << "inner atom=" << atom << " dim=" << d;
+                EXPECT_NEAR(middleOutput.forces[atom][d], 0.0_real, 1e-8)
+                        << "middle atom=" << atom << " dim=" << d;
+                EXPECT_NEAR(outerOutput.forces[atom][d], fullOutput.forces[atom][d], 2e-4)
+                        << "outer atom=" << atom << " dim=" << d;
             }
         }
     }

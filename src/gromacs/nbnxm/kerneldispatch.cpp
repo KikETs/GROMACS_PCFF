@@ -946,6 +946,44 @@ static void accountFlops(t_nrnb*                    nrnb,
     }
 }
 
+class ExactRespaCpuLaunchGuard
+{
+public:
+    ExactRespaCpuLaunchGuard(const interaction_const_t& ic, const StepWorkload& stepWork) : ic_(ic)
+    {
+        previousActive_       = ic_.exactRespaCpuPairSplit.active;
+        previousContribution_ = ic_.exactRespaCpuPairSplit.contribution;
+
+        const bool useSplitLaunch =
+                stepWork.nonbondedRespaContribution != MtsNonbondedRespaContribution::Full;
+        if (useSplitLaunch)
+        {
+            GMX_RELEASE_ASSERT(ic_.exactRespaCpuPairSplit.configured,
+                               "Exact r-RESPA CPU NBNXM launches require configured split metadata");
+            GMX_RELEASE_ASSERT(ic_.vdw.type == VanDerWaalsType::Cut
+                                       && ic_.vdw.modifier == InteractionModifiers::None
+                                       && usingPmeOrEwald(ic_.coulomb.type)
+                                       && ic_.coulomb.modifier == InteractionModifiers::None,
+                               "Exact r-RESPA CPU NBNXM launches support only cut-off LJ with PME/Ewald Coulomb and no real-space modifiers");
+        }
+
+        ic_.exactRespaCpuPairSplit.active       = useSplitLaunch;
+        ic_.exactRespaCpuPairSplit.contribution = stepWork.nonbondedRespaContribution;
+    }
+
+    ~ExactRespaCpuLaunchGuard()
+    {
+        ic_.exactRespaCpuPairSplit.active       = previousActive_;
+        ic_.exactRespaCpuPairSplit.contribution = previousContribution_;
+    }
+
+private:
+    const interaction_const_t&           ic_;
+    bool                                 previousActive_ = false;
+    MtsNonbondedRespaContribution        previousContribution_ =
+            MtsNonbondedRespaContribution::Full;
+};
+
 void nonbonded_verlet_t::dispatchNonbondedKernel(gmx::InteractionLocality       iLocality,
                                                  const interaction_const_t&     ic,
                                                  const gmx::StepWorkload&       stepWork,
@@ -956,6 +994,7 @@ void nonbonded_verlet_t::dispatchNonbondedKernel(gmx::InteractionLocality       
                                                  t_nrnb*             nrnb) const
 {
     const PairlistSet& pairlistSet = pairlistSets().pairlistSet(iLocality);
+    const ExactRespaCpuLaunchGuard exactRespaCpuLaunchGuard(ic, stepWork);
 
     switch (kernelSetup().kernelType)
     {

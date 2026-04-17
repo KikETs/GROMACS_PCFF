@@ -8060,6 +8060,170 @@ static void replayExactRespaNonbondedTraceShadow(const t_inputrec&             i
             inputrec, idef, fr, mdatoms, coordinates, shadowOutputs, enerd, stepWork, step, true);
 }
 
+static bool exactRespaCpuNbnxmKernelSupported(const NbnxmKernelType kernelType)
+{
+    switch (kernelType)
+    {
+        case NbnxmKernelType::Cpu4x4_PlainC:
+        case NbnxmKernelType::Cpu4xN_Simd_4xN:
+        case NbnxmKernelType::Cpu4xN_Simd_2xNN:
+        case NbnxmKernelType::Cpu1x1_PlainC: return true;
+        default: return false;
+    }
+}
+
+static NbnxmOutputContract buildExactRespaCpuNbnxmOutputContract(
+        const ExactRespaForceOutputs&                      exactRespaForceOutputs,
+        const std::vector<LammpsRespaNonbondedOutputSink>& outputSinks,
+        t_forcerec*                                        fr,
+        gmx_enerdata_t*                                    enerd)
+{
+    GMX_RELEASE_ASSERT(fr != nullptr && enerd != nullptr,
+                       "Exact r-RESPA CPU NBNXM output contract requires force and energy state");
+
+    NbnxmOutputContract contract;
+
+    for (const auto& outputSink : outputSinks)
+    {
+        ForceOutputs* outputs = exactRespaForceOutputs.levelOrNull(outputSink.mtsLevel);
+        GMX_RELEASE_ASSERT(outputs != nullptr,
+                           "Exact r-RESPA CPU NBNXM launches require one force output sink per active contribution");
+
+        NbnxmOutputSink sink;
+        sink.contribution = outputSink.contribution;
+        sink.sinkKind     = outputSink.sinkKind;
+        sink.locality     = AtomLocality::Local;
+
+        if (outputSink.sinkKind == LammpsRespaNonbondedOutputSinkKind::ForceWithVirial)
+        {
+            sink.force                = outputs->forceWithVirial().force_;
+            sink.directVirialOutput   = &outputs->forceWithVirial();
+            contract.virial.accumulateVirial = true;
+            contract.virial.contribution     = outputSink.contribution;
+            contract.virial.sinkKind         = outputSink.sinkKind;
+            contract.virial.directVirialOutput = sink.directVirialOutput;
+        }
+        else
+        {
+            sink.force       = outputs->forceWithShiftForces().force();
+            sink.shiftForces = outputs->forceWithShiftForces().shiftForces();
+        }
+
+        if (outputSink.accumulateEnergy)
+        {
+            contract.energy.accumulateEnergy = true;
+            contract.energy.contribution     = outputSink.contribution;
+            contract.energy.vdwEnergy =
+                    enerd->grpp.energyGroupPairTerms[fr->haveBuckingham ? NonBondedEnergyTerms::BuckinghamSR
+                                                                         : NonBondedEnergyTerms::LJSR];
+            contract.energy.coulombEnergy =
+                    enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR];
+        }
+
+        contract.sinks.push_back(sink);
+    }
+
+    return contract;
+}
+
+static void addExactRespaCpuNbnxmDirectVirial(const NbnxmOutputSink&    sink,
+                                              const t_forcerec&         fr,
+                                              const t_mdatoms&          mdatoms,
+                                              ArrayRef<const RVec>      coordinates,
+                                              const matrix              box,
+                                              const nbnxn_atomdata_t&   nbat,
+                                              t_nrnb*                   nrnb)
+{
+    GMX_RELEASE_ASSERT(sink.directVirialOutput != nullptr,
+                       "Exact r-RESPA CPU NBNXM direct-virial accumulation requires a virial sink");
+    GMX_RELEASE_ASSERT(sink.locality == AtomLocality::Local,
+                       "Exact r-RESPA CPU NBNXM direct-virial accumulation currently supports only local sinks");
+
+    std::vector<RVec> reducedShiftForces(c_numShiftVectors);
+    for (auto& shiftForce : reducedShiftForces)
+    {
+        clear_rvec(shiftForce);
+    }
+    nbnxn_atomdata_add_nbat_fshift_to_fshift(nbat, reducedShiftForces);
+
+    matrix      virial          = { { 0 } };
+    const rvec* fshift          = as_rvec_array(reducedShiftForces.data());
+    const rvec* shiftVecPointer = as_rvec_array(fr.shift_vec.data());
+    calc_vir(c_numShiftVectors, shiftVecPointer, fshift, virial, fr.pbcType == PbcType::Screw, box);
+    inc_nrnb(nrnb, eNR_VIRIAL, c_numShiftVectors);
+
+    const rvec* x = as_rvec_array(coordinates.data());
+    const rvec* f = as_rvec_array(sink.force.data());
+    f_calc_vir(0, mdatoms.homenr, x, f, virial, box);
+    inc_nrnb(nrnb, eNR_VIRIAL, mdatoms.homenr);
+
+    sink.directVirialOutput->addVirialContribution(virial);
+}
+
+static void computeExactRespaNonbondedCpuNbnxmNarrow(const t_inputrec&             inputrec,
+                                                     t_forcerec*                   fr,
+                                                     const t_mdatoms&              mdatoms,
+                                                     ArrayRef<const RVec>          coordinates,
+                                                     const matrix                  box,
+                                                     const ExactRespaForceOutputs& exactRespaForceOutputs,
+                                                     gmx_enerdata_t*               enerd,
+                                                     const StepWorkload&           stepWork,
+                                                     const ExactRespaStepWork&     exactRespaStepWork,
+                                                     const int64_t                 step,
+                                                     t_nrnb*                       nrnb,
+                                                     gmx_wallcycle*                wcycle)
+{
+    GMX_RELEASE_ASSERT(fr != nullptr && fr->nbv != nullptr,
+                       "Exact r-RESPA CPU NBNXM narrow mode requires initialized CPU nonbonded state");
+    GMX_RELEASE_ASSERT(exactRespaCpuNbnxmKernelSupported(fr->nbv->kernelSetup().kernelType),
+                       "Exact r-RESPA CPU NBNXM narrow mode requires a CPU NBNXM kernel");
+
+    const auto outputSinks = activeLammpsRespaNonbondedOutputSinks(inputrec,
+                                                                   exactRespaStepWork.highestActiveLevel,
+                                                                   stepWork.computeVirial,
+                                                                   stepWork.computeEnergy);
+    const NbnxmOutputContract outputContract =
+            buildExactRespaCpuNbnxmOutputContract(exactRespaForceOutputs, outputSinks, fr, enerd);
+
+    if (fr->nbv->isDynamicPruningStepCpu(step))
+    {
+        wallcycle_sub_start(wcycle, WallCycleSubCounter::NonbondedPruning);
+        fr->nbv->dispatchPruneKernelCpu(InteractionLocality::Local, fr->shift_vec);
+        wallcycle_sub_stop(wcycle, WallCycleSubCounter::NonbondedPruning);
+    }
+
+    for (const auto& outputSink : outputSinks)
+    {
+        const StepWorkload contributionWork = stepWork.withExactNonbondedContribution(outputSink.contribution);
+        fr->nbv->dispatchNonbondedKernel(
+                InteractionLocality::Local,
+                *fr->ic,
+                contributionWork,
+                enbvClearFYes,
+                fr->shift_vec,
+                enerd->grpp.energyGroupPairTerms[fr->haveBuckingham ? NonBondedEnergyTerms::BuckinghamSR
+                                                                    : NonBondedEnergyTerms::LJSR],
+                enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR],
+                nrnb);
+
+        if (contributionWork.computeForces)
+        {
+            fr->nbv->atomdata_add_nbat_f_to_outputs(outputContract, outputSink.contribution);
+
+            if (contributionWork.computeVirial)
+            {
+                const NbnxmOutputSink& sink =
+                        nbnxmOutputSinkForContribution(outputContract, outputSink.contribution);
+                if (sink.sinkKind == LammpsRespaNonbondedOutputSinkKind::ForceWithVirial)
+                {
+                    addExactRespaCpuNbnxmDirectVirial(
+                            sink, *fr, mdatoms, coordinates, box, fr->nbv->nbat(), nrnb);
+                }
+            }
+        }
+    }
+}
+
 #if GMX_GPU
 static void setExactRespaGpuLaunchParameters(NbnxmGpu*                         gpuNbv,
                                              const t_inputrec&                 inputrec,
@@ -10213,6 +10377,12 @@ void do_force(FILE*                         fplog,
             stepWork.computeNonbondedForces && useExactLammpsRespaPairSplitting;
     const bool useExactLammpsRespaGpuNonbonded =
             useExactLammpsRespaNonbonded && simulationWork.useGpuNonbonded;
+    const bool useExactLammpsRespaCpuNbnxmNarrow =
+            useExactLammpsRespaNonbonded && !simulationWork.useGpuNonbonded
+            && !simulationWork.havePpDomainDecomposition
+            && fr->nbv != nullptr
+            && exactRespaCpuNbnxmKernelSupported(fr->nbv->kernelSetup().kernelType)
+            && activeM2pTraceDirPath() == nullptr;
     const bool haveExactSlowForceOutputs  = (useExactRespaForceOutputs && exactRespaForceOutputs.numActiveLevels() > 1);
     const bool haveLegacySlowForceOutputs =
             (useLegacyMtsForceOutputs && computeLegacySlowSubstepForces);
@@ -10300,6 +10470,27 @@ void do_force(FILE*                         fplog,
                     *mdatoms,
                     x.unpaddedArrayRef(),
                     ic,
+                    exactRespaForceOutputs,
+                    enerd,
+                    stepWork,
+                    exactRespaStepWork,
+                    step,
+                    nrnb,
+                    wcycle);
+        }
+        else if (useExactLammpsRespaCpuNbnxmNarrow)
+        {
+            if (fplog != nullptr && step == 0)
+            {
+                fprintf(fplog,
+                        "Exact r-RESPA CPU nonbonded will use the narrow per-contribution NBNXM path.\n");
+            }
+            computeExactRespaNonbondedCpuNbnxmNarrow(
+                    inputrec,
+                    fr,
+                    *mdatoms,
+                    x.unpaddedArrayRef(),
+                    box,
                     exactRespaForceOutputs,
                     enerd,
                     stepWork,
