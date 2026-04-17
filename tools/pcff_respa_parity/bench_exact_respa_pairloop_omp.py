@@ -16,6 +16,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 PAIRLOOP_OMP_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP"
 PAIRLOOP_VECTOR_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_VECTOR"
 PAIRLOOP_SPARSE_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_SPARSE_REDUCTION"
+PAIRLOOP_BLOCK_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_BLOCK_REDUCTION"
+PAIRLOOP_TILE_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_TILE"
+PAIRLOOP_NBNXM4X4_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_NBNXM4X4"
+PAIRLOOP_DIRECT_CPULIST_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_DIRECT_CPULIST"
 UPDATE_OMP_ENV = "GMX_PCFF_EXACT_RESPA_UPDATE_OMP"
 
 WALLCYCLE_LABELS = {
@@ -49,8 +53,15 @@ def parse_args() -> argparse.Namespace:
             "combined",
             "pairloop_sparse",
             "combined_sparse",
+            "pairloop_block",
+            "pairloop_tile",
+            "pairloop_nbnxm4x4",
+            "pairloop_direct",
+            "pairloop_direct_block",
             "pairloop_omp_update",
             "pairloop_sparse_update",
+            "pairloop_block_update",
+            "pairloop_tile_update",
             "combined_update",
         ),
         default=["baseline"],
@@ -116,14 +127,25 @@ def mode_env(mode: str) -> dict[str, str]:
     env.pop(PAIRLOOP_OMP_ENV, None)
     env.pop(PAIRLOOP_VECTOR_ENV, None)
     env.pop(PAIRLOOP_SPARSE_ENV, None)
+    env.pop(PAIRLOOP_BLOCK_ENV, None)
+    env.pop(PAIRLOOP_TILE_ENV, None)
+    env.pop(PAIRLOOP_NBNXM4X4_ENV, None)
+    env.pop(PAIRLOOP_DIRECT_CPULIST_ENV, None)
     env.pop(UPDATE_OMP_ENV, None)
     if mode in (
         "pairloop_omp",
         "combined",
         "pairloop_sparse",
         "combined_sparse",
+        "pairloop_block",
+        "pairloop_tile",
+        "pairloop_nbnxm4x4",
+        "pairloop_direct",
+        "pairloop_direct_block",
         "pairloop_omp_update",
         "pairloop_sparse_update",
+        "pairloop_block_update",
+        "pairloop_tile_update",
         "combined_update",
     ):
         env[PAIRLOOP_OMP_ENV] = "1"
@@ -131,7 +153,25 @@ def mode_env(mode: str) -> dict[str, str]:
         env[PAIRLOOP_VECTOR_ENV] = "1"
     if mode in ("pairloop_sparse", "combined_sparse", "pairloop_sparse_update"):
         env[PAIRLOOP_SPARSE_ENV] = "1"
-    if mode in ("update_omp", "pairloop_omp_update", "pairloop_sparse_update", "combined_update"):
+    if mode in ("pairloop_block", "pairloop_tile", "pairloop_block_update", "pairloop_tile_update"):
+        env[PAIRLOOP_BLOCK_ENV] = "1"
+    if mode in ("pairloop_tile", "pairloop_tile_update"):
+        env[PAIRLOOP_TILE_ENV] = "1"
+    if mode in ("pairloop_nbnxm4x4",):
+        env[PAIRLOOP_BLOCK_ENV] = "1"
+        env[PAIRLOOP_NBNXM4X4_ENV] = "1"
+    if mode in ("pairloop_direct", "pairloop_direct_block"):
+        env[PAIRLOOP_DIRECT_CPULIST_ENV] = "1"
+    if mode in ("pairloop_direct_block",):
+        env[PAIRLOOP_BLOCK_ENV] = "1"
+    if mode in (
+        "update_omp",
+        "pairloop_omp_update",
+        "pairloop_sparse_update",
+        "pairloop_block_update",
+        "pairloop_tile_update",
+        "combined_update",
+    ):
         env[UPDATE_OMP_ENV] = "1"
     return env
 
@@ -194,6 +234,10 @@ def benchmark_one(args: argparse.Namespace, mode: str, ntomp: int, repeat_index:
         "pairloop_omp_env": env.get(PAIRLOOP_OMP_ENV, "0"),
         "pairloop_vector_env": env.get(PAIRLOOP_VECTOR_ENV, "0"),
         "pairloop_sparse_reduction_env": env.get(PAIRLOOP_SPARSE_ENV, "0"),
+        "pairloop_block_reduction_env": env.get(PAIRLOOP_BLOCK_ENV, "0"),
+        "pairloop_tile_env": env.get(PAIRLOOP_TILE_ENV, "0"),
+        "pairloop_nbnxm4x4_env": env.get(PAIRLOOP_NBNXM4X4_ENV, "0"),
+        "pairloop_direct_cpulist_env": env.get(PAIRLOOP_DIRECT_CPULIST_ENV, "0"),
         "exact_respa_update_omp_env": env.get(UPDATE_OMP_ENV, "0"),
         "command": cmd,
     }

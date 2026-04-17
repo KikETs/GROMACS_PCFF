@@ -131,6 +131,11 @@ ArrayRef<const int> nonbonded_verlet_t::getLocalAtomOrder() const
     return constArrayRefFromArray(pairSearch_->gridSet().atomIndices().data(), numIndices);
 }
 
+ArrayRef<const int> nonbonded_verlet_t::getGridAtomOrder() const
+{
+    return pairSearch_->gridSet().atomIndices();
+}
+
 void nonbonded_verlet_t::setLocalAtomOrder() const
 {
     pairSearch_->setLocalAtomOrder();

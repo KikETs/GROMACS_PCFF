@@ -296,6 +296,9 @@ public:
     //! Returns the order of the local atoms on the grid
     ArrayRef<const int> getLocalAtomOrder() const;
 
+    //! Returns the full atom-index remapping used by the pair-search grid
+    ArrayRef<const int> getGridAtomOrder() const;
+
     //! Return whether \p localAtomIndex is a valid local atom (and not a filler particle)
     static bool isValidLocalAtom(const int localAtomIndex) { return localAtomIndex >= 0; }
 

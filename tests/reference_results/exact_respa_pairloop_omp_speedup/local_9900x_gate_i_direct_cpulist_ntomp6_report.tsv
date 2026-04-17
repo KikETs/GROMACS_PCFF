@@ -1,0 +1,6 @@
+fixture_id	mode	ntomp	repeat_index	ns_per_day	ms_per_step	force_seconds	update_seconds	total_wallcycle_seconds	log_path
+gate_i_local_9900x_direct_cpulist_ntomp6	baseline	6	1	4.103	10.53	18.74	10.464	21.071	/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp6/baseline/ntomp_6/repeat_01/run.log
+gate_i_local_9900x_direct_cpulist_ntomp6	pairloop_omp	6	1	6.971	6.197	10.135	5.317	12.401	/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp6/pairloop_omp/ntomp_6/repeat_01/run.log
+gate_i_local_9900x_direct_cpulist_ntomp6	pairloop_block	6	1	6.988	6.182	10.101	5.304	12.37	/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp6/pairloop_block/ntomp_6/repeat_01/run.log
+gate_i_local_9900x_direct_cpulist_ntomp6	pairloop_direct	6	1	9.75	4.431	6.513	3.306	8.866	/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp6/pairloop_direct/ntomp_6/repeat_01/run.log
+gate_i_local_9900x_direct_cpulist_ntomp6	pairloop_direct_block	6	1	9.774	4.42	6.505	3.299	8.845	/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp6/pairloop_direct_block/ntomp_6/repeat_01/run.log

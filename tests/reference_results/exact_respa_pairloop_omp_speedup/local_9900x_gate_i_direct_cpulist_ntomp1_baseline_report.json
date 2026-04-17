@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "cpu_model": "AMD Ryzen 9 9900X 12-Core Processor",
+    "created_unix_time": 1776392419.7959514,
+    "fixture_id": "gate_i_local_9900x_direct_cpulist_ntomp1_baseline",
+    "git_branch": "exact-respa-omp-pairloop-speedup",
+    "git_commit": "ae09a8e8b1327ffa5c469fe21b6446f2e1e1d361",
+    "git_status_short": "M docs/exact_respa_pairloop_omp_speedup_track.md\n M src/gromacs/mdlib/sim_util.cpp\n M src/gromacs/nbnxm/nbnxm.cpp\n M src/gromacs/nbnxm/nbnxm.h\n M tests/reference_results/exact_respa_pairloop_omp_speedup/README.md\n M tools/pcff_respa_parity/bench_exact_respa_pairloop_omp.py\n M tools/pcff_respa_parity/validate_exact_respa_pairloop_force_delta.py\n?? gate_i_eq750_prod10000_ntmpi1_ntomp6_local_fastest.nohup.log\n?? gate_i_eq750_prod10000_split12_pp6_pme6_local.nohup.log\n?? output/exact_respa_pairloop_omp_speedup/\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_block_tile_force_delta_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_block_tile_ntomp6_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_blockindexed_tile_force_delta_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_blockindexed_tile_ntomp6_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_nbnxm4x4_force_delta_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_nbnxm4x4_ntomp6_report.json\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_fastest/\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.cpt\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.edr\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.log\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.mdout.mdp\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil_prev.cpt\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/logs/",
+    "gmx": "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+    "host": "KikET",
+    "modes": [
+      "baseline"
+    ],
+    "ntomp": [
+      1
+    ],
+    "pin": "off",
+    "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+    "repeats": 1,
+    "schema_name": "exact_respa_pairloop_omp_benchmark",
+    "schema_version": 1,
+    "steps": 2000,
+    "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr"
+  },
+  "runs": [
+    {
+      "command": [
+        "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+        "mdrun",
+        "-s",
+        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr",
+        "-deffnm",
+        "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp1_baseline/baseline/ntomp_1/repeat_01/run",
+        "-nsteps",
+        "2000",
+        "-ntmpi",
+        "1",
+        "-ntomp",
+        "1",
+        "-dlb",
+        "no",
+        "-nb",
+        "cpu",
+        "-pme",
+        "cpu",
+        "-bonded",
+        "cpu",
+        "-update",
+        "cpu",
+        "-pin",
+        "off",
+        "-reprod"
+      ],
+      "elapsed_seconds": 22.982699394226074,
+      "exact_respa_update_omp_env": "0",
+      "fixture_id": "gate_i_local_9900x_direct_cpulist_ntomp1_baseline",
+      "force_seconds": 19.215,
+      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp1_baseline/baseline/ntomp_1/repeat_01/run.log",
+      "mode": "baseline",
+      "ms_per_step": 11.48,
+      "neighbor_search_seconds": 0.869,
+      "ns_per_day": 3.763,
+      "ntmpi": 1,
+      "ntomp": 1,
+      "pairloop_block_reduction_env": "0",
+      "pairloop_direct_cpulist_env": "0",
+      "pairloop_nbnxm4x4_env": "0",
+      "pairloop_omp_env": "0",
+      "pairloop_sparse_reduction_env": "0",
+      "pairloop_tile_env": "0",
+      "pairloop_vector_env": "0",
+      "pin": "off",
+      "pme_mesh_seconds": 0.821,
+      "repeat_index": 1,
+      "run_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp1_baseline/baseline/ntomp_1/repeat_01",
+      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp1_baseline/baseline/ntomp_1/repeat_01/mdrun.stdout.txt",
+      "steps": 2000,
+      "total_wallcycle_seconds": 22.972,
+      "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr",
+      "update_seconds": 11.311
+    }
+  ]
+}
