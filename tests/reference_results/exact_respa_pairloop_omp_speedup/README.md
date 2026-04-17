@@ -41,15 +41,33 @@ Validation limit:
 - The current force-delta evidence compares 28 fast-path snapshots per
   candidate mode and 285120 force components per mode across `pairloop_omp`,
   `pairloop_vector`, and `combined`.
-- Machine-readable force-delta report:
+- Machine-readable local force-delta report:
   `local_9900x_gate_i_pairloop_force_delta_report.json`.
-- Maximum observed absolute pair-loop force-delta difference is
-  `0.00604248046875`; the largest relative differences occur only on near-zero
-  force components with absolute differences below `4e-5`.
+- Machine-readable remote Z690 force-delta report:
+  `remote_z690_gate_i_pairloop_force_delta_report.json`.
+- Maximum observed absolute pair-loop force-delta difference is `0.00604248046875`
+  on the local 9900X run and `0.0048828125` on the remote Z690/i9-12900K run;
+  the largest relative differences occur only on near-zero force components
+  with absolute differences below `4e-5`.
 - Final `.gro` output is byte-identical across baseline and all candidate modes
-  in the 20-step force-delta harness.
+  within each 20-step force-delta harness.
+
+Remote Z690 staged performance:
+
+- Machine-readable report: `remote_z690_gate_i_pairloop_omp_report.json`.
+- Host: `user-Z690-AORUS-PRO`, Intel i9-12900K.
+- Runtime: same Gate I exact-r-RESPA CPU TPR, `-ntmpi 1`, `-pin off`,
+  `-reprod`, 2000 steps, one repeat.
+- Best same-thread remote OpenMP result: `pairloop_omp` `5.893 ns/day` at
+  `ntomp=6`, `1.666x` versus the `ntomp=6` baseline.
+- Best remote vector-only result: `4.409 ns/day` at `ntomp=6`, `1.246x` versus
+  baseline.
+- Combined OpenMP+vector remains effectively no better than OpenMP alone on the
+  remote host: `5.857 ns/day` at `ntomp=6`, below the OpenMP-only row.
 
 Remaining validation limit:
 
 - This does not validate a parallel energy or virial fast path. Energy/virial
   pair-loop calls still deliberately use the serial path.
+- Two measured hosts still do not justify broad CPU scaling guidance or
+  production/transport readiness.
