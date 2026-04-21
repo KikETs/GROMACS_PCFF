@@ -360,6 +360,121 @@ PcffNonbondedOutput evaluateExactRespaContribution(const PcffNonbondedSystem&   
             system, ic, cutoff, coulombKernelType, kernelType, stepWork.withExactNonbondedContribution(contribution));
 }
 
+PcffNonbondedOutput evaluateExactRespaContributionForceOnly(
+        const PcffNonbondedSystem&         system,
+        const interaction_const_t&         ic,
+        const real                         cutoff,
+        const CoulombKernelType            coulombKernelType,
+        const NbnxmKernelType              kernelType,
+        const MtsNonbondedRespaContribution contribution)
+{
+    StepWorkload stepWork;
+    stepWork.computeForces = true;
+    return evaluateSystemWithWorkload(
+            system, ic, cutoff, coulombKernelType, kernelType, stepWork.withExactNonbondedContribution(contribution));
+}
+
+std::vector<PcffNonbondedOutput> evaluateExactRespaNativeMultiContributions(
+        const PcffNonbondedSystem&                      system,
+        const interaction_const_t&                      ic,
+        const real                                      cutoff,
+        const CoulombKernelType                         coulombKernelType,
+        const NbnxmKernelType                           kernelType,
+        const std::vector<MtsNonbondedRespaContribution>& contributions,
+        const StepWorkload&                             stepWork)
+{
+    auto nbv = setupNbnxm(system, cutoff, coulombKernelType, kernelType);
+
+    std::vector<RVec> shiftVectors(c_numShiftVectors);
+    calc_shifts(system.box, shiftVectors);
+    std::vector<real> vVdw(1, 0.0_real);
+    std::vector<real> vCoulomb(1, 0.0_real);
+    nbv->dispatchExactRespaCpuNativeMultiKernel(
+            InteractionLocality::Local,
+            ic,
+            contributions,
+            stepWork,
+            enbvClearFYes,
+            shiftVectors,
+            vVdw,
+            vCoulomb,
+            nullptr);
+
+    ArrayRef<const int> atomIndices = nbv->getLocalAtomOrder();
+    std::vector<std::vector<RVec>> reducedForces(contributions.size(),
+                                                 std::vector<RVec>(nbv->localAtomOrderMatchesNbnxmOrder()
+                                                                           ? atomIndices.size()
+                                                                           : system.coordinates.size(),
+                                                                   { 0.0_real, 0.0_real, 0.0_real }));
+    NbnxmOutputContract contract;
+    contract.kind = NbnxmOutputContractKind::NativeMultiContribution;
+    for (int contributionIndex = 0; contributionIndex < ssize(contributions); ++contributionIndex)
+    {
+        NbnxmOutputSink sink;
+        sink.contribution = contributions[contributionIndex];
+        sink.sinkKind     = LammpsRespaNonbondedOutputSinkKind::ShiftForce;
+        sink.locality     = AtomLocality::All;
+        sink.force        = reducedForces[contributionIndex];
+        contract.sinks.push_back(sink);
+        contract.nativeMultiContribution.contributions.push_back(contributions[contributionIndex]);
+    }
+    nbv->atomdata_add_nbat_f_to_native_multi_outputs(contract);
+
+    std::vector<PcffNonbondedOutput> outputs(contributions.size());
+    int                              energyOwnerIndex = -1;
+    if (stepWork.computeEnergy)
+    {
+        for (int contributionIndex = 0; contributionIndex < ssize(contributions); ++contributionIndex)
+        {
+            if (contributions[contributionIndex] == MtsNonbondedRespaContribution::Outer
+                || contributions[contributionIndex] == MtsNonbondedRespaContribution::Full)
+            {
+                energyOwnerIndex = contributionIndex;
+                break;
+            }
+        }
+        GMX_RELEASE_ASSERT(energyOwnerIndex >= 0,
+                           "Exact r-RESPA native multi energy evaluation requires an outer/full owner contribution");
+        outputs[energyOwnerIndex].vdwEnergy     = vVdw[0];
+        outputs[energyOwnerIndex].coulombEnergy = vCoulomb[0];
+    }
+    for (int contributionIndex = 0; contributionIndex < ssize(contributions); ++contributionIndex)
+    {
+        outputs[contributionIndex].forces.resize(system.coordinates.size(), { 0.0_real, 0.0_real, 0.0_real });
+        if (nbv->localAtomOrderMatchesNbnxmOrder())
+        {
+            for (Index i = 0; i < atomIndices.ssize(); ++i)
+            {
+                const int atom = atomIndices[i];
+                if (nonbonded_verlet_t::isValidLocalAtom(atom))
+                {
+                    outputs[contributionIndex].forces[atom] = reducedForces[contributionIndex][i];
+                }
+            }
+        }
+        else
+        {
+            outputs[contributionIndex].forces = std::move(reducedForces[contributionIndex]);
+        }
+    }
+
+    return outputs;
+}
+
+std::vector<PcffNonbondedOutput> evaluateExactRespaNativeMultiContributionsForceOnly(
+        const PcffNonbondedSystem&                      system,
+        const interaction_const_t&                      ic,
+        const real                                      cutoff,
+        const CoulombKernelType                         coulombKernelType,
+        const NbnxmKernelType                           kernelType,
+        const std::vector<MtsNonbondedRespaContribution>& contributions)
+{
+    StepWorkload stepWork;
+    stepWork.computeForces = true;
+    return evaluateExactRespaNativeMultiContributions(
+            system, ic, cutoff, coulombKernelType, kernelType, contributions, stepWork);
+}
+
 std::pair<real, real> class2Coefficients(const real sigma, const real epsilon)
 {
     return { 18.0_real * epsilon * gmx::power6(sigma), 18.0_real * epsilon * std::pow(sigma, 9) };
@@ -487,6 +602,69 @@ PcffNonbondedSystem makeSmallOligomerNoPairsSystem(const bool withLennardJones, 
     {
         std::fill(system.charges.begin(), system.charges.end(), 0.0_real);
     }
+    return system;
+}
+
+PcffNonbondedSystem replicateSystem(const PcffNonbondedSystem& base, const int nx, const int ny, const int nz)
+{
+    GMX_RELEASE_ASSERT(nx > 0 && ny > 0 && nz > 0, "Replication factors must be positive");
+    GMX_RELEASE_ASSERT(base.coordinates.size() == base.atomTypes.size()
+                               && base.coordinates.size() == base.charges.size()
+                               && base.coordinates.size() == base.atomInfo.size()
+                               && base.coordinates.size() == base.exclusions.ssize(),
+                       "Replicated PCFF test systems require consistent per-atom arrays");
+
+    const int atomsPerReplica = static_cast<int>(base.coordinates.size());
+    PcffNonbondedSystem system;
+    system.numAtomTypes        = base.numAtomTypes;
+    system.nonbondedParameters = base.nonbondedParameters;
+    system.atomTypes.reserve(atomsPerReplica * nx * ny * nz);
+    system.charges.reserve(atomsPerReplica * nx * ny * nz);
+    system.atomInfo.reserve(atomsPerReplica * nx * ny * nz);
+    system.coordinates.reserve(atomsPerReplica * nx * ny * nz);
+
+    const real dx = base.box[XX][XX];
+    const real dy = base.box[YY][YY];
+    const real dz = base.box[ZZ][ZZ];
+
+    int replicaIndex = 0;
+    for (int iz = 0; iz < nz; ++iz)
+    {
+        for (int iy = 0; iy < ny; ++iy)
+        {
+            for (int ix = 0; ix < nx; ++ix, ++replicaIndex)
+            {
+                const int atomOffset = replicaIndex * atomsPerReplica;
+                for (int atom = 0; atom < atomsPerReplica; ++atom)
+                {
+                    system.atomTypes.push_back(base.atomTypes[atom]);
+                    system.charges.push_back(base.charges[atom]);
+                    system.atomInfo.push_back(base.atomInfo[atom]);
+                    system.coordinates.push_back(
+                            { base.coordinates[atom][XX] + ix * dx,
+                              base.coordinates[atom][YY] + iy * dy,
+                              base.coordinates[atom][ZZ] + iz * dz });
+                }
+
+                for (int atom = 0; atom < atomsPerReplica; ++atom)
+                {
+                    std::vector<int> shiftedExclusions;
+                    shiftedExclusions.reserve(base.exclusions[atom].size());
+                    for (const int excludedAtom : base.exclusions[atom])
+                    {
+                        shiftedExclusions.push_back(atomOffset + excludedAtom);
+                    }
+                    system.exclusions.pushBack(shiftedExclusions);
+                }
+            }
+        }
+    }
+
+    clear_mat(system.box);
+    system.box[XX][XX] = nx * dx;
+    system.box[YY][YY] = ny * dy;
+    system.box[ZZ][ZZ] = nz * dz;
+
     return system;
 }
 
@@ -975,6 +1153,190 @@ TEST(PcffClass2NonbondedCurveTest, ExactRespaContributionsRecomposeFullPmeNonbon
             {
                 EXPECT_NEAR(recomposedOutput.forces[atom][d], fullOutput.forces[atom][d], 2e-4)
                         << "atom=" << atom << " dim=" << d;
+            }
+        }
+    }
+}
+
+TEST(PcffClass2NonbondedCurveTest, ExactRespaNativeMultiForceOnlyMatchesPerContributionLaunch)
+{
+    constexpr real sigma    = 0.34_real;
+    constexpr real epsilon  = 0.50208_real;
+    constexpr real cutoff   = 1.2_real;
+    constexpr real distance = 0.52_real;
+
+    const auto [c6, c9] = class2Coefficients(sigma, epsilon);
+    const auto system   = makeTwoAtomSystem(distance, c6, c9, 0.35_real, -0.40_real, false);
+    const auto splitIc  = makeExactRespaInteractionConst(CoulombKernelType::Table, 9.0, cutoff);
+    const std::vector<MtsNonbondedRespaContribution> contributions = {
+        MtsNonbondedRespaContribution::Inner,
+        MtsNonbondedRespaContribution::Middle,
+        MtsNonbondedRespaContribution::Outer
+    };
+
+    for (const NbnxmKernelType kernelType : cpuKernelTypesToValidate())
+    {
+        SCOPED_TRACE(testing::Message() << "kernel=" << static_cast<int>(kernelType));
+
+        const auto nativeOutputs = evaluateExactRespaNativeMultiContributionsForceOnly(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, contributions);
+        ASSERT_EQ(nativeOutputs.size(), contributions.size());
+
+        for (int contributionIndex = 0; contributionIndex < ssize(contributions); ++contributionIndex)
+        {
+            SCOPED_TRACE(testing::Message() << "contribution=" << contributionIndex);
+            const auto serialOutput = evaluateExactRespaContributionForceOnly(
+                    system, splitIc, cutoff, CoulombKernelType::Table, kernelType, contributions[contributionIndex]);
+
+            for (Index atom = 0; atom < ssize(system.coordinates); ++atom)
+            {
+                for (int d = 0; d < DIM; ++d)
+                {
+                    EXPECT_NEAR(nativeOutputs[contributionIndex].forces[atom][d],
+                                serialOutput.forces[atom][d],
+                                2e-4)
+                            << "atom=" << atom << " dim=" << d;
+                }
+            }
+        }
+    }
+}
+
+TEST(PcffClass2NonbondedCurveTest, ExactRespaNativeMultiOwnerEnergyMatchesPerContributionLaunch)
+{
+    constexpr real sigma    = 0.34_real;
+    constexpr real epsilon  = 0.50208_real;
+    constexpr real cutoff   = 1.2_real;
+    constexpr real distance = 0.52_real;
+
+    const auto [c6, c9] = class2Coefficients(sigma, epsilon);
+    const auto system   = makeTwoAtomSystem(distance, c6, c9, 0.35_real, -0.40_real, false);
+    const auto splitIc  = makeExactRespaInteractionConst(CoulombKernelType::Table, 9.0, cutoff);
+    const std::vector<MtsNonbondedRespaContribution> contributions = {
+        MtsNonbondedRespaContribution::Inner,
+        MtsNonbondedRespaContribution::Middle,
+        MtsNonbondedRespaContribution::Outer
+    };
+
+    StepWorkload stepWork;
+    stepWork.computeForces = true;
+    stepWork.computeEnergy = true;
+
+    for (const NbnxmKernelType kernelType : cpuKernelTypesToValidate())
+    {
+        SCOPED_TRACE(testing::Message() << "kernel=" << static_cast<int>(kernelType));
+
+        const auto nativeOutputs = evaluateExactRespaNativeMultiContributions(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, contributions, stepWork);
+        ASSERT_EQ(nativeOutputs.size(), contributions.size());
+
+        for (int contributionIndex = 0; contributionIndex < ssize(contributions); ++contributionIndex)
+        {
+            SCOPED_TRACE(testing::Message() << "contribution=" << contributionIndex);
+            const auto serialOutput = evaluateExactRespaContribution(
+                    system, splitIc, cutoff, CoulombKernelType::Table, kernelType, contributions[contributionIndex]);
+
+            for (Index atom = 0; atom < ssize(system.coordinates); ++atom)
+            {
+                for (int d = 0; d < DIM; ++d)
+                {
+                    EXPECT_NEAR(nativeOutputs[contributionIndex].forces[atom][d],
+                                serialOutput.forces[atom][d],
+                                2e-4)
+                            << "atom=" << atom << " dim=" << d;
+                }
+            }
+
+            EXPECT_NEAR(nativeOutputs[contributionIndex].vdwEnergy, serialOutput.vdwEnergy, 2e-4);
+            EXPECT_NEAR(nativeOutputs[contributionIndex].coulombEnergy, serialOutput.coulombEnergy, 2e-4);
+        }
+    }
+}
+
+TEST(PcffClass2NonbondedCurveTest, ExactRespaNativeMultiForceOnlyKeepsExcludedPmeCorrectionOuterOnly)
+{
+    constexpr real cutoff   = 1.2_real;
+    constexpr real distance = 0.52_real;
+    constexpr real q0       = 0.35_real;
+    constexpr real q1       = -0.40_real;
+
+    const auto system  = makeTwoAtomSystem(distance, 0.0_real, 0.0_real, q0, q1, true);
+    const auto splitIc = makeExactRespaInteractionConst(CoulombKernelType::Table, 9.0, cutoff);
+    const std::vector<MtsNonbondedRespaContribution> contributions = {
+        MtsNonbondedRespaContribution::Inner,
+        MtsNonbondedRespaContribution::Middle,
+        MtsNonbondedRespaContribution::Outer
+    };
+
+    for (const NbnxmKernelType kernelType : cpuKernelTypesToValidate())
+    {
+        SCOPED_TRACE(testing::Message() << "kernel=" << static_cast<int>(kernelType));
+
+        const auto nativeOutputs = evaluateExactRespaNativeMultiContributionsForceOnly(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, contributions);
+        ASSERT_EQ(nativeOutputs.size(), contributions.size());
+
+        for (Index atom = 0; atom < ssize(system.coordinates); ++atom)
+        {
+            for (int d = 0; d < DIM; ++d)
+            {
+                EXPECT_NEAR(nativeOutputs[0].forces[atom][d], 0.0_real, 1e-8)
+                        << "inner atom=" << atom << " dim=" << d;
+                EXPECT_NEAR(nativeOutputs[1].forces[atom][d], 0.0_real, 1e-8)
+                        << "middle atom=" << atom << " dim=" << d;
+            }
+        }
+
+        const auto outerSerial = evaluateExactRespaContributionForceOnly(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, MtsNonbondedRespaContribution::Outer);
+        for (Index atom = 0; atom < ssize(system.coordinates); ++atom)
+        {
+            for (int d = 0; d < DIM; ++d)
+            {
+                EXPECT_NEAR(nativeOutputs[2].forces[atom][d], outerSerial.forces[atom][d], 2e-4)
+                        << "outer atom=" << atom << " dim=" << d;
+            }
+        }
+    }
+}
+
+TEST(PcffClass2NonbondedCurveTest, ExactRespaNativeMultiDenseInnerMiddleMatchesPerContributionLaunch)
+{
+    constexpr real cutoff = 0.9_real;
+    const auto     system = replicateSystem(makeSmallOligomerNoPairsSystem(true, true), 6, 6, 6);
+    const auto     splitIc = makeExactRespaInteractionConst(CoulombKernelType::Table, 9.0, cutoff);
+    const std::vector<MtsNonbondedRespaContribution> contributions = {
+        MtsNonbondedRespaContribution::Inner,
+        MtsNonbondedRespaContribution::Middle
+    };
+
+    for (const NbnxmKernelType kernelType : cpuSimdKernelTypesToValidate())
+    {
+        SCOPED_TRACE(testing::Message() << "kernel=" << static_cast<int>(kernelType));
+        const auto nativeOutputs = evaluateExactRespaNativeMultiContributionsForceOnly(
+                system, splitIc, cutoff, CoulombKernelType::Table, kernelType, contributions);
+        ASSERT_EQ(nativeOutputs.size(), contributions.size());
+        // The dense middle-contribution fixture can differ from per-launch by
+        // a few single-precision ULPs on both CPU SIMD kernel families.
+        const bool simdKernel = kernelType == NbnxmKernelType::Cpu4xN_Simd_4xN
+                                || kernelType == NbnxmKernelType::Cpu4xN_Simd_2xNN;
+        const real forceTolerance = simdKernel ? 5e-6_real : 1e-6_real;
+
+        for (int contributionIndex = 0; contributionIndex < ssize(contributions); ++contributionIndex)
+        {
+            SCOPED_TRACE(testing::Message() << "contribution=" << contributionIndex);
+            const auto serialOutput = evaluateExactRespaContributionForceOnly(
+                    system, splitIc, cutoff, CoulombKernelType::Table, kernelType, contributions[contributionIndex]);
+
+            for (Index atom = 0; atom < ssize(system.coordinates); ++atom)
+            {
+                for (int d = 0; d < DIM; ++d)
+                {
+                    EXPECT_NEAR(nativeOutputs[contributionIndex].forces[atom][d],
+                                serialOutput.forces[atom][d],
+                                forceTolerance)
+                            << "atom=" << atom << " dim=" << d;
+                }
             }
         }
     }

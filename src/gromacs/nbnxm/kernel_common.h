@@ -44,6 +44,9 @@
 #ifndef GMX_NBXNM_KERNEL_COMMON_H
 #define GMX_NBXNM_KERNEL_COMMON_H
 
+#include <cstdlib>
+#include <cstring>
+
 #include "gromacs/mdtypes/interaction_const.h"
 #include "gromacs/utility/vectypes.h"
 /* nbnxn_atomdata_t and nbnxn_pairlist_t could be forward declared, but that requires modifications in all SIMD kernel files */
@@ -117,7 +120,56 @@ void reduce_energies_over_lists(const nbnxn_atomdata_t* nbat, int nlist, real* V
 /*! \brief Returns whether the current CPU NBNXM launch should apply exact r-RESPA split weights. */
 inline bool exactRespaCpuPairSplitLaunchActive(const interaction_const_t& ic)
 {
-    return ic.exactRespaCpuPairSplit.configured && ic.exactRespaCpuPairSplit.active;
+    return ic.exactRespaCpuPairSplit.configured && ic.exactRespaCpuPairSplit.active
+           && !ic.exactRespaCpuPairSplit.nativeMultiActive;
+}
+
+/*! \brief Returns whether the current CPU NBNXM launch writes multiple exact contributions. */
+inline bool exactRespaCpuPairSplitNativeMultiLaunchActive(const interaction_const_t& ic)
+{
+    return ic.exactRespaCpuPairSplit.configured && ic.exactRespaCpuPairSplit.active
+           && ic.exactRespaCpuPairSplit.nativeMultiActive
+           && ic.exactRespaCpuPairSplit.nativeMultiContributionCount > 1;
+}
+
+/*! \brief Returns the current native multi-contribution count. */
+inline int exactRespaCpuPairSplitNativeMultiContributionCount(const interaction_const_t& ic)
+{
+    GMX_RELEASE_ASSERT(exactRespaCpuPairSplitNativeMultiLaunchActive(ic),
+                       "Native multi-contribution exact r-RESPA CPU launch must be active");
+    return ic.exactRespaCpuPairSplit.nativeMultiContributionCount;
+}
+
+/*! \brief Returns one active native multi-contribution by launch-local index. */
+inline MtsNonbondedRespaContribution exactRespaCpuPairSplitNativeMultiContribution(
+        const interaction_const_t& ic, const int contributionIndex)
+{
+    GMX_RELEASE_ASSERT(exactRespaCpuPairSplitNativeMultiLaunchActive(ic),
+                       "Native multi-contribution exact r-RESPA CPU launch must be active");
+    GMX_RELEASE_ASSERT(contributionIndex >= 0
+                               && contributionIndex < ic.exactRespaCpuPairSplit.nativeMultiContributionCount,
+                       "Native multi-contribution exact r-RESPA CPU contribution index is out of range");
+    return ic.exactRespaCpuPairSplit.nativeMultiContributions[contributionIndex];
+}
+
+/*! \brief Returns whether the native multi inner/middle dual-contribution fast path is enabled. */
+inline bool exactRespaCpuPairSplitNativeMultiTwoContributionFastPathEnabled()
+{
+    static const bool enabled = []()
+    {
+        const char* env =
+                std::getenv("GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_DISABLE_TWO_CONTRIB_FASTPATH");
+        return env == nullptr || *env == '\0' || std::strcmp(env, "0") == 0;
+    }();
+    return enabled;
+}
+
+/*! \brief Returns whether one exact r-RESPA contribution owns the correction term. */
+inline bool exactRespaCpuPairSplitContributionAddsCorrection(
+        const MtsNonbondedRespaContribution contribution)
+{
+    return contribution == MtsNonbondedRespaContribution::Outer
+           || contribution == MtsNonbondedRespaContribution::Full;
 }
 
 /*! \brief Cubic switch that matches the scalar exact r-RESPA split path. */
@@ -140,18 +192,18 @@ inline real exactRespaSwitchIn(const real r, const real off, const real on)
     return x * x * (3.0_real - 2.0_real * x);
 }
 
-/*! \brief Returns the exact r-RESPA direct-force weight for distance \p r. */
-inline real exactRespaCpuPairSplitWeight(const interaction_const_t& ic, const real r)
+/*! \brief Returns the exact r-RESPA direct-force weight for \p contribution at distance \p r. */
+inline real exactRespaCpuPairSplitWeightForContribution(const interaction_const_t& ic,
+                                                        const MtsNonbondedRespaContribution contribution,
+                                                        const real r)
 {
-    if (!exactRespaCpuPairSplitLaunchActive(ic))
+    if (!(exactRespaCpuPairSplitLaunchActive(ic) || exactRespaCpuPairSplitNativeMultiLaunchActive(ic)))
     {
         return 1.0_real;
     }
 
     GMX_RELEASE_ASSERT(ic.exactRespaCpuPairSplit.configured,
                        "Exact r-RESPA CPU split launch must have configured split metadata");
-
-    const auto contribution = ic.exactRespaCpuPairSplit.contribution;
     switch (contribution)
     {
         case MtsNonbondedRespaContribution::Inner:
@@ -193,12 +245,17 @@ inline real exactRespaCpuPairSplitWeight(const interaction_const_t& ic, const re
     return 0.0_real;
 }
 
+/*! \brief Returns the exact r-RESPA direct-force weight for the current launch at distance \p r. */
+inline real exactRespaCpuPairSplitWeight(const interaction_const_t& ic, const real r)
+{
+    return exactRespaCpuPairSplitWeightForContribution(ic, ic.exactRespaCpuPairSplit.contribution, r);
+}
+
 /*! \brief Returns whether the current exact r-RESPA launch owns the correction term. */
 inline bool exactRespaCpuPairSplitAddsCorrection(const interaction_const_t& ic)
 {
     return !exactRespaCpuPairSplitLaunchActive(ic)
-           || ic.exactRespaCpuPairSplit.contribution == MtsNonbondedRespaContribution::Outer
-           || ic.exactRespaCpuPairSplit.contribution == MtsNonbondedRespaContribution::Full;
+           || exactRespaCpuPairSplitContributionAddsCorrection(ic.exactRespaCpuPairSplit.contribution);
 }
 
 } // namespace gmx

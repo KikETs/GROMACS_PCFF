@@ -1,0 +1,201 @@
+{
+  "env": {
+    "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT": "0",
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI": "1",
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "1",
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SPLIT_OWNER_OUTPUTS": "0",
+    "GMX_PCFF_EXACT_RESPA_UPDATE_DIRECT_FASTPATH": "1",
+    "GMX_PCFF_EXACT_RESPA_UPDATE_OMP": "1"
+  },
+  "ntomp": 12,
+  "pinargs": [
+    "-pin",
+    "on",
+    "-pinstride",
+    "2"
+  ],
+  "rows": [
+    {
+      "build_report": {
+        "C compiler flags:": "-Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O3 -DNDEBUG",
+        "C++ compiler flags:": "-Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG",
+        "CPU FFT library:": "fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512",
+        "SIMD instructions:": "AVX_512"
+      },
+      "cpt": "1487d8049f1c8913956d541ef5fdc39f3317759140f960134c4f694314fa4545",
+      "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
+      "force_seconds": 2.425,
+      "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
+      "hour_per_ns": 0.251,
+      "label": "skylake_auto",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/znver4_build_compare_ntomp12_pinstride2_10000_20260421/skylake_auto/rep01/run.log",
+      "ms_per_step": 0.451,
+      "nb_xf_buffer_ops_seconds": 0.262,
+      "neighbor_search_seconds": 0.368,
+      "ns_per_day": 95.775,
+      "pme_mesh_seconds": 1.001,
+      "repeat": 1,
+      "update_seconds": 2.063
+    },
+    {
+      "build_report": {
+        "C compiler flags:": "-Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O3 -DNDEBUG",
+        "C++ compiler flags:": "-Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG",
+        "CPU FFT library:": "fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512",
+        "SIMD instructions:": "AVX_512"
+      },
+      "cpt": "e4c557f572f32dc17bc1609bd622803179863e0683e463978e8b15ff47a44f0a",
+      "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
+      "force_seconds": 2.391,
+      "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
+      "hour_per_ns": 0.246,
+      "label": "skylake_auto",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/znver4_build_compare_ntomp12_pinstride2_10000_20260421/skylake_auto/rep02/run.log",
+      "ms_per_step": 0.442,
+      "nb_xf_buffer_ops_seconds": 0.266,
+      "neighbor_search_seconds": 0.358,
+      "ns_per_day": 97.642,
+      "pme_mesh_seconds": 0.972,
+      "repeat": 2,
+      "update_seconds": 2.02
+    },
+    {
+      "build_report": {
+        "C compiler flags:": "-Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O3 -DNDEBUG",
+        "C++ compiler flags:": "-Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG",
+        "CPU FFT library:": "fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512",
+        "SIMD instructions:": "AVX_512"
+      },
+      "cpt": "8ba8b8d09d2f8f45f4de085df9721c38c3d8fd9a969ee9e123d814771db3b5d2",
+      "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
+      "force_seconds": 2.394,
+      "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
+      "hour_per_ns": 0.247,
+      "label": "skylake_auto",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/znver4_build_compare_ntomp12_pinstride2_10000_20260421/skylake_auto/rep03/run.log",
+      "ms_per_step": 0.445,
+      "nb_xf_buffer_ops_seconds": 0.264,
+      "neighbor_search_seconds": 0.353,
+      "ns_per_day": 97.059,
+      "pme_mesh_seconds": 0.997,
+      "repeat": 3,
+      "update_seconds": 2.033
+    },
+    {
+      "build_report": {
+        "C compiler flags:": "-O3 -DNDEBUG",
+        "C++ compiler flags:": "-Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG",
+        "CPU FFT library:": "fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512",
+        "SIMD instructions:": "AVX_512"
+      },
+      "cpt": "3962ddb351762a83f2a33228e5dbe0a81b6e7fb5fdc40c13b5d1a84a61f225cf",
+      "edr": "75722efdc2fbcbadcfe939423e2ce744e1689afe48d81298ec9cd5eb7e4b6a66",
+      "force_seconds": 2.306,
+      "gro": "459b046017bb7a20a16853c7d08c1306de85b32111024cf3361cca10813611c3",
+      "hour_per_ns": 0.239,
+      "label": "znver4",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/znver4_build_compare_ntomp12_pinstride2_10000_20260421/znver4/rep01/run.log",
+      "ms_per_step": 0.43,
+      "nb_xf_buffer_ops_seconds": 0.258,
+      "neighbor_search_seconds": 0.353,
+      "ns_per_day": 100.446,
+      "pme_mesh_seconds": 0.955,
+      "repeat": 1,
+      "update_seconds": 1.961
+    },
+    {
+      "build_report": {
+        "C compiler flags:": "-O3 -DNDEBUG",
+        "C++ compiler flags:": "-Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG",
+        "CPU FFT library:": "fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512",
+        "SIMD instructions:": "AVX_512"
+      },
+      "cpt": "cd602a4b5bd40dadc0b117bfffd7df4e171e2775eb0e97b1bad0c4bd97678235",
+      "edr": "75722efdc2fbcbadcfe939423e2ce744e1689afe48d81298ec9cd5eb7e4b6a66",
+      "force_seconds": 2.332,
+      "gro": "459b046017bb7a20a16853c7d08c1306de85b32111024cf3361cca10813611c3",
+      "hour_per_ns": 0.243,
+      "label": "znver4",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/znver4_build_compare_ntomp12_pinstride2_10000_20260421/znver4/rep02/run.log",
+      "ms_per_step": 0.438,
+      "nb_xf_buffer_ops_seconds": 0.263,
+      "neighbor_search_seconds": 0.358,
+      "ns_per_day": 98.695,
+      "pme_mesh_seconds": 0.989,
+      "repeat": 2,
+      "update_seconds": 1.997
+    },
+    {
+      "build_report": {
+        "C compiler flags:": "-O3 -DNDEBUG",
+        "C++ compiler flags:": "-Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG",
+        "CPU FFT library:": "fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512",
+        "SIMD instructions:": "AVX_512"
+      },
+      "cpt": "c5bec656a275bf494e9506817cdc0d31ba20b27fb226461bcbd2345d81b4d6d4",
+      "edr": "75722efdc2fbcbadcfe939423e2ce744e1689afe48d81298ec9cd5eb7e4b6a66",
+      "force_seconds": 2.369,
+      "gro": "459b046017bb7a20a16853c7d08c1306de85b32111024cf3361cca10813611c3",
+      "hour_per_ns": 0.245,
+      "label": "znver4",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/znver4_build_compare_ntomp12_pinstride2_10000_20260421/znver4/rep03/run.log",
+      "ms_per_step": 0.442,
+      "nb_xf_buffer_ops_seconds": 0.267,
+      "neighbor_search_seconds": 0.362,
+      "ns_per_day": 97.83,
+      "pme_mesh_seconds": 0.969,
+      "repeat": 3,
+      "update_seconds": 2.011
+    }
+  ],
+  "schema": "exact_respa_znver4_build_compare",
+  "steps": 10000,
+  "summary": [
+    {
+      "edr_all_equal_within_label": true,
+      "example_build_report": {
+        "C compiler flags:": "-Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O3 -DNDEBUG",
+        "C++ compiler flags:": "-Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG",
+        "CPU FFT library:": "fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512",
+        "SIMD instructions:": "AVX_512"
+      },
+      "gro_all_equal_within_label": true,
+      "label": "skylake_auto",
+      "mean_force_seconds": 2.4033333333333333,
+      "mean_ms_per_step": 0.446,
+      "mean_nb_xf_buffer_ops_seconds": 0.264,
+      "mean_neighbor_search_seconds": 0.35966666666666663,
+      "mean_ns_per_day": 96.82533333333333,
+      "mean_pme_mesh_seconds": 0.99,
+      "mean_update_seconds": 2.038666666666667,
+      "stdev_ns_per_day": 0.779902700483987
+    },
+    {
+      "edr_all_equal_within_label": true,
+      "example_build_report": {
+        "C compiler flags:": "-O3 -DNDEBUG",
+        "C++ compiler flags:": "-Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG",
+        "CPU FFT library:": "fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512",
+        "SIMD instructions:": "AVX_512"
+      },
+      "gro_all_equal_within_label": true,
+      "label": "znver4",
+      "mean_force_seconds": 2.3356666666666666,
+      "mean_ms_per_step": 0.43666666666666665,
+      "mean_nb_xf_buffer_ops_seconds": 0.26266666666666666,
+      "mean_neighbor_search_seconds": 0.35766666666666663,
+      "mean_ns_per_day": 98.99033333333333,
+      "mean_pme_mesh_seconds": 0.971,
+      "mean_update_seconds": 1.9896666666666667,
+      "stdev_ns_per_day": 1.0882035144626623
+    },
+    {
+      "delta_force_seconds_pct": -2.8155339805825297,
+      "delta_ns_per_day_pct": 2.2359850727770914,
+      "delta_update_seconds_pct": -2.403531720078489,
+      "edr_cross_build_equal": false,
+      "gro_cross_build_equal": false,
+      "label": "znver4_vs_skylake_auto"
+    }
+  ]
+}

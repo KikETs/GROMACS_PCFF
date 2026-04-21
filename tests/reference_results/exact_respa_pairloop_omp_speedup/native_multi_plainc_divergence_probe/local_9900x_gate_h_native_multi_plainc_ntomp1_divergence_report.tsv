@@ -1,0 +1,6 @@
+fixture_id	steps	baseline_ns_per_day	candidate_ns_per_day	speedup	total_force_max_abs_component_delta	per_level_force_max_abs_component_delta	energy_max_abs_delta	gro_max_abs_coord_delta_nm	gro_sha256_equal	edr_sha256_equal	cpt_sha256_equal
+gate_h_dense_salt_polymer_2x2x2_equil_ntomp1_plainc	4	0.258	0.448	1.7364341085271318	0.00030517578125	0.000244140625	0.019999999999527063	0.0	true	false	false
+gate_h_dense_salt_polymer_2x2x2_equil_ntomp1_plainc	64	0.396	1.067	2.694444444444444	0.00030517578125	0.000244140625	0.019999999999527063	0.0	false	false	false
+gate_h_dense_salt_polymer_2x2x2_equil_ntomp1_plainc	256	0.412	1.164	2.825242718446602	0.317352294921875	0.3170166015625	1.0	0.001000000000000334	false	false	false
+gate_h_dense_salt_polymer_2x2x2_equil_ntomp1_plainc	1024	0.414	1.203	2.905797101449276	2.34844970703125	2.34918212890625	1.1000000000003638	0.001000000000000334	false	false	false
+gate_h_dense_salt_polymer_2x2x2_equil_ntomp1_plainc	2000	0.429	1.233	2.8741258741258746	14.1541748046875	14.0948486328125	2.1099999999999	0.001000000000000334	false	false	false

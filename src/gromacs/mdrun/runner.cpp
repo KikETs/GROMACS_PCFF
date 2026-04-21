@@ -1986,16 +1986,23 @@ int Mdrunner::mdrunner()
             }
         }
 
+        if (fr->plainPairlistRange.has_value())
+        {
+            fr->completePairlistRange =
+                    std::max(fr->completePairlistRange.value_or(0.0_real), fr->plainPairlistRange.value());
+        }
+
         if (gmx::useExactRespa(*inputrec) && gmx::exactRespaHasPairSplitting(*inputrec))
         {
-            const real requiredPlainPairlistRange = std::max(fr->ic->coulomb.cutoff, fr->ic->vdw.cutoff);
-            fr->plainPairlistRange = std::max(fr->plainPairlistRange.value_or(0.0_real), requiredPlainPairlistRange);
-            if (fr->plainPairlistRange.value() > inputrec->rlist)
+            const real requiredCompletePairlistRange = std::max(fr->ic->coulomb.cutoff, fr->ic->vdw.cutoff);
+            fr->completePairlistRange =
+                    std::max(fr->completePairlistRange.value_or(0.0_real), requiredCompletePairlistRange);
+            if (fr->completePairlistRange.value() > inputrec->rlist)
             {
                 const std::string mesg = gmx::formatString(
-                        "Exact LAMMPS-style r-RESPA requires a plain pairlist range of %f nm, which is larger "
+                        "Exact LAMMPS-style r-RESPA requires a complete pairlist range of %f nm, which is larger "
                         "than the normal pairlist range of %f nm",
-                        fr->plainPairlistRange.value(),
+                        fr->completePairlistRange.value(),
                         inputrec->rlist);
                 GMX_THROW(gmx::APIError(mesg));
             }

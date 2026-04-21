@@ -209,6 +209,26 @@ void nbnxn_atomdata_t::copyOutputBuffersToNativeMultiContributionOutputBuffers(
     }
 }
 
+nbnxn_atomdata_output_t* nbnxn_atomdata_t::correspondingNativeMultiContributionOutputBuffer(
+        const int contributionOutputIndex, const nbnxn_atomdata_output_t* outputBuffer) const
+{
+    GMX_RELEASE_ASSERT(outputBuffer != nullptr,
+                       "Need a valid reference output buffer for native multi-contribution lookup");
+    const nbnxn_atomdata_output_t* firstOutputBuffer = outputBuffers_.data();
+    const nbnxn_atomdata_output_t* pastLastOutputBuffer = firstOutputBuffer + outputBuffers_.size();
+    if (outputBuffer < firstOutputBuffer || outputBuffer >= pastLastOutputBuffer)
+    {
+        GMX_THROW(InternalError(
+                "Native multi-contribution output lookup requires a pointer into outputBuffers_"));
+    }
+
+    const auto nativeOutputBuffers = nativeMultiContributionOutputBuffers(contributionOutputIndex);
+    const int outputIndex = static_cast<int>(outputBuffer - firstOutputBuffer);
+    GMX_RELEASE_ASSERT(outputIndex >= 0 && outputIndex < nativeOutputBuffers.ssize(),
+                       "Reference output buffer index must resolve inside the native output set");
+    return const_cast<nbnxn_atomdata_output_t*>(&nativeOutputBuffers[outputIndex]);
+}
+
 /* Initializes an nbnxn_atomdata_output_t data structure */
 nbnxn_atomdata_output_t::nbnxn_atomdata_output_t(NbnxmKernelType kernelType,
                                                  int             numEnergyGroups,
@@ -1587,10 +1607,16 @@ static void addNbatFPackedToFPart(const nbnxn_atomdata_output_t& out,
 void nbnxn_atomdata_t::reduceForcesOverThreads(ArrayRef<nbnxn_atomdata_output_t> outputBuffers)
 {
     // The number of output buffers should match the number of OpenMP threads
-    const int nth = outputBuffers.ssize();
+    const int  nth = outputBuffers.ssize();
+    const bool forceSerialReduction = []()
+    {
+        const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_NBNXM_SERIAL_REDUCTION");
+        return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+    }();
+    const int reductionWorkers = forceSerialReduction ? 1 : nth;
 
-#pragma omp parallel for num_threads(nth) schedule(static)
-    for (int th = 0; th < nth; th++)
+#pragma omp parallel for num_threads(reductionWorkers) schedule(static)
+    for (int th = 0; th < reductionWorkers; th++)
     {
         try
         {
@@ -1599,8 +1625,8 @@ void nbnxn_atomdata_t::reduceForcesOverThreads(ArrayRef<nbnxn_atomdata_output_t>
             ArrayRef<const gmx_bitmask_t> flags = bufferFlags_;
 
             /* Calculate the cell-block range for our thread */
-            const int b0 = (flags.size() * th) / nth;
-            const int b1 = (flags.size() * (th + 1)) / nth;
+            const int b0 = (flags.size() * th) / reductionWorkers;
+            const int b1 = (flags.size() * (th + 1)) / reductionWorkers;
 
             for (int b = b0; b < b1; b++)
             {

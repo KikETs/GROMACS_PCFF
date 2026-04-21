@@ -1,0 +1,107 @@
+{
+  "ntomp": 10,
+  "pinargs": [
+    "-pin",
+    "on",
+    "-pinstride",
+    "2"
+  ],
+  "rows": [
+    {
+      "cpt": "3d47009991052a88ca019908a2a6b3c011abf4635023e5935806091dd93083bf",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "force_seconds": 2.665,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "hour_per_ns": 0.265,
+      "label": "direct_off",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_off/rep01/run.log",
+      "ms_per_step": 0.478,
+      "neighbor_search_seconds": 0.426,
+      "ns_per_day": 90.397,
+      "pme_mesh_seconds": 0.98,
+      "repeat": 1,
+      "update_seconds": 2.197
+    },
+    {
+      "cpt": "515764469fa82b7cccb203d71d57948340e7dcbbb6b34275f0a98e4629ec5834",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "force_seconds": 2.56,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "hour_per_ns": 0.256,
+      "label": "direct_off",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_off/rep02/run.log",
+      "ms_per_step": 0.461,
+      "neighbor_search_seconds": 0.403,
+      "ns_per_day": 93.715,
+      "pme_mesh_seconds": 0.969,
+      "repeat": 2,
+      "update_seconds": 2.12
+    },
+    {
+      "cpt": "00a2e33c8851ba5d97077d9e4a92d92a5062340d77e95bf5d681b0210f7f28af",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "force_seconds": 2.593,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "hour_per_ns": 0.259,
+      "label": "direct_on",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_on/rep01/run.log",
+      "ms_per_step": 0.466,
+      "neighbor_search_seconds": 0.429,
+      "ns_per_day": 92.681,
+      "pme_mesh_seconds": 0.973,
+      "repeat": 1,
+      "update_seconds": 2.135
+    },
+    {
+      "cpt": "affffa01def52889210c8e3df5f8dc21bc5da4c7f34b17bf62030734371521be",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "force_seconds": 2.614,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "hour_per_ns": 0.26,
+      "label": "direct_on",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_on/rep02/run.log",
+      "ms_per_step": 0.468,
+      "neighbor_search_seconds": 0.425,
+      "ns_per_day": 92.331,
+      "pme_mesh_seconds": 0.974,
+      "repeat": 2,
+      "update_seconds": 2.144
+    }
+  ],
+  "schema": "exact_respa_update_direct_fastpath_probe",
+  "steps": 10000,
+  "summary": [
+    {
+      "edr_all_equal": true,
+      "gro_all_equal": true,
+      "label": "direct_off",
+      "mean_force_seconds": 2.6125,
+      "mean_ms_per_step": 0.46950000000000003,
+      "mean_neighbor_search_seconds": 0.4145,
+      "mean_ns_per_day": 92.05600000000001,
+      "mean_pme_mesh_seconds": 0.9744999999999999,
+      "mean_update_seconds": 2.1585,
+      "stdev_ns_per_day": 1.658999999999999
+    },
+    {
+      "edr_all_equal": true,
+      "gro_all_equal": true,
+      "label": "direct_on",
+      "mean_force_seconds": 2.6035,
+      "mean_ms_per_step": 0.467,
+      "mean_neighbor_search_seconds": 0.427,
+      "mean_ns_per_day": 92.506,
+      "mean_pme_mesh_seconds": 0.9735,
+      "mean_update_seconds": 2.1395,
+      "stdev_ns_per_day": 0.17499999999999716
+    },
+    {
+      "delta_ns_per_day_pct": 0.4888328843312584,
+      "delta_update_seconds_pct": -0.8802409080379991,
+      "edr_cross_mode_equal": true,
+      "gro_cross_mode_equal": true,
+      "label": "direct_on_vs_off"
+    }
+  ],
+  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr"
+}

@@ -193,6 +193,17 @@ static NbnxmKernelType pickNbnxmKernelCpuSimdType(const t_inputrec&             
     GMX_RELEASE_ASSERT(sc_haveNbnxmSimd4xmKernels && sc_haveNbnxmSimd2xmmKernels,
                        "Here both 4xM and 2xMM SIMD kernels should be supported");
 
+    if (inputrec.exactRespa.enabled() && inputrec.exactRespa.forceLayout.hasPairSplitting())
+    {
+        /* The audited exact-r-RESPA CPU narrow/native-multi path closes on both
+         * local AVX-512 and remote AVX2 hosts when 2xNN is selected, while the
+         * AVX2 4xN path diverges from step 0 and grows rapidly over time.
+         * Keep the generic non-exact-respa heuristic unchanged and scope this
+         * portability guard to exact-r-RESPA pair splitting only.
+         */
+        return NbnxmKernelType::Cpu4xN_Simd_2xNN;
+    }
+
     if (hardwareInfo.haveAmdZen1Cpu)
     {
         /* One 256-bit FMA per cycle makes 2xNN faster */

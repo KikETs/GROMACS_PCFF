@@ -1,0 +1,62 @@
+{
+  "delta_final": {
+    "Density": -0.7621460000000297,
+    "Kinetic-En.": 91.76855400000022,
+    "Potential": 928.6875,
+    "Pressure": -301.22084000000007,
+    "Temperature": 3.406554999999969,
+    "Total-Energy": 1020.453125,
+    "Volume": 0.0898210000000006
+  },
+  "delta_mean": {
+    "Density": -0.223276000000169,
+    "Kinetic-En.": -81.16417511538384,
+    "Potential": 183.2878605769074,
+    "Pressure": -84.65235084615384,
+    "Temperature": -3.0129007692307823,
+    "Total-Energy": 102.12560096153175,
+    "Volume": 0.02634634615384357
+  },
+  "skylake_auto": {
+    "final": {
+      "Density": 703.639099,
+      "Kinetic-En.": 10070.375977,
+      "Potential": -198241.5,
+      "Pressure": -201.565781,
+      "Temperature": 373.823395,
+      "Total-Energy": -188171.125,
+      "Volume": 82.839668
+    },
+    "final_time_ps": 5.0,
+    "mean": {
+      "Density": 697.3848031923078,
+      "Kinetic-En.": 10253.794658923076,
+      "Potential": -186364.54447115384,
+      "Pressure": -249.00454157692306,
+      "Temperature": 380.63210715384616,
+      "Total-Energy": -176110.75060096153,
+      "Volume": 83.58854265384616
+    }
+  },
+  "znver4": {
+    "final": {
+      "Density": 702.876953,
+      "Kinetic-En.": 10162.144531,
+      "Potential": -197312.8125,
+      "Pressure": -502.786621,
+      "Temperature": 377.22995,
+      "Total-Energy": -187150.671875,
+      "Volume": 82.929489
+    },
+    "final_time_ps": 5.0,
+    "mean": {
+      "Density": 697.1615271923076,
+      "Kinetic-En.": 10172.630483807692,
+      "Potential": -186181.25661057694,
+      "Pressure": -333.6568924230769,
+      "Temperature": 377.6192063846154,
+      "Total-Energy": -176008.625,
+      "Volume": 83.614889
+    }
+  }
+}

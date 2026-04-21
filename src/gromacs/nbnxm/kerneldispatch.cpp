@@ -98,6 +98,18 @@ namespace gmx
 namespace
 {
 
+bool exactRespaCpuNbnxmKernelSupported(const NbnxmKernelType kernelType)
+{
+    switch (kernelType)
+    {
+        case NbnxmKernelType::Cpu4x4_PlainC:
+        case NbnxmKernelType::Cpu4xN_Simd_4xN:
+        case NbnxmKernelType::Cpu4xN_Simd_2xNN:
+        case NbnxmKernelType::Cpu1x1_PlainC: return true;
+        default: return false;
+    }
+}
+
 void appendM2pTraceTextLine(const char* traceDirPath, const char* fileName, const std::string& line)
 {
     if (traceDirPath == nullptr || *traceDirPath == '\0')
@@ -437,7 +449,9 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
         }
     }
 
-    const auto* shiftVecPointer = as_rvec_array(shiftVectors.data());
+    const auto* shiftVecPointer          = as_rvec_array(shiftVectors.data());
+    const bool  exactRespaNativeMultiActive =
+            exactRespaCpuPairSplitNativeMultiLaunchActive(ic) && stepWork.computeForces;
 
     int gmx_unused nthreads = gmx_omp_nthreads_get(ModuleMultiThread::Nonbonded);
     wallcycle_sub_start(wcycle, WallCycleSubCounter::NonbondedClear);
@@ -448,7 +462,18 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
         // so no need for a try/catch pair in this OpenMP region.
         nbnxn_atomdata_output_t& out = nbat->outputBuffer(nb);
 
-        if (clearF == enbvClearFYes)
+        if (clearF == enbvClearFYes && exactRespaNativeMultiActive)
+        {
+            const int contributionCount = exactRespaCpuPairSplitNativeMultiContributionCount(ic);
+            for (int contributionIndex = 0; contributionIndex < contributionCount; ++contributionIndex)
+            {
+                nbnxn_atomdata_output_t* nativeOut =
+                        nbat->correspondingNativeMultiContributionOutputBuffer(contributionIndex, &out);
+                std::fill(nativeOut->f.begin(), nativeOut->f.end(), 0.0_real);
+                clear_fshift(nativeOut->fshift.data());
+            }
+        }
+        else if (clearF == enbvClearFYes)
         {
             nbat->clearForceBuffer(nb);
 
@@ -952,7 +977,11 @@ public:
     ExactRespaCpuLaunchGuard(const interaction_const_t& ic, const StepWorkload& stepWork) : ic_(ic)
     {
         previousActive_       = ic_.exactRespaCpuPairSplit.active;
+        previousNativeMultiActive_ = ic_.exactRespaCpuPairSplit.nativeMultiActive;
         previousContribution_ = ic_.exactRespaCpuPairSplit.contribution;
+        previousNativeMultiContributionCount_ =
+                ic_.exactRespaCpuPairSplit.nativeMultiContributionCount;
+        previousNativeMultiContributions_ = ic_.exactRespaCpuPairSplit.nativeMultiContributions;
 
         const bool useSplitLaunch =
                 stepWork.nonbondedRespaContribution != MtsNonbondedRespaContribution::Full;
@@ -968,20 +997,72 @@ public:
         }
 
         ic_.exactRespaCpuPairSplit.active       = useSplitLaunch;
+        ic_.exactRespaCpuPairSplit.nativeMultiActive = false;
         ic_.exactRespaCpuPairSplit.contribution = stepWork.nonbondedRespaContribution;
+        ic_.exactRespaCpuPairSplit.nativeMultiContributionCount = 0;
+        ic_.exactRespaCpuPairSplit.nativeMultiContributions.fill(
+                MtsNonbondedRespaContribution::Full);
+    }
+
+    ExactRespaCpuLaunchGuard(const interaction_const_t& ic,
+                             gmx::ArrayRef<const MtsNonbondedRespaContribution> contributions) :
+        ic_(ic)
+    {
+        previousActive_       = ic_.exactRespaCpuPairSplit.active;
+        previousNativeMultiActive_ = ic_.exactRespaCpuPairSplit.nativeMultiActive;
+        previousContribution_ = ic_.exactRespaCpuPairSplit.contribution;
+        previousNativeMultiContributionCount_ =
+                ic_.exactRespaCpuPairSplit.nativeMultiContributionCount;
+        previousNativeMultiContributions_ = ic_.exactRespaCpuPairSplit.nativeMultiContributions;
+
+        GMX_RELEASE_ASSERT(ic_.exactRespaCpuPairSplit.configured,
+                           "Exact r-RESPA CPU native multi-contribution launches require configured split metadata");
+        GMX_RELEASE_ASSERT(contributions.size() > 1,
+                           "Exact r-RESPA CPU native multi-contribution launches require at least two contributions");
+        GMX_RELEASE_ASSERT(
+                contributions.size() <= interaction_const_t::c_maxExactRespaNativeMultiContributions,
+                "Exact r-RESPA CPU native multi-contribution launch exceeds the compiled contribution bound");
+        GMX_RELEASE_ASSERT(ic_.vdw.type == VanDerWaalsType::Cut
+                                   && ic_.vdw.modifier == InteractionModifiers::None
+                                   && usingPmeOrEwald(ic_.coulomb.type)
+                                   && ic_.coulomb.modifier == InteractionModifiers::None,
+                           "Exact r-RESPA CPU native multi-contribution launches support only cut-off LJ with PME/Ewald Coulomb and no real-space modifiers");
+
+        ic_.exactRespaCpuPairSplit.active                     = true;
+        ic_.exactRespaCpuPairSplit.nativeMultiActive          = true;
+        ic_.exactRespaCpuPairSplit.contribution               = MtsNonbondedRespaContribution::Full;
+        ic_.exactRespaCpuPairSplit.nativeMultiContributionCount = contributions.size();
+        ic_.exactRespaCpuPairSplit.nativeMultiContributions.fill(
+                MtsNonbondedRespaContribution::Full);
+        for (int contributionIndex = 0; contributionIndex < contributions.ssize(); ++contributionIndex)
+        {
+            ic_.exactRespaCpuPairSplit.nativeMultiContributions[contributionIndex] =
+                    contributions[contributionIndex];
+        }
     }
 
     ~ExactRespaCpuLaunchGuard()
     {
         ic_.exactRespaCpuPairSplit.active       = previousActive_;
+        ic_.exactRespaCpuPairSplit.nativeMultiActive = previousNativeMultiActive_;
         ic_.exactRespaCpuPairSplit.contribution = previousContribution_;
+        ic_.exactRespaCpuPairSplit.nativeMultiContributionCount =
+                previousNativeMultiContributionCount_;
+        ic_.exactRespaCpuPairSplit.nativeMultiContributions = previousNativeMultiContributions_;
     }
 
 private:
     const interaction_const_t&           ic_;
     bool                                 previousActive_ = false;
+    bool                                 previousNativeMultiActive_ = false;
     MtsNonbondedRespaContribution        previousContribution_ =
             MtsNonbondedRespaContribution::Full;
+    int                                  previousNativeMultiContributionCount_ = 0;
+    std::array<MtsNonbondedRespaContribution,
+               interaction_const_t::c_maxExactRespaNativeMultiContributions>
+            previousNativeMultiContributions_ = { MtsNonbondedRespaContribution::Full,
+                                                 MtsNonbondedRespaContribution::Full,
+                                                 MtsNonbondedRespaContribution::Full };
 };
 
 void nonbonded_verlet_t::dispatchNonbondedKernel(gmx::InteractionLocality       iLocality,
@@ -1048,6 +1129,54 @@ void nonbonded_verlet_t::dispatchNonbondedKernel(gmx::InteractionLocality       
 
         default: GMX_RELEASE_ASSERT(false, "Invalid nonbonded kernel type passed!");
     }
+
+    if (nrnb)
+    {
+        accountFlops(nrnb, pairlistSet, *this, ic, stepWork);
+    }
+}
+
+void nonbonded_verlet_t::dispatchExactRespaCpuNativeMultiKernel(
+        gmx::InteractionLocality                    iLocality,
+        const interaction_const_t&                 ic,
+        gmx::ArrayRef<const MtsNonbondedRespaContribution> contributions,
+        const gmx::StepWorkload&                   stepWork,
+        int                                        clearF,
+        gmx::ArrayRef<const gmx::RVec>             shiftvec,
+        gmx::ArrayRef<real>                        repulsionDispersionSR,
+        gmx::ArrayRef<real>                        CoulombSR,
+        t_nrnb*                                    nrnb) const
+{
+    GMX_RELEASE_ASSERT(exactRespaCpuNbnxmKernelSupported(kernelSetup().kernelType),
+                       "Exact r-RESPA CPU native multi-contribution dispatch requires a CPU NBNXM kernel");
+    GMX_RELEASE_ASSERT(!contributions.empty(),
+                       "Exact r-RESPA CPU native multi-contribution dispatch requires at least one contribution");
+    GMX_RELEASE_ASSERT(stepWork.computeForces,
+                       "Exact r-RESPA CPU native multi-contribution dispatch requires force computation");
+    GMX_RELEASE_ASSERT(!stepWork.computeEnergy
+                               || (!repulsionDispersionSR.empty() && !CoulombSR.empty()),
+                       "Exact r-RESPA CPU native multi-contribution dispatch requires real-space energy sinks on energy steps");
+    nbat_->ensureNativeMultiContributionOutputBuffers(contributions.ssize());
+
+    std::array<real, 1> dummyVdwEnergy = { 0.0_real };
+    std::array<real, 1> dummyCoulEnergy = { 0.0_real };
+    real*               coulombEnergy   =
+            stepWork.computeEnergy ? CoulombSR.data() : dummyCoulEnergy.data();
+    real* repulsionDispersionEnergy =
+            stepWork.computeEnergy ? repulsionDispersionSR.data() : dummyVdwEnergy.data();
+    const PairlistSet&  pairlistSet = pairlistSets().pairlistSet(iLocality);
+    const ExactRespaCpuLaunchGuard exactRespaCpuLaunchGuard(ic, contributions);
+
+    nbnxn_kernel_cpu(pairlistSet,
+                     kernelSetup(),
+                     nbat_.get(),
+                     ic,
+                     shiftvec,
+                     stepWork,
+                     clearF,
+                     coulombEnergy,
+                     repulsionDispersionEnergy,
+                     wcycle_);
 
     if (nrnb)
     {

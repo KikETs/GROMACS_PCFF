@@ -1,0 +1,222 @@
+{
+  "schema": "exact_respa_pinning_probe",
+  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
+  "steps": 10000,
+  "ntomp": 10,
+  "rows": [
+    {
+      "label": "pin_off",
+      "repeat": 1,
+      "pinargs": [
+        "-pin",
+        "off"
+      ],
+      "elapsed_seconds": 5.000980377197266,
+      "ns_per_day": 86.797,
+      "hour_per_ns": 0.277,
+      "ms_per_step": 0.498,
+      "neighbor_search_seconds": 0.399,
+      "force_seconds": 2.643,
+      "pme_mesh_seconds": 1.239,
+      "update_seconds": 2.308,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "cpt": "ad9c7616fe08b6697d263ccdbf33d3ef9a6945103ffdcdfcb3d412f5d8d74c15",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_off/rep01/run.log"
+    },
+    {
+      "label": "pin_off",
+      "repeat": 2,
+      "pinargs": [
+        "-pin",
+        "off"
+      ],
+      "elapsed_seconds": 5.085717678070068,
+      "ns_per_day": 85.346,
+      "hour_per_ns": 0.281,
+      "ms_per_step": 0.506,
+      "neighbor_search_seconds": 0.392,
+      "force_seconds": 2.641,
+      "pme_mesh_seconds": 1.317,
+      "update_seconds": 2.345,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "cpt": "d4c983fec006d237ee49619f9ca6e0c89dd3b87dd323d82c922b2ebe477e5b98",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_off/rep02/run.log"
+    },
+    {
+      "label": "pin_on_auto_stride",
+      "repeat": 1,
+      "pinargs": [
+        "-pin",
+        "on",
+        "-pinstride",
+        "0"
+      ],
+      "elapsed_seconds": 4.602245569229126,
+      "ns_per_day": 94.351,
+      "hour_per_ns": 0.254,
+      "ms_per_step": 0.458,
+      "neighbor_search_seconds": 0.397,
+      "force_seconds": 2.558,
+      "pme_mesh_seconds": 0.959,
+      "update_seconds": 2.103,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "cpt": "d0ec94dd1153914743bbf894f3ca723a81ed1ca5da7e978ad3bd9d145265756d",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_auto_stride/rep01/run.log"
+    },
+    {
+      "label": "pin_on_auto_stride",
+      "repeat": 2,
+      "pinargs": [
+        "-pin",
+        "on",
+        "-pinstride",
+        "0"
+      ],
+      "elapsed_seconds": 4.889989614486694,
+      "ns_per_day": 88.769,
+      "hour_per_ns": 0.27,
+      "ms_per_step": 0.487,
+      "neighbor_search_seconds": 0.457,
+      "force_seconds": 2.738,
+      "pme_mesh_seconds": 0.987,
+      "update_seconds": 2.247,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "cpt": "167d3db165a34dbce21d8a25aebf58e307b29df9d5ad10c0a0cd34f46f929435",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_auto_stride/rep02/run.log"
+    },
+    {
+      "label": "pin_on_stride1",
+      "repeat": 1,
+      "pinargs": [
+        "-pin",
+        "on",
+        "-pinstride",
+        "1"
+      ],
+      "elapsed_seconds": 5.3418238162994385,
+      "ns_per_day": 81.236,
+      "hour_per_ns": 0.295,
+      "ms_per_step": 0.532,
+      "neighbor_search_seconds": 0.576,
+      "force_seconds": 3.387,
+      "pme_mesh_seconds": 0.862,
+      "update_seconds": 2.481,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "cpt": "69065d3296e98d6e1ed0675bf59119ae104304e759ad8726782d334d78c137b9",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride1/rep01/run.log"
+    },
+    {
+      "label": "pin_on_stride1",
+      "repeat": 2,
+      "pinargs": [
+        "-pin",
+        "on",
+        "-pinstride",
+        "1"
+      ],
+      "elapsed_seconds": 5.341252326965332,
+      "ns_per_day": 81.246,
+      "hour_per_ns": 0.295,
+      "ms_per_step": 0.532,
+      "neighbor_search_seconds": 0.575,
+      "force_seconds": 3.39,
+      "pme_mesh_seconds": 0.86,
+      "update_seconds": 2.479,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "cpt": "2e5ead2b239e643c8f1aefc3d7a51604aaaf3b32129989ee02cb193d5015d28a",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride1/rep02/run.log"
+    },
+    {
+      "label": "pin_on_stride2",
+      "repeat": 1,
+      "pinargs": [
+        "-pin",
+        "on",
+        "-pinstride",
+        "2"
+      ],
+      "elapsed_seconds": 4.632617712020874,
+      "ns_per_day": 93.74,
+      "hour_per_ns": 0.256,
+      "ms_per_step": 0.461,
+      "neighbor_search_seconds": 0.405,
+      "force_seconds": 2.585,
+      "pme_mesh_seconds": 0.969,
+      "update_seconds": 2.127,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "cpt": "cfb41b50bbe59975237d0db268ba2ab50814b5081c62de2fabff339e850a3a93",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride2/rep01/run.log"
+    },
+    {
+      "label": "pin_on_stride2",
+      "repeat": 2,
+      "pinargs": [
+        "-pin",
+        "on",
+        "-pinstride",
+        "2"
+      ],
+      "elapsed_seconds": 4.532461166381836,
+      "ns_per_day": 95.813,
+      "hour_per_ns": 0.25,
+      "ms_per_step": 0.451,
+      "neighbor_search_seconds": 0.393,
+      "force_seconds": 2.518,
+      "pme_mesh_seconds": 0.956,
+      "update_seconds": 2.076,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "cpt": "8e2c36bb0c56ca8c017a628b13bc8ad4cc6e859c0ed987739bf4a0c6dbd39880",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride2/rep02/run.log"
+    }
+  ],
+  "summary": [
+    {
+      "label": "pin_off",
+      "mean_ns_per_day": 86.0715,
+      "stdev_ns_per_day": 0.7254999999999967,
+      "mean_ms_per_step": 0.502,
+      "mean_force_seconds": 2.642,
+      "mean_update_seconds": 2.3265000000000002,
+      "gro_all_equal": true,
+      "edr_all_equal": true
+    },
+    {
+      "label": "pin_on_auto_stride",
+      "mean_ns_per_day": 91.56,
+      "stdev_ns_per_day": 2.790999999999997,
+      "mean_ms_per_step": 0.47250000000000003,
+      "mean_force_seconds": 2.6479999999999997,
+      "mean_update_seconds": 2.175,
+      "gro_all_equal": true,
+      "edr_all_equal": true
+    },
+    {
+      "label": "pin_on_stride1",
+      "mean_ns_per_day": 81.241,
+      "stdev_ns_per_day": 0.0049999999999954525,
+      "mean_ms_per_step": 0.532,
+      "mean_force_seconds": 3.3885,
+      "mean_update_seconds": 2.48,
+      "gro_all_equal": true,
+      "edr_all_equal": true
+    },
+    {
+      "label": "pin_on_stride2",
+      "mean_ns_per_day": 94.7765,
+      "stdev_ns_per_day": 1.0365000000000038,
+      "mean_ms_per_step": 0.456,
+      "mean_force_seconds": 2.5515,
+      "mean_update_seconds": 2.1014999999999997,
+      "gro_all_equal": true,
+      "edr_all_equal": true
+    }
+  ]
+}

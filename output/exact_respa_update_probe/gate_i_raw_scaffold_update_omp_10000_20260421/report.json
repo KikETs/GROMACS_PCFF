@@ -1,0 +1,66 @@
+{
+  "schema": "gate_i_raw_scaffold_update_omp_probe",
+  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
+  "steps": 10000,
+  "ntomp": 6,
+  "rows": [
+    {
+      "mode": "off",
+      "env": "0",
+      "elapsed_seconds": 5.919625520706177,
+      "ns_per_day": 73.234,
+      "ms_per_step": 0.59,
+      "force_seconds": 3.639,
+      "update_seconds": 2.816,
+      "total_seconds": null,
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/gate_i_raw_scaffold_update_omp_10000_20260421/off/run.log"
+    },
+    {
+      "mode": "auto",
+      "env": "<unset>",
+      "elapsed_seconds": 5.564054250717163,
+      "ns_per_day": 77.93,
+      "ms_per_step": 0.554,
+      "force_seconds": 3.499,
+      "update_seconds": 2.583,
+      "total_seconds": null,
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/gate_i_raw_scaffold_update_omp_10000_20260421/auto/run.log"
+    },
+    {
+      "mode": "on",
+      "env": "1",
+      "elapsed_seconds": 5.489099025726318,
+      "ns_per_day": 79.005,
+      "ms_per_step": 0.547,
+      "force_seconds": 3.452,
+      "update_seconds": 2.545,
+      "total_seconds": null,
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/gate_i_raw_scaffold_update_omp_10000_20260421/on/run.log"
+    }
+  ],
+  "hashes": [
+    {
+      "mode": "off",
+      "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
+      "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
+      "cpt": "0383a3ebb1943ec64dc8b43c7e95902e7270fc1490aeb291e9c9c261917dc78e"
+    },
+    {
+      "mode": "auto",
+      "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
+      "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
+      "cpt": "add85b4c29f69592cade3db2029ee72f39e53d7381a63fd498b6a8097e54f60d"
+    },
+    {
+      "mode": "on",
+      "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
+      "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
+      "cpt": "658ff10fed2e4cbc19c3061e6525f49d3469fa900cfcb354cf097dd4916a8121"
+    }
+  ],
+  "comparisons": {
+    "gro_equal": true,
+    "edr_equal": true,
+    "cpt_equal": false
+  }
+}

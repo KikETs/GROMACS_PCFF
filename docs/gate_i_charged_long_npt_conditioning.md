@@ -26,10 +26,12 @@ Primary machine-readable artifacts:
 
 - [Gate I contract](../tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_contract.json)
 - [Gate I manifest](../tests/reference_results/gate_i_charged_long_npt_conditioning/gate_i_manifest.json)
+- [Gate I PASS contract, 3000 ps + 1000 ps x 3 replicas](../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/gate_i_contract.json)
+- [Gate I PASS manifest, 3000 ps + 1000 ps x 3 replicas](../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/gate_i_manifest.json)
 
-The checked-in manifest is currently a pending-execution artifact.
-That is intentional.
-It proves the gate is predeclared and bounded, but not yet passed.
+The generic checked-in manifest remains the frozen predeclaration artifact.
+The dated `eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421`
+artifact is the completed CPU-only exact-r-RESPA Gate I PASS evidence.
 
 ## Frozen Criteria
 
@@ -52,19 +54,31 @@ The public contract also freezes conditioned-state handoff rules:
 
 ## Runtime Cost
 
-The current cost is not trivial.
+The completed local 9900X Gate I PASS campaign used:
 
-The checked-in charged large-scaffold CPU exact run in [gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log](../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log) reports about `2.647 ns/day` or `9.068 hour/ns`.
-
-Using the current Gate I default horizon:
-
-- equilibration: `250 ps`
+- equilibration: `3000 ps`
 - production: `1000 ps`
 - replicas: `3`
+- runtime shape: `ntmpi 1`, `ntomp 12`, `pin on`, `pinstride 2`, CPU-only PP/PME/bonded/update
 
-The rough serial wall-clock estimate is about `34` hours.
-That estimate is operational, not scientific evidence.
-It explains why the repository can honestly freeze the gate before checking in a finished campaign.
+Observed throughput was about `63.3-63.6 ns/day` during equilibration and
+`65.6-67.0 ns/day` during production on the local host. This is performance
+evidence for this audited host/runtime shape only.
+
+## Completed Gate Result
+
+The dated PASS campaign closes the Gate I density/volume conditioning blocker
+within the predeclared criteria:
+
+- density mean relative block drift: `0.008912910771277587`
+- density worst-replica relative block drift: `0.012652646434178126`
+- density cross-replica relative span: `0.023858714505661974`
+- volume mean relative block drift: `0.008848600187149268`
+- volume worst-replica relative block drift: `0.012740374517488726`
+- volume cross-replica relative span: `0.023728645886153563`
+- temperature mean absolute error: `11.661190940078654 K`
+
+The selected conditioned-state handoff replica is `replica_03`.
 
 ## Non-Claims
 

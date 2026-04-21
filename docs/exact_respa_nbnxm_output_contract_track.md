@@ -268,13 +268,310 @@ contract/output-storage/kernel semantics를 실제 exact runtime에 연결했다
 중요한 한계:
 
 - 이건 narrow CPU runtime migration이다. broad CPU completion claim이 아니다.
-- native single-launch multi-contribution write는 여전히 미구현이다.
+- native single-launch multi-contribution write는 이 시점 기준으로 force-only narrow step에는 미구현이었다.
 - PP-DD / multi-rank exact CPU NBNXM은 아직 미구현이다.
 - wall-clock speedup claim은 아직 없다.
 - baseline-broken generic `NbnxmTests`는 clean `HEAD`에서도 실패하므로, 이 트랙의 회귀 판정 근거로 쓰지 않는다.
 
+## Phase 12 force-only native multi-contribution single-launch
+
+`PerContributionLaunch`를 force-only exact narrow steps에서 `NativeMultiContribution`
+single-launch로 바꿨다.
+
+- `src/gromacs/mdlib/sim_util.cpp`
+- `src/gromacs/mdtypes/interaction_const.h`
+- `src/gromacs/nbnxm/atomdata.h`
+- `src/gromacs/nbnxm/atomdata.cpp`
+- `src/gromacs/nbnxm/kernel_common.h`
+- `src/gromacs/nbnxm/kerneldispatch.cpp`
+- `src/gromacs/nbnxm/kernels_reference/kernel_ref_outer.h`
+- `src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h`
+- `src/gromacs/nbnxm/simd_kernel.h`
+- `src/gromacs/nbnxm/simd_kernel_inner.h`
+- `src/gromacs/nbnxm/tests/pcff_class2_nonbonded.cpp`
+
+현재 연결 방식:
+
+- `computeExactRespaNonbondedCpuNbnxmNarrow()`가 force-only / no-energy / no-virial narrow step에서
+  `NbnxmOutputContractKind::NativeMultiContribution`를 만든다.
+- `nonbonded_verlet_t::dispatchExactRespaCpuNativeMultiKernel()`가
+  `Inner/Middle/Outer` contribution metadata를 한 번에 kernel launch guard에 심고
+  CPU NBNXM kernel을 한 번만 실행한다.
+- plain-C와 SIMD kernel 둘 다 현재 output-buffer slot에 대응하는 native contribution buffer를 찾아
+  contribution별 `f/fshift`에 직접 쓴다.
+- energy/virial owner semantics가 필요한 step은 여전히 `PerContributionLaunch` fallback을 탄다.
+- `GMX_PCFF_EXACT_RESPA_NATIVE_MULTI=0`으로 기존 per-launch runtime을 강제로 유지할 수 있다.
+
+검증:
+
+- `nbnxm-test --gtest_filter='*ExactRespa*:*PcffClass2NonbondedCurveTest*'`: PASS
+- 새 force-only unit tests:
+  - `PcffClass2NonbondedCurveTest.ExactRespaNativeMultiForceOnlyMatchesPerContributionLaunch`
+  - `PcffClass2NonbondedCurveTest.ExactRespaNativeMultiForceOnlyKeepsExcludedPmeCorrectionOuterOnly`
+- `nbnxm-output-contract-test`: PASS
+- short runtime smoke:
+  - fixture: `output/repulsion_power_9_exact_respa_cpu_patch_perf/gate_h_dense_salt_polymer_2x2x2/exact_respa_cpu_patch_perf.tpr`
+  - shape: `-nsteps 2000 -ntmpi 1 -ntomp 6 -dlb no -nb cpu -pme cpu -bonded cpu -update cpu -pin off -reprod`
+  - report: `output/exact_respa_native_multi_probe/gate_h_ntomp6_20260417/report.json`
+  - result: `per_launch 34.729 ns/day -> native_multi 37.148 ns/day`
+  - result: `Force 0.853 s -> 0.640 s`, `Update 1.210 s -> 1.145 s`
+- automated runtime parity harness:
+  - script: `tools/pcff_respa_parity/validate_exact_respa_native_multi_runtime.py`
+  - gate_h report: `output/exact_respa_native_multi_probe/gate_h_runtime_parity_20260417/report.json`
+  - gate_i report: `output/exact_respa_native_multi_probe/gate_i_equil_runtime_parity_20260417/report.json`
+  - both reports show runtime hash mismatch on the 2000-step short run, but step-0 total-force and per-level force deltas are `0.0`
+- same-coordinate continuation probe:
+  - method: reuse the original TPR, derive a short continuation TPR with `gmx convert-tpr`, and continue from the baseline checkpoint with `-cpi`
+  - gate_h: same-coordinate `2000 -> 2004` probe gives `total/per-level force = 0.0`, `energy = 0.0`, `gro = 0.0`
+  - gate_i: same-coordinate first frame at step `2000` gives `total/per-level force = 0.0`, `energy = 0.0`, `gro = 0.0`
+  - gate_i still shows a later force-dump delta at recorded frame `2400`, but the same probe keeps `energy = 0.0` and final `gro = 0.0`, so this is not evidence of an immediate same-state semantic mismatch
+
+현재 honest boundary:
+
+- force-only narrow exact step에 한해서 native multi-contribution single-launch는 구현/연결/검증됐다.
+- wall-clock gain은 audited short runtime에서 `gate_h ~1.15x`, `gate_i ~1.07x`다.
+- 2000-step runtime `run.gro`, `run.edr`, `run.cpt` SHA256는 일치하지 않는다.
+- 하지만 `same-state first-frame` force/energy/virial/gro parity는 `gate_h`와 `gate_i` 둘 다 닫혔다.
+- 따라서 현재 증거는 `bitwise identical` claim이 아니라
+  `force-only runtime integration + same-state first-frame parity + bounded observable parity + small host-local speedup`까지다.
+- energy/virial owner step native migration은 아직 미구현이었다.
+
 ## Next step
 
-1. `do_force()` narrow CPU NBNXM path에 대한 checked-in runtime regression harness를 추가
-2. scalar exact CPU path 대비 force/energy/virial parity를 runtime fixture에서도 자동 비교
-3. 그 다음에야 native single-launch multi-contribution write 또는 wall-clock optimization을 열 것
+1. gate_i / gate_h의 later whole-run force-dump divergence가 dump cadence 문제인지, reduction-order-driven trajectory divergence인지 더 좁힐 것
+2. owner-step native migration 이후에도 남는 whole-run hash mismatch를 어떤 수준까지 public parity claim에 포함할지 정리할 것
+3. 그 다음에야 broader dataflow migration 또는 더 큰 wall-clock optimization을 열 것
+
+## Phase 13 owner-step native multi-contribution migration
+
+force-only에 한정돼 있던 native multi single-launch를 exact narrow owner-step
+energy/virial path까지 확장했다.
+
+- `src/gromacs/mdlib/sim_util.cpp`
+- `src/gromacs/nbnxm/nbnxm.h`
+- `src/gromacs/nbnxm/kerneldispatch.cpp`
+- `src/gromacs/nbnxm/tests/pcff_class2_nonbonded.cpp`
+
+현재 연결 방식:
+
+- `computeExactRespaNonbondedCpuNbnxmNarrow()`가 owner step에서도
+  `NbnxmOutputContractKind::NativeMultiContribution`를 선택할 수 있다.
+- `dispatchExactRespaCpuNativeMultiKernel()`는 더 이상 synthetic force-only
+  workload를 쓰지 않고 실제 `StepWorkload`와 real-space energy sink를 받는다.
+- native multi launch에서 force/shift force는 contribution-indexed output
+  buffers로 쓰고, owner-step energy는 기존 kernel energy arrays/reduction을
+  그대로 사용한다.
+- direct virial owner는 base output buffer가 아니라 owner contribution의
+  native `fshift` buffers를 reduce해서 virial matrix를 재구성한다.
+
+검증:
+
+- `nbnxm-output-contract-test --gtest_filter='*Native*:*ExactRespa*'`: PASS
+- `nbnxm-test --gtest_filter='*ExactRespaNativeMultiForceOnlyMatchesPerContributionLaunch:*ExactRespaNativeMultiOwnerEnergyMatchesPerContributionLaunch:*ExactRespaNativeMultiForceOnlyKeepsExcludedPmeCorrectionOuterOnly'`: PASS
+- runtime owner-step parity reports:
+  - `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_owner_probe/local_9900x_gate_h_owner_native_multi_runtime_report.json`
+  - `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_owner_probe/local_9900x_gate_i_owner_native_multi_runtime_report.json`
+- same-coordinate continuation probe:
+  - `gate_h`: final `gro` identical, `Potential/Total Energy` delta `0`,
+    force delta and virial/pressure deltas are small
+  - `gate_i`: final `gro` identical, `Potential/Total Energy` delta `0`,
+    force delta and virial/pressure deltas are small
+- full 2000-step runs still show later force/virial divergence after
+  trajectories separate, so whole-run hash parity는 닫히지 않았다.
+
+현재 honest boundary:
+
+- native multi single-launch는 force-only narrow step뿐 아니라 owner-step
+  energy/virial path까지 실제 runtime에 연결됐다.
+- 같은 state에서의 first-frame / short continuation parity는 지지된다.
+- 하지만 whole-run `gro/edr/cpt` hash parity와 full-trajectory identity는
+  여전히 지지되지 않는다.
+- 따라서 지금 가능한 가장 강한 문장은
+  `owner-step runtime integration + bounded same-state observable parity + host-local speedup`
+  까지다.
+
+## Phase 14 divergence onset narrowing
+
+owner-step native migration 이후 남아 있던 “later whole-run divergence”를
+step-count scan으로 더 좁혔다.
+
+- new harness:
+  `tools/pcff_respa_parity/scan_exact_respa_native_multi_divergence_onset.py`
+- canonical reports:
+  - `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_divergence_onset_probe/local_9900x_gate_h_native_multi_divergence_onset_report.json`
+  - `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_divergence_onset_probe/local_9900x_gate_i_native_multi_divergence_onset_report.json`
+
+결과:
+
+- `gate_h`
+  - force delta stays at `5.4931640625e-04` through `64` steps
+  - grows to `3.2586669921875e-01` at `256`
+  - grows to `1.7891845703125` at `1024`
+  - grows to `13.73583984375` at `2000`
+- `gate_i`
+  - force delta stays at `5.4931640625e-04` through `256` steps
+  - grows to `2.182708740234375` at `1024`
+  - grows to `6.3876953125` at `2000`
+- both fixtures lose `edr` hash identity at `4` steps and `gro` hash identity
+  at `64` steps, but the large force divergence appears substantially later
+
+현재 해석:
+
+- 이것은 dump cadence mismatch보다는 reduction-order-driven trajectory
+  branching 설명과 더 잘 맞는다.
+- 즉, immediate owner-step semantic failure 증거는 더 약해졌고,
+  whole-run bitwise identity가 닫히지 않았다는 사실만 남았다.
+
+## Phase 15 serial reduction probe
+
+`GMX_PCFF_EXACT_RESPA_NBNXM_SERIAL_REDUCTION=1`를 추가해서 native-multi
+output-buffer reduction 자체를 serial diagnostic mode로 고정한 뒤 같은
+onset scan을 다시 돌렸다.
+
+- reports:
+  - `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_serial_reduction_probe/local_9900x_gate_h_native_multi_serial_reduction_report.json`
+  - `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_serial_reduction_probe/local_9900x_gate_i_native_multi_serial_reduction_report.json`
+
+결과:
+
+- `gate_h`와 `gate_i` 모두 default onset curve와 serial-reduction onset
+  curve가 수치적으로 동일하다.
+- 따라서 final NBNXM output-buffer reduction은 later whole-run divergence의
+  핵심 원인으로 지지되지 않는다.
+
+현재 더 강한 해석:
+
+- divergence source는 reduction tail보다 upstream native-multi kernel-side
+  accumulation / arithmetic ordering 쪽에 있을 가능성이 더 높다.
+- whole-run identity는 여전히 닫히지 않았지만, 원인 후보는 더 좁아졌다.
+
+## Phase 16 ntomp=1 and plain-C falsification probes
+
+남아 있던 whole-run divergence에 대해 두 가지 쉬운 핑계를 더 제거했다.
+
+- canonical `ntomp=1` reports:
+  - `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_ntomp1_divergence_probe/local_9900x_gate_h_native_multi_ntomp1_divergence_report.json`
+  - `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_ntomp1_divergence_probe/local_9900x_gate_i_native_multi_ntomp1_divergence_report.json`
+- canonical `GMX_DISABLE_SIMD_KERNELS=1`, `ntomp=1` plain-C reports:
+  - `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_plainc_divergence_probe/local_9900x_gate_h_native_multi_plainc_ntomp1_divergence_report.json`
+  - `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_plainc_divergence_probe/local_9900x_gate_i_native_multi_plainc_ntomp1_divergence_report.json`
+
+결과:
+
+- `ntomp=1`로 줄여도 divergence는 사라지지 않는다.
+  - `gate_h`: step `2000` force delta `3.6497650146484375`
+  - `gate_i`: step `2000` force delta `765.7132415771484`
+- plain-C reference kernel로 강제해도 divergence는 사라지지 않는다.
+  - `gate_h`: step `2000` force delta `14.1541748046875`
+  - `gate_i`: step `2000` force delta `1278.444320678711`
+- plain-C report는 `disable_simd_kernels_env=1`,
+  `disable_simd_kernels_marker_seen=true`를 남긴다.
+
+현재 더 강한 해석:
+
+- remaining divergence를 “OpenMP thread fan-out 문제”로만 보는 건 근거가 약하다.
+- remaining divergence를 “SIMD kernel 특이 문제”로만 보는 것도 근거가 약하다.
+- 가장 강한 남은 후보는 native-multi single-launch 내부의 contribution
+  interleaving / arithmetic grouping이다.
+
+## Phase 17 owner-step fallback closure
+
+dense force-dump를 다시 보니 예전 해석의 핵심 빈틈이 드러났다. owner-level
+exact-r-RESPA step 중에는 `computeEnergy=0`, `computeVirial=0`인 force-only
+pass도 있는데, 이전 fallback heuristic은 이를 owner-step으로 보지 못했다.
+
+수정:
+
+- `src/gromacs/mdrun/md.cpp`에 `GMX_EXACT_RESPA_FORCE_DUMP_INTERVAL`를 추가해
+  dense dump가 `nstenergy` cadence에 묶이지 않게 했다.
+- `src/gromacs/mdlib/sim_util.cpp`에서 owner-step 판정을
+  `highestActiveLevel == exactRespaNonbondedOuterLevel(inputrec)`로 바꿨다.
+- `GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK`를 default-on으로
+  전환했다. `0`을 주면 이전 divergent owner-native path를 다시 강제할 수 있다.
+
+결과:
+
+- middle-only fallback은 `gate_h/gate_i` 둘 다 step `0`부터 mismatch가 난다.
+- owner-only fallback은 dense interval-1 scan에서 둘 다 `32`, `256`, `1024`
+  steps까지 total/per-level force, energy, gro가 모두 exact다.
+- default owner-fallback `2000`-step runtime도 둘 다 닫힌다.
+  - `gro`/`edr` hash equal
+  - total-force/per-level-force/energy/gro exact
+  - `cpt` hash는 여전히 다름
+
+canonical artifacts:
+
+- `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_owner_fallback_probe/local_9900x_gate_h_owner_fallback_dense_1024_report.json`
+- `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_owner_fallback_probe/local_9900x_gate_i_owner_fallback_dense_1024_report.json`
+- `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_owner_fallback_probe/local_9900x_gate_h_default_owner_fallback_runtime_report.json`
+- `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_owner_fallback_probe/local_9900x_gate_i_default_owner_fallback_runtime_report.json`
+- `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_owner_fallback_probe/summary.tsv`
+
+현재 가장 강한 해석:
+
+- audited `gate_h/gate_i` local runtime에서는 “native-multi whole-run
+  divergence”를 더 이상 general unresolved 문제로 두면 안 된다.
+- 실제 주범은 owner-level native-multi launch였고, owner-step을 legacy
+  per-contribution launch로 되돌리면 audited parity가 닫힌다.
+- 다만 이것으로 restart-bitwise identity나 broad cross-host closure까지
+  주장하면 과장이다.
+
+## Phase 18 default safe runtime closure
+
+Phase 17 이후 남은 native-multi ambiguity를 더 좁혔다. owner-step fallback만으로는
+middle-level force-only step의 first-frame ULP drift가 남을 수 있으므로, 기본 실행
+경로는 owner step과 middle step 모두 legacy per-contribution launch로 되돌린다.
+
+수정:
+
+- `src/gromacs/mdlib/sim_util.cpp`
+  - `GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK` default-on 유지
+  - `GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_MIDDLE_STEP_FALLBACK` default-on 전환
+  - decision trace가 owner/middle fallback과 native-multi eligibility를 기록
+- `tools/pcff_respa_parity/validate_exact_respa_native_multi_runtime.py`
+  - `--probe-steps 0` 지원 추가
+- `src/gromacs/nbnxm/tests/pcff_class2_nonbonded.cpp`
+  - dense native-multi unit fixture의 SIMD ULP envelope를 `Cpu4xN_Simd_4xN`과
+    `Cpu4xN_Simd_2xNN` 모두에 대해 좁게 허용
+
+검증:
+
+- `cmake --build build -j8 --target gmx nbnxm-test`: PASS
+- `nbnxm-test --gtest_filter='PcffClass2NonbondedCurveTest.*ExactRespa*'`: PASS
+- default safe 10000-step runtime parity:
+  `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_default_safe_probe/local_9900x_gate_i_default_owner_middle_fallback_runtime_10000_report.json`
+  - total force delta `0.0`
+  - per-level force delta `0.0`
+  - energy/virial/pressure tracked terms delta `0.0`
+  - final GRO coordinate/box delta `0.0`
+  - same-coordinate continuation probe total/per-level/energy/GRO delta `0.0`
+  - performance is noise-level only: `61.237 -> 61.526 ns/day`
+- fused initial-drift update probe:
+  `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_default_safe_probe/local_9900x_gate_i_default_owner_middle_fallback_fused_update_runtime_10000_report.json`
+  - exactness delta remains `0.0`
+  - performance is slightly worse: `62.490 -> 61.933 ns/day`
+- forced owner-native negative controls:
+  `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_default_safe_probe/local_9900x_gate_i_forced_owner_native_runtime_fail_report.json`
+  and
+  `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_default_safe_probe/local_9900x_gate_i_forced_owner_native_plainc_runtime_fail_report.json`
+  - forced owner-native remains invalid despite apparent speedup
+  - plain-C forced owner-native still has nonzero first-frame force/energy delta
+- split-owner sidecar retest at 10000 steps:
+  `tests/reference_results/exact_respa_pairloop_omp_speedup/native_multi_default_safe_probe/local_9900x_gate_i_split_owner_middle_fallback_runtime_10000_fail_report.json`
+  - this mode has a small apparent speedup, but fails long enough runtime parity
+    on Gate I: total force delta `9181.2333984375`, per-level force delta
+    `9455.427734375`, energy delta `3927.1699999999996`, and GRO coordinate
+    delta `4.831 nm`
+
+현재 honest boundary:
+
+- 기본 exact-r-RESPA CPU runtime parity는 audited Gate I 10000-step 기준으로 닫혔다.
+- 이 closure는 owner/middle fallback에 의해 성립한다. 즉 full native-multi
+  single-launch completion claim이 아니다.
+- `GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT=1`은 exact하지만 이 fixture에서는
+  성능 이득이 없으므로 default-off로 유지한다.
+- forced owner-native / full native-multi owner step은 여전히 장기 replica에 쓰면
+  안 된다.
+- split-owner sidecar도 2000-step evidence만으로 Gate I 장기 replica 후보가 될 수
+  없다. 10000-step negative control에서 실패했다.
+- 다음 Gate I density/volume replica는 default safe path로만 시작할 수 있다.

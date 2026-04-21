@@ -1,0 +1,268 @@
+{
+  "schema_name": "exact_respa_native_multi_divergence_onset",
+  "schema_version": 1,
+  "fixture_id": "gate_h_dense_salt_polymer_2x2x2_equil_ntomp1",
+  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/equil.tpr",
+  "ntmpi": 1,
+  "ntomp": 1,
+  "pin": "off",
+  "outer_step_factor": 4,
+  "exact_respa_nbnxm_serial_reduction_env": "0",
+  "step_list": [
+    4,
+    64,
+    256,
+    1024,
+    2000
+  ],
+  "records": [
+    {
+      "requested_steps": 4,
+      "steps": 4,
+      "baseline_ns_per_day": 6.742,
+      "candidate_ns_per_day": 8.988,
+      "speedup": 1.3331355680806882,
+      "total_force_max_abs_component_delta": 0.00054931640625,
+      "per_level_force_max_abs_component_delta": 0.00042724609375,
+      "energy_max_abs_delta": 0.019999999999527063,
+      "gro_max_abs_coord_delta_nm": 0.0,
+      "gro_sha256_equal": true,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false,
+      "first_total_force_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 0,
+        "baseline": -9.657133102416992,
+        "candidate": -9.657140731811523,
+        "delta": -7.62939453125e-06
+      },
+      "first_per_level_force_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "first_energy_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Pressure",
+        "baseline": 432.093,
+        "candidate": 432.094,
+        "delta": 0.0009999999999763531
+      },
+      "first_gro_mismatch": null
+    },
+    {
+      "requested_steps": 64,
+      "steps": 64,
+      "baseline_ns_per_day": 12.705,
+      "candidate_ns_per_day": 16.867,
+      "speedup": 1.3275875639512005,
+      "total_force_max_abs_component_delta": 0.00054931640625,
+      "per_level_force_max_abs_component_delta": 0.00042724609375,
+      "energy_max_abs_delta": 0.019999999999527063,
+      "gro_max_abs_coord_delta_nm": 0.0,
+      "gro_sha256_equal": false,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false,
+      "first_total_force_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 0,
+        "baseline": -9.657133102416992,
+        "candidate": -9.657140731811523,
+        "delta": -7.62939453125e-06
+      },
+      "first_per_level_force_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "first_energy_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Pressure",
+        "baseline": 432.093,
+        "candidate": 432.094,
+        "delta": 0.0009999999999763531
+      },
+      "first_gro_mismatch": null
+    },
+    {
+      "requested_steps": 256,
+      "steps": 256,
+      "baseline_ns_per_day": 13.846,
+      "candidate_ns_per_day": 18.106,
+      "speedup": 1.3076700852231693,
+      "total_force_max_abs_component_delta": 0.30511474609375,
+      "per_level_force_max_abs_component_delta": 0.3052978515625,
+      "energy_max_abs_delta": 0.08000000000015461,
+      "gro_max_abs_coord_delta_nm": 0.0,
+      "gro_sha256_equal": false,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false,
+      "first_total_force_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 0,
+        "baseline": -9.657133102416992,
+        "candidate": -9.657140731811523,
+        "delta": -7.62939453125e-06
+      },
+      "first_per_level_force_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "first_energy_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Pressure",
+        "baseline": 432.093,
+        "candidate": 432.094,
+        "delta": 0.0009999999999763531
+      },
+      "first_gro_mismatch": null
+    },
+    {
+      "requested_steps": 1024,
+      "steps": 1024,
+      "baseline_ns_per_day": 14.413,
+      "candidate_ns_per_day": 18.347,
+      "speedup": 1.2729480330257408,
+      "total_force_max_abs_component_delta": 1.8505859375,
+      "per_level_force_max_abs_component_delta": 1.853240966796875,
+      "energy_max_abs_delta": 1.009999999999991,
+      "gro_max_abs_coord_delta_nm": 0.001000000000000334,
+      "gro_sha256_equal": false,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false,
+      "first_total_force_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 0,
+        "baseline": -9.657133102416992,
+        "candidate": -9.657140731811523,
+        "delta": -7.62939453125e-06
+      },
+      "first_per_level_force_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "first_energy_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Pressure",
+        "baseline": 432.093,
+        "candidate": 432.094,
+        "delta": 0.0009999999999763531
+      },
+      "first_gro_mismatch": {
+        "atom": 155,
+        "dimension": 2,
+        "baseline": -0.007,
+        "candidate": -0.006,
+        "delta": 0.001
+      }
+    },
+    {
+      "requested_steps": 2000,
+      "steps": 2000,
+      "baseline_ns_per_day": 14.84,
+      "candidate_ns_per_day": 19.119,
+      "speedup": 1.2883423180592992,
+      "total_force_max_abs_component_delta": 3.6497650146484375,
+      "per_level_force_max_abs_component_delta": 3.655548095703125,
+      "energy_max_abs_delta": 1.0399999999999636,
+      "gro_max_abs_coord_delta_nm": 0.001000000000000334,
+      "gro_sha256_equal": false,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false,
+      "first_total_force_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 0,
+        "baseline": -9.657133102416992,
+        "candidate": -9.657140731811523,
+        "delta": -7.62939453125e-06
+      },
+      "first_per_level_force_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "first_energy_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Pressure",
+        "baseline": 432.093,
+        "candidate": 432.094,
+        "delta": 0.0009999999999763531
+      },
+      "first_gro_mismatch": {
+        "atom": 35,
+        "dimension": 2,
+        "baseline": 3.848,
+        "candidate": 3.847,
+        "delta": -0.0009999999999998899
+      }
+    }
+  ],
+  "threshold_summary": {
+    "force_max_abs_component_delta": {
+      "0.001": 256,
+      "0.01": 256,
+      "0.1": 256,
+      "1.0": 1024
+    },
+    "energy_max_abs_delta": {
+      "0.001": 4,
+      "0.01": 4,
+      "0.1": 1024,
+      "1.0": 1024
+    },
+    "gro_max_abs_coord_delta_nm": {
+      "0.0001": 1024,
+      "0.0005": 1024,
+      "0.001": 1024
+    },
+    "first_gro_hash_mismatch_step": 64,
+    "first_edr_hash_mismatch_step": 4
+  },
+  "notes": [
+    "This scan restarts both modes from the same input TPR at step 0 for each listed step count.",
+    "Threshold summaries are heuristics for divergence onset and should not be read as exactness pass/fail gates.",
+    "Raw per-step records remain the primary evidence."
+  ]
+}

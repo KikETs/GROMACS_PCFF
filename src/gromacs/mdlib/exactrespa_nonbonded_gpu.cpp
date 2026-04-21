@@ -254,7 +254,7 @@ void freeDeviceBufferIfAllocated(DeviceBuffer<ValueType>* buffer)
 bool exactRespaNonbondedGpuSupported(const t_inputrec& inputrec, const t_forcerec& fr)
 {
     return (sizeof(real) == sizeof(float)) && useExactRespa(inputrec) && exactRespaHasPairSplitting(inputrec)
-           && fr.plainPairlistRange.has_value() && fr.nbv != nullptr;
+           && fr.completePairlistRange.has_value() && fr.nbv != nullptr;
 }
 
 void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
@@ -277,8 +277,8 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
                        "CUDA exact r-RESPA GPU path requires standalone exact pair splitting");
     GMX_RELEASE_ASSERT(fr->ic->coulombEwaldTables,
                        "CUDA exact r-RESPA GPU path requires PME/Ewald tables");
-    GMX_RELEASE_ASSERT(fr->plainPairlistRange.has_value(),
-                       "CUDA exact r-RESPA GPU path requires a plain pairlist");
+    GMX_RELEASE_ASSERT(fr->completePairlistRange.has_value(),
+                       "CUDA exact r-RESPA GPU path requires a complete pairlist");
     GMX_RELEASE_ASSERT(fr->nbv != nullptr,
                        "CUDA exact r-RESPA GPU path requires a nonbonded Verlet object");
     GMX_RELEASE_ASSERT(fr->nbv->gpuNbv() != nullptr,
@@ -291,7 +291,7 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
         return;
     }
 
-    const auto& plainPairlist = fr->nbv->plainPairlist(fr->plainPairlistRange.value(), fr->shift_vec);
+    const auto& plainPairlist = fr->nbv->plainPairlist(fr->completePairlistRange.value(), fr->shift_vec);
     const auto  pairEntries   = packPairEntries(plainPairlist);
     const int   excludedPairCount =
             static_cast<int>(std::count_if(pairEntries.begin(),

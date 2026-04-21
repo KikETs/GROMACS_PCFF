@@ -1,0 +1,322 @@
+{
+  "schema_name": "exact_respa_native_multi_runtime_parity",
+  "schema_version": 1,
+  "fixture_id": "gate_i_true_owner_native_runtime_plainc_probe0",
+  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+  "steps": 4,
+  "ntmpi": 1,
+  "ntomp": 1,
+  "pin": "off",
+  "baseline_mode_name": "per_launch",
+  "candidate_mode_name": "true_owner_native_plainc",
+  "baseline_env": {
+    "GMX_DISABLE_SIMD_KERNELS": "1"
+  },
+  "candidate_env": {
+    "GMX_DISABLE_SIMD_KERNELS": "1",
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "0"
+  },
+  "baseline": {
+    "mode": "per_launch",
+    "native_multi_env": "0",
+    "extra_env": {
+      "GMX_DISABLE_SIMD_KERNELS": "1"
+    },
+    "disable_simd_kernels_env": "1",
+    "command": [
+      "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+      "mdrun",
+      "-s",
+      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+      "-deffnm",
+      "/tmp/true_owner_native_runtime_plainc_probe0/per_launch/run",
+      "-ntmpi",
+      "1",
+      "-ntomp",
+      "1",
+      "-dlb",
+      "no",
+      "-nb",
+      "cpu",
+      "-pme",
+      "cpu",
+      "-bonded",
+      "cpu",
+      "-update",
+      "cpu",
+      "-pin",
+      "off",
+      "-reprod",
+      "-nsteps",
+      "4"
+    ],
+    "elapsed_seconds": 0.8606235980987549,
+    "log": "/tmp/true_owner_native_runtime_plainc_probe0/per_launch/run.log",
+    "edr": "/tmp/true_owner_native_runtime_plainc_probe0/per_launch/run.edr",
+    "gro": "/tmp/true_owner_native_runtime_plainc_probe0/per_launch/run.gro",
+    "cpt": "/tmp/true_owner_native_runtime_plainc_probe0/per_launch/run.cpt",
+    "total_force_dump": "/tmp/true_owner_native_runtime_plainc_probe0/per_launch/total_force.tsv",
+    "per_level_force_dump": "/tmp/true_owner_native_runtime_plainc_probe0/per_launch/per_level_force.tsv",
+    "metrics": {
+      "ns_per_day": 0.254,
+      "ms_per_step": 169.977,
+      "force_seconds": 0.829,
+      "update_seconds": 0.239,
+      "total_seconds": null
+    },
+    "disable_simd_kernels_marker_seen": true,
+    "gro_sha256": "26a3edc6c319c33a3ff973c397aa467e72337dfe6fe21768a29b4148c360239d",
+    "edr_sha256": "b6c454e32ce75828109a9648a80f03218c8f6d1721ab734df6efa997a5630f3f",
+    "cpt_sha256": "d60604815fd15c7e08036abfece4ee7be3fc99152971f471914a1a1538b08171"
+  },
+  "candidate": {
+    "mode": "true_owner_native_plainc",
+    "native_multi_env": "1",
+    "extra_env": {
+      "GMX_DISABLE_SIMD_KERNELS": "1",
+      "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "0"
+    },
+    "disable_simd_kernels_env": "1",
+    "command": [
+      "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+      "mdrun",
+      "-s",
+      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+      "-deffnm",
+      "/tmp/true_owner_native_runtime_plainc_probe0/true_owner_native_plainc/run",
+      "-ntmpi",
+      "1",
+      "-ntomp",
+      "1",
+      "-dlb",
+      "no",
+      "-nb",
+      "cpu",
+      "-pme",
+      "cpu",
+      "-bonded",
+      "cpu",
+      "-update",
+      "cpu",
+      "-pin",
+      "off",
+      "-reprod",
+      "-nsteps",
+      "4"
+    ],
+    "elapsed_seconds": 0.5246129035949707,
+    "log": "/tmp/true_owner_native_runtime_plainc_probe0/true_owner_native_plainc/run.log",
+    "edr": "/tmp/true_owner_native_runtime_plainc_probe0/true_owner_native_plainc/run.edr",
+    "gro": "/tmp/true_owner_native_runtime_plainc_probe0/true_owner_native_plainc/run.gro",
+    "cpt": "/tmp/true_owner_native_runtime_plainc_probe0/true_owner_native_plainc/run.cpt",
+    "total_force_dump": "/tmp/true_owner_native_runtime_plainc_probe0/true_owner_native_plainc/total_force.tsv",
+    "per_level_force_dump": "/tmp/true_owner_native_runtime_plainc_probe0/true_owner_native_plainc/per_level_force.tsv",
+    "metrics": {
+      "ns_per_day": 0.42,
+      "ms_per_step": 102.909,
+      "force_seconds": 0.493,
+      "update_seconds": 0.101,
+      "total_seconds": null
+    },
+    "disable_simd_kernels_marker_seen": true,
+    "gro_sha256": "26a3edc6c319c33a3ff973c397aa467e72337dfe6fe21768a29b4148c360239d",
+    "edr_sha256": "1efdd68cb3d0a10b4b379dac8c8a380f241847c40510ab1898057765bd20eb02",
+    "cpt_sha256": "d5b2327937d78b811d6e13370bc1d3cc6072a9f8f386adbe9c13ab03269be2cb"
+  },
+  "comparisons": {
+    "total_force": {
+      "matches": false,
+      "candidate_frame_count": 1,
+      "baseline_frame_count": 1,
+      "common_frame_count": 1,
+      "candidate_only_frames": [],
+      "baseline_only_frames": [],
+      "max_abs_component_delta": 0.00030517578125,
+      "first_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 0,
+        "baseline": -24.14793586730957,
+        "candidate": -24.147958755493164,
+        "delta": -2.288818359375e-05
+      },
+      "frames": [
+        {
+          "frame_key": 0,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.00030517578125,
+          "time_ps": 0.0,
+          "highest_active_level": 2
+        }
+      ]
+    },
+    "per_level_force": {
+      "matches": false,
+      "candidate_frame_count": 3,
+      "baseline_frame_count": 3,
+      "common_frame_count": 3,
+      "candidate_only_frames": [],
+      "baseline_only_frames": [],
+      "max_abs_component_delta": 0.000244140625,
+      "first_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 112.70628356933594,
+        "candidate": 112.706298828125,
+        "delta": 1.52587890625e-05
+      },
+      "frames": [
+        {
+          "frame_key": [
+            0,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0001220703125,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            0,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0001220703125,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            0,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.000244140625,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 2
+        }
+      ]
+    },
+    "energy": {
+      "matches": false,
+      "candidate_frame_count": 2,
+      "baseline_frame_count": 2,
+      "common_frame_count": 2,
+      "max_abs_delta": 0.019999999999527063,
+      "first_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Pressure",
+        "baseline": 432.871,
+        "candidate": 432.873,
+        "delta": 0.0020000000000095497
+      },
+      "frames": [
+        {
+          "frame_index": 0,
+          "step": 0,
+          "time_ps": 0.0,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.0020000000000095497,
+            "Vir-XX": 0.010000000000218279,
+            "Vir-XY": 0.0020000000000095497,
+            "Vir-XZ": 0.0018999999999991246,
+            "Vir-YX": -0.0009999999999763531,
+            "Vir-YY": -0.019999999999527063,
+            "Vir-YZ": 0.0,
+            "Vir-ZX": -0.004199999999997317,
+            "Vir-ZY": 0.008000000000038199,
+            "Vir-ZZ": 0.0005000000000023874,
+            "Pres-XX": 0.0,
+            "Pres-XY": -0.0010000000000047748,
+            "Pres-XZ": -0.0007999999999999119,
+            "Pres-YX": 0.0010000000000047748,
+            "Pres-YY": 0.0,
+            "Pres-YZ": 0.0,
+            "Pres-ZX": 0.0016999999999995907,
+            "Pres-ZY": -0.002999999999985903,
+            "Pres-ZZ": 0.0
+          }
+        },
+        {
+          "frame_index": 1,
+          "step": 4,
+          "time_ps": 0.002,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.0010000000000047748,
+            "Vir-XX": 0.0,
+            "Vir-XY": 0.004000000000019099,
+            "Vir-XZ": -0.0011600000000000499,
+            "Vir-YX": 0.0,
+            "Vir-YY": -0.010000000000218279,
+            "Vir-YZ": 0.0,
+            "Vir-ZX": 0.003049999999999997,
+            "Vir-ZY": 0.013000000000033651,
+            "Vir-ZZ": 0.0009999999999763531,
+            "Pres-XX": 0.0,
+            "Pres-XY": -0.0010000000000047748,
+            "Pres-XZ": 0.0004500000000007276,
+            "Pres-YX": 0.0,
+            "Pres-YY": 0.0,
+            "Pres-YZ": 0.0,
+            "Pres-ZX": -0.0011900000000002464,
+            "Pres-ZY": -0.0049999999999954525,
+            "Pres-ZZ": 0.0
+          }
+        }
+      ]
+    },
+    "gro": {
+      "matches": true,
+      "atom_count": 2160,
+      "max_abs_coord_delta_nm": 0.0,
+      "max_abs_box_delta_nm": 0.0,
+      "first_mismatch": null
+    },
+    "same_coordinate_probe": {
+      "available": false,
+      "reason": "probe_steps<=0",
+      "probe_steps": 0
+    },
+    "hashes": {
+      "gro_sha256_equal": true,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false
+    },
+    "performance": {
+      "baseline_ns_per_day": 0.254,
+      "candidate_ns_per_day": 0.42,
+      "speedup": 1.6535433070866141,
+      "baseline_force_seconds": 0.829,
+      "candidate_force_seconds": 0.493,
+      "baseline_update_seconds": 0.239,
+      "candidate_update_seconds": 0.101
+    }
+  },
+  "notes": [
+    "Hashes are reported separately from force/energy/virial deltas.",
+    "A hash mismatch alone is not sufficient evidence of semantic failure or success.",
+    "Current harness compares runtime total-force dumps, per-level force dumps, EDR dump terms, and final GRO coordinates.",
+    "The same-coordinate probe reuses the original TPR plus checkpoint continuation instead of rebuilding a new TPR from MDP/topology inputs."
+  ]
+}

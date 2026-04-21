@@ -347,6 +347,15 @@ struct nbnxn_atomdata_t
     //! Copies current outputBuffers_ into one native exact r-RESPA contribution output set.
     void copyOutputBuffersToNativeMultiContributionOutputBuffers(int contributionOutputIndex);
 
+    /*! \brief Returns one mutable native contribution buffer matching \p outputBuffer.
+     *
+     * This is used by exact r-RESPA native multi-contribution CPU kernels, which
+     * still receive the normal per-thread/list output pointer and need the
+     * corresponding contribution-indexed output buffer for the same thread/list slot.
+     */
+    nbnxn_atomdata_output_t* correspondingNativeMultiContributionOutputBuffer(
+            int contributionOutputIndex, const nbnxn_atomdata_output_t* outputBuffer) const;
+
     //! Returns whether buffer flags are used
     bool useBufferFlags() const { return useBufferFlags_; }
 

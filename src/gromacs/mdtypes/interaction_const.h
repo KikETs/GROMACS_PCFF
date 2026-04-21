@@ -34,6 +34,7 @@
 #ifndef GMX_MDTYPES_INTERACTION_CONST_H
 #define GMX_MDTYPES_INTERACTION_CONST_H
 
+#include <array>
 #include <cstdio>
 
 #include <memory>
@@ -109,6 +110,8 @@ struct EwaldCorrectionTables
  */
 struct interaction_const_t
 {
+    static constexpr int c_maxExactRespaNativeMultiContributions = 3;
+
     //! Settings and parameters for Van der Waals functional forms
     struct VanDerWaalsSettings
     {
@@ -231,9 +234,18 @@ struct interaction_const_t
         real outerOff = 0;
         //! Per-launch activation state, written by CPU NBNXM dispatch before kernel entry.
         mutable bool active = false;
+        //! Whether the current CPU NBNXM launch writes multiple exact contributions at once.
+        mutable bool nativeMultiActive = false;
         //! Which contribution the current CPU NBNXM launch is computing.
         mutable gmx::MtsNonbondedRespaContribution contribution =
                 gmx::MtsNonbondedRespaContribution::Full;
+        //! Number of active outputs when native multi-contribution launch mode is enabled.
+        mutable int nativeMultiContributionCount = 0;
+        //! Ordered exact contributions owned by the current native multi-contribution launch.
+        mutable std::array<gmx::MtsNonbondedRespaContribution, c_maxExactRespaNativeMultiContributions>
+                nativeMultiContributions = { gmx::MtsNonbondedRespaContribution::Full,
+                                             gmx::MtsNonbondedRespaContribution::Full,
+                                             gmx::MtsNonbondedRespaContribution::Full };
     };
 
     //! Exact r-RESPA CPU pair-splitting configuration and active launch state.

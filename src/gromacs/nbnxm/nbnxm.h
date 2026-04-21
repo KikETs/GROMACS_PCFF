@@ -494,6 +494,23 @@ public:
                                  ArrayRef<real>             CoulombSR,
                                  t_nrnb*                    nrnb) const;
 
+    /*! \brief Executes one exact r-RESPA CPU NBNXM native multi-contribution launch.
+     *
+     * One CPU NBNXM traversal writes the active exact real-space contributions
+     * into contribution-indexed force buffers. Energy ownership, when requested
+     * by \p stepWork, still uses the existing kernel output arrays owned by the
+     * outer/full contribution.
+     */
+    void dispatchExactRespaCpuNativeMultiKernel(InteractionLocality                    iLocality,
+                                                const interaction_const_t&             ic,
+                                                ArrayRef<const MtsNonbondedRespaContribution> contributions,
+                                                const StepWorkload&                    stepWork,
+                                                int                                    clearF,
+                                                ArrayRef<const RVec>                   shiftvec,
+                                                ArrayRef<real>                         repulsionDispersionSR,
+                                                ArrayRef<real>                         CoulombSR,
+                                                t_nrnb*                                nrnb) const;
+
     //! Executes the non-bonded free-energy kernels, local + non-local, runs on the CPU
     void dispatchFreeEnergyCpuKernels(const ArrayRefWithPadding<const RVec>& coords,
                                       ForceWithShiftForces*                  forceWithShiftForces,

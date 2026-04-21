@@ -59,7 +59,7 @@ DEFAULT_OUT = REPO_ROOT / "tests" / "reference_results" / "gate_i_charged_long_n
 
 DT_PS = 0.0005
 EXACT_RESPA_FACTOR = 4
-DEFAULT_EQ_PS = 250.0
+DEFAULT_EQ_PS = 3000.0
 DEFAULT_PROD_PS = 1000.0
 DEFAULT_REPLICAS = 3
 DEFAULT_SAMPLE_INTERVAL = EXACT_RESPA_FACTOR * 100
@@ -68,6 +68,13 @@ DEFAULT_PRESSURE_BAR = 1.0
 DEFAULT_TAU_T_PS = 0.5
 DEFAULT_TAU_P_PS = 5.0
 DEFAULT_COMPRESSIBILITY_BAR_INV = 4.5e-5
+NATIVE_MULTI_ENV = "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI"
+NATIVE_MULTI_OWNER_FALLBACK_ENV = "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK"
+NATIVE_MULTI_SPLIT_OWNER_ENV = "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SPLIT_OWNER_OUTPUTS"
+EXACT_RESPA_UPDATE_OMP_ENV = "GMX_PCFF_EXACT_RESPA_UPDATE_OMP"
+EXACT_RESPA_UPDATE_OMP_THREADS_ENV = "GMX_PCFF_EXACT_RESPA_UPDATE_OMP_THREADS"
+EXACT_RESPA_UPDATE_DIRECT_FASTPATH_ENV = "GMX_PCFF_EXACT_RESPA_UPDATE_DIRECT_FASTPATH"
+EXACT_RESPA_FUSED_INITIAL_DRIFT_ENV = "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT"
 
 REQUESTED_OBSERVABLES = (
     "Temperature",
@@ -138,9 +145,83 @@ def parse_args() -> argparse.Namespace:
         default=str(DEFAULT_SCAFFOLD_MANIFEST),
         help="Charged large/medium scaffold manifest path.",
     )
+    parser.add_argument(
+        "--start-gro",
+        default=None,
+        help=(
+            "Optional common preconditioned starting structure for the Gate I equilibration stage. "
+            "When omitted, the scaffold manifest GRO is used."
+        ),
+    )
     parser.add_argument("--out", default=str(DEFAULT_OUT), help="Artifact root.")
     parser.add_argument("--ntmpi", type=int, default=1, help="Thread-MPI ranks.")
     parser.add_argument("--ntomp", type=int, default=1, help="OpenMP threads.")
+    parser.add_argument(
+        "--pin",
+        choices=("off", "on", "auto"),
+        default="off",
+        help=(
+            "GROMACS mdrun -pin policy for CPU-only Gate I runs. Default remains off to preserve "
+            "the historical contract; use 'on' only with an explicit measured affinity shape."
+        ),
+    )
+    parser.add_argument(
+        "--pinoffset",
+        type=int,
+        default=None,
+        help="Optional GROMACS mdrun -pinoffset value, only emitted when --pin is not off.",
+    )
+    parser.add_argument(
+        "--pinstride",
+        type=int,
+        default=None,
+        help="Optional GROMACS mdrun -pinstride value, only emitted when --pin is not off.",
+    )
+    parser.add_argument(
+        "--native-multi-owner-mode",
+        choices=("default", "owner_fallback", "full_owner_native", "split_owner_sidecar"),
+        default="default",
+        help=(
+            "Owner-step native-multi runtime mode. "
+            "'default' preserves compiled defaults; other modes pin the exact owner-step env contract explicitly."
+        ),
+    )
+    parser.add_argument(
+        "--exact-respa-update-omp-mode",
+        choices=("auto", "off", "on"),
+        default="auto",
+        help=(
+            "Exact-r-RESPA CPU update OpenMP policy. The default preserves the runtime auto heuristic; "
+            "use 'on' only for thread shapes where probe evidence supports it."
+        ),
+    )
+    parser.add_argument(
+        "--exact-respa-update-omp-threads",
+        type=int,
+        default=None,
+        help=(
+            "Optional cap for exact-r-RESPA CPU update OpenMP threads. This lets force/nonbonded use "
+            "--ntomp while the update loop uses a smaller host-local thread count."
+        ),
+    )
+    parser.add_argument(
+        "--exact-respa-update-direct-fastpath-mode",
+        choices=("auto", "off", "on"),
+        default="auto",
+        help=(
+            "Exact-r-RESPA direct mobile-atom update fast path. The default preserves the compiled "
+            "runtime default; use 'off' to force the conservative per-atom branch path."
+        ),
+    )
+    parser.add_argument(
+        "--exact-respa-fused-initial-drift-mode",
+        choices=("auto", "off", "on"),
+        default="auto",
+        help=(
+            "Exact-r-RESPA CPU initial half-kick plus drift fusion policy. The default preserves "
+            "the runtime default; use 'on' only for thread shapes where probe evidence supports it."
+        ),
+    )
     parser.add_argument("--npme", type=int, default=None, help="Optional explicit -npme value; omitted by default.")
     parser.add_argument(
         "--ntomp-pme",
@@ -151,6 +232,23 @@ def parse_args() -> argparse.Namespace:
         help="Optional explicit -ntomp_pme value; omitted by default.",
     )
     parser.add_argument("--replicas", type=int, default=DEFAULT_REPLICAS, help="Replica count.")
+    parser.add_argument(
+        "--ld-seed-base",
+        type=int,
+        default=None,
+        help=(
+            "Optional explicit base stochastic seed for thermostat/barostat coupling. "
+            "Replica i equilibration uses ld-seed = ld-seed-base + (i - 1), and production "
+            "uses ld-seed = ld-seed-base + prod-ld-seed-offset + (i - 1). "
+            "When omitted, GROMACS resolves the LD seed at grompp time and the script records the resolved value."
+        ),
+    )
+    parser.add_argument(
+        "--prod-ld-seed-offset",
+        type=int,
+        default=100000,
+        help="Offset added to --ld-seed-base for production-phase stochastic seeds.",
+    )
     parser.add_argument("--equil-ps", type=float, default=DEFAULT_EQ_PS, help="Equilibration duration in ps.")
     parser.add_argument("--prod-ps", type=float, default=DEFAULT_PROD_PS, help="Production duration in ps.")
     parser.add_argument(
@@ -243,6 +341,12 @@ def validate_args(args: argparse.Namespace) -> None:
         raise ValueError("ntmpi must be positive.")
     if args.ntomp < 1:
         raise ValueError("ntomp must be positive.")
+    if args.pin == "off" and (args.pinoffset is not None or args.pinstride is not None):
+        raise ValueError("pinoffset/pinstride require --pin on or --pin auto.")
+    if args.pinoffset is not None and args.pinoffset < 0:
+        raise ValueError("pinoffset must be non-negative when provided.")
+    if args.pinstride is not None and args.pinstride < 0:
+        raise ValueError("pinstride must be non-negative when provided.")
     if args.npme is not None and (args.npme < 1 or args.npme >= args.ntmpi):
         raise ValueError("npme must be positive and smaller than ntmpi when explicit PME ranks are requested.")
     if args.ntomp_pme is not None and args.ntomp_pme < 1:
@@ -251,6 +355,14 @@ def validate_args(args: argparse.Namespace) -> None:
         raise ValueError("ntomp-pme requires explicit npme so the PME OpenMP split is unambiguous.")
     if args.replicas < 3:
         raise ValueError("Gate I requires at least 3 replicas; otherwise cross-replica conditioning is too weak.")
+    if args.ld_seed_base is not None and args.ld_seed_base < 0:
+        raise ValueError("ld-seed-base must be non-negative when provided.")
+    if args.ld_seed_base is not None and args.prod_ld_seed_offset < args.replicas:
+        raise ValueError("prod-ld-seed-offset must be at least the replica count to avoid equil/prod LD seed overlap.")
+    if args.start_gro is not None and not rehome_repo_artifact_path(args.start_gro).is_file():
+        raise ValueError(f"start-gro does not exist or is not a file: {args.start_gro}")
+    if args.exact_respa_update_omp_threads is not None and args.exact_respa_update_omp_threads <= 0:
+        raise ValueError("exact-respa-update-omp-threads must be positive when provided.")
     if args.sample_interval <= 0 or args.sample_interval % EXACT_RESPA_FACTOR != 0:
         raise ValueError("sample-interval must be a positive multiple of the exact-r-RESPA factor.")
     for name, duration_ps in (("equil-ps", args.equil_ps), ("prod-ps", args.prod_ps)):
@@ -277,7 +389,15 @@ def validate_prerequisites(
         raise ValueError("Gate I requires the charged large/medium scaffold to already satisfy TP0 size and box-fit prerequisites.")
 
 
-def make_gate_i_npt_mdp(*, duration_ps: float, sample_interval: int, phase: str, seed: int, args: argparse.Namespace) -> str:
+def make_gate_i_npt_mdp(
+    *,
+    duration_ps: float,
+    sample_interval: int,
+    phase: str,
+    seed: int,
+    args: argparse.Namespace,
+    ld_seed: int | None = None,
+) -> str:
     nsteps = steps_from_ps(duration_ps)
     thermostat = (
         "tcoupl                  = v-rescale\n"
@@ -302,17 +422,47 @@ def make_gate_i_npt_mdp(*, duration_ps: float, sample_interval: int, phase: str,
         if phase == "equil"
         else "gen-vel                 = no\n"
     )
+    continuation = "continuation             = no\n" if phase == "equil" else "continuation             = yes\n"
+    stochastic_seed = f"ld-seed                 = {ld_seed}\n" if ld_seed is not None else ""
     return (
         f"title                   = gate i charged long npt {phase} exact respa\n"
         + exact_respa_common_mdp(nsteps, sample_interval)
         + thermostat
         + barostat
         + velocity
+        + continuation
+        + stochastic_seed
     )
 
 
 def file_exists_and_nonempty(path: Path) -> bool:
     return path.exists() and path.is_file() and path.stat().st_size > 0
+
+
+def final_box_from_gro(path: Path) -> list[float] | None:
+    if not file_exists_and_nonempty(path):
+        return None
+    lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    if not lines:
+        return None
+    fields = lines[-1].split()
+    if len(fields) < 3:
+        return None
+    try:
+        return [float(fields[0]), float(fields[1]), float(fields[2])]
+    except ValueError:
+        return None
+
+
+def initial_box_from_observables(observables: dict[str, dict[str, object]]) -> list[float] | None:
+    try:
+        return [
+            float(observables["Box-X"]["values"][0]),
+            float(observables["Box-Y"]["values"][0]),
+            float(observables["Box-Z"]["values"][0]),
+        ]
+    except (KeyError, IndexError, TypeError, ValueError):
+        return None
 
 
 def grompp_complete(tpr_path: Path, mdout_path: Path) -> bool:
@@ -366,6 +516,16 @@ def best_resume_checkpoint(gmx: Path, deffnm: Path) -> Path | None:
         return None
     candidates.sort(key=lambda item: (item[0], item[1].name))
     return candidates[-1][1]
+
+
+def resolved_ld_seed_from_grompp_stdout(stdout_path: Path) -> int | None:
+    if not file_exists_and_nonempty(stdout_path):
+        return None
+    match = re.search(
+        r"Setting the LD random seed to\s+(-?\d+)",
+        stdout_path.read_text(encoding="utf-8", errors="ignore"),
+    )
+    return int(match.group(1)) if match is not None else None
 
 
 def run_or_resume_grompp(
@@ -538,6 +698,66 @@ def acceptance_criteria(args: argparse.Namespace) -> dict[str, object]:
     }
 
 
+def native_multi_owner_mode_env(mode: str) -> dict[str, str]:
+    if mode == "default":
+        return {}
+    if mode == "owner_fallback":
+        return {
+            NATIVE_MULTI_ENV: "1",
+            NATIVE_MULTI_OWNER_FALLBACK_ENV: "1",
+            NATIVE_MULTI_SPLIT_OWNER_ENV: "0",
+        }
+    if mode == "full_owner_native":
+        return {
+            NATIVE_MULTI_ENV: "1",
+            NATIVE_MULTI_OWNER_FALLBACK_ENV: "0",
+            NATIVE_MULTI_SPLIT_OWNER_ENV: "0",
+        }
+    if mode == "split_owner_sidecar":
+        return {
+            NATIVE_MULTI_ENV: "1",
+            NATIVE_MULTI_OWNER_FALLBACK_ENV: "0",
+            NATIVE_MULTI_SPLIT_OWNER_ENV: "1",
+        }
+    raise ValueError(f"Unsupported native-multi owner mode: {mode}")
+
+
+def exact_respa_update_omp_env(mode: str) -> dict[str, str]:
+    if mode == "auto":
+        return {}
+    if mode == "off":
+        return {EXACT_RESPA_UPDATE_OMP_ENV: "0"}
+    if mode == "on":
+        return {EXACT_RESPA_UPDATE_OMP_ENV: "1"}
+    raise ValueError(f"Unsupported exact-r-RESPA update OMP mode: {mode}")
+
+
+def exact_respa_update_omp_threads_env(num_threads: int | None) -> dict[str, str]:
+    if num_threads is None:
+        return {}
+    return {EXACT_RESPA_UPDATE_OMP_THREADS_ENV: str(num_threads)}
+
+
+def exact_respa_update_direct_fastpath_env(mode: str) -> dict[str, str]:
+    if mode == "auto":
+        return {}
+    if mode == "off":
+        return {EXACT_RESPA_UPDATE_DIRECT_FASTPATH_ENV: "0"}
+    if mode == "on":
+        return {EXACT_RESPA_UPDATE_DIRECT_FASTPATH_ENV: "1"}
+    raise ValueError(f"Unsupported exact-r-RESPA update direct fastpath mode: {mode}")
+
+
+def exact_respa_fused_initial_drift_env(mode: str) -> dict[str, str]:
+    if mode == "auto":
+        return {}
+    if mode == "off":
+        return {EXACT_RESPA_FUSED_INITIAL_DRIFT_ENV: "0"}
+    if mode == "on":
+        return {EXACT_RESPA_FUSED_INITIAL_DRIFT_ENV: "1"}
+    raise ValueError(f"Unsupported exact-r-RESPA fused initial drift mode: {mode}")
+
+
 def build_contract(
     *,
     args: argparse.Namespace,
@@ -545,6 +765,8 @@ def build_contract(
     prerequisites: dict[str, object],
     perf_ref: dict[str, object],
 ) -> dict[str, object]:
+    scaffold_gro = rehome_repo_artifact_path(scaffold_manifest["artifacts"]["gro"])
+    start_gro = rehome_repo_artifact_path(args.start_gro) if args.start_gro is not None else scaffold_gro
     return {
         "schema_name": SCHEMA_NAME,
         "schema_version": SCHEMA_VERSION,
@@ -570,6 +792,8 @@ def build_contract(
         "prerequisites": prerequisites,
         "run_settings": {
             "replicas": args.replicas,
+            "ld_seed_base": args.ld_seed_base,
+            "prod_ld_seed_offset": args.prod_ld_seed_offset,
             "equil_ps": args.equil_ps,
             "prod_ps": args.prod_ps,
             "sample_interval_base_steps": args.sample_interval,
@@ -580,12 +804,49 @@ def build_contract(
             "compressibility_bar_inv": args.compressibility_bar_inv,
             "ntmpi": args.ntmpi,
             "ntomp": args.ntomp,
+            "pin": args.pin,
+            "pinoffset": args.pinoffset,
+            "pinstride": args.pinstride,
             "npme": args.npme,
             "ntomp_pme": args.ntomp_pme,
+            "native_multi_owner_mode": args.native_multi_owner_mode,
+            "native_multi_owner_mode_env": native_multi_owner_mode_env(args.native_multi_owner_mode),
+            "exact_respa_update_omp_mode": args.exact_respa_update_omp_mode,
+            "exact_respa_update_omp_env": exact_respa_update_omp_env(args.exact_respa_update_omp_mode),
+            "exact_respa_update_omp_threads": args.exact_respa_update_omp_threads,
+            "exact_respa_update_omp_threads_env": exact_respa_update_omp_threads_env(
+                args.exact_respa_update_omp_threads
+            ),
+            "exact_respa_update_direct_fastpath_mode": args.exact_respa_update_direct_fastpath_mode,
+            "exact_respa_update_direct_fastpath_env": exact_respa_update_direct_fastpath_env(
+                args.exact_respa_update_direct_fastpath_mode
+            ),
+            "exact_respa_fused_initial_drift_mode": args.exact_respa_fused_initial_drift_mode,
+            "exact_respa_fused_initial_drift_env": exact_respa_fused_initial_drift_env(
+                args.exact_respa_fused_initial_drift_mode
+            ),
             "mdrun_shape": (
                 f"ntmpi {args.ntmpi} / ntomp {args.ntomp} / npme {args.npme} / "
-                f"ntomp_pme {args.ntomp_pme} / nb cpu / bonded cpu / pme cpu / update cpu / reprod"
+                f"ntomp_pme {args.ntomp_pme} / pin {args.pin} / pinoffset {args.pinoffset} / "
+                f"pinstride {args.pinstride} / nb cpu / bonded cpu / pme cpu / update cpu / reprod"
             ),
+            "stochastic_seed_contract": (
+                "explicit_phase_separated_ld_seed_per_replica"
+                if args.ld_seed_base is not None
+                else "grompp_resolved_phase_ld_seed_recorded_per_replica"
+            ),
+            "phase_continuation_policy": {
+                "equil_gen_vel": True,
+                "prod_gen_vel": False,
+                "prod_grompp_uses_equil_checkpoint": True,
+                "prod_mdp_continuation": True,
+                "prod_ld_seed_restarts_from_distinct_seed": args.ld_seed_base is not None,
+            },
+            "initial_configuration": {
+                "source": "common_preconditioned_start_gro" if args.start_gro is not None else "scaffold_manifest_gro",
+                "path": str(start_gro.resolve()),
+                "replica_policy": "all replicas start equilibration from this same coordinate set; replica independence comes from gen-seed and ld-seed",
+            },
         },
         "requested_observables": list(REQUESTED_OBSERVABLES),
         "primary_gate_observables": list(PRIMARY_GATE_OBSERVABLES),
@@ -605,6 +866,7 @@ def build_contract(
             "A Gate I PASS still does not imply conductivity-production readiness.",
             "A Gate I PASS would still not imply LAMMPS-vs-GROMACS transport parity.",
             "A Gate I PASS would still not imply TP0-scale production length or uncertainty closure.",
+            "A common preconditioned starting structure is a conditioning input only; it is not production handoff approval.",
         ],
     }
 
@@ -841,12 +1103,28 @@ def main() -> int:
     gmx = Path(args.gmx)
     top_path = rehome_repo_artifact_path(scaffold_manifest["artifacts"]["topology"])
     gro_path = rehome_repo_artifact_path(scaffold_manifest["artifacts"]["gro"])
+    initial_gro_path = rehome_repo_artifact_path(args.start_gro) if args.start_gro is not None else gro_path
+    if args.start_gro is not None:
+        copied_start_gro = inputs_dir / "common_preconditioned_start.gro"
+        shutil.copy2(initial_gro_path, copied_start_gro)
+        initial_gro_path = copied_start_gro
     env = base_env(args)
+    env.update(native_multi_owner_mode_env(args.native_multi_owner_mode))
+    env.update(exact_respa_update_omp_env(args.exact_respa_update_omp_mode))
+    env.update(exact_respa_update_omp_threads_env(args.exact_respa_update_omp_threads))
+    env.update(exact_respa_update_direct_fastpath_env(args.exact_respa_update_direct_fastpath_mode))
+    env.update(exact_respa_fused_initial_drift_env(args.exact_respa_fused_initial_drift_mode))
     commands: list[dict[str, object]] = []
     replica_runs: list[dict[str, object]] = []
 
     for replica_index in range(1, args.replicas + 1):
         seed = 61001 + replica_index - 1
+        equil_ld_seed = args.ld_seed_base + replica_index - 1 if args.ld_seed_base is not None else None
+        prod_ld_seed = (
+            args.ld_seed_base + args.prod_ld_seed_offset + replica_index - 1
+            if args.ld_seed_base is not None
+            else None
+        )
         replica_input_root = inputs_dir / f"replica_{replica_index:02d}"
         replica_input_root.mkdir(parents=True, exist_ok=True)
         equil_mdp = replica_input_root / "equil.mdp"
@@ -859,6 +1137,7 @@ def main() -> int:
                 phase="equil",
                 seed=seed,
                 args=args,
+                ld_seed=equil_ld_seed,
             ),
         )
         write_text(
@@ -869,6 +1148,7 @@ def main() -> int:
                 phase="prod",
                 seed=seed,
                 args=args,
+                ld_seed=prod_ld_seed,
             ),
         )
 
@@ -880,7 +1160,7 @@ def main() -> int:
         run_or_resume_grompp(
             gmx=gmx,
             mdp_path=equil_mdp,
-            conf_path=gro_path,
+            conf_path=initial_gro_path,
             top_path=top_path,
             tpr_path=equil_deffnm.with_suffix(".tpr"),
             mdout_path=run_root / "equil.mdout.mdp",
@@ -889,6 +1169,7 @@ def main() -> int:
             label=f"cpu_replica_{replica_index:02d}_grompp_equil",
             env=env,
         )
+        resolved_equil_ld_seed = resolved_ld_seed_from_grompp_stdout(logs_dir / f"cpu_replica_{replica_index:02d}_grompp_equil.stdout")
         run_or_resume_md(
             gmx=gmx,
             argv=[str(gmx), "mdrun", *mdrun_args_cpu(args, equil_deffnm)],
@@ -913,6 +1194,7 @@ def main() -> int:
             env=env,
             checkpoint_path=equil_deffnm.with_suffix(".cpt"),
         )
+        resolved_prod_ld_seed = resolved_ld_seed_from_grompp_stdout(logs_dir / f"cpu_replica_{replica_index:02d}_grompp_prod.stdout")
         md_payload = run_or_resume_md(
             gmx=gmx,
             argv=[str(gmx), "mdrun", *mdrun_args_cpu(args, prod_deffnm)],
@@ -925,11 +1207,26 @@ def main() -> int:
         )
 
         observables = collect_run_observables(gmx, prod_deffnm, run_root / "production_observables.xvg")
+        phase_boundary = {
+            "equil_final_box_nm": final_box_from_gro(equil_deffnm.with_suffix(".gro")),
+            "prod_initial_box_nm": initial_box_from_observables(observables),
+            "prod_final_box_nm": final_box_from_gro(prod_deffnm.with_suffix(".gro")),
+            "prod_grompp_input_checkpoint": str(equil_deffnm.with_suffix(".cpt")),
+            "prod_mdp_continuation": True,
+        }
         replica_payload = {
             "replica_index": replica_index,
             "seed": seed,
+            "velocity_seed": seed,
+            "ld_seed_requested": equil_ld_seed,
+            "ld_seed_resolved": resolved_equil_ld_seed,
+            "equil_ld_seed_requested": equil_ld_seed,
+            "equil_ld_seed_resolved": resolved_equil_ld_seed,
+            "prod_ld_seed_requested": prod_ld_seed,
+            "prod_ld_seed_resolved": resolved_prod_ld_seed,
             "prod_deffnm": str(prod_deffnm),
             "layout_report": md_payload["layout_report"],
+            "phase_boundary": phase_boundary,
             "observables": observables,
         }
         replica_summary_json = run_root / "replica_summary.json"

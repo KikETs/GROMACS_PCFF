@@ -322,7 +322,240 @@
     energyAccumulator.template addEnergies<c_calculateCoulombInteractions ? nR : 0, c_nRLJ, kernelLayout, c_iClusterSize>(
             cj, vCoulombV, vLJV);
 
-    if (exactRespaCpuPairSplitLaunchActive(ic))
+    if (exactRespaNativeMultiActive)
+    {
+        const SimdReal one_S(1.0_real);
+        const SimdReal two_S(2.0_real);
+        const SimdReal three_S(3.0_real);
+        const auto exactRespaSwitchInV = [&](const SimdReal& r, const real off, const real on)
+        {
+            const SimdReal off_S(off);
+            const SimdReal on_S(on);
+
+            if (on <= off)
+            {
+                return blend(zero_S, one_S, on_S <= r);
+            }
+
+            const SimdReal switchFraction = (r - off_S) / (on_S - off_S);
+            SimdReal       switched =
+                    switchFraction * switchFraction * (three_S - two_S * switchFraction);
+            switched                = blend(switched, zero_S, r <= off_S);
+            switched                = blend(switched, one_S, on_S <= r);
+            return switched;
+        };
+
+        const auto directForceScalarV = genArr<nR>(
+                [&](int i)
+                {
+                    SimdReal directScalar = zero_S;
+                    if constexpr (c_iLJInteractions != ILJInteractions::None)
+                    {
+                        if (i < c_nRLJ)
+                        {
+                            directScalar = directScalar + rInvSquaredV[i] * frLJV[i];
+                        }
+                    }
+                    if constexpr (c_calculateCoulombInteractions)
+                    {
+                        directScalar = directScalar + rInvSquaredV[i] * qqV[i] * rInvExclV[i];
+                    }
+                    return directScalar;
+                });
+
+        const auto correctionForceScalarV = genArr<nR>(
+                [&](int i)
+                {
+                    if constexpr (c_calculateCoulombInteractions)
+                    {
+                        return rInvSquaredV[i] * frCoulombV[i] - rInvSquaredV[i] * qqV[i] * rInvExclV[i];
+                    }
+                    return zero_S;
+                });
+
+        const bool twoContributionInnerMiddle =
+                exactRespaNativeContributionCount == 2
+                && exactRespaCpuPairSplitNativeMultiContribution(ic, 0)
+                           == MtsNonbondedRespaContribution::Inner
+                && exactRespaCpuPairSplitNativeMultiContribution(ic, 1)
+                           == MtsNonbondedRespaContribution::Middle;
+        if (twoContributionInnerMiddle
+            && exactRespaCpuPairSplitNativeMultiTwoContributionFastPathEnabled())
+        {
+            const auto innerWeightV = genArr<nR>(
+                    [&](int i)
+                    {
+                        const SimdReal rV = rSquaredV[i] * rInvV[i];
+                        if (ic.exactRespaCpuPairSplit.hasMiddle)
+                        {
+                            return one_S
+                                   - exactRespaSwitchInV(rV,
+                                                         ic.exactRespaCpuPairSplit.innerOff,
+                                                         ic.exactRespaCpuPairSplit.innerOn);
+                        }
+                        return one_S
+                               - exactRespaSwitchInV(rV,
+                                                     ic.exactRespaCpuPairSplit.outerOn,
+                                                     ic.exactRespaCpuPairSplit.outerOff);
+                    });
+            const auto middleWeightV = genArr<nR>(
+                    [&](int i)
+                    {
+                        const SimdReal rV = rSquaredV[i] * rInvV[i];
+                        if (!ic.exactRespaCpuPairSplit.hasMiddle)
+                        {
+                            return zero_S;
+                        }
+                        const SimdReal switchIntoMiddle = exactRespaSwitchInV(
+                                rV, ic.exactRespaCpuPairSplit.innerOff, ic.exactRespaCpuPairSplit.innerOn);
+                        const SimdReal switchIntoOuter = exactRespaSwitchInV(
+                                rV, ic.exactRespaCpuPairSplit.outerOn, ic.exactRespaCpuPairSplit.outerOff);
+                        return switchIntoMiddle * (one_S - switchIntoOuter);
+                    });
+
+            const auto innerScalarV =
+                    genArr<nR>([&](int i) { return innerWeightV[i] * directForceScalarV[i]; });
+            const auto middleScalarV =
+                    genArr<nR>([&](int i) { return middleWeightV[i] * directForceScalarV[i]; });
+
+            const auto innerTxV = genArr<nR>([&](int i) { return innerScalarV[i] * dxV[i]; });
+            const auto innerTyV = genArr<nR>([&](int i) { return innerScalarV[i] * dyV[i]; });
+            const auto innerTzV = genArr<nR>([&](int i) { return innerScalarV[i] * dzV[i]; });
+            const auto middleTxV = genArr<nR>([&](int i) { return middleScalarV[i] * dxV[i]; });
+            const auto middleTyV = genArr<nR>([&](int i) { return middleScalarV[i] * dyV[i]; });
+            const auto middleTzV = genArr<nR>([&](int i) { return middleScalarV[i] * dzV[i]; });
+
+            exactRespaNativeForceIXV[0] =
+                    genArr<nR>([&](int i) { return exactRespaNativeForceIXV[0][i] + innerTxV[i]; });
+            exactRespaNativeForceIYV[0] =
+                    genArr<nR>([&](int i) { return exactRespaNativeForceIYV[0][i] + innerTyV[i]; });
+            exactRespaNativeForceIZV[0] =
+                    genArr<nR>([&](int i) { return exactRespaNativeForceIZV[0][i] + innerTzV[i]; });
+            exactRespaNativeForceIXV[1] =
+                    genArr<nR>([&](int i) { return exactRespaNativeForceIXV[1][i] + middleTxV[i]; });
+            exactRespaNativeForceIYV[1] =
+                    genArr<nR>([&](int i) { return exactRespaNativeForceIYV[1][i] + middleTyV[i]; });
+            exactRespaNativeForceIZV[1] =
+                    genArr<nR>([&](int i) { return exactRespaNativeForceIZV[1][i] + middleTzV[i]; });
+
+            real* innerForce = exactRespaNativeForces[0];
+            real* middleForce = exactRespaNativeForces[1];
+            if constexpr (c_numJClustersPerSimdRegister == 1)
+            {
+                store(innerForce + ajx, load<SimdReal>(innerForce + ajx) - sumArray(innerTxV));
+                store(innerForce + ajy, load<SimdReal>(innerForce + ajy) - sumArray(innerTyV));
+                store(innerForce + ajz, load<SimdReal>(innerForce + ajz) - sumArray(innerTzV));
+                store(middleForce + ajx, load<SimdReal>(middleForce + ajx) - sumArray(middleTxV));
+                store(middleForce + ajy, load<SimdReal>(middleForce + ajy) - sumArray(middleTyV));
+                store(middleForce + ajz, load<SimdReal>(middleForce + ajz) - sumArray(middleTzV));
+            }
+            else
+            {
+                decr3Hsimd(innerForce + aj * DIM,
+                           sumArray(innerTxV),
+                           sumArray(innerTyV),
+                           sumArray(innerTzV));
+                decr3Hsimd(middleForce + aj * DIM,
+                           sumArray(middleTxV),
+                           sumArray(middleTyV),
+                           sumArray(middleTzV));
+            }
+        }
+        else
+        {
+            for (int contributionIndex = 0; contributionIndex < exactRespaNativeContributionCount;
+                 ++contributionIndex)
+            {
+                const auto contribution =
+                        exactRespaCpuPairSplitNativeMultiContribution(ic, contributionIndex);
+                const auto directWeightV = genArr<nR>(
+                        [&](int i)
+                        {
+                            const SimdReal rV = rSquaredV[i] * rInvV[i];
+                            switch (contribution)
+                            {
+                                case MtsNonbondedRespaContribution::Inner:
+                                    if (ic.exactRespaCpuPairSplit.hasMiddle)
+                                    {
+                                        return one_S
+                                               - exactRespaSwitchInV(rV,
+                                                                     ic.exactRespaCpuPairSplit.innerOff,
+                                                                     ic.exactRespaCpuPairSplit.innerOn);
+                                    }
+                                    return one_S
+                                           - exactRespaSwitchInV(rV,
+                                                                 ic.exactRespaCpuPairSplit.outerOn,
+                                                                 ic.exactRespaCpuPairSplit.outerOff);
+                                case MtsNonbondedRespaContribution::Middle:
+                                {
+                                    if (!ic.exactRespaCpuPairSplit.hasMiddle)
+                                    {
+                                        return zero_S;
+                                    }
+                                    const SimdReal switchIntoMiddle = exactRespaSwitchInV(
+                                            rV, ic.exactRespaCpuPairSplit.innerOff, ic.exactRespaCpuPairSplit.innerOn);
+                                    const SimdReal switchIntoOuter = exactRespaSwitchInV(
+                                            rV, ic.exactRespaCpuPairSplit.outerOn, ic.exactRespaCpuPairSplit.outerOff);
+                                    return switchIntoMiddle * (one_S - switchIntoOuter);
+                                }
+                                case MtsNonbondedRespaContribution::Outer:
+                                    return exactRespaSwitchInV(
+                                            rV, ic.exactRespaCpuPairSplit.outerOn, ic.exactRespaCpuPairSplit.outerOff);
+                                case MtsNonbondedRespaContribution::Full: return one_S;
+                                case MtsNonbondedRespaContribution::Count:
+                                    GMX_RELEASE_ASSERT(false, "Invalid exact r-RESPA CPU contribution");
+                                    return zero_S;
+                            }
+
+                            GMX_RELEASE_ASSERT(false, "Unhandled exact r-RESPA CPU contribution");
+                            return zero_S;
+                        });
+
+                const auto contributionScalarV = genArr<nR>(
+                        [&](int i)
+                        {
+                            SimdReal fScalar = directWeightV[i] * directForceScalarV[i];
+                            if (exactRespaCpuPairSplitContributionAddsCorrection(contribution))
+                            {
+                                fScalar = fScalar + correctionForceScalarV[i];
+                            }
+                            return fScalar;
+                        });
+                const auto contributionTxV =
+                        genArr<nR>([&](int i) { return contributionScalarV[i] * dxV[i]; });
+                const auto contributionTyV =
+                        genArr<nR>([&](int i) { return contributionScalarV[i] * dyV[i]; });
+                const auto contributionTzV =
+                        genArr<nR>([&](int i) { return contributionScalarV[i] * dzV[i]; });
+
+                exactRespaNativeForceIXV[contributionIndex] =
+                        genArr<nR>([&](int i)
+                                   { return exactRespaNativeForceIXV[contributionIndex][i] + contributionTxV[i]; });
+                exactRespaNativeForceIYV[contributionIndex] =
+                        genArr<nR>([&](int i)
+                                   { return exactRespaNativeForceIYV[contributionIndex][i] + contributionTyV[i]; });
+                exactRespaNativeForceIZV[contributionIndex] =
+                        genArr<nR>([&](int i)
+                                   { return exactRespaNativeForceIZV[contributionIndex][i] + contributionTzV[i]; });
+
+                real* nativeForce = exactRespaNativeForces[contributionIndex];
+                if constexpr (c_numJClustersPerSimdRegister == 1)
+                {
+                    store(nativeForce + ajx, load<SimdReal>(nativeForce + ajx) - sumArray(contributionTxV));
+                    store(nativeForce + ajy, load<SimdReal>(nativeForce + ajy) - sumArray(contributionTyV));
+                    store(nativeForce + ajz, load<SimdReal>(nativeForce + ajz) - sumArray(contributionTzV));
+                }
+                else
+                {
+                    decr3Hsimd(nativeForce + aj * DIM,
+                               sumArray(contributionTxV),
+                               sumArray(contributionTyV),
+                               sumArray(contributionTzV));
+                }
+            }
+        }
+    }
+    else if (exactRespaCpuPairSplitLaunchActive(ic))
     {
         const SimdReal one_S(1.0_real);
         const SimdReal two_S(2.0_real);
@@ -450,26 +683,29 @@
         }
     }
 
-    /* Calculate temporary vectorial force */
-    const auto txV = genArr<nR>([&](int i) { return fScalarV[i] * dxV[i]; });
-    const auto tyV = genArr<nR>([&](int i) { return fScalarV[i] * dyV[i]; });
-    const auto tzV = genArr<nR>([&](int i) { return fScalarV[i] * dzV[i]; });
-
-    /* Increment i atom force */
-    forceIXV = genArr<nR>([&](int i) { return forceIXV[i] + txV[i]; });
-    forceIYV = genArr<nR>([&](int i) { return forceIYV[i] + tyV[i]; });
-    forceIZV = genArr<nR>([&](int i) { return forceIZV[i] + tzV[i]; });
-
-    /* Decrement j atom force */
-    if constexpr (c_numJClustersPerSimdRegister == 1)
+    if (!exactRespaNativeMultiActive)
     {
-        store(f + ajx, load<SimdReal>(f + ajx) - sumArray(txV));
-        store(f + ajy, load<SimdReal>(f + ajy) - sumArray(tyV));
-        store(f + ajz, load<SimdReal>(f + ajz) - sumArray(tzV));
-    }
-    else
-    {
-        decr3Hsimd(f + aj * DIM, sumArray(txV), sumArray(tyV), sumArray(tzV));
+        /* Calculate temporary vectorial force */
+        const auto txV = genArr<nR>([&](int i) { return fScalarV[i] * dxV[i]; });
+        const auto tyV = genArr<nR>([&](int i) { return fScalarV[i] * dyV[i]; });
+        const auto tzV = genArr<nR>([&](int i) { return fScalarV[i] * dzV[i]; });
+
+        /* Increment i atom force */
+        forceIXV = genArr<nR>([&](int i) { return forceIXV[i] + txV[i]; });
+        forceIYV = genArr<nR>([&](int i) { return forceIYV[i] + tyV[i]; });
+        forceIZV = genArr<nR>([&](int i) { return forceIZV[i] + tzV[i]; });
+
+        /* Decrement j atom force */
+        if constexpr (c_numJClustersPerSimdRegister == 1)
+        {
+            store(f + ajx, load<SimdReal>(f + ajx) - sumArray(txV));
+            store(f + ajy, load<SimdReal>(f + ajy) - sumArray(tyV));
+            store(f + ajz, load<SimdReal>(f + ajz) - sumArray(tzV));
+        }
+        else
+        {
+            decr3Hsimd(f + aj * DIM, sumArray(txV), sumArray(tyV), sumArray(tzV));
+        }
     }
 }
 

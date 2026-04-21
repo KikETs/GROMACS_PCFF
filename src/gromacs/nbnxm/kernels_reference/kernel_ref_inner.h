@@ -650,7 +650,7 @@ void noteM2pPlain4x4Step2PairTotal(int         ai,
             const real fy = fscal * dy;
             const real fz = fscal * dz;
 
-            if (m2pPlain4x4RealspaceForceSubcomponentTraceEnabled())
+            if (!exactRespaNativeMultiActive && m2pPlain4x4RealspaceForceSubcomponentTraceEnabled())
             {
                 real ljScalar = ljScalarUnsplit;
 #ifdef CALC_COULOMB
@@ -759,7 +759,7 @@ void noteM2pPlain4x4Step2PairTotal(int         ai,
 	                }
 	            }
 
-	            if (m2pPlain4x4ExclusionEquivalenceTraceEnabled())
+	            if (!exactRespaNativeMultiActive && m2pPlain4x4ExclusionEquivalenceTraceEnabled())
 	            {
 #ifdef CALC_COULOMB
 #    ifdef CALC_COUL_TAB
@@ -822,15 +822,113 @@ void noteM2pPlain4x4Step2PairTotal(int         ai,
 	                                                        "src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h:plain_exclusion_equivalence_trace");
 	            }
 
-	            /* Increment i-atom force */
-	            fi[i * FI_STRIDE + XX] += fx;
-            fi[i * FI_STRIDE + YY] += fy;
-            fi[i * FI_STRIDE + ZZ] += fz;
-            /* Decrement j-atom force */
-            f[aj * F_STRIDE + XX] -= fx;
-            f[aj * F_STRIDE + YY] -= fy;
-            f[aj * F_STRIDE + ZZ] -= fz;
-            /* 9 flops for force addition */
+            if (exactRespaNativeMultiActive)
+            {
+                const bool twoContributionInnerMiddle =
+                        exactRespaNativeContributionCount == 2
+                        && gmx::exactRespaCpuPairSplitNativeMultiContribution(ic, 0)
+                                   == MtsNonbondedRespaContribution::Inner
+                        && gmx::exactRespaCpuPairSplitNativeMultiContribution(ic, 1)
+                                   == MtsNonbondedRespaContribution::Middle;
+                if (twoContributionInnerMiddle
+                    && gmx::exactRespaCpuPairSplitNativeMultiTwoContributionFastPathEnabled())
+                {
+                    const real nativeDirectForceScalar =
+#ifdef CALC_COULOMB
+                            ljScalarUnsplit + directCoulombScalar;
+#else
+                            ljScalarUnsplit;
+#endif
+                    const real innerFscal =
+                            gmx::exactRespaCpuPairSplitWeightForContribution(
+                                    ic, MtsNonbondedRespaContribution::Inner, rForRespa)
+                            * nativeDirectForceScalar
+                            + (gmx::exactRespaCpuPairSplitContributionAddsCorrection(
+                                       MtsNonbondedRespaContribution::Inner)
+                                           ?
+#ifdef CALC_COULOMB
+                                                   correctionScalar
+#else
+                                                   0.0_real
+#endif
+                                           : 0.0_real);
+                    const real middleFscal =
+                            gmx::exactRespaCpuPairSplitWeightForContribution(
+                                    ic, MtsNonbondedRespaContribution::Middle, rForRespa)
+                            * nativeDirectForceScalar
+                            + (gmx::exactRespaCpuPairSplitContributionAddsCorrection(
+                                       MtsNonbondedRespaContribution::Middle)
+                                           ?
+#ifdef CALC_COULOMB
+                                                   correctionScalar
+#else
+                                                   0.0_real
+#endif
+                                           : 0.0_real);
+                    const real innerFx = innerFscal * dx;
+                    const real innerFy = innerFscal * dy;
+                    const real innerFz = innerFscal * dz;
+                    const real middleFx = middleFscal * dx;
+                    const real middleFy = middleFscal * dy;
+                    const real middleFz = middleFscal * dz;
+                    exactRespaNativeFi[0][i * FI_STRIDE + XX] += innerFx;
+                    exactRespaNativeFi[0][i * FI_STRIDE + YY] += innerFy;
+                    exactRespaNativeFi[0][i * FI_STRIDE + ZZ] += innerFz;
+                    exactRespaNativeForces[0][aj * F_STRIDE + XX] -= innerFx;
+                    exactRespaNativeForces[0][aj * F_STRIDE + YY] -= innerFy;
+                    exactRespaNativeForces[0][aj * F_STRIDE + ZZ] -= innerFz;
+                    exactRespaNativeFi[1][i * FI_STRIDE + XX] += middleFx;
+                    exactRespaNativeFi[1][i * FI_STRIDE + YY] += middleFy;
+                    exactRespaNativeFi[1][i * FI_STRIDE + ZZ] += middleFz;
+                    exactRespaNativeForces[1][aj * F_STRIDE + XX] -= middleFx;
+                    exactRespaNativeForces[1][aj * F_STRIDE + YY] -= middleFy;
+                    exactRespaNativeForces[1][aj * F_STRIDE + ZZ] -= middleFz;
+                }
+                else
+                {
+                    for (int contributionIndex = 0;
+                         contributionIndex < exactRespaNativeContributionCount;
+                         ++contributionIndex)
+                    {
+                        const auto contribution =
+                                gmx::exactRespaCpuPairSplitNativeMultiContribution(ic, contributionIndex);
+#ifdef CALC_COULOMB
+                        const real directWeight =
+                                gmx::exactRespaCpuPairSplitWeightForContribution(ic, contribution, rForRespa);
+                        const real contributionFscal =
+                                directWeight * (ljScalarUnsplit + directCoulombScalar)
+                                + (gmx::exactRespaCpuPairSplitContributionAddsCorrection(contribution)
+                                           ? correctionScalar
+                                           : 0.0_real);
+#else
+                        const real contributionFscal =
+                                gmx::exactRespaCpuPairSplitWeightForContribution(ic, contribution, rForRespa)
+                                * ljScalarUnsplit;
+#endif
+                        const real contributionFx = contributionFscal * dx;
+                        const real contributionFy = contributionFscal * dy;
+                        const real contributionFz = contributionFscal * dz;
+                        exactRespaNativeFi[contributionIndex][i * FI_STRIDE + XX] += contributionFx;
+                        exactRespaNativeFi[contributionIndex][i * FI_STRIDE + YY] += contributionFy;
+                        exactRespaNativeFi[contributionIndex][i * FI_STRIDE + ZZ] += contributionFz;
+                        exactRespaNativeForces[contributionIndex][aj * F_STRIDE + XX] -= contributionFx;
+                        exactRespaNativeForces[contributionIndex][aj * F_STRIDE + YY] -= contributionFy;
+                        exactRespaNativeForces[contributionIndex][aj * F_STRIDE + ZZ] -= contributionFz;
+                    }
+                }
+            }
+            else
+            {
+                /* Increment i-atom force */
+                fi[i * FI_STRIDE + XX] += fx;
+                fi[i * FI_STRIDE + YY] += fy;
+                fi[i * FI_STRIDE + ZZ] += fz;
+                /* Decrement j-atom force */
+                f[aj * F_STRIDE + XX] -= fx;
+                f[aj * F_STRIDE + YY] -= fy;
+                f[aj * F_STRIDE + ZZ] -= fz;
+                /* 9 flops for force addition */
+            }
         }
     }
 }

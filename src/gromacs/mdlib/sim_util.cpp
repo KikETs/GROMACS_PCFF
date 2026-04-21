@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cinttypes>
+#include <fstream>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -195,7 +196,7 @@ static bool disableRepulsionPower9ExactRespaCpuSpecialization()
 static bool exactRespaPairLoopOmpRequested()
 {
     const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP");
-    return env != nullptr && std::strcmp(env, "0") != 0;
+    return env == nullptr || std::strcmp(env, "0") != 0;
 }
 
 static bool exactRespaPairLoopVectorRequested()
@@ -231,7 +232,43 @@ static bool exactRespaPairLoopNbnxm4x4Requested()
 static bool exactRespaPairLoopDirectCpuListRequested()
 {
     const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_DIRECT_CPULIST");
-    return env != nullptr && std::strcmp(env, "0") != 0;
+    return env == nullptr || std::strcmp(env, "0") != 0;
+}
+
+static bool exactRespaDisableCpuNbnxmNarrow()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_DISABLE_NBNXM_NARROW");
+    return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+}
+
+static bool exactRespaNativeMultiContributionLaunchRequested()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_NATIVE_MULTI");
+    return env == nullptr || std::strcmp(env, "0") != 0;
+}
+
+static bool exactRespaNativeMultiSplitOwnerOutputsRequested()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SPLIT_OWNER_OUTPUTS");
+    return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+}
+
+static bool exactRespaNativeMultiFallbackOnOwnerStepsRequested()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK");
+    // Default on: audited gate_h/gate_i runtime parity only closes when
+    // owner-level exact-r-RESPA steps keep using the legacy per-contribution launch.
+    return env == nullptr || std::strcmp(env, "0") != 0;
+}
+
+static bool exactRespaNativeMultiFallbackOnMiddleStepsRequested()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_MIDDLE_STEP_FALLBACK");
+    // Default on: native multi-contribution middle steps currently introduce
+    // first-frame ULP-level force drift that amplifies in NPT runtime parity.
+    // Keep the exact per-contribution launch as the default until full native
+    // multi-contribution runtime parity is closed.
+    return env == nullptr || std::strcmp(env, "0") != 0;
 }
 
 static const char* exactRespaPairLoopTimingDirPath()
@@ -249,6 +286,12 @@ static const char* exactRespaPairLoopTimingLabel()
 static const char* exactRespaPairLoopForceDumpDirPath()
 {
     const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_DIR");
+    return (env != nullptr && *env != '\0') ? env : nullptr;
+}
+
+static const char* exactRespaNativeMultiDecisionTracePath()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_DECISION_TRACE");
     return (env != nullptr && *env != '\0') ? env : nullptr;
 }
 
@@ -1095,6 +1138,8 @@ extern thread_local const char* g_respaDoForceContextLabel;
 extern thread_local int64_t g_respaCurrentDoForceStep;
 extern thread_local const int* g_respaCurrentGlobalAtomIndices;
 extern thread_local int g_respaCurrentGlobalAtomIndexCount;
+extern thread_local const int* g_respaLatestForceDumpGlobalAtomIndices;
+extern thread_local int g_respaLatestForceDumpGlobalAtomIndexCount;
 static thread_local const int* g_respaTraceGlobalAtomIndices    = nullptr;
 static thread_local int        g_respaTraceGlobalAtomIndexCount = 0;
 
@@ -3573,8 +3618,8 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                                     coordinates.data());
     }
 
-    GMX_RELEASE_ASSERT(fr->plainPairlistRange.has_value(),
-                       "Exact LAMMPS-style r-RESPA requires a plain pairlist");
+    GMX_RELEASE_ASSERT(fr->completePairlistRange.has_value(),
+                       "Exact LAMMPS-style r-RESPA requires a complete pairlist");
     GMX_RELEASE_ASSERT(fr->efep == FreeEnergyPerturbationType::No,
                        "Exact LAMMPS-style r-RESPA does not support free-energy perturbation yet");
     GMX_RELEASE_ASSERT(fr->ic->vdw.type == VanDerWaalsType::Cut,
@@ -3832,13 +3877,14 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
             pairLoopFastPathEligible && pairLoopDirectCpuListRequested && pairLoopOmpRequested
             && !pairLoopVectorRequested && !pairLoopTileRequested && !pairLoopNbnxm4x4Requested;
     const bool needPlainPairlist =
-            !pairLoopDirectCpuListFastPathCandidate || pairLoopForceDumpEnabled || dumpPairWriteProof
+            !pairLoopDirectCpuListFastPathCandidate || dumpPairWriteProof
             || dumpDownstreamContract || debugExactRespa || dumpLjSrTrace
             || traceCpuCorrectionEnergies || traceExclusionEquivalence
             || traceRealspaceForceSubcomponents || traceStep1Subset01ForceGroupAudit;
     const PlainPairlist emptyPlainPairlist;
+    const real          completePairlistRange = fr->completePairlistRange.value();
     const PlainPairlist& plainPairlist =
-            needPlainPairlist ? fr->nbv->plainPairlist(fr->plainPairlistRange.value(), fr->shift_vec)
+            needPlainPairlist ? fr->nbv->plainPairlist(completePairlistRange, fr->shift_vec)
                               : emptyPlainPairlist;
     const bool needNamedPairChecks =
             useDispatchProbe || dumpDispatchInternalTrace || dumpBookkeepingResidualTrace
@@ -5214,7 +5260,7 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
             const auto atomIndices          = fr->nbv->getGridAtomOrder();
             const auto& nbat                = fr->nbv->nbat();
-            const real pairlistRangeSquared = gmx::square(fr->plainPairlistRange.value());
+            const real pairlistRangeSquared = gmx::square(completePairlistRange);
 
             const auto processPackedStandardCluster =
                     [&](const int                 thread,
@@ -6280,11 +6326,22 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
                      "# compute_virial %s\n",
                      stepWork.computeVirial ? "true" : "false");
         std::fprintf(dumpFile,
-                     "# plain_pair_count %ld\n",
-                     static_cast<long>(gmx::ssize(plainPairlist.pairs)));
-        std::fprintf(dumpFile,
-                     "# excluded_pair_count %ld\n",
-                     static_cast<long>(gmx::ssize(plainPairlist.excludedPairs)));
+                     "# plain_pair_count_available %s\n",
+                     needPlainPairlist ? "true" : "false");
+        if (needPlainPairlist)
+        {
+            std::fprintf(dumpFile,
+                         "# plain_pair_count %ld\n",
+                         static_cast<long>(gmx::ssize(plainPairlist.pairs)));
+            std::fprintf(dumpFile,
+                         "# excluded_pair_count %ld\n",
+                         static_cast<long>(gmx::ssize(plainPairlist.excludedPairs)));
+        }
+        else
+        {
+            std::fprintf(dumpFile, "# plain_pair_count unavailable\n");
+            std::fprintf(dumpFile, "# excluded_pair_count unavailable\n");
+        }
         std::fprintf(dumpFile, "contribution_index\tcontribution\tatom\tfx\tfy\tfz\n");
 
         GMX_RELEASE_ASSERT(pairLoopForceDumpBefore.size() == activeContributions.size(),
@@ -8076,12 +8133,15 @@ static NbnxmOutputContract buildExactRespaCpuNbnxmOutputContract(
         const ExactRespaForceOutputs&                      exactRespaForceOutputs,
         const std::vector<LammpsRespaNonbondedOutputSink>& outputSinks,
         t_forcerec*                                        fr,
-        gmx_enerdata_t*                                    enerd)
+        gmx_enerdata_t*                                    enerd,
+        const NbnxmOutputContractKind                      contractKind =
+                NbnxmOutputContractKind::PerContributionLaunch)
 {
     GMX_RELEASE_ASSERT(fr != nullptr && enerd != nullptr,
                        "Exact r-RESPA CPU NBNXM output contract requires force and energy state");
 
     NbnxmOutputContract contract;
+    contract.kind = contractKind;
 
     for (const auto& outputSink : outputSinks)
     {
@@ -8121,6 +8181,10 @@ static NbnxmOutputContract buildExactRespaCpuNbnxmOutputContract(
         }
 
         contract.sinks.push_back(sink);
+        if (contract.kind == NbnxmOutputContractKind::NativeMultiContribution)
+        {
+            contract.nativeMultiContribution.contributions.push_back(outputSink.contribution);
+        }
     }
 
     return contract;
@@ -8131,7 +8195,7 @@ static void addExactRespaCpuNbnxmDirectVirial(const NbnxmOutputSink&    sink,
                                               const t_mdatoms&          mdatoms,
                                               ArrayRef<const RVec>      coordinates,
                                               const matrix              box,
-                                              const nbnxn_atomdata_t&   nbat,
+                                              ArrayRef<const nbnxn_atomdata_output_t> outputBuffers,
                                               t_nrnb*                   nrnb)
 {
     GMX_RELEASE_ASSERT(sink.directVirialOutput != nullptr,
@@ -8144,7 +8208,7 @@ static void addExactRespaCpuNbnxmDirectVirial(const NbnxmOutputSink&    sink,
     {
         clear_rvec(shiftForce);
     }
-    nbnxn_atomdata_add_nbat_fshift_to_fshift(nbat, reducedShiftForces);
+    nbnxn_atomdata_add_output_fshift_to_fshift(outputBuffers, reducedShiftForces);
 
     matrix      virial          = { { 0 } };
     const rvec* fshift          = as_rvec_array(reducedShiftForces.data());
@@ -8158,6 +8222,36 @@ static void addExactRespaCpuNbnxmDirectVirial(const NbnxmOutputSink&    sink,
     inc_nrnb(nrnb, eNR_VIRIAL, mdatoms.homenr);
 
     sink.directVirialOutput->addVirialContribution(virial);
+}
+
+static void addExactRespaCpuNbnxmDirectVirial(const NbnxmOutputSink&  sink,
+                                              const t_forcerec&       fr,
+                                              const t_mdatoms&        mdatoms,
+                                              ArrayRef<const RVec>    coordinates,
+                                              const matrix            box,
+                                              const nbnxn_atomdata_t& nbat,
+                                              t_nrnb*                 nrnb)
+{
+    addExactRespaCpuNbnxmDirectVirial(
+            sink, fr, mdatoms, coordinates, box, nbat.outputBuffers(), nrnb);
+}
+
+static int exactRespaCpuNativeMultiContributionIndex(const NbnxmOutputContract&          contract,
+                                                     const MtsNonbondedRespaContribution contribution)
+{
+    for (int outputIndex = 0;
+         outputIndex < gmx::ssize(contract.nativeMultiContribution.contributions);
+         ++outputIndex)
+    {
+        if (contract.nativeMultiContribution.contributions[outputIndex] == contribution)
+        {
+            return outputIndex;
+        }
+    }
+
+    GMX_RELEASE_ASSERT(false,
+                       "Exact r-RESPA CPU native multi-contribution contract is missing a declared contribution");
+    return -1;
 }
 
 static void computeExactRespaNonbondedCpuNbnxmNarrow(const t_inputrec&             inputrec,
@@ -8182,8 +8276,65 @@ static void computeExactRespaNonbondedCpuNbnxmNarrow(const t_inputrec&          
                                                                    exactRespaStepWork.highestActiveLevel,
                                                                    stepWork.computeVirial,
                                                                    stepWork.computeEnergy);
-    const NbnxmOutputContract outputContract =
-            buildExactRespaCpuNbnxmOutputContract(exactRespaForceOutputs, outputSinks, fr, enerd);
+    const int outerContributionLevel = exactRespaNonbondedOuterLevel(inputrec);
+    const bool ownerLevelStep =
+            outerContributionLevel >= 0 && exactRespaStepWork.highestActiveLevel == outerContributionLevel;
+    const bool splitOwnerOutputsSidecar =
+            exactRespaNativeMultiSplitOwnerOutputsRequested() && ownerLevelStep;
+    const bool fallbackOnOwnerStep =
+            exactRespaNativeMultiFallbackOnOwnerStepsRequested() && ownerLevelStep;
+    const int middleContributionLevel =
+            inputrec.exactRespa.forceLayout.hasMiddle() ? exactRespaNonbondedMiddleLevel(inputrec) : -1;
+    const bool fallbackOnMiddleStep =
+            exactRespaNativeMultiFallbackOnMiddleStepsRequested() && !stepWork.computeVirial
+            && !stepWork.computeEnergy && middleContributionLevel >= 0
+            && exactRespaStepWork.highestActiveLevel == middleContributionLevel;
+    const MtsNonbondedRespaContribution ownerContribution =
+            stepWork.computeEnergy ? MtsNonbondedRespaContribution::Outer
+                                   : MtsNonbondedRespaContribution::Outer;
+    std::vector<LammpsRespaNonbondedOutputSink> nativeMultiOutputSinks = outputSinks;
+    auto ownerSinkIt = outputSinks.end();
+    if (splitOwnerOutputsSidecar)
+    {
+        ownerSinkIt = std::find_if(outputSinks.begin(),
+                                   outputSinks.end(),
+                                   [ownerContribution](const LammpsRespaNonbondedOutputSink& sink)
+                                   { return sink.contribution == ownerContribution; });
+        if (ownerSinkIt != outputSinks.end())
+        {
+            nativeMultiOutputSinks.erase(std::remove_if(nativeMultiOutputSinks.begin(),
+                                                        nativeMultiOutputSinks.end(),
+                                                        [ownerContribution](const LammpsRespaNonbondedOutputSink& sink)
+                                                        { return sink.contribution == ownerContribution; }),
+                                         nativeMultiOutputSinks.end());
+        }
+    }
+    const bool canUseNativeMultiContributionLaunch =
+            exactRespaNativeMultiContributionLaunchRequested() && stepWork.computeForces
+            && nativeMultiOutputSinks.size() > 1 && !fallbackOnOwnerStep && !fallbackOnMiddleStep;
+    if (const char* decisionTracePath = exactRespaNativeMultiDecisionTracePath())
+    {
+        std::ofstream output(decisionTracePath, std::ios::app);
+        output << "step=" << step << " highestActiveLevel=" << exactRespaStepWork.highestActiveLevel
+               << " computeEnergy=" << (stepWork.computeEnergy ? 1 : 0)
+               << " computeVirial=" << (stepWork.computeVirial ? 1 : 0)
+               << " nativeMultiRequested="
+               << (exactRespaNativeMultiContributionLaunchRequested() ? 1 : 0)
+               << " splitOwner=" << (splitOwnerOutputsSidecar ? 1 : 0)
+               << " fallbackOwner=" << (fallbackOnOwnerStep ? 1 : 0)
+               << " fallbackMiddle=" << (fallbackOnMiddleStep ? 1 : 0)
+               << " outputSinkCount=" << outputSinks.size()
+               << " nativeMultiSinkCount=" << nativeMultiOutputSinks.size()
+               << " canUseNativeMulti=" << (canUseNativeMultiContributionLaunch ? 1 : 0)
+               << '\n';
+    }
+    const NbnxmOutputContract outputContract = buildExactRespaCpuNbnxmOutputContract(
+            exactRespaForceOutputs,
+            canUseNativeMultiContributionLaunch ? nativeMultiOutputSinks : outputSinks,
+            fr,
+            enerd,
+            canUseNativeMultiContributionLaunch ? NbnxmOutputContractKind::NativeMultiContribution
+                                                : NbnxmOutputContractKind::PerContributionLaunch);
 
     if (fr->nbv->isDynamicPruningStepCpu(step))
     {
@@ -8192,9 +8343,100 @@ static void computeExactRespaNonbondedCpuNbnxmNarrow(const t_inputrec&          
         wallcycle_sub_stop(wcycle, WallCycleSubCounter::NonbondedPruning);
     }
 
+    if (canUseNativeMultiContributionLaunch)
+    {
+        StepWorkload forceOnlyNativeMultiWork = stepWork;
+        if (splitOwnerOutputsSidecar)
+        {
+            forceOnlyNativeMultiWork.computeEnergy = false;
+            forceOnlyNativeMultiWork.computeVirial = false;
+        }
+        fr->nbv->dispatchExactRespaCpuNativeMultiKernel(InteractionLocality::Local,
+                                                        *fr->ic,
+                                                        outputContract.nativeMultiContribution.contributions,
+                                                        splitOwnerOutputsSidecar ? forceOnlyNativeMultiWork : stepWork,
+                                                        enbvClearFYes,
+                                                        fr->shift_vec,
+                                                        (!splitOwnerOutputsSidecar && outputContract.energy.accumulateEnergy)
+                                                                ? outputContract.energy.vdwEnergy
+                                                                : ArrayRef<real>{},
+                                                        (!splitOwnerOutputsSidecar && outputContract.energy.accumulateEnergy)
+                                                                ? outputContract.energy.coulombEnergy
+                                                                : ArrayRef<real>{},
+                                                        nrnb);
+        fr->nbv->atomdata_add_nbat_f_to_native_multi_outputs(outputContract);
+        if (!splitOwnerOutputsSidecar && outputContract.virial.accumulateVirial
+            && outputContract.virial.sinkKind
+                       == LammpsRespaNonbondedOutputSinkKind::ForceWithVirial)
+        {
+            const auto nativeOutputSinks =
+                    nbnxmOutputSinksForNativeMultiContribution(outputContract);
+            const int ownerOutputIndex = exactRespaCpuNativeMultiContributionIndex(
+                    outputContract, outputContract.virial.contribution);
+            addExactRespaCpuNbnxmDirectVirial(*nativeOutputSinks[ownerOutputIndex],
+                                              *fr,
+                                              mdatoms,
+                                              coordinates,
+                                              box,
+                                              fr->nbv->nbat().nativeMultiContributionOutputBuffers(
+                                                      ownerOutputIndex),
+                                              nrnb);
+        }
+
+        if (splitOwnerOutputsSidecar && ownerSinkIt != outputSinks.end())
+        {
+            const int ownerLevel = nonbondedRespaContributionMtsLevel(inputrec, ownerContribution);
+            GMX_RELEASE_ASSERT(ownerLevel >= 0,
+                               "Native-multi owner sidecar requires a valid owner MTS level");
+
+            const std::vector<LammpsRespaNonbondedOutputSink> ownerOutputSinks = { *ownerSinkIt };
+            const NbnxmOutputContract ownerSidecarContract = buildExactRespaCpuNbnxmOutputContract(
+                    exactRespaForceOutputs,
+                    ownerOutputSinks,
+                    fr,
+                    enerd,
+                    NbnxmOutputContractKind::PerContributionLaunch);
+
+            const StepWorkload ownerContributionWork =
+                    stepWork.withExactNonbondedContribution(ownerContribution);
+            fr->nbv->dispatchNonbondedKernel(
+                    InteractionLocality::Local,
+                    *fr->ic,
+                    ownerContributionWork,
+                    enbvClearFYes,
+                    fr->shift_vec,
+                    enerd->grpp.energyGroupPairTerms[fr->haveBuckingham ? NonBondedEnergyTerms::BuckinghamSR
+                                                                        : NonBondedEnergyTerms::LJSR],
+                    enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR],
+                    nrnb);
+
+            if (ownerContributionWork.computeForces)
+            {
+                fr->nbv->atomdata_add_nbat_f_to_outputs(ownerSidecarContract, ownerContribution);
+                if (ownerContributionWork.computeVirial)
+                {
+                    const NbnxmOutputSink& sidecarSink =
+                            nbnxmOutputSinkForContribution(ownerSidecarContract, ownerContribution);
+                    if (sidecarSink.sinkKind == LammpsRespaNonbondedOutputSinkKind::ForceWithVirial)
+                    {
+                        addExactRespaCpuNbnxmDirectVirial(sidecarSink,
+                                                          *fr,
+                                                          mdatoms,
+                                                          coordinates,
+                                                          box,
+                                                          fr->nbv->nbat(),
+                                                          nrnb);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
     for (const auto& outputSink : outputSinks)
     {
-        const StepWorkload contributionWork = stepWork.withExactNonbondedContribution(outputSink.contribution);
+        const StepWorkload contributionWork =
+                stepWork.withExactNonbondedContribution(outputSink.contribution);
         fr->nbv->dispatchNonbondedKernel(
                 InteractionLocality::Local,
                 *fr->ic,
@@ -9466,8 +9708,22 @@ static void doPairSearch(const t_commrec*             cr,
     wallcycle_start_nocount(wcycle, WallCycleCounter::NS);
     wallcycle_sub_start(wcycle, WallCycleSubCounter::NBSSearchLocal);
     /* Note that with a GPU the launch overhead of the list transfer is not timed separately */
-    const bool alsoMakePlainPairlist = fr->plainPairlistRange.has_value();
-    nbv->constructPairlist(InteractionLocality::Local, top.excls, alsoMakePlainPairlist, step, nrnb);
+    const bool needAllPairsInPairlist = fr->completePairlistRange.has_value();
+    const bool forceEagerPlainPairlistMaterialization = []()
+    {
+        const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_EAGER_PLAIN_PAIRLIST");
+        return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+    }();
+    const std::optional<real> plainPairlistMaterializationRange =
+            fr->plainPairlistRange.has_value()
+                    ? fr->plainPairlistRange
+                    : (forceEagerPlainPairlistMaterialization ? fr->completePairlistRange : std::nullopt);
+    const bool needPlainPairlistMaterialization =
+            plainPairlistMaterializationRange.has_value()
+            && (forceEagerPlainPairlistMaterialization
+                || mdModulesNotifiers.simulationRunNotifier_
+                           .haveSubscribers<const MDModulesPairlistConstructedSignal&>());
+    nbv->constructPairlist(InteractionLocality::Local, top.excls, needAllPairsInPairlist, step, nrnb);
 
     nbv->setupGpuShortRangeWork(fr->listedForcesGpu.get(), InteractionLocality::Local);
 
@@ -9511,7 +9767,7 @@ static void doPairSearch(const t_commrec*             cr,
         wallcycle_start_nocount(wcycle, WallCycleCounter::NS);
         wallcycle_sub_start(wcycle, WallCycleSubCounter::NBSSearchNonLocal);
         /* Note that with a GPU the launch overhead of the list transfer is not timed separately */
-        nbv->constructPairlist(InteractionLocality::NonLocal, top.excls, alsoMakePlainPairlist, step, nrnb);
+        nbv->constructPairlist(InteractionLocality::NonLocal, top.excls, needAllPairsInPairlist, step, nrnb);
 
         nbv->setupGpuShortRangeWork(fr->listedForcesGpu.get(), InteractionLocality::NonLocal);
         wallcycle_sub_stop(wcycle, WallCycleSubCounter::NBSSearchNonLocal);
@@ -9537,9 +9793,9 @@ static void doPairSearch(const t_commrec*             cr,
         wallcycle_sub_stop(wcycle, WallCycleSubCounter::NonbondedFep);
     }
 
-    if (alsoMakePlainPairlist)
+    if (needPlainPairlistMaterialization)
     {
-        const auto& plainPairlist = nbv->plainPairlist(fr->plainPairlistRange.value(), fr->shift_vec);
+        const auto& plainPairlist = nbv->plainPairlist(plainPairlistMaterializationRange.value(), fr->shift_vec);
         MDModulesPairlistConstructedSignal mdModulesPairlistConstructedSignal(
                 plainPairlist.pairs, plainPairlist.excludedPairs, mdatoms.typeA);
         mdModulesNotifiers.simulationRunNotifier_.notify(mdModulesPairlistConstructedSignal);
@@ -9731,8 +9987,20 @@ void do_force(FILE*                         fplog,
             haveDDAtomOrdering(*cr) ? cr->dd->globalAtomIndices.data() : nullptr;
     g_respaTraceGlobalAtomIndexCount =
             haveDDAtomOrdering(*cr) ? static_cast<int>(cr->dd->globalAtomIndices.size()) : 0;
-    g_respaCurrentGlobalAtomIndices = g_respaTraceGlobalAtomIndices;
+    g_respaCurrentGlobalAtomIndices    = g_respaTraceGlobalAtomIndices;
     g_respaCurrentGlobalAtomIndexCount = g_respaTraceGlobalAtomIndexCount;
+    if ((g_respaCurrentGlobalAtomIndices == nullptr || g_respaCurrentGlobalAtomIndexCount == 0)
+        && fr != nullptr && fr->nbv != nullptr)
+    {
+        const auto localAtomOrder = fr->nbv->getLocalAtomOrder();
+        if (!localAtomOrder.empty())
+        {
+            g_respaCurrentGlobalAtomIndices    = localAtomOrder.data();
+            g_respaCurrentGlobalAtomIndexCount = localAtomOrder.ssize();
+        }
+    }
+    g_respaLatestForceDumpGlobalAtomIndices    = g_respaCurrentGlobalAtomIndices;
+    g_respaLatestForceDumpGlobalAtomIndexCount = g_respaCurrentGlobalAtomIndexCount;
 
     const bool reinitGpuPmePpComms = simulationWork.useGpuPmePpCommunication && stepWork.doNeighborSearch;
     if (stepWork.computePmeOnSeparateRank && stepWork.doNeighborSearch)
@@ -10380,6 +10648,7 @@ void do_force(FILE*                         fplog,
     const bool useExactLammpsRespaCpuNbnxmNarrow =
             useExactLammpsRespaNonbonded && !simulationWork.useGpuNonbonded
             && !simulationWork.havePpDomainDecomposition
+            && !exactRespaDisableCpuNbnxmNarrow()
             && fr->nbv != nullptr
             && exactRespaCpuNbnxmKernelSupported(fr->nbv->kernelSetup().kernelType)
             && activeM2pTraceDirPath() == nullptr;
@@ -10505,6 +10774,12 @@ void do_force(FILE*                         fplog,
                 && gmx_within_tol(fr->ic->vdw.repulsionPower, 9.0, 10 * GMX_DOUBLE_EPS)
                 && step == 0)
             {
+                if (exactRespaDisableCpuNbnxmNarrow())
+                {
+                    fprintf(fplog,
+                            "Found environment variable GMX_PCFF_EXACT_RESPA_DISABLE_NBNXM_NARROW.\n"
+                            "Exact r-RESPA CPU nonbonded will force the scalar pair-loop path instead of the narrow NBNXM path for diagnostic comparison.\n");
+                }
                 if (useRepulsionPower9ExactRespaCpuSpecialization(*fr->ic))
                 {
                     fprintf(fplog,
@@ -10519,7 +10794,12 @@ void do_force(FILE*                         fplog,
                 if (exactRespaPairLoopOmpRequested())
                 {
                     fprintf(fplog,
-                            "Exact r-RESPA CPU pair-loop OpenMP experimental fast path requested; only no-trace/no-energy/no-virial pair-loop calls are eligible.\n");
+                            "Exact r-RESPA CPU pair-loop OpenMP fast path is enabled for eligible no-trace/no-energy/no-virial pair-loop calls; set GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP=0 to force the legacy scalar path.\n");
+                }
+                if (exactRespaPairLoopDirectCpuListRequested())
+                {
+                    fprintf(fplog,
+                            "Exact r-RESPA CPU direct cpuLists()/packed-dispatch path is enabled for eligible pair-loop work; set GMX_PCFF_EXACT_RESPA_PAIRLOOP_DIRECT_CPULIST=0 to force plain-pairlist iteration.\n");
                 }
                 if (exactRespaPairLoopVectorRequested())
                 {

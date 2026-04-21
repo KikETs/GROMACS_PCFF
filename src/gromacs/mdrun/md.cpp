@@ -197,6 +197,8 @@ thread_local const char* g_respaDoForceContextLabel = nullptr;
 thread_local int64_t g_respaCurrentDoForceStep = -1;
 thread_local const int* g_respaCurrentGlobalAtomIndices = nullptr;
 thread_local int g_respaCurrentGlobalAtomIndexCount = 0;
+thread_local const int* g_respaLatestForceDumpGlobalAtomIndices = nullptr;
+thread_local int g_respaLatestForceDumpGlobalAtomIndexCount = 0;
 }
 
 namespace
@@ -236,6 +238,47 @@ const char* totalForceDumpFilePath()
 const char* perLevelForceDumpFilePath()
 {
     return std::getenv("GMX_EXACT_RESPA_PER_LEVEL_FORCE_DUMP_FILE");
+}
+
+int canonicalAtomIndexForForceDumpAtom(const int atomIndex)
+{
+    if (atomIndex < 0)
+    {
+        return atomIndex;
+    }
+    if (gmx::g_respaLatestForceDumpGlobalAtomIndices != nullptr
+        && atomIndex < gmx::g_respaLatestForceDumpGlobalAtomIndexCount)
+    {
+        return gmx::g_respaLatestForceDumpGlobalAtomIndices[atomIndex];
+    }
+    return atomIndex;
+}
+
+std::optional<int64_t> exactRespaForceDumpIntervalOverride()
+{
+    const char* value = std::getenv("GMX_EXACT_RESPA_FORCE_DUMP_INTERVAL");
+    if (value == nullptr || *value == '\0')
+    {
+        return std::nullopt;
+    }
+
+    char* end = nullptr;
+    const long parsed = std::strtol(value, &end, 10);
+    if (end == value || *end != '\0' || parsed <= 0)
+    {
+        return std::nullopt;
+    }
+
+    return static_cast<int64_t>(parsed);
+}
+
+bool shouldDumpExactRespaForceDiagnostics(const t_inputrec& inputRecord, const int64_t step)
+{
+    if (const auto interval = exactRespaForceDumpIntervalOverride())
+    {
+        return (step % *interval) == 0;
+    }
+    return do_per_step(step, inputRecord.nstenergy);
 }
 
 enum class RespaKickPhase : int
@@ -298,7 +341,8 @@ void appendExactRespaTotalForceRecord(const char*                        outputP
     output << std::setprecision(17);
     for (gmx::Index atom = 0; atom < gmx::ssize(totalForce); ++atom)
     {
-        output << step << '\t' << time << '\t' << highestActiveMtsLevel << '\t' << atom;
+        output << step << '\t' << time << '\t' << highestActiveMtsLevel << '\t' << atom << '\t'
+               << canonicalAtomIndexForForceDumpAtom(atom);
         for (int d = 0; d < DIM; ++d)
         {
             output << '\t' << totalForce[atom][d];
@@ -322,7 +366,8 @@ void appendExactRespaPerLevelForceRecord(const char*                        outp
     output << std::setprecision(17);
     for (gmx::Index atom = 0; atom < gmx::ssize(levelForce); ++atom)
     {
-        output << step << '\t' << time << '\t' << highestActiveMtsLevel << '\t' << mtsLevel << '\t' << atom;
+        output << step << '\t' << time << '\t' << highestActiveMtsLevel << '\t' << mtsLevel << '\t' << atom
+               << '\t' << canonicalAtomIndexForForceDumpAtom(atom);
         for (int d = 0; d < DIM; ++d)
         {
             output << '\t' << levelForce[atom][d];
@@ -338,7 +383,8 @@ void maybeDumpTotalForceForDiagnostics(const t_inputrec&                 inputRe
                                        const gmx::MdrunScheduleWorkload& runScheduleWork)
 {
     const char* outputPath = totalForceDumpFilePath();
-    if (outputPath == nullptr || *outputPath == '\0' || !do_per_step(step, inputRecord.nstenergy))
+    if (outputPath == nullptr || *outputPath == '\0'
+        || !shouldDumpExactRespaForceDiagnostics(inputRecord, step))
     {
         return;
     }
@@ -376,7 +422,8 @@ void maybeDumpPerLevelForceForDiagnostics(const t_inputrec&                 inpu
                                           const gmx::MdrunScheduleWorkload& runScheduleWork)
 {
     const char* outputPath = perLevelForceDumpFilePath();
-    if (outputPath == nullptr || *outputPath == '\0' || !do_per_step(step, inputRecord.nstenergy))
+    if (outputPath == nullptr || *outputPath == '\0'
+        || !shouldDumpExactRespaForceDiagnostics(inputRecord, step))
     {
         return;
     }

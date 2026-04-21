@@ -1,0 +1,990 @@
+{
+  "schema_name": "exact_respa_native_multi_runtime_parity",
+  "schema_version": 1,
+  "fixture_id": "gate_i_equil_ntomp6_narrow_nbnxm",
+  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+  "steps": 2000,
+  "ntmpi": 1,
+  "ntomp": 6,
+  "pin": "off",
+  "baseline": {
+    "mode": "per_launch",
+    "native_multi_env": "0",
+    "command": [
+      "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+      "mdrun",
+      "-s",
+      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+      "-deffnm",
+      "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/per_launch/run",
+      "-ntmpi",
+      "1",
+      "-ntomp",
+      "6",
+      "-dlb",
+      "no",
+      "-nb",
+      "cpu",
+      "-pme",
+      "cpu",
+      "-bonded",
+      "cpu",
+      "-update",
+      "cpu",
+      "-pin",
+      "off",
+      "-reprod",
+      "-nsteps",
+      "2000"
+    ],
+    "elapsed_seconds": 1.6733520030975342,
+    "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/per_launch/run.log",
+    "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/per_launch/run.edr",
+    "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/per_launch/run.gro",
+    "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/per_launch/run.cpt",
+    "total_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/per_launch/total_force.tsv",
+    "per_level_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/per_launch/per_level_force.tsv",
+    "metrics": {
+      "ns_per_day": 52.638,
+      "ms_per_step": 0.821,
+      "force_seconds": 0.905,
+      "update_seconds": 0.753,
+      "total_seconds": null
+    },
+    "gro_sha256": "0cf6380a20d83a2324023088df0dcb7e79e53eba399e7e3ea7f558ac88bcf4f7",
+    "edr_sha256": "9983d4e16276a0d55418ef97dcf143d93bfa2f99f27f86495171b91a9de420d6",
+    "cpt_sha256": "abd97660beb2435430b1d0e1e70f7a64d8743e447a33a50d1160a5fe116d15a7"
+  },
+  "candidate": {
+    "mode": "native_multi",
+    "native_multi_env": "1",
+    "command": [
+      "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+      "mdrun",
+      "-s",
+      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+      "-deffnm",
+      "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/native_multi/run",
+      "-ntmpi",
+      "1",
+      "-ntomp",
+      "6",
+      "-dlb",
+      "no",
+      "-nb",
+      "cpu",
+      "-pme",
+      "cpu",
+      "-bonded",
+      "cpu",
+      "-update",
+      "cpu",
+      "-pin",
+      "off",
+      "-reprod",
+      "-nsteps",
+      "2000"
+    ],
+    "elapsed_seconds": 1.36092209815979,
+    "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/native_multi/run.log",
+    "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/native_multi/run.edr",
+    "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/native_multi/run.gro",
+    "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/native_multi/run.cpt",
+    "total_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/native_multi/total_force.tsv",
+    "per_level_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/native_multi/per_level_force.tsv",
+    "metrics": {
+      "ns_per_day": 64.535,
+      "ms_per_step": 0.669,
+      "force_seconds": 0.667,
+      "update_seconds": 0.611,
+      "total_seconds": null
+    },
+    "gro_sha256": "324082fab832da79679c14286a46687aaeab973ddf35f30d794d8704b5d9ba83",
+    "edr_sha256": "3e05c29cdc4cca3592a7cb1d695c091860a2f57e0bef295742bdc63ab58c1966",
+    "cpt_sha256": "c351fbe4b324bdd0334f94d019f4f4c507d3a94676db79f8ffeb394c1413cb94"
+  },
+  "comparisons": {
+    "total_force": {
+      "matches": false,
+      "candidate_frame_count": 6,
+      "baseline_frame_count": 6,
+      "common_frame_count": 6,
+      "candidate_only_frames": [],
+      "baseline_only_frames": [],
+      "max_abs_component_delta": 6.3876953125,
+      "first_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 2,
+        "baseline": 4.173271656036377,
+        "candidate": 4.173272132873535,
+        "delta": 4.76837158203125e-07
+      },
+      "frames": [
+        {
+          "frame_key": 0,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.00054931640625,
+          "time_ps": 0.0,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 400,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.732269287109375,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 800,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 2.182708740234375,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 1200,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 1.8228759765625,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 1600,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 2.83544921875,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 2000,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 6.3876953125,
+          "time_ps": 1.0,
+          "highest_active_level": 2
+        }
+      ]
+    },
+    "per_level_force": {
+      "matches": false,
+      "candidate_frame_count": 18,
+      "baseline_frame_count": 18,
+      "common_frame_count": 18,
+      "candidate_only_frames": [],
+      "baseline_only_frames": [],
+      "max_abs_component_delta": 6.39501953125,
+      "first_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "frames": [
+        {
+          "frame_key": [
+            0,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.00048828125,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            0,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.00018310546875,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            0,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.000335693359375,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            400,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.73779296875,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            400,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.010101318359375,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            400,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.008056640625,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            800,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 2.180450439453125,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            800,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0229949951171875,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            800,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.015411376953125,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            1200,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 1.8197021484375,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            1200,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.03227996826171875,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            1200,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0225982666015625,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            1600,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 2.8487548828125,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            1600,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.09368896484375,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            1600,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.076202392578125,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            2000,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 6.39501953125,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            2000,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.3216285705566406,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            2000,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.09991455078125,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 2
+        }
+      ]
+    },
+    "energy": {
+      "matches": false,
+      "candidate_frame_count": 6,
+      "baseline_frame_count": 6,
+      "common_frame_count": 6,
+      "max_abs_delta": 1.4200000000000728,
+      "first_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Vir-XX",
+        "baseline": -3205.23,
+        "candidate": -3205.22,
+        "delta": 0.010000000000218279
+      },
+      "frames": [
+        {
+          "frame_index": 0,
+          "step": 0,
+          "time_ps": 0.0,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.0,
+            "Vir-XX": 0.010000000000218279,
+            "Vir-XY": 0.006000000000028649,
+            "Vir-XZ": 9.999999999621423e-05,
+            "Vir-YX": 0.0010000000000331966,
+            "Vir-YY": 0.0,
+            "Vir-YZ": 0.0,
+            "Vir-ZX": -9.999999999621423e-05,
+            "Vir-ZY": -0.0010000000000331966,
+            "Vir-ZZ": -0.0010000000000047748,
+            "Pres-XX": 0.0,
+            "Pres-XY": -0.0020000000000095497,
+            "Pres-XZ": -9.999999999976694e-05,
+            "Pres-YX": 0.0,
+            "Pres-YY": 0.0,
+            "Pres-YZ": 0.0,
+            "Pres-ZX": 0.0,
+            "Pres-ZY": 0.0,
+            "Pres-ZZ": 0.0
+          }
+        },
+        {
+          "frame_index": 1,
+          "step": 400,
+          "time_ps": 0.2,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.07540000000000013,
+            "Vir-XX": -0.209999999999809,
+            "Vir-XY": -0.016000000000076398,
+            "Vir-XZ": 0.00100000000009004,
+            "Vir-YX": -0.007999999999924512,
+            "Vir-YY": -0.06999999999970896,
+            "Vir-YZ": -0.15899999999999181,
+            "Vir-ZX": -0.018000000000029104,
+            "Vir-ZY": -0.17799999999999727,
+            "Vir-ZZ": -0.3100000000001728,
+            "Pres-XX": 0.08000000000015461,
+            "Pres-XY": 0.003999999999990678,
+            "Pres-XZ": 0.002999999999985903,
+            "Pres-YX": 0.0010000000000047748,
+            "Pres-YY": 0.03000000000020009,
+            "Pres-YZ": 0.06099999999997863,
+            "Pres-ZX": 0.010999999999967258,
+            "Pres-ZY": 0.06799999999998363,
+            "Pres-ZZ": 0.11999999999989086
+          }
+        },
+        {
+          "frame_index": 2,
+          "step": 800,
+          "time_ps": 0.4,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.14000000000001478,
+            "Vir-XX": -0.3129999999999882,
+            "Vir-XY": -0.017300000000000537,
+            "Vir-XZ": -0.10800000000000409,
+            "Vir-YX": -0.008699999999999264,
+            "Vir-YY": 0.0999999999994543,
+            "Vir-YZ": -0.08699999999998909,
+            "Vir-ZX": -0.12000000000000455,
+            "Vir-ZY": -0.09300000000001774,
+            "Vir-ZZ": -0.8900000000001,
+            "Pres-XX": 0.12999999999999545,
+            "Pres-XY": 0.004900000000006344,
+            "Pres-XZ": 0.039299999999997226,
+            "Pres-YX": 0.0015000000000000568,
+            "Pres-YY": -0.03999999999996362,
+            "Pres-YZ": 0.030000000000001137,
+            "Pres-ZX": 0.04400000000000048,
+            "Pres-ZY": 0.032199999999988904,
+            "Pres-ZZ": 0.33999999999991815
+          }
+        },
+        {
+          "frame_index": 3,
+          "step": 1200,
+          "time_ps": 0.6,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.2259999999999991,
+            "Vir-XX": -0.15999999999985448,
+            "Vir-XY": 0.23699999999996635,
+            "Vir-XZ": -0.2349999999999568,
+            "Vir-YX": 0.22699999999997544,
+            "Vir-YY": -0.8699999999998909,
+            "Vir-YZ": 0.5799999999999272,
+            "Vir-ZX": -0.23599999999999,
+            "Vir-ZY": 0.5899999999999181,
+            "Vir-ZZ": -0.61099999999999,
+            "Pres-XX": 0.08039999999999736,
+            "Pres-XY": -0.09600000000000364,
+            "Pres-XZ": 0.09200000000001296,
+            "Pres-YX": -0.09299999999998931,
+            "Pres-YY": 0.3400000000001455,
+            "Pres-YZ": -0.2440000000000282,
+            "Pres-ZX": 0.09299999999998931,
+            "Pres-ZY": -0.24699999999995725,
+            "Pres-ZZ": 0.2599999999999909
+          }
+        },
+        {
+          "frame_index": 4,
+          "step": 1600,
+          "time_ps": 0.8,
+          "term_deltas": {
+            "Potential": 1.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.17000000000007276,
+            "Vir-XX": -0.5499999999992724,
+            "Vir-XY": 1.0579999999999927,
+            "Vir-XZ": -0.11529999999999774,
+            "Vir-YX": 1.0550000000000637,
+            "Vir-YY": -1.4200000000000728,
+            "Vir-YZ": -0.3859999999999957,
+            "Vir-ZX": -0.12830000000000297,
+            "Vir-ZY": -0.37999999999999545,
+            "Vir-ZZ": 0.5100000000002183,
+            "Pres-XX": 0.18700000000001182,
+            "Pres-XY": -0.41499999999999204,
+            "Pres-XZ": 0.048410000000000064,
+            "Pres-YX": -0.41499999999999204,
+            "Pres-YY": 0.5399999999999636,
+            "Pres-YZ": 0.14499999999999602,
+            "Pres-ZX": 0.05355999999999961,
+            "Pres-ZY": 0.14300000000000068,
+            "Pres-ZZ": -0.21429999999999438
+          }
+        },
+        {
+          "frame_index": 5,
+          "step": 2000,
+          "time_ps": 1.0,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.20799999999997,
+            "Vir-XX": -0.849999999999909,
+            "Vir-XY": 0.6999999999999886,
+            "Vir-XZ": 0.07520000000000948,
+            "Vir-YX": 0.6839999999999975,
+            "Vir-YY": 0.019999999999527063,
+            "Vir-YZ": -0.6680000000000064,
+            "Vir-ZX": 0.08729999999999905,
+            "Vir-ZY": -0.6850000000000023,
+            "Vir-ZZ": -0.7800000000002001,
+            "Pres-XX": 0.2780000000000058,
+            "Pres-XY": -0.2407000000000039,
+            "Pres-XZ": -0.032399999999999096,
+            "Pres-YX": -0.23470000000000368,
+            "Pres-YY": 0.009999999999990905,
+            "Pres-YZ": 0.27370000000000516,
+            "Pres-ZX": -0.03710000000000235,
+            "Pres-ZY": 0.28069999999999595,
+            "Pres-ZZ": 0.3409500000000003
+          }
+        }
+      ]
+    },
+    "gro": {
+      "matches": false,
+      "atom_count": 2160,
+      "max_abs_coord_delta_nm": 0.001000000000000334,
+      "max_abs_box_delta_nm": 0.0,
+      "first_mismatch": {
+        "atom": 25,
+        "dimension": 1,
+        "baseline": 3.815,
+        "candidate": 3.814,
+        "delta": -0.0009999999999998899
+      }
+    },
+    "same_coordinate_probe": {
+      "available": true,
+      "probe_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/same_coordinate_probe.tpr",
+      "probe_start_step": 2000,
+      "probe_end_step": 2004,
+      "outer_step_factor": 4,
+      "probe_steps": 4,
+      "convert_tpr_command": [
+        "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+        "convert-tpr",
+        "-s",
+        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+        "-nsteps",
+        "2004",
+        "-o",
+        "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/same_coordinate_probe.tpr"
+      ],
+      "baseline": {
+        "mode": "per_launch",
+        "native_multi_env": "0",
+        "command": [
+          "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+          "mdrun",
+          "-s",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/same_coordinate_probe.tpr",
+          "-deffnm",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/per_launch/run",
+          "-ntmpi",
+          "1",
+          "-ntomp",
+          "6",
+          "-dlb",
+          "no",
+          "-nb",
+          "cpu",
+          "-pme",
+          "cpu",
+          "-bonded",
+          "cpu",
+          "-update",
+          "cpu",
+          "-pin",
+          "off",
+          "-reprod",
+          "-cpi",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/per_launch/run.cpt",
+          "-noappend"
+        ],
+        "elapsed_seconds": 0.05270218849182129,
+        "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/per_launch/run.part0002.log",
+        "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/per_launch/run.part0002.edr",
+        "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/per_launch/run.part0002.gro",
+        "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/per_launch/run.cpt",
+        "total_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/per_launch/total_force.tsv",
+        "per_level_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/per_launch/per_level_force.tsv",
+        "metrics": {
+          "ns_per_day": 9.899,
+          "ms_per_step": 4.364,
+          "force_seconds": 0.003,
+          "update_seconds": 0.002,
+          "total_seconds": null
+        },
+        "gro_sha256": "d4158f8186ac083690499ad9d45f84d6f60668d2ce86687b68462ef8256ba124",
+        "edr_sha256": "a928c420cacd289ae5e290c3e717b0c0e8b50e515f2bc73cf95f190495f761c5",
+        "cpt_sha256": "69923f204289a23ae4668568247e6faeaddacaf6b04e2e0e3308e28ca0c2ce0e"
+      },
+      "candidate": {
+        "mode": "native_multi",
+        "native_multi_env": "1",
+        "command": [
+          "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+          "mdrun",
+          "-s",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/same_coordinate_probe.tpr",
+          "-deffnm",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/native_multi/run",
+          "-ntmpi",
+          "1",
+          "-ntomp",
+          "6",
+          "-dlb",
+          "no",
+          "-nb",
+          "cpu",
+          "-pme",
+          "cpu",
+          "-bonded",
+          "cpu",
+          "-update",
+          "cpu",
+          "-pin",
+          "off",
+          "-reprod",
+          "-cpi",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/per_launch/run.cpt",
+          "-noappend"
+        ],
+        "elapsed_seconds": 0.04098367691040039,
+        "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/native_multi/run.part0002.log",
+        "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/native_multi/run.part0002.edr",
+        "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/native_multi/run.part0002.gro",
+        "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/native_multi/run.cpt",
+        "total_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/native_multi/total_force.tsv",
+        "per_level_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe/gate_i_equil_runtime_parity_20260417/same_coordinate_probe/runs/native_multi/per_level_force.tsv",
+        "metrics": {
+          "ns_per_day": 14.394,
+          "ms_per_step": 3.001,
+          "force_seconds": 0.002,
+          "update_seconds": 0.002,
+          "total_seconds": null
+        },
+        "gro_sha256": "d4158f8186ac083690499ad9d45f84d6f60668d2ce86687b68462ef8256ba124",
+        "edr_sha256": "300a854110d0404566656307095ce945468260748f80bebf3e780ceaf4e4d213",
+        "cpt_sha256": "31c7e2ca28c1dd5294f25b2b281114d9ce78bb30b41431ccff8afe9be91d1539"
+      },
+      "comparisons": {
+        "total_force": {
+          "matches": false,
+          "candidate_frame_count": 1,
+          "baseline_frame_count": 1,
+          "common_frame_count": 1,
+          "candidate_only_frames": [],
+          "baseline_only_frames": [],
+          "max_abs_component_delta": 0.000732421875,
+          "first_mismatch": {
+            "frame_key": 2000,
+            "atom": 0,
+            "dimension": 1,
+            "baseline": 183.02566528320312,
+            "candidate": 183.02569580078125,
+            "delta": 3.0517578125e-05
+          },
+          "frames": [
+            {
+              "frame_key": 2000,
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.000732421875,
+              "time_ps": 1.0,
+              "highest_active_level": 2
+            }
+          ]
+        },
+        "per_level_force": {
+          "matches": false,
+          "candidate_frame_count": 3,
+          "baseline_frame_count": 3,
+          "common_frame_count": 3,
+          "candidate_only_frames": [],
+          "baseline_only_frames": [],
+          "max_abs_component_delta": 0.00048828125,
+          "first_mismatch": {
+            "frame_key": [
+              2000,
+              0
+            ],
+            "atom": 0,
+            "dimension": 0,
+            "baseline": 134.64901733398438,
+            "candidate": 134.6490020751953,
+            "delta": -1.52587890625e-05
+          },
+          "frames": [
+            {
+              "frame_key": [
+                2000,
+                0
+              ],
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.00048828125,
+              "time_ps": 1.0,
+              "highest_active_level": 2,
+              "mts_level": 0
+            },
+            {
+              "frame_key": [
+                2000,
+                1
+              ],
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.0001220703125,
+              "time_ps": 1.0,
+              "highest_active_level": 2,
+              "mts_level": 1
+            },
+            {
+              "frame_key": [
+                2000,
+                2
+              ],
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.0003662109375,
+              "time_ps": 1.0,
+              "highest_active_level": 2,
+              "mts_level": 2
+            }
+          ]
+        },
+        "energy": {
+          "matches": false,
+          "candidate_frame_count": 2,
+          "baseline_frame_count": 2,
+          "common_frame_count": 2,
+          "max_abs_delta": 0.005000000000052296,
+          "first_mismatch": {
+            "frame_index": 0,
+            "step": 2000,
+            "term": "Vir-XY",
+            "baseline": 251.803,
+            "candidate": 251.808,
+            "delta": 0.0049999999999954525
+          },
+          "frames": [
+            {
+              "frame_index": 0,
+              "step": 2000,
+              "time_ps": 1.0,
+              "term_deltas": {
+                "Potential": 0.0,
+                "Total Energy": 0.0,
+                "Pressure": 0.0,
+                "Vir-XX": 0.0,
+                "Vir-XY": 0.0049999999999954525,
+                "Vir-XZ": -0.0024999999999977263,
+                "Vir-YX": 0.0010000000000047748,
+                "Vir-YY": 0.0,
+                "Vir-YZ": -0.0030000000000143245,
+                "Vir-ZX": -0.002300000000005298,
+                "Vir-ZY": -0.0020000000000095497,
+                "Vir-ZZ": 0.0,
+                "Pres-XX": 0.0,
+                "Pres-XY": -0.0020000000000095497,
+                "Pres-XZ": 0.0008999999999979025,
+                "Pres-YX": -0.0005999999999914962,
+                "Pres-YY": 0.0,
+                "Pres-YZ": 0.0007999999999981355,
+                "Pres-ZX": 0.0008999999999979025,
+                "Pres-ZY": 0.0005999999999914962,
+                "Pres-ZZ": -0.0014399999999996638
+              }
+            },
+            {
+              "frame_index": 1,
+              "step": 2004,
+              "time_ps": 1.002,
+              "term_deltas": {
+                "Potential": 0.0,
+                "Total Energy": 0.0,
+                "Pressure": 0.0,
+                "Vir-XX": 0.0,
+                "Vir-XY": -0.005000000000052296,
+                "Vir-XZ": 0.0010000000000047748,
+                "Vir-YX": 0.0,
+                "Vir-YY": 0.0,
+                "Vir-YZ": 0.0,
+                "Vir-ZX": -0.0030000000000001137,
+                "Vir-ZY": 0.004000000000019099,
+                "Vir-ZZ": 0.0,
+                "Pres-XX": 0.001799999999995805,
+                "Pres-XY": 0.0018999999999920192,
+                "Pres-XZ": -0.000800000000005241,
+                "Pres-YX": 0.0,
+                "Pres-YY": 0.0,
+                "Pres-YZ": 0.0,
+                "Pres-ZX": 0.0013999999999967372,
+                "Pres-ZY": -0.0010000000000047748,
+                "Pres-ZZ": -0.0005999999999986017
+              }
+            }
+          ]
+        },
+        "gro": {
+          "matches": true,
+          "atom_count": 2160,
+          "max_abs_coord_delta_nm": 0.0,
+          "max_abs_box_delta_nm": 0.0,
+          "first_mismatch": null
+        },
+        "first_total_force_frame": {
+          "frame_key": 2000,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.000732421875,
+          "time_ps": 1.0,
+          "highest_active_level": 2
+        },
+        "first_level0_force_frame": {
+          "frame_key": [
+            2000,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.00048828125,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        "first_level1_force_frame": {
+          "frame_key": [
+            2000,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0001220703125,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        "first_level2_force_frame": {
+          "frame_key": [
+            2000,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0003662109375,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 2
+        }
+      }
+    },
+    "hashes": {
+      "gro_sha256_equal": false,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false
+    },
+    "performance": {
+      "baseline_ns_per_day": 52.638,
+      "candidate_ns_per_day": 64.535,
+      "speedup": 1.2260154261180136,
+      "baseline_force_seconds": 0.905,
+      "candidate_force_seconds": 0.667,
+      "baseline_update_seconds": 0.753,
+      "candidate_update_seconds": 0.611
+    }
+  },
+  "notes": [
+    "Hashes are reported separately from force/energy/virial deltas.",
+    "A hash mismatch alone is not sufficient evidence of semantic failure or success.",
+    "Current harness compares runtime total-force dumps, per-level force dumps, EDR dump terms, and final GRO coordinates.",
+    "The same-coordinate probe reuses the original TPR plus checkpoint continuation instead of rebuilding a new TPR from MDP/topology inputs."
+  ]
+}

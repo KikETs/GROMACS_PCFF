@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import shutil
 from pathlib import Path
 
@@ -70,6 +71,15 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional explicit velocity seed. Defaults to the original Gate I seed mapping.",
     )
+    parser.add_argument(
+        "--ld-seed",
+        type=int,
+        default=None,
+        help=(
+            "Optional explicit stochastic thermostat/barostat seed. "
+            "Defaults to the resolved ld-seed from the original Gate I equilibration mdout."
+        ),
+    )
     parser.add_argument("--ntmpi", type=int, default=1)
     parser.add_argument("--ntomp", type=int, default=1)
     parser.add_argument("--npme", type=int, default=None)
@@ -113,6 +123,24 @@ def validate_args(args: argparse.Namespace) -> None:
 
 def original_seed(replica_index: int) -> int:
     return 61001 + replica_index - 1
+
+
+def resolved_ld_seed(failed_root: Path, replica_index: int) -> int:
+    grompp_stdout = failed_root / "logs" / f"cpu_replica_{replica_index:02d}_grompp_equil.stdout"
+    if grompp_stdout.exists():
+        match = re.search(
+            r"Setting the LD random seed to\s+(-?\d+)",
+            grompp_stdout.read_text(encoding="utf-8"),
+        )
+        if match is not None:
+            return int(match.group(1))
+    mdout_path = failed_root / "cpu" / f"replica_{replica_index:02d}" / "equil.mdout.mdp"
+    if not mdout_path.exists():
+        raise FileNotFoundError(f"Missing original equilibration mdout.mdp: {mdout_path}")
+    match = re.search(r"^ld-seed\s*=\s*(-?\d+)\s*$", mdout_path.read_text(encoding="utf-8"), flags=re.MULTILINE)
+    if match is None:
+        raise ValueError(f"Could not resolve ld-seed from {mdout_path}")
+    return int(match.group(1))
 
 
 def sanitize_observable(observable: dict[str, object]) -> dict[str, object]:
@@ -172,6 +200,7 @@ def build_report(
     *,
     args: argparse.Namespace,
     seed: int,
+    ld_seed: int,
     perf_ref: dict[str, object],
     original_summary: dict[str, object],
     probe_observables: dict[str, dict[str, object]],
@@ -203,6 +232,7 @@ def build_report(
             "failed_root": str(Path(args.failed_gate_i_root).resolve()),
             "replica_index": args.replica_index,
             "seed": seed,
+            "ld_seed": ld_seed,
             "original_replica_summary": str(
                 (Path(args.failed_gate_i_root) / "cpu" / f"replica_{args.replica_index:02d}" / "replica_summary.json").resolve()
             ),
@@ -219,6 +249,7 @@ def build_report(
             "ntmpi": args.ntmpi,
             "ntomp": args.ntomp,
             "npme": args.npme,
+            "ld_seed": ld_seed,
             "mdrun_shape": "nb cpu / bonded cpu / pme cpu / update cpu / reprod / single rank",
         },
         "performance_reference": perf_ref,
@@ -261,6 +292,7 @@ def report_markdown(report: dict[str, object]) -> str:
         "",
         f"- Replica index: `{report['source_gate_i']['replica_index']}`",
         f"- Seed: `{report['source_gate_i']['seed']}`",
+        f"- LD seed: `{report['source_gate_i']['ld_seed']}`",
         f"- Probe horizon: `{report['run_settings']['equil_ps']} ps + {report['run_settings']['prod_ps']} ps`",
         f"- Equil final volume (nm^3): `{report['equil_final_box']['volume_nm3']:.6f}`",
         f"- Probe density drift rel: `{density['probe_abs_block_drift_rel']:.6f}`",
@@ -294,6 +326,7 @@ def main() -> int:
     original_summary = load_json(original_summary_path)
 
     seed = args.seed if args.seed is not None else original_seed(args.replica_index)
+    ld_seed = args.ld_seed if args.ld_seed is not None else resolved_ld_seed(failed_root, args.replica_index)
     args.replicas = 1
     out_root = Path(args.out).resolve()
     if out_root.exists() and not args.resume:
@@ -309,6 +342,7 @@ def main() -> int:
         "source_gate_i_root": str(failed_root),
         "replica_index": args.replica_index,
         "seed": seed,
+        "ld_seed": ld_seed,
         "run_settings": {
             "equil_ps": args.equil_ps,
             "prod_ps": args.prod_ps,
@@ -316,6 +350,7 @@ def main() -> int:
             "ntmpi": args.ntmpi,
             "ntomp": args.ntomp,
             "npme": args.npme,
+            "ld_seed": ld_seed,
         },
         "performance_reference": perf_ref,
     }
@@ -336,24 +371,26 @@ def main() -> int:
     prod_mdp = inputs_dir / "prod.mdp"
     write_text(
         equil_mdp,
-        make_gate_i_npt_mdp(
-            duration_ps=args.equil_ps,
-            sample_interval=args.sample_interval,
-            phase="equil",
-            seed=seed,
-            args=args,
-        ),
-    )
+            make_gate_i_npt_mdp(
+                duration_ps=args.equil_ps,
+                sample_interval=args.sample_interval,
+                phase="equil",
+                seed=seed,
+                args=args,
+                ld_seed=ld_seed,
+            ),
+        )
     write_text(
         prod_mdp,
-        make_gate_i_npt_mdp(
-            duration_ps=args.prod_ps,
-            sample_interval=args.sample_interval,
-            phase="prod",
-            seed=seed,
-            args=args,
-        ),
-    )
+            make_gate_i_npt_mdp(
+                duration_ps=args.prod_ps,
+                sample_interval=args.sample_interval,
+                phase="prod",
+                seed=seed,
+                args=args,
+                ld_seed=ld_seed,
+            ),
+        )
 
     run_root = out_root / "cpu" / f"replica_{args.replica_index:02d}"
     run_root.mkdir(parents=True, exist_ok=True)
@@ -411,6 +448,7 @@ def main() -> int:
     report = build_report(
         args=args,
         seed=seed,
+        ld_seed=ld_seed,
         perf_ref=perf_ref,
         original_summary=original_summary,
         probe_observables=probe_observables,

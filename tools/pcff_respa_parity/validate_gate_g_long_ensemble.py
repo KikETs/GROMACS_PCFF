@@ -280,6 +280,7 @@ def make_gate_g_mdp(
 
 
 def mdrun_args_cpu(args: argparse.Namespace, deffnm: Path) -> list[str]:
+    pin = getattr(args, "pin", "off")
     argv = [
         "-s",
         str(deffnm.with_suffix(".tpr")),
@@ -307,10 +308,17 @@ def mdrun_args_cpu(args: argparse.Namespace, deffnm: Path) -> list[str]:
             "-update",
             "cpu",
             "-pin",
-            "off",
-            "-reprod",
+            pin,
         ]
     )
+    if pin != "off":
+        pinoffset = getattr(args, "pinoffset", None)
+        pinstride = getattr(args, "pinstride", None)
+        if pinoffset is not None:
+            argv.extend(["-pinoffset", str(pinoffset)])
+        if pinstride is not None:
+            argv.extend(["-pinstride", str(pinstride)])
+    argv.append("-reprod")
     return argv
 
 

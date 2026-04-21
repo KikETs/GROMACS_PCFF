@@ -1,0 +1,1051 @@
+{
+  "acceptance_criteria": {
+    "density_cross_replica_span_rel_max": 0.05,
+    "density_max_replica_abs_block_drift_rel_max": 0.08,
+    "density_mean_abs_block_drift_rel_max": 0.05,
+    "gate_scope_note": "These are predeclared conditioning criteria only. A Gate I PASS closes the density/volume conditioning blocker, not TP0 production or transport readiness.",
+    "relative_metric_note": "Relative block-drift and cross-replica span metrics are normalized by the absolute aggregate mean of the same observable.",
+    "replicas_min": 3,
+    "required_conditioned_state_files": [
+      "prod.gro",
+      "prod.cpt",
+      "prod.tpr",
+      "replica_summary.json"
+    ],
+    "temperature_mean_abs_error_k_max": 20.0,
+    "volume_cross_replica_span_rel_max": 0.05,
+    "volume_max_replica_abs_block_drift_rel_max": 0.08,
+    "volume_mean_abs_block_drift_rel_max": 0.05
+  },
+  "aggregates": {
+    "Box-X": {
+      "available": true,
+      "mean_abs_block_drift": 0.010084918333332915,
+      "mean_block_sem": 0.0037261610217489798,
+      "mean_block_span": 0.01945982841758213,
+      "mean_of_means": 3.410745069052856,
+      "pooled_mean": 3.4107450690528562,
+      "pooled_q10": 3.3862538,
+      "pooled_q50": 3.411917,
+      "pooled_q90": 3.4321114,
+      "pooled_std": 0.017035030337081473,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 0.0143835499999998,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.391671931,
+            3.383027837,
+            3.385236778221778,
+            3.407074621,
+            3.4060554809999997
+          ],
+          "block_sem": 0.005084298340348438,
+          "block_span": 0.02404678399999982,
+          "frame_count": 5001,
+          "max": 3.431571,
+          "mean": 3.394611454709058,
+          "min": 3.358495,
+          "q10": 3.377131,
+          "q50": 3.393785,
+          "q90": 3.41283,
+          "sem": 0.00019027103802738159,
+          "std": 0.013455539477404778
+        },
+        {
+          "abs_block_drift": 0.007632962999999382,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.4193534249999997,
+            3.423672257,
+            3.429867734265734,
+            3.4235710939999997,
+            3.4117204620000003
+          ],
+          "block_sem": 0.0029931623569055326,
+          "block_span": 0.01814727226573387,
+          "frame_count": 5001,
+          "max": 3.462625,
+          "mean": 3.4216386402719454,
+          "min": 3.390724,
+          "q10": 3.405244,
+          "q50": 3.420906,
+          "q90": 3.439494,
+          "sem": 0.0001777350296584228,
+          "std": 0.01256902118620101
+        },
+        {
+          "abs_block_drift": 0.008238241999999563,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.417604456,
+            3.419747587,
+            3.424692012987013,
+            3.4085065840000004,
+            3.4093662140000003
+          ],
+          "block_sem": 0.0031010223679929696,
+          "block_span": 0.016185428987012696,
+          "frame_count": 5001,
+          "max": 3.450727,
+          "mean": 3.4159851121775646,
+          "min": 3.379672,
+          "q10": 3.403637,
+          "q50": 3.414749,
+          "q90": 3.431377,
+          "sem": 0.0001581981339096269,
+          "std": 0.01118741589966216
+        }
+      ],
+      "sem_abs_block_drift": 0.002156406449104142,
+      "sem_of_means": 0.008230243593484855,
+      "std_of_means": 0.01425520006258402
+    },
+    "Box-Y": {
+      "available": true,
+      "mean_abs_block_drift": 0.010084918333332915,
+      "mean_block_sem": 0.0037261610217489798,
+      "mean_block_span": 0.01945982841758213,
+      "mean_of_means": 3.410745069052856,
+      "pooled_mean": 3.4107450690528562,
+      "pooled_q10": 3.3862538,
+      "pooled_q50": 3.411917,
+      "pooled_q90": 3.4321114,
+      "pooled_std": 0.017035030337081473,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 0.0143835499999998,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.391671931,
+            3.383027837,
+            3.385236778221778,
+            3.407074621,
+            3.4060554809999997
+          ],
+          "block_sem": 0.005084298340348438,
+          "block_span": 0.02404678399999982,
+          "frame_count": 5001,
+          "max": 3.431571,
+          "mean": 3.394611454709058,
+          "min": 3.358495,
+          "q10": 3.377131,
+          "q50": 3.393785,
+          "q90": 3.41283,
+          "sem": 0.00019027103802738159,
+          "std": 0.013455539477404778
+        },
+        {
+          "abs_block_drift": 0.007632962999999382,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.4193534249999997,
+            3.423672257,
+            3.429867734265734,
+            3.4235710939999997,
+            3.4117204620000003
+          ],
+          "block_sem": 0.0029931623569055326,
+          "block_span": 0.01814727226573387,
+          "frame_count": 5001,
+          "max": 3.462625,
+          "mean": 3.4216386402719454,
+          "min": 3.390724,
+          "q10": 3.405244,
+          "q50": 3.420906,
+          "q90": 3.439494,
+          "sem": 0.0001777350296584228,
+          "std": 0.01256902118620101
+        },
+        {
+          "abs_block_drift": 0.008238241999999563,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.417604456,
+            3.419747587,
+            3.424692012987013,
+            3.4085065840000004,
+            3.4093662140000003
+          ],
+          "block_sem": 0.0031010223679929696,
+          "block_span": 0.016185428987012696,
+          "frame_count": 5001,
+          "max": 3.450727,
+          "mean": 3.4159851121775646,
+          "min": 3.379672,
+          "q10": 3.403637,
+          "q50": 3.414749,
+          "q90": 3.431377,
+          "sem": 0.0001581981339096269,
+          "std": 0.01118741589966216
+        }
+      ],
+      "sem_abs_block_drift": 0.002156406449104142,
+      "sem_of_means": 0.008230243593484855,
+      "std_of_means": 0.01425520006258402
+    },
+    "Box-Z": {
+      "available": true,
+      "mean_abs_block_drift": 0.010084918333332915,
+      "mean_block_sem": 0.0037261610217489798,
+      "mean_block_span": 0.01945982841758213,
+      "mean_of_means": 3.410745069052856,
+      "pooled_mean": 3.4107450690528562,
+      "pooled_q10": 3.3862538,
+      "pooled_q50": 3.411917,
+      "pooled_q90": 3.4321114,
+      "pooled_std": 0.017035030337081473,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 0.0143835499999998,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.391671931,
+            3.383027837,
+            3.385236778221778,
+            3.407074621,
+            3.4060554809999997
+          ],
+          "block_sem": 0.005084298340348438,
+          "block_span": 0.02404678399999982,
+          "frame_count": 5001,
+          "max": 3.431571,
+          "mean": 3.394611454709058,
+          "min": 3.358495,
+          "q10": 3.377131,
+          "q50": 3.393785,
+          "q90": 3.41283,
+          "sem": 0.00019027103802738159,
+          "std": 0.013455539477404778
+        },
+        {
+          "abs_block_drift": 0.007632962999999382,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.4193534249999997,
+            3.423672257,
+            3.429867734265734,
+            3.4235710939999997,
+            3.4117204620000003
+          ],
+          "block_sem": 0.0029931623569055326,
+          "block_span": 0.01814727226573387,
+          "frame_count": 5001,
+          "max": 3.462625,
+          "mean": 3.4216386402719454,
+          "min": 3.390724,
+          "q10": 3.405244,
+          "q50": 3.420906,
+          "q90": 3.439494,
+          "sem": 0.0001777350296584228,
+          "std": 0.01256902118620101
+        },
+        {
+          "abs_block_drift": 0.008238241999999563,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            3.417604456,
+            3.419747587,
+            3.424692012987013,
+            3.4085065840000004,
+            3.4093662140000003
+          ],
+          "block_sem": 0.0031010223679929696,
+          "block_span": 0.016185428987012696,
+          "frame_count": 5001,
+          "max": 3.450727,
+          "mean": 3.4159851121775646,
+          "min": 3.379672,
+          "q10": 3.403637,
+          "q50": 3.414749,
+          "q90": 3.431377,
+          "sem": 0.0001581981339096269,
+          "std": 0.01118741589966216
+        }
+      ],
+      "sem_abs_block_drift": 0.002156406449104142,
+      "sem_of_means": 0.008230243593484855,
+      "std_of_means": 0.01425520006258402
+    },
+    "Density": {
+      "available": true,
+      "mean_abs_block_drift": 13.095593933666578,
+      "mean_block_sem": 4.825131865502875,
+      "mean_block_span": 25.15780462138294,
+      "mean_of_means": 1469.2836346873291,
+      "pooled_mean": 1469.2836346873291,
+      "pooled_q10": 1441.7970948,
+      "pooled_q50": 1467.549805,
+      "pooled_q90": 1501.1695312000002,
+      "pooled_std": 22.064262351404153,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 18.855600133999815,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            1494.038529195,
+            1505.513884881,
+            1502.597574911089,
+            1473.902278062,
+            1475.182929061
+          ],
+          "block_sem": 6.686053906149456,
+          "block_span": 31.611606818999917,
+          "frame_count": 5001,
+          "max": 1538.700439,
+          "mean": 1490.249508835233,
+          "min": 1442.477905,
+          "q10": 1466.372681,
+          "q50": 1491.19873,
+          "q90": 1513.367432,
+          "sem": 0.2503303773179479,
+          "std": 17.702800748427887
+        },
+        {
+          "abs_block_drift": 9.80928885000003,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            1458.050181744,
+            1452.559365225,
+            1444.7126872137862,
+            1452.800227163,
+            1467.859470594
+          ],
+          "block_sem": 3.81510981207124,
+          "block_span": 23.14678338021372,
+          "frame_count": 5001,
+          "max": 1495.240234,
+          "mean": 1455.1942900673866,
+          "min": 1404.015625,
+          "q10": 1432.533081,
+          "q50": 1456.011353,
+          "q90": 1476.194214,
+          "sem": 0.2263818599243047,
+          "std": 16.009215510462727
+        },
+        {
+          "abs_block_drift": 10.621892816999889,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            1460.286586682,
+            1457.57094838,
+            1451.282805935065,
+            1471.9978296000002,
+            1470.908479499
+          ],
+          "block_sem": 3.97423187828793,
+          "block_span": 20.715023664935188,
+          "frame_count": 5001,
+          "max": 1509.957642,
+          "mean": 1462.407105159368,
+          "min": 1418.588379,
+          "q10": 1442.7229,
+          "q50": 1463.901611,
+          "q90": 1478.286011,
+          "sem": 0.2027132368449023,
+          "std": 14.335423768311818
+        }
+      ],
+      "sem_abs_block_drift": 2.8895406135868713,
+      "sem_of_means": 10.687720126030667,
+      "std_of_means": 18.51167427536156
+    },
+    "Potential": {
+      "available": true,
+      "mean_abs_block_drift": 170.5268697916666,
+      "mean_block_sem": 44.83289564504122,
+      "mean_block_span": 217.06683199613084,
+      "mean_of_means": -218523.64461586848,
+      "pooled_mean": -218523.64461586848,
+      "pooled_q10": -219243.93437499998,
+      "pooled_q50": -218389.609375,
+      "pooled_q90": -217939.2625,
+      "pooled_std": 497.75110106637754,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 68.453406250017,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            -218252.767328125,
+            -218454.73890625,
+            -218459.72833416585,
+            -218283.817515625,
+            -218321.220734375
+          ],
+          "block_sem": 43.34390958371118,
+          "block_span": 206.9610060408595,
+          "frame_count": 5001,
+          "max": -217694.96875,
+          "mean": -218354.47561425215,
+          "min": -219141.328125,
+          "q10": -218602.125,
+          "q50": -218352.28125,
+          "q90": -218112.25,
+          "sem": 2.706557939230659,
+          "std": 191.40168454833665
+        },
+        {
+          "abs_block_drift": 304.58096875000047,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            -217966.477234375,
+            -217991.345625,
+            -217965.36494755244,
+            -218142.930671875,
+            -218271.058203125
+          ],
+          "block_sem": 60.647491438931645,
+          "block_span": 305.6932555725507,
+          "frame_count": 5001,
+          "max": -217333.75,
+          "mean": -218067.41492638973,
+          "min": -218796.3125,
+          "q10": -218357.671875,
+          "q50": -218051.78125,
+          "q90": -217800.5,
+          "sem": 3.049275287912684,
+          "std": 215.63788393312615
+        },
+        {
+          "abs_block_drift": 138.5462343749823,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            -219093.882703125,
+            -219099.747390625,
+            -219104.98838661338,
+            -219214.213171875,
+            -219232.4289375
+          ],
+          "block_sem": 30.50728591248084,
+          "block_span": 138.5462343749823,
+          "frame_count": 5001,
+          "max": -218481.546875,
+          "mean": -219149.0433069636,
+          "min": -219828.609375,
+          "q10": -219378.921875,
+          "q50": -219150.203125,
+          "q90": -218920.84375,
+          "sem": 2.538269202516941,
+          "std": 179.50068393400173
+        }
+      ],
+      "sem_abs_block_drift": 70.01458710937091,
+      "sem_of_means": 323.4932259706122,
+      "std_of_means": 560.3067032854601
+    },
+    "Pressure": {
+      "available": true,
+      "mean_abs_block_drift": 67.98928794233333,
+      "mean_block_sem": 18.655865825347924,
+      "mean_block_span": 108.23238166433333,
+      "mean_of_means": -11.891772209958008,
+      "pooled_mean": -11.891772209958008,
+      "pooled_q10": -859.8415408,
+      "pooled_q50": -9.120402,
+      "pooled_q90": 839.6276736000002,
+      "pooled_std": 662.634221031264,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 97.93369997500001,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            -82.45102883700001,
+            67.975091068,
+            6.009595661338661,
+            -25.420230208,
+            15.482671138000002
+          ],
+          "block_sem": 24.77202141093781,
+          "block_span": 150.426119905,
+          "frame_count": 5001,
+          "max": 2746.796143,
+          "mean": -3.678842547890422,
+          "min": -2303.013428,
+          "q10": -879.366699,
+          "q50": -6.534708,
+          "q90": 876.869324,
+          "sem": 9.692911192405822,
+          "std": 685.460859164631
+        },
+        {
+          "abs_block_drift": 19.999315146,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            -32.595077157,
+            35.641784079000004,
+            0.37479566133866254,
+            -9.923037869999998,
+            -52.594392303
+          ],
+          "block_sem": 14.998478839114684,
+          "block_span": 88.236176382,
+          "frame_count": 5001,
+          "max": 2787.264893,
+          "mean": -11.816747209358127,
+          "min": -2604.409912,
+          "q10": -838.378906,
+          "q50": -12.731445,
+          "q90": 818.121826,
+          "sem": 9.141335374944667,
+          "std": 646.4546590430847
+        },
+        {
+          "abs_block_drift": 86.03484870599999,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            -52.953750121,
+            -36.129730459,
+            -45.58157188311688,
+            0.71072136,
+            33.081098585
+          ],
+          "block_sem": 16.197097225991275,
+          "block_span": 86.03484870599999,
+          "frame_count": 5001,
+          "max": 2563.833252,
+          "mean": -20.179726872625476,
+          "min": -2176.297119,
+          "q10": -867.940735,
+          "q50": -6.987699,
+          "q90": 817.530334,
+          "sem": 9.267639248940664,
+          "std": 655.3865846809621
+        }
+      ],
+      "sem_abs_block_drift": 24.239594208134317,
+      "sem_of_means": 4.763542709567044,
+      "std_of_means": 8.250697996994436
+    },
+    "Temperature": {
+      "available": true,
+      "mean_abs_block_drift": 0.6309775153333325,
+      "mean_block_sem": 0.1786913146320869,
+      "mean_block_span": 1.0565455040479794,
+      "mean_of_means": 311.66119094007865,
+      "pooled_mean": 311.66119094007865,
+      "pooled_q10": 304.22152719999997,
+      "pooled_q50": 311.594482,
+      "pooled_q90": 319.270264,
+      "pooled_std": 5.889452846750326,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 0.8068643450000081,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            310.17118114699997,
+            310.61690376900003,
+            310.61142705894105,
+            311.73746891300004,
+            310.978045492
+          ],
+          "block_sem": 0.261954106690544,
+          "block_span": 1.5662877660000731,
+          "frame_count": 5001,
+          "max": 335.067322,
+          "mean": 310.8229629688062,
+          "min": 291.533813,
+          "q10": 303.61087,
+          "q50": 310.829163,
+          "q90": 317.922119,
+          "sem": 0.07852880796265171,
+          "std": 5.553380517653656
+        },
+        {
+          "abs_block_drift": 0.23549645200000668,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            310.431007858,
+            310.745550141,
+            309.99277314385614,
+            310.09852066400003,
+            310.195511406
+          ],
+          "block_sem": 0.1344078990267255,
+          "block_span": 0.7527769971438829,
+          "frame_count": 5001,
+          "max": 332.67038,
+          "mean": 310.29261267466507,
+          "min": 289.642609,
+          "q10": 303.210632,
+          "q50": 310.2276,
+          "q90": 317.535828,
+          "sem": 0.07925921528488136,
+          "std": 5.605033279212838
+        },
+        {
+          "abs_block_drift": 0.8505717489999824,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            314.223691078,
+            313.92826062100005,
+            313.985595972028,
+            313.829201285,
+            313.373119329
+          ],
+          "block_sem": 0.1397119381789912,
+          "block_span": 0.8505717489999824,
+          "frame_count": 5001,
+          "max": 337.831238,
+          "mean": 313.8679971767647,
+          "min": 292.191803,
+          "q10": 306.413055,
+          "q50": 313.757385,
+          "q90": 321.378906,
+          "sem": 0.08289803128392784,
+          "std": 5.862362155082722
+        }
+      ],
+      "sem_abs_block_drift": 0.1981426572636895,
+      "sem_of_means": 1.1139738451943326,
+      "std_of_means": 1.9294592981794512
+    },
+    "Volume": {
+      "available": true,
+      "mean_abs_block_drift": 0.3511194100000026,
+      "mean_block_sem": 0.12992031744723642,
+      "mean_block_span": 0.6790601246193807,
+      "mean_of_means": 39.68078595187629,
+      "pooled_mean": 39.68078595187629,
+      "pooled_q10": 38.829211400000005,
+      "pooled_q50": 39.718739,
+      "pooled_q90": 40.428177000000005,
+      "pooled_std": 0.5939277821721923,
+      "replica_count": 3,
+      "replicas": [
+        {
+          "abs_block_drift": 0.49839408500000104,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            39.016562705999995,
+            38.718926062,
+            38.79519405594405,
+            39.551008691,
+            39.514956790999996
+          ],
+          "block_sem": 0.1758999133784444,
+          "block_span": 0.8320826289999985,
+          "frame_count": 5001,
+          "max": 40.409096,
+          "mean": 39.11926484703059,
+          "min": 37.882114,
+          "q10": 38.516243,
+          "q50": 39.08884,
+          "q90": 39.750622,
+          "sem": 0.006581478319190941,
+          "std": 0.4654273307260415
+        },
+        {
+          "abs_block_drift": 0.2671259860000035,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            39.979748579,
+            40.131704125999995,
+            40.350116491508494,
+            40.129699757000004,
+            39.712622593
+          ],
+          "block_sem": 0.10518446679434153,
+          "block_span": 0.6374938985084952,
+          "frame_count": 5001,
+          "max": 41.516083,
+          "mean": 40.06083616536692,
+          "min": 38.983185,
+          "q10": 39.486153,
+          "q50": 40.033497,
+          "q90": 40.689621,
+          "sem": 0.00624828145654465,
+          "std": 0.44186439868149463
+        },
+        {
+          "abs_block_drift": 0.2878381590000032,
+          "available": true,
+          "block_count": 5,
+          "block_means": [
+            39.91838673,
+            39.993917853,
+            40.16786465034965,
+            39.600260804,
+            39.630548571
+          ],
+          "block_sem": 0.1086765721689233,
+          "block_span": 0.5676038463496482,
+          "frame_count": 5001,
+          "max": 41.0896,
+          "mean": 39.86225684323136,
+          "min": 38.603222,
+          "q10": 39.430279,
+          "q50": 39.817722,
+          "q90": 40.402233,
+          "sem": 0.0055447255093742116,
+          "std": 0.3921105059195683
+        }
+      ],
+      "sem_abs_block_drift": 0.07387967909572488,
+      "sem_of_means": 0.2865530202163322,
+      "std_of_means": 0.496324390076999
+    }
+  },
+  "conditioned_state_handoff": {
+    "available": true,
+    "candidates": [
+      {
+        "all_required_files_present": true,
+        "density_distance_rel": 0.004680192010322412,
+        "density_mean": 1462.407105159368,
+        "files": {
+          "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.cpt",
+          "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.gro",
+          "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.tpr",
+          "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json"
+        },
+        "replica_index": 3,
+        "selection_score": 0.009253460583559634,
+        "volume_distance_rel": 0.004573268573237223,
+        "volume_mean": 39.86225684323136
+      },
+      {
+        "all_required_files_present": true,
+        "density_distance_rel": 0.009589261247669702,
+        "density_mean": 1455.1942900673866,
+        "files": {
+          "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/prod.cpt",
+          "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/prod.gro",
+          "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/prod.tpr",
+          "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/replica_summary.json"
+        },
+        "replica_index": 2,
+        "selection_score": 0.019166949904127963,
+        "volume_distance_rel": 0.00957768865645826,
+        "volume_mean": 40.06083616536692
+      },
+      {
+        "all_required_files_present": true,
+        "density_distance_rel": 0.01426945325799227,
+        "density_mean": 1490.249508835233,
+        "files": {
+          "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.cpt",
+          "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.gro",
+          "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.tpr",
+          "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/replica_summary.json"
+        },
+        "replica_index": 1,
+        "selection_score": 0.028420410487687574,
+        "volume_distance_rel": 0.014150957229695305,
+        "volume_mean": 39.11926484703059
+      }
+    ],
+    "selected": {
+      "all_required_files_present": true,
+      "density_distance_rel": 0.004680192010322412,
+      "density_mean": 1462.407105159368,
+      "files": {
+        "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.cpt",
+        "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.gro",
+        "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.tpr",
+        "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json"
+      },
+      "replica_index": 3,
+      "selection_score": 0.009253460583559634,
+      "volume_distance_rel": 0.004573268573237223,
+      "volume_mean": 39.86225684323136
+    }
+  },
+  "contract_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/gate_i_contract.json",
+  "executed": true,
+  "failure_reasons": [],
+  "first_failing_metric": null,
+  "gate_id": "gate_i_cpu_exact_charged_long_npt_conditioning",
+  "non_claims": [
+    "A declared Gate I contract is not a passed gate.",
+    "A Gate I PASS still does not imply conductivity-production readiness.",
+    "A Gate I PASS would still not imply LAMMPS-vs-GROMACS transport parity.",
+    "A Gate I PASS would still not imply TP0-scale production length or uncertainty closure.",
+    "A common preconditioned starting structure is a conditioning input only; it is not production handoff approval."
+  ],
+  "performance_reference": {
+    "available": true,
+    "estimated_hours_if_replicas_run_fully_in_parallel": 36.272,
+    "estimated_hours_per_replica": 36.272,
+    "estimated_hours_serial_for_all_replicas": 108.816,
+    "hour_per_ns": 9.068,
+    "ns_per_day": 2.647,
+    "reference_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log"
+  },
+  "prepared_only": false,
+  "primary_gate_metrics": {
+    "Density": {
+      "available": true,
+      "cross_replica_span_rel": 0.023858714505661974,
+      "max_replica_abs_block_drift_rel": 0.012652646434178126,
+      "mean_abs_block_drift": 13.095593933666578,
+      "mean_abs_block_drift_rel": 0.008912910771277587,
+      "mean_of_means": 1469.2836346873291,
+      "per_replica_abs_block_drift_rel": [
+        0.012652646434178126,
+        0.006740879150608669,
+        0.00726329404413168
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 35.05521876784633,
+      "replica_means": [
+        1490.249508835233,
+        1455.1942900673866,
+        1462.407105159368
+      ],
+      "sem_of_means": 10.687720126030667,
+      "std_of_means": 18.51167427536156
+    },
+    "Temperature": {
+      "available": true,
+      "cross_replica_span_rel": 0.011472023485872607,
+      "max_replica_abs_block_drift_rel": 0.0027099664720546712,
+      "mean_abs_block_drift": 0.6309775153333325,
+      "mean_abs_block_drift_rel": 0.0020245623570585886,
+      "mean_abs_error_k": 11.661190940078654,
+      "mean_of_means": 311.66119094007865,
+      "per_replica_abs_block_drift_rel": [
+        0.002595896832374589,
+        0.0007589495926766375,
+        0.0027099664720546712
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 3.5753845020996096,
+      "replica_means": [
+        310.8229629688062,
+        310.29261267466507,
+        313.8679971767647
+      ],
+      "sem_of_means": 1.1139738451943326,
+      "std_of_means": 1.9294592981794512,
+      "target_temperature_k": 300.0
+    },
+    "Volume": {
+      "available": true,
+      "cross_replica_span_rel": 0.023728645886153563,
+      "max_replica_abs_block_drift_rel": 0.012740374517488726,
+      "mean_abs_block_drift": 0.3511194100000026,
+      "mean_abs_block_drift_rel": 0.008848600187149268,
+      "mean_of_means": 39.68078595187629,
+      "per_replica_abs_block_drift_rel": [
+        0.012740374517488726,
+        0.006668008248687958,
+        0.007220819436591392
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 0.9415713183363295,
+      "replica_means": [
+        39.11926484703059,
+        40.06083616536692,
+        39.86225684323136
+      ],
+      "sem_of_means": 0.2865530202163322,
+      "std_of_means": 0.496324390076999
+    }
+  },
+  "replica_summaries": [
+    "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/replica_summary.json",
+    "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/replica_summary.json",
+    "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json"
+  ],
+  "run_settings": {
+    "compressibility_bar_inv": 4.5e-05,
+    "equil_ps": 3000.0,
+    "exact_respa_fused_initial_drift_env": {
+      "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT": "0"
+    },
+    "exact_respa_fused_initial_drift_mode": "off",
+    "exact_respa_update_direct_fastpath_env": {
+      "GMX_PCFF_EXACT_RESPA_UPDATE_DIRECT_FASTPATH": "1"
+    },
+    "exact_respa_update_direct_fastpath_mode": "on",
+    "exact_respa_update_omp_env": {
+      "GMX_PCFF_EXACT_RESPA_UPDATE_OMP": "1"
+    },
+    "exact_respa_update_omp_mode": "on",
+    "exact_respa_update_omp_threads": null,
+    "exact_respa_update_omp_threads_env": {},
+    "initial_configuration": {
+      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/generated/system.gro",
+      "replica_policy": "all replicas start equilibration from this same coordinate set; replica independence comes from gen-seed and ld-seed",
+      "source": "scaffold_manifest_gro"
+    },
+    "ld_seed_base": 84001,
+    "mdrun_shape": "ntmpi 1 / ntomp 12 / npme None / ntomp_pme None / pin on / pinoffset None / pinstride 2 / nb cpu / bonded cpu / pme cpu / update cpu / reprod",
+    "native_multi_owner_mode": "owner_fallback",
+    "native_multi_owner_mode_env": {
+      "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI": "1",
+      "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "1",
+      "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SPLIT_OWNER_OUTPUTS": "0"
+    },
+    "npme": null,
+    "ntmpi": 1,
+    "ntomp": 12,
+    "ntomp_pme": null,
+    "phase_continuation_policy": {
+      "equil_gen_vel": true,
+      "prod_gen_vel": false,
+      "prod_grompp_uses_equil_checkpoint": true,
+      "prod_ld_seed_restarts_from_distinct_seed": true,
+      "prod_mdp_continuation": true
+    },
+    "pin": "on",
+    "pinoffset": null,
+    "pinstride": 2,
+    "pressure_bar": 1.0,
+    "prod_ld_seed_offset": 100000,
+    "prod_ps": 1000.0,
+    "replicas": 3,
+    "sample_interval_base_steps": 400,
+    "stochastic_seed_contract": "explicit_phase_separated_ld_seed_per_replica",
+    "tau_p_ps": 5.0,
+    "tau_t_ps": 0.5,
+    "temperature_k": 300.0
+  },
+  "schema_name": "gate_i_charged_long_npt_conditioning",
+  "schema_version": 1,
+  "scope": "CPU-only single-rank exact-r-RESPA charged large/medium long-NPT conditioning gate",
+  "status": "PASS",
+  "support_metrics": {
+    "Box-X": {
+      "available": true,
+      "cross_replica_span_rel": 0.007924129483647667,
+      "max_replica_abs_block_drift_rel": 0.004237171232085109,
+      "mean_abs_block_drift": 0.010084918333332915,
+      "mean_abs_block_drift_rel": 0.002956808007973882,
+      "mean_of_means": 3.410745069052856,
+      "per_replica_abs_block_drift_rel": [
+        0.004237171232085109,
+        0.0022307916768769974,
+        0.0024116738596521537
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 0.027027185562887635,
+      "replica_means": [
+        3.394611454709058,
+        3.4216386402719454,
+        3.4159851121775646
+      ],
+      "sem_of_means": 0.008230243593484855,
+      "std_of_means": 0.01425520006258402
+    },
+    "Box-Y": {
+      "available": true,
+      "cross_replica_span_rel": 0.007924129483647667,
+      "max_replica_abs_block_drift_rel": 0.004237171232085109,
+      "mean_abs_block_drift": 0.010084918333332915,
+      "mean_abs_block_drift_rel": 0.002956808007973882,
+      "mean_of_means": 3.410745069052856,
+      "per_replica_abs_block_drift_rel": [
+        0.004237171232085109,
+        0.0022307916768769974,
+        0.0024116738596521537
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 0.027027185562887635,
+      "replica_means": [
+        3.394611454709058,
+        3.4216386402719454,
+        3.4159851121775646
+      ],
+      "sem_of_means": 0.008230243593484855,
+      "std_of_means": 0.01425520006258402
+    },
+    "Box-Z": {
+      "available": true,
+      "cross_replica_span_rel": 0.007924129483647667,
+      "max_replica_abs_block_drift_rel": 0.004237171232085109,
+      "mean_abs_block_drift": 0.010084918333332915,
+      "mean_abs_block_drift_rel": 0.002956808007973882,
+      "mean_of_means": 3.410745069052856,
+      "per_replica_abs_block_drift_rel": [
+        0.004237171232085109,
+        0.0022307916768769974,
+        0.0024116738596521537
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 0.027027185562887635,
+      "replica_means": [
+        3.394611454709058,
+        3.4216386402719454,
+        3.4159851121775646
+      ],
+      "sem_of_means": 0.008230243593484855,
+      "std_of_means": 0.01425520006258402
+    },
+    "Potential": {
+      "available": true,
+      "cross_replica_span_rel": 0.004949708680153205,
+      "max_replica_abs_block_drift_rel": 0.0013967284789101297,
+      "mean_abs_block_drift": 170.5268697916666,
+      "mean_abs_block_drift_rel": 0.0007803588947613749,
+      "mean_of_means": -218523.64461586848,
+      "per_replica_abs_block_drift_rel": [
+        0.0003134966941137844,
+        0.0013967284789101297,
+        0.0006322009545846824
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 1081.6283805738785,
+      "replica_means": [
+        -218354.47561425215,
+        -218067.41492638973,
+        -219149.0433069636
+      ],
+      "sem_of_means": 323.4932259706122,
+      "std_of_means": 560.3067032854601
+    },
+    "Pressure": {
+      "available": true,
+      "cross_replica_span_rel": 1.3875883285854937,
+      "max_replica_abs_block_drift_rel": 26.620791376667817,
+      "mean_abs_block_drift": 67.98928794233333,
+      "mean_abs_block_drift_rel": 5.717338571739545,
+      "mean_of_means": -11.891772209958008,
+      "per_replica_abs_block_drift_rel": [
+        26.620791376667817,
+        1.6924551902203502,
+        4.263429790157832
+      ],
+      "replica_count": 3,
+      "replica_mean_span": 16.500884324735054,
+      "replica_means": [
+        -3.678842547890422,
+        -11.816747209358127,
+        -20.179726872625476
+      ],
+      "sem_of_means": 4.763542709567044,
+      "std_of_means": 8.250697996994436
+    }
+  },
+  "system_id": "gate_h_dense_salt_polymer_2x2x2"
+}

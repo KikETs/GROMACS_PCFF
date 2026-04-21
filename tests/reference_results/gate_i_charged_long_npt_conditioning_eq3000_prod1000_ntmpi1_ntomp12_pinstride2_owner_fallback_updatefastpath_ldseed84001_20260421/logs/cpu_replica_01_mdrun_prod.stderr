@@ -1,0 +1,28 @@
+   :-) GROMACS - gmx mdrun, 2027.0-dev-20260417-066f777fe1-dirty-unknown (-:
+
+Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
+Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Command line:
+  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod -ntmpi 1 -ntomp 12 -dlb no -nb cpu -pme cpu -bonded cpu -update cpu -pin on -pinstride 2 -reprod
+
+Reading file /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.tpr, VERSION 2027.0-dev-20260417-066f777fe1-dirty-unknown (single precision)
+Using 1 MPI thread
+Using 12 OpenMP threads 
+
+starting mdrun 'gate_h_dense_salt_polymer_2x2x2'
+2000000 steps,   1000.0 ps.
+
+Writing final coordinates.
+
+NOTE: 5 % of the run time was spent in domain decomposition,
+      11 % of the run time was spent in pair search,
+      you might want to increase nstlist (this has no effect on accuracy)
+
+               Core t (s)   Wall t (s)        (%)
+       Time:    15809.097     1317.425     1200.0
+                 (ns/day)    (hour/ns)    (ms/step)  (Matom*steps/s) 
+Performance:       65.583        0.366        0.659            3.279 
+
+GROMACS reminds you: "Your Country Needs YOU" (U.S. Army)
+
