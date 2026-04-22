@@ -5,6 +5,7 @@ Deterministic bridge foundation for the frozen LAMMPS PCFF/Class2 fixtures.
 ## Scope
 
 - Reads the repository-local LAMMPS fixture subset under `testdata/lammps_golden/`.
+- Reads LUNAR/LAMMPS `.data` files that carry PCFF/Class2 coefficients inline.
 - Emits a typed intermediate representation first.
 - Optionally renders a deterministic GROMACS `topol.top` from that IR.
 - Fails explicitly on unsupported styles, cross-pair coefficients, or missing Class2 coefficient families.
@@ -31,6 +32,8 @@ This tool does not do general chemistry auto-typing. The current milestone is na
   - every typed record carries a `source` object with file, line, and original text
 - `topol.top`
   - deterministic GROMACS topology rendered from the IR
+- `system.gro`
+  - emitted by the single `.data` bridge path from LAMMPS data-file coordinates
 - `bridge_manifest.json`
   - machine-readable list of generated artifacts
 
@@ -61,6 +64,20 @@ python3 tools/pcff_fixture_bridge/generate.py \
   --system small_salt_polymer_box \
   export-gromacs
 ```
+
+Import a LUNAR/LAMMPS `.data` file with inline coefficients:
+
+```bash
+python3 tools/pcff_fixture_bridge/lammps_data_bridge.py \
+  --data /path/to/chain_fixed_typed_nodup_IFF.data \
+  --out /tmp/lunar_gromacs_pcff \
+  --system-id Traj_14764
+```
+
+The single-file bridge records assumptions that are not stored in a LAMMPS
+data file, including `pair_modify`, `special_bonds`, and `kspace_style`.
+It is a topology/coordinate import artifact, not an energy/force/density
+parity claim by itself.
 
 ## Determinism and traceability
 

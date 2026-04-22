@@ -9,6 +9,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BRIDGE = REPO_ROOT / "tools" / "pcff_fixture_bridge" / "generate.py"
+DATA_BRIDGE = REPO_ROOT / "tools" / "pcff_fixture_bridge" / "lammps_data_bridge.py"
 CORPUS_ROOT = REPO_ROOT / "testdata" / "lammps_golden"
 M4_ROOT = REPO_ROOT / "tests" / "reference_results" / "m4"
 
@@ -163,3 +164,133 @@ def test_pcff_bridge_fails_on_missing_class2_cross_term(tmp_path: Path) -> None:
 
     assert result.returncode != 0
     assert "Missing dihedral_coeff bb13 for dihedral type 1 in small_oligomer" in result.stderr
+
+
+def test_lammps_data_bridge_imports_inline_lunar_style_coefficients(tmp_path: Path) -> None:
+    data_path = tmp_path / "inline_pcff.data"
+    data_path.write_text(
+        """HEADER, inline LUNAR-like PCFF Class2 data
+
+4 atoms
+3 bonds
+2 angles
+1 dihedrals
+0 impropers
+
+2 atom types
+1 bond types
+1 angle types
+1 dihedral types
+0 improper types
+
+-1.0 1.0 xlo xhi
+-1.0 1.0 ylo yhi
+-1.0 1.0 zlo zhi
+
+Masses
+
+1 12.011 # c2
+2 14.007 # n2
+
+Pair Coeffs  # lj/class2/coul/long
+
+1 0.12 3.40 # c2
+2 0.08 3.00 # n2
+
+Bond Coeffs  # class2
+
+1 1.48 230.0 -32.0 7.0 # c2 n2
+
+Angle Coeffs  # class2
+
+1 111.0 32.0 -3.6 1.0 # c2 n2 c2
+
+BondBond Coeffs  # class2
+
+1 5.0 1.48 1.48 # c2 n2 c2
+
+BondAngle Coeffs  # class2
+
+1 1.7 1.4 1.48 1.48 # c2 n2 c2
+
+Dihedral Coeffs  # class2
+
+1 0.9 0.0 0.5 180.0 0.3 0.0 # c2 n2 c2 n2
+
+MiddleBondTorsion Coeffs  # class2
+
+1 0.14 -0.09 0.05 1.48 # c2 n2 c2 n2
+
+EndBondTorsion Coeffs  # class2
+
+1 0.12 -0.06 0.03 0.10 -0.04 0.02 1.48 1.48 # c2 n2 c2 n2
+
+AngleTorsion Coeffs  # class2
+
+1 0.05 -0.03 0.02 0.04 -0.02 0.01 111.0 111.0 # c2 n2 c2 n2
+
+AngleAngleTorsion Coeffs  # class2
+
+1 0.22 111.0 111.0 # c2 n2 c2 n2
+
+BondBond13 Coeffs  # class2
+
+1 0.16 1.48 1.48 # c2 n2 c2 n2
+
+Atoms # full
+
+1 1 1 0.25 -0.5 0.0 0.0
+2 1 2 -0.25 -0.1 0.1 0.0
+3 1 1 0.25 0.2 -0.1 0.0
+4 1 2 -0.25 0.6 0.0 0.1
+
+Bonds
+
+1 1 1 2
+2 1 2 3
+3 1 3 4
+
+Angles
+
+1 1 1 2 3
+2 1 2 3 4
+
+Dihedrals
+
+1 1 1 2 3 4
+""",
+        encoding="utf-8",
+    )
+    out_root = tmp_path / "out"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(DATA_BRIDGE),
+            "--data",
+            str(data_path),
+            "--out",
+            str(out_root),
+            "--system-id",
+            "inline_pcff",
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    typed_ir = json.loads((out_root / "typed_system.json").read_text(encoding="utf-8"))
+    manifest = json.loads((out_root / "bridge_manifest.json").read_text(encoding="utf-8"))
+    topology = (out_root / "topol.top").read_text(encoding="utf-8")
+    gro_lines = (out_root / "system.gro").read_text(encoding="utf-8").splitlines()
+
+    assert typed_ir["atom_types"][0]["pair_coeff"]["source"]["file"] == "inline_pcff.data"
+    assert typed_ir["angle_types"][0]["bb"]["source"]["file"] == "inline_pcff.data"
+    assert typed_ir["dihedral_types"][0]["bb13"]["source"]["file"] == "inline_pcff.data"
+    assert manifest["counts"]["atoms"] == 4
+    assert "[ pairs ]" in topology
+    assert " 13 " in topology
+    assert gro_lines[1].strip() == "4"
+    assert gro_lines[-1].split() == ["0.2000000", "0.2000000", "0.2000000"]

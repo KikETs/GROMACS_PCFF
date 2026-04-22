@@ -148,7 +148,23 @@ def molecule_label(system_meta: dict, molecule: dict, template_index: int) -> tu
 def parse_lammps_data(path: Path) -> dict:
     count_keywords = {"atoms", "bonds", "angles", "dihedrals", "impropers"}
     type_keywords = {"atom types", "bond types", "angle types", "dihedral types", "improper types"}
-    section_names = {"Masses", "Atoms", "Bonds", "Angles", "Dihedrals", "Impropers", "Velocities"}
+    topology_section_names = {"Masses", "Atoms", "Bonds", "Angles", "Dihedrals", "Impropers", "Velocities"}
+    coeff_section_names = {
+        "Pair Coeffs",
+        "Bond Coeffs",
+        "Angle Coeffs",
+        "Dihedral Coeffs",
+        "Improper Coeffs",
+        "BondBond Coeffs",
+        "BondAngle Coeffs",
+        "AngleAngleTorsion Coeffs",
+        "EndBondTorsion Coeffs",
+        "MiddleBondTorsion Coeffs",
+        "BondBond13 Coeffs",
+        "AngleTorsion Coeffs",
+        "AngleAngle Coeffs",
+    }
+    section_names = topology_section_names | coeff_section_names
     header_counts = {key: 0 for key in count_keywords}
     type_counts = {key: 0 for key in type_keywords}
     box = {}
@@ -161,6 +177,13 @@ def parse_lammps_data(path: Path) -> dict:
         "Impropers": [],
         "Velocities": [],
     }
+    inline_coeffs = {
+        "pair_coeffs": {},
+        "bond_coeffs": {},
+        "angle_coeffs": {},
+        "dihedral_coeffs": {},
+        "improper_coeffs": {},
+    }
 
     current_section = None
     with path.open("r", encoding="utf-8") as handle:
@@ -168,7 +191,7 @@ def parse_lammps_data(path: Path) -> dict:
             stripped = raw_line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
-            if stripped.startswith("LAMMPS data file"):
+            if line_number == 1 or stripped.startswith("LAMMPS data file"):
                 continue
 
             tokens = stripped.split()
@@ -190,7 +213,7 @@ def parse_lammps_data(path: Path) -> dict:
                 current_section = None
                 continue
 
-            section_name = stripped.split(" #", 1)[0]
+            section_name = stripped.split(" #", 1)[0].strip()
             if section_name in section_names:
                 current_section = section_name
                 continue
@@ -198,7 +221,155 @@ def parse_lammps_data(path: Path) -> dict:
             require(current_section is not None, f"Unexpected data-file line outside a section: {stripped}")
             data_tokens = raw_line.split("#", 1)[0].split()
             src = source_ref(path, line_number, raw_line)
-            if current_section == "Masses":
+            if current_section == "Pair Coeffs":
+                require(len(data_tokens) >= 3, f"Malformed Pair Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                inline_coeffs["pair_coeffs"][type_id] = {
+                    "type_id": type_id,
+                    "epsilon_kcal_mol": float(data_tokens[1]),
+                    "sigma_angstrom": float(data_tokens[2]),
+                    "source": src,
+                }
+            elif current_section == "Bond Coeffs":
+                require(len(data_tokens) >= 5, f"Malformed Bond Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                inline_coeffs["bond_coeffs"][type_id] = {
+                    "type_id": type_id,
+                    "r0_angstrom": float(data_tokens[1]),
+                    "k2_kcal_mol_per_a2": float(data_tokens[2]),
+                    "k3_kcal_mol_per_a3": float(data_tokens[3]),
+                    "k4_kcal_mol_per_a4": float(data_tokens[4]),
+                    "source": src,
+                }
+            elif current_section == "Angle Coeffs":
+                require(len(data_tokens) >= 5, f"Malformed Angle Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["angle_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["main"] = {
+                    "theta0_deg": float(data_tokens[1]),
+                    "k2_kcal_mol": float(data_tokens[2]),
+                    "k3_kcal_mol": float(data_tokens[3]),
+                    "k4_kcal_mol": float(data_tokens[4]),
+                    "source": src,
+                }
+            elif current_section == "BondBond Coeffs":
+                require(len(data_tokens) >= 4, f"Malformed BondBond Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["angle_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["bb"] = {
+                    "k_kcal_mol_per_a2": float(data_tokens[1]),
+                    "r1_angstrom": float(data_tokens[2]),
+                    "r2_angstrom": float(data_tokens[3]),
+                    "source": src,
+                }
+            elif current_section == "BondAngle Coeffs":
+                require(len(data_tokens) >= 5, f"Malformed BondAngle Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["angle_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["ba"] = {
+                    "k1_kcal_mol_per_a": float(data_tokens[1]),
+                    "k2_kcal_mol_per_a": float(data_tokens[2]),
+                    "r1_angstrom": float(data_tokens[3]),
+                    "r2_angstrom": float(data_tokens[4]),
+                    "source": src,
+                }
+            elif current_section == "Dihedral Coeffs":
+                require(len(data_tokens) >= 7, f"Malformed Dihedral Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["dihedral_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["main"] = {
+                    "k1_kcal_mol": float(data_tokens[1]),
+                    "phi1_deg": float(data_tokens[2]),
+                    "k2_kcal_mol": float(data_tokens[3]),
+                    "phi2_deg": float(data_tokens[4]),
+                    "k3_kcal_mol": float(data_tokens[5]),
+                    "phi3_deg": float(data_tokens[6]),
+                    "source": src,
+                }
+            elif current_section == "MiddleBondTorsion Coeffs":
+                require(len(data_tokens) >= 5, f"Malformed MiddleBondTorsion Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["dihedral_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["mbt"] = {
+                    "f1_kcal_mol_per_a": float(data_tokens[1]),
+                    "f2_kcal_mol_per_a": float(data_tokens[2]),
+                    "f3_kcal_mol_per_a": float(data_tokens[3]),
+                    "r0_angstrom": float(data_tokens[4]),
+                    "source": src,
+                }
+            elif current_section == "EndBondTorsion Coeffs":
+                require(len(data_tokens) >= 9, f"Malformed EndBondTorsion Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["dihedral_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["ebt"] = {
+                    "f1_1_kcal_mol_per_a": float(data_tokens[1]),
+                    "f2_1_kcal_mol_per_a": float(data_tokens[2]),
+                    "f3_1_kcal_mol_per_a": float(data_tokens[3]),
+                    "f1_2_kcal_mol_per_a": float(data_tokens[4]),
+                    "f2_2_kcal_mol_per_a": float(data_tokens[5]),
+                    "f3_2_kcal_mol_per_a": float(data_tokens[6]),
+                    "r0_1_angstrom": float(data_tokens[7]),
+                    "r0_2_angstrom": float(data_tokens[8]),
+                    "source": src,
+                }
+            elif current_section == "AngleTorsion Coeffs":
+                require(len(data_tokens) >= 9, f"Malformed AngleTorsion Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["dihedral_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["at"] = {
+                    "f1_1_kcal_mol": float(data_tokens[1]),
+                    "f2_1_kcal_mol": float(data_tokens[2]),
+                    "f3_1_kcal_mol": float(data_tokens[3]),
+                    "f1_2_kcal_mol": float(data_tokens[4]),
+                    "f2_2_kcal_mol": float(data_tokens[5]),
+                    "f3_2_kcal_mol": float(data_tokens[6]),
+                    "theta0_1_deg": float(data_tokens[7]),
+                    "theta0_2_deg": float(data_tokens[8]),
+                    "source": src,
+                }
+            elif current_section == "AngleAngleTorsion Coeffs":
+                require(len(data_tokens) >= 4, f"Malformed AngleAngleTorsion Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["dihedral_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["aat"] = {
+                    "k_kcal_mol": float(data_tokens[1]),
+                    "theta0_1_deg": float(data_tokens[2]),
+                    "theta0_2_deg": float(data_tokens[3]),
+                    "source": src,
+                }
+            elif current_section == "BondBond13 Coeffs":
+                require(len(data_tokens) >= 4, f"Malformed BondBond13 Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["dihedral_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["bb13"] = {
+                    "k_kcal_mol_per_a2": float(data_tokens[1]),
+                    "r1_angstrom": float(data_tokens[2]),
+                    "r3_angstrom": float(data_tokens[3]),
+                    "source": src,
+                }
+            elif current_section == "Improper Coeffs":
+                require(len(data_tokens) >= 3, f"Malformed Improper Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["improper_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["main"] = {
+                    "k0_kcal_mol": float(data_tokens[1]),
+                    "chi0_deg": float(data_tokens[2]),
+                    "source": src,
+                }
+            elif current_section == "AngleAngle Coeffs":
+                require(len(data_tokens) >= 7, f"Malformed AngleAngle Coeffs line at {path}:{line_number}")
+                type_id = int(data_tokens[0])
+                coeff = inline_coeffs["improper_coeffs"].setdefault(type_id, {"type_id": type_id})
+                coeff["aa"] = {
+                    "k1_kcal_mol": float(data_tokens[1]),
+                    "k2_kcal_mol": float(data_tokens[2]),
+                    "k3_kcal_mol": float(data_tokens[3]),
+                    "theta0_1_deg": float(data_tokens[4]),
+                    "theta0_2_deg": float(data_tokens[5]),
+                    "theta0_3_deg": float(data_tokens[6]),
+                    "source": src,
+                }
+            elif current_section == "Masses":
                 require(len(data_tokens) >= 2, f"Malformed Masses line at {path}:{line_number}")
                 sections[current_section].append(
                     {
@@ -282,6 +453,7 @@ def parse_lammps_data(path: Path) -> dict:
         "dihedrals": sorted(sections["Dihedrals"], key=lambda item: item["id"]),
         "impropers": sorted(sections["Impropers"], key=lambda item: item["id"]),
         "velocities": sorted(sections["Velocities"], key=lambda item: item["atom_id"]),
+        "inline_coeffs": inline_coeffs,
     }
 
 
@@ -793,8 +965,338 @@ def build_typed_ir(system_record: dict, root: Path | None = None) -> dict:
     return typed_ir
 
 
+def normalize_special_bonds(value: str) -> str:
+    tokens = value.split()
+    if tokens == ["lj/coul", "0", "0", "1"] or tokens == ["lj/coul", "0.0", "0.0", "1.0"]:
+        return "lj/coul 0.0 0.0 1.0 angle no dihedral no"
+    return value
+
+
+def validate_inline_data_support(system_id: str, parsed_data: dict, inline_coeffs: dict) -> None:
+    used_atom_types = {atom["type_id"] for atom in parsed_data["atoms"]}
+    require(
+        used_atom_types.issubset(inline_coeffs["pair_coeffs"].keys()),
+        f"Missing Pair Coeffs for atom types {sorted(used_atom_types - set(inline_coeffs['pair_coeffs']))} in {system_id}",
+    )
+
+    atom_to_molecule = {atom["id"]: atom["molecule_id"] for atom in parsed_data["atoms"]}
+    for section_name in ("bonds", "angles", "dihedrals", "impropers"):
+        for interaction in parsed_data[section_name]:
+            molecule_ids = {atom_to_molecule[atom_id] for atom_id in interaction["atoms"]}
+            require(
+                len(molecule_ids) == 1,
+                f"{section_name[:-1].capitalize()} {interaction['id']} crosses molecule boundaries in {system_id}",
+            )
+
+    coeff_keys = {
+        "bonds": "bond_coeffs",
+        "angles": "angle_coeffs",
+        "dihedrals": "dihedral_coeffs",
+        "impropers": "improper_coeffs",
+    }
+    for section_name, coeff_key in coeff_keys.items():
+        used_types = {item["type_id"] for item in parsed_data[section_name]}
+        missing = sorted(used_types - set(inline_coeffs[coeff_key]))
+        require(not missing, f"Missing {coeff_key[:-1]} definitions for types {missing} in {system_id}")
+
+    for type_id in {item["type_id"] for item in parsed_data["angles"]}:
+        coeff = inline_coeffs["angle_coeffs"][type_id]
+        for key in ("main", "bb", "ba"):
+            require(key in coeff, f"Missing inline Angle Coeffs family {key} for angle type {type_id} in {system_id}")
+    for type_id in {item["type_id"] for item in parsed_data["dihedrals"]}:
+        coeff = inline_coeffs["dihedral_coeffs"][type_id]
+        for key in ("main", "mbt", "ebt", "at", "aat", "bb13"):
+            require(key in coeff, f"Missing inline Dihedral Coeffs family {key} for dihedral type {type_id} in {system_id}")
+    for type_id in {item["type_id"] for item in parsed_data["impropers"]}:
+        coeff = inline_coeffs["improper_coeffs"][type_id]
+        for key in ("main", "aa"):
+            require(key in coeff, f"Missing inline Improper Coeffs family {key} for improper type {type_id} in {system_id}")
+
+
+def build_typed_ir_from_lammps_data(
+    data_path: Path,
+    *,
+    system_id: str | None = None,
+    display_name: str | None = None,
+    category: str = "polymer_box",
+    description: str | None = None,
+    pair_style: str = "lj/class2/coul/long",
+    pair_style_args: list[str] | None = None,
+    pair_modify: str = "mix sixthpower",
+    special_bonds: str = "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    kspace_style: str | None = "pppm 1.0e-6",
+) -> dict:
+    parsed_data = parse_lammps_data(data_path)
+    inline_coeffs = parsed_data["inline_coeffs"]
+    resolved_system_id = system_id or data_path.stem
+    validate_inline_data_support(resolved_system_id, parsed_data, inline_coeffs)
+
+    masses_by_type = {item["type_id"]: item for item in parsed_data["masses"]}
+    atom_types = []
+    for type_id in sorted({atom["type_id"] for atom in parsed_data["atoms"]}):
+        mass = masses_by_type[type_id]
+        pair_coeff = inline_coeffs["pair_coeffs"][type_id]
+        atom_types.append(
+            {
+                "id": type_id,
+                "label": type_name(type_id),
+                "mass_amu": mass["mass_amu"],
+                "mass_source": mass["source"],
+                "pair_coeff": pair_coeff,
+            }
+        )
+
+    bond_types = [inline_coeffs["bond_coeffs"][type_id] for type_id in sorted({item["type_id"] for item in parsed_data["bonds"]})]
+    angle_types = [inline_coeffs["angle_coeffs"][type_id] for type_id in sorted({item["type_id"] for item in parsed_data["angles"]})]
+    dihedral_types = [
+        inline_coeffs["dihedral_coeffs"][type_id] for type_id in sorted({item["type_id"] for item in parsed_data["dihedrals"]})
+    ]
+    improper_types = [
+        inline_coeffs["improper_coeffs"][type_id] for type_id in sorted({item["type_id"] for item in parsed_data["impropers"]})
+    ]
+
+    atom_to_molecule = {atom["id"]: atom["molecule_id"] for atom in parsed_data["atoms"]}
+    molecules = OrderedDict()
+    for atom in parsed_data["atoms"]:
+        molecules.setdefault(
+            atom["molecule_id"],
+            {"id": atom["molecule_id"], "atoms": [], "bonds": [], "angles": [], "dihedrals": [], "impropers": []},
+        )
+        molecules[atom["molecule_id"]]["atoms"].append(atom)
+    for section_name in ("bonds", "angles", "dihedrals", "impropers"):
+        for interaction in parsed_data[section_name]:
+            molecule_id = atom_to_molecule[interaction["atoms"][0]]
+            molecules[molecule_id][section_name].append(interaction)
+
+    meta = {
+        "id": resolved_system_id,
+        "display_name": display_name or resolved_system_id,
+        "category": category,
+        "description": description or f"PCFF/Class2 system imported from {data_path.name}",
+        "reference_terms": [
+            "inline LAMMPS data-file Masses, Coeffs, Atoms, Bonds, Angles, Dihedrals, and Impropers sections",
+        ],
+    }
+    template_name_to_index = {}
+    template_signature_to_name = {}
+    molecule_templates = []
+    molecule_instances = []
+
+    for template_index, molecule in enumerate(molecules.values(), start=1):
+        global_to_local = {atom["id"]: index for index, atom in enumerate(molecule["atoms"], start=1)}
+        local_atoms = []
+        for local_index, atom in enumerate(molecule["atoms"], start=1):
+            local_atoms.append(
+                {
+                    "id": local_index,
+                    "global_id": atom["id"],
+                    "type_id": atom["type_id"],
+                    "type_label": type_name(atom["type_id"]),
+                    "charge_e": atom["charge_e"],
+                    "mass_amu": masses_by_type[atom["type_id"]]["mass_amu"],
+                    "coordinates_angstrom": {
+                        "x": atom["x_angstrom"],
+                        "y": atom["y_angstrom"],
+                        "z": atom["z_angstrom"],
+                    },
+                    "atom_name": f"A{local_index}",
+                    "source": atom["source"],
+                }
+            )
+
+        def localize(section_name: str) -> list[dict]:
+            localized = []
+            for item in molecule[section_name]:
+                localized.append(
+                    {
+                        "id": item["id"],
+                        "type_id": item["type_id"],
+                        "atoms": [global_to_local[atom_id] for atom_id in item["atoms"]],
+                        "source": item["source"],
+                    }
+                )
+            return localized
+
+        local_bonds = localize("bonds")
+        local_angles = localize("angles")
+        local_dihedrals = localize("dihedrals")
+        local_impropers = localize("impropers")
+        generated_pairs = []
+        seen_pairs = set()
+        for dihedral in local_dihedrals:
+            pair = (dihedral["atoms"][0], dihedral["atoms"][3])
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
+            generated_pairs.append(
+                {
+                    "ai": pair[0],
+                    "aj": pair[1],
+                    "funct": 1,
+                    "derived_from_dihedral_id": dihedral["id"],
+                    "source": dihedral["source"],
+                }
+            )
+
+        base_name, residue = molecule_label(meta, molecule, template_index)
+        signature_payload = {
+            "atoms": [(atom["type_id"], atom["charge_e"]) for atom in local_atoms],
+            "bonds": [(item["type_id"], tuple(item["atoms"])) for item in local_bonds],
+            "angles": [(item["type_id"], tuple(item["atoms"])) for item in local_angles],
+            "dihedrals": [(item["type_id"], tuple(item["atoms"])) for item in local_dihedrals],
+            "impropers": [(item["type_id"], tuple(item["atoms"])) for item in local_impropers],
+        }
+        signature = json.dumps(signature_payload, sort_keys=True)
+        template_name = template_signature_to_name.get(signature)
+        if template_name is None:
+            template_name = base_name
+            if template_name in template_name_to_index:
+                template_name = f"{base_name}{template_index}"
+            template_name_to_index[template_name] = len(molecule_templates)
+            template_signature_to_name[signature] = template_name
+            molecule_templates.append(
+                {
+                    "name": template_name,
+                    "residue_name": residue,
+                    "nrexcl": 3 if local_bonds else 1,
+                    "atoms": local_atoms,
+                    "bonds": local_bonds,
+                    "angles": local_angles,
+                    "dihedrals": local_dihedrals,
+                    "impropers": local_impropers,
+                    "generated_pairs": generated_pairs,
+                }
+            )
+        molecule_instances.append(
+            {
+                "molecule_id": molecule["id"],
+                "template_name": template_name,
+                "num_atoms": len(local_atoms),
+                "source": molecule["atoms"][0]["source"],
+            }
+        )
+
+    assumption_source = {"file": data_path.name, "line": None, "text": "Assumed by lammps_data_bridge CLI; LAMMPS data files do not store this command."}
+    normalized_special_bonds = normalize_special_bonds(special_bonds)
+    resolved_pair_style_args = [] if pair_style_args is None else pair_style_args
+    return {
+        "schema_version": 1,
+        "system_id": resolved_system_id,
+        "display_name": display_name or resolved_system_id,
+        "category": category,
+        "description": meta["description"],
+        "reference_terms": meta["reference_terms"],
+        "source_files": {
+            "system_json": None,
+            "system_data": str(data_path),
+            "system_in": None,
+        },
+        "units": {
+            "distance": "angstrom",
+            "energy": "kcal/mol",
+            "charge": "e",
+            "mass": "amu",
+        },
+        "styles": {
+            "units": "real",
+            "atom_style": "full",
+            "pair_style": {
+                "kind": pair_style,
+                "args": resolved_pair_style_args,
+                "source": assumption_source,
+            },
+            "pair_modify": {
+                "value": pair_modify,
+                "source": assumption_source,
+            },
+            "bond_style": "class2" if parsed_data["bonds"] else "none",
+            "angle_style": "class2" if parsed_data["angles"] else "none",
+            "dihedral_style": "class2" if parsed_data["dihedrals"] else "none",
+            "improper_style": "class2" if parsed_data["impropers"] else "none",
+            "kspace_style": (
+                {
+                    "value": kspace_style,
+                    "source": assumption_source,
+                }
+                if kspace_style is not None
+                else None
+            ),
+            "special_bonds": {
+                "value": normalized_special_bonds,
+                "source": assumption_source,
+            },
+        },
+        "box_angstrom": {
+            axis: {"lo": parsed_data["box"][axis]["lo"], "hi": parsed_data["box"][axis]["hi"], "source": parsed_data["box"][axis]["source"]}
+            for axis in ("x", "y", "z")
+        },
+        "atom_types": atom_types,
+        "bond_types": bond_types,
+        "angle_types": angle_types,
+        "dihedral_types": dihedral_types,
+        "improper_types": improper_types,
+        "molecule_templates": molecule_templates,
+        "molecule_instances": molecule_instances,
+        "diagnostics": {
+            "supported_gromacs_export": True,
+            "import_mode": "single_lammps_data_file_with_inline_coeffs",
+            "style_assumption_warning": (
+                "LAMMPS data files do not encode units, pair_modify, special_bonds, or kspace_style commands; "
+                "the CLI records those assumptions explicitly."
+            ),
+            "generated_pair_rule": "Each unique 1-4 pair is derived from the first and fourth atom of each Class2 dihedral because special_bonds is 0 0 1 and GROMACS needs explicit [ pairs ].",
+            "notes": [
+                "This IR is frozen in LAMMPS real units and retains source line provenance for every typed record.",
+                "Missing Class2 cross-term families abort export instead of silently degrading the topology.",
+            ],
+        },
+    }
+
+
 def format_float(value: float) -> str:
     return f"{value:.8f}"
+
+
+def lammps_data_local_atom_names(parsed_data: dict) -> dict[int, str]:
+    names = {}
+    atoms_by_molecule = OrderedDict()
+    for atom in parsed_data["atoms"]:
+        atoms_by_molecule.setdefault(atom["molecule_id"], []).append(atom)
+    for molecule_atoms in atoms_by_molecule.values():
+        for local_index, atom in enumerate(sorted(molecule_atoms, key=lambda item: item["id"]), start=1):
+            names[atom["id"]] = f"A{local_index}"
+    return names
+
+
+def render_gromacs_gro_from_lammps_data(
+    parsed_data: dict,
+    *,
+    title: str = "Generated from LAMMPS data",
+    residue_name: str = "MOL",
+    shift_to_origin: bool = True,
+) -> str:
+    box_x = (parsed_data["box"]["x"]["hi"] - parsed_data["box"]["x"]["lo"]) * ANGSTROM_TO_NM
+    box_y = (parsed_data["box"]["y"]["hi"] - parsed_data["box"]["y"]["lo"]) * ANGSTROM_TO_NM
+    box_z = (parsed_data["box"]["z"]["hi"] - parsed_data["box"]["z"]["lo"]) * ANGSTROM_TO_NM
+    origin = {
+        axis: parsed_data["box"][axis]["lo"] if shift_to_origin else 0.0
+        for axis in ("x", "y", "z")
+    }
+    atom_names = lammps_data_local_atom_names(parsed_data)
+
+    lines = [title[:80], f"{len(parsed_data['atoms']):>5d}"]
+    for atom in parsed_data["atoms"]:
+        x = (atom["x_angstrom"] - origin["x"]) * ANGSTROM_TO_NM
+        y = (atom["y_angstrom"] - origin["y"]) * ANGSTROM_TO_NM
+        z = (atom["z_angstrom"] - origin["z"]) * ANGSTROM_TO_NM
+        residue_id = atom["molecule_id"] % 100000
+        atom_name_value = atom_names[atom["id"]]
+        lines.append(
+            f"{residue_id:>5d}{residue_name[:5]:<5s}{atom_name_value[:5]:>5s}{atom['id'] % 100000:>5d}"
+            f"{x:15.7f}{y:15.7f}{z:15.7f}"
+        )
+    lines.append(f"{box_x:15.7f}{box_y:15.7f}{box_z:15.7f}")
+    return "\n".join(lines) + "\n"
 
 
 def gromacs_atomtypes_lines(typed_ir: dict) -> list[str]:
