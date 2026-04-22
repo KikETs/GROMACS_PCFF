@@ -1097,7 +1097,7 @@ class PcffRespaHybridAdmissionDeathTest :
 {
 };
 
-class PcffRespaHybridThreadShapeDeathTest :
+class PcffRespaHybridThreadShapeSmokeTest :
     public MdrunTestFixture,
     public ::testing::WithParamInterface<const char*>
 {
@@ -2174,11 +2174,6 @@ const char* expectedExactRespaHybridAdmissionReason(const ExactRespaHybridAdmiss
     return "unsupported";
 }
 
-const char* expectedExactRespaHybridThreadShapeReason()
-{
-    return "hybrid OpenMP+GPU is currently restricted to exactly 2 OpenMP threads per rank";
-}
-
 std::string makeGpuResidentNveMdp()
 {
     /* Keep energy/virial work off most steps so the run actually exercises GPU
@@ -2946,7 +2941,7 @@ TEST_P(PcffRespaHybridAdmissionDeathTest, ExactRespaHybridGpuRequestsFailWithAud
             expectedExactRespaHybridAdmissionReason(request));
 }
 
-TEST_P(PcffRespaHybridThreadShapeDeathTest, ExactRespaHybridForceOnlyRejectsUntestedOpenMpThreadShapes)
+TEST_P(PcffRespaHybridThreadShapeSmokeTest, ExactRespaHybridForceOnlyStartsExploratoryOpenMpThreadShapes)
 {
     const auto skipMessages = getExactRespaHybridAdmissionSkipMessages(
             ExactRespaHybridAdmissionRequest::NonbondedGpu);
@@ -2969,21 +2964,23 @@ TEST_P(PcffRespaHybridThreadShapeDeathTest, ExactRespaHybridForceOnlyRejectsUnte
 
     const ScopedEnvironmentVariable disableSingleRankDomainDecomposition("GMX_DD_SINGLE_RANK",
                                                                          std::string("0"));
-    const ScopedDeathTestStyle deathTestStyle("threadsafe");
 
     for (const int candidateThreads : { 1, 3 })
     {
         SCOPED_TRACE(formatString("system=%s ntomp=%d", systemId.c_str(), candidateThreads));
-        try
         {
             const ScopedMdrunTestOpenMPThreads threadOverride(candidateThreads);
-            runner_.callMdrun(makeExactRespaHybridNbGpuCaller("off"));
-            FAIL() << "Expected exact hybrid thread-shape admission to reject ntomp=" << candidateThreads;
-        }
-        catch (const InconsistentInputError& error)
-        {
-            EXPECT_NE(std::string(error.what()).find(expectedExactRespaHybridThreadShapeReason()),
-                      std::string::npos);
+            const auto result = runExactRespaOpenMpParitySimulation(&runner_,
+                                                                    &fileManager_,
+                                                                    systemId
+                                                                            + formatString("-exact-hybrid-nb-gpu-smoke-%d",
+                                                                                           candidateThreads),
+                                                                    makeExactRespaHybridNbGpuCaller("off"),
+                                                                    systemId);
+            EXPECT_NE(result.logContents.find("lammps-respa"), std::string::npos)
+                    << systemId << " candidate log is missing the exact r-RESPA mode marker";
+            EXPECT_TRUE(exactRespaLogMentionsOpenMPThreads(result.logContents, candidateThreads))
+                    << systemId << " candidate log does not report ntomp=" << candidateThreads;
         }
     }
 }
@@ -5088,7 +5085,7 @@ INSTANTIATE_TEST_SUITE_P(PcffRespaHybridAdmission,
                          exactRespaHybridAdmissionCaseName);
 
 INSTANTIATE_TEST_SUITE_P(PcffRespaHybridThreadShapeAdmission,
-                         PcffRespaHybridThreadShapeDeathTest,
+                         PcffRespaHybridThreadShapeSmokeTest,
                          ::testing::Values("small_oligomer", "small_salt_polymer_box"));
 
 INSTANTIATE_TEST_SUITE_P(PcffRespaHybridOwnershipAudit,

@@ -2101,7 +2101,6 @@ static bool isExactRespaHybridGpuRuntime(const t_inputrec&         inputrec,
                                          const StepWorkload&       stepWork)
 {
     return isSupportedExactRespaHybridGpuSimulation(inputrec, simulationWork)
-           && !stepWork.computeVirial && !stepWork.computeEnergy
            && !stepWork.useGpuXBufferOps && !stepWork.useGpuFBufferOps
            && !stepWork.useGpuPmeFReduction && !stepWork.useGpuXHalo && !stepWork.useGpuFHalo
            && !stepWork.computePmeOnSeparateRank && !stepWork.combineMtsForcesBeforeHaloExchange;
@@ -2182,7 +2181,10 @@ static void assertExactRespaOwnershipContract(const t_inputrec&          inputre
                        "Exact r-RESPA level-0 ownership must stay on the explicit host force buffer");
     if (exactHybridGpuRuntime)
     {
-        assertNoShiftOrVirialMergeBoundary(forceOutMtsLevel0);
+        if (!stepWork.computeVirial)
+        {
+            assertNoShiftOrVirialMergeBoundary(forceOutMtsLevel0);
+        }
     }
 
     if (!stepWork.computeSlowForces)
@@ -2212,7 +2214,10 @@ static void assertExactRespaOwnershipContract(const t_inputrec&          inputre
                            "Exact r-RESPA requires distinct host force buffers per active slow level");
         if (exactHybridGpuRuntime)
         {
-            assertNoShiftOrVirialMergeBoundary(*outputs);
+            if (!stepWork.computeVirial)
+            {
+                assertNoShiftOrVirialMergeBoundary(*outputs);
+            }
         }
     }
 }
@@ -8113,8 +8118,9 @@ static void replayExactRespaNonbondedTraceShadow(const t_inputrec&             i
         }
     }
 
+    gmx_enerdata_t shadowEnerd = *enerd;
     computeExactRespaNonbondedCpu(
-            inputrec, idef, fr, mdatoms, coordinates, shadowOutputs, enerd, stepWork, step, true);
+            inputrec, idef, fr, mdatoms, coordinates, shadowOutputs, &shadowEnerd, stepWork, step, true);
 }
 
 static bool exactRespaCpuNbnxmKernelSupported(const NbnxmKernelType kernelType)
@@ -8234,6 +8240,34 @@ static void addExactRespaCpuNbnxmDirectVirial(const NbnxmOutputSink&  sink,
 {
     addExactRespaCpuNbnxmDirectVirial(
             sink, fr, mdatoms, coordinates, box, nbat.outputBuffers(), nrnb);
+}
+
+static void addExactRespaDirectVirialFromHostForce(ForceWithVirial*       directVirialOutput,
+                                                   const t_forcerec&      fr,
+                                                   const t_mdatoms&       mdatoms,
+                                                   ArrayRef<const RVec>   coordinates,
+                                                   const matrix           box,
+                                                   ArrayRef<const RVec>   shiftForces,
+                                                   t_nrnb*                nrnb)
+{
+    GMX_RELEASE_ASSERT(directVirialOutput != nullptr,
+                       "Exact r-RESPA direct-virial accumulation requires a virial output");
+
+    matrix virial = { { 0 } };
+    if (!shiftForces.empty())
+    {
+        const rvec* fshift          = as_rvec_array(shiftForces.data());
+        const rvec* shiftVecPointer = as_rvec_array(fr.shift_vec.data());
+        calc_vir(c_numShiftVectors, shiftVecPointer, fshift, virial, fr.pbcType == PbcType::Screw, box);
+        inc_nrnb(nrnb, eNR_VIRIAL, c_numShiftVectors);
+    }
+
+    const rvec* x = as_rvec_array(coordinates.data());
+    const rvec* f = as_rvec_array(directVirialOutput->force_.data());
+    f_calc_vir(0, mdatoms.homenr, x, f, virial, box);
+    inc_nrnb(nrnb, eNR_VIRIAL, mdatoms.homenr);
+
+    directVirialOutput->addVirialContribution(virial);
 }
 
 static int exactRespaCpuNativeMultiContributionIndex(const NbnxmOutputContract&          contract,
@@ -8506,6 +8540,7 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
                                                 t_forcerec*                   fr,
                                                 const t_mdatoms&              mdatoms,
                                                 ArrayRef<const RVec>          coordinates,
+                                                const matrix                  box,
                                                 const interaction_const_t*    ic,
                                                 const ExactRespaForceOutputs& exactRespaForceOutputs,
                                                 gmx_enerdata_t*               enerd,
@@ -8517,8 +8552,6 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
 {
     GMX_RELEASE_ASSERT(fr != nullptr && fr->nbv != nullptr && fr->nbv->gpuNbv() != nullptr,
                        "Exact LAMMPS-style r-RESPA HG3 narrow mode requires initialized GPU nonbonded state");
-    GMX_RELEASE_ASSERT(!stepWork.computeVirial && !stepWork.computeEnergy,
-                       "Exact LAMMPS-style r-RESPA HG3 narrow mode is force-only");
     GMX_RELEASE_ASSERT(!stepWork.useGpuXBufferOps && !stepWork.useGpuFBufferOps,
                        "Exact LAMMPS-style r-RESPA HG3 narrow mode does not support GPU buffer ops");
     GMX_RELEASE_ASSERT(ic != nullptr && ic->vdw.type == VanDerWaalsType::Cut
@@ -8531,6 +8564,8 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
     {
         MtsNonbondedRespaContribution contribution;
         ArrayRef<RVec>                force;
+        ArrayRef<RVec>                shiftForces;
+        ForceWithVirial*              directVirialOutput = nullptr;
     };
 
     std::vector<ContributionTarget> activeTargets;
@@ -8540,21 +8575,28 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
                                                                    stepWork.computeEnergy);
     for (const auto& outputSink : outputSinks)
     {
-        GMX_RELEASE_ASSERT(outputSink.sinkKind == LammpsRespaNonbondedOutputSinkKind::ShiftForce,
-                           "Exact LAMMPS-style r-RESPA HG3 narrow mode requires host force-with-shift sinks");
         ForceOutputs* outputs = exactRespaForceOutputs.levelOrNull(outputSink.mtsLevel);
         GMX_RELEASE_ASSERT(outputs != nullptr,
                            "Exact LAMMPS-style r-RESPA HG3 narrow mode requires one host force sink per active contribution");
-        activeTargets.push_back(
-                { outputSink.contribution, outputs->forceWithShiftForces().force() });
+        ContributionTarget target;
+        target.contribution = outputSink.contribution;
+        if (outputSink.sinkKind == LammpsRespaNonbondedOutputSinkKind::ForceWithVirial)
+        {
+            GMX_RELEASE_ASSERT(outputs->haveForceWithVirial(),
+                               "Exact LAMMPS-style r-RESPA HG3 narrow mode requires a direct-virial output");
+            target.force              = outputs->forceWithVirial().force_;
+            target.directVirialOutput = &outputs->forceWithVirial();
+        }
+        else
+        {
+            target.force       = outputs->forceWithShiftForces().force();
+            target.shiftForces = outputs->forceWithShiftForces().shiftForces();
+        }
+        activeTargets.push_back(target);
     }
 
     nonbonded_verlet_t* nbv = fr->nbv.get();
     NbnxmGpu*           gpu = nbv->gpuNbv();
-    const auto          disabledShiftReductionSink =
-            exactRespaForceOutputs.level(0).forceWithShiftForces().shiftForces();
-    GMX_RELEASE_ASSERT(disabledShiftReductionSink.empty(),
-                       "Exact LAMMPS-style r-RESPA HG2/HG3 narrow mode supports only atom-force GPU merge; shift-force reduction stays disabled");
 
     wallcycle_start(wcycle, WallCycleCounter::LaunchGpuPp);
     wallcycle_sub_start(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
@@ -8566,6 +8608,17 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
     for (const auto& target : activeTargets)
     {
         const StepWorkload contributionWork = stepWork.withExactNonbondedContribution(target.contribution);
+        std::vector<RVec>  directVirialShiftForces;
+        ArrayRef<RVec>     shiftForceSink = target.shiftForces;
+        if (contributionWork.computeVirial && target.directVirialOutput != nullptr)
+        {
+            directVirialShiftForces.resize(c_numShiftVectors);
+            for (auto& shiftForce : directVirialShiftForces)
+            {
+                clear_rvec(shiftForce);
+            }
+            shiftForceSink = makeArrayRef(directVirialShiftForces);
+        }
         setExactRespaGpuLaunchParameters(gpu, inputrec, target.contribution);
 
         wallcycle_start_nocount(wcycle, WallCycleCounter::LaunchGpuPp);
@@ -8581,9 +8634,19 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
                              AtomLocality::Local,
                              false,
                              enerd,
-                             disabledShiftReductionSink,
+                             shiftForceSink,
                              wcycle);
         nbv->atomdata_add_nbat_f_to_f(AtomLocality::Local, target.force);
+        if (contributionWork.computeVirial && target.directVirialOutput != nullptr)
+        {
+            addExactRespaDirectVirialFromHostForce(target.directVirialOutput,
+                                                   *fr,
+                                                   mdatoms,
+                                                   coordinates,
+                                                   box,
+                                                   makeConstArrayRef(directVirialShiftForces),
+                                                   nrnb);
+        }
     }
 
     replayExactRespaNonbondedTraceShadow(
@@ -8596,6 +8659,7 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&,
                                                 t_forcerec*,
                                                 const t_mdatoms&,
                                                 ArrayRef<const RVec>,
+                                                const matrix,
                                                 const interaction_const_t*,
                                                 const ExactRespaForceOutputs&,
                                                 gmx_enerdata_t*,
@@ -9990,7 +10054,7 @@ void do_force(FILE*                         fplog,
     g_respaCurrentGlobalAtomIndices    = g_respaTraceGlobalAtomIndices;
     g_respaCurrentGlobalAtomIndexCount = g_respaTraceGlobalAtomIndexCount;
     if ((g_respaCurrentGlobalAtomIndices == nullptr || g_respaCurrentGlobalAtomIndexCount == 0)
-        && fr != nullptr && fr->nbv != nullptr)
+        && fr != nullptr && fr->nbv != nullptr && !simulationWork.useGpuNonbonded)
     {
         const auto localAtomOrder = fr->nbv->getLocalAtomOrder();
         if (!localAtomOrder.empty())
@@ -10738,6 +10802,7 @@ void do_force(FILE*                         fplog,
                     fr,
                     *mdatoms,
                     x.unpaddedArrayRef(),
+                    box,
                     ic,
                     exactRespaForceOutputs,
                     enerd,

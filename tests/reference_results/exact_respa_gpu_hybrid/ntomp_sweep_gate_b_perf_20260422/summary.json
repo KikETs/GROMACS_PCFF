@@ -1,0 +1,734 @@
+[
+  {
+    "fixture": "small_oligomer",
+    "ntomp": 2,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 387.226,
+    "ms_per_step": 0.112,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.061,
+        "gcycles": 0.54,
+        "percent": 5.5
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.246,
+        "gcycles": 2.165,
+        "percent": 22.1
+      },
+      "Force": {
+        "wall_seconds": 0.94,
+        "gcycles": 8.272,
+        "percent": 84.2
+      },
+      "PME mesh": {
+        "wall_seconds": 0.252,
+        "gcycles": 2.22,
+        "percent": 22.6
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.409,
+        "gcycles": 3.599,
+        "percent": 36.7
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.02,
+        "gcycles": 0.176,
+        "percent": 1.8
+      },
+      "Update": {
+        "wall_seconds": 0.517,
+        "gcycles": 4.547,
+        "percent": 46.3
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.003,
+        "gcycles": 0.028,
+        "percent": 0.3
+      },
+      "PME wait for PP": {
+        "wall_seconds": 0.863,
+        "gcycles": 7.599,
+        "percent": 77.4
+      },
+      "Total": {
+        "wall_seconds": 1.116,
+        "gcycles": 9.818,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_oligomer",
+    "ntomp": 4,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 432.102,
+    "ms_per_step": 0.1,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.065,
+        "gcycles": 1.147,
+        "percent": 6.5
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.245,
+        "gcycles": 4.311,
+        "percent": 24.5
+      },
+      "Force": {
+        "wall_seconds": 0.817,
+        "gcycles": 14.383,
+        "percent": 81.7
+      },
+      "PME mesh": {
+        "wall_seconds": 0.163,
+        "gcycles": 2.864,
+        "percent": 16.3
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.378,
+        "gcycles": 6.649,
+        "percent": 37.8
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.028,
+        "gcycles": 0.49,
+        "percent": 2.8
+      },
+      "Update": {
+        "wall_seconds": 0.466,
+        "gcycles": 8.193,
+        "percent": 46.6
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.005,
+        "gcycles": 0.085,
+        "percent": 0.5
+      },
+      "PME wait for PP": {
+        "wall_seconds": 0.837,
+        "gcycles": 14.733,
+        "percent": 83.7
+      },
+      "Total": {
+        "wall_seconds": 1.0,
+        "gcycles": 17.597,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_oligomer",
+    "ntomp": 6,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 360.618,
+    "ms_per_step": 0.12,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.088,
+        "gcycles": 2.321,
+        "percent": 7.3
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.25,
+        "gcycles": 6.601,
+        "percent": 20.9
+      },
+      "Force": {
+        "wall_seconds": 0.939,
+        "gcycles": 24.779,
+        "percent": 78.3
+      },
+      "PME mesh": {
+        "wall_seconds": 0.225,
+        "gcycles": 5.942,
+        "percent": 18.8
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.373,
+        "gcycles": 9.85,
+        "percent": 31.1
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.062,
+        "gcycles": 1.63,
+        "percent": 5.2
+      },
+      "Update": {
+        "wall_seconds": 0.563,
+        "gcycles": 14.869,
+        "percent": 47.0
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.013,
+        "gcycles": 0.334,
+        "percent": 1.1
+      },
+      "PME wait for PP": {
+        "wall_seconds": 0.973,
+        "gcycles": 25.686,
+        "percent": 81.2
+      },
+      "Total": {
+        "wall_seconds": 1.198,
+        "gcycles": 31.629,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_oligomer",
+    "ntomp": 8,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 302.996,
+    "ms_per_step": 0.143,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.099,
+        "gcycles": 3.472,
+        "percent": 6.9
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.256,
+        "gcycles": 9.018,
+        "percent": 18.0
+      },
+      "Force": {
+        "wall_seconds": 1.135,
+        "gcycles": 39.963,
+        "percent": 79.6
+      },
+      "PME mesh": {
+        "wall_seconds": 0.334,
+        "gcycles": 11.75,
+        "percent": 23.4
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.432,
+        "gcycles": 15.217,
+        "percent": 30.3
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.078,
+        "gcycles": 2.729,
+        "percent": 5.4
+      },
+      "Update": {
+        "wall_seconds": 0.674,
+        "gcycles": 23.728,
+        "percent": 47.3
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.015,
+        "gcycles": 0.544,
+        "percent": 1.1
+      },
+      "PME wait for PP": {
+        "wall_seconds": 1.092,
+        "gcycles": 38.442,
+        "percent": 76.6
+      },
+      "Total": {
+        "wall_seconds": 1.426,
+        "gcycles": 50.191,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_oligomer",
+    "ntomp": 10,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 299.861,
+    "ms_per_step": 0.144,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.106,
+        "gcycles": 4.682,
+        "percent": 7.4
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.255,
+        "gcycles": 11.231,
+        "percent": 17.7
+      },
+      "Force": {
+        "wall_seconds": 1.121,
+        "gcycles": 49.309,
+        "percent": 77.8
+      },
+      "PME mesh": {
+        "wall_seconds": 0.257,
+        "gcycles": 11.312,
+        "percent": 17.8
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.462,
+        "gcycles": 20.347,
+        "percent": 32.1
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.1,
+        "gcycles": 4.399,
+        "percent": 6.9
+      },
+      "Update": {
+        "wall_seconds": 0.68,
+        "gcycles": 29.908,
+        "percent": 47.2
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.02,
+        "gcycles": 0.871,
+        "percent": 1.4
+      },
+      "PME wait for PP": {
+        "wall_seconds": 1.184,
+        "gcycles": 52.083,
+        "percent": 82.2
+      },
+      "Total": {
+        "wall_seconds": 1.441,
+        "gcycles": 63.395,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_oligomer",
+    "ntomp": 12,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 272.651,
+    "ms_per_step": 0.158,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.111,
+        "gcycles": 5.844,
+        "percent": 7.0
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.263,
+        "gcycles": 13.865,
+        "percent": 16.6
+      },
+      "Force": {
+        "wall_seconds": 1.252,
+        "gcycles": 66.091,
+        "percent": 79.0
+      },
+      "PME mesh": {
+        "wall_seconds": 0.399,
+        "gcycles": 21.054,
+        "percent": 25.2
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.438,
+        "gcycles": 23.145,
+        "percent": 27.7
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.102,
+        "gcycles": 5.362,
+        "percent": 6.4
+      },
+      "Update": {
+        "wall_seconds": 0.752,
+        "gcycles": 39.719,
+        "percent": 47.5
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.021,
+        "gcycles": 1.131,
+        "percent": 1.4
+      },
+      "PME wait for PP": {
+        "wall_seconds": 1.186,
+        "gcycles": 62.612,
+        "percent": 74.8
+      },
+      "Total": {
+        "wall_seconds": 1.585,
+        "gcycles": 83.666,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_salt_polymer_box",
+    "ntomp": 2,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 317.148,
+    "ms_per_step": 0.136,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.062,
+        "gcycles": 0.545,
+        "percent": 4.5
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.244,
+        "gcycles": 2.146,
+        "percent": 17.9
+      },
+      "Force": {
+        "wall_seconds": 1.187,
+        "gcycles": 10.443,
+        "percent": 87.1
+      },
+      "PME mesh": {
+        "wall_seconds": 0.411,
+        "gcycles": 3.615,
+        "percent": 30.2
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.504,
+        "gcycles": 4.433,
+        "percent": 37.0
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.021,
+        "gcycles": 0.186,
+        "percent": 1.5
+      },
+      "Update": {
+        "wall_seconds": 0.631,
+        "gcycles": 5.55,
+        "percent": 46.3
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.003,
+        "gcycles": 0.03,
+        "percent": 0.3
+      },
+      "PME wait for PP": {
+        "wall_seconds": 0.951,
+        "gcycles": 8.373,
+        "percent": 69.8
+      },
+      "Total": {
+        "wall_seconds": 1.362,
+        "gcycles": 11.988,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_salt_polymer_box",
+    "ntomp": 4,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 365.313,
+    "ms_per_step": 0.118,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.065,
+        "gcycles": 1.147,
+        "percent": 5.5
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.246,
+        "gcycles": 4.324,
+        "percent": 20.8
+      },
+      "Force": {
+        "wall_seconds": 0.998,
+        "gcycles": 17.557,
+        "percent": 84.3
+      },
+      "PME mesh": {
+        "wall_seconds": 0.246,
+        "gcycles": 4.325,
+        "percent": 20.8
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.472,
+        "gcycles": 8.309,
+        "percent": 39.9
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.028,
+        "gcycles": 0.49,
+        "percent": 2.4
+      },
+      "Update": {
+        "wall_seconds": 0.556,
+        "gcycles": 9.79,
+        "percent": 47.0
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.005,
+        "gcycles": 0.084,
+        "percent": 0.4
+      },
+      "PME wait for PP": {
+        "wall_seconds": 0.937,
+        "gcycles": 16.49,
+        "percent": 79.2
+      },
+      "Total": {
+        "wall_seconds": 1.183,
+        "gcycles": 20.815,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_salt_polymer_box",
+    "ntomp": 6,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 313.602,
+    "ms_per_step": 0.138,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.085,
+        "gcycles": 2.246,
+        "percent": 6.2
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.247,
+        "gcycles": 6.526,
+        "percent": 17.9
+      },
+      "Force": {
+        "wall_seconds": 1.122,
+        "gcycles": 29.628,
+        "percent": 81.5
+      },
+      "PME mesh": {
+        "wall_seconds": 0.321,
+        "gcycles": 8.485,
+        "percent": 23.3
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.461,
+        "gcycles": 12.173,
+        "percent": 33.5
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.063,
+        "gcycles": 1.655,
+        "percent": 4.6
+      },
+      "Update": {
+        "wall_seconds": 0.652,
+        "gcycles": 17.204,
+        "percent": 47.3
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.012,
+        "gcycles": 0.329,
+        "percent": 0.9
+      },
+      "PME wait for PP": {
+        "wall_seconds": 1.056,
+        "gcycles": 27.885,
+        "percent": 76.7
+      },
+      "Total": {
+        "wall_seconds": 1.378,
+        "gcycles": 36.37,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_salt_polymer_box",
+    "ntomp": 8,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 274.253,
+    "ms_per_step": 0.158,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.098,
+        "gcycles": 3.447,
+        "percent": 6.2
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.252,
+        "gcycles": 8.867,
+        "percent": 16.0
+      },
+      "Force": {
+        "wall_seconds": 1.286,
+        "gcycles": 45.267,
+        "percent": 81.6
+      },
+      "PME mesh": {
+        "wall_seconds": 0.451,
+        "gcycles": 15.867,
+        "percent": 28.6
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.472,
+        "gcycles": 16.601,
+        "percent": 29.9
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.077,
+        "gcycles": 2.706,
+        "percent": 4.9
+      },
+      "Update": {
+        "wall_seconds": 0.754,
+        "gcycles": 26.524,
+        "percent": 47.8
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.015,
+        "gcycles": 0.544,
+        "percent": 1.0
+      },
+      "PME wait for PP": {
+        "wall_seconds": 1.125,
+        "gcycles": 39.585,
+        "percent": 71.4
+      },
+      "Total": {
+        "wall_seconds": 1.575,
+        "gcycles": 55.452,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_salt_polymer_box",
+    "ntomp": 10,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 283.152,
+    "ms_per_step": 0.153,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.106,
+        "gcycles": 4.671,
+        "percent": 7.0
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.262,
+        "gcycles": 11.53,
+        "percent": 17.2
+      },
+      "Force": {
+        "wall_seconds": 1.202,
+        "gcycles": 52.904,
+        "percent": 78.8
+      },
+      "PME mesh": {
+        "wall_seconds": 0.334,
+        "gcycles": 14.676,
+        "percent": 21.9
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.471,
+        "gcycles": 20.702,
+        "percent": 30.8
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.095,
+        "gcycles": 4.174,
+        "percent": 6.2
+      },
+      "Update": {
+        "wall_seconds": 0.718,
+        "gcycles": 31.591,
+        "percent": 47.1
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.019,
+        "gcycles": 0.85,
+        "percent": 1.3
+      },
+      "PME wait for PP": {
+        "wall_seconds": 1.192,
+        "gcycles": 52.46,
+        "percent": 78.1
+      },
+      "Total": {
+        "wall_seconds": 1.526,
+        "gcycles": 67.136,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  },
+  {
+    "fixture": "small_salt_polymer_box",
+    "ntomp": 12,
+    "stage": "mdrun",
+    "returncode": 0,
+    "ns_per_day": 227.603,
+    "ms_per_step": 0.19,
+    "wallcycle": {
+      "Neighbor search": {
+        "wall_seconds": 0.116,
+        "gcycles": 6.147,
+        "percent": 6.1
+      },
+      "Launch PP GPU ops.": {
+        "wall_seconds": 0.256,
+        "gcycles": 13.511,
+        "percent": 13.5
+      },
+      "Force": {
+        "wall_seconds": 1.554,
+        "gcycles": 82.063,
+        "percent": 81.9
+      },
+      "PME mesh": {
+        "wall_seconds": 0.554,
+        "gcycles": 29.244,
+        "percent": 29.2
+      },
+      "Wait GPU NB local": {
+        "wall_seconds": 0.584,
+        "gcycles": 30.861,
+        "percent": 30.8
+      },
+      "NB X/F buffer ops.": {
+        "wall_seconds": 0.112,
+        "gcycles": 5.899,
+        "percent": 5.9
+      },
+      "Update": {
+        "wall_seconds": 0.905,
+        "gcycles": 47.807,
+        "percent": 47.7
+      },
+      "Kinetic energy": {
+        "wall_seconds": 0.023,
+        "gcycles": 1.228,
+        "percent": 1.2
+      },
+      "PME wait for PP": {
+        "wall_seconds": 1.344,
+        "gcycles": 70.981,
+        "percent": 70.8
+      },
+      "Total": {
+        "wall_seconds": 1.898,
+        "gcycles": 100.226,
+        "percent": 100.0
+      }
+    },
+    "message": null
+  }
+]

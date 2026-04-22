@@ -1,0 +1,56 @@
+[
+  {
+    "ntomp": 2,
+    "returncode": 0,
+    "ns_per_day": 85.081,
+    "ms_per_step": 0.508,
+    "message": null,
+    "stderr_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_2/mdrun.stderr.txt",
+    "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_2/mdrun.stdout.txt"
+  },
+  {
+    "ntomp": 4,
+    "returncode": 1,
+    "ns_per_day": null,
+    "ms_per_step": null,
+    "message": "Inconsistency in user input:",
+    "stderr_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_4/mdrun.stderr.txt",
+    "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_4/mdrun.stdout.txt"
+  },
+  {
+    "ntomp": 6,
+    "returncode": 1,
+    "ns_per_day": null,
+    "ms_per_step": null,
+    "message": "Inconsistency in user input:",
+    "stderr_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_6/mdrun.stderr.txt",
+    "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_6/mdrun.stdout.txt"
+  },
+  {
+    "ntomp": 8,
+    "returncode": 1,
+    "ns_per_day": null,
+    "ms_per_step": null,
+    "message": "Inconsistency in user input:",
+    "stderr_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_8/mdrun.stderr.txt",
+    "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_8/mdrun.stdout.txt"
+  },
+  {
+    "ntomp": 10,
+    "returncode": 1,
+    "ns_per_day": null,
+    "ms_per_step": null,
+    "message": "Inconsistency in user input:",
+    "stderr_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_10/mdrun.stderr.txt",
+    "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_10/mdrun.stdout.txt"
+  },
+  {
+    "ntomp": 12,
+    "returncode": 1,
+    "ns_per_day": null,
+    "ms_per_step": null,
+    "message": "Inconsistency in user input:",
+    "stderr_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_12/mdrun.stderr.txt",
+    "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_12/mdrun.stdout.txt"
+  }
+]

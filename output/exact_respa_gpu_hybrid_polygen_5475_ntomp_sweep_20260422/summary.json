@@ -1,0 +1,342 @@
+{
+  "bridge": {
+    "assumptions": {
+      "coordinates_shifted_to_box_origin": true,
+      "kspace_style": "pppm 1.0e-6",
+      "pair_modify": "mix sixthpower",
+      "pair_style": {
+        "args": [],
+        "kind": "lj/class2/coul/long"
+      },
+      "special_bonds_effective": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+      "special_bonds_input": "lj/coul 0.0 0.0 1.0"
+    },
+    "claim_boundary": "This is a topology/coordinate bridge from a PCFF Class2 LAMMPS data file with inline coefficients. It does not by itself prove LAMMPS-vs-GROMACS energy, force, density, or transport parity.",
+    "command": "lammps-data-export-gromacs",
+    "counts": {
+      "angles": 10125,
+      "atoms": 5475,
+      "bonds": 5460,
+      "dihedrals": 11610,
+      "impropers": 6240,
+      "molecule_instances": 15,
+      "molecule_templates": 15
+    },
+    "outputs": {
+      "gromacs_coordinates": {
+        "bytes": 361428,
+        "line_count": 5478,
+        "path": "system.gro",
+        "sha256": "c140d437f3c6459d5192af199a9ef96ce889f50e77574256793b01de30c6b34c"
+      },
+      "gromacs_topology": {
+        "bytes": 7716935,
+        "line_count": 50838,
+        "path": "topol.top",
+        "sha256": "e8e463aa2e6070cc7190e64f1b20470df2a263aa03b50954629378ad5ed147cf"
+      },
+      "typed_system": {
+        "bytes": 16238723,
+        "line_count": 714978,
+        "path": "typed_system.json",
+        "sha256": "07e958db65cbcd5d18ea6506bafd3075c4920b8ab670f07ecd84e34c6aa46af6"
+      }
+    },
+    "schema_version": 1,
+    "source_data": "/home/kiket/src/PolyGen/Example-simulation-files/equilibration/system.lmp"
+  },
+  "claim_boundary": "Short host-local performance calibration only. This artifact does not prove density/volume convergence, transport readiness, or broad GPU production readiness.",
+  "host": {
+    "gmx_version": "      :-) GROMACS - gmx, 2027.0-dev-20260422-53781aa0a5-dirty-unknown (-:\n\nExecutable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx\nData prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)\nWorking dir:  /home/kiket/Desktop/test/GROMACS_PCFF\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260422-53781aa0a5-dirty-unknown\nGIT SHA1 hash:       53781aa0a5d33961bb2b993934478ba97ad16532 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         CUDA\nNBNxM GPU setup:     super-cluster 2x2x2 / cluster 8 (cluster-pair splitting on)\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     cuFFT\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\nCUDA compiler:       /usr/local/cuda-12.8/bin/nvcc (NVIDIA 12.8.93)\nCUDA compiler flags:  -O2 -g -DNDEBUG -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -O2 -g -DNDEBUG\nCUDA targets:        50;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;100-real;120\nCUDA driver:         12.80\nCUDA runtime:        12.80\nNVSHMEM:             disabled\n\n",
+    "nvidia_smi_L": "GPU 0: NVIDIA GeForce RTX 5070 Ti (UUID: GPU-0b2174db-af3a-581c-e9a5-098511dfba1d)"
+  },
+  "inputs": {
+    "bridge_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF-lunar-data-bridge/output/lammps_data_bridge_polygen_system/bridge_manifest.json",
+    "equil_ps": 5.0,
+    "gmx": "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+    "gro": "/home/kiket/Desktop/test/GROMACS_PCFF-lunar-data-bridge/output/lammps_data_bridge_polygen_system/system.gro",
+    "mdrun_flags": "-nb gpu -pme cpu -bonded cpu -update cpu -dlb no",
+    "ntmpi": 1,
+    "ntomp_list": [
+      2,
+      4,
+      6,
+      8,
+      10,
+      12
+    ],
+    "pin": "on",
+    "pinstride": 1,
+    "prod_ps": 10.0,
+    "sample_interval": 400,
+    "top": "/home/kiket/Desktop/test/GROMACS_PCFF-lunar-data-bridge/output/lammps_data_bridge_polygen_system/topol.top"
+  },
+  "kind": "exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep",
+  "runs": [
+    {
+      "combined_elapsed_seconds": 139.37715816497803,
+      "combined_ns_per_day": 9.29851072487753,
+      "env": {
+        "GMX_DISABLE_MODULAR_SIMULATOR": "1",
+        "GMX_MAXBACKUP": "-1",
+        "OMP_NUM_THREADS": "2"
+      },
+      "equil_elapsed_seconds": 47.49509644508362,
+      "equil_metrics": {
+        "force_seconds": 37.453,
+        "hour_per_ns": 2.585,
+        "launch_pp_gpu_ops_seconds": 0.462,
+        "ms_per_step": 4.652,
+        "nb_xf_buffer_ops_seconds": 0.447,
+        "neighbor_search_seconds": 5.406,
+        "ns_per_day": 9.285,
+        "pme_mesh_seconds": 3.662,
+        "pme_wait_for_pp_seconds": 42.867,
+        "total_wallcycle_seconds": 46.529,
+        "update_seconds": 21.595,
+        "wait_gpu_nb_local_seconds": 1.467
+      },
+      "ntomp": 2,
+      "paths": {
+        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp02/equil.log",
+        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp02/prod.log"
+      },
+      "prod_elapsed_seconds": 91.88206171989441,
+      "prod_metrics": {
+        "force_seconds": 74.94,
+        "hour_per_ns": 2.526,
+        "launch_pp_gpu_ops_seconds": 0.929,
+        "ms_per_step": 4.546,
+        "nb_xf_buffer_ops_seconds": 0.902,
+        "neighbor_search_seconds": 10.391,
+        "ns_per_day": 9.502,
+        "pme_mesh_seconds": 7.073,
+        "pme_wait_for_pp_seconds": 83.859,
+        "total_wallcycle_seconds": 90.932,
+        "update_seconds": 43.049,
+        "wait_gpu_nb_local_seconds": 3.286
+      }
+    },
+    {
+      "combined_elapsed_seconds": 75.65757918357849,
+      "combined_ns_per_day": 17.12981057529392,
+      "env": {
+        "GMX_DISABLE_MODULAR_SIMULATOR": "1",
+        "GMX_MAXBACKUP": "-1",
+        "OMP_NUM_THREADS": "4"
+      },
+      "equil_elapsed_seconds": 26.081976652145386,
+      "equil_metrics": {
+        "force_seconds": 19.997,
+        "hour_per_ns": 1.397,
+        "launch_pp_gpu_ops_seconds": 0.407,
+        "ms_per_step": 2.515,
+        "nb_xf_buffer_ops_seconds": 0.241,
+        "neighbor_search_seconds": 2.76,
+        "ns_per_day": 17.177,
+        "pme_mesh_seconds": 1.958,
+        "pme_wait_for_pp_seconds": 23.194,
+        "total_wallcycle_seconds": 25.153,
+        "update_seconds": 11.279,
+        "wait_gpu_nb_local_seconds": 1.601
+      },
+      "ntomp": 4,
+      "paths": {
+        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp04/equil.log",
+        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp04/prod.log"
+      },
+      "prod_elapsed_seconds": 49.575602531433105,
+      "prod_metrics": {
+        "force_seconds": 39.824,
+        "hour_per_ns": 1.351,
+        "launch_pp_gpu_ops_seconds": 0.783,
+        "ms_per_step": 2.431,
+        "nb_xf_buffer_ops_seconds": 0.472,
+        "neighbor_search_seconds": 5.733,
+        "ns_per_day": 17.768,
+        "pme_mesh_seconds": 3.69,
+        "pme_wait_for_pp_seconds": 44.938,
+        "total_wallcycle_seconds": 48.628,
+        "update_seconds": 22.613,
+        "wait_gpu_nb_local_seconds": 3.23
+      }
+    },
+    {
+      "combined_elapsed_seconds": 56.8721067905426,
+      "combined_ns_per_day": 22.7879724022377,
+      "env": {
+        "GMX_DISABLE_MODULAR_SIMULATOR": "1",
+        "GMX_MAXBACKUP": "-1",
+        "OMP_NUM_THREADS": "6"
+      },
+      "equil_elapsed_seconds": 19.613337516784668,
+      "equil_metrics": {
+        "force_seconds": 14.59,
+        "hour_per_ns": 1.037,
+        "launch_pp_gpu_ops_seconds": 0.393,
+        "ms_per_step": 1.866,
+        "nb_xf_buffer_ops_seconds": 0.177,
+        "neighbor_search_seconds": 1.979,
+        "ns_per_day": 23.148,
+        "pme_mesh_seconds": 1.392,
+        "pme_wait_for_pp_seconds": 17.272,
+        "total_wallcycle_seconds": 18.664,
+        "update_seconds": 8.314,
+        "wait_gpu_nb_local_seconds": 1.58
+      },
+      "ntomp": 6,
+      "paths": {
+        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp06/equil.log",
+        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp06/prod.log"
+      },
+      "prod_elapsed_seconds": 37.258769273757935,
+      "prod_metrics": {
+        "force_seconds": 29.145,
+        "hour_per_ns": 1.009,
+        "launch_pp_gpu_ops_seconds": 0.79,
+        "ms_per_step": 1.816,
+        "nb_xf_buffer_ops_seconds": 0.359,
+        "neighbor_search_seconds": 3.856,
+        "ns_per_day": 23.794,
+        "pme_mesh_seconds": 2.575,
+        "pme_wait_for_pp_seconds": 33.738,
+        "total_wallcycle_seconds": 36.313,
+        "update_seconds": 16.566,
+        "wait_gpu_nb_local_seconds": 3.294
+      }
+    },
+    {
+      "combined_elapsed_seconds": 46.88516402244568,
+      "combined_ns_per_day": 27.642006315250523,
+      "env": {
+        "GMX_DISABLE_MODULAR_SIMULATOR": "1",
+        "GMX_MAXBACKUP": "-1",
+        "OMP_NUM_THREADS": "8"
+      },
+      "equil_elapsed_seconds": 16.596217393875122,
+      "equil_metrics": {
+        "force_seconds": 11.574,
+        "hour_per_ns": 0.862,
+        "launch_pp_gpu_ops_seconds": 0.385,
+        "ms_per_step": 1.551,
+        "nb_xf_buffer_ops_seconds": 0.14,
+        "neighbor_search_seconds": 1.541,
+        "ns_per_day": 27.844,
+        "pme_mesh_seconds": 1.143,
+        "pme_wait_for_pp_seconds": 14.374,
+        "total_wallcycle_seconds": 15.517,
+        "update_seconds": 6.589,
+        "wait_gpu_nb_local_seconds": 1.574
+      },
+      "ntomp": 8,
+      "paths": {
+        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp08/equil.log",
+        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp08/prod.log"
+      },
+      "prod_elapsed_seconds": 30.288946628570557,
+      "prod_metrics": {
+        "force_seconds": 23.055,
+        "hour_per_ns": 0.813,
+        "launch_pp_gpu_ops_seconds": 0.773,
+        "ms_per_step": 1.463,
+        "nb_xf_buffer_ops_seconds": 0.282,
+        "neighbor_search_seconds": 3.226,
+        "ns_per_day": 29.531,
+        "pme_mesh_seconds": 2.135,
+        "pme_wait_for_pp_seconds": 27.124,
+        "total_wallcycle_seconds": 29.259,
+        "update_seconds": 13.225,
+        "wait_gpu_nb_local_seconds": 3.172
+      }
+    },
+    {
+      "combined_elapsed_seconds": 41.81392192840576,
+      "combined_ns_per_day": 30.99446165846449,
+      "env": {
+        "GMX_DISABLE_MODULAR_SIMULATOR": "1",
+        "GMX_MAXBACKUP": "-1",
+        "OMP_NUM_THREADS": "10"
+      },
+      "equil_elapsed_seconds": 14.792017936706543,
+      "equil_metrics": {
+        "force_seconds": 9.951,
+        "hour_per_ns": 0.769,
+        "launch_pp_gpu_ops_seconds": 0.381,
+        "ms_per_step": 1.384,
+        "nb_xf_buffer_ops_seconds": 0.13,
+        "neighbor_search_seconds": 1.401,
+        "ns_per_day": 31.208,
+        "pme_mesh_seconds": 0.957,
+        "pme_wait_for_pp_seconds": 12.887,
+        "total_wallcycle_seconds": 13.844,
+        "update_seconds": 5.757,
+        "wait_gpu_nb_local_seconds": 1.544
+      },
+      "ntomp": 10,
+      "paths": {
+        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp10/equil.log",
+        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp10/prod.log"
+      },
+      "prod_elapsed_seconds": 27.02190399169922,
+      "prod_metrics": {
+        "force_seconds": 19.691,
+        "hour_per_ns": 0.724,
+        "launch_pp_gpu_ops_seconds": 0.751,
+        "ms_per_step": 1.303,
+        "nb_xf_buffer_ops_seconds": 0.257,
+        "neighbor_search_seconds": 2.889,
+        "ns_per_day": 33.143,
+        "pme_mesh_seconds": 1.721,
+        "pme_wait_for_pp_seconds": 24.349,
+        "total_wallcycle_seconds": 26.07,
+        "update_seconds": 11.458,
+        "wait_gpu_nb_local_seconds": 3.107
+      }
+    },
+    {
+      "combined_elapsed_seconds": 36.74967050552368,
+      "combined_ns_per_day": 35.265622308238214,
+      "env": {
+        "GMX_DISABLE_MODULAR_SIMULATOR": "1",
+        "GMX_MAXBACKUP": "-1",
+        "OMP_NUM_THREADS": "12"
+      },
+      "equil_elapsed_seconds": 12.59225845336914,
+      "equil_metrics": {
+        "force_seconds": 8.909,
+        "hour_per_ns": 0.647,
+        "launch_pp_gpu_ops_seconds": 0.375,
+        "ms_per_step": 1.165,
+        "nb_xf_buffer_ops_seconds": 0.118,
+        "neighbor_search_seconds": 1.189,
+        "ns_per_day": 37.088,
+        "pme_mesh_seconds": 0.879,
+        "pme_wait_for_pp_seconds": 10.77,
+        "total_wallcycle_seconds": 11.649,
+        "update_seconds": 5.132,
+        "wait_gpu_nb_local_seconds": 1.543
+      },
+      "ntomp": 12,
+      "paths": {
+        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp12/equil.log",
+        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp12/prod.log"
+      },
+      "prod_elapsed_seconds": 24.15741205215454,
+      "prod_metrics": {
+        "force_seconds": 17.887,
+        "hour_per_ns": 0.644,
+        "launch_pp_gpu_ops_seconds": 0.74,
+        "ms_per_step": 1.159,
+        "nb_xf_buffer_ops_seconds": 0.237,
+        "neighbor_search_seconds": 2.51,
+        "ns_per_day": 37.274,
+        "pme_mesh_seconds": 1.572,
+        "pme_wait_for_pp_seconds": 21.609,
+        "total_wallcycle_seconds": 23.181,
+        "update_seconds": 10.376,
+        "wait_gpu_nb_local_seconds": 3.338
+      }
+    }
+  ],
+  "schema_version": 1
+}

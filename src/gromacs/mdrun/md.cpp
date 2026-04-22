@@ -216,8 +216,12 @@ bool useExactVelocityVerletLammpsRespa(const t_inputrec& inputRecord)
 
 bool useExactLammpsRespaForceOnlyContract(const t_inputrec& inputRecord)
 {
+    const bool forceOnlySchedule =
+            inputRecord.nsteps > 0 && inputRecord.nstcalcenergy > inputRecord.nsteps
+            && inputRecord.nstenergy > inputRecord.nsteps;
+
     return useExactVelocityVerletLammpsRespa(inputRecord)
-           && gmx::isSupportedExactRespaHybridNbGpuInput(inputRecord);
+           && gmx::isSupportedExactRespaHybridNbGpuInput(inputRecord) && forceOnlySchedule;
 }
 
 bool nestedExactLammpsRespaPrototypeEnabled()

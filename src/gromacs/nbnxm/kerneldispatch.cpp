@@ -1098,9 +1098,6 @@ void nonbonded_verlet_t::dispatchNonbondedKernel(gmx::InteractionLocality       
         case NbnxmKernelType::Gpu8x8x8:
             if (stepWork.nonbondedRespaContribution != MtsNonbondedRespaContribution::Full)
             {
-                GMX_RELEASE_ASSERT(!stepWork.computeEnergy && !stepWork.computeVirial,
-                                   "GPU NBNXM exact LAMMPS-style r-RESPA launches are currently "
-                                   "supported only for force-only steps");
                 GMX_RELEASE_ASSERT(ic.vdw.type == VanDerWaalsType::Cut
                                            && ic.vdw.modifier == InteractionModifiers::None
                                            && usingPmeOrEwald(ic.coulomb.type)

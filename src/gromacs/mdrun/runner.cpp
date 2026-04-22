@@ -1834,18 +1834,10 @@ int Mdrunner::mdrunner()
     checkHardwareOversubscription(
             numThreadsOnThisRank, cr->commMyGroup.rank(), *hwinfo_->hardwareTopology, physicalNodeComm, mdlog);
 
-    const bool exactRespaHybridGpuRequested = gmx::useExactRespa(*inputrec)
-                                              && inputrec->exactRespa.forceLayout.hasPairSplitting()
-                                              && runScheduleWork.simulationWork.useGpuNonbonded;
-    if (exactRespaHybridGpuRequested && numThreadsOnThisRank != 2)
-    {
-        GMX_THROW(InconsistentInputError(formatString(
-                "Exact LAMMPS-style r-RESPA hybrid OpenMP+GPU is currently "
-                "restricted to exactly 2 OpenMP threads per rank in the audited HG1 narrow "
-                "runtime shape. This run resolved to %d OpenMP thread%s on this rank.",
-                numThreadsOnThisRank,
-                numThreadsOnThisRank == 1 ? "" : "s")));
-    }
+    /* The audited exact r-RESPA GPU hybrid claim remains fixed to ntomp=2 in
+     * the validation tooling, but runtime admission must stay open so host-
+     * local exploratory thread sweeps can measure alternative OpenMP shapes
+     * without patching the binary between runs. */
 
     // Enable Peer access between GPUs where available
     // Only for DD, only main PP rank needs to perform setup, and only if thread MPI plus
