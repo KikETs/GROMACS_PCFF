@@ -187,14 +187,14 @@ def prod_outer_steps(args: argparse.Namespace) -> int:
     return steps_from_ps(args.prod_ps) // EXACT_RESPA_FACTOR
 
 
-def exact_respa_common_mdp(nsteps: int, sample_interval: int) -> str:
+def exact_respa_common_mdp(nsteps: int, sample_interval: int, *, nstlist: int = EXACT_RESPA_FACTOR) -> str:
     return (
         "integrator              = md-vv\n"
         f"dt                      = {DT_PS:.4f}\n"
         f"nsteps                  = {nsteps}\n"
         "constraints             = none\n"
         "cutoff-scheme           = Verlet\n"
-        f"nstlist                 = {EXACT_RESPA_FACTOR}\n"
+        f"nstlist                 = {nstlist}\n"
         "rlist                   = 0.99\n"
         "rvdw                    = 0.9\n"
         "rcoulomb                = 0.9\n"
