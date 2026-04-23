@@ -1,0 +1,70 @@
+{
+  "schema_name": "cpu_exact_respa_current_binary_revalidation",
+  "schema_version": 1,
+  "date": "2026-04-24",
+  "branch": "exact-respa-cpu-only-speedups-20260422",
+  "commit": "f45e2376d4",
+  "status": "PASS",
+  "claimable_candidate_env": {
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI": "1",
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "1",
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SPLIT_OWNER_OUTPUTS": "0",
+    "GMX_PCFF_EXACT_RESPA_UPDATE_OMP": "1",
+    "GMX_PCFF_EXACT_RESPA_UPDATE_DIRECT_FASTPATH": "1",
+    "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT": "0"
+  },
+  "baseline_env": {
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI": "0",
+    "GMX_PCFF_EXACT_RESPA_UPDATE_OMP": "0",
+    "GMX_PCFF_EXACT_RESPA_UPDATE_DIRECT_FASTPATH": "0",
+    "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT": "0"
+  },
+  "checks": [
+    {
+      "name": "small_deterministic_parity",
+      "fixture_id": "small_oligomer_gate_a_current_cpu",
+      "steps": 2000,
+      "report": "small_deterministic_native_multi_ownerfallback_update/report.json",
+      "status": "PASS",
+      "total_force_max_abs_component_delta": 0.0,
+      "per_level_force_max_abs_component_delta": 0.0,
+      "energy_max_abs_delta": 0.0,
+      "gro_max_abs_coord_delta_nm": 0.0,
+      "gro_max_abs_box_delta_nm": 0.0,
+      "same_coordinate_probe": {
+        "available": true,
+        "total_force_max_abs_component_delta": 0.0,
+        "per_level_force_max_abs_component_delta": 0.0,
+        "energy_max_abs_delta": 0.0,
+        "gro_max_abs_coord_delta_nm": 0.0
+      },
+      "virial_pressure_tensor_max_abs_delta": 0.0
+    },
+    {
+      "name": "medium_nvt_parity",
+      "fixture_id": "gate_h_dense_salt_polymer_2x2x2_medium_nvt_current_cpu",
+      "steps": 20000,
+      "report": "medium_nvt_dense_salt_polymer_ownerfallback_update/report.json",
+      "status": "PASS",
+      "total_force_max_abs_component_delta": 0.0,
+      "per_level_force_max_abs_component_delta": 0.0,
+      "energy_max_abs_delta": 0.0,
+      "gro_max_abs_coord_delta_nm": 0.0,
+      "gro_max_abs_box_delta_nm": 0.0,
+      "same_coordinate_probe": {
+        "available": true,
+        "total_force_max_abs_component_delta": 0.0,
+        "per_level_force_max_abs_component_delta": 0.0,
+        "energy_max_abs_delta": 0.0,
+        "gro_max_abs_coord_delta_nm": 0.0
+      },
+      "virial_pressure_tensor_max_abs_delta": 0.0
+    }
+  ],
+  "non_claims": [
+    "This does not claim conductivity-production readiness.",
+    "This does not claim GPU or hybrid readiness.",
+    "This does not claim LAMMPS-vs-GROMACS transport parity.",
+    "This does not expand beyond the audited CPU-only exact-r-RESPA runtime shape."
+  ]
+}

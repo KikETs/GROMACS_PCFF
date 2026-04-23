@@ -1,0 +1,10 @@
+*
+!.gitignore
+!README.md
+!current_binary_exactness_summary.json
+!small_deterministic_native_multi_ownerfallback_update/
+!small_deterministic_native_multi_ownerfallback_update/report.json
+!small_deterministic_native_multi_ownerfallback_update/report.tsv
+!medium_nvt_dense_salt_polymer_ownerfallback_update/
+!medium_nvt_dense_salt_polymer_ownerfallback_update/report.json
+!medium_nvt_dense_salt_polymer_ownerfallback_update/report.tsv
