@@ -117,3 +117,30 @@ These paths remain useful as local evidence, but should not be pushed as reposit
 3. Run GROMACS GPU hybrid full `equil + prod`.
 4. Compare stage-level density, volume, pressure, thermal, and energy behavior against the saved reference summaries.
 5. Report CPU/GPU prod speed from `mdrun` logs and wallcycle timers.
+
+## Final Full-Run Verification Results
+
+Final verification was executed from
+`output/jupyter-notebook/polygen_pcff_rrespa_lammps_gromacs_benchmark.ipynb`
+with LAMMPS disabled.
+
+CPU lane:
+
+- Command log: `logs/final_gromacs_cpu_full_20260510.nbconvert.log`
+- Mode: GROMACS CPU OpenMP, double precision, `ntomp=20`
+- Production chunks completed: 50/50
+- Production speed: mean `45.094 ns/day`, min `41.581 ns/day`, max `45.974 ns/day`
+- Last five production chunks: `45.974`, `44.768`, `45.781`, `45.865`, `45.811 ns/day`
+
+GPU strict lane:
+
+- Command log: `logs/final_gromacs_gpu_strict_full_20260510.nbconvert.log`
+- Mode: GROMACS CUDA mixed precision, strict hybrid `-nb gpu -pme cpu -bonded gpu -update cpu`, `ntomp=12`
+- Production chunks completed: 50/50
+- Production speed: mean `147.315 ns/day`, min `127.971 ns/day`, max `156.803 ns/day`
+- Last five production chunks: `142.795`, `145.957`, `156.397`, `156.803`, `156.637 ns/day`
+
+Interpretation:
+
+- The final strict GPU full run is about `3.27x` faster than the final CPU double full run by production mean speed.
+- The 200 ns/day GPU target was not reached under the strict PolyGen-equivalent r-RESPA settings. The observed GPU utilization remained moderate because PME stays on CPU, update stays on CPU, and exact PCFF listed/r-RESPA synchronization still limits the offload path.
