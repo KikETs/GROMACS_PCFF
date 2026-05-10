@@ -120,7 +120,7 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     const bool exactLammpsRespaHasPairSplitting = exactRespaHasPairSplitting(inputrec);
     const bool useExactRespaEwaldRealOnly = exactRespaEwaldRealOnlyRequested(inputrec);
     const bool useExactLammpsRespaHybridGpuNonbonded =
-            useExactLammpsRespa && !useExactRespaEwaldRealOnly && useGpuForNonbonded
+            useExactLammpsRespa && useGpuForNonbonded
             && isSupportedExactRespaHybridNbGpuInput(inputrec);
     const bool useExactLammpsRespaHybridGpuPme =
             !useExactRespaEwaldRealOnly && useExactLammpsRespaHybridGpuNonbonded

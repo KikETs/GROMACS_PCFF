@@ -282,33 +282,32 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void bond_class2_gpu(const int          
     const int ai   = gm_forceatoms[3 * i + 1];
     const int aj   = gm_forceatoms[3 * i + 2];
 
+    const auto& params = gm_forceparams[type].bond_class2;
+
     DeviceFloat3 dx;
     const int    ki  = pbcDxAiucGpu<calcVir>(pbcAiuc, gm_xq[ai], gm_xq[aj], dx);
     const float  rsq = gmxDeviceNorm2(dx);
     const float  r   = gmxDeviceSqrt(rsq);
-    const float  dr  = r - gm_forceparams[type].bond_class2.r0;
+    const float  dr  = r - params.r0;
     const float  dr2 = dr * dr;
     const float  dr3 = dr2 * dr;
-    const float  dr4 = dr3 * dr;
     float        de  = 0.0F;
     if (!pcffClass2DebugModeEnabled(pcffClass2DebugMode))
     {
-        de = 2.0F * gm_forceparams[type].bond_class2.k2 * dr
-             + 3.0F * gm_forceparams[type].bond_class2.k3 * dr2
-             + 4.0F * gm_forceparams[type].bond_class2.k4 * dr3;
+        de = 2.0F * params.k2 * dr + 3.0F * params.k3 * dr2 + 4.0F * params.k4 * dr3;
     }
     else
     {
         switch (static_cast<PcffClass2DebugMode>(pcffClass2DebugMode))
         {
             case PcffClass2DebugMode::BondClass2K2Only:
-                de = 2.0F * gm_forceparams[type].bond_class2.k2 * dr;
+                de = 2.0F * params.k2 * dr;
                 break;
             case PcffClass2DebugMode::BondClass2K3Only:
-                de = 3.0F * gm_forceparams[type].bond_class2.k3 * dr2;
+                de = 3.0F * params.k3 * dr2;
                 break;
             case PcffClass2DebugMode::BondClass2K4Only:
-                de = 4.0F * gm_forceparams[type].bond_class2.k4 * dr3;
+                de = 4.0F * params.k4 * dr3;
                 break;
             default: break;
         }
@@ -318,24 +317,23 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void bond_class2_gpu(const int          
     if constexpr (calcEner)
     {
         float energyContribution = 0.0F;
+        const float dr4          = dr3 * dr;
         if (!pcffClass2DebugModeEnabled(pcffClass2DebugMode))
         {
-            energyContribution = gm_forceparams[type].bond_class2.k2 * dr2
-                                 + gm_forceparams[type].bond_class2.k3 * dr3
-                                 + gm_forceparams[type].bond_class2.k4 * dr4;
+            energyContribution = params.k2 * dr2 + params.k3 * dr3 + params.k4 * dr4;
         }
         else
         {
             switch (static_cast<PcffClass2DebugMode>(pcffClass2DebugMode))
             {
                 case PcffClass2DebugMode::BondClass2K2Only:
-                    energyContribution = gm_forceparams[type].bond_class2.k2 * dr2;
+                    energyContribution = params.k2 * dr2;
                     break;
                 case PcffClass2DebugMode::BondClass2K3Only:
-                    energyContribution = gm_forceparams[type].bond_class2.k3 * dr3;
+                    energyContribution = params.k3 * dr3;
                     break;
                 case PcffClass2DebugMode::BondClass2K4Only:
-                    energyContribution = gm_forceparams[type].bond_class2.k4 * dr4;
+                    energyContribution = params.k4 * dr4;
                     break;
                 default: break;
             }
@@ -465,6 +463,8 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
     const int  aj        = angleData[2];
     const int  ak        = angleData[3];
 
+    const auto& params = gm_forceparams[type].angle_class2;
+
     DeviceFloat3 del1;
     DeviceFloat3 del2;
     const int    t1   = pbcDxAiucGpu<calcVir>(pbcAiuc, gm_xq[ai], gm_xq[aj], del1);
@@ -485,10 +485,9 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
     }
     s = 1.0F / s;
 
-    const float dtheta  = gmxDeviceAcos(c) - gm_forceparams[type].angle_class2.theta0;
+    const float dtheta  = gmxDeviceAcos(c) - params.theta0;
     const float dtheta2 = dtheta * dtheta;
     const float dtheta3 = dtheta2 * dtheta;
-    const float dtheta4 = dtheta3 * dtheta;
 
     const bool keepAll = !pcffClass2DebugModeEnabled(pcffClass2DebugMode);
     const bool keepAngleMain =
@@ -505,9 +504,8 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
 
     if (keepAngleMain)
     {
-        const float deAngle = 2.0F * gm_forceparams[type].angle_class2.k2 * dtheta
-                              + 3.0F * gm_forceparams[type].angle_class2.k3 * dtheta2
-                              + 4.0F * gm_forceparams[type].angle_class2.k4 * dtheta3;
+        const float deAngle =
+                2.0F * params.k2 * dtheta + 3.0F * params.k3 * dtheta2 + 4.0F * params.k4 * dtheta3;
         const float a   = -deAngle * s;
         const float a11 = a * c / rsq1;
         const float a12 = -a / r12;
@@ -517,16 +515,15 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
 
         if constexpr (calcEner)
         {
-            *vtot_loc += gm_forceparams[type].angle_class2.k2 * dtheta2
-                         + gm_forceparams[type].angle_class2.k3 * dtheta3
-                         + gm_forceparams[type].angle_class2.k4 * dtheta4;
+            const float dtheta4 = dtheta3 * dtheta;
+            *vtot_loc += params.k2 * dtheta2 + params.k3 * dtheta3 + params.k4 * dtheta4;
         }
     }
 
-    float dr1      = r1 - gm_forceparams[type].angle_class2.bb_r1;
-    float dr2      = r2 - gm_forceparams[type].angle_class2.bb_r2;
-    const float tk1 = gm_forceparams[type].angle_class2.bb_k * dr1;
-    const float tk2 = gm_forceparams[type].angle_class2.bb_k * dr2;
+    float       dr1 = r1 - params.bb_r1;
+    float       dr2 = r2 - params.bb_r2;
+    const float tk1 = params.bb_k * dr1;
+    const float tk2 = params.bb_k * dr2;
 
     if (keepBondBond)
     {
@@ -535,15 +532,15 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
 
         if constexpr (calcEner)
         {
-            *vtot_loc += gm_forceparams[type].angle_class2.bb_k * dr1 * dr2;
+            *vtot_loc += params.bb_k * dr1 * dr2;
         }
     }
 
-    dr1 = r1 - gm_forceparams[type].angle_class2.ba_r1;
-    dr2 = r2 - gm_forceparams[type].angle_class2.ba_r2;
+    dr1 = r1 - params.ba_r1;
+    dr2 = r2 - params.ba_r2;
 
-    const float aa1 = s * dr1 * gm_forceparams[type].angle_class2.ba_k1;
-    const float aa2 = s * dr2 * gm_forceparams[type].angle_class2.ba_k2;
+    const float aa1 = s * dr1 * params.ba_k1;
+    const float aa2 = s * dr2 * params.ba_k2;
 
     float aa11 = aa1 * c / rsq1;
     float aa12 = -aa1 / r12;
@@ -559,8 +556,8 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
     const DeviceFloat3 v3 = aa11 * del2 + aa12 * del1;
     const DeviceFloat3 v4 = aa21 * del2 + aa22 * del1;
 
-    const float b1 = gm_forceparams[type].angle_class2.ba_k1 * dtheta / r1;
-    const float b2 = gm_forceparams[type].angle_class2.ba_k2 * dtheta / r2;
+    const float b1 = params.ba_k1 * dtheta / r1;
+    const float b2 = params.ba_k2 * dtheta / r2;
 
     if (keepBondAngle1)
     {
@@ -569,9 +566,10 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
 
         if constexpr (calcEner)
         {
-            *vtot_loc += gm_forceparams[type].angle_class2.ba_k1 * dr1 * dtheta;
+            *vtot_loc += params.ba_k1 * dr1 * dtheta;
         }
     }
+
     if (keepBondAngle2)
     {
         f_i -= v2;
@@ -579,7 +577,7 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
 
         if constexpr (calcEner)
         {
-            *vtot_loc += gm_forceparams[type].angle_class2.ba_k2 * dr2 * dtheta;
+            *vtot_loc += params.ba_k2 * dr2 * dtheta;
         }
     }
 

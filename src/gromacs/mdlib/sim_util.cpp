@@ -11876,6 +11876,8 @@ void do_force(FILE*                         fplog,
                 exactRespaGpuBondedClass2DebugMode();
         const bool useExactGpuBondedInteractionListCache =
                 shouldUseExactGpuBondedInteractionListCache();
+        const bool exactGpuNonbondedCoordinatesReady =
+                useExactLammpsRespaGpuNonbonded && !stepWork.useGpuXBufferOps;
         const bool useExactGpuBondedCpuListedOverlap =
                 shouldUseExactGpuBondedCpuListedOverlap() && useExactRespaForceOutputs
                 && simulationWork.useGpuBonded
@@ -11893,7 +11895,7 @@ void do_force(FILE*                         fplog,
             GMX_RELEASE_ASSERT(!simulationWork.havePpDomainDecomposition,
                                "Exact r-RESPA GPU bonded offload currently supports single-rank execution only");
 
-            bool uploadedExactRespaGpuBondedCoordinates = false;
+            bool uploadedExactRespaGpuBondedCoordinates = exactGpuNonbondedCoordinatesReady;
             for (int exactLevel = 0; exactLevel < exactRespaForceOutputs.numActiveLevels(); ++exactLevel)
             {
                 ForceOutputs* forceOutPtr = exactRespaForceOutputs.levelOrNull(exactLevel);
@@ -11994,7 +11996,7 @@ void do_force(FILE*                         fplog,
             GMX_RELEASE_ASSERT(!simulationWork.havePpDomainDecomposition,
                                "Exact r-RESPA GPU bonded offload currently supports single-rank execution only");
 
-            bool uploadedExactRespaGpuBondedCoordinates = false;
+            bool uploadedExactRespaGpuBondedCoordinates = exactGpuNonbondedCoordinatesReady;
             for (int exactLevel = 0; exactLevel < exactRespaForceOutputs.numActiveLevels(); ++exactLevel)
             {
                 ForceOutputs* forceOutPtr = exactRespaForceOutputs.levelOrNull(exactLevel);

@@ -542,22 +542,21 @@ real bond_class2(int              nbonds,
         const int ai   = forceatoms[i++];
         const int aj   = forceatoms[i++];
 
+        const auto& params = forceparams[type].bond_class2;
+
         const int  ki  = pcffClass2RvecSub(pbc, x[ai], x[aj], dx);
         const real rsq = iprod(dx, dx);
         const real r   = std::sqrt(rsq);
-        const real dr  = r - forceparams[type].bond_class2.r0;
+        const real dr  = r - params.r0;
         const real dr2 = dr * dr;
         const real dr3 = dr2 * dr;
-        const real dr4 = dr3 * dr;
-        const real de  = 2 * forceparams[type].bond_class2.k2 * dr
-                        + 3 * forceparams[type].bond_class2.k3 * dr2
-                        + 4 * forceparams[type].bond_class2.k4 * dr3;
+        const real de  = 2 * params.k2 * dr + 3 * params.k3 * dr2 + 4 * params.k4 * dr3;
         const real fbond = (r > 0 ? -de / r : 0);
 
         if constexpr (computeEnergy(flavor))
         {
-            vtot += forceparams[type].bond_class2.k2 * dr2 + forceparams[type].bond_class2.k3 * dr3
-                    + forceparams[type].bond_class2.k4 * dr4;
+            const real dr4 = dr3 * dr;
+            vtot += params.k2 * dr2 + params.k3 * dr3 + params.k4 * dr4;
         }
 
         if (rsq > 0)
@@ -1895,6 +1894,8 @@ real angle_class2(int              nbonds,
         const int aj   = forceatoms[i++];
         const int ak   = forceatoms[i++];
 
+        const auto& params = forceparams[type].angle_class2;
+
         const int t1 = pcffClass2RvecSub(pbc, x[ai], x[aj], del1);
         const int t2 = pcffClass2RvecSub(pbc, x[ak], x[aj], del2);
 
@@ -1903,8 +1904,13 @@ real angle_class2(int              nbonds,
         const real r1   = std::sqrt(rsq1);
         const real r2   = std::sqrt(rsq2);
         const real r12  = r1 * r2;
+        const real invR1   = 1 / r1;
+        const real invR2   = 1 / r2;
+        const real invR12  = 1 / r12;
+        const real invRsq1 = 1 / rsq1;
+        const real invRsq2 = 1 / rsq2;
 
-        real c = iprod(del1, del2) / r12;
+        real c = iprod(del1, del2) * invR12;
         c      = std::clamp(c, -1.0_real, 1.0_real);
 
         real s = std::sqrt(1 - c * c);
@@ -1914,18 +1920,16 @@ real angle_class2(int              nbonds,
         }
         s = 1 / s;
 
-        const real dtheta  = std::acos(c) - forceparams[type].angle_class2.theta0;
+        const real dtheta  = std::acos(c) - params.theta0;
         const real dtheta2 = dtheta * dtheta;
         const real dtheta3 = dtheta2 * dtheta;
-        const real dtheta4 = dtheta3 * dtheta;
 
-        const real deAngle = 2 * forceparams[type].angle_class2.k2 * dtheta
-                             + 3 * forceparams[type].angle_class2.k3 * dtheta2
-                             + 4 * forceparams[type].angle_class2.k4 * dtheta3;
+        const real deAngle = 2 * params.k2 * dtheta + 3 * params.k3 * dtheta2
+                             + 4 * params.k4 * dtheta3;
         const real a   = -deAngle * s;
-        const real a11 = a * c / rsq1;
-        const real a12 = -a / r12;
-        const real a22 = a * c / rsq2;
+        const real a11 = a * c * invRsq1;
+        const real a12 = -a * invR12;
+        const real a22 = a * c * invRsq2;
 
         rvec f_i = { a11 * del1[XX] + a12 * del2[XX],
                      a11 * del1[YY] + a12 * del2[YY],
@@ -1936,38 +1940,37 @@ real angle_class2(int              nbonds,
 
         if constexpr (computeEnergy(flavor))
         {
-            vtot += forceparams[type].angle_class2.k2 * dtheta2
-                    + forceparams[type].angle_class2.k3 * dtheta3
-                    + forceparams[type].angle_class2.k4 * dtheta4;
+            const real dtheta4 = dtheta3 * dtheta;
+            vtot += params.k2 * dtheta2 + params.k3 * dtheta3 + params.k4 * dtheta4;
         }
 
-        real dr1 = r1 - forceparams[type].angle_class2.bb_r1;
-        real dr2 = r2 - forceparams[type].angle_class2.bb_r2;
-        const real tk1 = forceparams[type].angle_class2.bb_k * dr1;
-        const real tk2 = forceparams[type].angle_class2.bb_k * dr2;
+        real dr1 = r1 - params.bb_r1;
+        real dr2 = r2 - params.bb_r2;
+        const real tk1 = params.bb_k * dr1;
+        const real tk2 = params.bb_k * dr2;
 
-        f_i[XX] -= del1[XX] * tk2 / r1;
-        f_i[YY] -= del1[YY] * tk2 / r1;
-        f_i[ZZ] -= del1[ZZ] * tk2 / r1;
-        f_k[XX] -= del2[XX] * tk1 / r2;
-        f_k[YY] -= del2[YY] * tk1 / r2;
-        f_k[ZZ] -= del2[ZZ] * tk1 / r2;
+        f_i[XX] -= del1[XX] * tk2 * invR1;
+        f_i[YY] -= del1[YY] * tk2 * invR1;
+        f_i[ZZ] -= del1[ZZ] * tk2 * invR1;
+        f_k[XX] -= del2[XX] * tk1 * invR2;
+        f_k[YY] -= del2[YY] * tk1 * invR2;
+        f_k[ZZ] -= del2[ZZ] * tk1 * invR2;
 
         if constexpr (computeEnergy(flavor))
         {
-            vtot += forceparams[type].angle_class2.bb_k * dr1 * dr2;
+            vtot += params.bb_k * dr1 * dr2;
         }
 
-        dr1 = r1 - forceparams[type].angle_class2.ba_r1;
-        dr2 = r2 - forceparams[type].angle_class2.ba_r2;
+        dr1 = r1 - params.ba_r1;
+        dr2 = r2 - params.ba_r2;
 
-        const real aa1 = s * dr1 * forceparams[type].angle_class2.ba_k1;
-        const real aa2 = s * dr2 * forceparams[type].angle_class2.ba_k2;
+        const real aa1 = s * dr1 * params.ba_k1;
+        const real aa2 = s * dr2 * params.ba_k2;
 
-        real aa11 = aa1 * c / rsq1;
-        real aa12 = -aa1 / r12;
-        real aa21 = aa2 * c / rsq1;
-        real aa22 = -aa2 / r12;
+        real aa11 = aa1 * c * invRsq1;
+        real aa12 = -aa1 * invR12;
+        real aa21 = aa2 * c * invRsq1;
+        real aa22 = -aa2 * invR12;
 
         const rvec v1 = { aa11 * del1[XX] + aa12 * del2[XX],
                           aa11 * del1[YY] + aa12 * del2[YY],
@@ -1976,8 +1979,8 @@ real angle_class2(int              nbonds,
                           aa21 * del1[YY] + aa22 * del2[YY],
                           aa21 * del1[ZZ] + aa22 * del2[ZZ] };
 
-        aa11 = aa1 * c / rsq2;
-        aa21 = aa2 * c / rsq2;
+        aa11 = aa1 * c * invRsq2;
+        aa21 = aa2 * c * invRsq2;
 
         const rvec v3 = { aa11 * del2[XX] + aa12 * del1[XX],
                           aa11 * del2[YY] + aa12 * del1[YY],
@@ -1986,8 +1989,8 @@ real angle_class2(int              nbonds,
                           aa21 * del2[YY] + aa22 * del1[YY],
                           aa21 * del2[ZZ] + aa22 * del1[ZZ] };
 
-        const real b1 = forceparams[type].angle_class2.ba_k1 * dtheta / r1;
-        const real b2 = forceparams[type].angle_class2.ba_k2 * dtheta / r2;
+        const real b1 = params.ba_k1 * dtheta * invR1;
+        const real b2 = params.ba_k2 * dtheta * invR2;
 
         f_i[XX] -= v1[XX] + b1 * del1[XX] + v2[XX];
         f_i[YY] -= v1[YY] + b1 * del1[YY] + v2[YY];
@@ -1998,8 +2001,7 @@ real angle_class2(int              nbonds,
 
         if constexpr (computeEnergy(flavor))
         {
-            vtot += forceparams[type].angle_class2.ba_k1 * dr1 * dtheta
-                    + forceparams[type].angle_class2.ba_k2 * dr2 * dtheta;
+            vtot += params.ba_k1 * dr1 * dtheta + params.ba_k2 * dr2 * dtheta;
         }
 
         rvec f_j;

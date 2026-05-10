@@ -46,6 +46,7 @@
 #include "gmxpre.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstdint>
 #include <iterator>
 
@@ -88,6 +89,21 @@ static int chooseSubGroupSizeForDevice(const DeviceInformation& deviceInfo)
         GMX_RELEASE_ASSERT(false, "Device has no known supported sub-group sizes");
         return 0;
     }
+}
+
+static int chooseBondedThreadsPerBlock()
+{
+    const char* value = std::getenv("GMX_PCFF_GPU_BONDED_THREADS_PER_BLOCK");
+    if (value != nullptr && value[0] != '\0')
+    {
+        const int threadsPerBlock = std::atoi(value);
+        if (threadsPerBlock == 64 || threadsPerBlock == 128 || threadsPerBlock == 256
+            || threadsPerBlock == 512)
+        {
+            return threadsPerBlock;
+        }
+    }
+    return c_threadsBondedPerBlock;
 }
 
 ListedForcesGpu::Impl::Impl(const gmx_ffparams_t& ffparams,
@@ -147,10 +163,11 @@ ListedForcesGpu::Impl::Impl(const gmx_ffparams_t& ffparams,
 
     int fTypeRangeEnd = kernelParams_.fTypeRangeEnd[numFTypesOnGpu - 1];
 
-    kernelLaunchConfig_.blockSize[0] = c_threadsBondedPerBlock;
+    kernelLaunchConfig_.blockSize[0] = chooseBondedThreadsPerBlock();
     kernelLaunchConfig_.blockSize[1] = 1;
     kernelLaunchConfig_.blockSize[2] = 1;
-    kernelLaunchConfig_.gridSize[0] = (fTypeRangeEnd + c_threadsBondedPerBlock) / c_threadsBondedPerBlock;
+    kernelLaunchConfig_.gridSize[0] =
+            (fTypeRangeEnd + kernelLaunchConfig_.blockSize[0]) / kernelLaunchConfig_.blockSize[0];
     kernelLaunchConfig_.gridSize[1]      = 1;
     kernelLaunchConfig_.gridSize[2]      = 1;
     kernelLaunchConfig_.sharedMemorySize = c_numShiftVectors * sizeof(Float3);
@@ -440,7 +457,8 @@ void ListedForcesGpu::Impl::updateInteractionListsAndDeviceBuffers(ArrayRef<cons
     }
 
     int fTypeRangeEnd = kernelParams_.fTypeRangeEnd[numFTypesOnGpu - 1];
-    kernelLaunchConfig_.gridSize[0] = (fTypeRangeEnd + c_threadsBondedPerBlock) / c_threadsBondedPerBlock;
+    kernelLaunchConfig_.gridSize[0] =
+            (fTypeRangeEnd + kernelLaunchConfig_.blockSize[0]) / kernelLaunchConfig_.blockSize[0];
 
     d_xq_     = d_xqPtr;
     d_f_      = d_fPtr;
