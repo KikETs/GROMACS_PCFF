@@ -18,6 +18,8 @@ For the staged `250 bar -> 1 bar` follow-up protocol, see [M11.6 M2 Staged 1 Bar
 
 For the exact TP1 `dense_salt_polymer` thermal-runaway recovery, see [TP1 Charged Long-Equilibration Recovery](validation_report_tp1.md).
 
+For the latest GROMACS-only PolyGen exact r-RESPA CPU/GPU screening, see [PolyGen CPU/GPU Transport Screening, 2026-05-10](polygen_cpu_gpu_transport_screening_20260510.md). This records CPU/GPU stage-metric parity and 10 ns NE screening only; it is not a LAMMPS-vs-GROMACS transport parity claim.
+
 ## Bottom Line
 
 Current evidence supports a bounded PCFF / ion-compatible claim:

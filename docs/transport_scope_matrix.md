@@ -18,6 +18,8 @@ Source of truth:
 | Transference ($t_+$) | `unsupported` | M11.2 adds only short-horizon CPU/GPU observable consistency, not transport readiness |
 | cNE-style charged transport language | `unsupported` | Do not promote M11.2 transport-facing outputs to readiness claims |
 | Long NPT conditioning for charged transport entry | `unsupported` | Corrected TP1 5 ns rerun resolves the thermal-runaway blocker only; its final box/cutoff margin fails endpoint continuation safety |
+| PolyGen exact r-RESPA GROMACS CPU/GPU NE screening | `screening-only` | 2026-05-10 CPU/GPU 10 ns analysis shows NE conductivity delta `2.87%`, but this is not LAMMPS-vs-GROMACS transport parity and is below the charged `>=20 ns` protocol duration |
+| PolyGen exact r-RESPA HTP-MD-style cNE0 | `diagnostic-only` | 2026-05-10 CPU/GPU 10 ns analysis shows cNE0 conductivity delta `182.67%`; endpoint estimator is not production-stable over this run |
 
 ## Estimator Status
 

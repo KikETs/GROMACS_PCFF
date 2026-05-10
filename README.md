@@ -9,6 +9,20 @@ Current evidence supports this present-tense claim:
 
 > The bridge can deterministically type and export the frozen PT8 supported SPE subset, and it preserves charged Class2/LJ 9-6/long-range Coulomb mechanics on frozen small fixtures. In addition, one strict-PCFF-qualified charged dense-box subset is validated on the derived `gate_h_dense_salt_polymer_2x2x2` pair, M4 separated strict validation passes for that pair, M11.4 broadens M2 dense charged parity to two strict-PCFF-qualified dense charged pairs over a predeclared `250 bar`, 100 ps target / final 50 ps campaign, and M11.6 adds pressure-preconditioned staged `250 bar -> 1 bar` dense parity for the same two pairs over 100 ps precondition / 100 ps target / final 50 ps target analysis. M5 adds one workflow-level charged assembly containing an acyclic alkane neutral additive: `monoglyme_ethane_litfsi_1to1`. The exact TP1 `dense_salt_polymer` thermal-runaway blocker is also superseded by a corrected 5 ns NPT rerun with the intended `tcoupl`, `pcoupl`, and `gen-vel` keys applied. Broad PCFF chemistry, direct ambient 1 bar equilibrium dense charged parity, generic charged dense-box readiness, LAMMPS-vs-GROMACS charged transport parity, endpoint continuation safety from the TP1 final coordinates, and charged transport readiness are still not claimed.
 
+## Latest PolyGen Exact r-RESPA Screening
+
+The latest GROMACS-only PolyGen exact r-RESPA CPU/GPU full-run check is documented in [PolyGen CPU/GPU Transport Screening, 2026-05-10](docs/polygen_cpu_gpu_transport_screening_20260510.md).
+
+Current local evidence:
+
+- GROMACS CPU OpenMP double production speed: mean `45.094 ns/day`.
+- GROMACS GPU hybrid strict mixed production speed: mean `147.315 ns/day`.
+- CPU/GPU production density and volume match exactly on the fixed-volume production box.
+- CPU/GPU NE conductivity screening over 10 ns: CPU `0.00144877 S/cm`, GPU `0.00149032 S/cm`, GPU-CPU relative delta `2.87%`.
+- HTP-MD-style cNE0 conductivity is not production-stable in the 10 ns screening run; the CPU/GPU delta is `182.67%`.
+
+This screening does not change the broader claim boundary: charged transport readiness and LAMMPS-vs-GROMACS charged transport parity are still not claimed.
+
 ## Quick Start
 1.  **Scope First:** Read the [Current Status Note](docs/current_status_note.md) before using the emitter or workflow templates.
 2.  **Topology:** Use the PCFF emitter only within the supported chemistry scope documented there.
@@ -17,6 +31,8 @@ Current evidence supports this present-tense claim:
 
 ## Key Documentation
 - [Current Status Note](docs/current_status_note.md)
+- [PolyGen CPU/GPU Transport Screening, 2026-05-10](docs/polygen_cpu_gpu_transport_screening_20260510.md)
+- [Exact r-RESPA Kernel Optimization Handoff](docs/exact_respa_kernel_optimization_handoff_20260510.md)
 - [M11.1 Charged Subset Expansion](docs/validation_report_m11_1_pcff_charged_subset.md)
 - [M11.2 Strict Charged M4 Validation](docs/validation_report_m11_2_pcff_charged_m4.md)
 - [M11.3 M5 Chemistry-Scope Expansion](docs/validation_report_m11_3_pcff_charged_m5.md)

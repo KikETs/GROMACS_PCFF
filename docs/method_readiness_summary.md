@@ -6,6 +6,8 @@ The current fork is **not** scientifically ready for PCFF-based polymer-electrol
 
 M11.2 adds one strict-PCFF-qualified charged subset for mechanical, structural / density, and short-horizon transport-facing CPU/GPU observable validation. M11.3 adds one workflow-level acyclic-alkane neutral-additive chemistry subset. Neither closes LAMMPS-vs-GROMACS charged transport parity.
 
+The 2026-05-10 PolyGen exact r-RESPA GROMACS-only CPU/GPU analysis adds a useful screening result, not a readiness claim: 10 ns NE conductivity differs by `2.87%` between CPU and GPU, while HTP-MD-style cNE0 conductivity differs by `182.67%`. The run is below the frozen charged transport duration requirement and does not compare against LAMMPS transport observables.
+
 ## Why It Is Blocked
 
 Direct evidence:
@@ -26,6 +28,10 @@ Direct evidence:
 - [M11.3 M5 Chemistry-Scope Expansion](validation_report_m11_3_pcff_charged_m5.md)
   - one charged assembly with an acyclic alkane neutral additive passes workflow-level typing/export and GROMACS smoke validation
   - it is not dense ensemble or transport evidence
+- [PolyGen CPU/GPU Transport Screening, 2026-05-10](polygen_cpu_gpu_transport_screening_20260510.md)
+  - latest GROMACS-only CPU/GPU exact r-RESPA 10 ns NE screening is recorded
+  - HTP-MD-style cNE0 remains diagnostic-only for this run
+  - this is not LAMMPS-vs-GROMACS charged transport parity
 
 ## What The Current M10 Data Can Still Be Used For
 

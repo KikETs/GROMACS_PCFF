@@ -48,6 +48,24 @@ The following conditions are frozen as the mandatory minimum for transport valid
 - **Fitting Window:** 20% to 80% of the production trajectory (excluding initial 2 ns to ensure relaxation from equilibration-to-production transition).
 - **Uncertainty:** 5-block averaging over the production window.
 
+## 6.1 Current PolyGen Screening Exception
+
+The 2026-05-10 PolyGen exact r-RESPA CPU/GPU analysis is a 10 ns GROMACS-only screening run, not a TP0 charged transport sign-off.
+
+It may be used to discuss:
+
+- CPU/GPU production artifact readiness
+- CPU/GPU stage-metric screening parity
+- 10 ns NE screening consistency
+
+It must not be used to claim:
+
+- charged transport readiness
+- LAMMPS-vs-GROMACS charged transport parity
+- production cNE0 parity
+
+Reason: the charged production duration requirement above is `>= 20 ns`, and the HTP-MD-style cNE0 endpoint estimator is not stable over the 10 ns screening trajectory.
+
 ## 7. Out-of-Scope
 - Multi-microsecond dynamics.
 - Non-equilibrium molecular dynamics (NEMD) for viscosity or conductivity.

@@ -144,3 +144,29 @@ Interpretation:
 
 - The final strict GPU full run is about `3.27x` faster than the final CPU double full run by production mean speed.
 - The 200 ns/day GPU target was not reached under the strict PolyGen-equivalent r-RESPA settings. The observed GPU utilization remained moderate because PME stays on CPU, update stays on CPU, and exact PCFF listed/r-RESPA synchronization still limits the offload path.
+
+## Post-Run CPU/GPU Parity And Transport Screening
+
+Follow-up analysis was run on the final CPU/GPU full-run outputs. See
+[PolyGen CPU/GPU Transport Screening, 2026-05-10](polygen_cpu_gpu_transport_screening_20260510.md)
+for the full command log and result tables.
+
+Evidence summary:
+
+- Stage audit output: `output/polygen_cpu_gpu_parity_transport_20260510/stage_metric_audit`
+- Transport readiness output: `output/polygen_cpu_gpu_parity_transport_20260510/transport_readiness`
+- Transport analysis output: `output/polygen_cpu_gpu_parity_transport_20260510/transport_analysis`
+- GROMACS runtime freshness: 160/160 audited CPU/GPU records are `current_critical`.
+- Transport artifact readiness: `PASS`.
+- Production mean density and volume are identical between CPU and GPU lanes.
+- Production mean temperature differs by `0.095719 K`.
+- Production mean potential energy differs by `164.036 kJ/mol`, about `0.900%` relative to the CPU value.
+- NE conductivity screening over 10 ns: CPU `0.00144877 S/cm`, GPU `0.00149032 S/cm`, relative delta `2.87%`.
+- HTP-MD-style cNE0 conductivity is not stable over this 10 ns trajectory: CPU `0.00215901 S/cm`, GPU `0.00610284 S/cm`, relative delta `182.67%`.
+
+Boundary:
+
+- This is GROMACS CPU/GPU screening evidence only.
+- It does not establish LAMMPS-vs-GROMACS charged transport parity.
+- It does not establish production cNE0 parity.
+- It does not close charged transport readiness because the local frozen charged transport protocol requires at least 20 ns, while this run is 10 ns.
