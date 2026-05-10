@@ -149,6 +149,7 @@ public:
                  int                   numComGroups,
                  int                   numThreads,
                  InteractionSelection  interactionSelection,
+                 bool                  exactRespaGpuBondedNarrowMode,
                  const gmx_domdec_t*   domDec,
                  const gmx_multisim_t* commMultiSim,
                  FILE*                 fplog);
@@ -224,6 +225,8 @@ private:
     std::unique_ptr<bonded_threading_t> threading_;
     //! Tells which interactions to select for computation
     const InteractionSelection interactionSelection_;
+    //! Exact r-RESPA GPU bonded keeps the audited listed-pair offload narrow by default
+    const bool exactRespaGpuBondedNarrowMode_;
     //! Force buffer for free-energy forces
     std::vector<real> forceBufferLambda_;
     //! Shift force buffer for free-energy forces

@@ -44,6 +44,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
 #include <array>
@@ -90,6 +91,7 @@
 #include "gromacs/math/functions.h"
 #include "gromacs/math/matrix.h"
 #include "gromacs/math/paddedvector.h"
+#include "gromacs/math/units.h"
 #include "gromacs/mdlib/checkpointhandler.h"
 #include "gromacs/mdlib/constr.h"
 #include "gromacs/mdlib/coupling.h"
@@ -214,6 +216,576 @@ bool useExactVelocityVerletLammpsRespa(const t_inputrec& inputRecord)
     return useNestedExactLammpsRespa(inputRecord) && inputRecord.eI == IntegrationAlgorithm::VV;
 }
 
+bool shouldUsePmeLoadBalancingForExactRespa(const t_inputrec& inputRecord)
+{
+    if (!gmx::useExactRespa(inputRecord))
+    {
+        return true;
+    }
+
+    const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_ALLOW_PME_TUNING");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0
+           && std::strcmp(value, "false") != 0 && std::strcmp(value, "FALSE") != 0;
+}
+
+bool readEnvReal(const char* name, double* value)
+{
+    const char* text = std::getenv(name);
+    if (text == nullptr || *text == '\0')
+    {
+        return false;
+    }
+
+    char* end = nullptr;
+    const double parsed = std::strtod(text, &end);
+    if (end == text || (end != nullptr && *end != '\0'))
+    {
+        gmx_fatal(FARGS, "Invalid floating point value for %s: '%s'", name, text);
+    }
+    *value = parsed;
+    return true;
+}
+
+bool readEnvInt64(const char* name, int64_t* value)
+{
+    const char* text = std::getenv(name);
+    if (text == nullptr || *text == '\0')
+    {
+        return false;
+    }
+
+    char* end = nullptr;
+    const long long parsed = std::strtoll(text, &end, 10);
+    if (end == text || (end != nullptr && *end != '\0'))
+    {
+        gmx_fatal(FARGS, "Invalid integer value for %s: '%s'", name, text);
+    }
+    *value = static_cast<int64_t>(parsed);
+    return true;
+}
+
+enum PcffFixNhMassMask : unsigned
+{
+    pcffFixNhMassNone                = 0,
+    pcffFixNhThermostatMass          = 1U << 0,
+    pcffFixNhPressureMass            = 1U << 1,
+    pcffFixNhPressureThermostatMass  = 1U << 2,
+    pcffFixNhAllMasses               = pcffFixNhThermostatMass | pcffFixNhPressureMass
+                         | pcffFixNhPressureThermostatMass,
+};
+
+unsigned pcffLammpsFixNhMassMask()
+{
+    const char* value = std::getenv("GMX_PCFF_MTTK_MASS_MODE");
+    if (value == nullptr || *value == '\0')
+    {
+        return pcffFixNhMassNone;
+    }
+
+    const std::string mode(value);
+    if (mode == "0" || mode == "off" || mode == "false" || mode == "FALSE" || mode == "gromacs")
+    {
+        return pcffFixNhMassNone;
+    }
+    if (mode == "lammps" || mode == "lammps_fixnh" || mode == "lammps_pdamp")
+    {
+        return pcffFixNhAllMasses;
+    }
+    if (mode == "lammps_tchain" || mode == "lammps_thermostat")
+    {
+        return pcffFixNhThermostatMass;
+    }
+    if (mode == "lammps_pmass" || mode == "lammps_pressure")
+    {
+        return pcffFixNhPressureMass;
+    }
+    if (mode == "lammps_pchain" || mode == "lammps_pressure_thermostat")
+    {
+        return pcffFixNhPressureThermostatMass;
+    }
+    if (mode == "lammps_tchain_pmass")
+    {
+        return pcffFixNhThermostatMass | pcffFixNhPressureMass;
+    }
+    if (mode == "lammps_tchain_pchain")
+    {
+        return pcffFixNhThermostatMass | pcffFixNhPressureThermostatMass;
+    }
+    if (mode == "lammps_pmass_pchain")
+    {
+        return pcffFixNhPressureMass | pcffFixNhPressureThermostatMass;
+    }
+
+    gmx_fatal(FARGS,
+              "Invalid GMX_PCFF_MTTK_MASS_MODE='%s'. Supported values are gromacs/off "
+              "or lammps/lammps_fixnh/lammps_pdamp plus diagnostic component modes "
+              "lammps_tchain, lammps_pmass, lammps_pchain, lammps_tchain_pmass, "
+              "lammps_tchain_pchain, lammps_pmass_pchain.",
+              value);
+    return pcffFixNhMassNone;
+}
+
+bool pcffUseLammpsFixNhMassMode()
+{
+    return pcffLammpsFixNhMassMask() != pcffFixNhMassNone;
+}
+
+bool pcffUseLammpsFixNhPressureMassMode()
+{
+    return (pcffLammpsFixNhMassMask() & pcffFixNhPressureMass) != 0;
+}
+
+double pcffReadPositiveEnvRealOrDefault(const char* name, const double defaultValue)
+{
+    double value = defaultValue;
+    if (!readEnvReal(name, &value))
+    {
+        if (value <= 0)
+        {
+            gmx_fatal(FARGS, "%s is required and must be positive.", name);
+        }
+        return value;
+    }
+    if (value <= 0)
+    {
+        gmx_fatal(FARGS, "%s must be positive.", name);
+    }
+    return value;
+}
+
+double pcffReadPositiveEnvRealRequired(const char* name)
+{
+    return pcffReadPositiveEnvRealOrDefault(name, -1.0);
+}
+
+double pcffLammpsFixNhPdampPs(const t_inputrec& inputRecord)
+{
+    return pcffReadPositiveEnvRealOrDefault("GMX_PCFF_MTTK_LAMMPS_PDAMP_PS",
+                                            inputRecord.pressureCouplingOptions.tau_p);
+}
+
+double pcffLammpsFixNhPressureMassScale()
+{
+    return pcffReadPositiveEnvRealOrDefault("GMX_PCFF_MTTK_PRESSURE_MASS_SCALE", 1.0);
+}
+
+struct PcffContinuousRefPressureRamp
+{
+    bool   active     = false;
+    double startBar   = 0;
+    double endBar     = 0;
+    double durationPs = 0;
+};
+
+PcffContinuousRefPressureRamp pcffContinuousRefPressureRampFromEnv(const t_inputrec& inputRecord)
+{
+    PcffContinuousRefPressureRamp ramp;
+    if (inputRecord.pressureCouplingOptions.epc == PressureCoupling::No)
+    {
+        return ramp;
+    }
+
+    const bool haveStart = readEnvReal("GMX_PCFF_REFP_RAMP_START_BAR", &ramp.startBar);
+    const bool haveEnd   = readEnvReal("GMX_PCFF_REFP_RAMP_END_BAR", &ramp.endBar);
+    if (haveStart != haveEnd)
+    {
+        gmx_fatal(FARGS,
+                  "Both GMX_PCFF_REFP_RAMP_START_BAR and GMX_PCFF_REFP_RAMP_END_BAR "
+                  "must be set for continuous reference-pressure ramping.");
+    }
+    if (!haveStart)
+    {
+        return ramp;
+    }
+
+    ramp.active     = true;
+    ramp.durationPs = inputRecord.nsteps > 0 ? inputRecord.nsteps * inputRecord.delta_t : 0;
+    readEnvReal("GMX_PCFF_REFP_RAMP_DURATION_PS", &ramp.durationPs);
+    if (ramp.durationPs <= 0)
+    {
+        gmx_fatal(FARGS,
+                  "GMX_PCFF_REFP_RAMP_DURATION_PS must be positive for continuous "
+                  "reference-pressure ramping.");
+    }
+    return ramp;
+}
+
+PressureCouplingOptions pressureCouplingOptionsWithPcffContinuousRefPressureRamp(
+        const PcffContinuousRefPressureRamp& ramp,
+        const t_inputrec&              inputRecord,
+        const PressureCouplingOptions& basePressureCouplingOptions,
+        const int64_t                  step)
+{
+    if (!ramp.active)
+    {
+        return basePressureCouplingOptions;
+    }
+    if (basePressureCouplingOptions.epct != PressureCouplingType::Isotropic)
+    {
+        gmx_fatal(FARGS,
+                  "GMX_PCFF_REFP_RAMP_* currently supports only isotropic pressure coupling.");
+    }
+
+    const double relativeTimePs =
+            std::clamp((step - inputRecord.init_step) * inputRecord.delta_t, 0.0, ramp.durationPs);
+    const double fraction = relativeTimePs / ramp.durationPs;
+    const real   refPBar  = static_cast<real>(ramp.startBar + (ramp.endBar - ramp.startBar) * fraction);
+
+    PressureCouplingOptions current = basePressureCouplingOptions;
+    for (int d = 0; d < DIM; d++)
+    {
+        current.ref_p[d][d] = refPBar;
+    }
+    return current;
+}
+
+struct PcffMttkReferenceCellReset
+{
+    bool    active        = false;
+    int64_t intervalSteps = 0;
+};
+
+PcffMttkReferenceCellReset pcffMttkReferenceCellResetFromEnv(const t_inputrec& inputRecord)
+{
+    PcffMttkReferenceCellReset reset;
+    if (!readEnvInt64("GMX_PCFF_MTTK_NRESET_STEPS", &reset.intervalSteps))
+    {
+        return reset;
+    }
+    if (reset.intervalSteps <= 0)
+    {
+        gmx_fatal(FARGS, "GMX_PCFF_MTTK_NRESET_STEPS must be positive.");
+    }
+    if (inputRecord.pressureCouplingOptions.epc != PressureCoupling::Mttk)
+    {
+        gmx_fatal(FARGS, "GMX_PCFF_MTTK_NRESET_STEPS requires pcoupl = MTTK.");
+    }
+    if (inputRecord.pressureCouplingOptions.epct != PressureCouplingType::Isotropic)
+    {
+        gmx_fatal(FARGS, "GMX_PCFF_MTTK_NRESET_STEPS currently supports only isotropic MTTK.");
+    }
+
+    reset.active = true;
+    return reset;
+}
+
+bool pcffExactRespaMttkOuterPcoupleEnabled()
+{
+    const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_OUTER_PCOUPLE");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+}
+
+bool pcffExactRespaMttkInlineBoxRemapEnabled()
+{
+    const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+}
+
+bool pcffMttkReferenceCellResetThisStep(const PcffMttkReferenceCellReset& reset,
+                                        const t_inputrec&                 inputRecord,
+                                        const int64_t                     step)
+{
+    if (!reset.active)
+    {
+        return false;
+    }
+
+    const int64_t relativeStep = step - inputRecord.init_step;
+    return relativeStep > 0 && relativeStep % reset.intervalSteps == 0;
+}
+
+enum class PcffExactRespaTrotterReplay
+{
+    None,
+    Two,
+    Three,
+    TwoThenThree,
+    ThreeThenTwo,
+};
+
+PcffExactRespaTrotterReplay pcffExactRespaTrotterReplayFromEnv(
+        const char* envName, const PcffExactRespaTrotterReplay defaultValue)
+{
+    const char* value = std::getenv(envName);
+    if (value == nullptr || *value == '\0')
+    {
+        return defaultValue;
+    }
+    if (std::strcmp(value, "0") == 0 || std::strcmp(value, "none") == 0
+        || std::strcmp(value, "skip") == 0)
+    {
+        return PcffExactRespaTrotterReplay::None;
+    }
+    if (std::strcmp(value, "2") == 0 || std::strcmp(value, "two") == 0)
+    {
+        return PcffExactRespaTrotterReplay::Two;
+    }
+    if (std::strcmp(value, "3") == 0 || std::strcmp(value, "three") == 0)
+    {
+        return PcffExactRespaTrotterReplay::Three;
+    }
+    if (std::strcmp(value, "2,3") == 0 || std::strcmp(value, "two-three") == 0)
+    {
+        return PcffExactRespaTrotterReplay::TwoThenThree;
+    }
+    if (std::strcmp(value, "3,2") == 0 || std::strcmp(value, "three-two") == 0)
+    {
+        return PcffExactRespaTrotterReplay::ThreeThenTwo;
+    }
+    gmx_fatal(FARGS,
+              "%s must be one of: none, two, three, two-three, three-two.",
+              envName);
+}
+
+bool pcffExactRespaTrotterSequenceCouplesThisStep(const t_inputrec&     inputRecord,
+                                                  const int64_t         step,
+                                                  const TrotterSequence sequence)
+{
+    if (inputRecord.exactRespa.enabled() && inputRecord.eI == IntegrationAlgorithm::VV
+        && (inputrecNvtTrotter(&inputRecord) || inputrecNptTrotter(&inputRecord)
+            || inputrecNphTrotter(&inputRecord)))
+    {
+        if (sequence == TrotterSequence::Two)
+        {
+            return inputRecord.nsttcouple == 1 || do_per_step(step, inputRecord.nsttcouple);
+        }
+        return inputRecord.nsttcouple == 1 || do_per_step(step + 1, inputRecord.nsttcouple);
+    }
+
+    const int64_t stepEff = (sequence <= TrotterSequence::Two) ? step - 1 : step;
+    return inputRecord.nsttcouple == 1
+           || do_per_step(stepEff + inputRecord.nsttcouple, inputRecord.nsttcouple);
+}
+
+bool pcffExactRespaTrotterReplayCouplesThisStep(const t_inputrec&                 inputRecord,
+                                                const int64_t                     step,
+                                                const PcffExactRespaTrotterReplay replay)
+{
+    switch (replay)
+    {
+        case PcffExactRespaTrotterReplay::None: return false;
+        case PcffExactRespaTrotterReplay::Two:
+            return pcffExactRespaTrotterSequenceCouplesThisStep(
+                    inputRecord, step, TrotterSequence::Two);
+        case PcffExactRespaTrotterReplay::Three:
+            return pcffExactRespaTrotterSequenceCouplesThisStep(
+                    inputRecord, step, TrotterSequence::Three);
+        case PcffExactRespaTrotterReplay::TwoThenThree:
+            return pcffExactRespaTrotterSequenceCouplesThisStep(
+                           inputRecord, step, TrotterSequence::Two)
+                   || pcffExactRespaTrotterSequenceCouplesThisStep(
+                           inputRecord, step, TrotterSequence::Three);
+        case PcffExactRespaTrotterReplay::ThreeThenTwo:
+            return pcffExactRespaTrotterSequenceCouplesThisStep(
+                           inputRecord, step, TrotterSequence::Three)
+                   || pcffExactRespaTrotterSequenceCouplesThisStep(
+                           inputRecord, step, TrotterSequence::Two);
+    }
+    return false;
+}
+
+void applyPcffMttkReferenceCellReset(const t_inputrec&      inputRecord,
+                                     t_state*              state,
+                                     t_extmass*            massQ,
+                                     const gmx_ekindata_t& ekind)
+{
+    GMX_RELEASE_ASSERT(state != nullptr, "Need simulation state for MTTK reference-cell reset");
+    GMX_RELEASE_ASSERT(massQ != nullptr, "Need extended-mass state for MTTK reference-cell reset");
+
+    set_box_rel(&inputRecord, state);
+    state->vol0 = det(state->box);
+    if (state->vol0 <= 0)
+    {
+        gmx_fatal(FARGS, "Cannot reset MTTK reference volume from a non-positive box volume.");
+    }
+
+    // LAMMPS FixNH::compute_sigma() only resets the reference cell at nreset;
+    // omega_mass/etap_mass stay fixed unless their explicit *_mass_flag is set.
+    if (!pcffUseLammpsFixNhPressureMassMode())
+    {
+        massQ->Winv = (gmx::c_presfac * trace(inputRecord.pressureCouplingOptions.compress) * gmx::c_boltz
+                       * ekind.currentEnsembleTemperature())
+                      / (DIM * state->vol0 * gmx::square(inputRecord.pressureCouplingOptions.tau_p / M_2PI));
+    }
+}
+
+bool pcffResetNhMttkStateOnStartEnabled()
+{
+    const char* value = std::getenv("GMX_PCFF_RESET_NH_MTTK_STATE_ON_START");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+}
+
+const char* pcffRestoreNhMttkStateEnergyPath()
+{
+    const char* value = std::getenv("GMX_PCFF_RESTORE_NH_MTTK_STATE_FROM_EDR");
+    return (value != nullptr && *value != '\0') ? value : nullptr;
+}
+
+const char* pcffRestoreNhMttkStateLammpsFixVector()
+{
+    const char* value = std::getenv("GMX_PCFF_RESTORE_NH_MTTK_STATE_FROM_LAMMPS_FIX_VECTOR");
+    return (value != nullptr && *value != '\0') ? value : nullptr;
+}
+
+real pcffRestoreNhMttkStateEnergyTime(const t_inputrec& inputRecord)
+{
+    const char* value = std::getenv("GMX_PCFF_RESTORE_NH_MTTK_STATE_TIME_PS");
+    return (value != nullptr && *value != '\0') ? std::atof(value) : inputRecord.init_t;
+}
+
+void resetPcffNhMttkStateOnStart(const t_inputrec& inputRecord, t_state* state)
+{
+    GMX_RELEASE_ASSERT(state != nullptr, "Need simulation state for NH/MTTK state reset");
+
+    std::fill(state->nosehoover_xi.begin(), state->nosehoover_xi.end(), 0.0);
+    std::fill(state->nosehoover_vxi.begin(), state->nosehoover_vxi.end(), 0.0);
+    std::fill(state->nhpres_xi.begin(), state->nhpres_xi.end(), 0.0);
+    std::fill(state->nhpres_vxi.begin(), state->nhpres_vxi.end(), 0.0);
+
+    if (inputRecord.pressureCouplingOptions.epc == PressureCoupling::Mttk)
+    {
+        state->veta = 0;
+        clear_mat(state->boxv);
+        state->vol0 = det(state->box);
+        if (state->vol0 <= 0)
+        {
+            gmx_fatal(FARGS, "Cannot reset MTTK start state from a non-positive box volume.");
+        }
+    }
+}
+
+std::vector<double> parsePcffLammpsFixNhVector(const char* value)
+{
+    std::string text(value != nullptr ? value : "");
+    for (char& c : text)
+    {
+        if (c == ',' || c == ';')
+        {
+            c = ' ';
+        }
+    }
+
+    std::istringstream stream(text);
+    std::vector<double> values;
+    double parsed = 0;
+    while (stream >> parsed)
+    {
+        values.push_back(parsed);
+    }
+    if (!stream.eof())
+    {
+        gmx_fatal(FARGS,
+                  "Invalid GMX_PCFF_RESTORE_NH_MTTK_STATE_FROM_LAMMPS_FIX_VECTOR='%s'. "
+                  "Expected comma- or whitespace-separated numbers.",
+                  value);
+    }
+    if (values.size() < 6)
+    {
+        gmx_fatal(FARGS,
+                  "GMX_PCFF_RESTORE_NH_MTTK_STATE_FROM_LAMMPS_FIX_VECTOR requires at least "
+                  "six LAMMPS FixNH values for eta[0:3] and eta_dot[0:3], got %zu.",
+                  values.size());
+    }
+    return values;
+}
+
+void copyScaledPcffLammpsFixNhValues(std::vector<double>*     target,
+                                     const std::vector<double>& values,
+                                     const int                  sourceOffset,
+                                     const int                  count,
+                                     const double               scale,
+                                     const char*                targetName)
+{
+    GMX_RELEASE_ASSERT(target != nullptr, "Need a target vector for FixNH state restore");
+    if (target->size() < static_cast<size_t>(count))
+    {
+        gmx_fatal(FARGS,
+                  "Cannot restore LAMMPS FixNH state into %s: need at least %d values, have %zu.",
+                  targetName,
+                  count,
+                  target->size());
+    }
+    if (values.size() < static_cast<size_t>(sourceOffset + count))
+    {
+        gmx_fatal(FARGS,
+                  "LAMMPS FixNH state vector is too short for %s: need source values through "
+                  "f_1[%d], got %zu values.",
+                  targetName,
+                  sourceOffset + count,
+                  values.size());
+    }
+    for (int i = 0; i < count; i++)
+    {
+        (*target)[i] = values[sourceOffset + i] * scale;
+    }
+}
+
+void restorePcffNhMttkStateFromLammpsFixVector(const t_inputrec& inputRecord, t_state* state)
+{
+    const char* fixVector = pcffRestoreNhMttkStateLammpsFixVector();
+    if (fixVector == nullptr)
+    {
+        return;
+    }
+    GMX_RELEASE_ASSERT(state != nullptr, "Need simulation state for LAMMPS FixNH restore");
+
+    const std::vector<double> values = parsePcffLammpsFixNhVector(fixVector);
+    // LAMMPS real units store eta_dot/omega_dot/etap_dot in fs^-1; GROMACS uses ps^-1.
+    constexpr double lammpsFsInvToGromacsPsInv = 1000.0;
+    copyScaledPcffLammpsFixNhValues(&state->nosehoover_xi, values, 0, 3, 1.0, "nosehoover_xi");
+    copyScaledPcffLammpsFixNhValues(&state->nosehoover_vxi,
+                                    values,
+                                    3,
+                                    3,
+                                    lammpsFsInvToGromacsPsInv,
+                                    "nosehoover_vxi");
+
+    if (inputRecord.pressureCouplingOptions.epc == PressureCoupling::Mttk)
+    {
+        if (values.size() < 14)
+        {
+            gmx_fatal(FARGS,
+                      "MTTK restore requires LAMMPS FixNH values f_1[1] through f_1[14], "
+                      "got %zu values.",
+                      values.size());
+        }
+        state->veta = values[7] * lammpsFsInvToGromacsPsInv;
+        clear_mat(state->boxv);
+        for (int d = 0; d < DIM; d++)
+        {
+            state->boxv[d][d] = state->veta * state->box[d][d];
+        }
+        state->vol0 = det(state->box);
+        if (state->vol0 <= 0)
+        {
+            gmx_fatal(FARGS, "Cannot restore MTTK state from a non-positive box volume.");
+        }
+        copyScaledPcffLammpsFixNhValues(&state->nhpres_xi, values, 8, 3, 1.0, "nhpres_xi");
+        copyScaledPcffLammpsFixNhValues(&state->nhpres_vxi,
+                                        values,
+                                        11,
+                                        3,
+                                        lammpsFsInvToGromacsPsInv,
+                                        "nhpres_vxi");
+    }
+}
+
+void restorePcffNhMttkStateFromEnergy(const t_inputrec&        inputRecord,
+                                      const SimulationGroups& simulationGroups,
+                                      t_state*                state)
+{
+    const char* energyPath = pcffRestoreNhMttkStateEnergyPath();
+    if (energyPath == nullptr)
+    {
+        return;
+    }
+    get_enx_state(std::filesystem::path(energyPath),
+                  pcffRestoreNhMttkStateEnergyTime(inputRecord),
+                  simulationGroups,
+                  const_cast<t_inputrec*>(&inputRecord),
+                  state);
+}
+
 bool useExactLammpsRespaForceOnlyContract(const t_inputrec& inputRecord)
 {
     const bool forceOnlySchedule =
@@ -283,52 +855,6 @@ bool shouldDumpExactRespaForceDiagnostics(const t_inputrec& inputRecord, const i
         return (step % *interval) == 0;
     }
     return do_per_step(step, inputRecord.nstenergy);
-}
-
-enum class RespaKickPhase : int
-{
-    Initial,
-    Final
-};
-
-gmx::ArrayRef<const gmx::RVec> forceForExactRespaKickLevel(const t_inputrec&        inputRecord,
-                                                           const int64_t            baseStep,
-                                                           const RespaKickPhase     phase,
-                                                           gmx::ForceBuffersView*   forceView,
-                                                           const int                mtsLevel,
-                                                           std::vector<gmx::RVec>*  reconstructedLevel0Force)
-{
-    GMX_RELEASE_ASSERT(forceView != nullptr, "Need valid force buffers for exact r-RESPA");
-
-    if (mtsLevel != 0)
-    {
-        return gmx::makeConstArrayRef(forceView->forceForMtsLevel(mtsLevel));
-    }
-
-    const int forceEvaluationStep = baseStep + ((phase == RespaKickPhase::Final) ? 1 : 0);
-    const int highestActiveLevel  =
-            gmx::highestActiveExactRespaLevel(inputRecord.exactRespa, forceEvaluationStep);
-    if (highestActiveLevel <= 0)
-    {
-        return gmx::makeConstArrayRef(forceView->force());
-    }
-
-    GMX_RELEASE_ASSERT(reconstructedLevel0Force != nullptr, "Need scratch storage for exact level-0 forces");
-    GMX_RELEASE_ASSERT(highestActiveLevel <= forceView->numMtsLevelForceBuffers(),
-                       "Exact r-RESPA needs explicit per-level slow-force buffers");
-
-    const auto physicalForce = gmx::makeConstArrayRef(forceView->force());
-    reconstructedLevel0Force->assign(physicalForce.begin(), physicalForce.end());
-    for (int slowLevel = 1; slowLevel <= highestActiveLevel; slowLevel++)
-    {
-        const auto slowForce = gmx::makeConstArrayRef(forceView->forceForMtsLevel(slowLevel));
-        for (gmx::Index atom = 0; atom < gmx::ssize(*reconstructedLevel0Force); ++atom)
-        {
-            (*reconstructedLevel0Force)[atom] -= slowForce[atom];
-        }
-    }
-
-    return gmx::makeConstArrayRef(*reconstructedLevel0Force);
 }
 
 void appendExactRespaTotalForceRecord(const char*                        outputPath,
@@ -689,6 +1215,117 @@ void appendTp18gTraceRow(const int64_t         step,
            << pressureScalar << ',' << potentialEnergy << ',' << kineticEnergy << ',' << temperature << '\n';
 }
 
+struct PcffMttkStateTraceConfig
+{
+    bool        enabled = false;
+    std::string path;
+    int64_t     stride = 1;
+};
+
+std::mutex g_pcffMttkStateTraceMutex;
+
+int64_t pcffReadPositiveEnvInt64OrDefault(const char* name, const int64_t defaultValue)
+{
+    const char* text = std::getenv(name);
+    if (text == nullptr || *text == '\0')
+    {
+        return defaultValue;
+    }
+    char*           end    = nullptr;
+    const long long parsed = std::strtoll(text, &end, 10);
+    if (end == text || (end != nullptr && *end != '\0') || parsed <= 0)
+    {
+        gmx_fatal(FARGS, "%s must be a positive integer.", name);
+    }
+    return static_cast<int64_t>(parsed);
+}
+
+const PcffMttkStateTraceConfig& pcffMttkStateTraceConfig()
+{
+    static const PcffMttkStateTraceConfig config = []()
+    {
+        PcffMttkStateTraceConfig result;
+        if (const char* value = std::getenv("GMX_PCFF_MTTK_STATE_TRACE_FILE"))
+        {
+            if (*value != '\0')
+            {
+                result.enabled = true;
+                result.path    = value;
+                result.stride  = pcffReadPositiveEnvInt64OrDefault(
+                        "GMX_PCFF_MTTK_STATE_TRACE_STRIDE", 1);
+
+                std::filesystem::path tracePath(result.path);
+                std::filesystem::create_directories(tracePath.parent_path());
+                std::ofstream output(tracePath, std::ios::trunc);
+                GMX_RELEASE_ASSERT(output.good(),
+                                   "Could not open GMX_PCFF_MTTK_STATE_TRACE_FILE for writing");
+                output << "step,time_ps,stage,veta,volume_nm3,box_x,box_y,box_z,"
+                          "boxv_x,boxv_y,boxv_z,ref_p_bar,pressure_bar,"
+                          "pres_trace,pres_l2,total_vir_trace,total_vir_l2,"
+                          "potential_energy_kj,kinetic_energy_kj,temperature_k,"
+                          "nose_xi0,nose_xi1,nose_xi2,nose_vxi0,nose_vxi1,nose_vxi2,"
+                          "nhpres_xi0,nhpres_xi1,nhpres_xi2,"
+                          "nhpres_vxi0,nhpres_vxi1,nhpres_vxi2\n";
+            }
+        }
+        return result;
+    }();
+
+    return config;
+}
+
+double pcffMttkTraceArrayValue(const std::vector<double>& values, const int index)
+{
+    return (index >= 0 && index < static_cast<int>(values.size())) ? values[index] : 0.0;
+}
+
+void appendPcffMttkStateTraceRow(const int64_t         step,
+                                 const double          time,
+                                 const char*           stage,
+                                 const t_inputrec&     inputrec,
+                                 const t_state*        state,
+                                 const tensor          pres,
+                                 const tensor          totalVir,
+                                 const gmx_enerdata_t* enerd)
+{
+    const auto& config = pcffMttkStateTraceConfig();
+    if (!config.enabled || state == nullptr || step % config.stride != 0)
+    {
+        return;
+    }
+
+    const double volume          = det(state->box);
+    const double refPressure     = tp18eTraceOfTensor(inputrec.pressureCouplingOptions.ref_p) / DIM;
+    const double pressureScalar  = (enerd != nullptr) ? enerd->term[InteractionFunction::Pressure] : 0.0;
+    const double potentialEnergy = (enerd != nullptr) ? enerd->term[InteractionFunction::PotentialEnergy] : 0.0;
+    const double kineticEnergy   = (enerd != nullptr) ? enerd->term[InteractionFunction::KineticEnergy] : 0.0;
+    const double temperature     = (enerd != nullptr) ? enerd->term[InteractionFunction::Temperature] : 0.0;
+
+    std::lock_guard<std::mutex> lock(g_pcffMttkStateTraceMutex);
+    std::ofstream               output(config.path, std::ios::app);
+    GMX_RELEASE_ASSERT(output.good(), "Could not open GMX_PCFF_MTTK_STATE_TRACE_FILE for appending");
+    output << std::setprecision(17) << step << ',' << time << ',' << stage << ','
+           << state->veta << ',' << volume << ','
+           << state->box[XX][XX] << ',' << state->box[YY][YY] << ',' << state->box[ZZ][ZZ] << ','
+           << state->boxv[XX][XX] << ',' << state->boxv[YY][YY] << ',' << state->boxv[ZZ][ZZ] << ','
+           << refPressure << ',' << pressureScalar << ','
+           << tp18eTraceOfTensor(pres) << ',' << tp18gL2OfTensor(pres) << ','
+           << tp18eTraceOfTensor(totalVir) << ',' << tp18gL2OfTensor(totalVir) << ','
+           << potentialEnergy << ',' << kineticEnergy << ',' << temperature << ','
+           << pcffMttkTraceArrayValue(state->nosehoover_xi, 0) << ','
+           << pcffMttkTraceArrayValue(state->nosehoover_xi, 1) << ','
+           << pcffMttkTraceArrayValue(state->nosehoover_xi, 2) << ','
+           << pcffMttkTraceArrayValue(state->nosehoover_vxi, 0) << ','
+           << pcffMttkTraceArrayValue(state->nosehoover_vxi, 1) << ','
+           << pcffMttkTraceArrayValue(state->nosehoover_vxi, 2) << ','
+           << pcffMttkTraceArrayValue(state->nhpres_xi, 0) << ','
+           << pcffMttkTraceArrayValue(state->nhpres_xi, 1) << ','
+           << pcffMttkTraceArrayValue(state->nhpres_xi, 2) << ','
+           << pcffMttkTraceArrayValue(state->nhpres_vxi, 0) << ','
+           << pcffMttkTraceArrayValue(state->nhpres_vxi, 1) << ','
+           << pcffMttkTraceArrayValue(state->nhpres_vxi, 2) << '\n';
+}
+
 bool canUseNestedExactLammpsRespa(const t_inputrec&                  inputRecord,
                                   const gmx::SimulationWorkload&     simulationWork,
                                   const gmx::DomainLifetimeWorkload& domainWork,
@@ -707,6 +1344,20 @@ bool canUseNestedExactLammpsRespa(const t_inputrec&                  inputRecord
            && inputRecord.cos_accel == 0.0 && !inputRecord.useConstantAcceleration;
 }
 
+bool pcffExactRespaAllowLinearComRemoval()
+{
+    const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_ALLOW_LINEAR_COM_REMOVAL");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0
+           && std::strcmp(value, "false") != 0 && std::strcmp(value, "FALSE") != 0;
+}
+
+bool exactVelocityVerletRespaSupportsComRemoval(const t_inputrec& inputRecord)
+{
+    return inputRecord.comm_mode == ComRemovalAlgorithm::No
+           || (inputRecord.comm_mode == ComRemovalAlgorithm::Linear
+               && pcffExactRespaAllowLinearComRemoval());
+}
+
 bool canUseExactLammpsRespaVelocityVerlet(const t_inputrec&                  inputRecord,
                                           const gmx::SimulationWorkload&     simulationWork,
                                           const gmx::DomainLifetimeWorkload& domainWork,
@@ -718,11 +1369,13 @@ bool canUseExactLammpsRespaVelocityVerlet(const t_inputrec&                  inp
     const bool usesSupportedExactRespaTemperatureCoupling =
             inputRecord.etc == TemperatureCoupling::No
             || inputRecord.etc == TemperatureCoupling::Berendsen
-            || inputRecord.etc == TemperatureCoupling::VRescale;
+            || inputRecord.etc == TemperatureCoupling::VRescale
+            || inputRecord.etc == TemperatureCoupling::NoseHoover;
     const bool usesSupportedExactRespaPressureCoupling =
             inputRecord.pressureCouplingOptions.epc == PressureCoupling::No
             || inputRecord.pressureCouplingOptions.epc == PressureCoupling::Berendsen
-            || inputRecord.pressureCouplingOptions.epc == PressureCoupling::CRescale;
+            || inputRecord.pressureCouplingOptions.epc == PressureCoupling::CRescale
+            || inputRecord.pressureCouplingOptions.epc == PressureCoupling::Mttk;
     const bool usesSupportedExactRespaGpuForces =
             (!simulationWork.useGpuBonded || simulationWork.useGpuNonbonded)
             && (!simulationWork.useGpuPme
@@ -737,7 +1390,8 @@ bool canUseExactLammpsRespaVelocityVerlet(const t_inputrec&                  inp
                 && simulationWork.useGpuPme && !simulationWork.useMdGpuGraph);
 
     return inputRecord.eI == IntegrationAlgorithm::VV && usesSupportedExactRespaTemperatureCoupling
-           && usesSupportedExactRespaPressureCoupling && inputRecord.comm_mode == ComRemovalAlgorithm::No
+           && usesSupportedExactRespaPressureCoupling
+           && exactVelocityVerletRespaSupportsComRemoval(inputRecord)
            && (constr == nullptr || constr->numConstraintsTotal() == 0)
            && !simulationWork.havePpDomainDecomposition && usesSupportedExactRespaGpuForces
            && usesSupportedExactRespaGpuUpdate && shellfc == nullptr
@@ -1341,10 +1995,18 @@ void gmx::LegacySimulator::do_md()
     // PME tuning is only supported with PME for Coulomb. It is not supported with only LJ PME
     std::unique_ptr<PmeLoadBalancing> pmeLoadBal;
     if (mdrunOptions_.tunePme
+        && shouldUsePmeLoadBalancingForExactRespa(*ir)
         && pmeTuningIsSupported(fr_->ic->coulomb.type, mdrunOptions_.reproducible, simulationWork))
     {
         pmeLoadBal = std::make_unique<PmeLoadBalancing>(
                 cr_->dd, mdLog_, *ir, state_->box, *fr_->ic, *fr_->nbv, fr_->pmedata, simulationWork);
+    }
+    else if (mdrunOptions_.tunePme && gmx::useExactRespa(*ir))
+    {
+        GMX_LOG(mdLog_.info)
+                .asParagraph()
+                .appendText("PME load balancing disabled for exact r-RESPA. Set "
+                            "GMX_PCFF_EXACT_RESPA_ALLOW_PME_TUNING=1 to restore PME tuning.");
     }
 
     if (!ir->bContinuation)
@@ -1527,6 +2189,39 @@ void gmx::LegacySimulator::do_md()
     /* need to make an initiation call to get the Trotter variables set, as well as other constants
        for non-trotter temperature control */
     auto trotter_seq = init_npt_vars(ir, *ekind_, state_, &MassQ, bTrotter);
+    if (pcffResetNhMttkStateOnStartEnabled())
+    {
+        resetPcffNhMttkStateOnStart(*ir, state_);
+        if (isMainRank)
+        {
+            GMX_LOG(mdLog_.info)
+                    .asParagraph()
+                    .appendText("PCFF reset NH/MTTK extended state on start while preserving checkpoint x/v.");
+        }
+    }
+    if (pcffRestoreNhMttkStateEnergyPath() != nullptr)
+    {
+        restorePcffNhMttkStateFromEnergy(*ir, topGlobal_.groups, state_);
+        if (isMainRank)
+        {
+            GMX_LOG(mdLog_.info)
+                    .asParagraph()
+                    .appendTextFormatted(
+                            "PCFF restored NH/MTTK extended state from energy file %s at t=%g ps.",
+                            pcffRestoreNhMttkStateEnergyPath(),
+                            pcffRestoreNhMttkStateEnergyTime(*ir));
+        }
+    }
+    if (pcffRestoreNhMttkStateLammpsFixVector() != nullptr)
+    {
+        restorePcffNhMttkStateFromLammpsFixVector(*ir, state_);
+        if (isMainRank)
+        {
+            GMX_LOG(mdLog_.info)
+                    .asParagraph()
+                    .appendText("PCFF restored NH/MTTK extended state from LAMMPS FixNH f_1 vector.");
+        }
+    }
 
     if (isMainRank)
     {
@@ -1636,6 +2331,69 @@ void gmx::LegacySimulator::do_md()
                 .asParagraph()
                 .appendText("Standalone exact r-RESPA active (mts-mode = lammps-respa).");
     }
+    t_inputrec* mutableInputRecord = const_cast<t_inputrec*>(ir);
+    const PressureCouplingOptions basePressureCouplingOptions = ir->pressureCouplingOptions;
+    const PcffContinuousRefPressureRamp pcffContinuousRefPressureRamp =
+            pcffContinuousRefPressureRampFromEnv(*ir);
+    const PcffMttkReferenceCellReset pcffMttkReferenceCellReset =
+            pcffMttkReferenceCellResetFromEnv(*ir);
+    if (pcffContinuousRefPressureRamp.active)
+    {
+        GMX_LOG(mdLog_.info)
+                .asParagraph()
+                .appendText(formatString("PCFF continuous reference-pressure ramp active: "
+                                         "%.8g -> %.8g bar over %.8g ps.",
+                                         pcffContinuousRefPressureRamp.startBar,
+                                         pcffContinuousRefPressureRamp.endBar,
+                                         pcffContinuousRefPressureRamp.durationPs));
+    }
+    if (pcffMttkReferenceCellReset.active)
+    {
+        GMX_LOG(mdLog_.info)
+                .asParagraph()
+                .appendText(formatString("PCFF MTTK reference-cell reset active: every %lld steps.",
+                                         static_cast<long long>(pcffMttkReferenceCellReset.intervalSteps)));
+    }
+    if (pcffUseLammpsFixNhMassMode() && ir->pressureCouplingOptions.epc == PressureCoupling::Mttk)
+    {
+        const double natoms            = pcffReadPositiveEnvRealRequired("GMX_PCFF_MTTK_LAMMPS_NATOMS");
+        const double pdampPs           = pcffLammpsFixNhPdampPs(*ir);
+        const double pressureMassScale = pcffLammpsFixNhPressureMassScale();
+        const bool   exactRespaActive  = ir->exactRespa.enabled();
+        const int    pairSplitOuterLevel =
+                exactRespaActive ? ir->exactRespa.forceLayout.outerLevel : -1;
+        int mttkOuterStepLevel  = 0;
+        int mttkOuterStepFactor = 1;
+        if (exactRespaActive)
+        {
+            const int numRespaLevels = static_cast<int>(ir->exactRespa.levelStepFactors.size());
+            mttkOuterStepLevel = pairSplitOuterLevel > 0 ? pairSplitOuterLevel : numRespaLevels - 1;
+            if (mttkOuterStepLevel >= 0 && mttkOuterStepLevel < numRespaLevels)
+            {
+                mttkOuterStepFactor = ir->exactRespa.levelStepFactors[mttkOuterStepLevel];
+            }
+        }
+        const char*  extendedUpdateMode =
+                std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_EXTENDED_UPDATE");
+        const char* vetaScale = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_VETA_SCALE");
+        GMX_LOG(mdLog_.info)
+                .asParagraph()
+                .appendText(formatString("PCFF LAMMPS FixNH MTTK mass mode active: natoms=%.10g, "
+                                         "pdamp=%.10g ps, pressure-mass-scale=%.10g, extended-update=%s, "
+                                         "veta-scale=%s, mttk-outer-step-level=%d, "
+                                         "mttk-outer-step-factor=%d, pair-split-outer-level=%d.",
+                                         natoms,
+                                         pdampPs,
+                                         pressureMassScale,
+                                         (extendedUpdateMode != nullptr && extendedUpdateMode[0] != '\0')
+                                                 ? extendedUpdateMode
+                                                 : "unset",
+                                         (vetaScale != nullptr && vetaScale[0] != '\0') ? vetaScale
+                                                                                        : "1",
+                                         exactRespaActive ? mttkOuterStepLevel + 1 : 0,
+                                         mttkOuterStepFactor,
+                                         pairSplitOuterLevel >= 0 ? pairSplitOuterLevel + 1 : 0));
+    }
 
     const bool resetCountersIsLocal = true;
     auto       resetHandler         = std::make_unique<ResetHandler>(
@@ -1661,6 +2419,16 @@ void gmx::LegacySimulator::do_md()
     bLastStep = (bLastStep || (ir->nsteps >= 0 && step_rel > ir->nsteps));
     while (!bLastStep)
     {
+        if (pcffContinuousRefPressureRamp.active)
+        {
+            mutableInputRecord->pressureCouplingOptions =
+                    pressureCouplingOptionsWithPcffContinuousRefPressureRamp(
+                            pcffContinuousRefPressureRamp, *ir, basePressureCouplingOptions, step);
+        }
+        if (pcffMttkReferenceCellResetThisStep(pcffMttkReferenceCellReset, *ir, step))
+        {
+            applyPcffMttkReferenceCellReset(*ir, state_, &MassQ, *ekind_);
+        }
         appendPreDoForceStateTrace(activeM2pTraceDirPath(),
                                    step,
                                    "loop_start",
@@ -1730,7 +2498,18 @@ void gmx::LegacySimulator::do_md()
          * nstpcouple steps, we have computed the half-step kinetic energy
          * of the previous step and can always output energies at the last step.
          */
-        bLastStep = bLastStep || stopHandler->stoppingAfterCurrentStep(step);
+        const bool stopAfterCurrentStep = stopHandler->stoppingAfterCurrentStep(step);
+        bool       deferStopUntilExactRespaOuterStep = false;
+        if (!bLastStep && stopAfterCurrentStep && gmx::useExactRespa(*ir))
+        {
+            const int outerLevel = gmx::exactRespaNonbondedOuterLevel(*ir);
+            deferStopUntilExactRespaOuterStep =
+                    outerLevel > gmx::highestActiveMtsLevel(ir->mtsLevels, step);
+        }
+        // A second SIGINT/SIGTERM asks GROMACS to stop immediately, which can land on
+        // an inner-only exact r-RESPA step. Defer by at most a few base steps so the
+        // final virial/energy path still runs on the outer nonbonded boundary.
+        bLastStep = bLastStep || (stopAfterCurrentStep && !deferStopUntilExactRespaOuterStep);
 
         /* do_log triggers energy and virial calculation. Because this leads
          * to different code paths, forces can be different. Thus for exact
@@ -1941,7 +2720,8 @@ void gmx::LegacySimulator::do_md()
             const bool exactRespaOuterBoundaryPressureCoupling =
                     useExactVelocityVerletLammpsRespa(*ir)
                     && (ir->pressureCouplingOptions.epc == PressureCoupling::Berendsen
-                        || ir->pressureCouplingOptions.epc == PressureCoupling::CRescale);
+                        || ir->pressureCouplingOptions.epc == PressureCoupling::CRescale
+                        || ir->pressureCouplingOptions.epc == PressureCoupling::Mttk);
             if (EI_VV(ir->eI) && (!bInitStep))
             {
                 if (exactRespaOuterBoundaryPressureCoupling)
@@ -2032,13 +2812,14 @@ void gmx::LegacySimulator::do_md()
         {
             gmx_fatal(FARGS,
                       "Exact LAMMPS-style r-RESPA with integrator = %s currently only supports "
-                      "NVE/NVT/NPT runs without constraints, COM removal, domain decomposition, virtual "
+                      "NVE/NVT/NPT runs without constraints, unsupported COM removal, domain decomposition, virtual "
                       "sites, replica exchange, or other special-force modules, with either "
                       "CPU-only execution or the canonical GPU milestone layouts "
                       "(nb gpu; nb gpu + bonded gpu; nb gpu + bonded gpu + pme gpu; "
                       "nb gpu + bonded gpu + pme gpu + update gpu). "
-                      "The supported thermostat/barostat subset is tcoupl = no/berendsen/v-rescale "
-                      "and pcoupl = no/berendsen/c-rescale.",
+                      "The supported thermostat/barostat subset is tcoupl = no/berendsen/v-rescale/nose-hoover "
+                      "and pcoupl = no/berendsen/c-rescale/mttk. Linear COM removal is admitted only "
+                      "when GMX_PCFF_EXACT_RESPA_ALLOW_LINEAR_COM_REMOVAL is enabled.",
                       enumValueToString(IntegrationAlgorithm::VV));
         }
         if (gmx::useExactRespa(*ir) && bCalcVir)
@@ -2489,20 +3270,59 @@ void gmx::LegacySimulator::do_md()
             {
                 wallcycle_start(wallCycleCounters_, WallCycleCounter::Update);
             }
+            if (isMainRank)
+            {
+                appendPcffMttkStateTraceRow(
+                        step, t, "before_pre_trotter", *ir, state_, pres, total_vir, enerd_);
+            }
             /* UPDATE PRESSURE VARIABLES IN TROTTER FORMULATION WITH CONSTRAINTS */
+            const auto replayExactRespaTrotter = [&](const PcffExactRespaTrotterReplay replay)
+            {
+                const auto runTrotterPart = [&](const TrotterSequence sequence)
+                {
+                    trotter_update(ir,
+                                   step,
+                                   ekind_,
+                                   state_,
+                                   total_vir,
+                                   md->homenr,
+                                   md->cTC,
+                                   md->invmass,
+                                   &MassQ,
+                                   trotter_seq,
+                                   sequence);
+                };
+
+                switch (replay)
+                {
+                    case PcffExactRespaTrotterReplay::None: break;
+                    case PcffExactRespaTrotterReplay::Two: runTrotterPart(TrotterSequence::Two); break;
+                    case PcffExactRespaTrotterReplay::Three: runTrotterPart(TrotterSequence::Three); break;
+                    case PcffExactRespaTrotterReplay::TwoThenThree:
+                        runTrotterPart(TrotterSequence::Two);
+                        runTrotterPart(TrotterSequence::Three);
+                        break;
+                    case PcffExactRespaTrotterReplay::ThreeThenTwo:
+                        runTrotterPart(TrotterSequence::Three);
+                        runTrotterPart(TrotterSequence::Two);
+                        break;
+                }
+            };
+
             if (bTrotter)
             {
-                trotter_update(ir,
-                               step,
-                               ekind_,
-                               state_,
-                               total_vir,
-                               md->homenr,
-                               md->cTC,
-                               md->invmass,
-                               &MassQ,
-                               trotter_seq,
-                               TrotterSequence::Three);
+                const PcffExactRespaTrotterReplay preTrotterReplay =
+                        useSupportedExactVelocityVerletRespa
+                                ? pcffExactRespaTrotterReplayFromEnv(
+                                          "GMX_PCFF_EXACT_RESPA_PRE_TROTTER",
+                                          PcffExactRespaTrotterReplay::Two)
+                                : PcffExactRespaTrotterReplay::Three;
+                replayExactRespaTrotter(preTrotterReplay);
+                if (isMainRank)
+                {
+                    appendPcffMttkStateTraceRow(
+                            step, t, "after_pre_trotter", *ir, state_, pres, total_vir, enerd_);
+                }
                 /* We can only do Berendsen coupling after we have summed
                  * the kinetic energy or virial. Since the happens
                  * in global_state after update, we should only do it at
@@ -2565,6 +3385,65 @@ void gmx::LegacySimulator::do_md()
                                                          awh.get(),
                                                          ed ? ed->getLegacyED() : nullptr,
                                                          ddBalanceRegionHandler);
+                    if (isMainRank)
+                    {
+                        appendPcffMttkStateTraceRow(
+                                step, t, "after_respa_step", *ir, state_, pres, total_vir, enerd_);
+                    }
+                    const PcffExactRespaTrotterReplay postTrotterReplay =
+                            pcffExactRespaTrotterReplayFromEnv(
+                                    "GMX_PCFF_EXACT_RESPA_POST_TROTTER",
+                                    PcffExactRespaTrotterReplay::Three);
+                    const bool postTrotterCouplesThisStep =
+                            pcffExactRespaTrotterReplayCouplesThisStep(*ir, step, postTrotterReplay);
+                    if (bTrotter && postTrotterCouplesThisStep)
+                    {
+                        prepareExactRespaVelocityVerletObservablesForStep(*ir,
+                                                                          step + 1,
+                                                                          cr_->commMyGroup,
+                                                                          *mdAtoms_->mdatoms(),
+                                                                          nrnb_,
+                                                                          &vcm,
+                                                                          enerd_,
+                                                                          gstat,
+                                                                          &nullSignaller,
+                                                                          &observablesReducer,
+                                                                          force_vir,
+                                                                          shake_vir,
+                                                                          total_vir,
+                                                                          pres,
+                                                                          bCalcEner,
+                                                                          bCalcVir
+                                                                                  || postTrotterCouplesThisStep,
+                                                                          bGStat,
+                                                                          &bSumEkinhOld,
+                                                                          &saved_conserved_quantity,
+                                                                          &last_ekin);
+                        m_add(force_vir, shake_vir, total_vir);
+                        if (isMainRank)
+                        {
+                            appendPcffMttkStateTraceRow(step,
+                                                        t,
+                                                        "before_post_trotter",
+                                                        *ir,
+                                                        state_,
+                                                        pres,
+                                                        total_vir,
+                                                        enerd_);
+                        }
+                        replayExactRespaTrotter(postTrotterReplay);
+                        if (isMainRank)
+                        {
+                            appendPcffMttkStateTraceRow(step,
+                                                        t,
+                                                        "after_post_trotter",
+                                                        *ir,
+                                                        state_,
+                                                        pres,
+                                                        total_vir,
+                                                        enerd_);
+                        }
+                    }
                 }
                 else
                 {
@@ -2995,24 +3874,43 @@ void gmx::LegacySimulator::do_md()
         const real currentSystemRefT =
                 (haveEnsembleTemperature(*ir) ? ekind_->currentEnsembleTemperature() : 0.0_real);
         const bool scaleCoordinates = !useGpuForUpdate || bDoReplEx;
-        update_pcouple_after_coordinates(fpLog_,
-                                         step,
-                                         ir->pressureCouplingOptions,
-                                         ir->ld_seed,
-                                         currentSystemRefT,
-                                         ir->opts.nFreeze,
-                                         ir->deform,
-                                         ir->delta_t,
-                                         md->homenr,
-                                         md->cFREEZE,
-                                         pres,
-                                         force_vir,
-                                         shake_vir,
-                                         &pressureCouplingMu,
-                                         state_,
-                                         nrnb_,
-                                         upd.deform(),
-                                         scaleCoordinates);
+        const bool exactRespaMttkOuterPcouple =
+                useSupportedExactVelocityVerletRespa
+                && ir->pressureCouplingOptions.epc == PressureCoupling::Mttk
+                && pcffExactRespaMttkOuterPcoupleEnabled();
+        const bool exactRespaMttkInlineBoxRemap =
+                useSupportedExactVelocityVerletRespa
+                && ir->pressureCouplingOptions.epc == PressureCoupling::Mttk
+                && ir->pressureCouplingOptions.epct == PressureCouplingType::Isotropic
+                && pcffExactRespaMttkInlineBoxRemapEnabled();
+        const bool doExactRespaMttkOuterPcouple =
+                exactRespaMttkOuterPcouple
+                && do_per_step(step + 1, ir->pressureCouplingOptions.nstpcouple);
+        if (!exactRespaMttkInlineBoxRemap
+            && (!exactRespaMttkOuterPcouple || doExactRespaMttkOuterPcouple))
+        {
+            const real pcoupleDeltaT = doExactRespaMttkOuterPcouple
+                                               ? ir->delta_t * ir->pressureCouplingOptions.nstpcouple
+                                               : ir->delta_t;
+            update_pcouple_after_coordinates(fpLog_,
+                                             step,
+                                             ir->pressureCouplingOptions,
+                                             ir->ld_seed,
+                                             currentSystemRefT,
+                                             ir->opts.nFreeze,
+                                             ir->deform,
+                                             pcoupleDeltaT,
+                                             md->homenr,
+                                             md->cFREEZE,
+                                             pres,
+                                             force_vir,
+                                             shake_vir,
+                                             &pressureCouplingMu,
+                                             state_,
+                                             nrnb_,
+                                             upd.deform(),
+                                             scaleCoordinates);
+        }
         if (isMainRank)
         {
             appendTp18gTraceRow(step,
@@ -3029,6 +3927,8 @@ void gmx::LegacySimulator::do_md()
                                 total_vir,
                                 pres,
                                 enerd_);
+            appendPcffMttkStateTraceRow(
+                    step, t, "after_update_pcouple", *ir, state_, pres, total_vir, enerd_);
         }
 
         const bool doBerendsenPressureCoupling =
@@ -3422,6 +4322,10 @@ void gmx::LegacySimulator::do_md()
         }
     }
     /* End of main MD loop */
+    if (pcffContinuousRefPressureRamp.active)
+    {
+        mutableInputRecord->pressureCouplingOptions = basePressureCouplingOptions;
+    }
 
     /* Closing TNG files can include compressing data. Therefore it is good to do that
      * before stopping the time measurements. */

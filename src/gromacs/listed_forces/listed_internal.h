@@ -115,6 +115,8 @@ struct bonded_threading_t
     gmx::ThreadedForceBuffer<rvec4> threadedForceBuffer;
     //! true if we have and thus need to reduce bonded forces
     bool haveBondeds = false;
+    //! Listed interaction function types with work assigned to CPU threads.
+    std::vector<InteractionFunction> listedFtypesWithCpuWork;
 
     /* There are two different ways to distribute the bonded force calculation
      * over the threads. We decide which to use based on the number of threads.

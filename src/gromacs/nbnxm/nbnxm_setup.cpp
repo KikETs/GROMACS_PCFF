@@ -277,6 +277,10 @@ static NbnxmKernelSetup pickNbnxnKernelCpu(const t_inputrec&    inputrec,
     {
         return NbnxmKernelSetup{ NbnxmKernelType::Cpu1x1_PlainC, EwaldExclusionType::Table };
     }
+    if (std::getenv("GMX_NBNXN_PLAINC_4X4") != nullptr)
+    {
+        return NbnxmKernelSetup{ NbnxmKernelType::Cpu4x4_PlainC, EwaldExclusionType::Table };
+    }
     if (GMX_SIMD && useSimd && nbnxmSimdSupported(mdlog, inputrec))
     {
         return NbnxmKernelSetup{ pickNbnxmKernelCpuSimdType(inputrec, hardwareInfo),

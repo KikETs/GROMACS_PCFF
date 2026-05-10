@@ -37,10 +37,12 @@
 
 #include "config.h"
 
+#include <cstdlib>
 #include <cmath>
 #include <cstdio>
 
 #include <filesystem>
+#include <optional>
 #include <string>
 
 #include "gromacs/ewald/ewald_utils.h"
@@ -73,6 +75,33 @@ interaction_const_t::SoftCoreParameters::SoftCoreParameters(const t_lambda& fepv
 {
     // This is checked during tpr reading, so we can assert here
     GMX_RELEASE_ASSERT(fepvals.sc_r_power == 6.0, "We only support soft-core r-power 6");
+}
+
+static std::optional<real> pcffExactRespaEwaldCoeffOverride(const t_inputrec& ir)
+{
+    const char* value = std::getenv("GMX_PCFF_EWALD_BETA_INV_A");
+    if (value == nullptr || *value == '\0')
+    {
+        return std::nullopt;
+    }
+    if (!gmx::useExactRespa(ir) || !usingPmeOrEwald(ir.coulombtype))
+    {
+        gmx_fatal(FARGS,
+                  "GMX_PCFF_EWALD_BETA_INV_A is only supported for exact r-RESPA "
+                  "with PME/Ewald Coulomb.");
+    }
+
+    char*        end      = nullptr;
+    const double betaInvA = std::strtod(value, &end);
+    if (end == value || (end != nullptr && *end != '\0') || betaInvA <= 0.0)
+    {
+        gmx_fatal(FARGS,
+                  "Invalid GMX_PCFF_EWALD_BETA_INV_A='%s'; expected a positive "
+                  "LAMMPS-style G vector in A^-1.",
+                  value);
+    }
+
+    return static_cast<real>(10.0 * betaInvA);
 }
 
 /*! \brief Print Coulomb Ewald citations and set ewald coefficients */
@@ -117,6 +146,18 @@ static void initCoulombEwaldParameters(FILE*                                 fp,
     }
 
     coulombSettings->ewaldCoeff = calc_ewaldcoeff_q(ir.rcoulomb, ir.ewald_rtol);
+    if (const auto betaOverride = pcffExactRespaEwaldCoeffOverride(ir))
+    {
+        coulombSettings->ewaldCoeff = *betaOverride;
+        if (fp)
+        {
+            fprintf(fp,
+                    "PCFF exact r-RESPA overriding Coulomb Ewald beta from "
+                    "GMX_PCFF_EWALD_BETA_INV_A: %g A^-1 (%g nm^-1)\n",
+                    coulombSettings->ewaldCoeff / 10.0,
+                    coulombSettings->ewaldCoeff);
+        }
+    }
     if (fp)
     {
         fprintf(fp, "Using a Gaussian width (1/beta) of %g nm for Ewald\n", 1 / coulombSettings->ewaldCoeff);
@@ -336,7 +377,7 @@ interaction_const_t init_interaction_const(FILE*               fp,
                 std::make_unique<interaction_const_t::SoftCoreParameters>(*ir.fepvals);
     }
 
-    if (gmx::useExactRespa(ir) && gmx::exactRespaHasPairSplitting(ir))
+    if (gmx::useExactRespa(ir))
     {
         const auto& forceLayout = ir.exactRespa.forceLayout;
         auto&       pairSplit   = interactionConst.exactRespaCpuPairSplit;

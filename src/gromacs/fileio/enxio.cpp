@@ -1215,12 +1215,27 @@ void get_enx_state(const std::filesystem::path& fn,
     }
 
     npcoupl = TRICLINIC(ir->pressureCouplingOptions.compress) ? 6 : 3;
-    if (ir->pressureCouplingOptions.epc == PressureCoupling::ParrinelloRahman)
+    if (ir->pressureCouplingOptions.epc == PressureCoupling::ParrinelloRahman
+        || ir->pressureCouplingOptions.epc == PressureCoupling::Mttk)
     {
         clear_mat(state->boxv);
         for (i = 0; i < npcoupl; i++)
         {
             state->boxv[ind0[i]][ind1[i]] = find_energy(boxvel_nm[i], enm, fr);
+        }
+        if (ir->pressureCouplingOptions.epc == PressureCoupling::Mttk)
+        {
+            real veta = 0;
+            int  n    = 0;
+            for (int d = 0; d < DIM; d++)
+            {
+                if (state->box[d][d] != 0)
+                {
+                    veta += state->boxv[d][d] / state->box[d][d];
+                    n++;
+                }
+            }
+            state->veta = n > 0 ? veta / n : 0;
         }
         fprintf(stderr, "\nREAD %d BOX VELOCITIES FROM %s\n\n", npcoupl, fn.string().c_str());
     }
@@ -1228,6 +1243,8 @@ void get_enx_state(const std::filesystem::path& fn,
     if (ir->etc == TemperatureCoupling::NoseHoover)
     {
         char cns[20];
+        const bool bNHCtrotter =
+                inputrecNvtTrotter(ir) || inputrecNptTrotter(ir) || inputrecNphTrotter(ir);
 
         cns[0] = '\0';
 
@@ -1237,14 +1254,14 @@ void get_enx_state(const std::filesystem::path& fn,
             bufi = *(groups.groupNames[ni]);
             for (j = 0; (j < state->nhchainlength); j++)
             {
-                if (inputrecNvtTrotter(ir))
+                if (bNHCtrotter)
                 {
                     sprintf(cns, "-%d", j);
                 }
                 sprintf(buf, "Xi%s-%s", cns, bufi);
-                state->nosehoover_xi[i] = find_energy(buf, enm, fr);
+                state->nosehoover_xi[i * state->nhchainlength + j] = find_energy(buf, enm, fr);
                 sprintf(buf, "vXi%s-%s", cns, bufi);
-                state->nosehoover_vxi[i] = find_energy(buf, enm, fr);
+                state->nosehoover_vxi[i * state->nhchainlength + j] = find_energy(buf, enm, fr);
             }
         }
         fprintf(stderr, "\nREAD %d NOSE-HOOVER Xi chains FROM %s\n\n", state->ngtc, fn.string().c_str());
@@ -1257,9 +1274,9 @@ void get_enx_state(const std::filesystem::path& fn,
                 for (j = 0; (j < state->nhchainlength); j++)
                 {
                     sprintf(buf, "Xi-%d-%s", j, bufi);
-                    state->nhpres_xi[i] = find_energy(buf, enm, fr);
+                    state->nhpres_xi[i * state->nhchainlength + j] = find_energy(buf, enm, fr);
                     sprintf(buf, "vXi-%d-%s", j, bufi);
-                    state->nhpres_vxi[i] = find_energy(buf, enm, fr);
+                    state->nhpres_vxi[i * state->nhchainlength + j] = find_energy(buf, enm, fr);
                 }
             }
             fprintf(stderr,

@@ -1706,8 +1706,7 @@ int Mdrunner::mdrunner()
             canUseDirectGpuComm,
             useGpuPmeDecomposition);
 
-    if (runScheduleWork.simulationWork.useGpuNonbonded && gmx::useExactRespa(*inputrec)
-        && inputrec->exactRespa.forceLayout.hasPairSplitting())
+    if (runScheduleWork.simulationWork.useGpuNonbonded && gmx::useExactRespa(*inputrec))
     {
         if (havePPDomainDecomposition(cr->dd) || haveSeparatePmeRank)
         {
@@ -1984,7 +1983,21 @@ int Mdrunner::mdrunner()
                     std::max(fr->completePairlistRange.value_or(0.0_real), fr->plainPairlistRange.value());
         }
 
-        if (gmx::useExactRespa(*inputrec) && gmx::exactRespaHasPairSplitting(*inputrec))
+        const bool exactRespaTraceForceComponents = []()
+        {
+            const char* env = std::getenv("GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS");
+            return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+        }();
+
+        const bool exactRespaEwaldRealOnly = []()
+        {
+            const char* env = std::getenv("GMX_PCFF_EWALD_REAL_ONLY");
+            return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+        }();
+
+        if (gmx::useExactRespa(*inputrec)
+            && (gmx::exactRespaHasPairSplitting(*inputrec) || exactRespaTraceForceComponents
+                || exactRespaEwaldRealOnly))
         {
             const real requiredCompletePairlistRange = std::max(fr->ic->coulomb.cutoff, fr->ic->vdw.cutoff);
             fr->completePairlistRange =

@@ -217,7 +217,7 @@ def main() -> int:
             "sample_interval": args.sample_interval,
             "pin": args.pin,
             "pinstride": args.pinstride,
-            "mdrun_flags": "-nb gpu -pme cpu -bonded cpu -update cpu -dlb no",
+            "mdrun_flags": "-nb gpu -pme cpu -bonded cpu -update cpu -dlb no -notunepme",
         },
         "bridge": bridge_payload,
         "host": {
@@ -304,6 +304,7 @@ def main() -> int:
             "cpu",
             "-update",
             "cpu",
+            "-notunepme",
             "-pin",
             args.pin,
         ]

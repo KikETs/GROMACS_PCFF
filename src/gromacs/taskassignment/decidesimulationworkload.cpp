@@ -45,6 +45,8 @@
 #include "config.h"
 
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 #include <bitset>
 #include <memory>
@@ -78,6 +80,18 @@ struct pull_t;
 namespace gmx
 {
 
+namespace
+{
+
+bool exactRespaEwaldRealOnlyRequested(const t_inputrec& inputrec)
+{
+    const char* value = std::getenv("GMX_PCFF_EWALD_REAL_ONLY");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0 && useExactRespa(inputrec)
+           && usingPmeOrEwald(inputrec.coulombtype);
+}
+
+} // namespace
+
 SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
                                             const t_inputrec&    inputrec,
                                             const bool           haveDynamicBox,
@@ -104,11 +118,13 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     }
     const bool         useAnySubsteps      = useMtsSubstepping(inputrec) || useExactLammpsRespa;
     const bool exactLammpsRespaHasPairSplitting = exactRespaHasPairSplitting(inputrec);
+    const bool useExactRespaEwaldRealOnly = exactRespaEwaldRealOnlyRequested(inputrec);
     const bool useExactLammpsRespaHybridGpuNonbonded =
-            useExactLammpsRespa && exactLammpsRespaHasPairSplitting && useGpuForNonbonded
+            useExactLammpsRespa && !useExactRespaEwaldRealOnly && useGpuForNonbonded
             && isSupportedExactRespaHybridNbGpuInput(inputrec);
     const bool useExactLammpsRespaHybridGpuPme =
-            useExactLammpsRespaHybridGpuNonbonded && (pmeRunMode == PmeRunMode::GPU);
+            !useExactRespaEwaldRealOnly && useExactLammpsRespaHybridGpuNonbonded
+            && (pmeRunMode == PmeRunMode::GPU);
     const bool useExactLammpsRespaHybridGpuUpdate =
             useExactLammpsRespaHybridGpuPme && useGpuForBonded && useGpuForUpdate;
     const bool disableGpuForExactLammpsRespa =
@@ -135,12 +151,18 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
             && inputrec.fepvals->softcoreFunction == SoftcoreType::Beutler
             && inputrec.fepvals->sc_alpha != 0;
     simulationWorkload.useCpuPme =
-            (useExactLammpsRespa && !useExactLammpsRespaHybridGpuPme) || (pmeRunMode == PmeRunMode::CPU);
+            !useExactRespaEwaldRealOnly
+            && ((useExactLammpsRespa && !useExactLammpsRespaHybridGpuPme)
+                || (pmeRunMode == PmeRunMode::CPU));
     simulationWorkload.useGpuPme =
-            useExactLammpsRespaHybridGpuPme
-            || (!useExactLammpsRespa && (pmeRunMode == PmeRunMode::GPU || pmeRunMode == PmeRunMode::Mixed));
+            !useExactRespaEwaldRealOnly
+            && (useExactLammpsRespaHybridGpuPme
+                || (!useExactLammpsRespa
+                    && (pmeRunMode == PmeRunMode::GPU || pmeRunMode == PmeRunMode::Mixed)));
     simulationWorkload.useGpuPmeFft =
-            useExactLammpsRespaHybridGpuPme || (!useExactLammpsRespa && (pmeRunMode == PmeRunMode::GPU));
+            !useExactRespaEwaldRealOnly
+            && (useExactLammpsRespaHybridGpuPme
+                || (!useExactLammpsRespa && (pmeRunMode == PmeRunMode::GPU)));
     simulationWorkload.useGpuBonded =
             (!useExactLammpsRespa && useGpuForBonded)
             || (useExactLammpsRespa && useGpuForBonded && useExactLammpsRespaHybridGpuNonbonded);
@@ -157,10 +179,11 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     }
     simulationWorkload.haveSeparatePmeRank = haveSeparatePmeRank;
     simulationWorkload.useGpuPmePpCommunication =
-            !useExactLammpsRespa && haveSeparatePmeRank && canUseDirectGpuComm
+            !useExactRespaEwaldRealOnly && !useExactLammpsRespa && haveSeparatePmeRank && canUseDirectGpuComm
             && (pmeRunMode == PmeRunMode::GPU || pmeRunMode == PmeRunMode::Mixed);
     simulationWorkload.useCpuPmePpCommunication =
-            haveSeparatePmeRank && !simulationWorkload.useGpuPmePpCommunication;
+            !useExactRespaEwaldRealOnly && haveSeparatePmeRank
+            && !simulationWorkload.useGpuPmePpCommunication;
     GMX_RELEASE_ASSERT(!(simulationWorkload.useGpuPmePpCommunication
                          && simulationWorkload.useCpuPmePpCommunication),
                        "Cannot do PME-PP communication on both CPU and GPU");
@@ -358,21 +381,17 @@ ExactRespaStepWork setupExactRespaStepWork(const int                   legacyFla
     GMX_RELEASE_ASSERT(useExactRespa(inputrec),
                        "Exact step workload should only be queried for exact r-RESPA");
     assertExactRespaOwnsNoLegacyMtsState(inputrec);
+    GMX_UNUSED_VALUE(legacyFlags);
     GMX_UNUSED_VALUE(domainWork);
+    GMX_UNUSED_VALUE(simulationWork);
 
     ExactRespaStepWork flags;
     flags.highestActiveLevel  = highestActiveExactRespaLevel(inputrec.exactRespa, step);
     flags.haveSlowForceLevels = (flags.highestActiveLevel > 0);
-    const bool computeLongRangeNonbondedForces =
-            (flags.highestActiveLevel >= exactRespaLongrangeNonbondedLevel(inputrec));
-    flags.combineForcesBeforeHaloExchange =
-            ((legacyFlags & GMX_FORCE_FORCES) != 0) && simulationWork.useExactRespa
-            && flags.haveSlowForceLevels
-            && ((legacyFlags & GMX_FORCE_DO_NOT_NEED_NORMAL_FORCE) != 0)
-            && exactRespaNumLevels(inputrec) == 2
-            && flags.highestActiveLevel == 1
-            && !(((legacyFlags & GMX_FORCE_VIRIAL) != 0) || simulationWork.useGpuNonbonded
-                 || (simulationWork.haveGpuPmeOnPpRank() && computeLongRangeNonbondedForces));
+    // The legacy early-combine path reads StepWorkload MTS buffers. Standalone
+    // exact r-RESPA keeps its slow forces in ExactRespaForceOutputs/Store and
+    // combines them after post-processing in do_force().
+    flags.combineForcesBeforeHaloExchange = false;
 
     return flags;
 }
@@ -389,8 +408,12 @@ StepWorkload setupExactRespaStepWorkload(const int                   legacyFlags
 
     const int  highestActiveLevel             = highestActiveExactRespaLevel(inputrec.exactRespa, step);
     const bool haveSlowForceLevels            = (highestActiveLevel > 0);
-    const int  longrangeLevel                 = exactRespaLongrangeNonbondedLevel(inputrec);
-    const bool computeLongRangeNonbondedForces = (highestActiveLevel >= longrangeLevel);
+    const bool haveLongRangeNonbonded =
+            !exactRespaEwaldRealOnlyRequested(inputrec)
+            && (usingFullElectrostatics(inputrec.coulombtype) || usingLJPme(inputrec.vdwtype));
+    const bool computeLongRangeNonbondedForces =
+            haveLongRangeNonbonded
+            && (highestActiveLevel >= exactRespaLongrangeNonbondedLevel(inputrec));
 
     StepWorkload flags;
     flags.stateChanged                    = ((legacyFlags & GMX_FORCE_STATECHANGED) != 0);

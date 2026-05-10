@@ -444,12 +444,6 @@ std::vector<std::string> checkExactRespaRequirements(const t_inputrec& ir)
             return errorMessages;
         }
     }
-    if (exactRespaNumLevels(ir) != 3)
-    {
-        errorMessages.emplace_back(
-                "Exact LAMMPS-style r-RESPA CPU validation is currently frozen only for exact-respa-levels = 3");
-    }
-
     if (ir.eI != IntegrationAlgorithm::MD && ir.eI != IntegrationAlgorithm::VV)
     {
         errorMessages.push_back(
@@ -465,9 +459,10 @@ std::vector<std::string> checkExactRespaRequirements(const t_inputrec& ir)
     {
         errorMessages.emplace_back("Exact LAMMPS-style r-RESPA currently requires vdw-modifier = none");
     }
-    if (!usingPmeOrEwald(ir.coulombtype))
+    if (!(usingPmeOrEwald(ir.coulombtype) || ir.coulombtype == CoulombInteractionType::Cut))
     {
-        errorMessages.emplace_back("Exact LAMMPS-style r-RESPA currently requires coulombtype = PME or Ewald");
+        errorMessages.emplace_back(
+                "Exact LAMMPS-style r-RESPA currently requires coulombtype = PME, Ewald, or Cut-off");
     }
     if (ir.coulomb_modifier != InteractionModifiers::None)
     {

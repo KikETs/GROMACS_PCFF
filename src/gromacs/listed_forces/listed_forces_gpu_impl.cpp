@@ -47,6 +47,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
@@ -134,6 +136,14 @@ static bool topologyContainsAnyInteractionType(const gmx_mtop_t&                
                        { return topologyContainsInteractionType(mtop, fType); });
 }
 
+static bool exactRespaGpuBondedModeRequestsWideGpuListed()
+{
+    const char* mode = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES");
+    return mode != nullptr
+           && (std::strcmp(mode, "all") == 0 || std::strcmp(mode, "wide") == 0
+               || std::strcmp(mode, "gpu-all") == 0 || std::strcmp(mode, "gpu_all") == 0);
+}
+
 bool buildSupportsListedForcesGpu(std::string* error)
 {
     MessageStringCollector errorReasons;
@@ -163,17 +173,19 @@ bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, 
                                                 InteractionFunction::Coulomb14 });
     const bool hasExactHybridUnsupportedGpuBondedTypes =
             topologyContainsAnyInteractionType(mtop,
-                                              { InteractionFunction::Bonds,
-                                                InteractionFunction::Angles,
-                                                InteractionFunction::UreyBradleyPotential,
+                                               { InteractionFunction::Bonds,
+                                                 InteractionFunction::Angles,
+                                                 InteractionFunction::UreyBradleyPotential,
                                                 InteractionFunction::ProperDihedrals,
-                                                InteractionFunction::RyckaertBellemansDihedrals,
-                                                InteractionFunction::ImproperDihedrals,
-                                                InteractionFunction::PeriodicImproperDihedrals });
+                                                 InteractionFunction::RyckaertBellemansDihedrals,
+                                                 InteractionFunction::ImproperDihedrals,
+                                                 InteractionFunction::PeriodicImproperDihedrals });
+    const bool exactHybridWideGpuListedRequested =
+            isExactLammpsRespa && exactRespaGpuBondedModeRequestsWideGpuListed();
     const bool hasExactHybridUnsupportedPairInteractionTypes =
             topologyContainsAnyInteractionType(mtop,
-                                              { InteractionFunction::LennardJonesCoulomb14Q,
-                                                InteractionFunction::Coulomb14 });
+                                               { InteractionFunction::LennardJonesCoulomb14Q,
+                                                 InteractionFunction::Coulomb14 });
     const bool repulsionPowerSupported =
             std::abs(mtop.ffparams.reppow - 12.0) <= 10 * GMX_DOUBLE_EPS
             || (isExactLammpsRespa && std::abs(mtop.ffparams.reppow - 9.0) <= 10 * GMX_DOUBLE_EPS);
@@ -194,9 +206,10 @@ bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, 
                 "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the pair14-only "
                 "narrow mode, so the topology must contain Lennard-Jones 1-4 listed pairs.");
         errorReasons.appendIf(
-                hasExactHybridUnsupportedGpuBondedTypes,
+                hasExactHybridUnsupportedGpuBondedTypes && !exactHybridWideGpuListedRequested,
                 "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the pair14-only "
-                "narrow mode. GPU-capable bond/angle/dihedral/improper kernels must remain on the CPU.");
+                "narrow mode unless GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES=all is set. "
+                "GPU-capable bond/angle/dihedral/improper kernels must otherwise remain on the CPU.");
         errorReasons.appendIf(
                 hasExactHybridUnsupportedPairInteractionTypes,
                 "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted for "
@@ -245,7 +258,9 @@ void ListedForcesGpu::updateHaveInteractions(const InteractionDefinitions& /*ide
 
 void ListedForcesGpu::updateInteractionListsAndDeviceBuffers(ArrayRef<const int> /* nbnxnAtomOrder */,
                                                              const InteractionDefinitions& /* idef */,
-                                                             NBAtomDataGpu* /* nbnxmAtomDataGpu */)
+                                                             NBAtomDataGpu* /* nbnxmAtomDataGpu */,
+                                                             bool /* useCachedInteractionLists */,
+                                                             std::uintptr_t /* interactionListCacheIdentity */)
 {
 }
 

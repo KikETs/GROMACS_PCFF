@@ -11,6 +11,8 @@
 #include "legacysimulator.h"
 #include "exactrespasteppertesting.h"
 
+#include <algorithm>
+#include <cmath>
 #include <array>
 #include <cstdlib>
 #include <cstdint>
@@ -26,6 +28,7 @@
 
 #include "gromacs/domdec/collect.h"
 #include "gromacs/domdec/domdec_struct.h"
+#include "gromacs/math/functions.h"
 #include "gromacs/mdtypes/commrec.h"
 #include "gromacs/gpu_utils/gpueventsynchronizer.h"
 #include "gromacs/mdlib/force.h"
@@ -47,6 +50,7 @@
 #include "gromacs/mdtypes/mdatom.h"
 #include "gromacs/mdtypes/simulation_workload.h"
 #include "gromacs/mdtypes/state.h"
+#include "gromacs/pbcutil/pbc.h"
 #include "gromacs/taskassignment/include/gromacs/taskassignment/decidesimulationworkload.h"
 #include "gromacs/timing/wallcycle.h"
 #include "gromacs/topology/topology.h"
@@ -57,6 +61,8 @@
 
 namespace gmx
 {
+
+extern thread_local const char* g_respaDoForceContextLabel;
 
 namespace
 {
@@ -98,6 +104,38 @@ static bool exactRespaFusedInitialDriftEnabled()
         return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
     }();
     return enabled;
+}
+
+static bool exactRespaReturnNextVirialEnabled()
+{
+    static const bool enabled = []()
+    {
+        const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_RETURN_NEXT_VIRIAL");
+        return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+    }();
+    return enabled;
+}
+
+static bool exactRespaPostTrotterReplayIncludesFinalHalf()
+{
+    const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_POST_TROTTER");
+    if (value == nullptr || *value == '\0')
+    {
+        return false;
+    }
+    return std::strcmp(value, "2") == 0 || std::strcmp(value, "two") == 0
+           || std::strcmp(value, "3") == 0 || std::strcmp(value, "three") == 0
+           || std::strcmp(value, "2,3") == 0 || std::strcmp(value, "two-three") == 0
+           || std::strcmp(value, "3,2") == 0 || std::strcmp(value, "three-two") == 0;
+}
+
+static bool exactRespaMttkPostTrotterNeedsNextVirial(const t_inputrec& inputRecord,
+                                                     const int64_t     baseStep)
+{
+    return inputRecord.exactRespa.enabled() && inputRecord.eI == IntegrationAlgorithm::VV
+           && inputRecord.pressureCouplingOptions.epc == PressureCoupling::Mttk
+           && exactRespaPostTrotterReplayIncludesFinalHalf()
+           && (inputRecord.nsttcouple == 1 || ((baseStep + 1) % inputRecord.nsttcouple == 0));
 }
 
 static int exactRespaUpdateThreadOverride()
@@ -253,12 +291,6 @@ int canonicalAtomIndexForTraceAtom(const int*                  ddGlobalAtomIndic
     if (ddGlobalAtomIndices != nullptr && atomIndex < ddGlobalAtomIndicesCount)
     {
         return ddGlobalAtomIndices[atomIndex];
-    }
-
-    const auto localAtomOrder = nbv->getLocalAtomOrder();
-    if (atomIndex < localAtomOrder.ssize())
-    {
-        return localAtomOrder[atomIndex];
     }
 
     return atomIndex;
@@ -622,8 +654,275 @@ struct ExactRespaPreparedHalfKicks
 {
     std::array<ArrayRef<const RVec>, ExactRespaForceStore::c_numStoredLevels> forcesPerKick = {};
     std::array<real, ExactRespaForceStore::c_numStoredLevels>                  dtPerKick     = {};
+    std::array<int, ExactRespaForceStore::c_numStoredLevels>                   levelPerKick  = {};
     int                                                                        numKicks      = 0;
 };
+
+struct ExactRespaExtendedVvUpdate
+{
+    bool scaleVelocities     = false;
+    bool scalePositions      = false;
+    bool lammpsVelocityScale = false;
+    bool lammpsRemapPositions = false;
+    bool inlineBoxRemap      = false;
+    real veta            = 0;
+    real alpha           = 1;
+};
+
+static real exactRespaMttkVetaScale()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_VETA_SCALE");
+    if (env == nullptr || *env == '\0')
+    {
+        return 1.0_real;
+    }
+    char*      end    = nullptr;
+    const real parsed = static_cast<real>(std::strtod(env, &end));
+    GMX_RELEASE_ASSERT(end != env && (end == nullptr || *end == '\0'),
+                       "GMX_PCFF_EXACT_RESPA_MTTK_VETA_SCALE must be a floating point value");
+    return parsed;
+}
+
+static real exactRespaLammpsFixNhVelocityAlpha(const t_inputrec& inputRecord)
+{
+    const char* natomsText = std::getenv("GMX_PCFF_MTTK_LAMMPS_NATOMS");
+    if (natomsText != nullptr && *natomsText != '\0')
+    {
+        char*        end    = nullptr;
+        const double natoms = std::strtod(natomsText, &end);
+        GMX_RELEASE_ASSERT(end != natomsText && (end == nullptr || *end == '\0') && natoms > 0,
+                           "GMX_PCFF_MTTK_LAMMPS_NATOMS must be a positive floating point value");
+        return 1.0_real + 1.0_real / static_cast<real>(natoms);
+    }
+
+    GMX_RELEASE_ASSERT(inputRecord.opts.nrdf[0] > 0,
+                       "LAMMPS MTTK velocity scaling requires either natoms or non-zero degrees of freedom");
+    return 1.0_real + DIM / static_cast<real>(inputRecord.opts.nrdf[0]);
+}
+
+ExactRespaExtendedVvUpdate exactRespaExtendedVvUpdateFromState(const t_inputrec& inputRecord,
+                                                               const t_state&    state)
+{
+    ExactRespaExtendedVvUpdate update;
+    const bool mttkVv = inputRecord.eI == IntegrationAlgorithm::VV
+                        && inputRecord.pressureCouplingOptions.epc == PressureCoupling::Mttk;
+    const char* mode = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_EXTENDED_UPDATE");
+    if (mttkVv)
+    {
+        const bool useDefault = false;
+        if (mode != nullptr && *mode != '\0' && std::strcmp(mode, "0") != 0
+            && std::strcmp(mode, "none") != 0)
+        {
+            // LAMMPS FixNH r-RESPA remaps the box around each innermost drift.
+            // Keeping the legacy GROMACS MTTK box update after the full drift
+            // makes forces see the old box during pressure ramps and can drive
+            // the barostat unstable.
+            const bool velocityLammpsRemap = std::strcmp(mode, "velocity-lammps-remap") == 0;
+            update.scaleVelocities = useDefault || std::strcmp(mode, "velocity-only") == 0
+                                     || std::strcmp(mode, "velocity-position") == 0
+                                     || std::strcmp(mode, "1") == 0;
+            update.scalePositions = useDefault || std::strcmp(mode, "position-only") == 0
+                                     || std::strcmp(mode, "velocity-position") == 0
+                                     || std::strcmp(mode, "1") == 0;
+            update.lammpsVelocityScale = velocityLammpsRemap;
+            update.lammpsRemapPositions =
+                    useDefault || std::strcmp(mode, "lammps-remap") == 0 || velocityLammpsRemap;
+            update.inlineBoxRemap       = update.scalePositions || update.lammpsRemapPositions;
+        }
+    }
+    update.veta = (update.scaleVelocities || update.scalePositions || update.lammpsVelocityScale
+                   || update.lammpsRemapPositions)
+                          ? state.veta * exactRespaMttkVetaScale()
+                          : 0;
+    if (update.scaleVelocities || update.scalePositions || update.lammpsVelocityScale)
+    {
+        GMX_RELEASE_ASSERT(inputRecord.opts.nrdf[0] > 0,
+                           "MTTK exact r-RESPA update requires non-zero degrees of freedom");
+        update.alpha = update.lammpsVelocityScale
+                               ? exactRespaLammpsFixNhVelocityAlpha(inputRecord)
+                               : 1.0_real + DIM / static_cast<real>(inputRecord.opts.nrdf[0]);
+    }
+    return update;
+}
+
+static bool exactRespaMttkInlineBoxRemapEnabled(const t_inputrec& inputRecord)
+{
+    if (inputRecord.eI != IntegrationAlgorithm::VV
+        || inputRecord.pressureCouplingOptions.epc != PressureCoupling::Mttk
+        || inputRecord.pressureCouplingOptions.epct != PressureCouplingType::Isotropic)
+    {
+        return false;
+    }
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP");
+    const bool requested = env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+    if (!requested)
+    {
+        return false;
+    }
+    const char* realOnlyEnv = std::getenv("GMX_PCFF_EWALD_REAL_ONLY");
+    const bool  realOnlyRequested =
+            realOnlyEnv != nullptr && *realOnlyEnv != '\0' && std::strcmp(realOnlyEnv, "0") != 0;
+    if (usingPmeOrEwald(inputRecord.coulombtype) && !realOnlyRequested)
+    {
+        const char* allowPmeEnv = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP_PME");
+        const bool  allowPmeInlineRemap =
+                allowPmeEnv != nullptr && *allowPmeEnv != '\0' && std::strcmp(allowPmeEnv, "0") != 0;
+        if (allowPmeInlineRemap)
+        {
+            return true;
+        }
+        // Inline box remapping changes the box inside the exact-rRESPA drift.
+        // Reciprocal PME state is not rebuilt at that point, so PME stages can
+        // see inconsistent box/mesh state and drive the MTTK box to NaN.
+        return false;
+    }
+    return true;
+}
+
+static bool exactRespaStatePbcWrappingEnabled()
+{
+    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_WRAP_STATE_IN_BOX");
+    return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+}
+
+static void exactRespaMttkScaleBox(t_state& state, const real deltaT)
+{
+    const real veta  = state.veta * exactRespaMttkVetaScale();
+    const real scale = std::exp(veta * deltaT);
+    for (int i = 0; i < DIM; i++)
+    {
+        for (int j = 0; j < DIM; j++)
+        {
+            state.box[i][j] *= scale;
+            state.boxv[i][j] = veta * state.box[i][j];
+        }
+    }
+}
+
+static inline real exactRespaVvVelocityAfterHalfKick(const real currentVelocity,
+                                                     const real invMass,
+                                                     const real force,
+                                                     const real dt,
+                                                     const ExactRespaExtendedVvUpdate& extendedUpdate)
+{
+    if (!extendedUpdate.scaleVelocities)
+    {
+        return currentVelocity + 0.5_real * dt * invMass * force;
+    }
+
+    const real g   = 0.25_real * dt * extendedUpdate.veta * extendedUpdate.alpha;
+    const real mv1 = std::exp(-g);
+    const real mv2 = gmx::series_sinhx(g);
+    return mv1 * (mv1 * currentVelocity + 0.5_real * dt * invMass * mv2 * force);
+}
+
+ExactRespaExtendedVvUpdate exactRespaPlainKickUpdate(ExactRespaExtendedVvUpdate update)
+{
+    update.scaleVelocities     = false;
+    update.lammpsVelocityScale = false;
+    return update;
+}
+
+int exactRespaMttkOuterStepLevel(const t_inputrec& inputRecord)
+{
+    const int pairSplitOuterLevel = inputRecord.exactRespa.forceLayout.outerLevel;
+    if (pairSplitOuterLevel > 0)
+    {
+        return pairSplitOuterLevel;
+    }
+
+    // forceLayout.outerLevel describes the optional real-space pair splitting
+    // window. A value of 0 is the "no explicit pair-split outer window" sentinel
+    // used by the PolyGen 2-level schedule. FixNH/MTTK still couples on the
+    // slowest r-RESPA level, matching LAMMPS initial_integrate_respa().
+    return exactRespaNumLevels(inputRecord) - 1;
+}
+
+bool exactRespaPreparedKicksIncludeMttkOuterStep(const t_inputrec&                 inputRecord,
+                                                 const ExactRespaPreparedHalfKicks& preparedHalfKicks)
+{
+    const int outerLevel = exactRespaMttkOuterStepLevel(inputRecord);
+    for (int kickIndex = 0; kickIndex < preparedHalfKicks.numKicks; ++kickIndex)
+    {
+        if (preparedHalfKicks.levelPerKick[kickIndex] == outerLevel)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+real exactRespaOuterLevelDt(const t_inputrec& inputRecord)
+{
+    const int outerLevel = exactRespaMttkOuterStepLevel(inputRecord);
+    GMX_RELEASE_ASSERT(outerLevel >= 0, "LAMMPS MTTK velocity scaling requires an outer r-RESPA level");
+    return inputRecord.delta_t * exactRespaLevelStepFactor(inputRecord.exactRespa, outerLevel);
+}
+
+void applyLammpsMttkVelocityScale(const int                           homenr,
+                                  const ArrayRef<const ParticleType> ptype,
+                                  const ArrayRef<const RVec>         invMassPerDim,
+                                  const real                         outerDt,
+                                  const ExactRespaExtendedVvUpdate&  extendedUpdate,
+                                  ArrayRef<RVec>                     velocity)
+{
+    if (!extendedUpdate.lammpsVelocityScale)
+    {
+        return;
+    }
+
+    // LAMMPS FixNH applies nh_v_press() once on each outer r-RESPA half step.
+    // For isotropic boxes, its two quarter-step factors combine to
+    // exp(-0.5*dt*(omega_dot + omega_dot/natoms)).
+    const real scale = std::exp(-0.5_real * outerDt * extendedUpdate.veta * extendedUpdate.alpha);
+    if (exactRespaCanUseDirectUpdatePath(homenr, ptype, invMassPerDim))
+    {
+        exactRespaUpdateForAtoms(homenr, [&](const int atom)
+        {
+            velocity[atom][XX] *= scale;
+            velocity[atom][YY] *= scale;
+            velocity[atom][ZZ] *= scale;
+        });
+        return;
+    }
+
+    exactRespaUpdateForAtoms(homenr, [&](const int atom)
+    {
+        if (ptype[atom] == ParticleType::Shell)
+        {
+            return;
+        }
+        for (int d = 0; d < DIM; ++d)
+        {
+            if (invMassPerDim[atom][d] != 0)
+            {
+                velocity[atom][d] *= scale;
+            }
+        }
+    });
+}
+
+static inline real exactRespaVvPositionAfterDrift(const real currentPosition,
+                                                  const real velocity,
+                                                  const real dt,
+                                                  const ExactRespaExtendedVvUpdate& extendedUpdate)
+{
+    if (!extendedUpdate.scalePositions && !extendedUpdate.lammpsRemapPositions)
+    {
+        return currentPosition + dt * velocity;
+    }
+
+    if (extendedUpdate.lammpsRemapPositions)
+    {
+        const real halfScale = std::exp(0.5_real * dt * extendedUpdate.veta);
+        return halfScale * (halfScale * currentPosition + dt * velocity);
+    }
+
+    const real g   = 0.5_real * dt * extendedUpdate.veta;
+    const real mr1 = std::exp(g);
+    const real mr2 = gmx::series_sinhx(g);
+    return mr1 * (mr1 * currentPosition + mr2 * dt * velocity);
+}
 
 void appendPreparedRespaHalfKick(const t_inputrec&           inputRecord,
                                  const int64_t               baseStep,
@@ -652,6 +951,7 @@ void appendPreparedRespaHalfKick(const t_inputrec&           inputRecord,
     preparedHalfKicks->forcesPerKick[preparedHalfKicks->numKicks] = forceForLevel;
     preparedHalfKicks->dtPerKick[preparedHalfKicks->numKicks] =
             inputRecord.delta_t * exactRespaLevelStepFactor(inputRecord.exactRespa, mtsLevel);
+    preparedHalfKicks->levelPerKick[preparedHalfKicks->numKicks] = mtsLevel;
     ++preparedHalfKicks->numKicks;
 }
 
@@ -719,16 +1019,19 @@ void applyRespaVelocityHalfKick(const int                             homenr,
                                 const ArrayRef<const RVec>           invMassPerDim,
                                 const ArrayRef<const RVec>&          force,
                                 const real                           dt,
+                                const ExactRespaExtendedVvUpdate&    extendedUpdate,
                                 ArrayRef<RVec>                       velocity)
 {
-    const real halfDt = 0.5 * dt;
     if (exactRespaCanUseDirectUpdatePath(homenr, ptype, invMassPerDim))
     {
         exactRespaUpdateForAtoms(homenr, [&](const int atom)
         {
-            velocity[atom][XX] += halfDt * invMassPerDim[atom][XX] * force[atom][XX];
-            velocity[atom][YY] += halfDt * invMassPerDim[atom][YY] * force[atom][YY];
-            velocity[atom][ZZ] += halfDt * invMassPerDim[atom][ZZ] * force[atom][ZZ];
+            velocity[atom][XX] = exactRespaVvVelocityAfterHalfKick(
+                    velocity[atom][XX], invMassPerDim[atom][XX], force[atom][XX], dt, extendedUpdate);
+            velocity[atom][YY] = exactRespaVvVelocityAfterHalfKick(
+                    velocity[atom][YY], invMassPerDim[atom][YY], force[atom][YY], dt, extendedUpdate);
+            velocity[atom][ZZ] = exactRespaVvVelocityAfterHalfKick(
+                    velocity[atom][ZZ], invMassPerDim[atom][ZZ], force[atom][ZZ], dt, extendedUpdate);
         });
         return;
     }
@@ -744,7 +1047,8 @@ void applyRespaVelocityHalfKick(const int                             homenr,
             const real inverseMass = invMassPerDim[atom][d];
             if (inverseMass != 0)
             {
-                velocity[atom][d] += halfDt * inverseMass * force[atom][d];
+                velocity[atom][d] = exactRespaVvVelocityAfterHalfKick(
+                        velocity[atom][d], inverseMass, force[atom][d], dt, extendedUpdate);
             }
         }
     });
@@ -758,6 +1062,7 @@ void applyRespaVelocityHalfKicksFused(const int                             home
                                       const std::array<real, ExactRespaForceStore::c_numStoredLevels>&
                                                                             dtPerKick,
                                      const int                             numKicks,
+                                     const ExactRespaExtendedVvUpdate&     extendedUpdate,
                                      ArrayRef<RVec>                        velocity)
 {
     GMX_RELEASE_ASSERT(numKicks >= 0 && numKicks <= ExactRespaForceStore::c_numStoredLevels,
@@ -769,7 +1074,38 @@ void applyRespaVelocityHalfKicksFused(const int                             home
 
     if (numKicks == 1)
     {
-        applyRespaVelocityHalfKick(homenr, ptype, invMassPerDim, forcesPerKick[0], dtPerKick[0], velocity);
+        applyRespaVelocityHalfKick(
+                homenr, ptype, invMassPerDim, forcesPerKick[0], dtPerKick[0], extendedUpdate, velocity);
+        return;
+    }
+
+    if (extendedUpdate.scaleVelocities)
+    {
+        exactRespaUpdateForAtoms(homenr, [&](const int atom)
+        {
+            if (ptype[atom] == ParticleType::Shell)
+            {
+                return;
+            }
+            for (int d = 0; d < DIM; d++)
+            {
+                const real inverseMass = invMassPerDim[atom][d];
+                if (inverseMass == 0)
+                {
+                    continue;
+                }
+                real updatedVelocity = velocity[atom][d];
+                for (int kickIndex = 0; kickIndex < numKicks; ++kickIndex)
+                {
+                    updatedVelocity = exactRespaVvVelocityAfterHalfKick(updatedVelocity,
+                                                                        inverseMass,
+                                                                        forcesPerKick[kickIndex][atom][d],
+                                                                        dtPerKick[kickIndex],
+                                                                        extendedUpdate);
+                }
+                velocity[atom][d] = updatedVelocity;
+            }
+        });
         return;
     }
 
@@ -903,6 +1239,7 @@ void applyPreparedRespaHalfKicks(const int                             homenr,
                                  const ArrayRef<const ParticleType>   ptype,
                                  const ArrayRef<const RVec>           invMassPerDim,
                                  const ExactRespaPreparedHalfKicks&   preparedHalfKicks,
+                                 const ExactRespaExtendedVvUpdate&    extendedUpdate,
                                  ArrayRef<RVec>                       velocity)
 {
     if (preparedHalfKicks.numKicks == 1)
@@ -912,6 +1249,7 @@ void applyPreparedRespaHalfKicks(const int                             homenr,
                                    invMassPerDim,
                                    preparedHalfKicks.forcesPerKick[0],
                                    preparedHalfKicks.dtPerKick[0],
+                                   extendedUpdate,
                                    velocity);
     }
     else if (preparedHalfKicks.numKicks > 1)
@@ -922,6 +1260,7 @@ void applyPreparedRespaHalfKicks(const int                             homenr,
                                          preparedHalfKicks.forcesPerKick,
                                          preparedHalfKicks.dtPerKick,
                                          preparedHalfKicks.numKicks,
+                                         extendedUpdate,
                                          velocity);
     }
 }
@@ -930,6 +1269,7 @@ void driftRespaPositions(const int                             homenr,
                          const ArrayRef<const ParticleType>   ptype,
                          const ArrayRef<const RVec>           invMassPerDim,
                          const real                           dt,
+                         const ExactRespaExtendedVvUpdate&    extendedUpdate,
                          ArrayRef<RVec>                       position,
                          ArrayRef<const RVec>                 velocity)
 {
@@ -937,9 +1277,12 @@ void driftRespaPositions(const int                             homenr,
     {
         exactRespaUpdateForAtoms(homenr, [&](const int atom)
         {
-            position[atom][XX] += dt * velocity[atom][XX];
-            position[atom][YY] += dt * velocity[atom][YY];
-            position[atom][ZZ] += dt * velocity[atom][ZZ];
+            position[atom][XX] = exactRespaVvPositionAfterDrift(
+                    position[atom][XX], velocity[atom][XX], dt, extendedUpdate);
+            position[atom][YY] = exactRespaVvPositionAfterDrift(
+                    position[atom][YY], velocity[atom][YY], dt, extendedUpdate);
+            position[atom][ZZ] = exactRespaVvPositionAfterDrift(
+                    position[atom][ZZ], velocity[atom][ZZ], dt, extendedUpdate);
         });
         return;
     }
@@ -954,18 +1297,21 @@ void driftRespaPositions(const int                             homenr,
         {
             if (invMassPerDim[atom][d] != 0)
             {
-                position[atom][d] += dt * velocity[atom][d];
+                position[atom][d] = exactRespaVvPositionAfterDrift(
+                        position[atom][d], velocity[atom][d], dt, extendedUpdate);
             }
         }
     });
 }
 
 void applyPreparedRespaInitialHalfKicksAndDrift(
+        const t_inputrec&                  inputRecord,
         const int                           homenr,
         const ArrayRef<const ParticleType> ptype,
         const ArrayRef<const RVec>         invMassPerDim,
         const ExactRespaPreparedHalfKicks& preparedHalfKicks,
         const real                         driftDt,
+        const ExactRespaExtendedVvUpdate&  extendedUpdate,
         ArrayRef<RVec>                     position,
         ArrayRef<RVec>                     velocity)
 {
@@ -975,7 +1321,62 @@ void applyPreparedRespaInitialHalfKicksAndDrift(
                        "Exact r-RESPA fused initial kick count should be within the stored-level bound");
     if (preparedHalfKicks.numKicks == 0)
     {
-        driftRespaPositions(homenr, ptype, invMassPerDim, driftDt, position, velocity);
+        driftRespaPositions(homenr, ptype, invMassPerDim, driftDt, extendedUpdate, position, velocity);
+        return;
+    }
+
+    if (extendedUpdate.lammpsVelocityScale)
+    {
+        if (exactRespaPreparedKicksIncludeMttkOuterStep(inputRecord, preparedHalfKicks))
+        {
+            applyLammpsMttkVelocityScale(homenr,
+                                         ptype,
+                                         invMassPerDim,
+                                         exactRespaOuterLevelDt(inputRecord),
+                                         extendedUpdate,
+                                         velocity);
+        }
+        applyPreparedRespaHalfKicks(homenr,
+                                    ptype,
+                                    invMassPerDim,
+                                    preparedHalfKicks,
+                                    exactRespaPlainKickUpdate(extendedUpdate),
+                                    velocity);
+        driftRespaPositions(homenr, ptype, invMassPerDim, driftDt, extendedUpdate, position, velocity);
+        return;
+    }
+
+    if (extendedUpdate.scaleVelocities || extendedUpdate.scalePositions)
+    {
+        exactRespaUpdateForAtoms(homenr, [&](const int atom)
+        {
+            if (ptype[atom] == ParticleType::Shell)
+            {
+                return;
+            }
+            for (int d = 0; d < DIM; d++)
+            {
+                const real inverseMass = invMassPerDim[atom][d];
+                if (inverseMass == 0)
+                {
+                    continue;
+                }
+
+                real updatedVelocity = velocity[atom][d];
+                for (int kickIndex = 0; kickIndex < preparedHalfKicks.numKicks; ++kickIndex)
+                {
+                    updatedVelocity =
+                            exactRespaVvVelocityAfterHalfKick(updatedVelocity,
+                                                              inverseMass,
+                                                              preparedHalfKicks.forcesPerKick[kickIndex][atom][d],
+                                                              preparedHalfKicks.dtPerKick[kickIndex],
+                                                              extendedUpdate);
+                }
+                velocity[atom][d] = updatedVelocity;
+                position[atom][d] = exactRespaVvPositionAfterDrift(
+                        position[atom][d], updatedVelocity, driftDt, extendedUpdate);
+            }
+        });
         return;
     }
 
@@ -1204,12 +1605,45 @@ void applyRespaHalfKicks(const t_inputrec&                 inputRecord,
                          const int                         ddGlobalAtomIndicesCount,
                          const nonbonded_verlet_t*         nbv,
                          ForceBuffers&                     forceBuffers,
+                         const ExactRespaExtendedVvUpdate& extendedUpdate,
                          ArrayRef<RVec>                    velocity)
 {
     const ExactRespaPreparedHalfKicks preparedHalfKicks = prepareRespaHalfKicks(
             inputRecord, baseStep, phase, exactRespaForceStore, ddGlobalAtomIndices, ddGlobalAtomIndicesCount, nbv);
     GMX_UNUSED_VALUE(forceBuffers);
-    applyPreparedRespaHalfKicks(homenr, ptype, invMassPerDim, preparedHalfKicks, velocity);
+
+    if (extendedUpdate.lammpsVelocityScale)
+    {
+        const bool includesOuterLevel =
+                exactRespaPreparedKicksIncludeMttkOuterStep(inputRecord, preparedHalfKicks);
+        if (phase == RespaKickPhase::Initial && includesOuterLevel)
+        {
+            applyLammpsMttkVelocityScale(homenr,
+                                         ptype,
+                                         invMassPerDim,
+                                         exactRespaOuterLevelDt(inputRecord),
+                                         extendedUpdate,
+                                         velocity);
+        }
+        applyPreparedRespaHalfKicks(homenr,
+                                    ptype,
+                                    invMassPerDim,
+                                    preparedHalfKicks,
+                                    exactRespaPlainKickUpdate(extendedUpdate),
+                                    velocity);
+        if (phase == RespaKickPhase::Final && includesOuterLevel)
+        {
+            applyLammpsMttkVelocityScale(homenr,
+                                         ptype,
+                                         invMassPerDim,
+                                         exactRespaOuterLevelDt(inputRecord),
+                                         extendedUpdate,
+                                         velocity);
+        }
+        return;
+    }
+
+    applyPreparedRespaHalfKicks(homenr, ptype, invMassPerDim, preparedHalfKicks, extendedUpdate, velocity);
 }
 
 } // namespace
@@ -1395,6 +1829,15 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
 {
     const t_inputrec& inputRecord = exactRespaStep.inputRecord;
     const bool        useGpuUpdate = exactRespaStep.simulationWork.useGpuUpdate;
+    const ExactRespaExtendedVvUpdate extendedUpdate =
+            exactRespaExtendedVvUpdateFromState(inputRecord, *state_);
+    const bool inlineMttkBoxRemap =
+            extendedUpdate.inlineBoxRemap && exactRespaMttkInlineBoxRemapEnabled(inputRecord);
+    GMX_RELEASE_ASSERT(!useGpuUpdate
+                               || (!extendedUpdate.scaleVelocities && !extendedUpdate.scalePositions
+                                   && !extendedUpdate.lammpsVelocityScale
+                                   && !extendedUpdate.lammpsRemapPositions),
+                       "Exact r-RESPA MTTK propagation currently requires CPU update.");
     const bool        traceState = shouldRecordExactRespaStateTrace(exactRespaStep.step);
     const bool        tracePositions = exactRespaStateTraceConfig().includePositions;
     bool              copiedCoordinatesFromGpuAfterDrift = false;
@@ -1402,6 +1845,25 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
             haveDDAtomOrdering(*cr_) ? cr_->dd->globalAtomIndices.data() : nullptr;
     const int         ddGlobalAtomIndicesCount =
             haveDDAtomOrdering(*cr_) ? static_cast<int>(cr_->dd->globalAtomIndices.size()) : 0;
+    const int64_t nextStep         = exactRespaStep.step + 1;
+    const bool    nextStepIsNsStep = (inputRecord.nstlist > 0 && nextStep % inputRecord.nstlist == 0);
+    const bool    nextStepNeedsVirialForMttkPost =
+            exactRespaMttkPostTrotterNeedsNextVirial(inputRecord, exactRespaStep.step);
+    const int nextLegacyForceFlags =
+            GMX_FORCE_STATECHANGED | GMX_FORCE_ALLFORCES | (nextStepIsNsStep ? GMX_FORCE_NS : 0)
+            | (nextStepNeedsVirialForMttkPost ? GMX_FORCE_VIRIAL : 0);
+
+    MdrunScheduleWorkload nextRunSchedule = *runScheduleWork_;
+    nextRunSchedule.stepWork = setupExactRespaStepWorkload(nextLegacyForceFlags,
+                                                           inputRecord,
+                                                           nextStep,
+                                                           nextRunSchedule.domainWork,
+                                                           nextRunSchedule.simulationWork);
+    nextRunSchedule.exactRespaStepWork = setupExactRespaStepWork(nextLegacyForceFlags,
+                                                                 inputRecord,
+                                                                 nextStep,
+                                                                 nextRunSchedule.domainWork,
+                                                                 nextRunSchedule.simulationWork);
 
     if (traceState)
     {
@@ -1426,6 +1888,7 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                             ddGlobalAtomIndicesCount,
                             fr_->nbv.get(),
                             exactRespaStep.forceBuffers,
+                            extendedUpdate,
                             state_->v.arrayRefWithPadding().unpaddedArrayRef());
         if (traceState)
         {
@@ -1454,6 +1917,7 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
         fr_->stateGpu->copyVelocitiesToGpu(state_->v.arrayRefWithPadding().unpaddedArrayRef(),
                                            AtomLocality::Local);
         driftRespaPositionsOnGpu(fr_->stateGpu, exactRespaGpuUpdater_, inputRecord.delta_t);
+        fr_->stateGpu->setXUpdatedOnDeviceEventExpectedConsumptionCount(1);
         if (traceState && tracePositions)
         {
             fr_->stateGpu->copyCoordinatesFromGpu(
@@ -1479,6 +1943,7 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                                 ddGlobalAtomIndicesCount,
                                 fr_->nbv.get(),
                                 exactRespaStep.forceBuffers,
+                                extendedUpdate,
                                 state_->v.arrayRefWithPadding().unpaddedArrayRef());
             appendExactRespaStateTraceRows(exactRespaStep.step,
                                            "post_initial_kick_velocity",
@@ -1496,12 +1961,21 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                                                fr_->nbv.get());
             }
             recordExactRespaRuntimeEventForTesting(exactRespaStep.step, ExactRespaRuntimeEventType::Drift, 0);
+            if (inlineMttkBoxRemap)
+            {
+                exactRespaMttkScaleBox(*state_, 0.5_real * inputRecord.delta_t);
+            }
             driftRespaPositions(exactRespaStep.mdatoms.homenr,
                                 exactRespaStep.mdatoms.ptype,
                                 exactRespaStep.mdatoms.invMassPerDim,
                                 inputRecord.delta_t,
+                                extendedUpdate,
                                 state_->x.arrayRefWithPadding().unpaddedArrayRef(),
                                 state_->v.arrayRefWithPadding().unpaddedArrayRef());
+            if (inlineMttkBoxRemap)
+            {
+                exactRespaMttkScaleBox(*state_, 0.5_real * inputRecord.delta_t);
+            }
         }
         else if (exactRespaFusedInitialDriftEnabled())
         {
@@ -1514,13 +1988,23 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                     ddGlobalAtomIndicesCount,
                     fr_->nbv.get());
             recordExactRespaRuntimeEventForTesting(exactRespaStep.step, ExactRespaRuntimeEventType::Drift, 0);
-            applyPreparedRespaInitialHalfKicksAndDrift(exactRespaStep.mdatoms.homenr,
+            if (inlineMttkBoxRemap)
+            {
+                exactRespaMttkScaleBox(*state_, 0.5_real * inputRecord.delta_t);
+            }
+            applyPreparedRespaInitialHalfKicksAndDrift(inputRecord,
+                                                       exactRespaStep.mdatoms.homenr,
                                                        exactRespaStep.mdatoms.ptype,
                                                        exactRespaStep.mdatoms.invMassPerDim,
                                                        preparedHalfKicks,
                                                        inputRecord.delta_t,
+                                                       extendedUpdate,
                                                        state_->x.arrayRefWithPadding().unpaddedArrayRef(),
                                                        state_->v.arrayRefWithPadding().unpaddedArrayRef());
+            if (inlineMttkBoxRemap)
+            {
+                exactRespaMttkScaleBox(*state_, 0.5_real * inputRecord.delta_t);
+            }
         }
         else
         {
@@ -1535,14 +2019,24 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                                 ddGlobalAtomIndicesCount,
                                 fr_->nbv.get(),
                                 exactRespaStep.forceBuffers,
+                                extendedUpdate,
                                 state_->v.arrayRefWithPadding().unpaddedArrayRef());
             recordExactRespaRuntimeEventForTesting(exactRespaStep.step, ExactRespaRuntimeEventType::Drift, 0);
+            if (inlineMttkBoxRemap)
+            {
+                exactRespaMttkScaleBox(*state_, 0.5_real * inputRecord.delta_t);
+            }
             driftRespaPositions(exactRespaStep.mdatoms.homenr,
                                 exactRespaStep.mdatoms.ptype,
                                 exactRespaStep.mdatoms.invMassPerDim,
                                 inputRecord.delta_t,
+                                extendedUpdate,
                                 state_->x.arrayRefWithPadding().unpaddedArrayRef(),
                                 state_->v.arrayRefWithPadding().unpaddedArrayRef());
+            if (inlineMttkBoxRemap)
+            {
+                exactRespaMttkScaleBox(*state_, 0.5_real * inputRecord.delta_t);
+            }
         }
     }
     if (traceState && tracePositions)
@@ -1554,23 +2048,6 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                                        ddGlobalAtomIndicesCount,
                                        fr_->nbv.get());
     }
-
-    const int64_t nextStep         = exactRespaStep.step + 1;
-    const bool    nextStepIsNsStep = (inputRecord.nstlist > 0 && nextStep % inputRecord.nstlist == 0);
-    const int nextLegacyForceFlags =
-            GMX_FORCE_STATECHANGED | GMX_FORCE_ALLFORCES | (nextStepIsNsStep ? GMX_FORCE_NS : 0);
-
-    MdrunScheduleWorkload nextRunSchedule = *runScheduleWork_;
-    nextRunSchedule.stepWork = setupExactRespaStepWorkload(nextLegacyForceFlags,
-                                                           inputRecord,
-                                                           nextStep,
-                                                           nextRunSchedule.domainWork,
-                                                           nextRunSchedule.simulationWork);
-    nextRunSchedule.exactRespaStepWork = setupExactRespaStepWork(nextLegacyForceFlags,
-                                                                 inputRecord,
-                                                                 nextStep,
-                                                                 nextRunSchedule.domainWork,
-                                                                 nextRunSchedule.simulationWork);
 
     if (useGpuUpdate && !copiedCoordinatesFromGpuAfterDrift)
     {
@@ -1585,40 +2062,74 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
         copiedCoordinatesFromGpuAfterDrift = true;
     }
 
+    if (fr_->pbcType != PbcType::No && exactRespaStatePbcWrappingEnabled())
+    {
+        // Diagnostic-only path: per-atom wrapping can split bonded molecules
+        // across PBC and make listed 1-4 distances exceed the table range.
+        put_atoms_in_box_omp(fr_->pbcType,
+                             state_->box,
+                             fr_->haveBoxDeformation,
+                             inputRecord.deform,
+                             state_->x.arrayRefWithPadding().unpaddedArrayRef().subArray(
+                                     0, exactRespaStep.mdatoms.homenr),
+                             state_->v.arrayRefWithPadding().unpaddedArrayRef().subArray(
+                                     0, exactRespaStep.mdatoms.homenr),
+                             gmx_omp_nthreads_get(ModuleMultiThread::Default));
+    }
+
     tensor         nextForceVir = { { 0 } };
     gmx_enerdata_t& nextEnerd   = exactRespaNestedForceScratchEnerd(exactRespaStep.enerd);
     rvec           nextMuTot    = { 0, 0, 0 };
 
-    do_force(fpLog_,
-             cr_,
-             inputRecord,
-             mdModulesNotifiers_,
-             exactRespaStep.awh,
-             enforcedRotation_,
-             imdSession_,
-             pullWork_,
-             nextStep,
-             nrnb_,
-             wallCycleCounters_,
-             top_,
-             state_->box,
-             state_->x.arrayRefWithPadding(),
-             state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-             &state_->hist,
-             &exactRespaStep.forceBuffers.view(),
-             &exactRespaStep.exactRespaForceStore,
-             nextForceVir,
-             &exactRespaStep.mdatoms,
-             &nextEnerd,
-             state_->lambda,
-             fr_,
-             nextRunSchedule,
-             virtualSites_,
-             nextMuTot,
-             exactRespaStep.time + inputRecord.delta_t,
-             exactRespaStep.ed,
-             fr_->longRangeNonbondeds.get(),
-             exactRespaStep.ddBalanceRegionHandler);
+    if (!useGpuUpdate)
+    {
+        wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
+    }
+
+    {
+        const char* previousForceContextLabel = g_respaDoForceContextLabel;
+        g_respaDoForceContextLabel           = "exact_respa_next_step_force";
+        do_force(fpLog_,
+                 cr_,
+                 inputRecord,
+                 mdModulesNotifiers_,
+                 exactRespaStep.awh,
+                 enforcedRotation_,
+                 imdSession_,
+                 pullWork_,
+                 nextStep,
+                 nrnb_,
+                 wallCycleCounters_,
+                 top_,
+                 state_->box,
+                 state_->x.arrayRefWithPadding(),
+                 state_->v.arrayRefWithPadding().unpaddedArrayRef(),
+                 &state_->hist,
+                 &exactRespaStep.forceBuffers.view(),
+                 &exactRespaStep.exactRespaForceStore,
+                 nextForceVir,
+                 &exactRespaStep.mdatoms,
+                 &nextEnerd,
+                 state_->lambda,
+                 fr_,
+                 nextRunSchedule,
+                 virtualSites_,
+                 nextMuTot,
+                 exactRespaStep.time + inputRecord.delta_t,
+                 exactRespaStep.ed,
+                 fr_->longRangeNonbondeds.get(),
+                 exactRespaStep.ddBalanceRegionHandler);
+        g_respaDoForceContextLabel = previousForceContextLabel;
+    }
+    if (exactRespaReturnNextVirialEnabled() || nextStepNeedsVirialForMttkPost)
+    {
+        copy_mat(nextForceVir, exactRespaStep.forceVir);
+    }
+
+    if (!useGpuUpdate)
+    {
+        wallcycle_start(wallCycleCounters_, WallCycleCounter::Update);
+    }
 
     recordExactRespaRefreshEventsForTesting(inputRecord.exactRespa, exactRespaStep.step);
 
@@ -1633,6 +2144,7 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                         ddGlobalAtomIndicesCount,
                         fr_->nbv.get(),
                         exactRespaStep.forceBuffers,
+                        extendedUpdate,
                         state_->v.arrayRefWithPadding().unpaddedArrayRef());
     if (traceState)
     {
@@ -1654,6 +2166,8 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
 void LegacySimulator::doExactRespaNestedPrototypeStep(const ExactRespaStepContext& exactRespaStep)
 {
     const t_inputrec& inputRecord = exactRespaStep.inputRecord;
+    const ExactRespaExtendedVvUpdate extendedUpdate =
+            exactRespaExtendedVvUpdateFromState(inputRecord, *state_);
     const int*        ddGlobalAtomIndices =
             haveDDAtomOrdering(*cr_) ? cr_->dd->globalAtomIndices.data() : nullptr;
     const int         ddGlobalAtomIndicesCount =
@@ -1670,11 +2184,13 @@ void LegacySimulator::doExactRespaNestedPrototypeStep(const ExactRespaStepContex
                 ddGlobalAtomIndicesCount,
                 fr_->nbv.get());
         recordExactRespaRuntimeEventForTesting(exactRespaStep.step, ExactRespaRuntimeEventType::Drift, 0);
-        applyPreparedRespaInitialHalfKicksAndDrift(exactRespaStep.mdatoms.homenr,
+        applyPreparedRespaInitialHalfKicksAndDrift(inputRecord,
+                                                   exactRespaStep.mdatoms.homenr,
                                                    exactRespaStep.mdatoms.ptype,
                                                    exactRespaStep.mdatoms.invMassPerDim,
                                                    preparedHalfKicks,
                                                    inputRecord.delta_t,
+                                                   extendedUpdate,
                                                    state_->x.arrayRefWithPadding().unpaddedArrayRef(),
                                                    state_->v.arrayRefWithPadding().unpaddedArrayRef());
     }
@@ -1691,20 +2207,24 @@ void LegacySimulator::doExactRespaNestedPrototypeStep(const ExactRespaStepContex
                             ddGlobalAtomIndicesCount,
                             fr_->nbv.get(),
                             exactRespaStep.forceBuffers,
+                            extendedUpdate,
                             state_->v.arrayRefWithPadding().unpaddedArrayRef());
         recordExactRespaRuntimeEventForTesting(exactRespaStep.step, ExactRespaRuntimeEventType::Drift, 0);
         driftRespaPositions(exactRespaStep.mdatoms.homenr,
                             exactRespaStep.mdatoms.ptype,
                             exactRespaStep.mdatoms.invMassPerDim,
                             inputRecord.delta_t,
+                            extendedUpdate,
                             state_->x.arrayRefWithPadding().unpaddedArrayRef(),
                             state_->v.arrayRefWithPadding().unpaddedArrayRef());
     }
-
     const int64_t nextStep         = exactRespaStep.step + 1;
     const bool    nextStepIsNsStep = (inputRecord.nstlist > 0 && nextStep % inputRecord.nstlist == 0);
+    const bool    nextStepNeedsVirialForMttkPost =
+            exactRespaMttkPostTrotterNeedsNextVirial(inputRecord, exactRespaStep.step);
     const int nextLegacyForceFlags =
-            GMX_FORCE_STATECHANGED | GMX_FORCE_ALLFORCES | (nextStepIsNsStep ? GMX_FORCE_NS : 0);
+            GMX_FORCE_STATECHANGED | GMX_FORCE_ALLFORCES | (nextStepIsNsStep ? GMX_FORCE_NS : 0)
+            | (nextStepNeedsVirialForMttkPost ? GMX_FORCE_VIRIAL : 0);
 
     MdrunScheduleWorkload nextRunSchedule = *runScheduleWork_;
     nextRunSchedule.stepWork = setupExactRespaStepWorkload(nextLegacyForceFlags,
@@ -1722,36 +2242,49 @@ void LegacySimulator::doExactRespaNestedPrototypeStep(const ExactRespaStepContex
     gmx_enerdata_t& nextEnerd   = exactRespaNestedForceScratchEnerd(exactRespaStep.enerd);
     rvec           nextMuTot    = { 0, 0, 0 };
 
-    do_force(fpLog_,
-             cr_,
-             inputRecord,
-             mdModulesNotifiers_,
-             exactRespaStep.awh,
-             enforcedRotation_,
-             imdSession_,
-             pullWork_,
-             nextStep,
-             nrnb_,
-             wallCycleCounters_,
-             top_,
-             state_->box,
-             state_->x.arrayRefWithPadding(),
-             state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-             &state_->hist,
-             &exactRespaStep.forceBuffers.view(),
-             &exactRespaStep.exactRespaForceStore,
-             nextForceVir,
-             &exactRespaStep.mdatoms,
-             &nextEnerd,
-             state_->lambda,
-             fr_,
-             nextRunSchedule,
-             virtualSites_,
-             nextMuTot,
-             exactRespaStep.time + inputRecord.delta_t,
-             exactRespaStep.ed,
-             fr_->longRangeNonbondeds.get(),
-             exactRespaStep.ddBalanceRegionHandler);
+    wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
+
+    {
+        const char* previousForceContextLabel = g_respaDoForceContextLabel;
+        g_respaDoForceContextLabel           = "exact_respa_next_step_force";
+        do_force(fpLog_,
+                 cr_,
+                 inputRecord,
+                 mdModulesNotifiers_,
+                 exactRespaStep.awh,
+                 enforcedRotation_,
+                 imdSession_,
+                 pullWork_,
+                 nextStep,
+                 nrnb_,
+                 wallCycleCounters_,
+                 top_,
+                 state_->box,
+                 state_->x.arrayRefWithPadding(),
+                 state_->v.arrayRefWithPadding().unpaddedArrayRef(),
+                 &state_->hist,
+                 &exactRespaStep.forceBuffers.view(),
+                 &exactRespaStep.exactRespaForceStore,
+                 nextForceVir,
+                 &exactRespaStep.mdatoms,
+                 &nextEnerd,
+                 state_->lambda,
+                 fr_,
+                 nextRunSchedule,
+                 virtualSites_,
+                 nextMuTot,
+                 exactRespaStep.time + inputRecord.delta_t,
+                 exactRespaStep.ed,
+                 fr_->longRangeNonbondeds.get(),
+                 exactRespaStep.ddBalanceRegionHandler);
+        g_respaDoForceContextLabel = previousForceContextLabel;
+    }
+    if (exactRespaReturnNextVirialEnabled() || nextStepNeedsVirialForMttkPost)
+    {
+        copy_mat(nextForceVir, exactRespaStep.forceVir);
+    }
+
+    wallcycle_start(wallCycleCounters_, WallCycleCounter::Update);
 
     recordExactRespaRefreshEventsForTesting(inputRecord.exactRespa, exactRespaStep.step);
 
@@ -1766,6 +2299,7 @@ void LegacySimulator::doExactRespaNestedPrototypeStep(const ExactRespaStepContex
                         ddGlobalAtomIndicesCount,
                         fr_->nbv.get(),
                         exactRespaStep.forceBuffers,
+                        extendedUpdate,
                         state_->v.arrayRefWithPadding().unpaddedArrayRef());
 }
 } // namespace gmx

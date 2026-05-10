@@ -983,20 +983,22 @@ public:
                 ic_.exactRespaCpuPairSplit.nativeMultiContributionCount;
         previousNativeMultiContributions_ = ic_.exactRespaCpuPairSplit.nativeMultiContributions;
 
-        const bool useSplitLaunch =
-                stepWork.nonbondedRespaContribution != MtsNonbondedRespaContribution::Full;
-        if (useSplitLaunch)
+        const bool useExactRespaLaunch =
+                ic_.exactRespaCpuPairSplit.configured
+                || stepWork.nonbondedRespaContribution != MtsNonbondedRespaContribution::Full;
+        if (useExactRespaLaunch)
         {
             GMX_RELEASE_ASSERT(ic_.exactRespaCpuPairSplit.configured,
                                "Exact r-RESPA CPU NBNXM launches require configured split metadata");
             GMX_RELEASE_ASSERT(ic_.vdw.type == VanDerWaalsType::Cut
                                        && ic_.vdw.modifier == InteractionModifiers::None
-                                       && usingPmeOrEwald(ic_.coulomb.type)
+                                       && (usingPmeOrEwald(ic_.coulomb.type)
+                                           || ic_.coulomb.type == CoulombInteractionType::Cut)
                                        && ic_.coulomb.modifier == InteractionModifiers::None,
-                               "Exact r-RESPA CPU NBNXM launches support only cut-off LJ with PME/Ewald Coulomb and no real-space modifiers");
+                               "Exact r-RESPA CPU NBNXM launches support only cut-off LJ with PME/Ewald or Cut-off Coulomb and no real-space modifiers");
         }
 
-        ic_.exactRespaCpuPairSplit.active       = useSplitLaunch;
+        ic_.exactRespaCpuPairSplit.active       = useExactRespaLaunch;
         ic_.exactRespaCpuPairSplit.nativeMultiActive = false;
         ic_.exactRespaCpuPairSplit.contribution = stepWork.nonbondedRespaContribution;
         ic_.exactRespaCpuPairSplit.nativeMultiContributionCount = 0;
@@ -1024,9 +1026,10 @@ public:
                 "Exact r-RESPA CPU native multi-contribution launch exceeds the compiled contribution bound");
         GMX_RELEASE_ASSERT(ic_.vdw.type == VanDerWaalsType::Cut
                                    && ic_.vdw.modifier == InteractionModifiers::None
-                                   && usingPmeOrEwald(ic_.coulomb.type)
+                                   && (usingPmeOrEwald(ic_.coulomb.type)
+                                       || ic_.coulomb.type == CoulombInteractionType::Cut)
                                    && ic_.coulomb.modifier == InteractionModifiers::None,
-                           "Exact r-RESPA CPU native multi-contribution launches support only cut-off LJ with PME/Ewald Coulomb and no real-space modifiers");
+                           "Exact r-RESPA CPU native multi-contribution launches support only cut-off LJ with PME/Ewald or Cut-off Coulomb and no real-space modifiers");
 
         ic_.exactRespaCpuPairSplit.active                     = true;
         ic_.exactRespaCpuPairSplit.nativeMultiActive          = true;
@@ -1100,10 +1103,11 @@ void nonbonded_verlet_t::dispatchNonbondedKernel(gmx::InteractionLocality       
             {
                 GMX_RELEASE_ASSERT(ic.vdw.type == VanDerWaalsType::Cut
                                            && ic.vdw.modifier == InteractionModifiers::None
-                                           && usingPmeOrEwald(ic.coulomb.type)
+                                           && (usingPmeOrEwald(ic.coulomb.type)
+                                               || ic.coulomb.type == CoulombInteractionType::Cut)
                                            && ic.coulomb.modifier == InteractionModifiers::None,
                                    "GPU NBNXM exact LAMMPS-style r-RESPA launches currently "
-                                   "support only cut-off LJ with PME/Ewald Coulomb and no real-space modifiers");
+                                   "support only cut-off LJ with PME/Ewald or Cut-off Coulomb and no real-space modifiers");
             }
             gpu_launch_kernel(gpuNbv_, stepWork, iLocality);
             break;

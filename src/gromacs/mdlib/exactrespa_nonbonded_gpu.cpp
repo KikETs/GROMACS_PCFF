@@ -9,6 +9,7 @@
 #include <array>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <mutex>
 #include <sstream>
@@ -26,6 +27,7 @@
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/interaction_const.h"
 #include "gromacs/mdtypes/mdatom.h"
+#include "gromacs/mdtypes/md_enums.h"
 #include "gromacs/mdtypes/simulation_workload.h"
 #include "gromacs/nbnxm/cuda/nbnxm_cuda_types.h"
 #include "gromacs/nbnxm/nbnxm.h"
@@ -61,6 +63,13 @@ bool anyDirectVirialLevel(const ExactRespaGpuOutputView& outputView)
         }
     }
     return false;
+}
+
+bool exactRespaEwaldRealOnlyRequested(const t_inputrec& inputrec)
+{
+    const char* env = std::getenv("GMX_PCFF_EWALD_REAL_ONLY");
+    return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0 && useExactRespa(inputrec)
+           && usingPmeOrEwald(inputrec.coulombtype);
 }
 
 float computePmeSelfEnergy(const interaction_const_t& interactionConstants)
@@ -254,6 +263,8 @@ void freeDeviceBufferIfAllocated(DeviceBuffer<ValueType>* buffer)
 bool exactRespaNonbondedGpuSupported(const t_inputrec& inputrec, const t_forcerec& fr)
 {
     return (sizeof(real) == sizeof(float)) && useExactRespa(inputrec) && exactRespaHasPairSplitting(inputrec)
+           && (usingPmeOrEwald(inputrec.coulombtype)
+               || inputrec.coulombtype == CoulombInteractionType::Cut)
            && fr.completePairlistRange.has_value() && fr.nbv != nullptr;
 }
 
@@ -275,8 +286,13 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
                        "CUDA exact r-RESPA GPU path requires exact r-RESPA to be enabled");
     GMX_RELEASE_ASSERT(exactRespaHasPairSplitting(inputrec),
                        "CUDA exact r-RESPA GPU path requires standalone exact pair splitting");
-    GMX_RELEASE_ASSERT(fr->ic->coulombEwaldTables,
-                       "CUDA exact r-RESPA GPU path requires PME/Ewald tables");
+    const bool usingEwaldCoulomb  = usingPmeOrEwald(fr->ic->coulomb.type);
+    const bool usingCutoffCoulomb = (fr->ic->coulomb.type == CoulombInteractionType::Cut);
+    const bool ewaldRealOnly      = exactRespaEwaldRealOnlyRequested(inputrec);
+    GMX_RELEASE_ASSERT(usingEwaldCoulomb || usingCutoffCoulomb,
+                       "CUDA exact r-RESPA GPU path requires PME/Ewald or Cut-off Coulomb");
+    GMX_RELEASE_ASSERT(!usingEwaldCoulomb || fr->ic->coulombEwaldTables,
+                       "CUDA exact r-RESPA GPU path requires PME/Ewald tables for PME/Ewald Coulomb");
     GMX_RELEASE_ASSERT(fr->completePairlistRange.has_value(),
                        "CUDA exact r-RESPA GPU path requires a complete pairlist");
     GMX_RELEASE_ASSERT(fr->nbv != nullptr,
@@ -325,6 +341,8 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
     params.middleLevel =
             inputrec.exactRespa.forceLayout.hasMiddle() ? exactRespaNonbondedMiddleLevel(inputrec) : -1;
     params.hasMiddle       = inputrec.exactRespa.forceLayout.hasMiddle() ? 1 : 0;
+    params.coulombUsesEwaldTable = usingEwaldCoulomb ? 1 : 0;
+    params.suppressEwaldExcludedAndSelf = 0;
     params.innerOff        = inputrec.exactRespa.forceLayout.innerOff;
     params.innerOn         = inputrec.exactRespa.forceLayout.innerOn;
     params.outerOn         = inputrec.exactRespa.forceLayout.outerOn;
@@ -335,10 +353,13 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
     params.invRepulsionPower =
             (params.repulsionPower != 0.0F) ? (1.0F / params.repulsionPower) : 0.0F;
     params.epsfac                 = fr->ic->coulomb.epsfac;
-    params.ewaldShift             = fr->ic->coulomb.ewaldShift;
-    params.coulombTableScale      = fr->ic->coulombEwaldTables->scale;
-    params.coulombTableElementCount =
-            static_cast<int>(fr->ic->coulombEwaldTables->tableFDV0.size());
+    if (usingEwaldCoulomb)
+    {
+        params.ewaldShift             = fr->ic->coulomb.ewaldShift;
+        params.coulombTableScale      = fr->ic->coulombEwaldTables->scale;
+        params.coulombTableElementCount =
+                static_cast<int>(fr->ic->coulombEwaldTables->tableFDV0.size());
+    }
 
     for (int level = 0; level < ExactRespaGpuOutputView::c_numLevels; ++level)
     {
@@ -393,7 +414,12 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
     allocateDeviceBuffer(&d_atomTypes, mdatoms.typeA.size(), deviceContext);
     allocateDeviceBuffer(&d_atomCharges, mdatoms.chargeA.size(), deviceContext);
     allocateDeviceBuffer(&d_nbfp, fr->nbfp.size(), deviceContext);
-    allocateDeviceBuffer(&d_coulombTable, fr->ic->coulombEwaldTables->tableFDV0.size(), deviceContext);
+    if (usingEwaldCoulomb)
+    {
+        allocateDeviceBuffer(&d_coulombTable,
+                             fr->ic->coulombEwaldTables->tableFDV0.size(),
+                             deviceContext);
+    }
 
     clearDeviceBufferAsync(&d_levelForces,
                            0,
@@ -454,13 +480,16 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
                        deviceStream,
                        GpuApiCallBehavior::Sync,
                        nullptr);
-    copyToDeviceBuffer(&d_coulombTable,
-                       fr->ic->coulombEwaldTables->tableFDV0.data(),
-                       0,
-                       fr->ic->coulombEwaldTables->tableFDV0.size(),
-                       deviceStream,
-                       GpuApiCallBehavior::Sync,
-                       nullptr);
+    if (usingEwaldCoulomb)
+    {
+        copyToDeviceBuffer(&d_coulombTable,
+                           fr->ic->coulombEwaldTables->tableFDV0.data(),
+                           0,
+                           fr->ic->coulombEwaldTables->tableFDV0.size(),
+                           deviceStream,
+                           GpuApiCallBehavior::Sync,
+                           nullptr);
+    }
 
     launchExactRespaNonbondedGpuKernel(params,
                                        d_pairEntries,
@@ -556,20 +585,23 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
         enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR][0] +=
                 h_levelCoulombEnergies[params.outerLevel];
 
-        const float pmeSelfEnergy = computePmeSelfEnergy(*fr->ic);
         float       selfEnergyTotal = 0.0F;
         int         selfEnergyCount = 0;
-        for (int atom = 0; atom < fr->natoms_force_constr; ++atom)
+        if (usingEwaldCoulomb && !ewaldRealOnly)
         {
-            const float charge = mdatoms.chargeA[atom];
-            if (charge == 0.0F)
+            const float pmeSelfEnergy = computePmeSelfEnergy(*fr->ic);
+            for (int atom = 0; atom < fr->natoms_force_constr; ++atom)
             {
-                continue;
+                const float charge = mdatoms.chargeA[atom];
+                if (charge == 0.0F)
+                {
+                    continue;
+                }
+                const float selfEnergy = -fr->ic->coulomb.epsfac * charge * charge * pmeSelfEnergy;
+                enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR][0] += selfEnergy;
+                selfEnergyTotal += selfEnergy;
+                ++selfEnergyCount;
             }
-            const float selfEnergy = -fr->ic->coulomb.epsfac * charge * charge * pmeSelfEnergy;
-            enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR][0] += selfEnergy;
-            selfEnergyTotal += selfEnergy;
-            ++selfEnergyCount;
         }
         if (shouldTraceCpuCorrectionEnergiesStep(step))
         {

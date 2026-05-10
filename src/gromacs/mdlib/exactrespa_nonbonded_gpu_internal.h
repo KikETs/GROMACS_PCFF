@@ -35,6 +35,8 @@ struct ExactRespaGpuRuntimeParams
     int   middleLevel             = -1;
     int   outerLevel              = -1;
     int   hasMiddle               = 0;
+    int   coulombUsesEwaldTable   = 0;
+    int   suppressEwaldExcludedAndSelf = 0;
     int   coulombTableElementCount = 0;
     float innerOff                = 0.0F;
     float innerOn                 = 0.0F;

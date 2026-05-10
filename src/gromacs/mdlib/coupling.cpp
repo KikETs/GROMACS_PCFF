@@ -38,11 +38,15 @@
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
 #include <filesystem>
 #include <numeric>
 #include <string>
+#include <vector>
 
 #include "gromacs/domdec/domdec_struct.h"
 #include "gromacs/gmxlib/nrnb.h"
@@ -105,6 +109,190 @@ static const double sy_const_5[] = { 0.2967324292201065,
 
 static constexpr std::array<const double*, 6> sy_const = { nullptr,    sy_const_1, nullptr,
                                                            sy_const_3, nullptr,    sy_const_5 };
+
+enum PcffFixNhMassMask : unsigned
+{
+    pcffFixNhMassNone                = 0,
+    pcffFixNhThermostatMass          = 1U << 0,
+    pcffFixNhPressureMass            = 1U << 1,
+    pcffFixNhPressureThermostatMass  = 1U << 2,
+    pcffFixNhAllMasses               = pcffFixNhThermostatMass | pcffFixNhPressureMass
+                         | pcffFixNhPressureThermostatMass,
+};
+
+static unsigned pcffLammpsFixNhMassMask()
+{
+    const char* value = std::getenv("GMX_PCFF_MTTK_MASS_MODE");
+    if (value == nullptr || *value == '\0')
+    {
+        return pcffFixNhMassNone;
+    }
+
+    const std::string mode(value);
+    if (mode == "0" || mode == "off" || mode == "false" || mode == "FALSE" || mode == "gromacs")
+    {
+        return pcffFixNhMassNone;
+    }
+    if (mode == "lammps" || mode == "lammps_fixnh" || mode == "lammps_pdamp")
+    {
+        return pcffFixNhAllMasses;
+    }
+    if (mode == "lammps_tchain" || mode == "lammps_thermostat")
+    {
+        return pcffFixNhThermostatMass;
+    }
+    if (mode == "lammps_pmass" || mode == "lammps_pressure")
+    {
+        return pcffFixNhPressureMass;
+    }
+    if (mode == "lammps_pchain" || mode == "lammps_pressure_thermostat")
+    {
+        return pcffFixNhPressureThermostatMass;
+    }
+    if (mode == "lammps_tchain_pmass")
+    {
+        return pcffFixNhThermostatMass | pcffFixNhPressureMass;
+    }
+    if (mode == "lammps_tchain_pchain")
+    {
+        return pcffFixNhThermostatMass | pcffFixNhPressureThermostatMass;
+    }
+    if (mode == "lammps_pmass_pchain")
+    {
+        return pcffFixNhPressureMass | pcffFixNhPressureThermostatMass;
+    }
+
+    gmx_fatal(FARGS,
+              "Invalid GMX_PCFF_MTTK_MASS_MODE='%s'. Supported values are gromacs/off "
+              "or lammps/lammps_fixnh/lammps_pdamp plus diagnostic component modes "
+              "lammps_tchain, lammps_pmass, lammps_pchain, lammps_tchain_pmass, "
+              "lammps_tchain_pchain, lammps_pmass_pchain.",
+              value);
+    return pcffFixNhMassNone;
+}
+
+static bool pcffUseLammpsFixNhThermostatMassMode()
+{
+    return (pcffLammpsFixNhMassMask() & pcffFixNhThermostatMass) != 0;
+}
+
+static bool pcffUseLammpsFixNhPressureMassMode()
+{
+    return (pcffLammpsFixNhMassMask() & pcffFixNhPressureMass) != 0;
+}
+
+static bool pcffUseLammpsFixNhPressureThermostatMassMode()
+{
+    return (pcffLammpsFixNhMassMask() & pcffFixNhPressureThermostatMass) != 0;
+}
+
+static double pcffReadPositiveEnvRealOrDefault(const char* name, const double defaultValue)
+{
+    const char* text = std::getenv(name);
+    if (text == nullptr || *text == '\0')
+    {
+        if (defaultValue <= 0)
+        {
+            gmx_fatal(FARGS, "%s is required and must be positive.", name);
+        }
+        return defaultValue;
+    }
+
+    char*        end    = nullptr;
+    const double parsed = std::strtod(text, &end);
+    if (end == text || (end != nullptr && *end != '\0') || parsed <= 0)
+    {
+        gmx_fatal(FARGS, "%s must be a positive floating point value, got '%s'.", name, text);
+    }
+    return parsed;
+}
+
+static double pcffReadPositiveEnvRealRequired(const char* name)
+{
+    return pcffReadPositiveEnvRealOrDefault(name, -1.0);
+}
+
+static double pcffLammpsFixNhPdampPs(const t_inputrec& ir)
+{
+    return pcffReadPositiveEnvRealOrDefault("GMX_PCFF_MTTK_LAMMPS_PDAMP_PS",
+                                            ir.pressureCouplingOptions.tau_p);
+}
+
+static double pcffLammpsFixNhPressureMassScale()
+{
+    return pcffReadPositiveEnvRealOrDefault("GMX_PCFF_MTTK_PRESSURE_MASS_SCALE", 1.0);
+}
+
+static double pcffLammpsFixNhPressureWinv(const t_inputrec& ir, const real ensembleTemperature)
+{
+    const double natoms             = pcffReadPositiveEnvRealRequired("GMX_PCFF_MTTK_LAMMPS_NATOMS");
+    const double pdampPs            = pcffLammpsFixNhPdampPs(ir);
+    const double pressureMassScale  = pcffLammpsFixNhPressureMassScale();
+    const double kT                 = gmx::c_boltz * ensembleTemperature;
+    if (kT <= 0)
+    {
+        gmx_fatal(FARGS, "LAMMPS FixNH MTTK mass mode requires a positive ensemble temperature.");
+    }
+
+    // LAMMPS FixNH stores one omega_mass per barostatted diagonal dimension:
+    // omega_mass=(natoms+1)*kT*pdamp^2. GROMACS updates one isotropic scalar
+    // with the pressure trace, so divide Winv by DIM to map to the per-axis
+    // LAMMPS omega_dot response.
+    return 1.0 / (pressureMassScale * DIM * (natoms + 1.0) * kT * gmx::square(pdampPs));
+}
+
+static double pcffNoseHooverInvMass(const double periodPs, const double degreesOfFreedom, const double kT)
+{
+    return 1.0 / (gmx::square(periodPs) * degreesOfFreedom * kT);
+}
+
+static bool pcffUseLammpsFixNhChainIntegrator()
+{
+    const char* value = std::getenv("GMX_PCFF_NHC_INTEGRATOR");
+    if (value == nullptr || *value == '\0')
+    {
+        return false;
+    }
+    return std::strcmp(value, "lammps") == 0 || std::strcmp(value, "lammps_fixnh") == 0
+           || std::strcmp(value, "fixnh") == 0 || std::strcmp(value, "1") == 0;
+}
+
+static bool pcffUseLammpsFixNhBoxvIntegrator()
+{
+    const char* value = std::getenv("GMX_PCFF_MTTK_BOXV_INTEGRATOR");
+    if (value == nullptr || *value == '\0')
+    {
+        return false;
+    }
+    if (std::strcmp(value, "0") == 0 || std::strcmp(value, "off") == 0
+        || std::strcmp(value, "false") == 0 || std::strcmp(value, "FALSE") == 0
+        || std::strcmp(value, "gromacs") == 0)
+    {
+        return false;
+    }
+    if (std::strcmp(value, "lammps") == 0 || std::strcmp(value, "lammps_fixnh") == 0
+        || std::strcmp(value, "fixnh") == 0 || std::strcmp(value, "1") == 0)
+    {
+        return true;
+    }
+    gmx_fatal(FARGS,
+              "Invalid GMX_PCFF_MTTK_BOXV_INTEGRATOR='%s'. Supported values are "
+              "off/gromacs or lammps/lammps_fixnh/fixnh/1.",
+              value);
+    return false;
+}
+
+static double pcffLammpsNhcOuterForce(gmx::ArrayRef<const double> iQinv,
+                                      const double*               vxi,
+                                      const int                   j,
+                                      const double                kT)
+{
+    if (j <= 0 || iQinv[j] <= 0 || iQinv[j - 1] <= 0)
+    {
+        return 0.0;
+    }
+    return iQinv[j] * ((gmx::square(vxi[j - 1]) / iQinv[j - 1]) - kT);
+}
 
 static void nosehoover_tcoupl(const gmx_ekindata_t& ekind,
                               real                  dt,
@@ -463,6 +651,122 @@ static void NHC_trotter(const t_grpopts*      opts,
     int     ns = SUZUKI_YOSHIDA_NUM; /* set the degree of integration in the types/state.h file */
     int     nh = opts->nhchainlength;
 
+    if (pcffUseLammpsFixNhChainIntegrator())
+    {
+        const bool useBarostatChain = (scalefac == nullptr);
+        const bool updateThermostatMassFromTarget =
+                !useBarostatChain && pcffUseLammpsFixNhThermostatMassMode();
+        std::vector<double> targetTemperatureQinv(updateThermostatMassFromTarget ? nh : 0);
+        for (i = 0; i < nvar; i++)
+        {
+            ivxi = &vxi[i * nh];
+            ixi  = &xi[i * nh];
+
+            gmx::ArrayRef<const double> iQinv;
+            if (useBarostatChain)
+            {
+                iQinv = gmx::arrayRefFromArray(&MassQ->QPinv[i * nh], nh);
+                nd    = 1.0;
+                reft  = std::max<real>(0, ekind->currentEnsembleTemperature());
+                Ekin  = gmx::square(*veta) / MassQ->Winv;
+            }
+            else
+            {
+                iQinv                      = gmx::arrayRefFromArray(&MassQ->Qinv[i * nh], nh);
+                const t_grp_tcstat* tcstat = &ekind->tcstat[i];
+                nd                         = opts->nrdf[i];
+                reft                       = std::max<real>(0, ekind->currentReferenceTemperature(i));
+                if (bEkinAveVel)
+                {
+                    Ekin = 2 * trace(tcstat->ekinf) * tcstat->ekinscalef_nhc;
+                }
+                else
+                {
+                    Ekin = 2 * trace(tcstat->ekinh) * tcstat->ekinscaleh_nhc;
+                }
+            }
+
+            kT = gmx::c_boltz * reft;
+            if (nh <= 0 || kT <= 0)
+            {
+                continue;
+            }
+
+            if (updateThermostatMassFromTarget && opts->tau_t[i] > 0 && nd > 0)
+            {
+                // LAMMPS FixNH keeps eta_mass_flag enabled and refreshes
+                // particle thermostat masses from t_target inside nhc_temp_integrate().
+                for (j = 0; j < nh; j++)
+                {
+                    const double ndj = (j == 0) ? nd : 1.0;
+                    targetTemperatureQinv[j] = pcffNoseHooverInvMass(opts->tau_t[i], ndj, kT);
+                }
+                iQinv = gmx::makeConstArrayRef(targetTemperatureQinv);
+            }
+
+            std::vector<double> lammpsGQ(nh, 0.0);
+            lammpsGQ[0] = iQinv[0] * (Ekin - nd * kT);
+            for (j = 1; j < nh; j++)
+            {
+                lammpsGQ[j] = pcffLammpsNhcOuterForce(iQinv, ivxi, j, kT);
+            }
+
+            const double dt8     = 0.125 * dtfull;
+            const double dt4     = 0.25 * dtfull;
+            const double dthalf  = 0.5 * dtfull;
+            for (j = nh - 1; j > 0; j--)
+            {
+                const double nextVxi = (j + 1 < nh) ? ivxi[j + 1] : 0.0;
+                Efac                 = std::exp(-dt8 * nextVxi);
+                ivxi[j]              = Efac * (ivxi[j] + dt4 * lammpsGQ[j]) * Efac;
+            }
+
+            Efac    = std::exp(-dt8 * ((nh > 1) ? ivxi[1] : 0.0));
+            ivxi[0] = Efac * (ivxi[0] + dt4 * lammpsGQ[0]) * Efac;
+
+            if (useBarostatChain)
+            {
+                // LAMMPS FixNH::nhc_press_integrate() advances the barostat
+                // thermostat coordinates before scaling omega_dot.  The particle
+                // thermostat path advances eta after velocity scaling.
+                for (j = 0; j < nh; j++)
+                {
+                    ixi[j] += dthalf * ivxi[j];
+                }
+            }
+
+            const double scale = std::exp(-dthalf * ivxi[0]);
+            if (useBarostatChain)
+            {
+                *veta *= scale;
+            }
+            else
+            {
+                scalefac[i] *= scale;
+            }
+            Ekin *= scale * scale;
+
+            lammpsGQ[0] = iQinv[0] * (Ekin - nd * kT);
+            if (!useBarostatChain)
+            {
+                for (j = 0; j < nh; j++)
+                {
+                    ixi[j] += dthalf * ivxi[j];
+                }
+            }
+
+            ivxi[0] = Efac * (ivxi[0] + dt4 * lammpsGQ[0]) * Efac;
+            for (j = 1; j < nh; j++)
+            {
+                const double nextVxi = (j + 1 < nh) ? ivxi[j + 1] : 0.0;
+                Efac                 = std::exp(-dt8 * nextVxi);
+                lammpsGQ[j] = pcffLammpsNhcOuterForce(iQinv, ivxi, j, kT);
+                ivxi[j]     = Efac * (ivxi[j] + dt4 * lammpsGQ[j]) * Efac;
+            }
+        }
+        return;
+    }
+
     snew(GQ, nh);
     mstepsi = mstepsj = ns;
 
@@ -581,20 +885,142 @@ static void NHC_trotter(const t_grpopts*      opts,
     sfree(GQ);
 }
 
+static const char* pcffTrotterSequenceName(const TrotterSequence sequence)
+{
+    switch (sequence)
+    {
+        case TrotterSequence::Zero: return "zero";
+        case TrotterSequence::One: return "one";
+        case TrotterSequence::Two: return "two";
+        case TrotterSequence::Three: return "three";
+        case TrotterSequence::Four: return "four";
+        default: return "unknown";
+    }
+}
+
+static const char* pcffTrotterPartName(const int part)
+{
+    switch (part)
+    {
+        case etrtBAROV: return "barov";
+        case etrtBAROV2: return "barov2";
+        case etrtBARONHC: return "baronhc";
+        case etrtBARONHC2: return "baronhc2";
+        case etrtNHC: return "nhc";
+        case etrtNHC2: return "nhc2";
+        case etrtNONE: return "none";
+        case etrtSKIPALL: return "skipall";
+        default: return "unknown";
+    }
+}
+
+static const char* pcffMttkBoxvTracePath()
+{
+    static const std::string path = []()
+    {
+        const char* value = std::getenv("GMX_PCFF_MTTK_BOXV_TRACE_FILE");
+        if (value == nullptr || *value == '\0')
+        {
+            return std::string();
+        }
+        std::filesystem::path tracePath(value);
+        if (tracePath.has_parent_path())
+        {
+            std::filesystem::create_directories(tracePath.parent_path());
+        }
+        if (FILE* fp = std::fopen(value, "w"))
+        {
+            std::fprintf(fp,
+                         "call,step,sequence,part,dt_ps,veta_before,veta_after,delta_veta,"
+                         "volume_nm3,alpha,ekin_scale_nhc,ekin_trace,ekinmod_trace,vir_trace,"
+                         "raw_pscal_bar,mod_pscal_bar,raw_pres_trace_bar,mod_pres_trace_bar,"
+                         "ref_trace_bar,winv,gw_ps2\n");
+            std::fclose(fp);
+        }
+        else
+        {
+            gmx_fatal(FARGS, "Could not open GMX_PCFF_MTTK_BOXV_TRACE_FILE for writing");
+        }
+        return std::string(value);
+    }();
+    return path.empty() ? nullptr : path.c_str();
+}
+
+static void pcffAppendMttkBoxvTrace(const int64_t         step,
+                                    const TrotterSequence sequence,
+                                    const int             part,
+                                    const real            delta_t,
+                                    const real            vetaBefore,
+                                    const real            vetaAfter,
+                                    const real            volume,
+                                    const double          alpha,
+                                    const real            ekinScaleNhc,
+                                    const tensor          ekin,
+                                    const tensor          ekinmod,
+                                    const tensor          vir,
+                                    const real            rawPscal,
+                                    const real            modPscal,
+                                    const tensor          rawPres,
+                                    const tensor          modPres,
+                                    const real            refTrace,
+                                    const real            winv,
+                                    const real            gw)
+{
+    const char* path = pcffMttkBoxvTracePath();
+    if (path == nullptr)
+    {
+        return;
+    }
+
+    static int64_t callIndex = 0;
+    if (FILE* fp = std::fopen(path, "a"))
+    {
+        std::fprintf(fp,
+                     "%" PRId64 ",%" PRId64 ",%s,%s,%.17g,%.17g,%.17g,%.17g,"
+                     "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,"
+                     "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g\n",
+                     callIndex++,
+                     step,
+                     pcffTrotterSequenceName(sequence),
+                     pcffTrotterPartName(part),
+                     static_cast<double>(delta_t),
+                     static_cast<double>(vetaBefore),
+                     static_cast<double>(vetaAfter),
+                     static_cast<double>(vetaAfter - vetaBefore),
+                     static_cast<double>(volume),
+                     alpha,
+                     static_cast<double>(ekinScaleNhc),
+                     static_cast<double>(trace(ekin)),
+                     static_cast<double>(trace(ekinmod)),
+                     static_cast<double>(trace(vir)),
+                     static_cast<double>(rawPscal),
+                     static_cast<double>(modPscal),
+                     static_cast<double>(trace(rawPres)),
+                     static_cast<double>(trace(modPres)),
+                     static_cast<double>(refTrace),
+                     static_cast<double>(winv),
+                     static_cast<double>(gw));
+        std::fclose(fp);
+    }
+}
+
 static void boxv_trotter(const t_inputrec*     ir,
-                         real*                 veta,
-                         real                  delta_t,
-                         const tensor          box,
+                         int64_t              step,
+                         TrotterSequence      sequence,
+                         int                  part,
+                         real*                veta,
+                         real                 delta_t,
+                         const tensor         box,
                          const gmx_ekindata_t* ekind,
-                         const tensor          vir,
-                         const t_extmass*      MassQ)
+                         const tensor         vir,
+                         const t_extmass*     MassQ)
 {
 
     real   pscal;
     double alpha;
     int    nwall;
     real   GW, vol;
-    tensor ekinmod, localpres;
+    tensor ekinmod, localpres, rawpres;
 
     /* The heat bath is coupled to a separate barostat, the last temperature group.  In the
        2006 Tuckerman et al paper., the order is iL_{T_baro} iL {T_part}
@@ -622,18 +1048,77 @@ static void boxv_trotter(const t_inputrec*     ir,
     }
     /* alpha factor for phase space volume, then multiply by the ekin scaling factor.  */
     alpha = 1.0 + DIM / (static_cast<double>(ir->opts.nrdf[0]));
-    alpha *= ekind->tcstat[0].ekinscalef_nhc;
+    const real ekinScaleNhc = ekind->tcstat[0].ekinscalef_nhc;
+    alpha *= ekinScaleNhc;
     msmul(ekind->ekin, alpha, ekinmod);
     /* for now, we use Elr = 0, because if you want to get it right, you
        really should be using PME. Maybe print a warning? */
 
+    const real rawPscal = calc_pres(ir->pbcType, nwall, box, ekind->ekin, vir, rawpres);
     pscal = calc_pres(ir->pbcType, nwall, box, ekinmod, vir, localpres);
 
     vol = det(box);
-    GW  = (vol * (MassQ->Winv / gmx::c_presfac))
-         * (DIM * pscal - trace(ir->pressureCouplingOptions.ref_p)); /* W is in ps^2 * bar * nm^3 */
+    if (pcffUseLammpsFixNhBoxvIntegrator())
+    {
+        if (!pcffUseLammpsFixNhPressureMassMode())
+        {
+            gmx_fatal(FARGS,
+                      "GMX_PCFF_MTTK_BOXV_INTEGRATOR=lammps requires "
+                      "GMX_PCFF_MTTK_MASS_MODE to include the LAMMPS pressure mass.");
+        }
+        if (ir->pressureCouplingOptions.epct != PressureCouplingType::Isotropic)
+        {
+            gmx_fatal(FARGS,
+                      "GMX_PCFF_MTTK_BOXV_INTEGRATOR=lammps currently supports only "
+                      "isotropic MTTK pressure coupling.");
+        }
 
+        tensor lammpsEkin;
+        msmul(ekind->ekin, ekinScaleNhc, lammpsEkin);
+        tensor lammpsPres;
+        pscal = calc_pres(ir->pbcType, nwall, box, lammpsEkin, vir, lammpsPres);
+
+        const double natoms = pcffReadPositiveEnvRealRequired("GMX_PCFF_MTTK_LAMMPS_NATOMS");
+        const double refPressureScalar = trace(ir->pressureCouplingOptions.ref_p) / DIM;
+        const double kineticTrace      = trace(lammpsEkin);
+
+        // LAMMPS FixNH::nh_omega_dot(), ISO case:
+        // f_omega = (p_current - p_target) * V / (omega_mass * nktv2p)
+        //         + tdof * k_B * T_current / (pdim * natoms * omega_mass).
+        // Here MassQ->Winv = 1 / (DIM * omega_mass), c_presfac maps
+        // kJ mol^-1 nm^-3 to bar, and tdof*kBT = 2*K.
+        GW = DIM * MassQ->Winv
+             * (vol * (pscal - refPressureScalar) / gmx::c_presfac
+                + 2.0 * kineticTrace / (DIM * natoms));
+    }
+    else
+    {
+        GW = (vol * (MassQ->Winv / gmx::c_presfac))
+             * (DIM * pscal
+                - trace(ir->pressureCouplingOptions.ref_p)); /* W is in ps^2 * bar * nm^3 */
+    }
+
+    const real vetaBefore = *veta;
     *veta += 0.5 * delta_t * GW;
+    pcffAppendMttkBoxvTrace(step,
+                            sequence,
+                            part,
+                            delta_t,
+                            vetaBefore,
+                            *veta,
+                            vol,
+                            alpha,
+                            ekinScaleNhc,
+                            ekind->ekin,
+                            ekinmod,
+                            vir,
+                            rawPscal,
+                            pscal,
+                            rawpres,
+                            localpres,
+                            trace(ir->pressureCouplingOptions.ref_p),
+                            MassQ->Winv,
+                            GW);
 }
 
 /*
@@ -1527,18 +2012,29 @@ void trotter_update(const t_inputrec*                   ir,
     rvec             sumv = { 0, 0, 0 };
     bool             bCouple;
 
-    if (trotter_seqno <= TrotterSequence::Two)
+    if (ir->exactRespa.enabled() && ir->eI == IntegrationAlgorithm::VV
+        && (inputrecNvtTrotter(ir) || inputrecNptTrotter(ir) || inputrecNphTrotter(ir)))
     {
-        step_eff = step - 1; /* the velocity verlet calls are actually out of order -- the first
-                                half step is actually the last half step from the previous step.
-                                Thus the first half step actually corresponds to the n-1 step*/
+        // LAMMPS FixNH r-RESPA applies the first extended-variable half update at
+        // the beginning of each outer step and the second half at the end.
+        bCouple = (ir->nsttcouple == 1)
+                  || do_per_step((trotter_seqno == TrotterSequence::Two) ? step : step + 1,
+                                 ir->nsttcouple);
     }
     else
     {
-        step_eff = step;
+        if (trotter_seqno <= TrotterSequence::Two)
+        {
+            step_eff = step - 1; /* the velocity verlet calls are actually out of order -- the first
+                                    half step is actually the last half step from the previous step.
+                                    Thus the first half step actually corresponds to the n-1 step*/
+        }
+        else
+        {
+            step_eff = step;
+        }
+        bCouple = (ir->nsttcouple == 1 || do_per_step(step_eff + ir->nsttcouple, ir->nsttcouple));
     }
-
-    bCouple = (ir->nsttcouple == 1 || do_per_step(step_eff + ir->nsttcouple, ir->nsttcouple));
 
     const gmx::ArrayRef<const int> trotter_seq = trotter_seqlist[static_cast<int>(trotter_seqno)];
 
@@ -1575,7 +2071,16 @@ void trotter_update(const t_inputrec*                   ir,
         {
             case etrtBAROV:
             case etrtBAROV2:
-                boxv_trotter(ir, &(state->veta), dt, state->box, ekind, vir, MassQ);
+                boxv_trotter(ir,
+                             step,
+                             trotter_seqno,
+                             trotter_seq[i],
+                             &(state->veta),
+                             dt,
+                             state->box,
+                             ekind,
+                             vir,
+                             MassQ);
                 break;
             case etrtBARONHC:
             case etrtBARONHC2:
@@ -1654,6 +2159,9 @@ void init_npt_masses(const t_inputrec& ir, const gmx_ekindata_t& ekind, t_state*
     ngtc = opts->ngtc;
     nh   = state->nhchainlength;
 
+    const bool useLammpsFixNhThermostatMass = pcffUseLammpsFixNhThermostatMassMode();
+    const bool useLammpsFixNhPressureMass   = pcffUseLammpsFixNhPressureMassMode();
+
     if (ir.eI == IntegrationAlgorithm::MD)
     {
         if (bInit)
@@ -1664,8 +2172,10 @@ void init_npt_masses(const t_inputrec& ir, const gmx_ekindata_t& ekind, t_state*
         {
             if (opts->tau_t[i] > 0 && ekind.currentReferenceTemperature(i) > 0)
             {
-                MassQ->Qinv[i] =
-                        1.0 / (gmx::square(opts->tau_t[i] / M_2PI) * ekind.currentReferenceTemperature(i));
+                const real thermostatPeriod =
+                        useLammpsFixNhThermostatMass ? opts->tau_t[i] : opts->tau_t[i] / M_2PI;
+                MassQ->Qinv[i] = 1.0 / (gmx::square(thermostatPeriod)
+                                         * ekind.currentReferenceTemperature(i));
             }
             else
             {
@@ -1690,9 +2200,16 @@ void init_npt_masses(const t_inputrec& ir, const gmx_ekindata_t& ekind, t_state*
 
         /* units are nm^3 * ns^2 / (nm^3 * bar / kJ/mol) = kJ/mol  */
         /* Consider evaluating eventually if this the right mass to use.  All are correct, some might be more stable  */
-        MassQ->Winv = (gmx::c_presfac * trace(ir.pressureCouplingOptions.compress) * gmx::c_boltz
-                       * ekind.currentEnsembleTemperature())
-                      / (DIM * state->vol0 * gmx::square(ir.pressureCouplingOptions.tau_p / M_2PI));
+        if (useLammpsFixNhPressureMass && ir.pressureCouplingOptions.epc == PressureCoupling::Mttk)
+        {
+            MassQ->Winv = pcffLammpsFixNhPressureWinv(ir, ekind.currentEnsembleTemperature());
+        }
+        else
+        {
+            MassQ->Winv = (gmx::c_presfac * trace(ir.pressureCouplingOptions.compress) * gmx::c_boltz
+                           * ekind.currentEnsembleTemperature())
+                          / (DIM * state->vol0 * gmx::square(ir.pressureCouplingOptions.tau_p / M_2PI));
+        }
         /* Allocate space for thermostat variables */
         if (bInit)
         {
@@ -1717,7 +2234,9 @@ void init_npt_masses(const t_inputrec& ir, const gmx_ekindata_t& ekind, t_state*
                     {
                         ndj = 1;
                     }
-                    MassQ->Qinv[i * nh + j] = 1.0 / (gmx::square(opts->tau_t[i] / M_2PI) * ndj * kT);
+                    const real thermostatPeriod =
+                            useLammpsFixNhThermostatMass ? opts->tau_t[i] : opts->tau_t[i] / M_2PI;
+                    MassQ->Qinv[i * nh + j] = pcffNoseHooverInvMass(thermostatPeriod, ndj, kT);
                 }
             }
             else
@@ -1790,15 +2309,32 @@ gmx::EnumerationArray<TrotterSequence, std::vector<int>> init_npt_vars(const t_i
 
             /* trotter_seq[1] is etrtNHC for 1/2 step velocities - leave zero */
 
-            /* The first half trotter update */
-            trotter_seq[2][0] = etrtBAROV;
-            trotter_seq[2][1] = etrtNHC;
-            trotter_seq[2][2] = etrtBARONHC;
+            if (ir->exactRespa.enabled() && pcffUseLammpsFixNhChainIntegrator())
+            {
+                // LAMMPS FixNH r-RESPA calls nhc_press_integrate(), nhc_temp_integrate(),
+                // then nh_omega_dot() in initial_integrate_respa(); final_integrate_respa()
+                // applies the reverse half: nh_omega_dot(), nhc_temp_integrate(),
+                // nhc_press_integrate().
+                trotter_seq[2][0] = etrtBARONHC;
+                trotter_seq[2][1] = etrtNHC;
+                trotter_seq[2][2] = etrtBAROV;
 
-            /* The second half trotter update */
-            trotter_seq[3][0] = etrtBARONHC;
-            trotter_seq[3][1] = etrtNHC;
-            trotter_seq[3][2] = etrtBAROV;
+                trotter_seq[3][0] = etrtBAROV;
+                trotter_seq[3][1] = etrtNHC;
+                trotter_seq[3][2] = etrtBARONHC;
+            }
+            else
+            {
+                /* The first half trotter update */
+                trotter_seq[2][0] = etrtBAROV;
+                trotter_seq[2][1] = etrtNHC;
+                trotter_seq[2][2] = etrtBARONHC;
+
+                /* The second half trotter update */
+                trotter_seq[3][0] = etrtBARONHC;
+                trotter_seq[3][1] = etrtNHC;
+                trotter_seq[3][2] = etrtBAROV;
+            }
 
             /* trotter_seq[4] is etrtNHC for second 1/2 step velocities - leave zero */
         }
@@ -1889,10 +2425,17 @@ gmx::EnumerationArray<TrotterSequence, std::vector<int>> init_npt_vars(const t_i
 
     MassQ->QPinv.resize(nnhpres * opts->nhchainlength);
 
+    const real ensembleTemperature =
+            haveEnsembleTemperature(*ir) ? ekind.currentEnsembleTemperature() : -1;
+
+    const bool useLammpsFixNhPressureThermostatMass =
+            pcffUseLammpsFixNhPressureThermostatMassMode()
+            && ir->pressureCouplingOptions.epc == PressureCoupling::Mttk;
+
     /* barostat temperature */
-    if ((ir->pressureCouplingOptions.tau_p > 0) && (constantEnsembleTemperature(*ir) > 0))
+    if ((ir->pressureCouplingOptions.tau_p > 0) && (ensembleTemperature > 0))
     {
-        reft = constantEnsembleTemperature(*ir);
+        reft = ensembleTemperature;
         kT   = gmx::c_boltz * reft;
         for (i = 0; i < nnhpres; i++)
         {
@@ -1906,8 +2449,16 @@ gmx::EnumerationArray<TrotterSequence, std::vector<int>> init_npt_vars(const t_i
                 {
                     qmass = 1;
                 }
-                MassQ->QPinv[i * opts->nhchainlength + j] =
-                        1.0 / (gmx::square(opts->tau_t[0] / M_2PI) * qmass * kT);
+                if (useLammpsFixNhPressureThermostatMass)
+                {
+                    MassQ->QPinv[i * opts->nhchainlength + j] =
+                            pcffNoseHooverInvMass(pcffLammpsFixNhPdampPs(*ir), 1.0, kT);
+                }
+                else
+                {
+                    MassQ->QPinv[i * opts->nhchainlength + j] =
+                            pcffNoseHooverInvMass(opts->tau_t[0] / M_2PI, qmass, kT);
+                }
             }
         }
     }

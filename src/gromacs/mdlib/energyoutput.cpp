@@ -311,7 +311,9 @@ EnergyOutput::EnergyOutput(ener_file*                fp_ene,
     bTricl_  = TRICLINIC(inputrec.pressureCouplingOptions.compress) || TRICLINIC(inputrec.deform);
     bDynBox_ = inputrecDynamicBox(&inputrec);
     etc_     = isRerun ? TemperatureCoupling::No : inputrec.etc;
-    bNHC_trotter_   = inputrecNvtTrotter(&inputrec) && !isRerun;
+    bNHC_trotter_ =
+            (inputrecNvtTrotter(&inputrec) || inputrecNptTrotter(&inputrec) || inputrecNphTrotter(&inputrec))
+            && !isRerun;
     bPrintNHChains_ = inputrec.bPrintNHChains && !isRerun;
     bMTTK_          = (inputrecNptTrotter(&inputrec) || inputrecNphTrotter(&inputrec)) && !isRerun;
     bMu_            = inputrecNeedMutot(&inputrec);

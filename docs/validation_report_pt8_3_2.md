@@ -1,5 +1,10 @@
 # PT8.3.2 — Improper Mapping Root-Cause Search Validation Report
 
+> Superseded note, 2026-04-27: later PolyGen EM handoff energy parity
+> showed that this report's selected swapped mapping is not valid for
+> the production bridge. The active bridge uses direct LAMMPS
+> `K1,K2,K3,theta1,theta2,theta3` ordering for `ImproperClass2`.
+
 ## Overview
 This report documents the systematic identification and validation of the correct ImproperClass2 coefficient mapping for the GROMACS-PCFF bridge.
 

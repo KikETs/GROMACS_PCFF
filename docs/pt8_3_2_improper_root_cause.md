@@ -1,5 +1,13 @@
 # PT8.3.2 — Improper Mapping Root-Cause Analysis
 
+> Superseded note, 2026-04-27: the PolyGen EM handoff single-frame
+> parity check contradicted the swapped mapping described below. Using
+> the LAMMPS `improper_class2.cpp` formula with minimum-image bonded
+> vectors gives `E_impro = -6.5089784 kcal/mol`, matching LAMMPS.
+> The swapped bridge mapping gives `-20.24064 kcal/mol`, matching the
+> old GROMACS mismatch. The active bridge now uses direct LAMMPS order:
+> `K1,K2,K3,theta1,theta2,theta3`.
+
 ## Overview
 This document details the systematic investigation into the ImproperClass2 force parity discrepancy. By performing an exhaustive search over mapping and ordering variants, the physically correct configuration was identified.
 
@@ -18,7 +26,7 @@ The search identified a unique configuration that significantly outperformed the
 | PT8.3 Baseline | 0.0616% | 7.65 | FAIL (under 0.01% target) |
 | **Search Best (a1234_kp1_tp2)** | **0.0272%** | **3.38** | **PASS (under 0.1% target)** |
 
-### Correct Mapping Logic
+### Superseded Mapping Logic
 The GROMACS `improper_class2` kernel expects parameters in a specific cross-angle order. The LAMMPS coefficients must be mapped as follows to match the kernel's internal $\theta_1, \theta_2, \theta_3$ sequence:
 - `aa_k1` = LAMMPS $K_1$
 - `aa_k2` = LAMMPS $K_3$

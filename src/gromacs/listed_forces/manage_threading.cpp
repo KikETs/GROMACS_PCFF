@@ -49,6 +49,7 @@
 #include <cinttypes>
 #include <climits>
 #include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
 #include <array>
@@ -77,6 +78,73 @@ typedef struct
     InteractionFunction    ftype; /**< the function type index */
     int                    nat;   /**< nr of atoms involved in a single ftype interaction */
 } ilist_data_t;
+
+static bool exactRespaGpuBondedModeOffloadsFtype(const InteractionFunction fType)
+{
+    const char* mode = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES");
+
+    if (mode != nullptr
+        && (std::strcmp(mode, "off") == 0 || std::strcmp(mode, "none") == 0
+            || std::strcmp(mode, "cpu") == 0 || std::strcmp(mode, "cpu-listed") == 0
+            || std::strcmp(mode, "cpu_listed") == 0))
+    {
+        return false;
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "all") == 0 || std::strcmp(mode, "wide") == 0
+            || std::strcmp(mode, "gpu-all") == 0 || std::strcmp(mode, "gpu_all") == 0))
+    {
+        return true;
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "pair14") == 0 || std::strcmp(mode, "lj14") == 0
+            || std::strcmp(mode, "listed-pair") == 0 || std::strcmp(mode, "listed_pair") == 0))
+    {
+        return fType == InteractionFunction::LennardJones14;
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "class2-pair14") == 0
+            || std::strcmp(mode, "class2_pair14") == 0 || std::strcmp(mode, "pcff") == 0
+            || std::strcmp(mode, "pcff-class2-pair14") == 0
+            || std::strcmp(mode, "pcff_class2_pair14") == 0))
+    {
+        return fType == InteractionFunction::BondClass2 || fType == InteractionFunction::AngleClass2
+               || fType == InteractionFunction::DihedralClass2
+               || fType == InteractionFunction::ImproperClass2
+               || fType == InteractionFunction::LennardJones14;
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "class2") == 0 || std::strcmp(mode, "pcff-class2") == 0))
+    {
+        return fType == InteractionFunction::BondClass2 || fType == InteractionFunction::AngleClass2
+               || fType == InteractionFunction::DihedralClass2
+               || fType == InteractionFunction::ImproperClass2;
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "bond-class2") == 0 || std::strcmp(mode, "bond_class2") == 0))
+    {
+        return fType == InteractionFunction::BondClass2;
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "angle-class2") == 0 || std::strcmp(mode, "angle_class2") == 0))
+    {
+        return fType == InteractionFunction::AngleClass2;
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "dihedral-class2") == 0
+            || std::strcmp(mode, "dihedral_class2") == 0))
+    {
+        return fType == InteractionFunction::DihedralClass2;
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "improper-class2") == 0
+            || std::strcmp(mode, "improper_class2") == 0))
+    {
+        return fType == InteractionFunction::ImproperClass2;
+    }
+
+    return fType == InteractionFunction::LennardJones14;
+}
 
 /*! \brief Divides listed interactions over threads
  *
@@ -207,6 +275,7 @@ static bool ftypeHasPerturbedEntries(const InteractionDefinitions& idef, Interac
 //! Divides bonded interactions over threads and GPU
 static void divide_bondeds_over_threads(bonded_threading_t*           bt,
                                         bool                          useGpuForBondeds,
+                                        bool                          exactRespaGpuBondedNarrowMode,
                                         const InteractionDefinitions& idef)
 {
     gmx::EnumerationArray<InteractionFunction, ilist_data_t> ild;
@@ -217,6 +286,7 @@ static void divide_bondeds_over_threads(bonded_threading_t*           bt,
     gmx::ArrayRef<const t_iparams> iparams = idef.iparams;
 
     bt->haveBondeds      = false;
+    bt->listedFtypesWithCpuWork.clear();
     int    numType       = 0;
     size_t fTypeGpuIndex = 0;
     for (const auto fType : gmx::EnumerationWrapper<InteractionFunction>{})
@@ -238,7 +308,8 @@ static void divide_bondeds_over_threads(bonded_threading_t*           bt,
              * But instead of doing all on the CPU, we could do only
              * the actually perturbed interactions on the CPU.
              */
-            if (!ftypeHasPerturbedEntries(idef, fType))
+            if ((!exactRespaGpuBondedNarrowMode || exactRespaGpuBondedModeOffloadsFtype(fType))
+                && !ftypeHasPerturbedEntries(idef, fType))
             {
                 /* We will assign this interaction type to the GPU */
                 nrToAssignToCpuThreads = 0;
@@ -248,6 +319,10 @@ static void divide_bondeds_over_threads(bonded_threading_t*           bt,
         if (nrToAssignToCpuThreads > 0)
         {
             bt->haveBondeds = true;
+            if (ftype_is_bonded_potential(fType))
+            {
+                bt->listedFtypesWithCpuWork.push_back(fType);
+            }
         }
 
         if (nrToAssignToCpuThreads == 0)
@@ -384,12 +459,13 @@ static void calc_bonded_reduction_mask(int                            natoms,
 void setup_bonded_threading(bonded_threading_t*           bt,
                             int                           numAtomsForce,
                             bool                          useGpuForBondeds,
+                            bool                          exactRespaGpuBondedNarrowMode,
                             const InteractionDefinitions& idef)
 {
     assert(bt->nthreads >= 1);
 
     /* Divide the bonded interaction over the threads */
-    divide_bondeds_over_threads(bt, useGpuForBondeds, idef);
+    divide_bondeds_over_threads(bt, useGpuForBondeds, exactRespaGpuBondedNarrowMode, idef);
 
     if (!bt->haveBondeds)
     {
