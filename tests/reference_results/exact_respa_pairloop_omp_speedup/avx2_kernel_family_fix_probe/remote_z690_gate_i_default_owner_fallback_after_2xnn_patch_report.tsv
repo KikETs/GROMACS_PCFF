@@ -1,0 +1,2 @@
+fixture_id	ntomp	steps	baseline_ns_per_day	candidate_ns_per_day	speedup	total_force_max_abs_component_delta	per_level_force_max_abs_component_delta	energy_max_abs_delta	gro_max_abs_coord_delta_nm	gro_sha256_equal	edr_sha256_equal	cpt_sha256_equal
+remote_default_owner_fallback_after_2xnn_patch	6	2000	24.405	24.987	1.0238475722188074	0.0	0.0	0.0	0.0	true	true	false

@@ -1,0 +1,6 @@
+fixture_id	steps	baseline_ns_per_day	candidate_ns_per_day	speedup	total_force_max_abs_component_delta	per_level_force_max_abs_component_delta	energy_max_abs_delta	gro_max_abs_coord_delta_nm	gro_sha256_equal	edr_sha256_equal	cpt_sha256_equal
+gate_i_equil_ntomp6_narrow_nbnxm_serial_reduction	4	13.344	14.615	1.0952488009592327	0.00054931640625	0.00048828125	0.010000000000218279	0.0	true	false	false
+gate_i_equil_ntomp6_narrow_nbnxm_serial_reduction	64	40.792	53.621	1.3144979407727004	0.00054931640625	0.00048828125	0.012000000000000455	0.0	false	false	false
+gate_i_equil_ntomp6_narrow_nbnxm_serial_reduction	256	62.754	79.635	1.2690027727316189	0.00054931640625	0.00048828125	0.07299999999997908	0.0010000000000000009	false	false	false
+gate_i_equil_ntomp6_narrow_nbnxm_serial_reduction	1024	67.517	83.941	1.2432572537286906	2.182708740234375	2.180450439453125	0.8900000000001	0.001000000000000334	false	false	false
+gate_i_equil_ntomp6_narrow_nbnxm_serial_reduction	2000	62.957	88.069	1.398875422907699	6.3876953125	6.39501953125	1.4200000000000728	0.001000000000000334	false	false	false

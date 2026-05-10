@@ -1,0 +1,65 @@
+{
+  "ntomp": 12,
+  "pinargs": [
+    "-pin",
+    "on",
+    "-pinstride",
+    "2"
+  ],
+  "rows": [
+    {
+      "cpt": "842d2ef8982cf641373cf5016620b7523378dc60c4d3df281164a3202b174bb2",
+      "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
+      "force_seconds": 2.421,
+      "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
+      "hour_per_ns": 0.248,
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinstride2_ntomp12_repeats_10000_20260421/rep01/run.log",
+      "ms_per_step": 0.446,
+      "neighbor_search_seconds": 0.376,
+      "ns_per_day": 96.904,
+      "pme_mesh_seconds": 0.979,
+      "repeat": 1,
+      "update_seconds": 2.041
+    },
+    {
+      "cpt": "02966e1800b3560dea92701273faef20d7203bd5d2a2dff1214875f51059e638",
+      "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
+      "force_seconds": 2.376,
+      "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
+      "hour_per_ns": 0.245,
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinstride2_ntomp12_repeats_10000_20260421/rep02/run.log",
+      "ms_per_step": 0.441,
+      "neighbor_search_seconds": 0.354,
+      "ns_per_day": 97.893,
+      "pme_mesh_seconds": 0.998,
+      "repeat": 2,
+      "update_seconds": 2.018
+    },
+    {
+      "cpt": "25d4c4a45feb059488ab822dd34d407abc223849daa50b2ec32fd2b3b77228b2",
+      "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
+      "force_seconds": 2.363,
+      "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
+      "hour_per_ns": 0.244,
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinstride2_ntomp12_repeats_10000_20260421/rep03/run.log",
+      "ms_per_step": 0.439,
+      "neighbor_search_seconds": 0.352,
+      "ns_per_day": 98.486,
+      "pme_mesh_seconds": 0.992,
+      "repeat": 3,
+      "update_seconds": 2.009
+    }
+  ],
+  "schema": "exact_respa_update_direct_fastpath_pinstride2_ntomp12_repeats",
+  "steps": 10000,
+  "summary": {
+    "edr_all_equal": true,
+    "gro_all_equal": true,
+    "mean_force_seconds": 2.3866666666666667,
+    "mean_ms_per_step": 0.442,
+    "mean_ns_per_day": 97.761,
+    "mean_pme_mesh_seconds": 0.9896666666666667,
+    "mean_update_seconds": 2.0226666666666664,
+    "stdev_ns_per_day": 0.6525585542054221
+  }
+}

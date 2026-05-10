@@ -1,0 +1,154 @@
+{
+  "acceptance_criteria": {
+    "density_cross_replica_span_rel_max": 0.05,
+    "density_max_replica_abs_block_drift_rel_max": 0.08,
+    "density_mean_abs_block_drift_rel_max": 0.05,
+    "gate_scope_note": "These are predeclared conditioning criteria only. A Gate I PASS closes the density/volume conditioning blocker, not TP0 production or transport readiness.",
+    "relative_metric_note": "Relative block-drift and cross-replica span metrics are normalized by the absolute aggregate mean of the same observable.",
+    "replicas_min": 3,
+    "required_conditioned_state_files": [
+      "prod.gro",
+      "prod.cpt",
+      "prod.tpr",
+      "replica_summary.json"
+    ],
+    "temperature_mean_abs_error_k_max": 20.0,
+    "volume_cross_replica_span_rel_max": 0.05,
+    "volume_max_replica_abs_block_drift_rel_max": 0.08,
+    "volume_mean_abs_block_drift_rel_max": 0.05
+  },
+  "conditioned_state_handoff_rule": {
+    "non_claimable_statement": "The conditioned-state handoff is only an input to later TP0-scale transport campaigns; it is not production approval.",
+    "required_files": [
+      "prod.gro",
+      "prod.cpt",
+      "prod.tpr",
+      "replica_summary.json"
+    ],
+    "selection": "Choose the replica whose density and volume means are closest to the aggregate conditioning center after the gate passes."
+  },
+  "execution_policy": {
+    "cpu_only": true,
+    "ensemble": "npt",
+    "exact_respa": true,
+    "prepare_only_supported": true,
+    "resume_supported": true,
+    "single_rank": true
+  },
+  "gate_id": "gate_i_cpu_exact_charged_long_npt_conditioning",
+  "non_claims": [
+    "A declared Gate I contract is not a passed gate.",
+    "A Gate I PASS still does not imply conductivity-production readiness.",
+    "A Gate I PASS would still not imply LAMMPS-vs-GROMACS transport parity.",
+    "A Gate I PASS would still not imply TP0-scale production length or uncertainty closure.",
+    "A common preconditioned starting structure is a conditioning input only; it is not production handoff approval."
+  ],
+  "performance_reference": {
+    "available": true,
+    "estimated_hours_if_replicas_run_fully_in_parallel": 36.272,
+    "estimated_hours_per_replica": 36.272,
+    "estimated_hours_serial_for_all_replicas": 108.816,
+    "hour_per_ns": 9.068,
+    "ns_per_day": 2.647,
+    "reference_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log"
+  },
+  "prerequisites": {
+    "gate_a_status": "PASS",
+    "gate_e_status": "PASS",
+    "gate_f_status": "PASS",
+    "gate_g_status": "PASS"
+  },
+  "primary_gate_observables": [
+    "Density",
+    "Volume"
+  ],
+  "requested_observables": [
+    "Temperature",
+    "Pressure",
+    "Potential",
+    "Volume",
+    "Density",
+    "Box-X",
+    "Box-Y",
+    "Box-Z"
+  ],
+  "run_settings": {
+    "compressibility_bar_inv": 4.5e-05,
+    "equil_ps": 3000.0,
+    "exact_respa_fused_initial_drift_env": {
+      "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT": "0"
+    },
+    "exact_respa_fused_initial_drift_mode": "off",
+    "exact_respa_update_direct_fastpath_env": {
+      "GMX_PCFF_EXACT_RESPA_UPDATE_DIRECT_FASTPATH": "1"
+    },
+    "exact_respa_update_direct_fastpath_mode": "on",
+    "exact_respa_update_omp_env": {
+      "GMX_PCFF_EXACT_RESPA_UPDATE_OMP": "1"
+    },
+    "exact_respa_update_omp_mode": "on",
+    "exact_respa_update_omp_threads": null,
+    "exact_respa_update_omp_threads_env": {},
+    "initial_configuration": {
+      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/generated/system.gro",
+      "replica_policy": "all replicas start equilibration from this same coordinate set; replica independence comes from gen-seed and ld-seed",
+      "source": "scaffold_manifest_gro"
+    },
+    "ld_seed_base": 84001,
+    "mdrun_shape": "ntmpi 1 / ntomp 12 / npme None / ntomp_pme None / pin on / pinoffset None / pinstride 2 / nb cpu / bonded cpu / pme cpu / update cpu / reprod",
+    "native_multi_owner_mode": "owner_fallback",
+    "native_multi_owner_mode_env": {
+      "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI": "1",
+      "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "1",
+      "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SPLIT_OWNER_OUTPUTS": "0"
+    },
+    "npme": null,
+    "ntmpi": 1,
+    "ntomp": 12,
+    "ntomp_pme": null,
+    "phase_continuation_policy": {
+      "equil_gen_vel": true,
+      "prod_gen_vel": false,
+      "prod_grompp_uses_equil_checkpoint": true,
+      "prod_ld_seed_restarts_from_distinct_seed": true,
+      "prod_mdp_continuation": true
+    },
+    "pin": "on",
+    "pinoffset": null,
+    "pinstride": 2,
+    "pressure_bar": 1.0,
+    "prod_ld_seed_offset": 100000,
+    "prod_ps": 1000.0,
+    "replicas": 3,
+    "sample_interval_base_steps": 400,
+    "stochastic_seed_contract": "explicit_phase_separated_ld_seed_per_replica",
+    "tau_p_ps": 5.0,
+    "tau_t_ps": 0.5,
+    "temperature_k": 300.0
+  },
+  "schema_name": "gate_i_charged_long_npt_conditioning",
+  "schema_version": 1,
+  "scope_statement": "Gate I is the concrete next gate for the remaining CPU exact-r-RESPA blocker: charged large/medium long-NPT density/volume conditioning on gate_h_dense_salt_polymer_2x2x2.",
+  "status": "DECLARED",
+  "support_observables": [
+    "Temperature",
+    "Pressure",
+    "Potential",
+    "Box-X",
+    "Box-Y",
+    "Box-Z"
+  ],
+  "system": {
+    "box_nm": [
+      4.4,
+      4.4,
+      4.4
+    ],
+    "fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
+    "natoms": 2160,
+    "seed_system": "dense_salt_polymer",
+    "system_id": "gate_h_dense_salt_polymer_2x2x2",
+    "tp0_box_fit": true,
+    "tp0_size_fit": true
+  }
+}

@@ -1,0 +1,970 @@
+{
+  "schema_name": "exact_respa_native_multi_runtime_parity",
+  "schema_version": 1,
+  "fixture_id": "remote_force_2xnn_split_owner",
+  "tpr": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/local_gate_i_equil_localhost_closure.tpr",
+  "steps": 2000,
+  "ntmpi": 1,
+  "ntomp": 6,
+  "pin": "off",
+  "baseline_mode_name": "per_launch",
+  "candidate_mode_name": "split_owner_sidecar",
+  "baseline_env": {
+    "GMX_NBNXN_SIMD_2XNN": "1"
+  },
+  "candidate_env": {
+    "GMX_NBNXN_SIMD_2XNN": "1",
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "0",
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SPLIT_OWNER_OUTPUTS": "1"
+  },
+  "baseline": {
+    "mode": "per_launch",
+    "native_multi_env": "0",
+    "extra_env": {
+      "GMX_NBNXN_SIMD_2XNN": "1"
+    },
+    "disable_simd_kernels_env": "0",
+    "command": [
+      "/home/user/Desktop/test/GROMACS_PCFF/build_remote_cpu_exact/bin/gmx",
+      "mdrun",
+      "-s",
+      "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/local_gate_i_equil_localhost_closure.tpr",
+      "-deffnm",
+      "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/per_launch/run",
+      "-ntmpi",
+      "1",
+      "-ntomp",
+      "6",
+      "-dlb",
+      "no",
+      "-nb",
+      "cpu",
+      "-pme",
+      "cpu",
+      "-bonded",
+      "cpu",
+      "-update",
+      "cpu",
+      "-pin",
+      "off",
+      "-reprod",
+      "-nsteps",
+      "2000"
+    ],
+    "elapsed_seconds": 3.690441131591797,
+    "log": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/per_launch/run.log",
+    "edr": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/per_launch/run.edr",
+    "gro": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/per_launch/run.gro",
+    "cpt": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/per_launch/run.cpt",
+    "total_force_dump": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/per_launch/total_force.tsv",
+    "per_level_force_dump": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/per_launch/per_level_force.tsv",
+    "metrics": {
+      "ns_per_day": 23.647,
+      "ms_per_step": 1.827,
+      "force_seconds": 2.28,
+      "update_seconds": 1.695,
+      "total_seconds": null
+    },
+    "disable_simd_kernels_marker_seen": false,
+    "gro_sha256": "2a18a0e1bf8f073e3e989d17eeffaedc25b67d94b13e005c9ad82ef07a6b2412",
+    "edr_sha256": "973619c02c417815673ab01e2d7bd8b872ab37bc6a09b5dbeb953df61ba2ef40",
+    "cpt_sha256": "0582908a2f70c7be064d75d9535d0bddbf291a5f074b8e914a9fb061555a913a"
+  },
+  "candidate": {
+    "mode": "split_owner_sidecar",
+    "native_multi_env": "1",
+    "extra_env": {
+      "GMX_NBNXN_SIMD_2XNN": "1",
+      "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "0",
+      "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SPLIT_OWNER_OUTPUTS": "1"
+    },
+    "disable_simd_kernels_env": "0",
+    "command": [
+      "/home/user/Desktop/test/GROMACS_PCFF/build_remote_cpu_exact/bin/gmx",
+      "mdrun",
+      "-s",
+      "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/local_gate_i_equil_localhost_closure.tpr",
+      "-deffnm",
+      "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/split_owner_sidecar/run",
+      "-ntmpi",
+      "1",
+      "-ntomp",
+      "6",
+      "-dlb",
+      "no",
+      "-nb",
+      "cpu",
+      "-pme",
+      "cpu",
+      "-bonded",
+      "cpu",
+      "-update",
+      "cpu",
+      "-pin",
+      "off",
+      "-reprod",
+      "-nsteps",
+      "2000"
+    ],
+    "elapsed_seconds": 3.3694069385528564,
+    "log": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/split_owner_sidecar/run.log",
+    "edr": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/split_owner_sidecar/run.edr",
+    "gro": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/split_owner_sidecar/run.gro",
+    "cpt": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/split_owner_sidecar/run.cpt",
+    "total_force_dump": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/split_owner_sidecar/total_force.tsv",
+    "per_level_force_dump": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/split_owner_sidecar/per_level_force.tsv",
+    "metrics": {
+      "ns_per_day": 25.942,
+      "ms_per_step": 1.665,
+      "force_seconds": 1.936,
+      "update_seconds": 1.529,
+      "total_seconds": null
+    },
+    "disable_simd_kernels_marker_seen": false,
+    "gro_sha256": "2a18a0e1bf8f073e3e989d17eeffaedc25b67d94b13e005c9ad82ef07a6b2412",
+    "edr_sha256": "973619c02c417815673ab01e2d7bd8b872ab37bc6a09b5dbeb953df61ba2ef40",
+    "cpt_sha256": "ddc451c554f5dde3fae69190e1c980c07f13a5f0a55c3db9efdca105bf3d0e39"
+  },
+  "comparisons": {
+    "total_force": {
+      "matches": true,
+      "candidate_frame_count": 6,
+      "baseline_frame_count": 6,
+      "common_frame_count": 6,
+      "candidate_only_frames": [],
+      "baseline_only_frames": [],
+      "max_abs_component_delta": 0.0,
+      "first_mismatch": null,
+      "frames": [
+        {
+          "frame_key": 0,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.0,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 400,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 800,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 1200,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 1600,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 2000,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 1.0,
+          "highest_active_level": 2
+        }
+      ]
+    },
+    "per_level_force": {
+      "matches": true,
+      "candidate_frame_count": 18,
+      "baseline_frame_count": 18,
+      "common_frame_count": 18,
+      "candidate_only_frames": [],
+      "baseline_only_frames": [],
+      "max_abs_component_delta": 0.0,
+      "first_mismatch": null,
+      "frames": [
+        {
+          "frame_key": [
+            0,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            0,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            0,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            400,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            400,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            400,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            800,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            800,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            800,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            1200,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            1200,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            1200,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            1600,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            1600,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            1600,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            2000,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            2000,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            2000,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 2
+        }
+      ]
+    },
+    "energy": {
+      "matches": true,
+      "candidate_frame_count": 6,
+      "baseline_frame_count": 6,
+      "common_frame_count": 6,
+      "max_abs_delta": 0.0,
+      "first_mismatch": null,
+      "frames": [
+        {
+          "frame_index": 0,
+          "step": 0,
+          "time_ps": 0.0,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.0,
+            "Vir-XX": 0.0,
+            "Vir-XY": 0.0,
+            "Vir-XZ": 0.0,
+            "Vir-YX": 0.0,
+            "Vir-YY": 0.0,
+            "Vir-YZ": 0.0,
+            "Vir-ZX": 0.0,
+            "Vir-ZY": 0.0,
+            "Vir-ZZ": 0.0,
+            "Pres-XX": 0.0,
+            "Pres-XY": 0.0,
+            "Pres-XZ": 0.0,
+            "Pres-YX": 0.0,
+            "Pres-YY": 0.0,
+            "Pres-YZ": 0.0,
+            "Pres-ZX": 0.0,
+            "Pres-ZY": 0.0,
+            "Pres-ZZ": 0.0
+          }
+        },
+        {
+          "frame_index": 1,
+          "step": 400,
+          "time_ps": 0.2,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.0,
+            "Vir-XX": 0.0,
+            "Vir-XY": 0.0,
+            "Vir-XZ": 0.0,
+            "Vir-YX": 0.0,
+            "Vir-YY": 0.0,
+            "Vir-YZ": 0.0,
+            "Vir-ZX": 0.0,
+            "Vir-ZY": 0.0,
+            "Vir-ZZ": 0.0,
+            "Pres-XX": 0.0,
+            "Pres-XY": 0.0,
+            "Pres-XZ": 0.0,
+            "Pres-YX": 0.0,
+            "Pres-YY": 0.0,
+            "Pres-YZ": 0.0,
+            "Pres-ZX": 0.0,
+            "Pres-ZY": 0.0,
+            "Pres-ZZ": 0.0
+          }
+        },
+        {
+          "frame_index": 2,
+          "step": 800,
+          "time_ps": 0.4,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.0,
+            "Vir-XX": 0.0,
+            "Vir-XY": 0.0,
+            "Vir-XZ": 0.0,
+            "Vir-YX": 0.0,
+            "Vir-YY": 0.0,
+            "Vir-YZ": 0.0,
+            "Vir-ZX": 0.0,
+            "Vir-ZY": 0.0,
+            "Vir-ZZ": 0.0,
+            "Pres-XX": 0.0,
+            "Pres-XY": 0.0,
+            "Pres-XZ": 0.0,
+            "Pres-YX": 0.0,
+            "Pres-YY": 0.0,
+            "Pres-YZ": 0.0,
+            "Pres-ZX": 0.0,
+            "Pres-ZY": 0.0,
+            "Pres-ZZ": 0.0
+          }
+        },
+        {
+          "frame_index": 3,
+          "step": 1200,
+          "time_ps": 0.6,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.0,
+            "Vir-XX": 0.0,
+            "Vir-XY": 0.0,
+            "Vir-XZ": 0.0,
+            "Vir-YX": 0.0,
+            "Vir-YY": 0.0,
+            "Vir-YZ": 0.0,
+            "Vir-ZX": 0.0,
+            "Vir-ZY": 0.0,
+            "Vir-ZZ": 0.0,
+            "Pres-XX": 0.0,
+            "Pres-XY": 0.0,
+            "Pres-XZ": 0.0,
+            "Pres-YX": 0.0,
+            "Pres-YY": 0.0,
+            "Pres-YZ": 0.0,
+            "Pres-ZX": 0.0,
+            "Pres-ZY": 0.0,
+            "Pres-ZZ": 0.0
+          }
+        },
+        {
+          "frame_index": 4,
+          "step": 1600,
+          "time_ps": 0.8,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.0,
+            "Vir-XX": 0.0,
+            "Vir-XY": 0.0,
+            "Vir-XZ": 0.0,
+            "Vir-YX": 0.0,
+            "Vir-YY": 0.0,
+            "Vir-YZ": 0.0,
+            "Vir-ZX": 0.0,
+            "Vir-ZY": 0.0,
+            "Vir-ZZ": 0.0,
+            "Pres-XX": 0.0,
+            "Pres-XY": 0.0,
+            "Pres-XZ": 0.0,
+            "Pres-YX": 0.0,
+            "Pres-YY": 0.0,
+            "Pres-YZ": 0.0,
+            "Pres-ZX": 0.0,
+            "Pres-ZY": 0.0,
+            "Pres-ZZ": 0.0
+          }
+        },
+        {
+          "frame_index": 5,
+          "step": 2000,
+          "time_ps": 1.0,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.0,
+            "Vir-XX": 0.0,
+            "Vir-XY": 0.0,
+            "Vir-XZ": 0.0,
+            "Vir-YX": 0.0,
+            "Vir-YY": 0.0,
+            "Vir-YZ": 0.0,
+            "Vir-ZX": 0.0,
+            "Vir-ZY": 0.0,
+            "Vir-ZZ": 0.0,
+            "Pres-XX": 0.0,
+            "Pres-XY": 0.0,
+            "Pres-XZ": 0.0,
+            "Pres-YX": 0.0,
+            "Pres-YY": 0.0,
+            "Pres-YZ": 0.0,
+            "Pres-ZX": 0.0,
+            "Pres-ZY": 0.0,
+            "Pres-ZZ": 0.0
+          }
+        }
+      ]
+    },
+    "gro": {
+      "matches": true,
+      "atom_count": 2160,
+      "max_abs_coord_delta_nm": 0.0,
+      "max_abs_box_delta_nm": 0.0,
+      "first_mismatch": null
+    },
+    "same_coordinate_probe": {
+      "available": true,
+      "probe_tpr": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/same_coordinate_probe.tpr",
+      "probe_start_step": 2000,
+      "probe_end_step": 2004,
+      "outer_step_factor": 4,
+      "probe_steps": 4,
+      "convert_tpr_command": [
+        "/home/user/Desktop/test/GROMACS_PCFF/build_remote_cpu_exact/bin/gmx",
+        "convert-tpr",
+        "-s",
+        "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/local_gate_i_equil_localhost_closure.tpr",
+        "-nsteps",
+        "2004",
+        "-o",
+        "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/same_coordinate_probe.tpr"
+      ],
+      "baseline": {
+        "mode": "per_launch",
+        "native_multi_env": "0",
+        "extra_env": {
+          "GMX_NBNXN_SIMD_2XNN": "1"
+        },
+        "disable_simd_kernels_env": "0",
+        "command": [
+          "/home/user/Desktop/test/GROMACS_PCFF/build_remote_cpu_exact/bin/gmx",
+          "mdrun",
+          "-s",
+          "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/same_coordinate_probe.tpr",
+          "-deffnm",
+          "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/per_launch/run",
+          "-ntmpi",
+          "1",
+          "-ntomp",
+          "6",
+          "-dlb",
+          "no",
+          "-nb",
+          "cpu",
+          "-pme",
+          "cpu",
+          "-bonded",
+          "cpu",
+          "-update",
+          "cpu",
+          "-pin",
+          "off",
+          "-reprod",
+          "-cpi",
+          "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/per_launch/run.cpt",
+          "-noappend"
+        ],
+        "elapsed_seconds": 0.05945229530334473,
+        "log": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/per_launch/run.part0002.log",
+        "edr": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/per_launch/run.part0002.edr",
+        "gro": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/per_launch/run.part0002.gro",
+        "cpt": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/per_launch/run.cpt",
+        "total_force_dump": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/per_launch/total_force.tsv",
+        "per_level_force_dump": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/per_launch/per_level_force.tsv",
+        "metrics": {
+          "ns_per_day": 8.767,
+          "ms_per_step": 4.928,
+          "force_seconds": 0.006,
+          "update_seconds": 0.004,
+          "total_seconds": null
+        },
+        "disable_simd_kernels_marker_seen": false,
+        "gro_sha256": "8a82b163c790cc1eb903165750ef6faca67fc1839626c1e8532d27c5993d66ca",
+        "edr_sha256": "2ed82563ee2715831eb2eb182f508eb66792d45e8382e32c648f7919196a3561",
+        "cpt_sha256": "086a06e2ef931bb41f81167318eaa26865e67e1ed9d650dcd073f9d458a5658e"
+      },
+      "candidate": {
+        "mode": "split_owner_sidecar",
+        "native_multi_env": "1",
+        "extra_env": {
+          "GMX_NBNXN_SIMD_2XNN": "1",
+          "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "0",
+          "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SPLIT_OWNER_OUTPUTS": "1"
+        },
+        "disable_simd_kernels_env": "0",
+        "command": [
+          "/home/user/Desktop/test/GROMACS_PCFF/build_remote_cpu_exact/bin/gmx",
+          "mdrun",
+          "-s",
+          "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/same_coordinate_probe.tpr",
+          "-deffnm",
+          "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/split_owner_sidecar/run",
+          "-ntmpi",
+          "1",
+          "-ntomp",
+          "6",
+          "-dlb",
+          "no",
+          "-nb",
+          "cpu",
+          "-pme",
+          "cpu",
+          "-bonded",
+          "cpu",
+          "-update",
+          "cpu",
+          "-pin",
+          "off",
+          "-reprod",
+          "-cpi",
+          "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/per_launch/run.cpt",
+          "-noappend"
+        ],
+        "elapsed_seconds": 0.059906959533691406,
+        "log": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/split_owner_sidecar/run.part0002.log",
+        "edr": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/split_owner_sidecar/run.part0002.edr",
+        "gro": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/split_owner_sidecar/run.part0002.gro",
+        "cpt": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/split_owner_sidecar/run.cpt",
+        "total_force_dump": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/split_owner_sidecar/total_force.tsv",
+        "per_level_force_dump": "/home/user/Desktop/test/GROMACS_PCFF/output/exact_respa_remote_diag/remote_force_2xnn_split_owner/same_coordinate_probe/runs/split_owner_sidecar/per_level_force.tsv",
+        "metrics": {
+          "ns_per_day": 8.529,
+          "ms_per_step": 5.065,
+          "force_seconds": 0.005,
+          "update_seconds": 0.004,
+          "total_seconds": null
+        },
+        "disable_simd_kernels_marker_seen": false,
+        "gro_sha256": "8a82b163c790cc1eb903165750ef6faca67fc1839626c1e8532d27c5993d66ca",
+        "edr_sha256": "2ed82563ee2715831eb2eb182f508eb66792d45e8382e32c648f7919196a3561",
+        "cpt_sha256": "9bbb39ad4e453d5fb78b67d22f42a45a1104a9e54364165549ab53b89af5b154"
+      },
+      "comparisons": {
+        "total_force": {
+          "matches": true,
+          "candidate_frame_count": 1,
+          "baseline_frame_count": 1,
+          "common_frame_count": 1,
+          "candidate_only_frames": [],
+          "baseline_only_frames": [],
+          "max_abs_component_delta": 0.0,
+          "first_mismatch": null,
+          "frames": [
+            {
+              "frame_key": 2000,
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.0,
+              "time_ps": 1.0,
+              "highest_active_level": 2
+            }
+          ]
+        },
+        "per_level_force": {
+          "matches": true,
+          "candidate_frame_count": 3,
+          "baseline_frame_count": 3,
+          "common_frame_count": 3,
+          "candidate_only_frames": [],
+          "baseline_only_frames": [],
+          "max_abs_component_delta": 0.0,
+          "first_mismatch": null,
+          "frames": [
+            {
+              "frame_key": [
+                2000,
+                0
+              ],
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.0,
+              "time_ps": 1.0,
+              "highest_active_level": 2,
+              "mts_level": 0
+            },
+            {
+              "frame_key": [
+                2000,
+                1
+              ],
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.0,
+              "time_ps": 1.0,
+              "highest_active_level": 2,
+              "mts_level": 1
+            },
+            {
+              "frame_key": [
+                2000,
+                2
+              ],
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.0,
+              "time_ps": 1.0,
+              "highest_active_level": 2,
+              "mts_level": 2
+            }
+          ]
+        },
+        "energy": {
+          "matches": true,
+          "candidate_frame_count": 2,
+          "baseline_frame_count": 2,
+          "common_frame_count": 2,
+          "max_abs_delta": 0.0,
+          "first_mismatch": null,
+          "frames": [
+            {
+              "frame_index": 0,
+              "step": 2000,
+              "time_ps": 1.0,
+              "term_deltas": {
+                "Potential": 0.0,
+                "Total Energy": 0.0,
+                "Pressure": 0.0,
+                "Vir-XX": 0.0,
+                "Vir-XY": 0.0,
+                "Vir-XZ": 0.0,
+                "Vir-YX": 0.0,
+                "Vir-YY": 0.0,
+                "Vir-YZ": 0.0,
+                "Vir-ZX": 0.0,
+                "Vir-ZY": 0.0,
+                "Vir-ZZ": 0.0,
+                "Pres-XX": 0.0,
+                "Pres-XY": 0.0,
+                "Pres-XZ": 0.0,
+                "Pres-YX": 0.0,
+                "Pres-YY": 0.0,
+                "Pres-YZ": 0.0,
+                "Pres-ZX": 0.0,
+                "Pres-ZY": 0.0,
+                "Pres-ZZ": 0.0
+              }
+            },
+            {
+              "frame_index": 1,
+              "step": 2004,
+              "time_ps": 1.002,
+              "term_deltas": {
+                "Potential": 0.0,
+                "Total Energy": 0.0,
+                "Pressure": 0.0,
+                "Vir-XX": 0.0,
+                "Vir-XY": 0.0,
+                "Vir-XZ": 0.0,
+                "Vir-YX": 0.0,
+                "Vir-YY": 0.0,
+                "Vir-YZ": 0.0,
+                "Vir-ZX": 0.0,
+                "Vir-ZY": 0.0,
+                "Vir-ZZ": 0.0,
+                "Pres-XX": 0.0,
+                "Pres-XY": 0.0,
+                "Pres-XZ": 0.0,
+                "Pres-YX": 0.0,
+                "Pres-YY": 0.0,
+                "Pres-YZ": 0.0,
+                "Pres-ZX": 0.0,
+                "Pres-ZY": 0.0,
+                "Pres-ZZ": 0.0
+              }
+            }
+          ]
+        },
+        "gro": {
+          "matches": true,
+          "atom_count": 2160,
+          "max_abs_coord_delta_nm": 0.0,
+          "max_abs_box_delta_nm": 0.0,
+          "first_mismatch": null
+        },
+        "first_total_force_frame": {
+          "frame_key": 2000,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 1.0,
+          "highest_active_level": 2
+        },
+        "first_level0_force_frame": {
+          "frame_key": [
+            2000,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        "first_level1_force_frame": {
+          "frame_key": [
+            2000,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        "first_level2_force_frame": {
+          "frame_key": [
+            2000,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 2
+        }
+      }
+    },
+    "hashes": {
+      "gro_sha256_equal": true,
+      "edr_sha256_equal": true,
+      "cpt_sha256_equal": false
+    },
+    "performance": {
+      "baseline_ns_per_day": 23.647,
+      "candidate_ns_per_day": 25.942,
+      "speedup": 1.0970524802300503,
+      "baseline_force_seconds": 2.28,
+      "candidate_force_seconds": 1.936,
+      "baseline_update_seconds": 1.695,
+      "candidate_update_seconds": 1.529
+    }
+  },
+  "notes": [
+    "Hashes are reported separately from force/energy/virial deltas.",
+    "A hash mismatch alone is not sufficient evidence of semantic failure or success.",
+    "Current harness compares runtime total-force dumps, per-level force dumps, EDR dump terms, and final GRO coordinates.",
+    "The same-coordinate probe reuses the original TPR plus checkpoint continuation instead of rebuilding a new TPR from MDP/topology inputs."
+  ]
+}

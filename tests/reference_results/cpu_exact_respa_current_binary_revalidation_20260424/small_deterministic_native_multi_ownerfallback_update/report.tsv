@@ -1,0 +1,2 @@
+fixture_id	ntomp	steps	baseline_ns_per_day	candidate_ns_per_day	speedup	total_force_max_abs_component_delta	per_level_force_max_abs_component_delta	energy_max_abs_delta	gro_max_abs_coord_delta_nm	gro_sha256_equal	edr_sha256_equal	cpt_sha256_equal
+small_oligomer_gate_a_current_cpu	12	2000	326.16	313.931	0.9625061319597742	0.0	0.0	0.0	0.0	true	true	false

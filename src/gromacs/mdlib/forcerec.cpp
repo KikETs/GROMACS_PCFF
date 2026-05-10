@@ -945,7 +945,7 @@ void init_forcerec(FILE*                            fplog,
         {
             gmx_fatal(FARGS, "Only LJ repulsion power 12 or 9 is supported with LJ-PME in this build");
         }
-        if (inputrec.eDispCorr != DispersionCorrectionType::No)
+        if (inputrec.eDispCorr != DispersionCorrectionType::No && !validatedCpuSimdShortRangeNineSixPath)
         {
             gmx_fatal(FARGS, "Dispersion correction is not supported with LJ repulsion power %.0f",
                       interactionConst->vdw.repulsionPower);
@@ -1022,8 +1022,6 @@ void init_forcerec(FILE*                            fplog,
             || gmx_mtop_ftype_count(mtop, InteractionFunction::PositionRestraints) > 0
             || gmx_mtop_ftype_count(mtop, InteractionFunction::FlatBottomedPositionRestraints) > 0
             || inputrec.nwall > 0 || inputrec.bRot || inputrec.bIMD;
-    const bool exactLammpsRespaWithSplitNonbonded =
-            gmx::useExactRespa(inputrec) && gmx::exactRespaHasPairSplitting(inputrec);
     const bool haveDirectVirialContributionsSlow = usingFullElectrostatics(interactionConst->coulomb.type)
                                                    || usingLJPme(interactionConst->vdw.type);
     const int pullMtsLevel = inputrec.bPull
@@ -1041,6 +1039,12 @@ void init_forcerec(FILE*                            fplog,
                                             : (useLegacyMtsRuntime
                                                        ? static_cast<int>(inputrec.mtsLevels.size())
                                                        : 1);
+    const int exactRespaDirectVirialNonbondedLevel =
+            useExactRespaRuntime
+                    ? (gmx::exactRespaHasPairSplitting(inputrec)
+                               ? gmx::exactRespaNonbondedOuterLevel(inputrec)
+                               : gmx::exactRespaNonbondedFullLevel(inputrec))
+                    : -1;
     for (int i = 0; i < numRuntimeMtsLevels; i++)
     {
         bool haveDirectVirialContributions =
@@ -1050,7 +1054,7 @@ void init_forcerec(FILE*                            fplog,
                 || (haveDirectVirialContributionsSlow
                     && (((useExactRespaRuntime || useLegacyMtsRuntime) && longrangeMtsLevel == i)
                         || ((!useExactRespaRuntime && !useLegacyMtsRuntime) && i == 0)))
-                || (exactLammpsRespaWithSplitNonbonded && gmx::exactRespaNonbondedOuterLevel(inputrec) == i);
+                || (useExactRespaRuntime && exactRespaDirectVirialNonbondedLevel == i);
         forcerec->forceHelperBuffers.emplace_back(haveDirectVirialContributions);
     }
 
@@ -1233,6 +1237,7 @@ void init_forcerec(FILE*                            fplog,
                     inputrec.posresCom.size(),
                     gmx_omp_nthreads_get(ModuleMultiThread::Bonded),
                     interactionSelection,
+                    gmx::useExactRespa(inputrec),
                     commrec->dd,
                     commMultiSim,
                     fplog);
@@ -1247,6 +1252,7 @@ void init_forcerec(FILE*                            fplog,
                 inputrec.posresCom.size(),
                 gmx_omp_nthreads_get(ModuleMultiThread::Bonded),
                 ListedForces::interactionSelectionAll(),
+                false,
                 commrec->dd,
                 commMultiSim,
                 fplog);

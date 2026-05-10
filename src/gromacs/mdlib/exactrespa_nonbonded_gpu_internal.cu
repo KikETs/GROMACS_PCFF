@@ -211,16 +211,25 @@ __global__ void exactRespaNonbondedKernel(const ExactRespaGpuRuntimeParams param
         const float qq = atomCharges[ai] * atomCharges[aj] * params.epsfac;
         if (qq != 0.0F)
         {
-            const float scaledR = r * params.coulombTableScale;
-            const int   tableIndex = static_cast<int>(scaledR);
-            const float frac       = scaledR - tableIndex;
-            const float halfsp     = 0.5F / params.coulombTableScale;
-            const float baseF      = coulombTable[tableIndex * 4];
-            const float fexcl      = baseF + frac * coulombTable[tableIndex * 4 + 1];
-            const float vcorr = coulombTable[tableIndex * 4 + 2] - halfsp * frac * (baseF + fexcl);
             bareCoulombScalar = factorCoulomb * qq * rinv;
-            correctionScalar  = -qq * fexcl / rinv;
-            fullCoulombEnergy = qq * (factorCoulomb * (rinv - params.ewaldShift) - vcorr);
+            if (params.coulombUsesEwaldTable != 0
+                && !(excluded && params.suppressEwaldExcludedAndSelf != 0))
+            {
+                const float scaledR = r * params.coulombTableScale;
+                const int   tableIndex = static_cast<int>(scaledR);
+                const float frac       = scaledR - tableIndex;
+                const float halfsp     = 0.5F / params.coulombTableScale;
+                const float baseF      = coulombTable[tableIndex * 4];
+                const float fexcl      = baseF + frac * coulombTable[tableIndex * 4 + 1];
+                const float vcorr =
+                        coulombTable[tableIndex * 4 + 2] - halfsp * frac * (baseF + fexcl);
+                correctionScalar  = -qq * fexcl / rinv;
+                fullCoulombEnergy = qq * (factorCoulomb * (rinv - params.ewaldShift) - vcorr);
+            }
+            else
+            {
+                fullCoulombEnergy = factorCoulomb * qq * rinv;
+            }
         }
     }
 

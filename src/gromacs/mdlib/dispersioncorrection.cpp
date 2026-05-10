@@ -152,9 +152,9 @@ DispersionCorrection::TopologyParams::TopologyParams(const gmx_mtop_t& mtop,
                     }
                     else
                     {
-                        /* nbfp now includes the 6.0/12.0 derivative prefactors */
+                        /* nbfp now includes the derivative prefactors 6.0 and repulsionPower. */
                         csix += npair_ij * C6(nbfp, ntp, tpi, tpj) / 6.0;
-                        ctwelve += npair_ij * C12(nbfp, ntp, tpi, tpj) / 12.0;
+                        ctwelve += npair_ij * C12(nbfp, ntp, tpi, tpj) / mtop.ffparams.reppow;
                     }
                     npair += npair_ij;
                 }
@@ -185,9 +185,9 @@ DispersionCorrection::TopologyParams::TopologyParams(const gmx_mtop_t& mtop,
                             }
                             else
                             {
-                                /* nbfp now includes the 6.0/12.0 derivative prefactors */
+                                /* nbfp now includes the derivative prefactors 6.0 and repulsionPower. */
                                 csix -= nmol * C6(nbfp, ntp, tpi, tpj) / 6.0;
-                                ctwelve -= nmol * C12(nbfp, ntp, tpi, tpj) / 12.0;
+                                ctwelve -= nmol * C12(nbfp, ntp, tpi, tpj) / mtop.ffparams.reppow;
                             }
                             nexcl += molb.nmol;
                         }
@@ -237,9 +237,9 @@ DispersionCorrection::TopologyParams::TopologyParams(const gmx_mtop_t& mtop,
                         }
                         else
                         {
-                            /* nbfp now includes the 6.0/12.0 derivative prefactors */
+                            /* nbfp now includes the derivative prefactors 6.0 and repulsionPower. */
                             csix += nmolc * C6(nbfp, ntp, tpi, tpj) / 6.0;
-                            ctwelve += nmolc * C12(nbfp, ntp, tpi, tpj) / 12.0;
+                            ctwelve += nmolc * C12(nbfp, ntp, tpi, tpj) / mtop.ffparams.reppow;
                         }
                         npair += nmolc;
                     }
@@ -337,15 +337,17 @@ struct InteractionCorrection
 /* Adds the energy and virial corrections beyond the cut-off */
 static void addCorrectionBeyondCutoff(InteractionCorrection* energy,
                                       InteractionCorrection* virial,
-                                      const double           cutoffDistance)
+                                      const double           cutoffDistance,
+                                      const double           repulsionPower)
 {
     const double rc3 = cutoffDistance * cutoffDistance * cutoffDistance;
-    const double rc9 = rc3 * rc3 * rc3;
+    const double rcRepulsionMinus3 = std::pow(cutoffDistance, repulsionPower - 3.0);
 
     energy->dispersion += -4.0 * M_PI / (3.0 * rc3);
-    energy->repulsion += 4.0 * M_PI / (9.0 * rc9);
+    energy->repulsion += 4.0 * M_PI / ((repulsionPower - 3.0) * rcRepulsionMinus3);
     virial->dispersion += 8.0 * M_PI / rc3;
-    virial->repulsion += -16.0 * M_PI / (3.0 * rc9);
+    virial->repulsion +=
+            -repulsionPower * 4.0 * M_PI / ((repulsionPower - 3.0) * rcRepulsionMinus3);
 }
 
 void DispersionCorrection::setInteractionParameters(InteractionParams*         iParams,
@@ -363,6 +365,8 @@ void DispersionCorrection::setInteractionParameters(InteractionParams*         i
 
     InteractionCorrection energy;
     InteractionCorrection virial;
+
+    const double repulsionPower = ic.vdw.repulsionPower;
 
     if ((ic.vdw.modifier == InteractionModifiers::PotShift)
         || (ic.vdw.modifier == InteractionModifiers::PotSwitch)
@@ -463,7 +467,7 @@ void DispersionCorrection::setInteractionParameters(InteractionParams*         i
          * all the parts we are missing out to infinity from r0 by
          * calculating the analytical dispersion correction.
          */
-        addCorrectionBeyondCutoff(&energy, &virial, r0);
+        addCorrectionBeyondCutoff(&energy, &virial, r0, repulsionPower);
     }
     else if (ic.vdw.type == VanDerWaalsType::Cut || usingLJPme(ic.vdw.type)
              || ic.vdw.type == VanDerWaalsType::User)
@@ -476,15 +480,15 @@ void DispersionCorrection::setInteractionParameters(InteractionParams*         i
          */
 
         const double rc3 = ic.vdw.cutoff * ic.vdw.cutoff * ic.vdw.cutoff;
-        const double rc9 = rc3 * rc3 * rc3;
+        const double rcRepulsionMinus3 = std::pow(ic.vdw.cutoff, repulsionPower - 3.0);
         if (ic.vdw.modifier == InteractionModifiers::PotShift)
         {
             /* Contribution within the cut-off */
             energy.dispersion += -4.0 * M_PI / (3.0 * rc3);
-            energy.repulsion += 4.0 * M_PI / (3.0 * rc9);
+            energy.repulsion += 4.0 * M_PI / (3.0 * rcRepulsionMinus3);
         }
         /* Contribution beyond the cut-off */
-        addCorrectionBeyondCutoff(&energy, &virial, ic.vdw.cutoff);
+        addCorrectionBeyondCutoff(&energy, &virial, ic.vdw.cutoff, repulsionPower);
     }
     else
     {

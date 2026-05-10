@@ -1,0 +1,2 @@
+fixture_id	ntomp	steps	baseline_ns_per_day	candidate_ns_per_day	speedup	total_force_max_abs_component_delta	per_level_force_max_abs_component_delta	energy_max_abs_delta	gro_max_abs_coord_delta_nm	gro_sha256_equal	edr_sha256_equal	cpt_sha256_equal
+gate_i_split_owner_sidecar_runtime_2000	6	2000	68.534	76.586	1.1174891294831761	0.0	0.0	0.0	0.0	true	true	false

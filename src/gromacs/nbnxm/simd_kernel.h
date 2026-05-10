@@ -206,6 +206,22 @@ void nbnxmKernelSimd(const NbnxnPairlistCpu&    pairlist,
     /* Unpack pointers for output */
     real*            f      = out->f.data();
     real gmx_unused* fshift = out->fshift.data();
+    const bool exactRespaNativeMultiActive = exactRespaCpuPairSplitNativeMultiLaunchActive(ic);
+    const int  exactRespaNativeContributionCount =
+            exactRespaNativeMultiActive ? exactRespaCpuPairSplitNativeMultiContributionCount(ic) : 0;
+    std::array<real*, interaction_const_t::c_maxExactRespaNativeMultiContributions> exactRespaNativeForces = {};
+    std::array<real*, interaction_const_t::c_maxExactRespaNativeMultiContributions> exactRespaNativeShiftForces = {};
+    if (exactRespaNativeMultiActive)
+    {
+        for (int contributionIndex = 0; contributionIndex < exactRespaNativeContributionCount;
+             ++contributionIndex)
+        {
+            nbnxn_atomdata_output_t* nativeOut =
+                    nbat.correspondingNativeMultiContributionOutputBuffer(contributionIndex, out);
+            exactRespaNativeForces[contributionIndex] = nativeOut->f.data();
+            exactRespaNativeShiftForces[contributionIndex] = nativeOut->fshift.data();
+        }
+    }
 
     const SimdReal zero_S(0.0);
 
@@ -451,6 +467,25 @@ void nbnxmKernelSimd(const NbnxnPairlistCpu&    pairlist,
         auto forceIXV = genArr<nR>([&](int gmx_unused i) { return setZero(); });
         auto forceIYV = genArr<nR>([&](int gmx_unused i) { return setZero(); });
         auto forceIZV = genArr<nR>([&](int gmx_unused i) { return setZero(); });
+        std::array<std::array<SimdReal, nR>, interaction_const_t::c_maxExactRespaNativeMultiContributions>
+                exactRespaNativeForceIXV;
+        std::array<std::array<SimdReal, nR>, interaction_const_t::c_maxExactRespaNativeMultiContributions>
+                exactRespaNativeForceIYV;
+        std::array<std::array<SimdReal, nR>, interaction_const_t::c_maxExactRespaNativeMultiContributions>
+                exactRespaNativeForceIZV;
+        if (exactRespaNativeMultiActive)
+        {
+            for (int contributionIndex = 0; contributionIndex < exactRespaNativeContributionCount;
+                 ++contributionIndex)
+            {
+                exactRespaNativeForceIXV[contributionIndex] =
+                        genArr<nR>([&](int gmx_unused i) { return setZero(); });
+                exactRespaNativeForceIYV[contributionIndex] =
+                        genArr<nR>([&](int gmx_unused i) { return setZero(); });
+                exactRespaNativeForceIZV[contributionIndex] =
+                        genArr<nR>([&](int gmx_unused i) { return setZero(); });
+            }
+        }
 
 
         int cjind = cjind0;
@@ -524,7 +559,59 @@ void nbnxmKernelSimd(const NbnxnPairlistCpu&    pairlist,
         real fShiftY;
         real fShiftZ;
         static_assert(c_iClusterSize == 4, "i-force reductions only support cluster size 4");
-        if constexpr (c_numJClustersPerSimdRegister == 1)
+        if (exactRespaNativeMultiActive)
+        {
+            for (int contributionIndex = 0; contributionIndex < exactRespaNativeContributionCount;
+                 ++contributionIndex)
+            {
+                real* nativeForce = exactRespaNativeForces[contributionIndex];
+                real* nativeShiftForce = exactRespaNativeShiftForces[contributionIndex];
+                real nativeFShiftX;
+                real nativeFShiftY;
+                real nativeFShiftZ;
+                if constexpr (c_numJClustersPerSimdRegister == 1)
+                {
+                    nativeFShiftX = reduceIncr4ReturnSum(nativeForce + scix,
+                                                         exactRespaNativeForceIXV[contributionIndex][0],
+                                                         exactRespaNativeForceIXV[contributionIndex][1],
+                                                         exactRespaNativeForceIXV[contributionIndex][2],
+                                                         exactRespaNativeForceIXV[contributionIndex][3]);
+                    nativeFShiftY = reduceIncr4ReturnSum(nativeForce + sciy,
+                                                         exactRespaNativeForceIYV[contributionIndex][0],
+                                                         exactRespaNativeForceIYV[contributionIndex][1],
+                                                         exactRespaNativeForceIYV[contributionIndex][2],
+                                                         exactRespaNativeForceIYV[contributionIndex][3]);
+                    nativeFShiftZ = reduceIncr4ReturnSum(nativeForce + sciz,
+                                                         exactRespaNativeForceIZV[contributionIndex][0],
+                                                         exactRespaNativeForceIZV[contributionIndex][1],
+                                                         exactRespaNativeForceIZV[contributionIndex][2],
+                                                         exactRespaNativeForceIZV[contributionIndex][3]);
+                }
+                else
+                {
+                    nativeFShiftX = reduceIncr4ReturnSumHsimd(
+                            nativeForce + scix,
+                            exactRespaNativeForceIXV[contributionIndex][0],
+                            exactRespaNativeForceIXV[contributionIndex][1]);
+                    nativeFShiftY = reduceIncr4ReturnSumHsimd(
+                            nativeForce + sciy,
+                            exactRespaNativeForceIYV[contributionIndex][0],
+                            exactRespaNativeForceIYV[contributionIndex][1]);
+                    nativeFShiftZ = reduceIncr4ReturnSumHsimd(
+                            nativeForce + sciz,
+                            exactRespaNativeForceIZV[contributionIndex][0],
+                            exactRespaNativeForceIZV[contributionIndex][1]);
+                }
+
+                if constexpr (sc_calculateShiftForces)
+                {
+                    nativeShiftForce[ish3 + 0] += nativeFShiftX;
+                    nativeShiftForce[ish3 + 1] += nativeFShiftY;
+                    nativeShiftForce[ish3 + 2] += nativeFShiftZ;
+                }
+            }
+        }
+        else if constexpr (c_numJClustersPerSimdRegister == 1)
         {
             fShiftX = reduceIncr4ReturnSum(f + scix, forceIXV[0], forceIXV[1], forceIXV[2], forceIXV[3]);
             fShiftY = reduceIncr4ReturnSum(f + sciy, forceIYV[0], forceIYV[1], forceIYV[2], forceIYV[3]);
@@ -539,9 +626,12 @@ void nbnxmKernelSimd(const NbnxnPairlistCpu&    pairlist,
 
         if constexpr (sc_calculateShiftForces)
         {
-            fshift[ish3 + 0] += fShiftX;
-            fshift[ish3 + 1] += fShiftY;
-            fshift[ish3 + 2] += fShiftZ;
+            if (!exactRespaNativeMultiActive)
+            {
+                fshift[ish3 + 0] += fShiftX;
+                fshift[ish3 + 1] += fShiftY;
+                fshift[ish3 + 2] += fShiftZ;
+            }
         }
 
         energyAccumulator.reduceIEnergies(do_coul);

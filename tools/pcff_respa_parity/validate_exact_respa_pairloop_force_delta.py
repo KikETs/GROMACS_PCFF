@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -24,6 +25,7 @@ UPDATE_OMP_ENV = "GMX_PCFF_EXACT_RESPA_UPDATE_OMP"
 FORCE_DUMP_DIR_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_DIR"
 FORCE_DUMP_LABEL_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_LABEL"
 FORCE_DUMP_MAX_ENV = "GMX_PCFF_EXACT_RESPA_PAIRLOOP_FORCE_DUMP_MAX"
+DISABLE_NBNXM_NARROW_ENV = "GMX_PCFF_EXACT_RESPA_DISABLE_NBNXM_NARROW"
 
 
 def parse_args() -> argparse.Namespace:
@@ -55,10 +57,15 @@ def parse_args() -> argparse.Namespace:
             "pairloop_direct",
             "pairloop_direct_block",
             "pairloop_omp_update",
+            "pairloop_omp_update_auto",
             "pairloop_sparse_update",
+            "pairloop_sparse_update_auto",
             "pairloop_block_update",
+            "pairloop_block_update_auto",
             "pairloop_tile_update",
+            "pairloop_tile_update_auto",
             "combined_update",
+            "combined_update_auto",
         ),
         default=["pairloop_omp", "pairloop_vector", "combined"],
     )
@@ -115,8 +122,12 @@ def mode_env(mode: str) -> dict[str, str]:
         FORCE_DUMP_DIR_ENV,
         FORCE_DUMP_LABEL_ENV,
         FORCE_DUMP_MAX_ENV,
+        DISABLE_NBNXM_NARROW_ENV,
     ):
         env.pop(name, None)
+    env[PAIRLOOP_OMP_ENV] = "0"
+    env[PAIRLOOP_DIRECT_CPULIST_ENV] = "0"
+    env[DISABLE_NBNXM_NARROW_ENV] = "1"
     if mode in (
         "pairloop_omp",
         "combined",
@@ -128,19 +139,31 @@ def mode_env(mode: str) -> dict[str, str]:
         "pairloop_direct",
         "pairloop_direct_block",
         "pairloop_omp_update",
+        "pairloop_omp_update_auto",
         "pairloop_sparse_update",
+        "pairloop_sparse_update_auto",
         "pairloop_block_update",
+        "pairloop_block_update_auto",
         "pairloop_tile_update",
+        "pairloop_tile_update_auto",
         "combined_update",
+        "combined_update_auto",
     ):
         env[PAIRLOOP_OMP_ENV] = "1"
-    if mode in ("pairloop_vector", "combined", "combined_sparse", "combined_update"):
+    if mode in ("pairloop_vector", "combined", "combined_sparse", "combined_update", "combined_update_auto"):
         env[PAIRLOOP_VECTOR_ENV] = "1"
-    if mode in ("pairloop_sparse", "combined_sparse", "pairloop_sparse_update"):
+    if mode in ("pairloop_sparse", "combined_sparse", "pairloop_sparse_update", "pairloop_sparse_update_auto"):
         env[PAIRLOOP_SPARSE_ENV] = "1"
-    if mode in ("pairloop_block", "pairloop_tile", "pairloop_block_update", "pairloop_tile_update"):
+    if mode in (
+        "pairloop_block",
+        "pairloop_tile",
+        "pairloop_block_update",
+        "pairloop_block_update_auto",
+        "pairloop_tile_update",
+        "pairloop_tile_update_auto",
+    ):
         env[PAIRLOOP_BLOCK_ENV] = "1"
-    if mode in ("pairloop_tile", "pairloop_tile_update"):
+    if mode in ("pairloop_tile", "pairloop_tile_update", "pairloop_tile_update_auto"):
         env[PAIRLOOP_TILE_ENV] = "1"
     if mode in ("pairloop_nbnxm4x4",):
         env[PAIRLOOP_BLOCK_ENV] = "1"
@@ -149,15 +172,31 @@ def mode_env(mode: str) -> dict[str, str]:
         env[PAIRLOOP_DIRECT_CPULIST_ENV] = "1"
     if mode in ("pairloop_direct_block",):
         env[PAIRLOOP_BLOCK_ENV] = "1"
-    if mode in (
-        "pairloop_omp_update",
-        "pairloop_sparse_update",
-        "pairloop_block_update",
-        "pairloop_tile_update",
-        "combined_update",
-    ):
+    if mode in ("update_auto", "pairloop_omp_update_auto", "pairloop_sparse_update_auto",
+                "pairloop_block_update_auto", "pairloop_tile_update_auto", "combined_update_auto"):
+        return env
+    if mode in ("update_omp", "pairloop_omp_update", "pairloop_sparse_update", "pairloop_block_update",
+                "pairloop_tile_update", "combined_update"):
         env[UPDATE_OMP_ENV] = "1"
+    else:
+        env[UPDATE_OMP_ENV] = "0"
     return env
+
+
+def update_mode_label(env: dict[str, str]) -> str:
+    if UPDATE_OMP_ENV not in env:
+        return "auto"
+    return "off" if env[UPDATE_OMP_ENV] == "0" else "on"
+
+
+def file_sha256(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def run_mode(args: argparse.Namespace, mode: str) -> dict:
@@ -213,7 +252,12 @@ def run_mode(args: argparse.Namespace, mode: str) -> dict:
         "pairloop_tile_env": env.get(PAIRLOOP_TILE_ENV, "0"),
         "pairloop_nbnxm4x4_env": env.get(PAIRLOOP_NBNXM4X4_ENV, "0"),
         "pairloop_direct_cpulist_env": env.get(PAIRLOOP_DIRECT_CPULIST_ENV, "0"),
-        "exact_respa_update_omp_env": env.get(UPDATE_OMP_ENV, "0"),
+        "exact_respa_update_omp_mode": update_mode_label(env),
+        "exact_respa_update_omp_env": env.get(UPDATE_OMP_ENV, "<unset>"),
+        "exact_respa_disable_nbnxm_narrow_env": env.get(DISABLE_NBNXM_NARROW_ENV, "0"),
+        "gro_sha256": file_sha256(run_dir / "run.gro"),
+        "edr_sha256": file_sha256(run_dir / "run.edr"),
+        "cpt_sha256": file_sha256(run_dir / "run.cpt"),
     }
 
 

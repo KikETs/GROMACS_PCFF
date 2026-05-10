@@ -93,6 +93,13 @@ public:
     //! Returns the number of foreign lambda values
     int numLambdas() const { return numLambdas_; }
 
+    //! Returns the lambda table backing this output shape, if any.
+    const gmx::EnumerationArray<FreeEnergyPerturbationCouplingType, std::vector<double>>*
+    allLambdasSource() const
+    {
+        return allLambdas_;
+    }
+
     //! Returns the foreign lambda values for the given perturbation type
     gmx::ArrayRef<const double> foreignLambdas(FreeEnergyPerturbationCouplingType couplingType)
     {

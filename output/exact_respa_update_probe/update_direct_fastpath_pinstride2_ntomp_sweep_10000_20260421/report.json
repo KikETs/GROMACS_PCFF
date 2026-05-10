@@ -1,0 +1,77 @@
+{
+  "best_by_ns_per_day": {
+    "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
+    "force_seconds": 2.389,
+    "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
+    "hour_per_ns": 0.247,
+    "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinstride2_ntomp_sweep_10000_20260421/ntomp12/rep01/run.log",
+    "ms_per_step": 0.445,
+    "neighbor_search_seconds": 0.362,
+    "ns_per_day": 97.186,
+    "ntomp": 12,
+    "pme_mesh_seconds": 0.996,
+    "update_seconds": 2.033
+  },
+  "pinargs": [
+    "-pin",
+    "on",
+    "-pinstride",
+    "2"
+  ],
+  "rows": [
+    {
+      "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
+      "force_seconds": 3.402,
+      "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
+      "hour_per_ns": 0.297,
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinstride2_ntomp_sweep_10000_20260421/ntomp6/rep01/run.log",
+      "ms_per_step": 0.535,
+      "neighbor_search_seconds": 0.686,
+      "ns_per_day": 80.778,
+      "ntomp": 6,
+      "pme_mesh_seconds": 0.822,
+      "update_seconds": 2.48
+    },
+    {
+      "edr": "480fd7991b95602a3fb68b8648e494be755bb76ac911f3835464a58d329b5ffd",
+      "force_seconds": 2.987,
+      "gro": "c752bb7547653dd885de0c5e62129f7f605c6972d6c064e79ff1a6eb0ca533ce",
+      "hour_per_ns": 0.298,
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinstride2_ntomp_sweep_10000_20260421/ntomp8/rep01/run.log",
+      "ms_per_step": 0.537,
+      "neighbor_search_seconds": 0.52,
+      "ns_per_day": 80.462,
+      "ntomp": 8,
+      "pme_mesh_seconds": 1.2,
+      "update_seconds": 2.478
+    },
+    {
+      "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
+      "force_seconds": 2.575,
+      "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
+      "hour_per_ns": 0.255,
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinstride2_ntomp_sweep_10000_20260421/ntomp10/rep01/run.log",
+      "ms_per_step": 0.459,
+      "neighbor_search_seconds": 0.418,
+      "ns_per_day": 94.018,
+      "ntomp": 10,
+      "pme_mesh_seconds": 0.937,
+      "update_seconds": 2.101
+    },
+    {
+      "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
+      "force_seconds": 2.389,
+      "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
+      "hour_per_ns": 0.247,
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinstride2_ntomp_sweep_10000_20260421/ntomp12/rep01/run.log",
+      "ms_per_step": 0.445,
+      "neighbor_search_seconds": 0.362,
+      "ns_per_day": 97.186,
+      "ntomp": 12,
+      "pme_mesh_seconds": 0.996,
+      "update_seconds": 2.033
+    }
+  ],
+  "schema": "exact_respa_update_direct_fastpath_pinstride2_ntomp_sweep",
+  "steps": 10000
+}

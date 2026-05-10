@@ -47,6 +47,7 @@
 #include "gromacs/domdec/domdec_zones.h"
 #include "gromacs/nbnxm/atomdata.h"
 #include "gromacs/timing/wallcycle.h"
+#include "gromacs/utility/exceptions.h"
 #include "gromacs/utility/message_string_collector.h"
 
 #include "nbnxm_gpu.h"
@@ -206,6 +207,264 @@ void nonbonded_verlet_t::atomdata_add_nbat_f_to_f(const AtomLocality locality, A
     wallcycle_sub_start(wcycle_, WallCycleSubCounter::NBFBufOps);
 
     nbat_->reduceForces(locality, pairSearch_->gridSet(), force);
+
+    wallcycle_sub_stop(wcycle_, WallCycleSubCounter::NBFBufOps);
+    wallcycle_stop(wcycle_, WallCycleCounter::NbXFBufOps);
+}
+
+namespace
+{
+
+void requireValidNbnxmOutputContract(const bool condition, const char* message)
+{
+    if (!condition)
+    {
+        GMX_THROW(InternalError(message));
+    }
+}
+
+bool isConcreteNonbondedRespaContribution(const MtsNonbondedRespaContribution contribution)
+{
+    switch (contribution)
+    {
+        case MtsNonbondedRespaContribution::Full:
+        case MtsNonbondedRespaContribution::Inner:
+        case MtsNonbondedRespaContribution::Middle:
+        case MtsNonbondedRespaContribution::Outer: return true;
+        case MtsNonbondedRespaContribution::Count: return false;
+    }
+
+    return false;
+}
+
+const NbnxmOutputSink* findNbnxmOutputSink(const NbnxmOutputContract&    contract,
+                                           MtsNonbondedRespaContribution contribution)
+{
+    for (const auto& sink : contract.sinks)
+    {
+        if (sink.contribution == contribution)
+        {
+            return &sink;
+        }
+    }
+
+    return nullptr;
+}
+
+const NbnxmOutputSink& findRequiredNbnxmOutputSink(const NbnxmOutputContract&    contract,
+                                                   MtsNonbondedRespaContribution contribution,
+                                                   const char*                  missingMessage)
+{
+    const NbnxmOutputSink* matchedSink = findNbnxmOutputSink(contract, contribution);
+    requireValidNbnxmOutputContract(matchedSink != nullptr, missingMessage);
+    return *matchedSink;
+}
+
+void validateNbnxmOutputContract(const NbnxmOutputContract& contract)
+{
+    switch (contract.kind)
+    {
+        case NbnxmOutputContractKind::PerContributionLaunch:
+            requireValidNbnxmOutputContract(
+                    contract.nativeMultiContribution.contributions.empty(),
+                    "Per-contribution NBNXM exact r-RESPA output contracts must not declare native multi-contribution outputs");
+            break;
+        case NbnxmOutputContractKind::NativeMultiContribution:
+            requireValidNbnxmOutputContract(
+                    contract.nativeMultiContribution.contributions.size() > 1,
+                    "Native multi-contribution NBNXM exact r-RESPA output contracts require at least two contributions");
+            break;
+        case NbnxmOutputContractKind::Count:
+            requireValidNbnxmOutputContract(false,
+                                            "The NBNXM output contract kind count sentinel is not a contract kind");
+            break;
+    }
+
+    for (int sinkIndex = 0; sinkIndex < gmx::ssize(contract.sinks); ++sinkIndex)
+    {
+        const auto& sink = contract.sinks[sinkIndex];
+        requireValidNbnxmOutputContract(
+                isConcreteNonbondedRespaContribution(sink.contribution),
+                "NBNXM exact r-RESPA output sinks must use a concrete contribution");
+        for (int compareIndex = sinkIndex + 1; compareIndex < gmx::ssize(contract.sinks);
+             ++compareIndex)
+        {
+            requireValidNbnxmOutputContract(
+                    sink.contribution != contract.sinks[compareIndex].contribution,
+                    "NBNXM exact r-RESPA output contract supports only one sink per contribution");
+        }
+
+        if (sink.sinkKind == LammpsRespaNonbondedOutputSinkKind::ShiftForce)
+        {
+            requireValidNbnxmOutputContract(
+                    sink.directVirialOutput == nullptr,
+                    "ShiftForce sinks must not advertise a direct virial output");
+        }
+        else
+        {
+            requireValidNbnxmOutputContract(
+                    sink.shiftForces.empty(),
+                    "ForceWithVirial sinks cannot request shift-force reduction");
+            requireValidNbnxmOutputContract(sink.directVirialOutput != nullptr,
+                                            "ForceWithVirial sinks require a direct virial target");
+        }
+    }
+
+    if (contract.virial.accumulateVirial)
+    {
+        requireValidNbnxmOutputContract(
+                contract.virial.contribution == MtsNonbondedRespaContribution::Outer
+                        || contract.virial.contribution == MtsNonbondedRespaContribution::Full,
+                "Only outer/full exact r-RESPA contributions can own nbnxm virial output");
+        const NbnxmOutputSink& virialSink = findRequiredNbnxmOutputSink(
+                contract,
+                contract.virial.contribution,
+                "NBNXM exact r-RESPA virial output contract is missing its owning contribution sink");
+        requireValidNbnxmOutputContract(contract.virial.sinkKind == virialSink.sinkKind,
+                                        "The virial sink kind must match the owning contribution sink");
+        if (contract.virial.sinkKind == LammpsRespaNonbondedOutputSinkKind::ShiftForce)
+        {
+            requireValidNbnxmOutputContract(
+                    contract.virial.directVirialOutput == nullptr,
+                    "Shift-force virial routing cannot also own a direct virial output");
+            requireValidNbnxmOutputContract(!contract.virial.shiftForces.empty(),
+                                            "Shift-force virial routing requires a shift-force sink");
+            requireValidNbnxmOutputContract(
+                    contract.virial.shiftForces.data() == virialSink.shiftForces.data()
+                            && contract.virial.shiftForces.size() == virialSink.shiftForces.size(),
+                    "The virial shift-force sink must match the owning contribution sink");
+        }
+        else
+        {
+            requireValidNbnxmOutputContract(contract.virial.shiftForces.empty(),
+                                            "Direct-virial routing cannot also own shift-force reduction");
+            requireValidNbnxmOutputContract(
+                    contract.virial.directVirialOutput == virialSink.directVirialOutput,
+                    "The direct-virial sink must match the owning contribution sink");
+        }
+    }
+
+    if (contract.energy.accumulateEnergy)
+    {
+        requireValidNbnxmOutputContract(
+                contract.energy.contribution == MtsNonbondedRespaContribution::Outer
+                        || contract.energy.contribution == MtsNonbondedRespaContribution::Full,
+                "Only outer/full exact r-RESPA contributions can own nbnxm energy output");
+        findRequiredNbnxmOutputSink(
+                contract,
+                contract.energy.contribution,
+                "NBNXM exact r-RESPA energy output contract is missing its owning contribution sink");
+    }
+}
+
+} // namespace
+
+const NbnxmOutputSink& nbnxmOutputSinkForContribution(const NbnxmOutputContract&    contract,
+                                                      MtsNonbondedRespaContribution contribution)
+{
+    validateNbnxmOutputContract(contract);
+    requireValidNbnxmOutputContract(
+            contract.kind == NbnxmOutputContractKind::PerContributionLaunch,
+            "Per-contribution NBNXM output sink lookup requires a per-contribution launch contract");
+    requireValidNbnxmOutputContract(
+            isConcreteNonbondedRespaContribution(contribution),
+            "NBNXM exact r-RESPA output lookup requires a concrete contribution");
+
+    return findRequiredNbnxmOutputSink(
+            contract,
+            contribution,
+            "NBNXM exact r-RESPA output contract is missing the active contribution sink");
+}
+
+std::vector<const NbnxmOutputSink*> nbnxmOutputSinksForNativeMultiContribution(
+        const NbnxmOutputContract& contract)
+{
+    validateNbnxmOutputContract(contract);
+    requireValidNbnxmOutputContract(
+            contract.kind == NbnxmOutputContractKind::NativeMultiContribution,
+            "Native multi-contribution NBNXM output lookup requires a native multi-contribution contract");
+
+    std::vector<const NbnxmOutputSink*> outputSinks;
+    outputSinks.reserve(contract.nativeMultiContribution.contributions.size());
+    for (int contributionIndex = 0;
+         contributionIndex < gmx::ssize(contract.nativeMultiContribution.contributions);
+         ++contributionIndex)
+    {
+        const auto contribution = contract.nativeMultiContribution.contributions[contributionIndex];
+        requireValidNbnxmOutputContract(
+                isConcreteNonbondedRespaContribution(contribution),
+                "Native multi-contribution NBNXM exact r-RESPA outputs must use concrete contributions");
+        for (int compareIndex = contributionIndex + 1;
+             compareIndex < gmx::ssize(contract.nativeMultiContribution.contributions);
+             ++compareIndex)
+        {
+            requireValidNbnxmOutputContract(
+                    contribution != contract.nativeMultiContribution.contributions[compareIndex],
+                    "Native multi-contribution NBNXM exact r-RESPA outputs must not duplicate contributions");
+        }
+        outputSinks.push_back(&findRequiredNbnxmOutputSink(
+                contract,
+                contribution,
+                "Native multi-contribution NBNXM exact r-RESPA output is missing a declared sink"));
+    }
+
+    requireValidNbnxmOutputContract(
+            outputSinks.size() == contract.sinks.size(),
+            "Native multi-contribution NBNXM exact r-RESPA outputs must cover every declared sink");
+
+    return outputSinks;
+}
+
+void nonbonded_verlet_t::atomdata_add_nbat_f_to_outputs(const NbnxmOutputContract&    contract,
+                                                        MtsNonbondedRespaContribution contribution)
+{
+    const NbnxmOutputSink& matchedSink = nbnxmOutputSinkForContribution(contract, contribution);
+    atomdata_add_nbat_f_to_f(matchedSink.locality, matchedSink.force);
+
+    if (matchedSink.sinkKind == LammpsRespaNonbondedOutputSinkKind::ShiftForce)
+    {
+        if (!matchedSink.shiftForces.empty())
+        {
+            GMX_RELEASE_ASSERT(matchedSink.locality == AtomLocality::Local,
+                               "NBNXM shift-force reduction currently supports only local atom sinks");
+            nbnxn_atomdata_add_nbat_fshift_to_fshift(*nbat_, matchedSink.shiftForces);
+        }
+    }
+}
+
+void nonbonded_verlet_t::atomdata_add_nbat_f_to_native_multi_outputs(const NbnxmOutputContract& contract)
+{
+    const auto nativeOutputSinks = nbnxmOutputSinksForNativeMultiContribution(contract);
+    nbat_->ensureNativeMultiContributionOutputBuffers(gmx::ssize(nativeOutputSinks));
+
+    wallcycle_start(wcycle_, WallCycleCounter::NbXFBufOps);
+    wallcycle_sub_start(wcycle_, WallCycleSubCounter::NBFBufOps);
+
+    for (int outputIndex = 0; outputIndex < gmx::ssize(nativeOutputSinks); outputIndex++)
+    {
+        const NbnxmOutputSink& matchedSink = *nativeOutputSinks[outputIndex];
+
+        /* Skip the reduction if there was no short-range GPU work to do
+         * (either NB or both NB and bonded work). */
+        if (!pairlistIsSimple()
+            && !haveGpuShortRangeWork(gpuNbv_, atomToInteractionLocality(matchedSink.locality)))
+        {
+            continue;
+        }
+
+        auto contributionOutputBuffers = nbat_->nativeMultiContributionOutputBuffers(outputIndex);
+        nbat_->reduceForceOutputBuffers(
+                matchedSink.locality, pairSearch_->gridSet(), contributionOutputBuffers, matchedSink.force);
+
+        if (matchedSink.sinkKind == LammpsRespaNonbondedOutputSinkKind::ShiftForce
+            && !matchedSink.shiftForces.empty())
+        {
+            GMX_RELEASE_ASSERT(matchedSink.locality == AtomLocality::Local,
+                               "NBNXM shift-force reduction currently supports only local atom sinks");
+            nbnxn_atomdata_add_output_fshift_to_fshift(contributionOutputBuffers,
+                                                       matchedSink.shiftForces);
+        }
+    }
 
     wallcycle_sub_stop(wcycle_, WallCycleSubCounter::NBFBufOps);
     wallcycle_stop(wcycle_, WallCycleCounter::NbXFBufOps);

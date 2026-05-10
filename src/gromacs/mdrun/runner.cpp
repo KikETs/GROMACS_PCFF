@@ -1706,8 +1706,7 @@ int Mdrunner::mdrunner()
             canUseDirectGpuComm,
             useGpuPmeDecomposition);
 
-    if (runScheduleWork.simulationWork.useGpuNonbonded && gmx::useExactRespa(*inputrec)
-        && inputrec->exactRespa.forceLayout.hasPairSplitting())
+    if (runScheduleWork.simulationWork.useGpuNonbonded && gmx::useExactRespa(*inputrec))
     {
         if (havePPDomainDecomposition(cr->dd) || haveSeparatePmeRank)
         {
@@ -1834,18 +1833,10 @@ int Mdrunner::mdrunner()
     checkHardwareOversubscription(
             numThreadsOnThisRank, cr->commMyGroup.rank(), *hwinfo_->hardwareTopology, physicalNodeComm, mdlog);
 
-    const bool exactRespaHybridGpuRequested = gmx::useExactRespa(*inputrec)
-                                              && inputrec->exactRespa.forceLayout.hasPairSplitting()
-                                              && runScheduleWork.simulationWork.useGpuNonbonded;
-    if (exactRespaHybridGpuRequested && numThreadsOnThisRank != 2)
-    {
-        GMX_THROW(InconsistentInputError(formatString(
-                "Exact LAMMPS-style r-RESPA hybrid OpenMP+GPU is currently "
-                "restricted to exactly 2 OpenMP threads per rank in the audited HG1 narrow "
-                "runtime shape. This run resolved to %d OpenMP thread%s on this rank.",
-                numThreadsOnThisRank,
-                numThreadsOnThisRank == 1 ? "" : "s")));
-    }
+    /* The audited exact r-RESPA GPU hybrid claim remains fixed to ntomp=2 in
+     * the validation tooling, but runtime admission must stay open so host-
+     * local exploratory thread sweeps can measure alternative OpenMP shapes
+     * without patching the binary between runs. */
 
     // Enable Peer access between GPUs where available
     // Only for DD, only main PP rank needs to perform setup, and only if thread MPI plus
@@ -1986,16 +1977,37 @@ int Mdrunner::mdrunner()
             }
         }
 
-        if (gmx::useExactRespa(*inputrec) && gmx::exactRespaHasPairSplitting(*inputrec))
+        if (fr->plainPairlistRange.has_value())
         {
-            const real requiredPlainPairlistRange = std::max(fr->ic->coulomb.cutoff, fr->ic->vdw.cutoff);
-            fr->plainPairlistRange = std::max(fr->plainPairlistRange.value_or(0.0_real), requiredPlainPairlistRange);
-            if (fr->plainPairlistRange.value() > inputrec->rlist)
+            fr->completePairlistRange =
+                    std::max(fr->completePairlistRange.value_or(0.0_real), fr->plainPairlistRange.value());
+        }
+
+        const bool exactRespaTraceForceComponents = []()
+        {
+            const char* env = std::getenv("GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS");
+            return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+        }();
+
+        const bool exactRespaEwaldRealOnly = []()
+        {
+            const char* env = std::getenv("GMX_PCFF_EWALD_REAL_ONLY");
+            return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+        }();
+
+        if (gmx::useExactRespa(*inputrec)
+            && (gmx::exactRespaHasPairSplitting(*inputrec) || exactRespaTraceForceComponents
+                || exactRespaEwaldRealOnly))
+        {
+            const real requiredCompletePairlistRange = std::max(fr->ic->coulomb.cutoff, fr->ic->vdw.cutoff);
+            fr->completePairlistRange =
+                    std::max(fr->completePairlistRange.value_or(0.0_real), requiredCompletePairlistRange);
+            if (fr->completePairlistRange.value() > inputrec->rlist)
             {
                 const std::string mesg = gmx::formatString(
-                        "Exact LAMMPS-style r-RESPA requires a plain pairlist range of %f nm, which is larger "
+                        "Exact LAMMPS-style r-RESPA requires a complete pairlist range of %f nm, which is larger "
                         "than the normal pairlist range of %f nm",
-                        fr->plainPairlistRange.value(),
+                        fr->completePairlistRange.value(),
                         inputrec->rlist);
                 GMX_THROW(gmx::APIError(mesg));
             }

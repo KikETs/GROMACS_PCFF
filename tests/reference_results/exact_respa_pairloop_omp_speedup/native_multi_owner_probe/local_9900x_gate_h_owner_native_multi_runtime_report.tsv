@@ -1,0 +1,2 @@
+fixture_id	ntomp	steps	baseline_ns_per_day	candidate_ns_per_day	speedup	total_force_max_abs_component_delta	per_level_force_max_abs_component_delta	energy_max_abs_delta	gro_max_abs_coord_delta_nm	gro_sha256_equal	edr_sha256_equal	cpt_sha256_equal
+gate_h_dense_salt_polymer_2x2x2_equil	6	2000	52.591	58.553	1.1133654047270445	13.73583984375	13.734130859375	2.269999999999527	0.001000000000000334	false	false	false

@@ -87,6 +87,7 @@ ListedForces::ListedForces(const gmx_ffparams_t&      ffparams,
                            const int                  numComGroups,
                            const int                  numThreads,
                            const InteractionSelection interactionSelection,
+                           const bool                 exactRespaGpuBondedNarrowMode,
                            const gmx_domdec_t*        domDec,
                            const gmx_multisim_t*      commMultiSim,
                            FILE*                      fplog) :
@@ -94,6 +95,7 @@ ListedForces::ListedForces(const gmx_ffparams_t&      ffparams,
     idefSelection_(ffparams),
     threading_(std::make_unique<bonded_threading_t>(numThreads, numEnergyGroups, numComGroups, fplog)),
     interactionSelection_(interactionSelection),
+    exactRespaGpuBondedNarrowMode_(exactRespaGpuBondedNarrowMode),
     foreignEnergyGroups_(std::make_unique<gmx_grppairener_t>(numEnergyGroups)),
     domDec_(domDec),
     commMultiSim_(commMultiSim)
@@ -235,7 +237,8 @@ void ListedForces::setup(const InteractionDefinitions&             domainIdef,
         }
     }
 
-    setup_bonded_threading(threading_.get(), numAtomsForce, useGpu, *idef_);
+    setup_bonded_threading(
+            threading_.get(), numAtomsForce, useGpu, exactRespaGpuBondedNarrowMode_, *idef_);
 
     if (idef_->ilsort == ilsortFE_SORTED)
     {
@@ -576,11 +579,11 @@ static void calcBondedForces(const InteractionDefinitions&       idef,
                 grpp   = &threadBuffer.groupPairEnergies();
                 dvdlt  = threadBuffer.dvdl();
             }
-            /* Loop over all bonded force types to calculate the bonded forces */
-            for (const auto ftype : gmx::EnumerationWrapper<InteractionFunction>{})
+            /* Loop only over bonded force types that have CPU work assigned. */
+            for (const InteractionFunction ftype : bt->listedFtypesWithCpuWork)
             {
                 const InteractionList& ilist = idef.il[ftype];
-                if (!ilist.empty() && ftype_is_bonded_potential(ftype))
+                if (!ilist.empty())
                 {
                     ArrayRef<const int> iatoms = gmx::makeConstArrayRef(ilist.iatoms);
                     const bool          havePerturbedInteractions =

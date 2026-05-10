@@ -48,7 +48,10 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
 #include <array>
@@ -141,6 +144,25 @@ int pbc_rvec_sub(const t_pbc* pbc, const rvec xi, const rvec xj, rvec dx)
     }
 }
 
+bool pcffClass2RawBondedDeltasRequested()
+{
+    static const bool requested = [] {
+        const char* value = std::getenv("GMX_PCFF_CLASS2_RAW_DELTAS");
+        return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+    }();
+    return requested;
+}
+
+int pcffClass2RvecSub(const t_pbc* pbc, const rvec xi, const rvec xj, rvec dx)
+{
+    if (pcffClass2RawBondedDeltasRequested())
+    {
+        rvec_sub(xi, xj, dx);
+        return c_centralShiftIndex;
+    }
+    return pbc_rvec_sub(pbc, xi, xj, dx);
+}
+
 } // namespace
 
 //! \cond
@@ -224,6 +246,136 @@ inline void spreadBondForces(const real bondForce,
             fshift[c_centralShiftIndex][m] -= fij;
         }
     }
+}
+
+template<typename ForceReal>
+static double pcffClass2TraceVectorNorm(const ForceReal force[DIM])
+{
+    return std::sqrt(static_cast<double>(force[XX]) * static_cast<double>(force[XX])
+                     + static_cast<double>(force[YY]) * static_cast<double>(force[YY])
+                     + static_cast<double>(force[ZZ]) * static_cast<double>(force[ZZ]));
+}
+
+static double pcffClass2TraceThreshold()
+{
+    const char* value = std::getenv("GMX_PCFF_CPU_CLASS2_FORCE_TRACE_THRESHOLD");
+    if (value == nullptr || value[0] == '\0')
+    {
+        return 1.0e8;
+    }
+
+    char*        end    = nullptr;
+    const double parsed = std::strtod(value, &end);
+    return (end != value && parsed > 0.0) ? parsed : 1.0e8;
+}
+
+static const char* pcffClass2TracePath()
+{
+    static const char* path = []() -> const char* {
+        const char* value = std::getenv("GMX_PCFF_CPU_CLASS2_FORCE_TRACE");
+        return (value != nullptr && value[0] != '\0') ? value : nullptr;
+    }();
+    return path;
+}
+
+static bool pcffClass2TraceEnabled()
+{
+    return pcffClass2TracePath() != nullptr;
+}
+
+static double pcffClass2LinearAngleSinFloor()
+{
+    static const double value = [] {
+        const char* envValue = std::getenv("GMX_PCFF_CLASS2_LINEAR_ANGLE_SIN_FLOOR");
+        if (envValue == nullptr || envValue[0] == '\0')
+        {
+            return 1.0e-7;
+        }
+
+        char*        end    = nullptr;
+        const double parsed = std::strtod(envValue, &end);
+        return (end != envValue && parsed > 0.0) ? parsed : 1.0e-7;
+    }();
+    return value;
+}
+
+static bool pcffClass2DihedralDoubleAccumulationEnabled()
+{
+#if GMX_DOUBLE
+    return false;
+#else
+    static const bool value = [] {
+        const char* envValue = std::getenv("GMX_PCFF_CLASS2_DIHEDRAL_DOUBLE_ACCUM");
+        if (envValue == nullptr || envValue[0] == '\0')
+        {
+            return false;
+        }
+        return std::atoi(envValue) != 0;
+    }();
+    return value;
+#endif
+}
+
+static int pcffClass2DihedralMaxAtomIndex(const int nbonds, const t_iatom forceatoms[])
+{
+    int maxAtomIndex = -1;
+    for (int n = 0; n < nbonds;)
+    {
+        n++; // type
+        for (int atom = 0; atom < 4; atom++)
+        {
+            maxAtomIndex = std::max(maxAtomIndex, forceatoms[n++]);
+        }
+    }
+    return maxAtomIndex;
+}
+
+template<typename ForceReal>
+static void pcffClass2TraceInteraction(const char* label,
+                                       int         type,
+                                       const int   atoms[],
+                                       int         natoms,
+                                       const ForceReal forces[][DIM],
+                                       int*        globalAtomIndex)
+{
+    const char* path = pcffClass2TracePath();
+    if (path == nullptr)
+    {
+        return;
+    }
+
+    double maxForce = 0;
+    for (int i = 0; i < natoms; i++)
+    {
+        maxForce = std::max(maxForce, pcffClass2TraceVectorNorm(forces[i]));
+    }
+    if (maxForce < pcffClass2TraceThreshold())
+    {
+        return;
+    }
+
+    FILE* fp = std::fopen(path, "a");
+    if (fp == nullptr)
+    {
+        return;
+    }
+
+    std::fprintf(fp, "%s type=%d max_force=% .12e", label, type, static_cast<double>(maxForce));
+    for (int i = 0; i < natoms; i++)
+    {
+        std::fprintf(fp,
+                     " atom%d_local=%d atom%d_global=%d f%d=(% .12e,% .12e,% .12e)",
+                     i,
+                     atoms[i],
+                     i,
+                     glatnr(globalAtomIndex, atoms[i]),
+                     i,
+                     static_cast<double>(forces[i][XX]),
+                     static_cast<double>(forces[i][YY]),
+                     static_cast<double>(forces[i][ZZ]));
+    }
+    std::fprintf(fp, "\n");
+    std::fclose(fp);
 }
 
 /*! \brief Morse potential bond
@@ -382,6 +534,7 @@ real bond_class2(int              nbonds,
 {
     real vtot = 0;
     rvec dx;
+    const bool traceEnabled = pcffClass2TraceEnabled();
 
     for (int i = 0; i < nbonds;)
     {
@@ -389,23 +542,33 @@ real bond_class2(int              nbonds,
         const int ai   = forceatoms[i++];
         const int aj   = forceatoms[i++];
 
-        const int  ki  = pbc_rvec_sub(pbc, x[ai], x[aj], dx);
+        const auto& params = forceparams[type].bond_class2;
+
+        const int  ki  = pcffClass2RvecSub(pbc, x[ai], x[aj], dx);
         const real rsq = iprod(dx, dx);
         const real r   = std::sqrt(rsq);
-        const real dr  = r - forceparams[type].bond_class2.r0;
+        const real dr  = r - params.r0;
         const real dr2 = dr * dr;
         const real dr3 = dr2 * dr;
-        const real dr4 = dr3 * dr;
-        const real de  = 2 * forceparams[type].bond_class2.k2 * dr
-                        + 3 * forceparams[type].bond_class2.k3 * dr2
-                        + 4 * forceparams[type].bond_class2.k4 * dr3;
+        const real de  = 2 * params.k2 * dr + 3 * params.k3 * dr2 + 4 * params.k4 * dr3;
         const real fbond = (r > 0 ? -de / r : 0);
 
-        vtot += forceparams[type].bond_class2.k2 * dr2 + forceparams[type].bond_class2.k3 * dr3
-                + forceparams[type].bond_class2.k4 * dr4;
+        if constexpr (computeEnergy(flavor))
+        {
+            const real dr4 = dr3 * dr;
+            vtot += params.k2 * dr2 + params.k3 * dr3 + params.k4 * dr4;
+        }
 
         if (rsq > 0)
         {
+            if (traceEnabled)
+            {
+                const int  traceAtoms[2] = { ai, aj };
+                const real traceForces[2][DIM] = { { fbond * dx[XX], fbond * dx[YY], fbond * dx[ZZ] },
+                                                   { -fbond * dx[XX], -fbond * dx[YY], -fbond * dx[ZZ] } };
+                pcffClass2TraceInteraction(
+                        "bond_class2", type, traceAtoms, 2, traceForces, global_atom_index);
+            }
             spreadBondForces<flavor>(fbond, dx, ai, aj, f, ki, fshift);
         }
     }
@@ -1722,6 +1885,7 @@ real angle_class2(int              nbonds,
 
     real vtot = 0;
     rvec del1, del2;
+    const bool traceEnabled = pcffClass2TraceEnabled();
 
     for (int i = 0; i < nbonds;)
     {
@@ -1730,16 +1894,23 @@ real angle_class2(int              nbonds,
         const int aj   = forceatoms[i++];
         const int ak   = forceatoms[i++];
 
-        const int t1 = pbc_rvec_sub(pbc, x[ai], x[aj], del1);
-        const int t2 = pbc_rvec_sub(pbc, x[ak], x[aj], del2);
+        const auto& params = forceparams[type].angle_class2;
+
+        const int t1 = pcffClass2RvecSub(pbc, x[ai], x[aj], del1);
+        const int t2 = pcffClass2RvecSub(pbc, x[ak], x[aj], del2);
 
         const real rsq1 = iprod(del1, del1);
         const real rsq2 = iprod(del2, del2);
         const real r1   = std::sqrt(rsq1);
         const real r2   = std::sqrt(rsq2);
         const real r12  = r1 * r2;
+        const real invR1   = 1 / r1;
+        const real invR2   = 1 / r2;
+        const real invR12  = 1 / r12;
+        const real invRsq1 = 1 / rsq1;
+        const real invRsq2 = 1 / rsq2;
 
-        real c = iprod(del1, del2) / r12;
+        real c = iprod(del1, del2) * invR12;
         c      = std::clamp(c, -1.0_real, 1.0_real);
 
         real s = std::sqrt(1 - c * c);
@@ -1749,18 +1920,16 @@ real angle_class2(int              nbonds,
         }
         s = 1 / s;
 
-        const real dtheta  = std::acos(c) - forceparams[type].angle_class2.theta0;
+        const real dtheta  = std::acos(c) - params.theta0;
         const real dtheta2 = dtheta * dtheta;
         const real dtheta3 = dtheta2 * dtheta;
-        const real dtheta4 = dtheta3 * dtheta;
 
-        const real deAngle = 2 * forceparams[type].angle_class2.k2 * dtheta
-                             + 3 * forceparams[type].angle_class2.k3 * dtheta2
-                             + 4 * forceparams[type].angle_class2.k4 * dtheta3;
+        const real deAngle = 2 * params.k2 * dtheta + 3 * params.k3 * dtheta2
+                             + 4 * params.k4 * dtheta3;
         const real a   = -deAngle * s;
-        const real a11 = a * c / rsq1;
-        const real a12 = -a / r12;
-        const real a22 = a * c / rsq2;
+        const real a11 = a * c * invRsq1;
+        const real a12 = -a * invR12;
+        const real a22 = a * c * invRsq2;
 
         rvec f_i = { a11 * del1[XX] + a12 * del2[XX],
                      a11 * del1[YY] + a12 * del2[YY],
@@ -1769,33 +1938,39 @@ real angle_class2(int              nbonds,
                      a22 * del2[YY] + a12 * del1[YY],
                      a22 * del2[ZZ] + a12 * del1[ZZ] };
 
-        vtot += forceparams[type].angle_class2.k2 * dtheta2 + forceparams[type].angle_class2.k3 * dtheta3
-                + forceparams[type].angle_class2.k4 * dtheta4;
+        if constexpr (computeEnergy(flavor))
+        {
+            const real dtheta4 = dtheta3 * dtheta;
+            vtot += params.k2 * dtheta2 + params.k3 * dtheta3 + params.k4 * dtheta4;
+        }
 
-        real dr1 = r1 - forceparams[type].angle_class2.bb_r1;
-        real dr2 = r2 - forceparams[type].angle_class2.bb_r2;
-        const real tk1 = forceparams[type].angle_class2.bb_k * dr1;
-        const real tk2 = forceparams[type].angle_class2.bb_k * dr2;
+        real dr1 = r1 - params.bb_r1;
+        real dr2 = r2 - params.bb_r2;
+        const real tk1 = params.bb_k * dr1;
+        const real tk2 = params.bb_k * dr2;
 
-        f_i[XX] -= del1[XX] * tk2 / r1;
-        f_i[YY] -= del1[YY] * tk2 / r1;
-        f_i[ZZ] -= del1[ZZ] * tk2 / r1;
-        f_k[XX] -= del2[XX] * tk1 / r2;
-        f_k[YY] -= del2[YY] * tk1 / r2;
-        f_k[ZZ] -= del2[ZZ] * tk1 / r2;
+        f_i[XX] -= del1[XX] * tk2 * invR1;
+        f_i[YY] -= del1[YY] * tk2 * invR1;
+        f_i[ZZ] -= del1[ZZ] * tk2 * invR1;
+        f_k[XX] -= del2[XX] * tk1 * invR2;
+        f_k[YY] -= del2[YY] * tk1 * invR2;
+        f_k[ZZ] -= del2[ZZ] * tk1 * invR2;
 
-        vtot += forceparams[type].angle_class2.bb_k * dr1 * dr2;
+        if constexpr (computeEnergy(flavor))
+        {
+            vtot += params.bb_k * dr1 * dr2;
+        }
 
-        dr1 = r1 - forceparams[type].angle_class2.ba_r1;
-        dr2 = r2 - forceparams[type].angle_class2.ba_r2;
+        dr1 = r1 - params.ba_r1;
+        dr2 = r2 - params.ba_r2;
 
-        const real aa1 = s * dr1 * forceparams[type].angle_class2.ba_k1;
-        const real aa2 = s * dr2 * forceparams[type].angle_class2.ba_k2;
+        const real aa1 = s * dr1 * params.ba_k1;
+        const real aa2 = s * dr2 * params.ba_k2;
 
-        real aa11 = aa1 * c / rsq1;
-        real aa12 = -aa1 / r12;
-        real aa21 = aa2 * c / rsq1;
-        real aa22 = -aa2 / r12;
+        real aa11 = aa1 * c * invRsq1;
+        real aa12 = -aa1 * invR12;
+        real aa21 = aa2 * c * invRsq1;
+        real aa22 = -aa2 * invR12;
 
         const rvec v1 = { aa11 * del1[XX] + aa12 * del2[XX],
                           aa11 * del1[YY] + aa12 * del2[YY],
@@ -1804,8 +1979,8 @@ real angle_class2(int              nbonds,
                           aa21 * del1[YY] + aa22 * del2[YY],
                           aa21 * del1[ZZ] + aa22 * del2[ZZ] };
 
-        aa11 = aa1 * c / rsq2;
-        aa21 = aa2 * c / rsq2;
+        aa11 = aa1 * c * invRsq2;
+        aa21 = aa2 * c * invRsq2;
 
         const rvec v3 = { aa11 * del2[XX] + aa12 * del1[XX],
                           aa11 * del2[YY] + aa12 * del1[YY],
@@ -1814,8 +1989,8 @@ real angle_class2(int              nbonds,
                           aa21 * del2[YY] + aa22 * del1[YY],
                           aa21 * del2[ZZ] + aa22 * del1[ZZ] };
 
-        const real b1 = forceparams[type].angle_class2.ba_k1 * dtheta / r1;
-        const real b2 = forceparams[type].angle_class2.ba_k2 * dtheta / r2;
+        const real b1 = params.ba_k1 * dtheta * invR1;
+        const real b2 = params.ba_k2 * dtheta * invR2;
 
         f_i[XX] -= v1[XX] + b1 * del1[XX] + v2[XX];
         f_i[YY] -= v1[YY] + b1 * del1[YY] + v2[YY];
@@ -1824,13 +1999,29 @@ real angle_class2(int              nbonds,
         f_k[YY] -= v3[YY] + b2 * del2[YY] + v4[YY];
         f_k[ZZ] -= v3[ZZ] + b2 * del2[ZZ] + v4[ZZ];
 
-        vtot += forceparams[type].angle_class2.ba_k1 * dr1 * dtheta
-                + forceparams[type].angle_class2.ba_k2 * dr2 * dtheta;
+        if constexpr (computeEnergy(flavor))
+        {
+            vtot += params.ba_k1 * dr1 * dtheta + params.ba_k2 * dr2 * dtheta;
+        }
 
         rvec f_j;
         for (int m = 0; m < DIM; m++)
         {
             f_j[m] = -f_i[m] - f_k[m];
+        }
+
+        if (traceEnabled)
+        {
+            const int  traceAtoms[3] = { ai, aj, ak };
+            const real traceForces[3][DIM] = { { f_i[XX], f_i[YY], f_i[ZZ] },
+                                               { f_j[XX], f_j[YY], f_j[ZZ] },
+                                               { f_k[XX], f_k[YY], f_k[ZZ] } };
+            pcffClass2TraceInteraction(
+                    "angle_class2", type, traceAtoms, 3, traceForces, global_atom_index);
+        }
+
+        for (int m = 0; m < DIM; m++)
+        {
             f[ai][m] += f_i[m];
             f[aj][m] += f_j[m];
             f[ak][m] += f_k[m];
@@ -2448,6 +2639,13 @@ static inline real pcffClass2Dot(const real a[DIM], const real b[DIM])
     return a[XX] * b[XX] + a[YY] * b[YY] + a[ZZ] * b[ZZ];
 }
 
+static inline double pcffClass2DotDouble(const real a[DIM], const real b[DIM])
+{
+    return static_cast<double>(a[XX]) * static_cast<double>(b[XX])
+           + static_cast<double>(a[YY]) * static_cast<double>(b[YY])
+           + static_cast<double>(a[ZZ]) * static_cast<double>(b[ZZ]);
+}
+
 static inline real clampedAcos(const real value)
 {
     return std::acos(std::clamp(value, -1.0_real, 1.0_real));
@@ -2471,8 +2669,21 @@ real dihedral_class2(int             nbonds,
 {
     constexpr real c_tolerance = 0.05_real;
     constexpr real c_small     = 1.0e-7_real;
+    const double   angleSinFloor = std::max(static_cast<double>(c_small), pcffClass2LinearAngleSinFloor());
 
     real vtot = 0;
+    const bool traceEnabled = pcffClass2TraceEnabled();
+    const bool doubleAccumulate = pcffClass2DihedralDoubleAccumulationEnabled();
+    std::vector<std::array<double, DIM>> forceAcc;
+    std::array<std::array<double, DIM>, c_numShiftVectors> shiftAcc = {};
+    if (doubleAccumulate)
+    {
+        const int maxAtomIndex = pcffClass2DihedralMaxAtomIndex(nbonds, forceatoms);
+        if (maxAtomIndex >= 0)
+        {
+            forceAcc.resize(static_cast<size_t>(maxAtomIndex + 1));
+        }
+    }
 
     for (int n = 0; n < nbonds;)
     {
@@ -2485,104 +2696,117 @@ real dihedral_class2(int             nbonds,
         const auto& params = forceparams[type].dihedral_class2;
 
         rvec vb1, vb2, vb3;
-        const int t1 = pbc_rvec_sub(pbc, x[ai], x[aj], vb1);
-        const int t2 = pbc_rvec_sub(pbc, x[ak], x[aj], vb2);
-        pbc_rvec_sub(pbc, x[al], x[ak], vb3);
+        const int t1 = pcffClass2RvecSub(pbc, x[ai], x[aj], vb1);
+        const int t2 = pcffClass2RvecSub(pbc, x[ak], x[aj], vb2);
+        pcffClass2RvecSub(pbc, x[al], x[ak], vb3);
 
-        const real vb2xm = -vb2[XX];
-        const real vb2ym = -vb2[YY];
-        const real vb2zm = -vb2[ZZ];
+        const double vb2xm = -static_cast<double>(vb2[XX]);
+        const double vb2ym = -static_cast<double>(vb2[YY]);
+        const double vb2zm = -static_cast<double>(vb2[ZZ]);
 
-        const real r1mag2 = pcffClass2Dot(vb1, vb1);
-        const real r2mag2 = pcffClass2Dot(vb2, vb2);
-        const real r3mag2 = pcffClass2Dot(vb3, vb3);
-        const real r1     = std::sqrt(r1mag2);
-        const real r2     = std::sqrt(r2mag2);
-        const real r3     = std::sqrt(r3mag2);
-        const real sb1    = 1.0_real / r1mag2;
-        const real rb1    = 1.0_real / r1;
-        const real sb2    = 1.0_real / r2mag2;
-        const real rb2    = 1.0_real / r2;
-        const real sb3    = 1.0_real / r3mag2;
-        const real rb3    = 1.0_real / r3;
+        const double r1mag2 = pcffClass2DotDouble(vb1, vb1);
+        const double r2mag2 = pcffClass2DotDouble(vb2, vb2);
+        const double r3mag2 = pcffClass2DotDouble(vb3, vb3);
+        const double r1     = std::sqrt(r1mag2);
+        const double r2     = std::sqrt(r2mag2);
+        const double r3     = std::sqrt(r3mag2);
+        const double sb1    = 1.0 / r1mag2;
+        const double rb1    = 1.0 / r1;
+        const double sb2    = 1.0 / r2mag2;
+        const double rb2    = 1.0 / r2;
+        const double sb3    = 1.0 / r3mag2;
+        const double rb3    = 1.0 / r3;
 
-        real c0      = pcffClass2Dot(vb1, vb3) * rb1 * rb3;
-        const real r12c1 = rb1 * rb2;
-        const real r12c2 = rb2 * rb3;
-        real costh12 = pcffClass2Dot(vb1, vb2) * r12c1;
-        real costh13 = c0;
-        real costh23 = (vb2xm * vb3[XX] + vb2ym * vb3[YY] + vb2zm * vb3[ZZ]) * r12c2;
+        double c0      = pcffClass2DotDouble(vb1, vb3) * rb1 * rb3;
+        const double r12c1 = rb1 * rb2;
+        const double r12c2 = rb2 * rb3;
+        double costh12 = pcffClass2DotDouble(vb1, vb2) * r12c1;
+        double costh13 = c0;
+        double costh23 = (vb2xm * static_cast<double>(vb3[XX]) + vb2ym * static_cast<double>(vb3[YY])
+                          + vb2zm * static_cast<double>(vb3[ZZ]))
+                         * r12c2;
 
-        costh12 = std::clamp(costh12, -1.0_real, 1.0_real);
-        costh13 = std::clamp(costh13, -1.0_real, 1.0_real);
-        costh23 = std::clamp(costh23, -1.0_real, 1.0_real);
+        costh12 = std::clamp(costh12, -1.0, 1.0);
+        costh13 = std::clamp(costh13, -1.0, 1.0);
+        costh23 = std::clamp(costh23, -1.0, 1.0);
         c0      = costh13;
 
-        real sin2 = std::max(1.0_real - costh12 * costh12, 0.0_real);
-        real sc1  = std::sqrt(sin2);
-        if (sc1 < c_small)
+        double sin2       = std::max(1.0 - costh12 * costh12, 0.0);
+        double sinTheta12 = std::sqrt(sin2);
+        if (sinTheta12 < c_small)
         {
-            sc1 = c_small;
+            sinTheta12 = c_small;
         }
-        sc1 = 1.0_real / sc1;
+        const double sc1Energy = 1.0 / sinTheta12;
 
-        sin2      = std::max(1.0_real - costh23 * costh23, 0.0_real);
-        real sc2  = std::sqrt(sin2);
-        if (sc2 < c_small)
+        sin2              = std::max(1.0 - costh23 * costh23, 0.0);
+        double sinTheta23 = std::sqrt(sin2);
+        if (sinTheta23 < c_small)
         {
-            sc2 = c_small;
+            sinTheta23 = c_small;
         }
-        sc2 = 1.0_real / sc2;
+        const double sc2Energy = 1.0 / sinTheta23;
 
-        const real s1  = sc1 * sc1;
-        const real s2  = sc2 * sc2;
-        const real s12 = sc1 * sc2;
-        real       c   = (c0 + costh12 * costh23) * s12;
+        double s1  = sc1Energy * sc1Energy;
+        double s2  = sc2Energy * sc2Energy;
+        double s12 = sc1Energy * sc2Energy;
+        double       c   = (c0 + costh12 * costh23) * s12;
 
-        if (c > 1.0_real + c_tolerance || c < -1.0_real - c_tolerance)
+        if (c > 1.0 + c_tolerance || c < -1.0 - c_tolerance)
         {
-            c = std::clamp(c, -1.0_real, 1.0_real);
+            c = std::clamp(c, -1.0, 1.0);
         }
         else
         {
-            c = std::clamp(c, -1.0_real, 1.0_real);
+            c = std::clamp(c, -1.0, 1.0);
         }
 
-        real cosphi = c;
-        real phi    = std::acos(c);
+        double cosphi = c;
+        double phi    = std::acos(c);
 
-        real sinphi = std::sqrt(std::max(1.0_real - c * c, 0.0_real));
-        sinphi      = std::max(sinphi, c_small);
+        double sinphi = std::sqrt(std::max(1.0 - c * c, 0.0));
+        sinphi      = std::max(sinphi, static_cast<double>(c_small));
 
-        const real n123x = vb1[YY] * vb2[ZZ] - vb1[ZZ] * vb2[YY];
-        const real n123y = vb1[ZZ] * vb2[XX] - vb1[XX] * vb2[ZZ];
-        const real n123z = vb1[XX] * vb2[YY] - vb1[YY] * vb2[XX];
-        const real n123DotVb3 = n123x * vb3[XX] + n123y * vb3[YY] + n123z * vb3[ZZ];
+        const double n123x = static_cast<double>(vb1[YY]) * static_cast<double>(vb2[ZZ])
+                             - static_cast<double>(vb1[ZZ]) * static_cast<double>(vb2[YY]);
+        const double n123y = static_cast<double>(vb1[ZZ]) * static_cast<double>(vb2[XX])
+                             - static_cast<double>(vb1[XX]) * static_cast<double>(vb2[ZZ]);
+        const double n123z = static_cast<double>(vb1[XX]) * static_cast<double>(vb2[YY])
+                             - static_cast<double>(vb1[YY]) * static_cast<double>(vb2[XX]);
+        const double n123DotVb3 = n123x * static_cast<double>(vb3[XX])
+                                  + n123y * static_cast<double>(vb3[YY])
+                                  + n123z * static_cast<double>(vb3[ZZ]);
         if (n123DotVb3 > 0.0_real)
         {
             phi    = -phi;
             sinphi = -sinphi;
         }
 
-        const real a11 = -c * sb1 * s1;
-        const real a22 = sb2 * (2.0_real * costh13 * s12 - c * (s1 + s2));
-        const real a33 = -c * sb3 * s2;
-        const real a12 = r12c1 * (costh12 * c * s1 + costh23 * s12);
-        const real a13 = rb1 * rb3 * s12;
-        const real a23 = r12c2 * (-costh23 * c * s2 - costh12 * s12);
+        const double sc1 = 1.0 / std::max(sinTheta12, angleSinFloor);
+        const double sc2 = 1.0 / std::max(sinTheta23, angleSinFloor);
+        s1               = sc1 * sc1;
+        s2               = sc2 * sc2;
+        s12              = sc1 * sc2;
 
-        const real sx1  = a11 * vb1[XX] + a12 * vb2[XX] + a13 * vb3[XX];
-        const real sx2  = a12 * vb1[XX] + a22 * vb2[XX] + a23 * vb3[XX];
-        const real sx12 = a13 * vb1[XX] + a23 * vb2[XX] + a33 * vb3[XX];
-        const real sy1  = a11 * vb1[YY] + a12 * vb2[YY] + a13 * vb3[YY];
-        const real sy2  = a12 * vb1[YY] + a22 * vb2[YY] + a23 * vb3[YY];
-        const real sy12 = a13 * vb1[YY] + a23 * vb2[YY] + a33 * vb3[YY];
-        const real sz1  = a11 * vb1[ZZ] + a12 * vb2[ZZ] + a13 * vb3[ZZ];
-        const real sz2  = a12 * vb1[ZZ] + a22 * vb2[ZZ] + a23 * vb3[ZZ];
-        const real sz12 = a13 * vb1[ZZ] + a23 * vb2[ZZ] + a33 * vb3[ZZ];
+        const double a11 = -c * sb1 * s1;
+        const double a22 = sb2 * (2.0 * costh13 * s12 - c * (s1 + s2));
+        const double a33 = -c * sb3 * s2;
+        const double a12 = r12c1 * (costh12 * c * s1 + costh23 * s12);
+        const double a13 = rb1 * rb3 * s12;
+        const double a23 = r12c2 * (-costh23 * c * s2 - costh12 * s12);
 
-        real dcosphidr[4][DIM];
-        real dphidr[4][DIM];
+        const double sx1  = a11 * vb1[XX] + a12 * vb2[XX] + a13 * vb3[XX];
+        const double sx2  = a12 * vb1[XX] + a22 * vb2[XX] + a23 * vb3[XX];
+        const double sx12 = a13 * vb1[XX] + a23 * vb2[XX] + a33 * vb3[XX];
+        const double sy1  = a11 * vb1[YY] + a12 * vb2[YY] + a13 * vb3[YY];
+        const double sy2  = a12 * vb1[YY] + a22 * vb2[YY] + a23 * vb3[YY];
+        const double sy12 = a13 * vb1[YY] + a23 * vb2[YY] + a33 * vb3[YY];
+        const double sz1  = a11 * vb1[ZZ] + a12 * vb2[ZZ] + a13 * vb3[ZZ];
+        const double sz2  = a12 * vb1[ZZ] + a22 * vb2[ZZ] + a23 * vb3[ZZ];
+        const double sz12 = a13 * vb1[ZZ] + a23 * vb2[ZZ] + a33 * vb3[ZZ];
+
+        double dcosphidr[4][DIM];
+        double dphidr[4][DIM];
         dcosphidr[0][XX] = -sx1;
         dcosphidr[0][YY] = -sy1;
         dcosphidr[0][ZZ] = -sz1;
@@ -2604,19 +2828,20 @@ real dihedral_class2(int             nbonds,
             }
         }
 
-        real fabcd[4][DIM] = { { 0 } };
+        double fabcd[4][DIM] = { { 0 } };
 
-        const real dphi1 = phi - params.phi1;
-        const real dphi2 = 2.0_real * phi - params.phi2;
-        const real dphi3 = 3.0_real * phi - params.phi3;
+        const double dphi1 = phi - params.phi1;
+        const double dphi2 = 2.0 * phi - params.phi2;
+        const double dphi3 = 3.0 * phi - params.phi3;
         if (computeEnergy(flavor))
         {
-            vtot += params.k1 * (1.0_real - std::cos(dphi1)) + params.k2 * (1.0_real - std::cos(dphi2))
-                    + params.k3 * (1.0_real - std::cos(dphi3));
+            vtot += static_cast<real>(params.k1 * (1.0 - std::cos(dphi1))
+                                       + params.k2 * (1.0 - std::cos(dphi2))
+                                       + params.k3 * (1.0 - std::cos(dphi3)));
         }
 
-        const real deDihedral = params.k1 * std::sin(dphi1) + 2.0_real * params.k2 * std::sin(dphi2)
-                                + 3.0_real * params.k3 * std::sin(dphi3);
+        const double deDihedral = params.k1 * std::sin(dphi1) + 2.0 * params.k2 * std::sin(dphi2)
+                                  + 3.0 * params.k3 * std::sin(dphi3);
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < DIM; j++)
@@ -2625,7 +2850,7 @@ real dihedral_class2(int             nbonds,
             }
         }
 
-        real dbonddr[3][4][DIM] = { { { 0 } } };
+        double dbonddr[3][4][DIM] = { { { 0 } } };
         dbonddr[0][0][XX] = vb1[XX] / r1;
         dbonddr[0][0][YY] = vb1[YY] / r1;
         dbonddr[0][0][ZZ] = vb1[ZZ] / r1;
@@ -2647,11 +2872,11 @@ real dihedral_class2(int             nbonds,
         dbonddr[2][3][YY] = -vb3[YY] / r3;
         dbonddr[2][3][ZZ] = -vb3[ZZ] / r3;
 
-        real dthetadr[2][4][DIM] = { { { 0 } } };
-        const real t1l = costh12 / r1mag2;
-        const real t2l = costh23 / r2mag2;
-        const real t3l = costh12 / r2mag2;
-        const real t4l = costh23 / r3mag2;
+        double dthetadr[2][4][DIM] = { { { 0 } } };
+        const double t1l = costh12 / r1mag2;
+        const double t2l = costh23 / r2mag2;
+        const double t3l = costh12 / r2mag2;
+        const double t4l = costh23 / r3mag2;
 
         dthetadr[0][0][XX] = sc1 * (t1l * vb1[XX] - vb2[XX] * r12c1);
         dthetadr[0][0][YY] = sc1 * (t1l * vb1[YY] - vb2[YY] * r12c1);
@@ -2676,22 +2901,26 @@ real dihedral_class2(int             nbonds,
         dthetadr[1][3][YY] = -sc2 * (t4l * vb3[YY] + vb2[YY] * r12c2);
         dthetadr[1][3][ZZ] = -sc2 * (t4l * vb3[ZZ] + vb2[ZZ] * r12c2);
 
-        const real cos2phi = std::cos(2.0_real * phi);
-        const real cos3phi = std::cos(3.0_real * phi);
-        real       bt1     = params.mbt_f1 * cosphi;
-        real       bt2     = params.mbt_f2 * cos2phi;
-        real       bt3     = params.mbt_f3 * cos3phi;
-        real       sumbte  = bt1 + bt2 + bt3;
-        real       db      = r2 - params.mbt_r0;
+        const double cos2phi = std::cos(2.0 * phi);
+        const double cos3phi = std::cos(3.0 * phi);
+        const double sin2phi = std::sin(2.0 * phi);
+        const double sin3phi = std::sin(3.0 * phi);
+        const double theta12 = std::acos(costh12);
+        const double theta23 = std::acos(costh23);
+        double       bt1     = params.mbt_f1 * cosphi;
+        double       bt2     = params.mbt_f2 * cos2phi;
+        double       bt3     = params.mbt_f3 * cos3phi;
+        double       sumbte  = bt1 + bt2 + bt3;
+        double       db      = r2 - params.mbt_r0;
         if (computeEnergy(flavor))
         {
-            vtot += db * sumbte;
+            vtot += static_cast<real>(db * sumbte);
         }
 
         bt1 = -params.mbt_f1 * sinphi;
-        bt2 = -2.0_real * params.mbt_f2 * std::sin(2.0_real * phi);
-        bt3 = -3.0_real * params.mbt_f3 * std::sin(3.0_real * phi);
-        real sumbtf = bt1 + bt2 + bt3;
+        bt2 = -2.0 * params.mbt_f2 * sin2phi;
+        bt3 = -3.0 * params.mbt_f3 * sin3phi;
+        double sumbtf = bt1 + bt2 + bt3;
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < DIM; j++)
@@ -2707,12 +2936,12 @@ real dihedral_class2(int             nbonds,
         db     = r1 - params.ebt_r0_1;
         if (computeEnergy(flavor))
         {
-            vtot += db * sumbte;
+            vtot += static_cast<real>(db * sumbte);
         }
 
         bt1 = params.ebt_f1_1 * sinphi;
-        bt2 = 2.0_real * params.ebt_f2_1 * std::sin(2.0_real * phi);
-        bt3 = 3.0_real * params.ebt_f3_1 * std::sin(3.0_real * phi);
+        bt2 = 2.0 * params.ebt_f2_1 * sin2phi;
+        bt3 = 3.0 * params.ebt_f3_1 * sin3phi;
         sumbtf = bt1 + bt2 + bt3;
         for (int i = 0; i < 4; i++)
         {
@@ -2729,12 +2958,12 @@ real dihedral_class2(int             nbonds,
         db     = r3 - params.ebt_r0_2;
         if (computeEnergy(flavor))
         {
-            vtot += db * sumbte;
+            vtot += static_cast<real>(db * sumbte);
         }
 
         bt1 = -params.ebt_f1_2 * sinphi;
-        bt2 = -2.0_real * params.ebt_f2_2 * std::sin(2.0_real * phi);
-        bt3 = -3.0_real * params.ebt_f3_2 * std::sin(3.0_real * phi);
+        bt2 = -2.0 * params.ebt_f2_2 * sin2phi;
+        bt3 = -3.0 * params.ebt_f3_2 * sin3phi;
         sumbtf = bt1 + bt2 + bt3;
         for (int i = 0; i < 4; i++)
         {
@@ -2744,19 +2973,19 @@ real dihedral_class2(int             nbonds,
             }
         }
 
-        real at1 = params.at_f1_1 * cosphi;
-        real at2 = params.at_f2_1 * cos2phi;
-        real at3 = params.at_f3_1 * cos3phi;
+        double at1 = params.at_f1_1 * cosphi;
+        double at2 = params.at_f2_1 * cos2phi;
+        double at3 = params.at_f3_1 * cos3phi;
         sumbte   = at1 + at2 + at3;
-        real da  = std::acos(costh12) - params.at_theta0_1;
+        double da  = theta12 - params.at_theta0_1;
         if (computeEnergy(flavor))
         {
-            vtot += da * sumbte;
+            vtot += static_cast<real>(da * sumbte);
         }
 
         bt1 = params.at_f1_1 * sinphi;
-        bt2 = 2.0_real * params.at_f2_1 * std::sin(2.0_real * phi);
-        bt3 = 3.0_real * params.at_f3_1 * std::sin(3.0_real * phi);
+        bt2 = 2.0 * params.at_f2_1 * sin2phi;
+        bt3 = 3.0 * params.at_f3_1 * sin3phi;
         sumbtf = bt1 + bt2 + bt3;
         for (int i = 0; i < 4; i++)
         {
@@ -2770,15 +2999,15 @@ real dihedral_class2(int             nbonds,
         at2    = params.at_f2_2 * cos2phi;
         at3    = params.at_f3_2 * cos3phi;
         sumbte = at1 + at2 + at3;
-        da     = std::acos(costh23) - params.at_theta0_2;
+        da     = theta23 - params.at_theta0_2;
         if (computeEnergy(flavor))
         {
-            vtot += da * sumbte;
+            vtot += static_cast<real>(da * sumbte);
         }
 
         bt1 = -params.at_f1_2 * sinphi;
-        bt2 = -2.0_real * params.at_f2_2 * std::sin(2.0_real * phi);
-        bt3 = -3.0_real * params.at_f3_2 * std::sin(3.0_real * phi);
+        bt2 = -2.0 * params.at_f2_2 * sin2phi;
+        bt3 = -3.0 * params.at_f3_2 * sin3phi;
         sumbtf = bt1 + bt2 + bt3;
         for (int i = 0; i < 4; i++)
         {
@@ -2788,11 +3017,11 @@ real dihedral_class2(int             nbonds,
             }
         }
 
-        const real da1 = std::acos(costh12) - params.aat_theta0_1;
-        const real da2 = std::acos(costh23) - params.aat_theta0_2;
+        const double da1 = theta12 - params.aat_theta0_1;
+        const double da2 = theta23 - params.aat_theta0_2;
         if (computeEnergy(flavor))
         {
-            vtot += params.aat_k * da1 * da2 * cosphi;
+            vtot += static_cast<real>(params.aat_k * da1 * da2 * cosphi);
         }
         for (int i = 0; i < 4; i++)
         {
@@ -2806,14 +3035,14 @@ real dihedral_class2(int             nbonds,
 
         if (std::abs(params.bb13t_k) > c_small)
         {
-            const real dr1 = r1 - params.bb13t_r10;
-            const real dr2 = r3 - params.bb13t_r30;
-            const real tk1 = -params.bb13t_k * dr1 / r3;
-            const real tk2 = -params.bb13t_k * dr2 / r1;
+            const double dr1 = r1 - params.bb13t_r10;
+            const double dr2 = r3 - params.bb13t_r30;
+            const double tk1 = -params.bb13t_k * dr1 / r3;
+            const double tk2 = -params.bb13t_k * dr2 / r1;
 
             if (computeEnergy(flavor))
             {
-                vtot += params.bb13t_k * dr1 * dr2;
+                vtot += static_cast<real>(params.bb13t_k * dr1 * dr2);
             }
 
             fabcd[0][XX] += tk2 * vb1[XX];
@@ -2830,22 +3059,79 @@ real dihedral_class2(int             nbonds,
             fabcd[3][ZZ] += tk1 * vb3[ZZ];
         }
 
-        for (int m = 0; m < DIM; m++)
+        if (traceEnabled)
         {
-            f[ai][m] += fabcd[0][m];
-            f[aj][m] += fabcd[1][m];
-            f[ak][m] += fabcd[2][m];
-            f[al][m] += fabcd[3][m];
+            const int traceAtoms[4] = { ai, aj, ak, al };
+            pcffClass2TraceInteraction(
+                    "dihedral_class2", type, traceAtoms, 4, fabcd, global_atom_index);
+        }
+
+        if (doubleAccumulate)
+        {
+            for (int m = 0; m < DIM; m++)
+            {
+                forceAcc[ai][m] += fabcd[0][m];
+                forceAcc[aj][m] += fabcd[1][m];
+                forceAcc[ak][m] += fabcd[2][m];
+                forceAcc[al][m] += fabcd[3][m];
+            }
+        }
+        else
+        {
+            for (int m = 0; m < DIM; m++)
+            {
+                f[ai][m] += static_cast<real>(fabcd[0][m]);
+                f[aj][m] += static_cast<real>(fabcd[1][m]);
+                f[ak][m] += static_cast<real>(fabcd[2][m]);
+                f[al][m] += static_cast<real>(fabcd[3][m]);
+            }
         }
 
         if (computeVirial(flavor))
         {
             rvec h;
-            const int t3 = pbc ? pbc_rvec_sub(pbc, x[al], x[aj], h) : c_centralShiftIndex;
-            rvec_inc(fshift[t1], fabcd[0]);
-            rvec_inc(fshift[c_centralShiftIndex], fabcd[1]);
-            rvec_inc(fshift[t2], fabcd[2]);
-            rvec_inc(fshift[t3], fabcd[3]);
+            const int t3 = pbc ? pcffClass2RvecSub(pbc, x[al], x[aj], h) : c_centralShiftIndex;
+            if (doubleAccumulate)
+            {
+                for (int m = 0; m < DIM; m++)
+                {
+                    shiftAcc[t1][m] += fabcd[0][m];
+                    shiftAcc[c_centralShiftIndex][m] += fabcd[1][m];
+                    shiftAcc[t2][m] += fabcd[2][m];
+                    shiftAcc[t3][m] += fabcd[3][m];
+                }
+            }
+            else
+            {
+                for (int m = 0; m < DIM; m++)
+                {
+                    fshift[t1][m] += static_cast<real>(fabcd[0][m]);
+                    fshift[c_centralShiftIndex][m] += static_cast<real>(fabcd[1][m]);
+                    fshift[t2][m] += static_cast<real>(fabcd[2][m]);
+                    fshift[t3][m] += static_cast<real>(fabcd[3][m]);
+                }
+            }
+        }
+    }
+
+    if (doubleAccumulate)
+    {
+        for (int atom = 0; atom < static_cast<int>(forceAcc.size()); atom++)
+        {
+            for (int m = 0; m < DIM; m++)
+            {
+                f[atom][m] += static_cast<real>(forceAcc[atom][m]);
+            }
+        }
+        if (computeVirial(flavor))
+        {
+            for (int shift = 0; shift < c_numShiftVectors; shift++)
+            {
+                for (int m = 0; m < DIM; m++)
+                {
+                    fshift[shift][m] += static_cast<real>(shiftAcc[shift][m]);
+                }
+            }
         }
     }
 
@@ -2869,6 +3155,7 @@ real improper_class2(int             nbonds,
                      int*                     global_atom_index)
 {
     real vtot = 0;
+    const bool traceEnabled = pcffClass2TraceEnabled();
 
     for (int n = 0; n < nbonds;)
     {
@@ -2881,16 +3168,16 @@ real improper_class2(int             nbonds,
         const auto& params = forceparams[type].improper_class2;
 
         rvec delr[3];
-        const int t1 = pbc_rvec_sub(pbc, x[ai], x[aj], delr[0]);
-        const int t2 = pbc_rvec_sub(pbc, x[ak], x[aj], delr[1]);
-        const int t3 = pbc_rvec_sub(pbc, x[al], x[aj], delr[2]);
+        const int t1 = pcffClass2RvecSub(pbc, x[ai], x[aj], delr[0]);
+        const int t2 = pcffClass2RvecSub(pbc, x[ak], x[aj], delr[1]);
+        const int t3 = pcffClass2RvecSub(pbc, x[al], x[aj], delr[2]);
 
         real fabcd[4][DIM] = { { 0 } };
 
         if (params.k0 != 0)
         {
             real rmag[3], rinvmag[3], rmag2[3];
-            real theta[3], costheta[3], sintheta[3], cossqtheta[3], sinsqtheta[3], invstheta[3];
+                real costheta[3], sintheta[3], cossqtheta[3], sinsqtheta[3], invstheta[3];
             real rABxrCB[DIM], rDBxrAB[DIM], rCBxrDB[DIM];
             real ddelr[3][4]      = { { 0 } };
             real dr[3][4][DIM]    = { { { 0 } } };
@@ -2929,11 +3216,10 @@ real improper_class2(int             nbonds,
                               glatnr(global_atom_index, al));
                 }
                 costheta[i]   = std::clamp(costheta[i], -1.0_real, 1.0_real);
-                theta[i]      = std::acos(costheta[i]);
                 cossqtheta[i] = costheta[i] * costheta[i];
-                sintheta[i]   = std::sin(theta[i]);
+                sinsqtheta[i] = std::max(1.0_real - cossqtheta[i], 0.0_real);
+                sintheta[i]   = std::sqrt(sinsqtheta[i]);
                 invstheta[i]  = 1 / sintheta[i];
-                sinsqtheta[i] = sintheta[i] * sintheta[i];
             }
 
             pcffClass2Cross(delr[0], delr[1], rABxrCB);
@@ -2954,7 +3240,10 @@ real improper_class2(int             nbonds,
             const real chiDBAC = std::asin(dotABCBDB * invs3r[2]);
             const real deltachi = (chiABCD + chiCBDA + chiDBAC) / 3 - params.chi0;
 
-            vtot += params.k0 * deltachi * deltachi;
+            if constexpr (computeEnergy(flavor))
+            {
+                vtot += params.k0 * deltachi * deltachi;
+            }
 
             ddelr[0][0] = 1;
             ddelr[0][1] = -1;
@@ -3149,8 +3438,11 @@ real improper_class2(int             nbonds,
             const real dthABD   = thetaABD - params.aa_theta0_2;
             const real dthCBD   = thetaCBD - params.aa_theta0_3;
 
-            vtot += params.aa_k2 * dthABC * dthABD + params.aa_k1 * dthABC * dthCBD
-                    + params.aa_k3 * dthABD * dthCBD;
+            if constexpr (computeEnergy(flavor))
+            {
+                vtot += params.aa_k2 * dthABC * dthABD + params.aa_k1 * dthABC * dthCBD
+                        + params.aa_k3 * dthABD * dthCBD;
+            }
 
             real dthetadr[3][4][DIM] = { { { 0 } } };
 
@@ -3210,6 +3502,13 @@ real improper_class2(int             nbonds,
             }
         }
 
+        if (traceEnabled)
+        {
+            const int traceAtoms[4] = { ai, aj, ak, al };
+            pcffClass2TraceInteraction(
+                    "improper_class2", type, traceAtoms, 4, fabcd, global_atom_index);
+        }
+
         for (int m = 0; m < DIM; m++)
         {
             f[ai][m] += fabcd[0][m];
@@ -3249,7 +3548,7 @@ PcffClass2SubtermEnergies evaluatePcffClass2SubtermEnergies(const InteractionDef
         const int aj   = bondList.iatoms[n++];
 
         rvec dx;
-        pbc_rvec_sub(pbc, coordinates[ai], coordinates[aj], dx);
+        pcffClass2RvecSub(pbc, coordinates[ai], coordinates[aj], dx);
         const real r   = norm(dx);
         const real dr  = r - idef.iparams[type].bond_class2.r0;
         const real dr2 = dr * dr;
@@ -3272,8 +3571,8 @@ PcffClass2SubtermEnergies evaluatePcffClass2SubtermEnergies(const InteractionDef
 
         rvec del1;
         rvec del2;
-        pbc_rvec_sub(pbc, coordinates[ai], coordinates[aj], del1);
-        pbc_rvec_sub(pbc, coordinates[ak], coordinates[aj], del2);
+        pcffClass2RvecSub(pbc, coordinates[ai], coordinates[aj], del1);
+        pcffClass2RvecSub(pbc, coordinates[ak], coordinates[aj], del2);
 
         const real r1     = norm(del1);
         const real r2     = norm(del2);
@@ -3313,8 +3612,20 @@ PcffClass2SubtermEnergies evaluatePcffClass2SubtermEnergies(const InteractionDef
         int  t1;
         int  t2;
         int  t3;
-        const real phi = dih_angle(
-                coordinates[ai], coordinates[aj], coordinates[ak], coordinates[al], pbc, vb1, vb2, vb3, m, nvec, &t1, &t2, &t3);
+        const t_pbc* dihedralPbc = pcffClass2RawBondedDeltasRequested() ? nullptr : pbc;
+        const real   phi = dih_angle(coordinates[ai],
+                                   coordinates[aj],
+                                   coordinates[ak],
+                                   coordinates[al],
+                                   dihedralPbc,
+                                   vb1,
+                                   vb2,
+                                   vb3,
+                                   m,
+                                   nvec,
+                                   &t1,
+                                   &t2,
+                                   &t3);
 
         const real r1 = std::sqrt(pcffClass2Dot(vb1, vb1));
         const real r2 = std::sqrt(pcffClass2Dot(vb2, vb2));
@@ -3363,9 +3674,9 @@ PcffClass2SubtermEnergies evaluatePcffClass2SubtermEnergies(const InteractionDef
         const auto& params = idef.iparams[type].improper_class2;
 
         rvec delr[3];
-        pbc_rvec_sub(pbc, coordinates[ai], coordinates[aj], delr[0]);
-        pbc_rvec_sub(pbc, coordinates[ak], coordinates[aj], delr[1]);
-        pbc_rvec_sub(pbc, coordinates[al], coordinates[aj], delr[2]);
+        pcffClass2RvecSub(pbc, coordinates[ai], coordinates[aj], delr[0]);
+        pcffClass2RvecSub(pbc, coordinates[ak], coordinates[aj], delr[1]);
+        pcffClass2RvecSub(pbc, coordinates[al], coordinates[aj], delr[2]);
 
         real rmag[3];
         for (int i = 0; i < 3; ++i)

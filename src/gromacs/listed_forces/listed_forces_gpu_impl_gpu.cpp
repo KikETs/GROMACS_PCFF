@@ -46,6 +46,9 @@
 #include "gmxpre.h"
 
 #include <algorithm>
+#include <cstdlib>
+#include <cstdint>
+#include <iterator>
 
 #include "gromacs/gpu_utils/device_context.h"
 #include "gromacs/gpu_utils/device_stream.h"
@@ -86,6 +89,21 @@ static int chooseSubGroupSizeForDevice(const DeviceInformation& deviceInfo)
         GMX_RELEASE_ASSERT(false, "Device has no known supported sub-group sizes");
         return 0;
     }
+}
+
+static int chooseBondedThreadsPerBlock()
+{
+    const char* value = std::getenv("GMX_PCFF_GPU_BONDED_THREADS_PER_BLOCK");
+    if (value != nullptr && value[0] != '\0')
+    {
+        const int threadsPerBlock = std::atoi(value);
+        if (threadsPerBlock == 64 || threadsPerBlock == 128 || threadsPerBlock == 256
+            || threadsPerBlock == 512)
+        {
+            return threadsPerBlock;
+        }
+    }
+    return c_threadsBondedPerBlock;
 }
 
 ListedForcesGpu::Impl::Impl(const gmx_ffparams_t& ffparams,
@@ -145,10 +163,11 @@ ListedForcesGpu::Impl::Impl(const gmx_ffparams_t& ffparams,
 
     int fTypeRangeEnd = kernelParams_.fTypeRangeEnd[numFTypesOnGpu - 1];
 
-    kernelLaunchConfig_.blockSize[0] = c_threadsBondedPerBlock;
+    kernelLaunchConfig_.blockSize[0] = chooseBondedThreadsPerBlock();
     kernelLaunchConfig_.blockSize[1] = 1;
     kernelLaunchConfig_.blockSize[2] = 1;
-    kernelLaunchConfig_.gridSize[0] = (fTypeRangeEnd + c_threadsBondedPerBlock) / c_threadsBondedPerBlock;
+    kernelLaunchConfig_.gridSize[0] =
+            (fTypeRangeEnd + kernelLaunchConfig_.blockSize[0]) / kernelLaunchConfig_.blockSize[0];
     kernelLaunchConfig_.gridSize[1]      = 1;
     kernelLaunchConfig_.gridSize[2]      = 1;
     kernelLaunchConfig_.sharedMemorySize = c_numShiftVectors * sizeof(Float3);
@@ -166,6 +185,18 @@ ListedForcesGpu::Impl::~Impl()
             {
                 freeDeviceBuffer(&d_iAtoms_[ft]);
                 d_iAtoms_[ft] = nullptr;
+            }
+        }
+        for (auto& cacheEntry : cachedInteractionLists_)
+        {
+            for (InteractionFunction fType : fTypesOnGpu)
+            {
+                const int ft = static_cast<int>(fType);
+                if (cacheEntry.d_iAtoms[ft])
+                {
+                    freeDeviceBuffer(&cacheEntry.d_iAtoms[ft]);
+                    cacheEntry.d_iAtoms[ft] = nullptr;
+                }
             }
         }
 
@@ -224,6 +255,34 @@ static inline int roundUpToFactor(const int input, const int factor)
     return (input + (factor - remainder));
 }
 
+static BondedGpuInteractionListCacheKey makeInteractionListCacheKey(
+        ArrayRef<const int>           nbnxnAtomOrder,
+        const InteractionDefinitions& idef,
+        const std::uintptr_t          interactionListCacheIdentity)
+{
+    // Exact r-RESPA enables this cache only between neighbor-search steps, where
+    // atom order and listed interaction storage are stable. Keep the key O(1)
+    // so the cache lookup does not become the inner-step bottleneck.
+    BondedGpuInteractionListCacheKey key;
+    key.interactionListIdentity = interactionListCacheIdentity;
+    key.atomOrderSize        = nbnxnAtomOrder.ssize();
+    key.atomOrderFingerprint = reinterpret_cast<std::uintptr_t>(nbnxnAtomOrder.data());
+
+    for (int i = 0; i < numFTypesOnGpu; ++i)
+    {
+        const InteractionFunction fType = fTypesOnGpu[i];
+        const int                 ft    = static_cast<int>(fType);
+        key.iListSizes[i]              = idef.il[ft].size();
+        key.iListFingerprints[i] =
+                (interactionListCacheIdentity != 0)
+                        ? 0
+                        : reinterpret_cast<std::uintptr_t>(idef.il[ft].iatoms.data());
+        key.numNonperturbedInteractions[i] = idef.numNonperturbedInteractions[ft];
+    }
+
+    return key;
+}
+
 void ListedForcesGpu::Impl::updateHaveInteractions(const InteractionDefinitions& idef)
 {
     haveInteractions_ = false;
@@ -261,16 +320,79 @@ void ListedForcesGpu::Impl::updateInteractionListsAndDeviceBuffers(ArrayRef<cons
                                                                    const InteractionDefinitions& idef,
                                                                    DeviceBuffer<Float4> d_xqPtr,
                                                                    DeviceBuffer<RVec>   d_fPtr,
-                                                                   DeviceBuffer<RVec>   d_fShiftPtr)
+                                                                   DeviceBuffer<RVec>   d_fShiftPtr,
+                                                                   const bool useCachedInteractionLists,
+                                                                   const std::uintptr_t interactionListCacheIdentity)
 {
     wallcycle_sub_start(wcycle_, WallCycleSubCounter::GpuBondedListUpdate);
+    if (!useCachedInteractionLists)
+    {
+        cachedInteractionListsValid_ = false;
+        for (auto& cacheEntry : cachedInteractionLists_)
+        {
+            cacheEntry.valid = false;
+        }
+    }
+    const BondedGpuInteractionListCacheKey cacheKey =
+            useCachedInteractionLists
+                    ? makeInteractionListCacheKey(nbnxnAtomOrder, idef, interactionListCacheIdentity)
+                                      : BondedGpuInteractionListCacheKey{};
+
+    if (useCachedInteractionLists)
+    {
+        for (const auto& cacheEntry : cachedInteractionLists_)
+        {
+            if (cacheEntry.valid && cacheEntry.key == cacheKey)
+            {
+                d_xq_     = d_xqPtr;
+                d_f_      = d_fPtr;
+                d_fShift_ = d_fShiftPtr;
+
+                haveInteractions_  = cacheEntry.haveInteractions;
+                kernelParams_       = cacheEntry.kernelParams;
+                kernelLaunchConfig_ = cacheEntry.kernelLaunchConfig;
+
+                kernelBuffers_.d_forceParams = d_forceParams_;
+                kernelBuffers_.d_vTot        = d_vTot_;
+                for (int i = 0; i < numFTypesOnGpu; ++i)
+                {
+                    const int ft = static_cast<int>(fTypesOnGpu[i]);
+                    kernelBuffers_.d_iatoms[i] = cacheEntry.d_iAtoms[ft];
+                }
+
+                wallcycle_sub_stop(wcycle_, WallCycleSubCounter::GpuBondedListUpdate);
+                return;
+            }
+        }
+    }
+
+    BondedGpuInteractionListCacheEntry* cacheEntry = nullptr;
+    if (useCachedInteractionLists)
+    {
+        auto emptyEntry = std::find_if(cachedInteractionLists_.begin(),
+                                       cachedInteractionLists_.end(),
+                                       [](const auto& entry) { return !entry.valid; });
+        if (emptyEntry == cachedInteractionLists_.end())
+        {
+            cachedInteractionLists_.emplace_back();
+            emptyEntry = std::prev(cachedInteractionLists_.end());
+        }
+        cacheEntry        = &(*emptyEntry);
+        cacheEntry->key   = cacheKey;
+        cacheEntry->valid = false;
+    }
+
+    auto& iLists = useCachedInteractionLists ? cacheEntry->iLists : iLists_;
+    auto& dIAtoms = useCachedInteractionLists ? cacheEntry->d_iAtoms : d_iAtoms_;
+    auto& dIAtomsAlloc = useCachedInteractionLists ? cacheEntry->d_iAtomsAlloc : d_iAtomsAlloc_;
+
     bool haveGpuInteractions = false;
     int  fTypesCounter       = 0;
 
     for (InteractionFunction fType : fTypesOnGpu)
     {
         const int ft    = static_cast<int>(fType);
-        auto&     iList = iLists_[ft];
+        auto&     iList = iLists[ft];
 
         /* Perturbation is not implemented in the GPU bonded kernels.
          * But instead of doing all interactions on the CPU, we can
@@ -295,9 +417,9 @@ void ListedForcesGpu::Impl::updateInteractionListsAndDeviceBuffers(ArrayRef<cons
         {
             int newListSize;
             reallocateDeviceBuffer(
-                    &d_iAtoms_[ft], iList.size(), &newListSize, &d_iAtomsAlloc_[ft], deviceContext_);
+                    &dIAtoms[ft], iList.size(), &newListSize, &dIAtomsAlloc[ft], deviceContext_);
 
-            copyToDeviceBuffer(&d_iAtoms_[ft],
+            copyToDeviceBuffer(&dIAtoms[ft],
                                iList.iatoms.data(),
                                0,
                                iList.size(),
@@ -308,7 +430,7 @@ void ListedForcesGpu::Impl::updateInteractionListsAndDeviceBuffers(ArrayRef<cons
         kernelParams_.fTypesOnGpu[fTypesCounter] = static_cast<InteractionFunction>(ft);
         int numBonds = iList.size() / (interaction_function[ft].nratoms + 1);
         kernelParams_.numFTypeBonds[fTypesCounter] = numBonds;
-        kernelBuffers_.d_iatoms[fTypesCounter]     = d_iAtoms_[ft];
+        kernelBuffers_.d_iatoms[fTypesCounter]     = dIAtoms[ft];
         if (fTypesCounter == 0)
         {
             kernelParams_.fTypeRangeStart[fTypesCounter] = 0;
@@ -335,7 +457,8 @@ void ListedForcesGpu::Impl::updateInteractionListsAndDeviceBuffers(ArrayRef<cons
     }
 
     int fTypeRangeEnd = kernelParams_.fTypeRangeEnd[numFTypesOnGpu - 1];
-    kernelLaunchConfig_.gridSize[0] = (fTypeRangeEnd + c_threadsBondedPerBlock) / c_threadsBondedPerBlock;
+    kernelLaunchConfig_.gridSize[0] =
+            (fTypeRangeEnd + kernelLaunchConfig_.blockSize[0]) / kernelLaunchConfig_.blockSize[0];
 
     d_xq_     = d_xqPtr;
     d_f_      = d_fPtr;
@@ -346,6 +469,16 @@ void ListedForcesGpu::Impl::updateInteractionListsAndDeviceBuffers(ArrayRef<cons
 
     GMX_RELEASE_ASSERT(haveGpuInteractions == haveInteractions_,
                        "inconsistent haveInteractions flags encountered.");
+
+    if (useCachedInteractionLists)
+    {
+        cachedInteractionListsValid_ = true;
+        cachedInteractionListsKey_   = cacheKey;
+        cacheEntry->kernelParams       = kernelParams_;
+        cacheEntry->kernelLaunchConfig = kernelLaunchConfig_;
+        cacheEntry->haveInteractions   = haveInteractions_;
+        cacheEntry->valid              = true;
+    }
 
     wallcycle_sub_stop(wcycle_, WallCycleSubCounter::GpuBondedListUpdate);
 }
@@ -439,10 +572,18 @@ void ListedForcesGpu::updateHaveInteractions(const InteractionDefinitions& idef)
 
 void ListedForcesGpu::updateInteractionListsAndDeviceBuffers(ArrayRef<const int> nbnxnAtomOrder,
                                                              const InteractionDefinitions& idef,
-                                                             NBAtomDataGpu* nbnxmAtomDataGpu)
+                                                             NBAtomDataGpu* nbnxmAtomDataGpu,
+                                                             const bool useCachedInteractionLists,
+                                                             const std::uintptr_t interactionListCacheIdentity)
 {
     impl_->updateInteractionListsAndDeviceBuffers(
-            nbnxnAtomOrder, idef, nbnxmAtomDataGpu->xq, nbnxmAtomDataGpu->f, nbnxmAtomDataGpu->fShift);
+            nbnxnAtomOrder,
+            idef,
+            nbnxmAtomDataGpu->xq,
+            nbnxmAtomDataGpu->f,
+            nbnxmAtomDataGpu->fShift,
+            useCachedInteractionLists,
+            interactionListCacheIdentity);
 }
 
 void ListedForcesGpu::setPbc(PbcType pbcType, const matrix box, bool canMoleculeSpanPbc)

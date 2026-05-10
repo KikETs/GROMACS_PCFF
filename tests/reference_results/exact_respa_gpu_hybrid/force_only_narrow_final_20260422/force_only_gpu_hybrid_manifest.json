@@ -1,0 +1,156 @@
+{
+  "aggregate_force_tolerance": null,
+  "aggregate_force_tolerance_policy": "per-system force_tol multiplied by fixture atom count",
+  "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422",
+  "claim_boundary": {
+    "allowed_if_pass": "single-host, single-rank force-only exact r-RESPA nonbonded GPU offload preserves CPU event order and force dumps on the tested small fixtures",
+    "not_allowed": [
+      "Gate I GPU density/volume readiness",
+      "energy or virial GPU exactness",
+      "GPU update readiness",
+      "transport or production readiness",
+      "broad GPU speedup"
+    ]
+  },
+  "force_tolerance": 0.001,
+  "gate": "exact-r-RESPA GPU hybrid force-only smoke",
+  "gmx": "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+  "gmx_version": "      :-) GROMACS - gmx, 2027.0-dev-20260422-53781aa0a5-dirty-unknown (-:\n\nExecutable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx\nData prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)\nWorking dir:  /home/kiket/Desktop/test/GROMACS_PCFF\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260422-53781aa0a5-dirty-unknown\nGIT SHA1 hash:       53781aa0a5d33961bb2b993934478ba97ad16532 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         CUDA\nNBNxM GPU setup:     super-cluster 2x2x2 / cluster 8 (cluster-pair splitting on)\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     cuFFT\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\nCUDA compiler:       /usr/local/cuda-12.8/bin/nvcc (NVIDIA 12.8.93)\nCUDA compiler flags:  -O2 -g -DNDEBUG -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -O2 -g -DNDEBUG\nCUDA targets:        50;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;100-real;120\nCUDA driver:         12.80\nCUDA runtime:        12.80\nNVSHMEM:             disabled\n\n",
+  "gpu_support": "CUDA",
+  "ntmpi": 1,
+  "ntomp": 2,
+  "objective": "Validate the currently admitted exact r-RESPA hybrid OpenMP+GPU nonbonded force-only runtime shape before any broader GPU hybrid claim.",
+  "outer_steps": 5,
+  "pair14_level": 1,
+  "precision_mode": "mixed",
+  "reproducibility_notes": [
+    "Binary reproducibility (-reprod) is not enabled because GROMACS rejects -nb gpu together with -reprod.",
+    "This is a force-only validation shape; energy, virial, density, volume, and transport claims remain out of scope."
+  ],
+  "schema_version": 1,
+  "status": "PASS",
+  "systems": [
+    {
+      "admission_shape": {
+        "bonded": "cpu",
+        "exact_respa": true,
+        "force_only": true,
+        "nb_gpu": true,
+        "ntmpi": 1,
+        "ntomp": 2,
+        "pme": "cpu",
+        "update": "cpu"
+      },
+      "aggregate_force_tolerance": 0.006,
+      "aggregate_force_tolerance_policy": "force_tol multiplied by fixture atom count",
+      "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_oligomer",
+      "event_comparison": {
+        "actual_count": 129,
+        "expected_count": 129,
+        "first_mismatch": null,
+        "matches": true
+      },
+      "force_comparison": {
+        "compared_row_count": 6,
+        "extra_count": 0,
+        "extra_in_actual": [],
+        "first_over_tolerance": null,
+        "matches": true,
+        "max_abs_component_delta": 0.00030517578125,
+        "missing_count": 0,
+        "missing_in_actual": [],
+        "rms_component_delta": 0.00013528960680066887,
+        "tolerance": 0.001
+      },
+      "per_level_force_comparison": {
+        "compared_row_count": 130,
+        "extra_count": 0,
+        "extra_in_actual": [],
+        "first_over_tolerance": null,
+        "matches": true,
+        "max_abs_component_delta": 0.00121307373046875,
+        "missing_count": 0,
+        "missing_in_actual": [],
+        "tolerance": 0.006
+      },
+      "runs": {
+        "cpu": {
+          "returncode": 0,
+          "run_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_oligomer/cpu_force_only",
+          "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_oligomer/logs/mdrun_cpu.stderr",
+          "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_oligomer/logs/mdrun_cpu.stdout"
+        },
+        "gpu": {
+          "returncode": 0,
+          "run_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_oligomer/gpu_force_only",
+          "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_oligomer/logs/mdrun_gpu.stderr",
+          "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_oligomer/logs/mdrun_gpu.stdout"
+        }
+      },
+      "schema_version": 1,
+      "status": "PASS",
+      "system_id": "small_oligomer"
+    },
+    {
+      "admission_shape": {
+        "bonded": "cpu",
+        "exact_respa": true,
+        "force_only": true,
+        "nb_gpu": true,
+        "ntmpi": 1,
+        "ntomp": 2,
+        "pme": "cpu",
+        "update": "cpu"
+      },
+      "aggregate_force_tolerance": 0.01,
+      "aggregate_force_tolerance_policy": "force_tol multiplied by fixture atom count",
+      "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_salt_polymer_box",
+      "event_comparison": {
+        "actual_count": 129,
+        "expected_count": 129,
+        "first_mismatch": null,
+        "matches": true
+      },
+      "force_comparison": {
+        "compared_row_count": 10,
+        "extra_count": 0,
+        "extra_in_actual": [],
+        "first_over_tolerance": null,
+        "matches": true,
+        "max_abs_component_delta": 0.0009765625,
+        "missing_count": 0,
+        "missing_in_actual": [],
+        "rms_component_delta": 0.0002418063749849028,
+        "tolerance": 0.001
+      },
+      "per_level_force_comparison": {
+        "compared_row_count": 130,
+        "extra_count": 0,
+        "extra_in_actual": [],
+        "first_over_tolerance": null,
+        "matches": true,
+        "max_abs_component_delta": 0.0029144287109375,
+        "missing_count": 0,
+        "missing_in_actual": [],
+        "tolerance": 0.01
+      },
+      "runs": {
+        "cpu": {
+          "returncode": 0,
+          "run_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_salt_polymer_box/cpu_force_only",
+          "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_salt_polymer_box/logs/mdrun_cpu.stderr",
+          "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_salt_polymer_box/logs/mdrun_cpu.stdout"
+        },
+        "gpu": {
+          "returncode": 0,
+          "run_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_salt_polymer_box/gpu_force_only",
+          "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_salt_polymer_box/logs/mdrun_gpu.stderr",
+          "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_salt_polymer_box/logs/mdrun_gpu.stdout"
+        }
+      },
+      "schema_version": 1,
+      "status": "PASS",
+      "system_id": "small_salt_polymer_box"
+    }
+  ]
+}

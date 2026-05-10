@@ -117,6 +117,19 @@ static bool shouldTraceRespaStateXChainStep(const int64_t step)
            && std::find(steps.begin(), steps.end(), step) != steps.end();
 }
 
+static real pcffNveLimitNm()
+{
+    const char* value = std::getenv("GMX_PCFF_NVE_LIMIT_NM");
+    if (value == nullptr || *value == '\0')
+    {
+        return 0.0_real;
+    }
+
+    char*        end    = nullptr;
+    const double parsed = std::strtod(value, &end);
+    return (end != value && parsed > 0.0) ? static_cast<real>(parsed) : 0.0_real;
+}
+
 static const char* activeM2pTraceDirPath()
 {
     const char* traceDir = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
@@ -1054,6 +1067,10 @@ static void do_update_vv_vel(int                                 start,
     int  gf = 0, ga = 0;
     int  n, d;
     real g, mv1, mv2;
+    const real nveLimitNm = pcffNveLimitNm();
+    const real vLimitSq   = (nveLimitNm > 0.0_real && dt > 0.0_real)
+                                    ? (nveLimitNm / dt) * (nveLimitNm / dt)
+                                    : 0.0_real;
 
     if (bExtended)
     {
@@ -1088,6 +1105,28 @@ static void do_update_vv_vel(int                                 start,
             else
             {
                 v[n][d] = 0.0;
+            }
+        }
+        if (vLimitSq > 0.0_real && ptype[n] != ParticleType::Shell)
+        {
+            real vSq = 0.0_real;
+            for (d = 0; d < DIM; d++)
+            {
+                if (!nFreeze[gf][d])
+                {
+                    vSq += v[n][d] * v[n][d];
+                }
+            }
+            if (vSq > vLimitSq)
+            {
+                const real scale = std::sqrt(vLimitSq / vSq);
+                for (d = 0; d < DIM; d++)
+                {
+                    if (!nFreeze[gf][d])
+                    {
+                        v[n][d] *= scale;
+                    }
+                }
             }
         }
     }

@@ -1,0 +1,175 @@
+{
+  "results": [
+    {
+      "label": "default_auto",
+      "repeat": 1,
+      "env": {},
+      "elapsed_s": 1.061837911605835,
+      "ns_per_day": 83.203,
+      "ms_per_step": 0.519,
+      "neighbor_search_s": 0.158,
+      "force_s": 0.599,
+      "update_s": 0.448,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "b056dc7d168bb1e4146b3742b24c93589fdbe743b4fb2e4615f30256b73dfe70"
+    },
+    {
+      "label": "explicit_on",
+      "repeat": 1,
+      "env": {
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP": "1",
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_DIRECT_CPULIST": "1"
+      },
+      "elapsed_s": 1.0363996028900146,
+      "ns_per_day": 85.055,
+      "ms_per_step": 0.508,
+      "neighbor_search_s": 0.154,
+      "force_s": 0.584,
+      "update_s": 0.438,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "4af3620b63797ecdbfd66f1b7c30a92d4bb45f33b911d1d491a11b5e0f8f68b2"
+    },
+    {
+      "label": "forced_off",
+      "repeat": 1,
+      "env": {
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP": "0",
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_DIRECT_CPULIST": "0"
+      },
+      "elapsed_s": 1.0406553745269775,
+      "ns_per_day": 84.718,
+      "ms_per_step": 0.51,
+      "neighbor_search_s": 0.153,
+      "force_s": 0.591,
+      "update_s": 0.438,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "2da7acc60c56bd4163f60e499192ac31adcca42579c514f7b5caf64b6116a6ab"
+    },
+    {
+      "label": "eager_on",
+      "repeat": 1,
+      "env": {
+        "GMX_PCFF_EXACT_RESPA_EAGER_PLAIN_PAIRLIST": "1"
+      },
+      "elapsed_s": 2.8968327045440674,
+      "ns_per_day": 30.045,
+      "ms_per_step": 1.438,
+      "neighbor_search_s": 0.165,
+      "force_s": 0.57,
+      "update_s": 1.371,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "24186d32daa5f04df42ff1de71df6b9dcf96b93ae21f0cf699291785219e56af"
+    },
+    {
+      "label": "default_auto",
+      "repeat": 2,
+      "env": {},
+      "elapsed_s": 1.002377986907959,
+      "ns_per_day": 87.846,
+      "ms_per_step": 0.492,
+      "neighbor_search_s": 0.148,
+      "force_s": 0.576,
+      "update_s": 0.423,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "3a464961691f6db29349a1e502a4471d93f18434d66f670ef718d6dd8ab02ec7"
+    },
+    {
+      "label": "explicit_on",
+      "repeat": 2,
+      "env": {
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP": "1",
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_DIRECT_CPULIST": "1"
+      },
+      "elapsed_s": 1.0434026718139648,
+      "ns_per_day": 84.436,
+      "ms_per_step": 0.512,
+      "neighbor_search_s": 0.153,
+      "force_s": 0.591,
+      "update_s": 0.442,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "6384e38948686777cb49350e1d80475bc95029ce4dd37d112e7697977f8e465e"
+    },
+    {
+      "label": "forced_off",
+      "repeat": 2,
+      "env": {
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP": "0",
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_DIRECT_CPULIST": "0"
+      },
+      "elapsed_s": 1.0253455638885498,
+      "ns_per_day": 86.044,
+      "ms_per_step": 0.502,
+      "neighbor_search_s": 0.152,
+      "force_s": 0.586,
+      "update_s": 0.432,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "f5c4dd762c043e6203a6f8724e1665635faf17ce0bf5952b9d0461abb8e47d09"
+    },
+    {
+      "label": "eager_on",
+      "repeat": 2,
+      "env": {
+        "GMX_PCFF_EXACT_RESPA_EAGER_PLAIN_PAIRLIST": "1"
+      },
+      "elapsed_s": 2.934943675994873,
+      "ns_per_day": 29.656,
+      "ms_per_step": 1.457,
+      "neighbor_search_s": 0.166,
+      "force_s": 0.585,
+      "update_s": 1.388,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "3e39188031a2e4b4cc9a3038fb40dfb3aff704dbe3ae1e5dbbfda0c04fa37bbd"
+    }
+  ],
+  "averages": {
+    "default_auto": {
+      "avg_ns_per_day": 85.5245,
+      "avg_ms_per_step": 0.5055000000000001,
+      "avg_neighbor_search_s": 0.153,
+      "avg_force_s": 0.5874999999999999,
+      "avg_update_s": 0.4355,
+      "gro_sha256_all_equal": true,
+      "edr_sha256_all_equal": true
+    },
+    "explicit_on": {
+      "avg_ns_per_day": 84.7455,
+      "avg_ms_per_step": 0.51,
+      "avg_neighbor_search_s": 0.1535,
+      "avg_force_s": 0.5874999999999999,
+      "avg_update_s": 0.44,
+      "gro_sha256_all_equal": true,
+      "edr_sha256_all_equal": true
+    },
+    "forced_off": {
+      "avg_ns_per_day": 85.381,
+      "avg_ms_per_step": 0.506,
+      "avg_neighbor_search_s": 0.1525,
+      "avg_force_s": 0.5885,
+      "avg_update_s": 0.435,
+      "gro_sha256_all_equal": true,
+      "edr_sha256_all_equal": true
+    },
+    "eager_on": {
+      "avg_ns_per_day": 29.8505,
+      "avg_ms_per_step": 1.4475,
+      "avg_neighbor_search_s": 0.1655,
+      "avg_force_s": 0.5774999999999999,
+      "avg_update_s": 1.3795,
+      "gro_sha256_all_equal": true,
+      "edr_sha256_all_equal": true
+    }
+  },
+  "comparisons": {
+    "default_vs_explicit_on_speed_ratio": 1.0091922284959083,
+    "default_vs_forced_off_speed_ratio": 1.0016807017954814,
+    "default_vs_eager_on_speed_ratio": 2.865094387028693
+  }
+}

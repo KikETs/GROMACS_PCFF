@@ -1,0 +1,2 @@
+fixture_id	ntomp	steps	baseline_ns_per_day	candidate_ns_per_day	speedup	total_force_max_abs_component_delta	per_level_force_max_abs_component_delta	energy_max_abs_delta	gro_max_abs_coord_delta_nm	gro_sha256_equal	edr_sha256_equal	cpt_sha256_equal
+gate_i_owner_fallback_runtime_2000	6	2000	71.753	75.97	1.0587710618371358	0.0	0.0	0.0	0.0	true	true	false

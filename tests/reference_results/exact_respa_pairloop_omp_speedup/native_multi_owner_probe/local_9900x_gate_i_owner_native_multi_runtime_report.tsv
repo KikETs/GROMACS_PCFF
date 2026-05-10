@@ -1,0 +1,2 @@
+fixture_id	ntomp	steps	baseline_ns_per_day	candidate_ns_per_day	speedup	total_force_max_abs_component_delta	per_level_force_max_abs_component_delta	energy_max_abs_delta	gro_max_abs_coord_delta_nm	gro_sha256_equal	edr_sha256_equal	cpt_sha256_equal
+gate_i_equil_ntomp6_narrow_nbnxm	6	2000	52.638	64.535	1.2260154261180136	6.3876953125	6.39501953125	1.4200000000000728	0.001000000000000334	false	false	false

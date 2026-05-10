@@ -34,6 +34,8 @@
 #include "gromacs/mdtypes/md_enums.h"
 #include "gromacs/topology/topology.h"
 
+#include "testutils/setenv.h"
+
 namespace gmx
 {
 namespace test
@@ -155,6 +157,20 @@ TEST(ListedForcesGpuInputSupportTest, ExactRespaRejectsGpuCapableBondTypesOutsid
 
     EXPECT_FALSE(inputSupportsListedForcesGpu(ir, mtop, &error));
     EXPECT_NE(error.find("pair14-only narrow mode"), std::string::npos);
+}
+
+TEST(ListedForcesGpuInputSupportTest, ExactRespaWideGpuBondedEnvAdmitsGpuCapableBondTypes)
+{
+    t_inputrec  ir;
+    gmx_mtop_t  mtop;
+    std::string error;
+    initializeExactLammpsRespaInputrec(&ir);
+    initializeListedPairTopology(&mtop, 9.0);
+    mtop.moltype[0].ilist[InteractionFunction::Bonds].iatoms = { 0, 0, 1 };
+
+    gmxSetenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES", "all", true);
+    EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
+    gmxUnsetenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES");
 }
 
 } // namespace

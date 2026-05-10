@@ -858,13 +858,15 @@ static void do_pairs_simple(int                       nbonds,
                             rvec4                     f[],
                             const pbc_type            pbc,
                             gmx::ArrayRef<const real> charge,
-                            const real                scale_factor)
+                            const real                scale_factor,
+                            const int                 repulsionPower)
 {
     const int nfa1 = 1 + 2;
 
     T six(6);
-    T twelve(12);
+    T repulsionPowerFactor(repulsionPower);
     T ef(scale_factor);
+    const bool useNineSix = (repulsionPower == 9);
 
 #if GMX_SIMD_HAVE_REAL
     alignas(GMX_SIMD_ALIGNMENT) std::int32_t ai[pack_size];
@@ -921,9 +923,9 @@ static void do_pairs_simple(int                       nbonds,
         T c12 = load<T>(coeff + 1 * pack_size);
         T qq  = load<T>(coeff + 2 * pack_size);
 
-        /* We could save these operations by storing 6*C6,12*C12 */
+        /* We could save these operations by storing 6*C6,n*C_n */
         c6  = six * c6;
-        c12 = twelve * c12;
+        c12 = repulsionPowerFactor * c12;
 
         T dr[DIM];
         pbc_dx_aiuc(pbc, xi, xj, dr);
@@ -938,6 +940,11 @@ static void do_pairs_simple(int                       nbonds,
 
         /* Calculate the LJ force * r and add it to the Coulomb part */
         T fr = gmx::fma(fms(c12, rinv6, c6), rinv6, cfr);
+        if (useNineSix)
+        {
+            const T rinv9 = rinv6 * rinv2 * rinv;
+            fr            = c12 * rinv9 - c6 * rinv6 + cfr;
+        }
 
         T finvr = fr * rinv2;
         T fx    = finvr * dr[XX];
@@ -975,9 +982,14 @@ void do_pairs(InteractionFunction                 ftype,
               gmx_grppairener_t*                  grppener,
               int*                                global_atom_index)
 {
+    const bool useAnalyticPower12 =
+            (std::abs(fr->ic->vdw.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS);
+    const bool useAnalyticPower9 =
+            (std::abs(fr->ic->vdw.repulsionPower - 9.0) < 10 * GMX_DOUBLE_EPS);
+
     if (ftype == InteractionFunction::LennardJones14 && fr->ic->vdw.type != VanDerWaalsType::User
         && !usingUserTableElectrostatics(fr->ic->coulomb.type) && !havePerturbedInteractions
-        && std::abs(fr->ic->vdw.repulsionPower - 12.0) < 10 * GMX_DOUBLE_EPS
+        && (useAnalyticPower12 || useAnalyticPower9)
         && (!stepWork.computeVirial && !stepWork.computeEnergy))
     {
         /* We use a fast code-path for plain LJ 1-4 without FEP.
@@ -988,6 +1000,7 @@ void do_pairs(InteractionFunction                 ftype,
          * and sum the virial for the shifts. But we should do this
          * at once for the angles and dihedrals as well.
          */
+        const int repulsionPower = useAnalyticPower9 ? 9 : 12;
 #if GMX_SIMD_HAVE_REAL
         if (fr->use_simd_kernels)
         {
@@ -995,7 +1008,15 @@ void do_pairs(InteractionFunction                 ftype,
             set_pbc_simd(pbc, pbc_simd);
 
             do_pairs_simple<SimdReal, GMX_SIMD_REAL_WIDTH, const real*>(
-                    nbonds, iatoms, iparams, x, f, pbc_simd, chargeA, fr->ic->coulomb.epsfac * fr->fudgeQQ);
+                    nbonds,
+                    iatoms,
+                    iparams,
+                    x,
+                    f,
+                    pbc_simd,
+                    chargeA,
+                    fr->ic->coulomb.epsfac * fr->fudgeQQ,
+                    repulsionPower);
         }
         else
 #endif
@@ -1015,7 +1036,15 @@ void do_pairs(InteractionFunction                 ftype,
             }
 
             do_pairs_simple<real, 1, const t_pbc*>(
-                    nbonds, iatoms, iparams, x, f, pbc_nonnull, chargeA, fr->ic->coulomb.epsfac * fr->fudgeQQ);
+                    nbonds,
+                    iatoms,
+                    iparams,
+                    x,
+                    f,
+                    pbc_nonnull,
+                    chargeA,
+                    fr->ic->coulomb.epsfac * fr->fudgeQQ,
+                    repulsionPower);
         }
     }
     else if (stepWork.computeVirial)

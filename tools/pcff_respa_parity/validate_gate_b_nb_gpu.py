@@ -60,7 +60,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-build", action="store_true", help="Skip the build step.")
     parser.add_argument("--build-dir", default=None, help="Optional explicit build directory.")
     parser.add_argument("--ntmpi", type=int, default=1, help="Thread-MPI ranks for mdrun.")
-    parser.add_argument("--ntomp", type=int, default=1, help="OpenMP threads for mdrun.")
+    parser.add_argument("--ntomp", type=int, default=2, help="OpenMP threads for mdrun.")
     parser.add_argument("--outer-steps", type=int, default=5, help="Number of exact r-RESPA outer steps.")
     parser.add_argument("--pair14-level", type=int, default=1, help="Exact r-RESPA pair14 level.")
     parser.add_argument(
@@ -462,7 +462,13 @@ def force_sum_roundoff_bound_from_total_force_dump(path: Path) -> dict[str, obje
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
-        step_str, _time_str, highest_level_str, _atom_str, fx_str, fy_str, fz_str = line.split("\t")
+        parts = line.split("\t")
+        if len(parts) == 7:
+            step_str, _time_str, highest_level_str, _atom_str, fx_str, fy_str, fz_str = parts
+        elif len(parts) == 8:
+            step_str, _time_str, highest_level_str, _local_atom_str, _atom_str, fx_str, fy_str, fz_str = parts
+        else:
+            raise ValueError(f"Unexpected force dump line in {path}: {line}")
         key = (int(step_str), int(highest_level_str))
         bucket = grouped.setdefault(key, {"atom_count": 0, "max_abs_component": 0.0})
         bucket["atom_count"] = int(bucket["atom_count"]) + 1
@@ -1264,7 +1270,7 @@ def build_manifest(
         "binary_reproducibility_supported": False,
         "reproducibility_notes": [
             GPU_REPRODUCIBILITY_NOTE,
-            "Determinism is constrained with single-rank execution, single OpenMP thread, DLB disabled, and measured repeated-run GPU noise floors.",
+            "Determinism is constrained with single-rank execution, the recorded OpenMP thread count, DLB disabled, and measured repeated-run GPU noise floors.",
         ],
         "rerun_used": False,
         "normal_md_used": True,

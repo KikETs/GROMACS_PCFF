@@ -1,0 +1,2 @@
+fixture_id	ntomp	steps	baseline_ns_per_day	candidate_ns_per_day	speedup	total_force_max_abs_component_delta	per_level_force_max_abs_component_delta	energy_max_abs_delta	gro_max_abs_coord_delta_nm	gro_sha256_equal	edr_sha256_equal	cpt_sha256_equal
+gate_h_dense_salt_polymer_2x2x2_medium_nvt_current_cpu	12	20000	56.854	58.217	1.023973686987723	0.0	0.0	0.0	0.0	true	true	false

@@ -239,6 +239,9 @@ struct t_forcerec
     /* When this has a value, generate a plain pairlist with this range */
     std::optional<real> plainPairlistRange;
 
+    /* When this has a value, the neighbor-search pairlist must include all pairs up to this range */
+    std::optional<real> completePairlistRange;
+
     /* Limit for printing large forces, negative is don't print */
     real print_force = 0;
 

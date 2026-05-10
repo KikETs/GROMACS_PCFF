@@ -1,0 +1,1012 @@
+{
+  "schema_name": "exact_respa_native_multi_runtime_parity",
+  "schema_version": 1,
+  "fixture_id": "gate_i_full_owner_native_runtime_2000",
+  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+  "steps": 2000,
+  "ntmpi": 1,
+  "ntomp": 6,
+  "pin": "off",
+  "baseline_mode_name": "per_launch",
+  "candidate_mode_name": "full_owner_native",
+  "baseline_env": {},
+  "candidate_env": {
+    "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "0"
+  },
+  "baseline": {
+    "mode": "per_launch",
+    "native_multi_env": "0",
+    "extra_env": {},
+    "disable_simd_kernels_env": "0",
+    "command": [
+      "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+      "mdrun",
+      "-s",
+      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+      "-deffnm",
+      "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/per_launch/run",
+      "-ntmpi",
+      "1",
+      "-ntomp",
+      "6",
+      "-dlb",
+      "no",
+      "-nb",
+      "cpu",
+      "-pme",
+      "cpu",
+      "-bonded",
+      "cpu",
+      "-update",
+      "cpu",
+      "-pin",
+      "off",
+      "-reprod",
+      "-nsteps",
+      "2000"
+    ],
+    "elapsed_seconds": 1.2769052982330322,
+    "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/per_launch/run.log",
+    "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/per_launch/run.edr",
+    "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/per_launch/run.gro",
+    "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/per_launch/run.cpt",
+    "total_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/per_launch/total_force.tsv",
+    "per_level_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/per_launch/per_level_force.tsv",
+    "metrics": {
+      "ns_per_day": 68.74,
+      "ms_per_step": 0.628,
+      "force_seconds": 0.771,
+      "update_seconds": 0.567,
+      "total_seconds": null
+    },
+    "disable_simd_kernels_marker_seen": false,
+    "gro_sha256": "3a7fa2e6fc7ff73b44894d02325f427e1233a31196902f05a96095bcf7a09a71",
+    "edr_sha256": "6fb84be422368691d77f544f54938f46d19edd3fb67a77463b740337d995c4d7",
+    "cpt_sha256": "9c3cd6a03d36d5278f843cb44bc4ece944f094fda6fd20eb2e1a68a80b693350"
+  },
+  "candidate": {
+    "mode": "full_owner_native",
+    "native_multi_env": "1",
+    "extra_env": {
+      "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "0"
+    },
+    "disable_simd_kernels_env": "0",
+    "command": [
+      "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+      "mdrun",
+      "-s",
+      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+      "-deffnm",
+      "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/full_owner_native/run",
+      "-ntmpi",
+      "1",
+      "-ntomp",
+      "6",
+      "-dlb",
+      "no",
+      "-nb",
+      "cpu",
+      "-pme",
+      "cpu",
+      "-bonded",
+      "cpu",
+      "-update",
+      "cpu",
+      "-pin",
+      "off",
+      "-reprod",
+      "-nsteps",
+      "2000"
+    ],
+    "elapsed_seconds": 1.0554604530334473,
+    "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/full_owner_native/run.log",
+    "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/full_owner_native/run.edr",
+    "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/full_owner_native/run.gro",
+    "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/full_owner_native/run.cpt",
+    "total_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/full_owner_native/total_force.tsv",
+    "per_level_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/full_owner_native/per_level_force.tsv",
+    "metrics": {
+      "ns_per_day": 83.596,
+      "ms_per_step": 0.517,
+      "force_seconds": 0.564,
+      "update_seconds": 0.465,
+      "total_seconds": null
+    },
+    "disable_simd_kernels_marker_seen": false,
+    "gro_sha256": "28edadf8d17203b870a203c3b0e209fd6f2610893a0e7118fcdc508ddf494388",
+    "edr_sha256": "62e8580ad5992815225a4616c0c93a92161c38f0e8407fe409f1a342e27b1c0a",
+    "cpt_sha256": "ec7656c747a86bb6fff97102556fe0605379a8bef3acf2c003b7e3388bd3f979"
+  },
+  "comparisons": {
+    "total_force": {
+      "matches": false,
+      "candidate_frame_count": 6,
+      "baseline_frame_count": 6,
+      "common_frame_count": 6,
+      "candidate_only_frames": [],
+      "baseline_only_frames": [],
+      "max_abs_component_delta": 5.338623046875,
+      "first_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 0,
+        "baseline": -9.657098770141602,
+        "candidate": -9.657114028930664,
+        "delta": -1.52587890625e-05
+      },
+      "frames": [
+        {
+          "frame_key": 0,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.00042724609375,
+          "time_ps": 0.0,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 400,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.75860595703125,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 800,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 1.58447265625,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 1200,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 2.197052001953125,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 1600,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 3.128570556640625,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2
+        },
+        {
+          "frame_key": 2000,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 5.338623046875,
+          "time_ps": 1.0,
+          "highest_active_level": 2
+        }
+      ]
+    },
+    "per_level_force": {
+      "matches": false,
+      "candidate_frame_count": 18,
+      "baseline_frame_count": 18,
+      "common_frame_count": 18,
+      "candidate_only_frames": [],
+      "baseline_only_frames": [],
+      "max_abs_component_delta": 5.38525390625,
+      "first_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "frames": [
+        {
+          "frame_key": [
+            0,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.00048828125,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            0,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 1.52587890625e-05,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            0,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 6.103515625e-05,
+          "time_ps": 0.0,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            400,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.75830078125,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            400,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.00567626953125,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            400,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.009113311767578125,
+          "time_ps": 0.20000000298023224,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            800,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 1.5771484375,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            800,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.022674560546875,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            800,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.01348876953125,
+          "time_ps": 0.4000000059604645,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            1200,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 2.195098876953125,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            1200,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.031707763671875,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            1200,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.0223541259765625,
+          "time_ps": 0.6000000238418579,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            1600,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 3.123382568359375,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            1600,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.1258544921875,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            1600,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.06195068359375,
+          "time_ps": 0.800000011920929,
+          "highest_active_level": 2,
+          "mts_level": 2
+        },
+        {
+          "frame_key": [
+            2000,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 5.38525390625,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        {
+          "frame_key": [
+            2000,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.33587646484375,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        {
+          "frame_key": [
+            2000,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.09637451171875,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 2
+        }
+      ]
+    },
+    "energy": {
+      "matches": false,
+      "candidate_frame_count": 6,
+      "baseline_frame_count": 6,
+      "common_frame_count": 6,
+      "max_abs_delta": 1.25,
+      "first_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Vir-XY",
+        "baseline": 464.517,
+        "candidate": 464.523,
+        "delta": 0.006000000000028649
+      },
+      "frames": [
+        {
+          "frame_index": 0,
+          "step": 0,
+          "time_ps": 0.0,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.0,
+            "Vir-XX": 0.0,
+            "Vir-XY": 0.006000000000028649,
+            "Vir-XZ": 0.00039999999999906777,
+            "Vir-YX": 0.0010000000000331966,
+            "Vir-YY": 0.0,
+            "Vir-YZ": -0.0009999999999763531,
+            "Vir-ZX": 0.0008999999999943498,
+            "Vir-ZY": 0.0,
+            "Vir-ZZ": -0.0002999999999957481,
+            "Pres-XX": 0.0,
+            "Pres-XY": -0.0020000000000095497,
+            "Pres-XZ": -0.00019999999999953388,
+            "Pres-YX": 0.0,
+            "Pres-YY": 0.0,
+            "Pres-YZ": 0.0010000000000047748,
+            "Pres-ZX": -0.0003000000000010772,
+            "Pres-ZY": 0.0,
+            "Pres-ZZ": 0.0
+          }
+        },
+        {
+          "frame_index": 1,
+          "step": 400,
+          "time_ps": 0.2,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": -0.06570000000000142,
+            "Vir-XX": 0.08999999999991815,
+            "Vir-XY": -0.011999999999943611,
+            "Vir-XZ": -0.1269999999999527,
+            "Vir-YX": -0.02400000000000091,
+            "Vir-YY": 0.17000000000007276,
+            "Vir-YZ": 0.015000000000100044,
+            "Vir-ZX": -0.125,
+            "Vir-ZY": 0.01999999999998181,
+            "Vir-ZZ": 0.2599999999999909,
+            "Pres-XX": -0.03999999999996362,
+            "Pres-XY": 0.0030000000000143245,
+            "Pres-XZ": 0.05099999999998772,
+            "Pres-YX": 0.008000000000009777,
+            "Pres-YY": -0.06000000000040018,
+            "Pres-YZ": -0.004000000000019099,
+            "Pres-ZX": 0.049999999999954525,
+            "Pres-ZY": -0.005999999999971806,
+            "Pres-ZZ": -0.09999999999990905
+          }
+        },
+        {
+          "frame_index": 2,
+          "step": 800,
+          "time_ps": 0.4,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": -0.19300000000001205,
+            "Vir-XX": 0.12400000000002365,
+            "Vir-XY": 0.18679999999999986,
+            "Vir-XZ": 0.1939999999999884,
+            "Vir-YX": 0.1897000000000002,
+            "Vir-YY": 0.8900000000003274,
+            "Vir-YZ": 0.3889999999999816,
+            "Vir-ZX": 0.19299999999998363,
+            "Vir-ZY": 0.3849999999999909,
+            "Vir-ZZ": 0.4600000000000364,
+            "Pres-XX": -0.051999999999964075,
+            "Pres-XY": -0.07370000000000232,
+            "Pres-XZ": -0.0799000000000003,
+            "Pres-YX": -0.07489999999999952,
+            "Pres-YY": -0.3400000000001455,
+            "Pres-YZ": -0.14449999999999363,
+            "Pres-ZX": -0.07939999999999969,
+            "Pres-ZY": -0.14270000000000493,
+            "Pres-ZZ": -0.1899999999998272
+          }
+        },
+        {
+          "frame_index": 3,
+          "step": 1200,
+          "time_ps": 0.6,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": -0.15999999999996817,
+            "Vir-XX": 0.2400000000000091,
+            "Vir-XY": -0.15800000000001546,
+            "Vir-XZ": 0.3019999999999641,
+            "Vir-YX": -0.16099999999994452,
+            "Vir-YY": 0.15999999999985448,
+            "Vir-YZ": -0.06999999999993634,
+            "Vir-ZX": 0.30600000000004,
+            "Vir-ZY": -0.06999999999993634,
+            "Vir-ZZ": 0.8179999999999836,
+            "Pres-XX": -0.11840000000000117,
+            "Pres-XY": 0.0519999999999925,
+            "Pres-XZ": -0.12800000000001432,
+            "Pres-YX": 0.05299999999999727,
+            "Pres-YY": -0.03999999999996362,
+            "Pres-YZ": 0.028999999999996362,
+            "Pres-ZX": -0.12999999999999545,
+            "Pres-ZY": 0.025999999999953616,
+            "Pres-ZZ": -0.3190000000000168
+          }
+        },
+        {
+          "frame_index": 4,
+          "step": 1600,
+          "time_ps": 0.8,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": -0.22000000000002728,
+            "Vir-XX": 0.3499999999994543,
+            "Vir-XY": -0.4880000000000564,
+            "Vir-XZ": 0.04260000000000019,
+            "Vir-YX": -0.49900000000002365,
+            "Vir-YY": 0.050000000001091394,
+            "Vir-YZ": -0.39400000000000546,
+            "Vir-ZX": 0.051499999999997215,
+            "Vir-ZY": -0.37299999999999045,
+            "Vir-ZZ": 1.25,
+            "Pres-XX": -0.12400000000002365,
+            "Pres-XY": 0.1599999999999966,
+            "Pres-XZ": -0.013490000000000002,
+            "Pres-YX": 0.16399999999998727,
+            "Pres-YY": -0.02999999999974534,
+            "Pres-YZ": 0.1770000000000067,
+            "Pres-ZX": -0.01697000000000015,
+            "Pres-ZY": 0.16800000000000637,
+            "Pres-ZZ": -0.5020000000000095
+          }
+        },
+        {
+          "frame_index": 5,
+          "step": 2000,
+          "time_ps": 1.0,
+          "term_deltas": {
+            "Potential": 0.0,
+            "Total Energy": 0.0,
+            "Pressure": 0.06799999999998363,
+            "Vir-XX": 1.0700000000001637,
+            "Vir-XY": 0.23400000000000887,
+            "Vir-XZ": -0.4455000000000098,
+            "Vir-YX": 0.24600000000000932,
+            "Vir-YY": -0.8299999999999272,
+            "Vir-YZ": 0.32900000000000773,
+            "Vir-ZX": -0.43079999999999075,
+            "Vir-ZY": 0.30400000000000205,
+            "Vir-ZZ": -0.6300000000001091,
+            "Pres-XX": -0.35899999999999466,
+            "Pres-XY": -0.10699999999999932,
+            "Pres-XZ": 0.16220000000000212,
+            "Pres-YX": -0.11209999999999809,
+            "Pres-YY": 0.3000000000001819,
+            "Pres-YZ": -0.12399999999999523,
+            "Pres-ZX": 0.15639999999999787,
+            "Pres-ZY": -0.11409999999999343,
+            "Pres-ZZ": 0.2636099999999999
+          }
+        }
+      ]
+    },
+    "gro": {
+      "matches": false,
+      "atom_count": 2160,
+      "max_abs_coord_delta_nm": 0.001000000000000334,
+      "max_abs_box_delta_nm": 0.0,
+      "first_mismatch": {
+        "atom": 66,
+        "dimension": 1,
+        "baseline": 0.689,
+        "candidate": 0.69,
+        "delta": 0.0010000000000000009
+      }
+    },
+    "same_coordinate_probe": {
+      "available": true,
+      "probe_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/same_coordinate_probe.tpr",
+      "probe_start_step": 2000,
+      "probe_end_step": 2004,
+      "outer_step_factor": 4,
+      "probe_steps": 4,
+      "convert_tpr_command": [
+        "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+        "convert-tpr",
+        "-s",
+        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+        "-nsteps",
+        "2004",
+        "-o",
+        "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/same_coordinate_probe.tpr"
+      ],
+      "baseline": {
+        "mode": "per_launch",
+        "native_multi_env": "0",
+        "extra_env": {},
+        "disable_simd_kernels_env": "0",
+        "command": [
+          "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+          "mdrun",
+          "-s",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/same_coordinate_probe.tpr",
+          "-deffnm",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/per_launch/run",
+          "-ntmpi",
+          "1",
+          "-ntomp",
+          "6",
+          "-dlb",
+          "no",
+          "-nb",
+          "cpu",
+          "-pme",
+          "cpu",
+          "-bonded",
+          "cpu",
+          "-update",
+          "cpu",
+          "-pin",
+          "off",
+          "-reprod",
+          "-cpi",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/per_launch/run.cpt",
+          "-noappend"
+        ],
+        "elapsed_seconds": 0.042252302169799805,
+        "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/per_launch/run.part0002.log",
+        "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/per_launch/run.part0002.edr",
+        "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/per_launch/run.part0002.gro",
+        "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/per_launch/run.cpt",
+        "total_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/per_launch/total_force.tsv",
+        "per_level_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/per_launch/per_level_force.tsv",
+        "metrics": {
+          "ns_per_day": 10.978,
+          "ms_per_step": 3.935,
+          "force_seconds": 0.003,
+          "update_seconds": 0.002,
+          "total_seconds": null
+        },
+        "disable_simd_kernels_marker_seen": false,
+        "gro_sha256": "d8eb7026f303d0a66836280b1efd9a5df850bfdeed5a6d2587f5f3feda689d4a",
+        "edr_sha256": "1429fcb7822e682eef348962e48a9315b7905858de8a4dabd3e9707d1523fece",
+        "cpt_sha256": "49aa208f6345a2b2af0c10201f709f16824b9c5a7482e325168836959a2c674b"
+      },
+      "candidate": {
+        "mode": "full_owner_native",
+        "native_multi_env": "1",
+        "extra_env": {
+          "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK": "0"
+        },
+        "disable_simd_kernels_env": "0",
+        "command": [
+          "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+          "mdrun",
+          "-s",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/same_coordinate_probe.tpr",
+          "-deffnm",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/full_owner_native/run",
+          "-ntmpi",
+          "1",
+          "-ntomp",
+          "6",
+          "-dlb",
+          "no",
+          "-nb",
+          "cpu",
+          "-pme",
+          "cpu",
+          "-bonded",
+          "cpu",
+          "-update",
+          "cpu",
+          "-pin",
+          "off",
+          "-reprod",
+          "-cpi",
+          "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/per_launch/run.cpt",
+          "-noappend"
+        ],
+        "elapsed_seconds": 0.03905916213989258,
+        "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/full_owner_native/run.part0002.log",
+        "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/full_owner_native/run.part0002.edr",
+        "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/full_owner_native/run.part0002.gro",
+        "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/full_owner_native/run.cpt",
+        "total_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/full_owner_native/total_force.tsv",
+        "per_level_force_dump": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_native_multi_owner_probe_refresh/local_9900x_gate_i_full_owner_native_runtime/same_coordinate_probe/runs/full_owner_native/per_level_force.tsv",
+        "metrics": {
+          "ns_per_day": 14.427,
+          "ms_per_step": 2.994,
+          "force_seconds": 0.002,
+          "update_seconds": 0.002,
+          "total_seconds": null
+        },
+        "disable_simd_kernels_marker_seen": false,
+        "gro_sha256": "d8eb7026f303d0a66836280b1efd9a5df850bfdeed5a6d2587f5f3feda689d4a",
+        "edr_sha256": "1f0cf87e36606b066c89bb9cf65d3ac4791253c5ab09b27321171e51a678e26a",
+        "cpt_sha256": "f16231967824153a20dc01b99aab86d1828d8a6551db7ead4091fbff70122c07"
+      },
+      "comparisons": {
+        "total_force": {
+          "matches": false,
+          "candidate_frame_count": 1,
+          "baseline_frame_count": 1,
+          "common_frame_count": 1,
+          "candidate_only_frames": [],
+          "baseline_only_frames": [],
+          "max_abs_component_delta": 0.00048828125,
+          "first_mismatch": {
+            "frame_key": 2000,
+            "atom": 0,
+            "dimension": 0,
+            "baseline": 125.60623168945312,
+            "candidate": 125.60626220703125,
+            "delta": 3.0517578125e-05
+          },
+          "frames": [
+            {
+              "frame_key": 2000,
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.00048828125,
+              "time_ps": 1.0,
+              "highest_active_level": 2
+            }
+          ]
+        },
+        "per_level_force": {
+          "matches": false,
+          "candidate_frame_count": 3,
+          "baseline_frame_count": 3,
+          "common_frame_count": 3,
+          "candidate_only_frames": [],
+          "baseline_only_frames": [],
+          "max_abs_component_delta": 0.00048828125,
+          "first_mismatch": {
+            "frame_key": [
+              2000,
+              0
+            ],
+            "atom": 0,
+            "dimension": 0,
+            "baseline": 135.2781982421875,
+            "candidate": 135.27822875976562,
+            "delta": 3.0517578125e-05
+          },
+          "frames": [
+            {
+              "frame_key": [
+                2000,
+                0
+              ],
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.00048828125,
+              "time_ps": 1.0,
+              "highest_active_level": 2,
+              "mts_level": 0
+            },
+            {
+              "frame_key": [
+                2000,
+                1
+              ],
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 3.0517578125e-05,
+              "time_ps": 1.0,
+              "highest_active_level": 2,
+              "mts_level": 1
+            },
+            {
+              "frame_key": [
+                2000,
+                2
+              ],
+              "candidate_atom_count": 2160,
+              "baseline_atom_count": 2160,
+              "common_atom_count": 2160,
+              "max_abs_component_delta": 0.000152587890625,
+              "time_ps": 1.0,
+              "highest_active_level": 2,
+              "mts_level": 2
+            }
+          ]
+        },
+        "energy": {
+          "matches": false,
+          "candidate_frame_count": 2,
+          "baseline_frame_count": 2,
+          "common_frame_count": 2,
+          "max_abs_delta": 0.002999999999985903,
+          "first_mismatch": {
+            "frame_index": 0,
+            "step": 2000,
+            "term": "Vir-XY",
+            "baseline": 252.463,
+            "candidate": 252.462,
+            "delta": -0.0010000000000047748
+          },
+          "frames": [
+            {
+              "frame_index": 0,
+              "step": 2000,
+              "time_ps": 1.0,
+              "term_deltas": {
+                "Potential": 0.0,
+                "Total Energy": 0.0,
+                "Pressure": 0.0,
+                "Vir-XX": 0.0,
+                "Vir-XY": -0.0010000000000047748,
+                "Vir-XZ": -0.0005000000000023874,
+                "Vir-YX": 0.0010000000000047748,
+                "Vir-YY": 0.0,
+                "Vir-YZ": 0.0010000000000047748,
+                "Vir-ZX": -0.0023999999999944066,
+                "Vir-ZY": 0.002999999999985903,
+                "Vir-ZZ": 0.0,
+                "Pres-XX": 0.0,
+                "Pres-XY": 0.0002999999999957481,
+                "Pres-XZ": 0.00019999999999953388,
+                "Pres-YX": -0.0006000000000057071,
+                "Pres-YY": 0.0,
+                "Pres-YZ": -0.00039999999999906777,
+                "Pres-ZX": 0.0009999999999976694,
+                "Pres-ZY": -0.0010999999999938836,
+                "Pres-ZZ": -0.0016400000000000858
+              }
+            },
+            {
+              "frame_index": 1,
+              "step": 2004,
+              "time_ps": 1.002,
+              "term_deltas": {
+                "Potential": 0.0,
+                "Total Energy": 0.0,
+                "Pressure": 0.0,
+                "Vir-XX": 0.0,
+                "Vir-XY": 0.002999999999985903,
+                "Vir-XZ": 0.0,
+                "Vir-YX": 0.0009999999999763531,
+                "Vir-YY": 0.0,
+                "Vir-YZ": -0.0010000000000331966,
+                "Vir-ZX": 0.0,
+                "Vir-ZY": 0.0,
+                "Vir-ZZ": 0.0,
+                "Pres-XX": 0.0,
+                "Pres-XY": -0.0011999999999972033,
+                "Pres-XZ": 0.0,
+                "Pres-YX": -0.0002999999999957481,
+                "Pres-YY": 0.0,
+                "Pres-YZ": 0.0,
+                "Pres-ZX": 9.999999999621423e-05,
+                "Pres-ZY": 0.0,
+                "Pres-ZZ": 0.0
+              }
+            }
+          ]
+        },
+        "gro": {
+          "matches": true,
+          "atom_count": 2160,
+          "max_abs_coord_delta_nm": 0.0,
+          "max_abs_box_delta_nm": 0.0,
+          "first_mismatch": null
+        },
+        "first_total_force_frame": {
+          "frame_key": 2000,
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.00048828125,
+          "time_ps": 1.0,
+          "highest_active_level": 2
+        },
+        "first_level0_force_frame": {
+          "frame_key": [
+            2000,
+            0
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.00048828125,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 0
+        },
+        "first_level1_force_frame": {
+          "frame_key": [
+            2000,
+            1
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 3.0517578125e-05,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 1
+        },
+        "first_level2_force_frame": {
+          "frame_key": [
+            2000,
+            2
+          ],
+          "candidate_atom_count": 2160,
+          "baseline_atom_count": 2160,
+          "common_atom_count": 2160,
+          "max_abs_component_delta": 0.000152587890625,
+          "time_ps": 1.0,
+          "highest_active_level": 2,
+          "mts_level": 2
+        }
+      }
+    },
+    "hashes": {
+      "gro_sha256_equal": false,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false
+    },
+    "performance": {
+      "baseline_ns_per_day": 68.74,
+      "candidate_ns_per_day": 83.596,
+      "speedup": 1.2161187081757348,
+      "baseline_force_seconds": 0.771,
+      "candidate_force_seconds": 0.564,
+      "baseline_update_seconds": 0.567,
+      "candidate_update_seconds": 0.465
+    }
+  },
+  "notes": [
+    "Hashes are reported separately from force/energy/virial deltas.",
+    "A hash mismatch alone is not sufficient evidence of semantic failure or success.",
+    "Current harness compares runtime total-force dumps, per-level force dumps, EDR dump terms, and final GRO coordinates.",
+    "The same-coordinate probe reuses the original TPR plus checkpoint continuation instead of rebuilding a new TPR from MDP/topology inputs."
+  ]
+}

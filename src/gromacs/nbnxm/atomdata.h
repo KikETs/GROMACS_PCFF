@@ -317,6 +317,14 @@ struct nbnxn_atomdata_t
     //! Resizes the force buffers for the current number of atoms
     void resizeForceBuffers();
 
+    /*! \brief Ensure native exact r-RESPA contribution output buffers exist.
+     *
+     * The buffers are contribution-indexed first and output-buffer-indexed second.
+     * They are separate from outputBuffers_, which remains the normal
+     * thread/list output storage.
+     */
+    void ensureNativeMultiContributionOutputBuffers(int numContributions);
+
     //! Returns the output buffer for the given \p thread
     nbnxn_atomdata_output_t& outputBuffer(int thread) { return outputBuffers_[thread]; }
 
@@ -325,6 +333,28 @@ struct nbnxn_atomdata_t
 
     //! Returns the list of output buffers
     ArrayRef<const nbnxn_atomdata_output_t> outputBuffers() const { return outputBuffers_; }
+
+    //! Returns the number of native exact r-RESPA contribution outputs.
+    int numNativeMultiContributionOutputSets() const { return numNativeMultiContributionOutputSets_; }
+
+    //! Returns mutable native exact r-RESPA output buffers for one contribution-output index.
+    ArrayRef<nbnxn_atomdata_output_t> nativeMultiContributionOutputBuffers(int contributionOutputIndex);
+
+    //! Returns native exact r-RESPA output buffers for one contribution-output index.
+    ArrayRef<const nbnxn_atomdata_output_t> nativeMultiContributionOutputBuffers(
+            int contributionOutputIndex) const;
+
+    //! Copies current outputBuffers_ into one native exact r-RESPA contribution output set.
+    void copyOutputBuffersToNativeMultiContributionOutputBuffers(int contributionOutputIndex);
+
+    /*! \brief Returns one mutable native contribution buffer matching \p outputBuffer.
+     *
+     * This is used by exact r-RESPA native multi-contribution CPU kernels, which
+     * still receive the normal per-thread/list output pointer and need the
+     * corresponding contribution-indexed output buffer for the same thread/list slot.
+     */
+    nbnxn_atomdata_output_t* correspondingNativeMultiContributionOutputBuffer(
+            int contributionOutputIndex, const nbnxn_atomdata_output_t* outputBuffer) const;
 
     //! Returns whether buffer flags are used
     bool useBufferFlags() const { return useBufferFlags_; }
@@ -340,6 +370,21 @@ struct nbnxn_atomdata_t
      */
     void reduceForces(AtomLocality locality, const GridSet& gridSet, ArrayRef<RVec> totalForce);
 
+    /*! \brief Add forces from an explicit set of output buffers to \p f.
+     *
+     * This is used by exact r-RESPA native multi-contribution output buffers,
+     * where the source is not outputBuffers_.
+     *
+     * \param[in]  locality       If the reduction should be performed on local or non-local atoms.
+     * \param[in]  gridSet        The grids data.
+     * \param[in]  outputBuffers  Source output buffers for one contribution.
+     * \param[out] totalForce     Buffer to accumulate resulting force.
+     */
+    void reduceForceOutputBuffers(AtomLocality                  locality,
+                                  const GridSet&                gridSet,
+                                  ArrayRef<nbnxn_atomdata_output_t>     outputBuffers,
+                                  ArrayRef<RVec>                totalForce);
+
     /*! \brief Clears the force buffer.
      *
      * Either the whole buffer is cleared or only the parts used
@@ -351,10 +396,12 @@ struct nbnxn_atomdata_t
 
 private:
     //! Reduce the output buffers into the first one
-    void reduceForcesOverThreads();
+    void reduceForcesOverThreads(ArrayRef<nbnxn_atomdata_output_t> outputBuffers);
 
     //! The LJ and charge parameters
     Params params_;
+    //! Kernel type used to construct output buffers
+    NbnxmKernelType kernelType_;
     //! The total number of atoms currently stored
     int numAtoms_;
     //! The number of local atoms
@@ -383,6 +430,11 @@ private:
 
     //! Output data structures, 1 per thread
     std::vector<nbnxn_atomdata_output_t> outputBuffers_;
+
+    //! Native exact r-RESPA output data, contribution-indexed then output-buffer-indexed
+    std::vector<nbnxn_atomdata_output_t> nativeMultiContributionOutputBuffers_;
+    //! Number of contribution output sets represented in nativeMultiContributionOutputBuffers_
+    int numNativeMultiContributionOutputSets_;
 
     //! Reduction related data
     //! \{
@@ -448,6 +500,10 @@ void nbnxn_atomdata_x_to_nbat_x_gpu(const GridSet&        gridSet,
 
 //! Add the fshift force stored in nbat to fshift
 void nbnxn_atomdata_add_nbat_fshift_to_fshift(const nbnxn_atomdata_t& nbat, ArrayRef<RVec> fshift);
+
+//! Add the fshift force stored in explicit output buffers to fshift
+void nbnxn_atomdata_add_output_fshift_to_fshift(ArrayRef<const nbnxn_atomdata_output_t> outputBuffers,
+                                                ArrayRef<RVec>                         fshift);
 
 //! Returns the coordinates of atoms \p a
 static inline RVec getCoordinate(const nbnxn_atomdata_t& nbat, const int a)

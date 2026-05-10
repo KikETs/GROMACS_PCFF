@@ -380,6 +380,15 @@ def parse_lammps_data(path: Path) -> dict:
                 )
             elif current_section == "Atoms":
                 require(len(data_tokens) >= 7, f"Malformed Atoms line at {path}:{line_number}")
+                image_flags = (
+                    {
+                        "ix": int(data_tokens[7]),
+                        "iy": int(data_tokens[8]),
+                        "iz": int(data_tokens[9]),
+                    }
+                    if len(data_tokens) >= 10
+                    else {"ix": 0, "iy": 0, "iz": 0}
+                )
                 sections[current_section].append(
                     {
                         "id": int(data_tokens[0]),
@@ -389,6 +398,7 @@ def parse_lammps_data(path: Path) -> dict:
                         "x_angstrom": float(data_tokens[4]),
                         "y_angstrom": float(data_tokens[5]),
                         "z_angstrom": float(data_tokens[6]),
+                        **image_flags,
                         "source": src,
                     }
                 )
@@ -1380,10 +1390,10 @@ def gromacs_improper_params(coeff: dict) -> list[float]:
         kcal_to_kj(coeff["main"]["k0_kcal_mol"]),
         coeff["main"]["chi0_deg"],
         kcal_to_kj(coeff["aa"]["k1_kcal_mol"]),  # aa_k1 = K1
-        kcal_to_kj(coeff["aa"]["k3_kcal_mol"]),  # aa_k2 = K3
-        kcal_to_kj(coeff["aa"]["k2_kcal_mol"]),  # aa_k3 = K2
-        coeff["aa"]["theta0_2_deg"],             # aa_theta0_1 = theta2
-        coeff["aa"]["theta0_1_deg"],             # aa_theta0_2 = theta1
+        kcal_to_kj(coeff["aa"]["k2_kcal_mol"]),  # aa_k2 = K2
+        kcal_to_kj(coeff["aa"]["k3_kcal_mol"]),  # aa_k3 = K3
+        coeff["aa"]["theta0_1_deg"],             # aa_theta0_1 = theta1
+        coeff["aa"]["theta0_2_deg"],             # aa_theta0_2 = theta2
         coeff["aa"]["theta0_3_deg"],             # aa_theta0_3 = theta3
     ]
 

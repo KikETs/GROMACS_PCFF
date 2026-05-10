@@ -46,6 +46,7 @@
 #include <cinttypes>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <ctime>
 
@@ -388,6 +389,248 @@ static void get_f_norm_max(const t_commrec*         cr,
     {
         *a_fmax = a_max;
     }
+}
+
+//! Compute the largest absolute vector component in parallel.
+static real get_f_component_absmax(const t_commrec*         cr,
+                                   const t_grpopts*         opts,
+                                   t_mdatoms*               mdatoms,
+                                   const RVec* gmx_restrict f)
+{
+    real componentMax = 0;
+    int  gf           = 0;
+
+    for (int i = 0; i < mdatoms->homenr; i++)
+    {
+        if (!mdatoms->cFREEZE.empty())
+        {
+            gf = mdatoms->cFREEZE[i];
+        }
+        for (int m = 0; m < DIM; m++)
+        {
+            if (!opts->nFreeze[gf][m])
+            {
+                componentMax = std::max(componentMax, static_cast<real>(std::fabs(f[i][m])));
+            }
+        }
+    }
+
+    if (cr->commMyGroup.isParallel())
+    {
+        const gmx::MpiComm& mpiComm = cr->commMyGroup;
+        std::vector<double> sum(mpiComm.size(), 0);
+        sum[mpiComm.rank()] = componentMax;
+        cr->commMyGroup.sumReduce(sum);
+        componentMax = 0;
+        for (double value : sum)
+        {
+            componentMax = std::max(componentMax, static_cast<real>(value));
+        }
+    }
+
+    return componentMax;
+}
+
+static bool pcffLammpsCgEmRequested()
+{
+    const char* value = std::getenv("GMX_PCFF_LAMMPS_CG_EM");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+}
+
+static bool pcffLammpsCgEmTraceRequested()
+{
+    const char* value = std::getenv("GMX_PCFF_LAMMPS_CG_EM_TRACE");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+}
+
+static bool pcffLammpsCgEmRestoreTrialCoordsRequested()
+{
+    const char* value = std::getenv("GMX_PCFF_LAMMPS_CG_EM_RESTORE_TRIAL_X");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+}
+
+static bool pcffLammpsCgEmPbcResetRequested()
+{
+    const char* value = std::getenv("GMX_PCFF_LAMMPS_CG_EM_PBC_RESET_X0");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+}
+
+static bool pcffLammpsCgEmBoxCrossResetRequested()
+{
+    const char* value = std::getenv("GMX_PCFF_LAMMPS_CG_EM_BOX_CROSS_RESET_X0");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+}
+
+static real pcffLammpsCgEmNeighborSkinNm()
+{
+    const char* value = std::getenv("GMX_PCFF_LAMMPS_CG_EM_NEIGHBOR_SKIN_NM");
+    if (value == nullptr || *value == '\0')
+    {
+        return 0.3_real;
+    }
+    char*  end    = nullptr;
+    double parsed = std::strtod(value, &end);
+    if (end == value || parsed <= 0.0)
+    {
+        return 0.3_real;
+    }
+    return static_cast<real>(parsed);
+}
+
+static double pcffLammpsCgEmLineSearchEmach()
+{
+    const char* value = std::getenv("GMX_PCFF_LAMMPS_CG_EM_EMACH");
+    if (value == nullptr || *value == '\0')
+    {
+        return 1.0e-8;
+    }
+    char*  end    = nullptr;
+    double parsed = std::strtod(value, &end);
+    if (end == value || parsed < 0.0)
+    {
+        return 1.0e-8;
+    }
+    return parsed;
+}
+
+struct LammpsCgPbcResetStats
+{
+    int  atomCount = 0;
+    real maxCorrection = 0;
+};
+
+static real lammpsCgMaxMinimumImageDisplacement(
+        const PbcType                        pbcType,
+        const matrix                         box,
+        gmx::ArrayRef<const gmx::RVec>       referenceCoords,
+        gmx::ArrayRef<const gmx::RVec>       trialCoords)
+{
+    if (pbcType == PbcType::No || referenceCoords.empty() || trialCoords.empty())
+    {
+        return 0;
+    }
+
+    t_pbc pbc;
+    set_pbc(&pbc, pbcType, box);
+    if (pbc.pbcType == PbcType::No)
+    {
+        return 0;
+    }
+
+    real      maxDistance2 = 0;
+    const int atomCount    = std::min(gmx::ssize(referenceCoords), gmx::ssize(trialCoords));
+    for (int i = 0; i < atomCount; i++)
+    {
+        rvec dx;
+        pbc_dx(&pbc, trialCoords[i], referenceCoords[i], dx);
+        maxDistance2 = std::max(maxDistance2, norm2(dx));
+    }
+    return std::sqrt(maxDistance2);
+}
+
+static LammpsCgPbcResetStats lammpsCgResetStartCoordsAfterPbc(
+        const PbcType                  pbcType,
+        const matrix                   box,
+        gmx::ArrayRef<gmx::RVec>       startCoords,
+        gmx::ArrayRef<const gmx::RVec> trialCoords)
+{
+    LammpsCgPbcResetStats stats;
+    if (pbcType == PbcType::No || startCoords.empty() || trialCoords.empty())
+    {
+        return stats;
+    }
+
+    t_pbc pbc;
+    set_pbc(&pbc, pbcType, box);
+    if (pbc.pbcType == PbcType::No)
+    {
+        return stats;
+    }
+
+    const int atomCount = std::min(gmx::ssize(startCoords), gmx::ssize(trialCoords));
+    for (int i = 0; i < atomCount; i++)
+    {
+        rvec rawDx;
+        rvec minImageDx;
+        rvec_sub(trialCoords[i], startCoords[i], rawDx);
+        pbc_dx(&pbc, trialCoords[i], startCoords[i], minImageDx);
+        for (int m = 0; m < DIM; m++)
+        {
+            if (minImageDx[m] != rawDx[m])
+            {
+                stats.atomCount++;
+                stats.maxCorrection = std::max(stats.maxCorrection, std::fabs(rawDx[m] - minImageDx[m]));
+                startCoords[i][m] = trialCoords[i][m] - minImageDx[m];
+            }
+        }
+    }
+    return stats;
+}
+
+static LammpsCgPbcResetStats lammpsCgResetStartCoordsAfterBoxCrossing(
+        const matrix                   box,
+        gmx::ArrayRef<gmx::RVec>       startCoords,
+        gmx::ArrayRef<const gmx::RVec> trialCoords)
+{
+    LammpsCgPbcResetStats stats;
+    if (startCoords.empty() || trialCoords.empty())
+    {
+        return stats;
+    }
+
+    const int atomCount = std::min(gmx::ssize(startCoords), gmx::ssize(trialCoords));
+    for (int i = 0; i < atomCount; i++)
+    {
+        for (int m = 0; m < DIM; m++)
+        {
+            const real length = box[m][m];
+            if (length <= 0)
+            {
+                continue;
+            }
+            const real trial = trialCoords[i][m];
+            if (trial >= 0 && trial < length)
+            {
+                continue;
+            }
+
+            real wrapped = trial - std::floor(trial / length) * length;
+            if (wrapped >= length)
+            {
+                wrapped -= length;
+            }
+            if (wrapped < 0)
+            {
+                wrapped += length;
+            }
+
+            real minImageDx = wrapped - startCoords[i][m];
+            while (minImageDx > 0.5_real * length)
+            {
+                minImageDx -= length;
+            }
+            while (minImageDx <= -0.5_real * length)
+            {
+                minImageDx += length;
+            }
+
+            const real correctedStart = wrapped - minImageDx;
+            stats.atomCount++;
+            stats.maxCorrection =
+                    std::max(stats.maxCorrection, std::fabs(correctedStart - startCoords[i][m]));
+            startCoords[i][m] = correctedStart;
+        }
+    }
+    return stats;
+}
+
+static real lammpsCgLimitedStepSize(real emStep, real directionComponentMax)
+{
+    if (directionComponentMax <= 0)
+    {
+        return 0;
+    }
+    return std::min(static_cast<real>(1.0), emStep / directionComponentMax);
 }
 
 //! Compute the norm of the force
@@ -984,6 +1227,8 @@ public:
     int ddpCountPairSearch;
     //! The local coordinates that were used for pair searching, stored for computing displacements
     std::vector<RVec> pairSearchCoordinates;
+    //! Whether the last energy evaluation rebuilt the pair list.
+    bool didPairSearch = false;
 };
 
 void EnergyEvaluator::run(em_state_t* ems, rvec mu_tot, tensor vir, tensor pres, int64_t count, gmx_bool bFirst, int64_t step)
@@ -1074,6 +1319,7 @@ void EnergyEvaluator::run(em_state_t* ems, rvec mu_tot, tensor vir, tensor pres,
         runScheduleWork->domainWork = setupDomainLifetimeWorkload(
                 *inputrec, *fr, pull_work, ed, *mdAtoms->mdatoms(), runScheduleWork->simulationWork);
     }
+    didPairSearch = bNS;
 
 
     const int legacyForceFlags = GMX_FORCE_STATECHANGED | GMX_FORCE_ALLFORCES | GMX_FORCE_VIRIAL
@@ -1317,6 +1563,8 @@ void LegacySimulator::do_cg()
     const char* CG = "Polak-Ribiere Conjugate Gradients";
 
     const bool isMainRank = cr_->commMyGroup.isMainRank();
+    const bool pcffLammpsCgEm = pcffLammpsCgEmRequested();
+    const bool pcffLammpsCgEmTrace = pcffLammpsCgEmTraceRequested();
 
     gmx_global_stat_t gstat;
     double            tmp, minstep;
@@ -1422,6 +1670,13 @@ void LegacySimulator::do_cg()
     if (fpLog_)
     {
         sp_header(fpLog_, CG, inputRec_->em_tol, number_steps);
+        if (pcffLammpsCgEm)
+        {
+            fprintf(fpLog_,
+                    "\nPCFF LAMMPS-like CG EM mode enabled by GMX_PCFF_LAMMPS_CG_EM: "
+                    "component dmax step cap, quadratic/backtracking line search, "
+                    "PR+ beta clamp, and no nstcgsteep reset.\n");
+        }
     }
 
     EnergyEvaluator energyEvaluator{ fpLog_,
@@ -1454,6 +1709,14 @@ void LegacySimulator::do_cg()
     energyEvaluator.run(s_min, mu_tot, vir, pres, -1, TRUE, step);
     observablesReducer.markAsReadyToReduce();
 
+    const real       lammpsCgNeighborSkinNm = pcffLammpsCgEm ? pcffLammpsCgEmNeighborSkinNm() : 0;
+    std::vector<RVec> lammpsCgNeighborReferenceCoords;
+    if (pcffLammpsCgEm)
+    {
+        const auto coords = makeArrayRef(s_min->s.x);
+        lammpsCgNeighborReferenceCoords.assign(coords.begin(), coords.end());
+    }
+
     if (isMainRank)
     {
         /* Copy stuff to the energy bin for easy printing etc. */
@@ -1478,8 +1741,20 @@ void LegacySimulator::do_cg()
                 mdoutf_get_fp_ene(outf), TRUE, FALSE, FALSE, fpLog_, step, step, fr_->fcdata.get(), nullptr);
     }
 
-    /* Estimate/guess the initial stepsize */
-    stepsize = inputRec_->em_stepsize / s_min->fnorm;
+    /* Estimate/guess the initial stepsize.  In the PCFF matching mode,
+     * emstep is treated like LAMMPS min_modify dmax: no single coordinate
+     * component may move more than emstep in one line-search trial.
+     */
+    if (pcffLammpsCgEm)
+    {
+        stepsize = lammpsCgLimitedStepSize(
+                inputRec_->em_stepsize,
+                get_f_component_absmax(cr_, &(inputRec_->opts), mdatoms, s_min->f.view().force().data()));
+    }
+    else
+    {
+        stepsize = inputRec_->em_stepsize / s_min->fnorm;
+    }
 
     if (isMainRank)
     {
@@ -1543,6 +1818,13 @@ void LegacySimulator::do_cg()
         /* Calculate the norm of the search vector */
         get_f_norm_max(cr_, &(inputRec_->opts), mdatoms, pm, &pnorm, nullptr, nullptr);
 
+        if (pcffLammpsCgEm)
+        {
+            stepsize =
+                    lammpsCgLimitedStepSize(inputRec_->em_stepsize,
+                                            get_f_component_absmax(cr_, &(inputRec_->opts), mdatoms, pm));
+        }
+
         /* Just in case stepsize reaches zero due to numerical precision... */
         if (stepsize <= 0)
         {
@@ -1585,7 +1867,7 @@ void LegacySimulator::do_cg()
 
         minstep = GMX_REAL_EPS / std::sqrt(minstep / (3 * topGlobal_.natoms));
 
-        if (stepsize < minstep)
+        if (!pcffLammpsCgEm && stepsize < minstep)
         {
             converged = TRUE;
             break;
@@ -1614,135 +1896,104 @@ void LegacySimulator::do_cg()
          * Due to the finite numerical accuracy, it turns out that it is a good idea
          * to even accept a SMALL increase in energy, if the derivative is still downhill.
          * This leads to lower final energies in the tests I've done. / Erik
-         */
-        s_a->epot = s_min->epot;
-        a         = 0.0;
-        c         = a + stepsize; /* reference position along line is zero */
-
-        if (haveDDAtomOrdering(*cr_) && s_min->s.ddp_count < cr_->dd->ddp_count)
-        {
-            em_dd_partition_system(fpLog_,
-                                   mdLog_,
-                                   step,
-                                   cr_,
-                                   topGlobal_,
-                                   inputRec_,
-                                   mdModulesNotifiers_,
-                                   imdSession_,
-                                   pullWork_,
-                                   s_min,
-                                   top_,
-                                   mdAtoms_,
-                                   fr_,
-                                   virtualSites_,
-                                   constr_,
-                                   nrnb_,
-                                   wallCycleCounters_);
-        }
-
-        /* Take a trial step (new coords in s_c) */
-        do_em_step(cr_, inputRec_, mdatoms, s_min, c, s_min->s.cg_p.constArrayRefWithPadding(), s_c, constr_, -1);
-
-        neval++;
-        /* Calculate energy for the trial step */
-        energyEvaluator.run(s_c, mu_tot, vir, pres, -1, FALSE, step);
-        observablesReducer.markAsReadyToReduce();
-
-        /* Calc derivative along line
-         *
-         * To maximize the ability of the compiler to optimize, all
-         * the arrays of RVec should be annotated with gmx_restrict,
-         * so the compiler knows there is no aliasing, and for the
-         * same reason we do not use ArrayRef<RVec> for them. */
-        const RVec*        pc  = s_c->s.cg_p.data();
-        RVec* gmx_restrict sfc = s_c->f.view().force().data();
-        double             gpc = 0;
-        for (int i = 0; i < mdatoms->homenr; i++)
-        {
-            for (m = 0; m < DIM; m++)
+        */
+        auto derivativeAlongSearch = [&](const em_state_t* state) {
+            const RVec* gmx_restrict p = state->s.cg_p.data();
+            const RVec* gmx_restrict f = state->f.view().force().data();
+            double                   derivative = 0;
+            for (int i = 0; i < mdatoms->homenr; i++)
             {
-                gpc -= pc[i][m] * sfc[i][m]; /* f is negative gradient, thus the sign */
-            }
-        }
-        /* Sum the gradient along the line across CPUs */
-        cr_->commMyGroup.sumReduce(1, &gpc);
-
-        /* This is the max amount of increase in energy we tolerate */
-        tmp = std::sqrt(GMX_REAL_EPS) * std::fabs(s_a->epot);
-
-        /* Accept the step if the energy is lower, or if it is not significantly higher
-         * and the line derivative is still negative.
-         */
-        if (s_c->epot < s_a->epot || (gpc < 0 && s_c->epot < (s_a->epot + tmp)))
-        {
-            foundlower = TRUE;
-            /* Great, we found a better energy. Increase step for next iteration
-             * if we are still going down, decrease it otherwise
-             */
-            if (gpc < 0)
-            {
-                stepsize *= 1.618034; /* The golden section */
-            }
-            else
-            {
-                stepsize *= 0.618034; /* 1/golden section */
-            }
-        }
-        else
-        {
-            /* New energy is the same or higher. We will have to do some work
-             * to find a smaller value in the interval. Take smaller step next time!
-             */
-            foundlower = FALSE;
-            stepsize *= 0.618034;
-        }
-
-
-        /* OK, if we didn't find a lower value we will have to locate one now - there must
-         * be one in the interval [a=0,c].
-         * The same thing is valid here, though: Don't spend dozens of iterations to find
-         * the line minimum. We try to interpolate based on the derivative at the endpoints,
-         * and only continue until we find a lower value. In most cases this means 1-2 iterations.
-         *
-         * I also have a safeguard for potentially really pathological functions so we never
-         * take more than 20 steps before we give up ...
-         *
-         * If we already found a lower value we just skip this step and continue to the update.
-         */
-        double gpb;
-        if (!foundlower)
-        {
-            nminstep = 0;
-
-            do
-            {
-                /* Select a new trial point.
-                 * If the derivatives at points a & c have different sign we interpolate to zero,
-                 * otherwise just do a bisection.
-                 */
-                if (gpa < 0 && gpc > 0)
+                for (m = 0; m < DIM; m++)
                 {
-                    b = a + gpa * (a - c) / (gpc - gpa);
+                    derivative -= p[i][m] * f[i][m]; /* f is negative gradient, thus the sign */
                 }
-                else
+            }
+            cr_->commMyGroup.sumReduce(1, &derivative);
+            return derivative;
+        };
+
+        double gpb = 0;
+        if (pcffLammpsCgEm)
+        {
+            constexpr double quadraticTol  = 0.1;
+            constexpr double backtrackSlope = 0.4;
+            constexpr double epsQuad        = 1.0e-28;
+            constexpr int    maxLineSteps   = 100;
+            const double     emach          = pcffLammpsCgEmLineSearchEmach();
+            const bool       restoreTrialCoords = pcffLammpsCgEmRestoreTrialCoordsRequested();
+            const bool       resetStartCoordsAfterPbc = pcffLammpsCgEmPbcResetRequested();
+            const bool       resetStartCoordsAfterBoxCrossing =
+                    pcffLammpsCgEmBoxCrossResetRequested();
+            std::vector<RVec> savedTrialCoords;
+
+            auto evaluateLammpsCgTrial = [&](em_state_t* trialState) {
+                if (restoreTrialCoords || resetStartCoordsAfterBoxCrossing)
                 {
-                    b = 0.5 * (a + c);
+                    const auto trialCoords = makeArrayRef(trialState->s.x);
+                    savedTrialCoords.resize(trialCoords.size());
+                    std::copy(trialCoords.begin(), trialCoords.end(), savedTrialCoords.begin());
                 }
 
-                /* safeguard if interpolation close to machine accuracy causes errors:
-                 * never go outside the interval
-                 */
-                if (b <= a || b >= c)
-                {
-                    b = 0.5 * (a + c);
-                }
+                energyEvaluator.run(trialState, mu_tot, vir, pres, -1, FALSE, step);
+                observablesReducer.markAsReadyToReduce();
 
+                if (restoreTrialCoords)
+                {
+                    auto trialCoords = makeArrayRef(trialState->s.x);
+                    std::copy(savedTrialCoords.begin(), savedTrialCoords.end(), trialCoords.begin());
+                }
+                else if (resetStartCoordsAfterBoxCrossing)
+                {
+                    const auto resetStats = lammpsCgResetStartCoordsAfterBoxCrossing(
+                            s_min->s.box, makeArrayRef(s_min->s.x), makeArrayRef(savedTrialCoords));
+                    if (pcffLammpsCgEmTrace && fpLog_ && resetStats.atomCount > 0)
+                    {
+                        fprintf(fpLog_,
+                                "PCFF LAMMPS CG box-cross reset step %d atoms=%d max-correction=%g\n",
+                                step,
+                                resetStats.atomCount,
+                                static_cast<double>(resetStats.maxCorrection));
+                    }
+                }
+                else if (resetStartCoordsAfterPbc
+                         && lammpsCgMaxMinimumImageDisplacement(inputRec_->pbcType,
+                                                                 s_min->s.box,
+                                                                 makeConstArrayRef(lammpsCgNeighborReferenceCoords),
+                                                                 makeConstArrayRef(trialState->s.x))
+                                    >= 0.5_real * lammpsCgNeighborSkinNm)
+                {
+                    const auto resetStats = lammpsCgResetStartCoordsAfterPbc(inputRec_->pbcType,
+                                                                              s_min->s.box,
+                                                                              makeArrayRef(s_min->s.x),
+                                                                              makeArrayRef(trialState->s.x));
+                    const auto trialCoords = makeArrayRef(trialState->s.x);
+                    lammpsCgNeighborReferenceCoords.assign(trialCoords.begin(), trialCoords.end());
+                    if (pcffLammpsCgEmTrace && fpLog_ && resetStats.atomCount > 0)
+                    {
+                        fprintf(fpLog_,
+                                "PCFF LAMMPS CG PBC reset step %d atoms=%d max-correction=%g\n",
+                                step,
+                                resetStats.atomCount,
+                                static_cast<double>(resetStats.maxCorrection));
+                    }
+                }
+            };
+
+            const double eoriginal = s_min->epot;
+            const double fdoth0    = -gpa;
+            double       fhprev    = fdoth0;
+            double       engprev   = eoriginal;
+            real         alphaprev = 0.0;
+            real         alpha     = stepsize;
+            bool         accepted  = false;
+            const char*  failReason = "not-run";
+
+            auto ensureCurrentSMinState = [&]() {
                 if (haveDDAtomOrdering(*cr_) && s_min->s.ddp_count != cr_->dd->ddp_count)
                 {
-                    /* Reload the old state */
                     em_dd_partition_system(fpLog_,
                                            mdLog_,
-                                           -1,
+                                           step,
                                            cr_,
                                            topGlobal_,
                                            inputRec_,
@@ -1758,120 +2009,412 @@ void LegacySimulator::do_cg()
                                            nrnb_,
                                            wallCycleCounters_);
                 }
+            };
 
-                /* Take a trial step to this new point - new coords in s_b */
-                do_em_step(
-                        cr_, inputRec_, mdatoms, s_min, b, s_min->s.cg_p.constArrayRefWithPadding(), s_b, constr_, -1);
-
-                neval++;
-                /* Calculate energy for the trial step */
-                energyEvaluator.run(s_b, mu_tot, vir, pres, -1, FALSE, step);
-                observablesReducer.markAsReadyToReduce();
-
-                /* p does not change within a step, but since the domain decomposition
-                 * might change, we have to use cg_p of s_b here.
-                 *
-                 * To maximize the ability of the compiler to optimize, all
-                 * the arrays of RVec should be annotated with gmx_restrict,
-                 * so the compiler knows there is no aliasing, and for the
-                 * same reason we do not use ArrayRef<RVec> for them. */
-                const RVec* gmx_restrict pb  = s_b->s.cg_p.data();
-                RVec* gmx_restrict       sfb = s_b->f.view().force().data();
-                gpb                          = 0;
-                for (int i = 0; i < mdatoms->homenr; i++)
-                {
-                    for (m = 0; m < DIM; m++)
-                    {
-                        gpb -= pb[i][m] * sfb[i][m]; /* f is negative gradient, thus the sign */
-                    }
-                }
-                /* Sum the gradient along the line across CPUs */
-                cr_->commMyGroup.sumReduce(1, &gpb);
-
-                if (debug)
-                {
-                    fprintf(debug, "CGE: EpotA %f EpotB %f EpotC %f gpb %f\n", s_a->epot, s_b->epot, s_c->epot, gpb);
-                }
-
-                epot_repl = s_b->epot;
-
-                /* Keep one of the intervals based on the value of the derivative at the new point */
-                if (gpb > 0)
-                {
-                    /* Replace c endpoint with b */
-                    swap_em_state(&s_b, &s_c);
-                    c   = b;
-                    gpc = gpb;
-                }
-                else
-                {
-                    /* Replace a endpoint with b */
-                    swap_em_state(&s_b, &s_a);
-                    a   = b;
-                    gpa = gpb;
-                }
-
-                /*
-                 * Stop search as soon as we find a value smaller than the endpoints.
-                 * Never run more than 20 steps, no matter what.
-                 */
-                nminstep++;
-            } while ((epot_repl > s_a->epot || epot_repl > s_c->epot) && (nminstep < 20));
-
-            if (std::fabs(epot_repl - s_min->epot) < std::fabs(s_min->epot) * GMX_REAL_EPS || nminstep >= 20)
+            for (int lineStep = 0; lineStep < maxLineSteps && !accepted; lineStep++)
             {
-                /* OK. We couldn't find a significantly lower energy.
-                 * If beta==0 this was steepest descent, and then we give up.
-                 * If not, set beta=0 and restart with steepest descent before quitting.
-                 */
-                if (beta == 0.0)
+                ensureCurrentSMinState();
+
+                do_em_step(cr_,
+                           inputRec_,
+                           mdatoms,
+                           s_min,
+                           alpha,
+                           s_min->s.cg_p.constArrayRefWithPadding(),
+                           s_c,
+                           constr_,
+                           -1);
+                neval++;
+                evaluateLammpsCgTrial(s_c);
+
+                const double gpcTrial = derivativeAlongSearch(s_c);
+                const double fh       = -gpcTrial;
+                const double delfh    = fh - fhprev;
+                const double deIdeal  = -backtrackSlope * alpha * fdoth0;
+
+                if (std::fabs(fh) < epsQuad || std::fabs(delfh) < epsQuad)
                 {
-                    /* Converged */
-                    converged = TRUE;
+                    failReason = (std::fabs(fh) < epsQuad) ? "zero-quadratic-fh" : "zero-quadratic-delfh";
                     break;
                 }
-                else
+
+                const double relerr =
+                        (engprev != 0.0)
+                                ? std::fabs(1.0
+                                            - (0.5 * (alpha - alphaprev) * (fh + fhprev) + s_c->epot)
+                                                      / engprev)
+                                : std::numeric_limits<double>::infinity();
+                const real alpha0 = alpha - (alpha - alphaprev) * fh / delfh;
+
+                em_state_t* acceptedCandidate = s_c;
+                real        candidateAlpha    = alpha;
+                double      candidateEpot     = s_c->epot;
+                double      candidateGpb      = gpcTrial;
+                if (relerr <= quadraticTol && alpha0 > 0.0 && alpha0 < stepsize)
                 {
-                    /* Reset memory before giving up */
-                    beta = 0.0;
-                    continue;
+                    ensureCurrentSMinState();
+                    do_em_step(cr_,
+                               inputRec_,
+                               mdatoms,
+                               s_min,
+                               alpha0,
+                               s_min->s.cg_p.constArrayRefWithPadding(),
+                               s_b,
+                               constr_,
+                               -1);
+                    neval++;
+                    evaluateLammpsCgTrial(s_b);
+                    gpb = derivativeAlongSearch(s_b);
+                    const double deAlpha0 = s_b->epot - eoriginal;
+                    if (deAlpha0 < emach)
+                    {
+                        accepted = true;
+                        if (pcffLammpsCgEmTrace && fpLog_)
+                        {
+                            fprintf(fpLog_,
+                                    "PCFF LAMMPS CG trace step %d line %d accept=quadratic alpha=%g epot=%g de=%g fh=%g relerr=%g\n",
+                                    step,
+                                    lineStep,
+                                    static_cast<double>(alpha0),
+                                    s_b->epot,
+                                    deAlpha0,
+                                    gpb,
+                                    relerr);
+                        }
+                        break;
+                    }
+	                    acceptedCandidate = s_b;
+	                    candidateAlpha    = alpha0;
+	                    candidateEpot     = s_b->epot;
+	                    candidateGpb      = gpb;
+	                }
+
+	                const double candidateDe = candidateEpot - eoriginal;
+	                if (candidateAlpha <= 0.0)
+	                {
+	                    failReason = "nonpositive-accepted-alpha";
+	                    break;
+	                }
+	                if (candidateDe <= deIdeal)
+	                {
+                    if (acceptedCandidate == s_c)
+                    {
+                        swap_em_state(&s_b, &s_c);
+                    }
+                    gpb      = candidateGpb;
+                    accepted = true;
+                    if (pcffLammpsCgEmTrace && fpLog_)
+                    {
+                        fprintf(fpLog_,
+	                                "PCFF LAMMPS CG trace step %d line %d accept=backtrack alpha=%g epot=%g de=%g deIdeal=%g fh=%g relerr=%g\n",
+	                                step,
+	                                lineStep,
+	                                static_cast<double>(candidateAlpha),
+	                                candidateEpot,
+                                candidateDe,
+                                deIdeal,
+                                candidateGpb,
+                                relerr);
+                    }
+                    break;
                 }
+
+                fhprev    = fh;
+                engprev   = candidateEpot;
+                alphaprev = alpha;
+                alpha *= 0.5;
+
+                if (alpha <= 0.0 || deIdeal >= -emach)
+                {
+                    failReason = (alpha <= 0.0) ? "zero-alpha" : "zero-alpha-emach";
+                    break;
+                }
+                failReason = "backtrack-retry-limit";
             }
 
-            /* Select min energy state of A & C, put the best in B.
-             */
-            if (s_c->epot < s_a->epot)
+            if (!accepted)
             {
-                if (debug)
+                if (pcffLammpsCgEmTrace && fpLog_)
                 {
-                    fprintf(debug, "CGE: C (%f) is lower than A (%f), moving C to B\n", s_c->epot, s_a->epot);
+                    fprintf(fpLog_,
+                            "PCFF LAMMPS CG trace step %d failed reason=%s beta=%g epot=%g fdoth0=%g stepsize=%g\n",
+                            step,
+                            failReason,
+                            static_cast<double>(beta),
+                            s_min->epot,
+                            fdoth0,
+                            static_cast<double>(stepsize));
                 }
-                swap_em_state(&s_b, &s_c);
-                gpb = gpc;
+                converged = TRUE;
+                break;
+            }
+        }
+        else
+        {
+            s_a->epot = s_min->epot;
+            a         = 0.0;
+            c         = a + stepsize; /* reference position along line is zero */
+
+            if (haveDDAtomOrdering(*cr_) && s_min->s.ddp_count < cr_->dd->ddp_count)
+            {
+                em_dd_partition_system(fpLog_,
+                                       mdLog_,
+                                       step,
+                                       cr_,
+                                       topGlobal_,
+                                       inputRec_,
+                                       mdModulesNotifiers_,
+                                       imdSession_,
+                                       pullWork_,
+                                       s_min,
+                                       top_,
+                                       mdAtoms_,
+                                       fr_,
+                                       virtualSites_,
+                                       constr_,
+                                       nrnb_,
+                                       wallCycleCounters_);
+            }
+
+            /* Take a trial step (new coords in s_c) */
+            do_em_step(cr_, inputRec_, mdatoms, s_min, c, s_min->s.cg_p.constArrayRefWithPadding(), s_c, constr_, -1);
+
+            neval++;
+            /* Calculate energy for the trial step */
+            energyEvaluator.run(s_c, mu_tot, vir, pres, -1, FALSE, step);
+            observablesReducer.markAsReadyToReduce();
+
+            /* Calc derivative along line
+             *
+             * To maximize the ability of the compiler to optimize, all
+             * the arrays of RVec should be annotated with gmx_restrict,
+             * so the compiler knows there is no aliasing, and for the
+             * same reason we do not use ArrayRef<RVec> for them. */
+            const RVec*        pc  = s_c->s.cg_p.data();
+            RVec* gmx_restrict sfc = s_c->f.view().force().data();
+            double             gpc = 0;
+            for (int i = 0; i < mdatoms->homenr; i++)
+            {
+                for (m = 0; m < DIM; m++)
+                {
+                    gpc -= pc[i][m] * sfc[i][m]; /* f is negative gradient, thus the sign */
+                }
+            }
+            /* Sum the gradient along the line across CPUs */
+            cr_->commMyGroup.sumReduce(1, &gpc);
+
+            /* This is the max amount of increase in energy we tolerate */
+            tmp = std::sqrt(GMX_REAL_EPS) * std::fabs(s_a->epot);
+
+            /* Accept the step if the energy is lower, or if it is not significantly higher
+             * and the line derivative is still negative.
+             */
+            if (s_c->epot < s_a->epot || (gpc < 0 && s_c->epot < (s_a->epot + tmp)))
+            {
+                foundlower = TRUE;
+                /* Great, we found a better energy. Increase step for next iteration
+                 * if we are still going down, decrease it otherwise
+                 */
+                if (gpc < 0)
+                {
+                    stepsize *= 1.618034; /* The golden section */
+                }
+                else
+                {
+                    stepsize *= 0.618034; /* 1/golden section */
+                }
+            }
+            else
+            {
+                /* New energy is the same or higher. We will have to do some work
+                 * to find a smaller value in the interval. Take smaller step next time!
+                 */
+                foundlower = FALSE;
+                stepsize *= 0.618034;
+            }
+
+
+            /* OK, if we didn't find a lower value we will have to locate one now - there must
+             * be one in the interval [a=0,c].
+             * The same thing is valid here, though: Don't spend dozens of iterations to find
+             * the line minimum. We try to interpolate based on the derivative at the endpoints,
+             * and only continue until we find a lower value. In most cases this means 1-2 iterations.
+             *
+             * I also have a safeguard for potentially really pathological functions so we never
+             * take more than 20 steps before we give up ...
+             *
+             * If we already found a lower value we just skip this step and continue to the update.
+             */
+            if (!foundlower)
+            {
+                nminstep = 0;
+
+                do
+                {
+                    /* Select a new trial point.
+                     * If the derivatives at points a & c have different sign we interpolate to zero,
+                     * otherwise just do a bisection.
+                     */
+                    if (gpa < 0 && gpc > 0)
+                    {
+                        b = a + gpa * (a - c) / (gpc - gpa);
+                    }
+                    else
+                    {
+                        b = 0.5 * (a + c);
+                    }
+
+                    /* safeguard if interpolation close to machine accuracy causes errors:
+                     * never go outside the interval
+                     */
+                    if (b <= a || b >= c)
+                    {
+                        b = 0.5 * (a + c);
+                    }
+
+                    if (haveDDAtomOrdering(*cr_) && s_min->s.ddp_count != cr_->dd->ddp_count)
+                    {
+                        /* Reload the old state */
+                        em_dd_partition_system(fpLog_,
+                                               mdLog_,
+                                               -1,
+                                               cr_,
+                                               topGlobal_,
+                                               inputRec_,
+                                               mdModulesNotifiers_,
+                                               imdSession_,
+                                               pullWork_,
+                                               s_min,
+                                               top_,
+                                               mdAtoms_,
+                                               fr_,
+                                               virtualSites_,
+                                               constr_,
+                                               nrnb_,
+                                               wallCycleCounters_);
+                    }
+
+                    /* Take a trial step to this new point - new coords in s_b */
+                    do_em_step(cr_,
+                               inputRec_,
+                               mdatoms,
+                               s_min,
+                               b,
+                               s_min->s.cg_p.constArrayRefWithPadding(),
+                               s_b,
+                               constr_,
+                               -1);
+
+                    neval++;
+                    /* Calculate energy for the trial step */
+                    energyEvaluator.run(s_b, mu_tot, vir, pres, -1, FALSE, step);
+                    observablesReducer.markAsReadyToReduce();
+
+                    /* p does not change within a step, but since the domain decomposition
+                     * might change, we have to use cg_p of s_b here.
+                     *
+                     * To maximize the ability of the compiler to optimize, all
+                     * the arrays of RVec should be annotated with gmx_restrict,
+                     * so the compiler knows there is no aliasing, and for the
+                     * same reason we do not use ArrayRef<RVec> for them. */
+                    const RVec* gmx_restrict pb  = s_b->s.cg_p.data();
+                    RVec* gmx_restrict       sfb = s_b->f.view().force().data();
+                    gpb                          = 0;
+                    for (int i = 0; i < mdatoms->homenr; i++)
+                    {
+                        for (m = 0; m < DIM; m++)
+                        {
+                            gpb -= pb[i][m] * sfb[i][m]; /* f is negative gradient, thus the sign */
+                        }
+                    }
+                    /* Sum the gradient along the line across CPUs */
+                    cr_->commMyGroup.sumReduce(1, &gpb);
+
+                    if (debug)
+                    {
+                        fprintf(debug, "CGE: EpotA %f EpotB %f EpotC %f gpb %f\n", s_a->epot, s_b->epot, s_c->epot, gpb);
+                    }
+
+                    epot_repl = s_b->epot;
+
+                    /* Keep one of the intervals based on the value of the derivative at the new point */
+                    if (gpb > 0)
+                    {
+                        /* Replace c endpoint with b */
+                        swap_em_state(&s_b, &s_c);
+                        c   = b;
+                        gpc = gpb;
+                    }
+                    else
+                    {
+                        /* Replace a endpoint with b */
+                        swap_em_state(&s_b, &s_a);
+                        a   = b;
+                        gpa = gpb;
+                    }
+
+                    /*
+                     * Stop search as soon as we find a value smaller than the endpoints.
+                     * Never run more than 20 steps, no matter what.
+                     */
+                    nminstep++;
+                } while ((epot_repl > s_a->epot || epot_repl > s_c->epot) && (nminstep < 20));
+
+                if (std::fabs(epot_repl - s_min->epot) < std::fabs(s_min->epot) * GMX_REAL_EPS || nminstep >= 20)
+                {
+                    /* OK. We couldn't find a significantly lower energy.
+                     * If beta==0 this was steepest descent, and then we give up.
+                     * If not, set beta=0 and restart with steepest descent before quitting.
+                     */
+                    if (beta == 0.0)
+                    {
+                        /* Converged */
+                        converged = TRUE;
+                        break;
+                    }
+                    else
+                    {
+                        /* Reset memory before giving up */
+                        beta = 0.0;
+                        continue;
+                    }
+                }
+
+                /* Select min energy state of A & C, put the best in B.
+                 */
+                if (s_c->epot < s_a->epot)
+                {
+                    if (debug)
+                    {
+                        fprintf(debug, "CGE: C (%f) is lower than A (%f), moving C to B\n", s_c->epot, s_a->epot);
+                    }
+                    swap_em_state(&s_b, &s_c);
+                    gpb = gpc;
+                }
+                else
+                {
+                    if (debug)
+                    {
+                        fprintf(debug, "CGE: A (%f) is lower than C (%f), moving A to B\n", s_a->epot, s_c->epot);
+                    }
+                    swap_em_state(&s_b, &s_a);
+                    gpb = gpa;
+                }
             }
             else
             {
                 if (debug)
                 {
-                    fprintf(debug, "CGE: A (%f) is lower than C (%f), moving A to B\n", s_a->epot, s_c->epot);
+                    fprintf(debug, "CGE: Found a lower energy %f, moving C to B\n", s_c->epot);
                 }
-                swap_em_state(&s_b, &s_a);
-                gpb = gpa;
+                swap_em_state(&s_b, &s_c);
+                gpb = gpc;
             }
-        }
-        else
-        {
-            if (debug)
-            {
-                fprintf(debug, "CGE: Found a lower energy %f, moving C to B\n", s_c->epot);
-            }
-            swap_em_state(&s_b, &s_c);
-            gpb = gpc;
         }
 
         /* new search direction */
         /* beta = 0 means forget all memory and restart with steepest descents. */
-        if (nstcg && ((step % nstcg) == 0))
+        if (!pcffLammpsCgEm && nstcg && ((step % nstcg) == 0))
         {
             beta = 0.0;
         }
@@ -1885,9 +2428,13 @@ void LegacySimulator::do_cg()
              * Change to fnorm2/fnorm2_old for Fletcher-Reeves
              */
             beta = pr_beta(cr_, &inputRec_->opts, mdatoms, topGlobal_, s_min, s_b);
+            if (pcffLammpsCgEm && beta < 0.0)
+            {
+                beta = 0.0;
+            }
         }
         /* Limit beta to prevent oscillations */
-        if (std::fabs(beta) > 5.0)
+        if (!pcffLammpsCgEm && std::fabs(beta) > 5.0)
         {
             beta = 0.0;
         }

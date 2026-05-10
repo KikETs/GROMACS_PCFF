@@ -49,6 +49,9 @@
 
 #include "config.h"
 
+#include <cstdint>
+#include <vector>
+
 #include "gromacs/gpu_utils/gputraits.h"
 #include "gromacs/gpu_utils/hostallocator.h"
 #include "gromacs/listed_forces/listed_forces_gpu.h"
@@ -122,6 +125,48 @@ struct BondedGpuKernelBuffers
     DeviceBuffer<t_iatom> d_iatoms[numFTypesOnGpu];
 };
 
+struct BondedGpuInteractionListCacheKey
+{
+    uint64_t interactionListIdentity = 0;
+    int      atomOrderSize        = -1;
+    uint64_t atomOrderFingerprint = 0;
+    int      iListSizes[numFTypesOnGpu] = {};
+    uint64_t iListFingerprints[numFTypesOnGpu] = {};
+    int      numNonperturbedInteractions[numFTypesOnGpu] = {};
+
+    bool operator==(const BondedGpuInteractionListCacheKey& other) const
+    {
+        if (interactionListIdentity != other.interactionListIdentity
+            || atomOrderSize != other.atomOrderSize
+            || atomOrderFingerprint != other.atomOrderFingerprint)
+        {
+            return false;
+        }
+        for (int i = 0; i < numFTypesOnGpu; ++i)
+        {
+            if (iListSizes[i] != other.iListSizes[i]
+                || iListFingerprints[i] != other.iListFingerprints[i]
+                || numNonperturbedInteractions[i] != other.numNonperturbedInteractions[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+};
+
+struct BondedGpuInteractionListCacheEntry
+{
+    bool                             valid = false;
+    BondedGpuInteractionListCacheKey key;
+    gmx::EnumerationArray<InteractionFunction, HostInteractionList> iLists;
+    gmx::EnumerationArray<InteractionFunction, DeviceBuffer<t_iatom>> d_iAtoms      = {};
+    gmx::EnumerationArray<InteractionFunction, int>                   d_iAtomsAlloc = {};
+    BondedGpuKernelParameters kernelParams;
+    KernelLaunchConfig        kernelLaunchConfig;
+    bool                      haveInteractions = false;
+};
+
 /*! \internal \brief Implements GPU bondeds */
 class ListedForcesGpu::Impl
 {
@@ -153,7 +198,9 @@ public:
                                                 const InteractionDefinitions& idef,
                                                 DeviceBuffer<Float4>          d_xqPtr,
                                                 DeviceBuffer<RVec>            d_fPtr,
-                                                DeviceBuffer<RVec>            d_fShiftPtr);
+                                                DeviceBuffer<RVec>            d_fShiftPtr,
+                                                bool                          useCachedInteractionLists,
+                                                std::uintptr_t interactionListCacheIdentity);
     /*! \brief
      * Update PBC data.
      *
@@ -200,6 +247,9 @@ private:
     //! Interaction lists on the device.
     gmx::EnumerationArray<InteractionFunction, DeviceBuffer<t_iatom>> d_iAtoms_      = {};
     gmx::EnumerationArray<InteractionFunction, int>                   d_iAtomsAlloc_ = {};
+    bool                               cachedInteractionListsValid_ = false;
+    BondedGpuInteractionListCacheKey   cachedInteractionListsKey_;
+    std::vector<BondedGpuInteractionListCacheEntry> cachedInteractionLists_;
     //! Bonded parameters for device-side use.
     DeviceBuffer<t_iparams> d_forceParams_ = nullptr;
     //! Position-charge vector on the device.

@@ -47,6 +47,7 @@
 #ifndef GMX_LISTED_FORCES_LISTED_FORCES_GPU_H
 #define GMX_LISTED_FORCES_LISTED_FORCES_GPU_H
 
+#include <cstdint>
 #include <memory>
 
 #include "gromacs/gpu_utils/devicebuffer_datatype.h"
@@ -173,7 +174,9 @@ public:
      */
     void updateInteractionListsAndDeviceBuffers(ArrayRef<const int>           nbnxnAtomOrder,
                                                 const InteractionDefinitions& idef,
-                                                NBAtomDataGpu*                nbnxmAtomDataGpu);
+                                                NBAtomDataGpu*                nbnxmAtomDataGpu,
+                                                bool                          useCachedInteractionLists = false,
+                                                std::uintptr_t interactionListCacheIdentity = 0);
     /*! \brief
      * Update PBC data.
      *

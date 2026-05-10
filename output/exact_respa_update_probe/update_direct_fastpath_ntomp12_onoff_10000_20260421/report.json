@@ -1,0 +1,37 @@
+{
+  "delta_ns_per_day_pct": 3.090317144967192,
+  "delta_update_seconds_pct": -3.3898305084745672,
+  "edr_cross_mode_equal": true,
+  "gro_cross_mode_equal": true,
+  "ntomp": 12,
+  "pinargs": [
+    "-pin",
+    "on",
+    "-pinstride",
+    "2"
+  ],
+  "rows": [
+    {
+      "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
+      "force_seconds": 2.421,
+      "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
+      "label": "direct_off",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_ntomp12_onoff_10000_20260421/direct_off/run.log",
+      "ms_per_step": 0.449,
+      "ns_per_day": 96.139,
+      "update_seconds": 2.065
+    },
+    {
+      "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
+      "force_seconds": 2.333,
+      "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
+      "label": "direct_on",
+      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_ntomp12_onoff_10000_20260421/direct_on/run.log",
+      "ms_per_step": 0.436,
+      "ns_per_day": 99.11,
+      "update_seconds": 1.995
+    }
+  ],
+  "schema": "exact_respa_update_direct_fastpath_ntomp12_onoff",
+  "steps": 10000
+}

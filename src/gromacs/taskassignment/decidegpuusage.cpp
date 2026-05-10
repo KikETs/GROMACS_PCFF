@@ -143,27 +143,24 @@ bool isSupportedExactRespaHybridNbGpuInputInternal(const t_inputrec& inputrec)
         return false;
     }
 
-    if (!isExactLammpsRespa(inputrec) || !inputrec.exactRespa.forceLayout.hasPairSplitting())
+    if (!isExactLammpsRespa(inputrec))
     {
         return false;
     }
 
-    const bool forceOnlySchedule =
-            inputrec.nsteps > 0 && inputrec.nstcalcenergy > inputrec.nsteps
-            && inputrec.nstenergy > inputrec.nsteps;
-
-    return forceOnlySchedule && inputrec.efep == FreeEnergyPerturbationType::No
+    return inputrec.efep == FreeEnergyPerturbationType::No
            && inputrec.vdwtype == VanDerWaalsType::Cut
            && inputrec.vdw_modifier == InteractionModifiers::None
-           && usingPmeOrEwald(inputrec.coulombtype)
+           && (usingPmeOrEwald(inputrec.coulombtype)
+               || inputrec.coulombtype == CoulombInteractionType::Cut)
            && inputrec.coulomb_modifier == InteractionModifiers::None;
 }
 
 const char* const g_exactRespaGpuNonbondedNotSupportedReason =
         "Exact LAMMPS-style r-RESPA hybrid OpenMP+GPU nonbonded is only admitted in the narrow "
-        "force-only CUDA shape with no exact-path energy/virial steps and the audited two-thread "
-        "OpenMP runtime. The requested input does not satisfy that audited HG1/HG3 admission "
-        "contract.";
+        "single-rank CUDA shape with cut-off LJ, PME/Ewald or Cut-off Coulomb, no free-energy perturbation, "
+        "and either pair-split or full pair-level nonbonded routing. The requested input does not "
+        "satisfy that audited HG1/HG3 admission contract.";
 
 const char* const g_exactRespaGpuPmeNotSupportedReason =
         "Exact LAMMPS-style r-RESPA hybrid PME is only admitted in the audited HG5 narrow "

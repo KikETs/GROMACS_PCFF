@@ -508,10 +508,19 @@ def parse_total_force_dump(path: Path) -> dict[str, object]:
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
-        step_str, time_str, highest_level_str, atom_str, fx_str, fy_str, fz_str = line.split("\t")
+        parts = line.split("\t")
+        if len(parts) == 7:
+            step_str, time_str, highest_level_str, atom_str, fx_str, fy_str, fz_str = parts
+            local_atom = int(atom_str)
+            atom = local_atom
+        elif len(parts) == 8:
+            step_str, time_str, highest_level_str, local_atom_str, atom_str, fx_str, fy_str, fz_str = parts
+            local_atom = int(local_atom_str)
+            atom = int(atom_str)
+        else:
+            raise ValueError(f"Unexpected force dump line in {path}: {line}")
         step = int(step_str)
         highest_level = int(highest_level_str)
-        atom = int(atom_str)
         fx = float(fx_str)
         fy = float(fy_str)
         fz = float(fz_str)
@@ -520,6 +529,7 @@ def parse_total_force_dump(path: Path) -> dict[str, object]:
                 "step": step,
                 "time_ps": float(time_str),
                 "highest_active_level": highest_level,
+                "local_atom": local_atom,
                 "atom": atom,
                 "force": [fx, fy, fz],
             }

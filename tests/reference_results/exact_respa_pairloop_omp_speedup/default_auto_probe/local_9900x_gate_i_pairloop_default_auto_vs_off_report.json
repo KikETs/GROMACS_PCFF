@@ -1,0 +1,87 @@
+{
+  "results": [
+    {
+      "label": "default_auto",
+      "env": {},
+      "elapsed_s": 1.0664353370666504,
+      "ns_per_day": 82.705,
+      "ms_per_step": 0.522,
+      "neighbor_search_s": 0.155,
+      "force_s": 0.602,
+      "update_s": 0.448,
+      "total_s": null,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "4a605d345a0f8ab9a05ac64802f3a6bb12149511d1102d7fd5f9f5479bc26f97"
+    },
+    {
+      "label": "explicit_on",
+      "env": {
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP": "1",
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_DIRECT_CPULIST": "1"
+      },
+      "elapsed_s": 1.0656681060791016,
+      "ns_per_day": 82.679,
+      "ms_per_step": 0.523,
+      "neighbor_search_s": 0.156,
+      "force_s": 0.602,
+      "update_s": 0.449,
+      "total_s": null,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "1c62ed7a36f8e9e74d07bc7f9e0bcaddb5ba8af22274a44ec1c10596a2906516"
+    },
+    {
+      "label": "forced_off",
+      "env": {
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_OMP": "0",
+        "GMX_PCFF_EXACT_RESPA_PAIRLOOP_DIRECT_CPULIST": "0"
+      },
+      "elapsed_s": 1.1728508472442627,
+      "ns_per_day": 75.014,
+      "ms_per_step": 0.576,
+      "neighbor_search_s": 0.166,
+      "force_s": 0.643,
+      "update_s": 0.5,
+      "total_s": null,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "cc9702a0fc6167043ddd407248e79f1cc28e8be60d56e134ae75a79e2ddb5505"
+    },
+    {
+      "label": "eager_on",
+      "env": {
+        "GMX_PCFF_EXACT_RESPA_EAGER_PLAIN_PAIRLIST": "1"
+      },
+      "elapsed_s": 2.901153802871704,
+      "ns_per_day": 30.005,
+      "ms_per_step": 1.44,
+      "neighbor_search_s": 0.168,
+      "force_s": 0.584,
+      "update_s": 1.367,
+      "total_s": null,
+      "gro_sha256": "ac3dc3ecc4728f0123e7a686d7468baa5e37d6c515af14f76ef67fb16aec0599",
+      "edr_sha256": "ca8088ffe00cadcd7d97fedd6e2d4920901bc193fa6ad7d90d573b75a9325f68",
+      "cpt_sha256": "46c89e28e89d66e3461730cd6cc4566e21c521271f23141beba57293e15ebdd1"
+    }
+  ],
+  "comparisons": {
+    "default_vs_explicit_on": {
+      "gro_equal": true,
+      "edr_equal": true,
+      "cpt_equal": false
+    },
+    "default_vs_forced_off": {
+      "gro_equal": true,
+      "edr_equal": true,
+      "cpt_equal": false,
+      "speedup": 1.102527528194737
+    },
+    "default_vs_eager_on": {
+      "gro_equal": true,
+      "edr_equal": true,
+      "cpt_equal": false,
+      "speedup": 2.7563739376770537
+    }
+  }
+}

@@ -115,6 +115,7 @@
 
 #include "gromacs/gpu_utils/devicebuffer_datatype.h"
 #include "gromacs/mdtypes/locality.h"
+#include "gromacs/mdtypes/multipletimestepping.h"
 #include "gromacs/utility/arrayref.h"
 #include "gromacs/utility/enumerationhelpers.h"
 #include "gromacs/utility/real.h"
@@ -151,6 +152,7 @@ template<typename>
 class ArrayRefWithPadding;
 class DeviceStreamManager;
 class DomdecZones;
+class ForceWithVirial;
 class ForceWithShiftForces;
 class ListedForcesGpu;
 template<typename>
@@ -194,6 +196,105 @@ struct PlainPairlist
     //! List of excluded atom pairs
     std::vector<PairlistEntry> excludedPairs;
 };
+
+/*! \brief One nbnxm output-routing sink for an exact r-RESPA contribution.
+ *
+ * The current contract is contribution-aware, but intentionally still bounded:
+ * one kernel launch writes to one reduced atom-force target, optionally with
+ * shift-force reduction when the sink kind is ShiftForce.
+ */
+struct NbnxmOutputSink
+{
+    MtsNonbondedRespaContribution      contribution;
+    LammpsRespaNonbondedOutputSinkKind sinkKind;
+    AtomLocality                       locality;
+    ArrayRef<RVec>                     force;
+    ArrayRef<RVec>                     shiftForces;
+    ForceWithVirial*                   directVirialOutput = nullptr;
+};
+
+/*! \brief Explicit virial ownership for an exact r-RESPA nbnxm output contract.
+ *
+ * The current contract only records which contribution owns virial output and
+ * whether that ownership is routed through shift-force reduction or a direct
+ * virial sink.
+ */
+struct NbnxmVirialOutput
+{
+    bool                               accumulateVirial = false;
+    MtsNonbondedRespaContribution      contribution = MtsNonbondedRespaContribution::Full;
+    LammpsRespaNonbondedOutputSinkKind sinkKind     = LammpsRespaNonbondedOutputSinkKind::ShiftForce;
+    ArrayRef<RVec>                     shiftForces;
+    ForceWithVirial*                   directVirialOutput = nullptr;
+};
+
+/*! \brief Explicit energy ownership for an exact r-RESPA nbnxm output contract.
+ *
+ * Native nbnxm kernels still write energies through their existing scalar/group
+ * arrays. This contract only makes the exact contribution that owns those
+ * arrays explicit.
+ */
+struct NbnxmEnergyOutput
+{
+    bool                          accumulateEnergy = false;
+    MtsNonbondedRespaContribution contribution = MtsNonbondedRespaContribution::Full;
+    ArrayRef<real>                vdwEnergy;
+    ArrayRef<real>                coulombEnergy;
+};
+
+/*! \brief Execution model described by an NBNXM exact r-RESPA output contract. */
+enum class NbnxmOutputContractKind : int
+{
+    //! Current bounded implementation: one NBNXM launch/reduction per active contribution.
+    PerContributionLaunch,
+    //! Future native implementation: one launch can write multiple contribution outputs.
+    NativeMultiContribution,
+    Count
+};
+
+/*! \brief Native multi-contribution output descriptor for exact r-RESPA.
+ *
+ * This is a contract-level descriptor only. It makes the intended native
+ * multi-output shape representable and testable, but does not by itself change
+ * any NBNXM kernel write path.
+ */
+struct NbnxmNativeMultiContributionOutput
+{
+    std::vector<MtsNonbondedRespaContribution> contributions;
+};
+
+/*! \brief Bounded exact r-RESPA output contract for one nbnxm launch family.
+ *
+ * PerContributionLaunch remains the one-launch/one-contribution model.
+ * NativeMultiContribution has contribution-indexed host output storage and
+ * reduction support, but native kernel multi-write semantics still require a
+ * separate kernel implementation.
+ */
+struct NbnxmOutputContract
+{
+    NbnxmOutputContractKind             kind = NbnxmOutputContractKind::PerContributionLaunch;
+    std::vector<NbnxmOutputSink>        sinks;
+    NbnxmVirialOutput                   virial;
+    NbnxmEnergyOutput                   energy;
+    NbnxmNativeMultiContributionOutput  nativeMultiContribution;
+};
+
+/*! \brief Validate \p contract and return the sink for \p contribution.
+ *
+ * This helper is intentionally independent from nonbonded_verlet_t so exact
+ * r-RESPA output routing can be regression-tested without a GPU or nbnxm atom
+ * data instance.
+ */
+const NbnxmOutputSink& nbnxmOutputSinkForContribution(const NbnxmOutputContract&    contract,
+                                                      MtsNonbondedRespaContribution contribution);
+
+/*! \brief Validate and return the sinks for a native multi-contribution contract.
+ *
+ * The returned sink pointers follow the order declared in
+ * NbnxmNativeMultiContributionOutput::contributions.
+ */
+std::vector<const NbnxmOutputSink*> nbnxmOutputSinksForNativeMultiContribution(
+        const NbnxmOutputContract& contract);
 
 /*! \libinternal
  *  \brief Top-level non-bonded data structure for the Verlet-type cut-off scheme. */
@@ -393,6 +494,23 @@ public:
                                  ArrayRef<real>             CoulombSR,
                                  t_nrnb*                    nrnb) const;
 
+    /*! \brief Executes one exact r-RESPA CPU NBNXM native multi-contribution launch.
+     *
+     * One CPU NBNXM traversal writes the active exact real-space contributions
+     * into contribution-indexed force buffers. Energy ownership, when requested
+     * by \p stepWork, still uses the existing kernel output arrays owned by the
+     * outer/full contribution.
+     */
+    void dispatchExactRespaCpuNativeMultiKernel(InteractionLocality                    iLocality,
+                                                const interaction_const_t&             ic,
+                                                ArrayRef<const MtsNonbondedRespaContribution> contributions,
+                                                const StepWorkload&                    stepWork,
+                                                int                                    clearF,
+                                                ArrayRef<const RVec>                   shiftvec,
+                                                ArrayRef<real>                         repulsionDispersionSR,
+                                                ArrayRef<real>                         CoulombSR,
+                                                t_nrnb*                                nrnb) const;
+
     //! Executes the non-bonded free-energy kernels, local + non-local, runs on the CPU
     void dispatchFreeEnergyCpuKernels(const ArrayRefWithPadding<const RVec>& coords,
                                       ForceWithShiftForces*                  forceWithShiftForces,
@@ -424,6 +542,24 @@ public:
      * \param [inout] force         Force to be added to
      */
     void atomdata_add_nbat_f_to_f(AtomLocality locality, ArrayRef<RVec> force);
+
+    /*! \brief Reduce one exact r-RESPA contribution into the matching nbnxm output sink.
+     *
+     * This contract currently supports one reduced sink per contribution. It
+     * makes the contribution routing explicit, but does not yet change kernel
+     * write semantics or introduce native multi-write output buffers.
+     */
+    void atomdata_add_nbat_f_to_outputs(const NbnxmOutputContract&    contract,
+                                        MtsNonbondedRespaContribution contribution);
+
+    /*! \brief Reduce native multi-contribution exact r-RESPA output buffers.
+     *
+     * This validates the native contract at the NBNXM boundary, ensures
+     * contribution-indexed output buffers exist, and reduces each contribution
+     * into its declared sink. NBNXM kernels still need a separate change before
+     * they can write those contribution-indexed buffers directly.
+     */
+    void atomdata_add_nbat_f_to_native_multi_outputs(const NbnxmOutputContract& contract);
 
     /*! \brief Get the number of atoms for a given locality
      *

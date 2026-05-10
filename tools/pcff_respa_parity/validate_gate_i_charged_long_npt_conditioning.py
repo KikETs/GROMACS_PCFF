@@ -59,7 +59,7 @@ DEFAULT_OUT = REPO_ROOT / "tests" / "reference_results" / "gate_i_charged_long_n
 
 DT_PS = 0.0005
 EXACT_RESPA_FACTOR = 4
-DEFAULT_EQ_PS = 250.0
+DEFAULT_EQ_PS = 3000.0
 DEFAULT_PROD_PS = 1000.0
 DEFAULT_REPLICAS = 3
 DEFAULT_SAMPLE_INTERVAL = EXACT_RESPA_FACTOR * 100
@@ -68,6 +68,13 @@ DEFAULT_PRESSURE_BAR = 1.0
 DEFAULT_TAU_T_PS = 0.5
 DEFAULT_TAU_P_PS = 5.0
 DEFAULT_COMPRESSIBILITY_BAR_INV = 4.5e-5
+NATIVE_MULTI_ENV = "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI"
+NATIVE_MULTI_OWNER_FALLBACK_ENV = "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_OWNER_STEP_FALLBACK"
+NATIVE_MULTI_SPLIT_OWNER_ENV = "GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SPLIT_OWNER_OUTPUTS"
+EXACT_RESPA_UPDATE_OMP_ENV = "GMX_PCFF_EXACT_RESPA_UPDATE_OMP"
+EXACT_RESPA_UPDATE_OMP_THREADS_ENV = "GMX_PCFF_EXACT_RESPA_UPDATE_OMP_THREADS"
+EXACT_RESPA_UPDATE_DIRECT_FASTPATH_ENV = "GMX_PCFF_EXACT_RESPA_UPDATE_DIRECT_FASTPATH"
+EXACT_RESPA_FUSED_INITIAL_DRIFT_ENV = "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT"
 
 REQUESTED_OBSERVABLES = (
     "Temperature",
@@ -138,9 +145,108 @@ def parse_args() -> argparse.Namespace:
         default=str(DEFAULT_SCAFFOLD_MANIFEST),
         help="Charged large/medium scaffold manifest path.",
     )
+    parser.add_argument(
+        "--start-gro",
+        default=None,
+        help=(
+            "Optional common preconditioned starting structure for the Gate I equilibration stage. "
+            "When omitted, the scaffold manifest GRO is used."
+        ),
+    )
     parser.add_argument("--out", default=str(DEFAULT_OUT), help="Artifact root.")
     parser.add_argument("--ntmpi", type=int, default=1, help="Thread-MPI ranks.")
     parser.add_argument("--ntomp", type=int, default=1, help="OpenMP threads.")
+    parser.add_argument(
+        "--pin",
+        choices=("off", "on", "auto"),
+        default="off",
+        help=(
+            "GROMACS mdrun -pin policy for CPU-only Gate I runs. Default remains off to preserve "
+            "the historical contract; use 'on' only with an explicit measured affinity shape."
+        ),
+    )
+    parser.add_argument(
+        "--pinoffset",
+        type=int,
+        default=None,
+        help="Optional GROMACS mdrun -pinoffset value, only emitted when --pin is not off.",
+    )
+    parser.add_argument(
+        "--pinstride",
+        type=int,
+        default=None,
+        help="Optional GROMACS mdrun -pinstride value, only emitted when --pin is not off.",
+    )
+    parser.add_argument(
+        "--native-multi-owner-mode",
+        choices=("default", "owner_fallback", "full_owner_native", "split_owner_sidecar"),
+        default="default",
+        help=(
+            "Owner-step native-multi runtime mode. "
+            "'default' preserves compiled defaults; other modes pin the exact owner-step env contract explicitly."
+        ),
+    )
+    parser.add_argument(
+        "--allow-experimental-native-multi-probe",
+        action="store_true",
+        help=(
+            "Permit full_owner_native or split_owner_sidecar for explicit performance probes. "
+            "These modes are not accepted as Gate I exactness evidence until runtime parity is closed."
+        ),
+    )
+    parser.add_argument(
+        "--allow-experimental-update-probe",
+        action="store_true",
+        help=(
+            "Permit default-off update experiments such as fused initial drift. "
+            "These modes are recorded as probes and are not accepted as claimable Gate I evidence."
+        ),
+    )
+    parser.add_argument(
+        "--exact-respa-update-omp-mode",
+        choices=("auto", "off", "on"),
+        default="auto",
+        help=(
+            "Exact-r-RESPA CPU update OpenMP policy. The default preserves the runtime auto heuristic; "
+            "use 'on' only for thread shapes where probe evidence supports it."
+        ),
+    )
+    parser.add_argument(
+        "--exact-respa-update-omp-threads",
+        type=int,
+        default=None,
+        help=(
+            "Optional cap for exact-r-RESPA CPU update OpenMP threads. This lets force/nonbonded use "
+            "--ntomp while the update loop uses a smaller host-local thread count."
+        ),
+    )
+    parser.add_argument(
+        "--exact-respa-update-direct-fastpath-mode",
+        choices=("auto", "off", "on"),
+        default="auto",
+        help=(
+            "Exact-r-RESPA direct mobile-atom update fast path. The default preserves the compiled "
+            "runtime default; use 'off' to force the conservative per-atom branch path."
+        ),
+    )
+    parser.add_argument(
+        "--exact-respa-fused-initial-drift-mode",
+        choices=("auto", "off", "on"),
+        default="auto",
+        help=(
+            "Exact-r-RESPA CPU initial half-kick plus drift fusion policy. The default preserves "
+            "the runtime default; use 'on' only for thread shapes where probe evidence supports it."
+        ),
+    )
+    parser.add_argument(
+        "--nstlist",
+        type=int,
+        default=EXACT_RESPA_FACTOR,
+        help=(
+            "Verlet neighbor-list update interval in base steps for explicit performance probes. "
+            "The default keeps the historical Gate I exact-r-RESPA shape."
+        ),
+    )
     parser.add_argument("--npme", type=int, default=None, help="Optional explicit -npme value; omitted by default.")
     parser.add_argument(
         "--ntomp-pme",
@@ -151,8 +257,49 @@ def parse_args() -> argparse.Namespace:
         help="Optional explicit -ntomp_pme value; omitted by default.",
     )
     parser.add_argument("--replicas", type=int, default=DEFAULT_REPLICAS, help="Replica count.")
+    parser.add_argument(
+        "--ld-seed-base",
+        type=int,
+        default=None,
+        help=(
+            "Optional explicit base stochastic seed for thermostat/barostat coupling. "
+            "Replica i equilibration uses ld-seed = ld-seed-base + (i - 1), and production "
+            "uses ld-seed = ld-seed-base + prod-ld-seed-offset + (i - 1). "
+            "When omitted, GROMACS resolves the LD seed at grompp time and the script records the resolved value."
+        ),
+    )
+    parser.add_argument(
+        "--prod-ld-seed-offset",
+        type=int,
+        default=100000,
+        help="Offset added to --ld-seed-base for production-phase stochastic seeds.",
+    )
     parser.add_argument("--equil-ps", type=float, default=DEFAULT_EQ_PS, help="Equilibration duration in ps.")
     parser.add_argument("--prod-ps", type=float, default=DEFAULT_PROD_PS, help="Production duration in ps.")
+    parser.add_argument(
+        "--common-precondition-ps",
+        type=float,
+        default=0.0,
+        help=(
+            "Optional single common exact-r-RESPA NPT preconditioning duration in ps. "
+            "When positive, the generated preconditioned GRO becomes the common start for all replicas."
+        ),
+    )
+    parser.add_argument(
+        "--common-precondition-velocity-seed",
+        type=int,
+        default=60999,
+        help="Velocity generation seed for the optional common preconditioning stage.",
+    )
+    parser.add_argument(
+        "--common-precondition-ld-seed",
+        type=int,
+        default=None,
+        help=(
+            "Optional LD seed for the common preconditioning stage. When omitted and --ld-seed-base "
+            "is set, the script derives a non-overlapping deterministic seed from the Gate I seed contract."
+        ),
+    )
     parser.add_argument(
         "--sample-interval",
         type=int,
@@ -243,6 +390,12 @@ def validate_args(args: argparse.Namespace) -> None:
         raise ValueError("ntmpi must be positive.")
     if args.ntomp < 1:
         raise ValueError("ntomp must be positive.")
+    if args.pin == "off" and (args.pinoffset is not None or args.pinstride is not None):
+        raise ValueError("pinoffset/pinstride require --pin on or --pin auto.")
+    if args.pinoffset is not None and args.pinoffset < 0:
+        raise ValueError("pinoffset must be non-negative when provided.")
+    if args.pinstride is not None and args.pinstride < 0:
+        raise ValueError("pinstride must be non-negative when provided.")
     if args.npme is not None and (args.npme < 1 or args.npme >= args.ntmpi):
         raise ValueError("npme must be positive and smaller than ntmpi when explicit PME ranks are requested.")
     if args.ntomp_pme is not None and args.ntomp_pme < 1:
@@ -251,14 +404,53 @@ def validate_args(args: argparse.Namespace) -> None:
         raise ValueError("ntomp-pme requires explicit npme so the PME OpenMP split is unambiguous.")
     if args.replicas < 3:
         raise ValueError("Gate I requires at least 3 replicas; otherwise cross-replica conditioning is too weak.")
+    if args.ld_seed_base is not None and args.ld_seed_base < 0:
+        raise ValueError("ld-seed-base must be non-negative when provided.")
+    if args.ld_seed_base is not None and args.prod_ld_seed_offset < args.replicas:
+        raise ValueError("prod-ld-seed-offset must be at least the replica count to avoid equil/prod LD seed overlap.")
+    if args.start_gro is not None and not rehome_repo_artifact_path(args.start_gro).is_file():
+        raise ValueError(f"start-gro does not exist or is not a file: {args.start_gro}")
+    if args.exact_respa_update_omp_threads is not None and args.exact_respa_update_omp_threads <= 0:
+        raise ValueError("exact-respa-update-omp-threads must be positive when provided.")
     if args.sample_interval <= 0 or args.sample_interval % EXACT_RESPA_FACTOR != 0:
         raise ValueError("sample-interval must be a positive multiple of the exact-r-RESPA factor.")
+    if args.nstlist <= 0:
+        raise ValueError("nstlist must be positive.")
+    if args.nstlist % EXACT_RESPA_FACTOR != 0:
+        raise ValueError("Gate I nstlist probes must use a multiple of the outer exact-r-RESPA factor.")
+    if args.common_precondition_ps < 0:
+        raise ValueError("common-precondition-ps must be non-negative.")
+    if args.common_precondition_velocity_seed < 0:
+        raise ValueError("common-precondition-velocity-seed must be non-negative.")
+    if args.common_precondition_ld_seed is not None and args.common_precondition_ld_seed < 0:
+        raise ValueError("common-precondition-ld-seed must be non-negative when provided.")
+    if (
+        args.native_multi_owner_mode in ("full_owner_native", "split_owner_sidecar")
+        and not args.allow_experimental_native_multi_probe
+    ):
+        raise ValueError(
+            "full_owner_native and split_owner_sidecar are experimental performance probes, "
+            "not Gate I exactness evidence. Re-run with --native-multi-owner-mode owner_fallback "
+            "for claimable validation, or add --allow-experimental-native-multi-probe for an explicit probe."
+        )
+    if args.exact_respa_fused_initial_drift_mode == "on" and not args.allow_experimental_update_probe:
+        raise ValueError(
+            "exact-respa fused initial drift is a default-off update performance probe, not claimable "
+            "Gate I evidence. Re-run with --exact-respa-fused-initial-drift-mode off/auto for claimable "
+            "validation, or add --allow-experimental-update-probe for an explicit non-claimable probe."
+        )
     for name, duration_ps in (("equil-ps", args.equil_ps), ("prod-ps", args.prod_ps)):
         steps = steps_from_ps(duration_ps)
         if steps <= 0 or not math.isclose(steps * DT_PS, duration_ps, rel_tol=0.0, abs_tol=1.0e-12):
             raise ValueError(f"{name} must be representable as a positive integer number of base steps.")
         if steps % EXACT_RESPA_FACTOR != 0:
             raise ValueError(f"{name} must be a multiple of the exact-r-RESPA factor.")
+    if args.common_precondition_ps > 0:
+        steps = steps_from_ps(args.common_precondition_ps)
+        if steps <= 0 or not math.isclose(steps * DT_PS, args.common_precondition_ps, rel_tol=0.0, abs_tol=1.0e-12):
+            raise ValueError("common-precondition-ps must be representable as a positive integer number of base steps.")
+        if steps % EXACT_RESPA_FACTOR != 0:
+            raise ValueError("common-precondition-ps must be a multiple of the exact-r-RESPA factor.")
 
 
 def validate_prerequisites(
@@ -277,8 +469,17 @@ def validate_prerequisites(
         raise ValueError("Gate I requires the charged large/medium scaffold to already satisfy TP0 size and box-fit prerequisites.")
 
 
-def make_gate_i_npt_mdp(*, duration_ps: float, sample_interval: int, phase: str, seed: int, args: argparse.Namespace) -> str:
+def make_gate_i_npt_mdp(
+    *,
+    duration_ps: float,
+    sample_interval: int,
+    phase: str,
+    seed: int,
+    args: argparse.Namespace,
+    ld_seed: int | None = None,
+) -> str:
     nsteps = steps_from_ps(duration_ps)
+    starts_from_coordinates = phase in ("equil", "precondition")
     thermostat = (
         "tcoupl                  = v-rescale\n"
         "tc-grps                 = System\n"
@@ -299,15 +500,19 @@ def make_gate_i_npt_mdp(*, duration_ps: float, sample_interval: int, phase: str,
         "gen-vel                 = yes\n"
         f"gen-temp                = {args.temperature_k:.3f}\n"
         f"gen-seed                = {seed}\n"
-        if phase == "equil"
+        if starts_from_coordinates
         else "gen-vel                 = no\n"
     )
+    continuation = "continuation             = no\n" if starts_from_coordinates else "continuation             = yes\n"
+    stochastic_seed = f"ld-seed                 = {ld_seed}\n" if ld_seed is not None else ""
     return (
         f"title                   = gate i charged long npt {phase} exact respa\n"
-        + exact_respa_common_mdp(nsteps, sample_interval)
+        + exact_respa_common_mdp(nsteps, sample_interval, nstlist=getattr(args, "nstlist", EXACT_RESPA_FACTOR))
         + thermostat
         + barostat
         + velocity
+        + continuation
+        + stochastic_seed
     )
 
 
@@ -315,18 +520,48 @@ def file_exists_and_nonempty(path: Path) -> bool:
     return path.exists() and path.is_file() and path.stat().st_size > 0
 
 
+def final_box_from_gro(path: Path) -> list[float] | None:
+    if not file_exists_and_nonempty(path):
+        return None
+    lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    if not lines:
+        return None
+    fields = lines[-1].split()
+    if len(fields) < 3:
+        return None
+    try:
+        return [float(fields[0]), float(fields[1]), float(fields[2])]
+    except ValueError:
+        return None
+
+
+def initial_box_from_observables(observables: dict[str, dict[str, object]]) -> list[float] | None:
+    try:
+        return [
+            float(observables["Box-X"]["values"][0]),
+            float(observables["Box-Y"]["values"][0]),
+            float(observables["Box-Z"]["values"][0]),
+        ]
+    except (KeyError, IndexError, TypeError, ValueError):
+        return None
+
+
 def grompp_complete(tpr_path: Path, mdout_path: Path) -> bool:
     return file_exists_and_nonempty(tpr_path) and file_exists_and_nonempty(mdout_path)
 
 
-def mdrun_complete(deffnm: Path) -> bool:
+def mdrun_complete(gmx: Path, deffnm: Path, expected_steps: int | None = None) -> bool:
     required = (
         deffnm.with_suffix(".edr"),
         deffnm.with_suffix(".gro"),
         deffnm.with_suffix(".cpt"),
         deffnm.with_suffix(".log"),
     )
-    return all(file_exists_and_nonempty(path) for path in required)
+    if not all(file_exists_and_nonempty(path) for path in required):
+        return False
+    if expected_steps is None:
+        return True
+    return checkpoint_step(gmx, deffnm.with_suffix(".cpt")) >= expected_steps
 
 
 def remove_incomplete_mdrun_outputs(deffnm: Path, preserve_paths: tuple[Path, ...] = ()) -> None:
@@ -366,6 +601,16 @@ def best_resume_checkpoint(gmx: Path, deffnm: Path) -> Path | None:
         return None
     candidates.sort(key=lambda item: (item[0], item[1].name))
     return candidates[-1][1]
+
+
+def resolved_ld_seed_from_grompp_stdout(stdout_path: Path) -> int | None:
+    if not file_exists_and_nonempty(stdout_path):
+        return None
+    match = re.search(
+        r"Setting the LD random seed to\s+(-?\d+)",
+        stdout_path.read_text(encoding="utf-8", errors="ignore"),
+    )
+    return int(match.group(1)) if match is not None else None
 
 
 def run_or_resume_grompp(
@@ -439,13 +684,14 @@ def run_or_resume_md(
     commands: list[dict[str, object]],
     label: str,
     args: argparse.Namespace,
+    expected_steps: int | None = None,
 ) -> dict[str, object]:
     stdout_path = logs_dir / f"{label}.stdout"
     stderr_path = logs_dir / f"{label}.stderr"
     effective_argv = list(argv)
     resume_checkpoint = best_resume_checkpoint(gmx, deffnm) if args.resume else None
     preserve_partial_outputs = resume_checkpoint == deffnm.with_suffix(".cpt")
-    if not mdrun_complete(deffnm):
+    if not mdrun_complete(gmx, deffnm, expected_steps):
         if resume_checkpoint is not None:
             effective_argv.extend(["-cpi", str(resume_checkpoint)])
             if not preserve_partial_outputs:
@@ -462,7 +708,7 @@ def run_or_resume_md(
             stderr_path=stderr_path,
         )
     )
-    if mdrun_complete(deffnm):
+    if mdrun_complete(gmx, deffnm, expected_steps):
         return {
             "run_id": label,
             "argv": effective_argv,
@@ -538,13 +784,84 @@ def acceptance_criteria(args: argparse.Namespace) -> dict[str, object]:
     }
 
 
+def native_multi_owner_mode_env(mode: str) -> dict[str, str]:
+    if mode == "default":
+        return {}
+    if mode == "owner_fallback":
+        return {
+            NATIVE_MULTI_ENV: "1",
+            NATIVE_MULTI_OWNER_FALLBACK_ENV: "1",
+            NATIVE_MULTI_SPLIT_OWNER_ENV: "0",
+        }
+    if mode == "full_owner_native":
+        return {
+            NATIVE_MULTI_ENV: "1",
+            NATIVE_MULTI_OWNER_FALLBACK_ENV: "0",
+            NATIVE_MULTI_SPLIT_OWNER_ENV: "0",
+        }
+    if mode == "split_owner_sidecar":
+        return {
+            NATIVE_MULTI_ENV: "1",
+            NATIVE_MULTI_OWNER_FALLBACK_ENV: "0",
+            NATIVE_MULTI_SPLIT_OWNER_ENV: "1",
+        }
+    raise ValueError(f"Unsupported native-multi owner mode: {mode}")
+
+
+def exact_respa_update_omp_env(mode: str) -> dict[str, str]:
+    if mode == "auto":
+        return {}
+    if mode == "off":
+        return {EXACT_RESPA_UPDATE_OMP_ENV: "0"}
+    if mode == "on":
+        return {EXACT_RESPA_UPDATE_OMP_ENV: "1"}
+    raise ValueError(f"Unsupported exact-r-RESPA update OMP mode: {mode}")
+
+
+def exact_respa_update_omp_threads_env(num_threads: int | None) -> dict[str, str]:
+    if num_threads is None:
+        return {}
+    return {EXACT_RESPA_UPDATE_OMP_THREADS_ENV: str(num_threads)}
+
+
+def exact_respa_update_direct_fastpath_env(mode: str) -> dict[str, str]:
+    if mode == "auto":
+        return {}
+    if mode == "off":
+        return {EXACT_RESPA_UPDATE_DIRECT_FASTPATH_ENV: "0"}
+    if mode == "on":
+        return {EXACT_RESPA_UPDATE_DIRECT_FASTPATH_ENV: "1"}
+    raise ValueError(f"Unsupported exact-r-RESPA update direct fastpath mode: {mode}")
+
+
+def exact_respa_fused_initial_drift_env(mode: str) -> dict[str, str]:
+    if mode == "auto":
+        return {}
+    if mode == "off":
+        return {EXACT_RESPA_FUSED_INITIAL_DRIFT_ENV: "0"}
+    if mode == "on":
+        return {EXACT_RESPA_FUSED_INITIAL_DRIFT_ENV: "1"}
+    raise ValueError(f"Unsupported exact-r-RESPA fused initial drift mode: {mode}")
+
+
+def common_precondition_ld_seed(args: argparse.Namespace) -> int | None:
+    if args.common_precondition_ld_seed is not None:
+        return args.common_precondition_ld_seed
+    if args.ld_seed_base is None:
+        return None
+    return args.ld_seed_base + (2 * args.prod_ld_seed_offset) + args.replicas
+
+
 def build_contract(
     *,
     args: argparse.Namespace,
+    out_root: Path,
     scaffold_manifest: dict[str, object],
     prerequisites: dict[str, object],
     perf_ref: dict[str, object],
 ) -> dict[str, object]:
+    scaffold_gro = rehome_repo_artifact_path(scaffold_manifest["artifacts"]["gro"])
+    start_gro = rehome_repo_artifact_path(args.start_gro) if args.start_gro is not None else scaffold_gro
     return {
         "schema_name": SCHEMA_NAME,
         "schema_version": SCHEMA_VERSION,
@@ -570,9 +887,15 @@ def build_contract(
         "prerequisites": prerequisites,
         "run_settings": {
             "replicas": args.replicas,
+            "ld_seed_base": args.ld_seed_base,
+            "prod_ld_seed_offset": args.prod_ld_seed_offset,
+            "common_precondition_ps": args.common_precondition_ps,
+            "common_precondition_velocity_seed": args.common_precondition_velocity_seed,
+            "common_precondition_ld_seed": common_precondition_ld_seed(args),
             "equil_ps": args.equil_ps,
             "prod_ps": args.prod_ps,
             "sample_interval_base_steps": args.sample_interval,
+            "nstlist_base_steps": args.nstlist,
             "temperature_k": args.temperature_k,
             "pressure_bar": args.pressure_bar,
             "tau_t_ps": args.tau_t_ps,
@@ -580,12 +903,73 @@ def build_contract(
             "compressibility_bar_inv": args.compressibility_bar_inv,
             "ntmpi": args.ntmpi,
             "ntomp": args.ntomp,
+            "pin": args.pin,
+            "pinoffset": args.pinoffset,
+            "pinstride": args.pinstride,
             "npme": args.npme,
             "ntomp_pme": args.ntomp_pme,
+            "native_multi_owner_mode": args.native_multi_owner_mode,
+            "native_multi_owner_mode_env": native_multi_owner_mode_env(args.native_multi_owner_mode),
+            "allow_experimental_native_multi_probe": args.allow_experimental_native_multi_probe,
+            "allow_experimental_update_probe": args.allow_experimental_update_probe,
+            "exact_respa_update_omp_mode": args.exact_respa_update_omp_mode,
+            "exact_respa_update_omp_env": exact_respa_update_omp_env(args.exact_respa_update_omp_mode),
+            "exact_respa_update_omp_threads": args.exact_respa_update_omp_threads,
+            "exact_respa_update_omp_threads_env": exact_respa_update_omp_threads_env(
+                args.exact_respa_update_omp_threads
+            ),
+            "exact_respa_update_direct_fastpath_mode": args.exact_respa_update_direct_fastpath_mode,
+            "exact_respa_update_direct_fastpath_env": exact_respa_update_direct_fastpath_env(
+                args.exact_respa_update_direct_fastpath_mode
+            ),
+            "exact_respa_fused_initial_drift_mode": args.exact_respa_fused_initial_drift_mode,
+            "exact_respa_fused_initial_drift_env": exact_respa_fused_initial_drift_env(
+                args.exact_respa_fused_initial_drift_mode
+            ),
             "mdrun_shape": (
                 f"ntmpi {args.ntmpi} / ntomp {args.ntomp} / npme {args.npme} / "
-                f"ntomp_pme {args.ntomp_pme} / nb cpu / bonded cpu / pme cpu / update cpu / reprod"
+                f"ntomp_pme {args.ntomp_pme} / pin {args.pin} / pinoffset {args.pinoffset} / "
+                f"pinstride {args.pinstride} / nb cpu / bonded cpu / pme cpu / update cpu / reprod"
             ),
+            "stochastic_seed_contract": (
+                "explicit_phase_separated_ld_seed_per_replica"
+                if args.ld_seed_base is not None
+                else "grompp_resolved_phase_ld_seed_recorded_per_replica"
+            ),
+            "phase_continuation_policy": {
+                "equil_gen_vel": True,
+                "prod_gen_vel": False,
+                "prod_grompp_uses_equil_checkpoint": True,
+                "prod_mdp_continuation": True,
+                "prod_ld_seed_restarts_from_distinct_seed": args.ld_seed_base is not None,
+            },
+            "initial_configuration": {
+                "source": (
+                    "generated_common_preconditioned_start_gro"
+                    if args.common_precondition_ps > 0
+                    else ("common_preconditioned_start_gro" if args.start_gro is not None else "scaffold_manifest_gro")
+                ),
+                "input_path": str(start_gro.resolve()),
+                "path": (
+                    str((out_root / "precondition" / "common" / "precondition.gro").resolve())
+                    if args.common_precondition_ps > 0
+                    else str(start_gro.resolve())
+                ),
+                "replica_policy": "all replicas start equilibration from this same coordinate set; replica independence comes from gen-seed and ld-seed",
+            },
+            "common_preconditioning_policy": {
+                "enabled": args.common_precondition_ps > 0,
+                "duration_ps": args.common_precondition_ps,
+                "velocity_seed": args.common_precondition_velocity_seed,
+                "ld_seed": common_precondition_ld_seed(args),
+                "output_gro": str((out_root / "precondition" / "common" / "precondition.gro").resolve())
+                if args.common_precondition_ps > 0
+                else None,
+                "claim_note": (
+                    "The common preconditioning stage is input preparation only; Gate I acceptance still "
+                    "depends on the independent replica production observables."
+                ),
+            },
         },
         "requested_observables": list(REQUESTED_OBSERVABLES),
         "primary_gate_observables": list(PRIMARY_GATE_OBSERVABLES),
@@ -605,6 +989,7 @@ def build_contract(
             "A Gate I PASS still does not imply conductivity-production readiness.",
             "A Gate I PASS would still not imply LAMMPS-vs-GROMACS transport parity.",
             "A Gate I PASS would still not imply TP0-scale production length or uncertainty closure.",
+            "A common preconditioned starting structure is a conditioning input only; it is not production handoff approval.",
         ],
     }
 
@@ -822,7 +1207,13 @@ def main() -> int:
         "gate_g_status": gate_g_manifest.get("status"),
     }
     perf_ref = performance_reference(Path(args.performance_reference_log), args)
-    contract = build_contract(args=args, scaffold_manifest=scaffold_manifest, prerequisites=prereq_payload, perf_ref=perf_ref)
+    contract = build_contract(
+        args=args,
+        out_root=out_root,
+        scaffold_manifest=scaffold_manifest,
+        prerequisites=prereq_payload,
+        perf_ref=perf_ref,
+    )
     write_json(out_root / "gate_i_contract.json", contract)
 
     if args.prepare_only:
@@ -841,12 +1232,101 @@ def main() -> int:
     gmx = Path(args.gmx)
     top_path = rehome_repo_artifact_path(scaffold_manifest["artifacts"]["topology"])
     gro_path = rehome_repo_artifact_path(scaffold_manifest["artifacts"]["gro"])
+    initial_gro_path = rehome_repo_artifact_path(args.start_gro) if args.start_gro is not None else gro_path
+    if args.start_gro is not None:
+        copied_start_gro = inputs_dir / (
+            "precondition_input_start.gro" if args.common_precondition_ps > 0 else "common_preconditioned_start.gro"
+        )
+        shutil.copy2(initial_gro_path, copied_start_gro)
+        initial_gro_path = copied_start_gro
     env = base_env(args)
+    env.update(native_multi_owner_mode_env(args.native_multi_owner_mode))
+    env.update(exact_respa_update_omp_env(args.exact_respa_update_omp_mode))
+    env.update(exact_respa_update_omp_threads_env(args.exact_respa_update_omp_threads))
+    env.update(exact_respa_update_direct_fastpath_env(args.exact_respa_update_direct_fastpath_mode))
+    env.update(exact_respa_fused_initial_drift_env(args.exact_respa_fused_initial_drift_mode))
     commands: list[dict[str, object]] = []
     replica_runs: list[dict[str, object]] = []
+    precondition_summary: dict[str, object] = {
+        "enabled": False,
+        "observables": {},
+        "phase_boundary": {},
+    }
+
+    if args.common_precondition_ps > 0:
+        precondition_input_root = inputs_dir / "precondition"
+        precondition_input_root.mkdir(parents=True, exist_ok=True)
+        precondition_mdp = precondition_input_root / "precondition.mdp"
+        precondition_ld_seed = common_precondition_ld_seed(args)
+        write_text(
+            precondition_mdp,
+            make_gate_i_npt_mdp(
+                duration_ps=args.common_precondition_ps,
+                sample_interval=args.sample_interval,
+                phase="precondition",
+                seed=args.common_precondition_velocity_seed,
+                args=args,
+                ld_seed=precondition_ld_seed,
+            ),
+        )
+
+        precondition_run_root = out_root / "precondition" / "common"
+        precondition_run_root.mkdir(parents=True, exist_ok=True)
+        precondition_deffnm = precondition_run_root / "precondition"
+        run_or_resume_grompp(
+            gmx=gmx,
+            mdp_path=precondition_mdp,
+            conf_path=initial_gro_path,
+            top_path=top_path,
+            tpr_path=precondition_deffnm.with_suffix(".tpr"),
+            mdout_path=precondition_run_root / "precondition.mdout.mdp",
+            logs_dir=logs_dir,
+            commands=commands,
+            label="common_precondition_grompp",
+            env=env,
+        )
+        resolved_precondition_ld_seed = resolved_ld_seed_from_grompp_stdout(logs_dir / "common_precondition_grompp.stdout")
+        precondition_md_payload = run_or_resume_md(
+            gmx=gmx,
+            argv=[str(gmx), "mdrun", *mdrun_args_cpu(args, precondition_deffnm)],
+            deffnm=precondition_deffnm,
+            env=env,
+            logs_dir=logs_dir,
+            commands=commands,
+            label="common_precondition_mdrun",
+            args=args,
+            expected_steps=steps_from_ps(args.common_precondition_ps),
+        )
+        precondition_observables = collect_run_observables(
+            gmx,
+            precondition_deffnm,
+            precondition_run_root / "precondition_observables.xvg",
+        )
+        precondition_summary = {
+            "enabled": True,
+            "duration_ps": args.common_precondition_ps,
+            "velocity_seed": args.common_precondition_velocity_seed,
+            "ld_seed_requested": precondition_ld_seed,
+            "ld_seed_resolved": resolved_precondition_ld_seed,
+            "deffnm": str(precondition_deffnm),
+            "layout_report": precondition_md_payload["layout_report"],
+            "phase_boundary": {
+                "input_box_nm": final_box_from_gro(initial_gro_path),
+                "final_box_nm": final_box_from_gro(precondition_deffnm.with_suffix(".gro")),
+            },
+            "observables": precondition_observables,
+        }
+        write_json(precondition_run_root / "precondition_summary.json", precondition_summary)
+        initial_gro_path = precondition_deffnm.with_suffix(".gro")
 
     for replica_index in range(1, args.replicas + 1):
         seed = 61001 + replica_index - 1
+        equil_ld_seed = args.ld_seed_base + replica_index - 1 if args.ld_seed_base is not None else None
+        prod_ld_seed = (
+            args.ld_seed_base + args.prod_ld_seed_offset + replica_index - 1
+            if args.ld_seed_base is not None
+            else None
+        )
         replica_input_root = inputs_dir / f"replica_{replica_index:02d}"
         replica_input_root.mkdir(parents=True, exist_ok=True)
         equil_mdp = replica_input_root / "equil.mdp"
@@ -859,6 +1339,7 @@ def main() -> int:
                 phase="equil",
                 seed=seed,
                 args=args,
+                ld_seed=equil_ld_seed,
             ),
         )
         write_text(
@@ -869,6 +1350,7 @@ def main() -> int:
                 phase="prod",
                 seed=seed,
                 args=args,
+                ld_seed=prod_ld_seed,
             ),
         )
 
@@ -880,7 +1362,7 @@ def main() -> int:
         run_or_resume_grompp(
             gmx=gmx,
             mdp_path=equil_mdp,
-            conf_path=gro_path,
+            conf_path=initial_gro_path,
             top_path=top_path,
             tpr_path=equil_deffnm.with_suffix(".tpr"),
             mdout_path=run_root / "equil.mdout.mdp",
@@ -889,6 +1371,7 @@ def main() -> int:
             label=f"cpu_replica_{replica_index:02d}_grompp_equil",
             env=env,
         )
+        resolved_equil_ld_seed = resolved_ld_seed_from_grompp_stdout(logs_dir / f"cpu_replica_{replica_index:02d}_grompp_equil.stdout")
         run_or_resume_md(
             gmx=gmx,
             argv=[str(gmx), "mdrun", *mdrun_args_cpu(args, equil_deffnm)],
@@ -898,7 +1381,9 @@ def main() -> int:
             commands=commands,
             label=f"cpu_replica_{replica_index:02d}_mdrun_equil",
             args=args,
+            expected_steps=steps_from_ps(args.equil_ps),
         )
+        equil_observables = collect_run_observables(gmx, equil_deffnm, run_root / "equilibration_observables.xvg")
 
         run_or_resume_grompp(
             gmx=gmx,
@@ -913,6 +1398,7 @@ def main() -> int:
             env=env,
             checkpoint_path=equil_deffnm.with_suffix(".cpt"),
         )
+        resolved_prod_ld_seed = resolved_ld_seed_from_grompp_stdout(logs_dir / f"cpu_replica_{replica_index:02d}_grompp_prod.stdout")
         md_payload = run_or_resume_md(
             gmx=gmx,
             argv=[str(gmx), "mdrun", *mdrun_args_cpu(args, prod_deffnm)],
@@ -922,14 +1408,31 @@ def main() -> int:
             commands=commands,
             label=f"cpu_replica_{replica_index:02d}_mdrun_prod",
             args=args,
+            expected_steps=steps_from_ps(args.prod_ps),
         )
 
         observables = collect_run_observables(gmx, prod_deffnm, run_root / "production_observables.xvg")
+        phase_boundary = {
+            "equil_final_box_nm": final_box_from_gro(equil_deffnm.with_suffix(".gro")),
+            "prod_initial_box_nm": initial_box_from_observables(observables),
+            "prod_final_box_nm": final_box_from_gro(prod_deffnm.with_suffix(".gro")),
+            "prod_grompp_input_checkpoint": str(equil_deffnm.with_suffix(".cpt")),
+            "prod_mdp_continuation": True,
+        }
         replica_payload = {
             "replica_index": replica_index,
             "seed": seed,
+            "velocity_seed": seed,
+            "ld_seed_requested": equil_ld_seed,
+            "ld_seed_resolved": resolved_equil_ld_seed,
+            "equil_ld_seed_requested": equil_ld_seed,
+            "equil_ld_seed_resolved": resolved_equil_ld_seed,
+            "prod_ld_seed_requested": prod_ld_seed,
+            "prod_ld_seed_resolved": resolved_prod_ld_seed,
             "prod_deffnm": str(prod_deffnm),
             "layout_report": md_payload["layout_report"],
+            "phase_boundary": phase_boundary,
+            "equil_observables": equil_observables,
             "observables": observables,
         }
         replica_summary_json = run_root / "replica_summary.json"
@@ -939,6 +1442,12 @@ def main() -> int:
 
     aggregates = {
         term: aggregate_replicates([replica["observables"][term] for replica in replica_runs if replica["observables"][term].get("available")])
+        for term in REQUESTED_OBSERVABLES
+    }
+    equil_aggregates = {
+        term: aggregate_replicates(
+            [replica["equil_observables"][term] for replica in replica_runs if replica["equil_observables"][term].get("available")]
+        )
         for term in REQUESTED_OBSERVABLES
     }
     metrics = {term: aggregate_metric(aggregate) for term, aggregate in aggregates.items()}
@@ -983,6 +1492,10 @@ def main() -> int:
         },
         "support_metrics": {term: metrics[term] for term in SUPPORT_OBSERVABLES if term not in ("Temperature",)},
         "aggregates": {term: sanitize_aggregate(aggregate) for term, aggregate in aggregates.items()},
+        "equilibration_diagnostics": {
+            term: aggregate_metric(aggregate) for term, aggregate in equil_aggregates.items() if term in PRIMARY_GATE_OBSERVABLES
+        },
+        "common_preconditioning": precondition_summary,
         "replica_summaries": [str(replica["replica_summary_json"]) for replica in replica_runs],
         "conditioned_state_handoff": conditioned_state,
         "performance_reference": perf_ref,

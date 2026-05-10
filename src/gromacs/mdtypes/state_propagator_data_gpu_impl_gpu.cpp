@@ -44,6 +44,7 @@
 #include "config.h"
 
 #if GMX_GPU
+#    include <cstdlib>
 #    include <numeric>
 
 #    include "gromacs/domdec/domdec_internal.h"
@@ -65,6 +66,11 @@ struct gmx_domdec_comm_t;
 
 namespace gmx
 {
+
+static bool exactRespaFullPairLevelGpuUpdateProbeEnabled()
+{
+    return std::getenv("GMX_PCFF_EXACT_RESPA_GPU_UPDATE_FULL_PAIRLEVEL_PROBE") != nullptr;
+}
 
 StatePropagatorDataGpu::Impl::Impl(const DeviceStreamManager& deviceStreamManager,
                                    GpuApiCallBehavior         transferKind,
@@ -417,7 +423,8 @@ GpuEventSynchronizer* StatePropagatorDataGpu::Impl::getCoordinatesReadyOnDeviceE
                    "GPU halo exchange is active but its completion event is null.");
         return gpuCoordinateHaloLaunched;
     }
-    if (atomLocality == AtomLocality::Local && simulationWork.useGpuUpdate && !stepWork.doNeighborSearch)
+    if (atomLocality == AtomLocality::Local && simulationWork.useGpuUpdate && !stepWork.doNeighborSearch
+        && !(simulationWork.useExactRespa && exactRespaFullPairLevelGpuUpdateProbeEnabled()))
     {
         GMX_ASSERT(xUpdatedOnDeviceEvent_ != nullptr, "The event synchronizer can not be nullptr.");
         return xUpdatedOnDeviceEvent_;

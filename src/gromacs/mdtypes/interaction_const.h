@@ -34,6 +34,7 @@
 #ifndef GMX_MDTYPES_INTERACTION_CONST_H
 #define GMX_MDTYPES_INTERACTION_CONST_H
 
+#include <array>
 #include <cstdio>
 
 #include <memory>
@@ -41,6 +42,7 @@
 #include <vector>
 
 #include "gromacs/mdtypes/md_enums.h"
+#include "gromacs/mdtypes/mtstypes.h"
 #include "gromacs/utility/alignedallocator.h"
 #include "gromacs/utility/real.h"
 
@@ -108,6 +110,8 @@ struct EwaldCorrectionTables
  */
 struct interaction_const_t
 {
+    static constexpr int c_maxExactRespaNativeMultiContributions = 3;
+
     //! Settings and parameters for Van der Waals functional forms
     struct VanDerWaalsSettings
     {
@@ -215,6 +219,37 @@ struct interaction_const_t
 
     // Free-energy parameters, only present when free-energy calculations are requested
     std::unique_ptr<SoftCoreParameters> softCoreParameters;
+
+    //! Exact r-RESPA CPU pair-splitting metadata shared with NBNXM kernels.
+    struct ExactRespaCpuPairSplit
+    {
+        //! Whether the inputrec configured exact pair splitting for this run.
+        bool configured = false;
+        //! Whether a middle contribution exists between inner and outer.
+        bool hasMiddle = false;
+        //! Transition geometry for the split weights.
+        real innerOff = 0;
+        real innerOn  = 0;
+        real outerOn  = 0;
+        real outerOff = 0;
+        //! Per-launch activation state, written by CPU NBNXM dispatch before kernel entry.
+        mutable bool active = false;
+        //! Whether the current CPU NBNXM launch writes multiple exact contributions at once.
+        mutable bool nativeMultiActive = false;
+        //! Which contribution the current CPU NBNXM launch is computing.
+        mutable gmx::MtsNonbondedRespaContribution contribution =
+                gmx::MtsNonbondedRespaContribution::Full;
+        //! Number of active outputs when native multi-contribution launch mode is enabled.
+        mutable int nativeMultiContributionCount = 0;
+        //! Ordered exact contributions owned by the current native multi-contribution launch.
+        mutable std::array<gmx::MtsNonbondedRespaContribution, c_maxExactRespaNativeMultiContributions>
+                nativeMultiContributions = { gmx::MtsNonbondedRespaContribution::Full,
+                                             gmx::MtsNonbondedRespaContribution::Full,
+                                             gmx::MtsNonbondedRespaContribution::Full };
+    };
+
+    //! Exact r-RESPA CPU pair-splitting configuration and active launch state.
+    ExactRespaCpuPairSplit exactRespaCpuPairSplit;
 
     /**
      * Indicates whether the NBNxM module handles short-range coulomb interactions.

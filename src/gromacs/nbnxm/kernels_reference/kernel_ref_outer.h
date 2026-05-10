@@ -160,8 +160,31 @@ void
 #    endif
 #endif
 
+    const bool exactRespaNativeMultiActive = gmx::exactRespaCpuPairSplitNativeMultiLaunchActive(ic);
+    const int  exactRespaNativeContributionCount =
+            exactRespaNativeMultiActive ? gmx::exactRespaCpuPairSplitNativeMultiContributionCount(ic) : 0;
+    std::array<real*, interaction_const_t::c_maxExactRespaNativeMultiContributions> exactRespaNativeForces = {};
+#ifdef CALC_SHIFTFORCES
+    std::array<real*, interaction_const_t::c_maxExactRespaNativeMultiContributions> exactRespaNativeShiftForces = {};
+#endif
+    if (exactRespaNativeMultiActive)
+    {
+        for (int contributionIndex = 0; contributionIndex < exactRespaNativeContributionCount;
+             ++contributionIndex)
+        {
+            nbnxn_atomdata_output_t* nativeOut =
+                    nbat.correspondingNativeMultiContributionOutputBuffer(contributionIndex, out);
+            exactRespaNativeForces[contributionIndex] = nativeOut->f.data();
+#ifdef CALC_SHIFTFORCES
+            exactRespaNativeShiftForces[contributionIndex] = nativeOut->fshift.data();
+#endif
+        }
+    }
+
     real xi[UNROLLI * XI_STRIDE];
     real fi[UNROLLI * FI_STRIDE];
+    std::array<std::array<real, UNROLLI * FI_STRIDE>, interaction_const_t::c_maxExactRespaNativeMultiContributions>
+            exactRespaNativeFi = {};
 #if HAVE_ELECTROSTATICS
     real qi[UNROLLI];
 #endif
@@ -293,6 +316,15 @@ void
             {
                 xi[i * XI_STRIDE + d] = x[(ci * UNROLLI + i) * X_STRIDE + d] + shiftvec[ishf + d];
                 fi[i * FI_STRIDE + d] = 0;
+                if (exactRespaNativeMultiActive)
+                {
+                    for (int contributionIndex = 0;
+                         contributionIndex < exactRespaNativeContributionCount;
+                         ++contributionIndex)
+                    {
+                        exactRespaNativeFi[contributionIndex][i * FI_STRIDE + d] = 0.0_real;
+                    }
+                }
             }
 
 #if HAVE_ELECTROSTATICS
@@ -442,15 +474,53 @@ void
 #endif // !VECTORIZE_JLOOP
 
         /* Add accumulated i-forces to the force array */
-        for (int i = 0; i < UNROLLI; i++)
+        if (exactRespaNativeMultiActive)
         {
-            for (int d = 0; d < DIM; d++)
+            for (int contributionIndex = 0; contributionIndex < exactRespaNativeContributionCount;
+                 ++contributionIndex)
             {
-                f[(ci * UNROLLI + i) * F_STRIDE + d] += fi[i * FI_STRIDE + d];
+                real* nativeForce = exactRespaNativeForces[contributionIndex];
+                for (int i = 0; i < UNROLLI; i++)
+                {
+                    for (int d = 0; d < DIM; d++)
+                    {
+                        nativeForce[(ci * UNROLLI + i) * F_STRIDE + d] +=
+                                exactRespaNativeFi[contributionIndex][i * FI_STRIDE + d];
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < UNROLLI; i++)
+            {
+                for (int d = 0; d < DIM; d++)
+                {
+                    f[(ci * UNROLLI + i) * F_STRIDE + d] += fi[i * FI_STRIDE + d];
+                }
             }
         }
 #ifdef CALC_SHIFTFORCES
-        if (fshift != nullptr)
+        if (exactRespaNativeMultiActive)
+        {
+            for (int contributionIndex = 0; contributionIndex < exactRespaNativeContributionCount;
+                 ++contributionIndex)
+            {
+                real* nativeShiftForces = exactRespaNativeShiftForces[contributionIndex];
+                if (nativeShiftForces != nullptr)
+                {
+                    for (int i = 0; i < UNROLLI; i++)
+                    {
+                        for (int d = 0; d < DIM; d++)
+                        {
+                            nativeShiftForces[ishf + d] +=
+                                    exactRespaNativeFi[contributionIndex][i * FI_STRIDE + d];
+                        }
+                    }
+                }
+            }
+        }
+        else if (fshift != nullptr)
         {
             /* Add i forces to shifted force list */
             for (int i = 0; i < UNROLLI; i++)

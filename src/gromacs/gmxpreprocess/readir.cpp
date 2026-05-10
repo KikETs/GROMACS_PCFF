@@ -5321,10 +5321,20 @@ void triple_check(const char* mdparin, const t_inputrec& ir, const gmx_mtop_t& s
 
     if (ir.pressureCouplingOptions.epc == PressureCoupling::Mttk && !haveConstantEnsembleTemperature(ir))
     {
-        sprintf(warn_buf,
-                "The %s barostat requires a constant ensemble temperature for the system",
-                enumValueToString(ir.pressureCouplingOptions.epc));
-        wi->addError(warn_buf);
+        if (gmx::useExactRespa(ir) && haveEnsembleTemperature(ir))
+        {
+            wi->addWarning(
+                    "Allowing MTTK with a variable ensemble temperature for standalone exact "
+                    "r-RESPA. This is an experimental PCFF validation path and should be "
+                    "validated against reference trajectories before production use.");
+        }
+        else
+        {
+            sprintf(warn_buf,
+                    "The %s barostat requires a constant ensemble temperature for the system",
+                    enumValueToString(ir.pressureCouplingOptions.epc));
+            wi->addError(warn_buf);
+        }
     }
 
     bool                      bCharge = FALSE;

@@ -1,0 +1,274 @@
+{
+  "schema_name": "exact_respa_native_multi_divergence_onset",
+  "schema_version": 1,
+  "fixture_id": "gate_i_equil_ntomp6_narrow_nbnxm_serial_reduction",
+  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+  "ntmpi": 1,
+  "ntomp": 6,
+  "pin": "off",
+  "outer_step_factor": 4,
+  "exact_respa_nbnxm_serial_reduction_env": "1",
+  "step_list": [
+    4,
+    64,
+    256,
+    1024,
+    2000
+  ],
+  "records": [
+    {
+      "requested_steps": 4,
+      "steps": 4,
+      "baseline_ns_per_day": 13.344,
+      "candidate_ns_per_day": 14.615,
+      "speedup": 1.0952488009592327,
+      "total_force_max_abs_component_delta": 0.00054931640625,
+      "per_level_force_max_abs_component_delta": 0.00048828125,
+      "energy_max_abs_delta": 0.010000000000218279,
+      "gro_max_abs_coord_delta_nm": 0.0,
+      "gro_sha256_equal": true,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false,
+      "first_total_force_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 2,
+        "baseline": 4.173271656036377,
+        "candidate": 4.173272132873535,
+        "delta": 4.76837158203125e-07
+      },
+      "first_per_level_force_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "first_energy_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Vir-XX",
+        "baseline": -3205.23,
+        "candidate": -3205.22,
+        "delta": 0.010000000000218279
+      },
+      "first_gro_mismatch": null
+    },
+    {
+      "requested_steps": 64,
+      "steps": 64,
+      "baseline_ns_per_day": 40.792,
+      "candidate_ns_per_day": 53.621,
+      "speedup": 1.3144979407727004,
+      "total_force_max_abs_component_delta": 0.00054931640625,
+      "per_level_force_max_abs_component_delta": 0.00048828125,
+      "energy_max_abs_delta": 0.012000000000000455,
+      "gro_max_abs_coord_delta_nm": 0.0,
+      "gro_sha256_equal": false,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false,
+      "first_total_force_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 2,
+        "baseline": 4.173271656036377,
+        "candidate": 4.173272132873535,
+        "delta": 4.76837158203125e-07
+      },
+      "first_per_level_force_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "first_energy_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Vir-XX",
+        "baseline": -3205.23,
+        "candidate": -3205.22,
+        "delta": 0.010000000000218279
+      },
+      "first_gro_mismatch": null
+    },
+    {
+      "requested_steps": 256,
+      "steps": 256,
+      "baseline_ns_per_day": 62.754,
+      "candidate_ns_per_day": 79.635,
+      "speedup": 1.2690027727316189,
+      "total_force_max_abs_component_delta": 0.00054931640625,
+      "per_level_force_max_abs_component_delta": 0.00048828125,
+      "energy_max_abs_delta": 0.07299999999997908,
+      "gro_max_abs_coord_delta_nm": 0.0010000000000000009,
+      "gro_sha256_equal": false,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false,
+      "first_total_force_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 2,
+        "baseline": 4.173271656036377,
+        "candidate": 4.173272132873535,
+        "delta": 4.76837158203125e-07
+      },
+      "first_per_level_force_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "first_energy_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Vir-XX",
+        "baseline": -3205.23,
+        "candidate": -3205.22,
+        "delta": 0.010000000000218279
+      },
+      "first_gro_mismatch": {
+        "atom": 1597,
+        "dimension": 1,
+        "baseline": 0.915,
+        "candidate": 0.916,
+        "delta": 0.0010000000000000009
+      }
+    },
+    {
+      "requested_steps": 1024,
+      "steps": 1024,
+      "baseline_ns_per_day": 67.517,
+      "candidate_ns_per_day": 83.941,
+      "speedup": 1.2432572537286906,
+      "total_force_max_abs_component_delta": 2.182708740234375,
+      "per_level_force_max_abs_component_delta": 2.180450439453125,
+      "energy_max_abs_delta": 0.8900000000001,
+      "gro_max_abs_coord_delta_nm": 0.001000000000000334,
+      "gro_sha256_equal": false,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false,
+      "first_total_force_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 2,
+        "baseline": 4.173271656036377,
+        "candidate": 4.173272132873535,
+        "delta": 4.76837158203125e-07
+      },
+      "first_per_level_force_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "first_energy_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Vir-XX",
+        "baseline": -3205.23,
+        "candidate": -3205.22,
+        "delta": 0.010000000000218279
+      },
+      "first_gro_mismatch": {
+        "atom": 102,
+        "dimension": 1,
+        "baseline": 3.653,
+        "candidate": 3.652,
+        "delta": -0.0009999999999998899
+      }
+    },
+    {
+      "requested_steps": 2000,
+      "steps": 2000,
+      "baseline_ns_per_day": 62.957,
+      "candidate_ns_per_day": 88.069,
+      "speedup": 1.398875422907699,
+      "total_force_max_abs_component_delta": 6.3876953125,
+      "per_level_force_max_abs_component_delta": 6.39501953125,
+      "energy_max_abs_delta": 1.4200000000000728,
+      "gro_max_abs_coord_delta_nm": 0.001000000000000334,
+      "gro_sha256_equal": false,
+      "edr_sha256_equal": false,
+      "cpt_sha256_equal": false,
+      "first_total_force_mismatch": {
+        "frame_key": 0,
+        "atom": 0,
+        "dimension": 2,
+        "baseline": 4.173271656036377,
+        "candidate": 4.173272132873535,
+        "delta": 4.76837158203125e-07
+      },
+      "first_per_level_force_mismatch": {
+        "frame_key": [
+          0,
+          0
+        ],
+        "atom": 0,
+        "dimension": 0,
+        "baseline": 127.97037506103516,
+        "candidate": 127.9703598022461,
+        "delta": -1.52587890625e-05
+      },
+      "first_energy_mismatch": {
+        "frame_index": 0,
+        "step": 0,
+        "term": "Vir-XX",
+        "baseline": -3205.23,
+        "candidate": -3205.22,
+        "delta": 0.010000000000218279
+      },
+      "first_gro_mismatch": {
+        "atom": 25,
+        "dimension": 1,
+        "baseline": 3.815,
+        "candidate": 3.814,
+        "delta": -0.0009999999999998899
+      }
+    }
+  ],
+  "threshold_summary": {
+    "force_max_abs_component_delta": {
+      "0.001": 1024,
+      "0.01": 1024,
+      "0.1": 1024,
+      "1.0": 1024
+    },
+    "energy_max_abs_delta": {
+      "0.001": 4,
+      "0.01": 4,
+      "0.1": 1024,
+      "1.0": 2000
+    },
+    "gro_max_abs_coord_delta_nm": {
+      "0.0001": 256,
+      "0.0005": 256,
+      "0.001": 256
+    },
+    "first_gro_hash_mismatch_step": 64,
+    "first_edr_hash_mismatch_step": 4
+  },
+  "notes": [
+    "This scan restarts both modes from the same input TPR at step 0 for each listed step count.",
+    "Threshold summaries are heuristics for divergence onset and should not be read as exactness pass/fail gates.",
+    "Raw per-step records remain the primary evidence."
+  ]
+}
