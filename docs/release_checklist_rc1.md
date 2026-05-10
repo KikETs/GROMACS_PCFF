@@ -1,6 +1,8 @@
-# Release Checklist: v1.0.0-rc1
+# Historical Release Checklist: v1.0.0-rc1
 
-This checklist must be completed by the maintainer before tagging the `v1.0.0-rc1` release.
+This checklist is retained for historical context only.
+
+It is not the current active issue list and must not be used as a present-tense release gate. Use [Current Active Issues](current_active_issues.md), [Current Status Note](current_status_note.md), and [Release Readiness Matrix](release_readiness_matrix.md) instead.
 
 ## 1. Documentation Review
 - [ ] `README.md` points to the correct release notes.

@@ -1,5 +1,23 @@
 # exact r-RESPA GPU Hybrid Track
 
+## Supersession Note, 2026-05-11
+
+This file began as the early GPU-hybrid admission track. Parts of the original
+scope are now historical.
+
+Current PolyGen evidence has widened the local strict production path to:
+
+- single-rank exact r-RESPA
+- `-nb gpu -pme cpu -bonded gpu -update cpu`
+- strict PME order 5
+- 50 production chunks / 10 ns completed on the audited host
+
+See [Exact r-RESPA Kernel Optimization Handoff](exact_respa_kernel_optimization_handoff_20260510.md)
+and [PolyGen CPU/GPU Transport Screening, 2026-05-10](polygen_cpu_gpu_transport_screening_20260510.md).
+
+This does not imply broad GPU bonded readiness, PME-GPU readiness, update-GPU
+readiness, multi-rank readiness, or charged transport readiness.
+
 ## Current Scope
 
 This track starts from commit `53781aa0a5` on top of the CPU exact r-RESPA
@@ -24,7 +42,7 @@ claim target unless the runtime is explicitly switched to it and revalidated.
 ## Out Of Scope
 
 - Transport or conductivity production claims.
-- GPU bonded PCFF/class2 readiness.
+- Broad GPU bonded PCFF/class2 readiness outside the current strict PolyGen lane.
 - GPU update readiness for exact r-RESPA unless a Gate E-style chain passes.
 - Multi-rank or domain-decomposed exact r-RESPA GPU execution.
 - Broad GPU performance guidance from one host or one fixture.
@@ -115,9 +133,11 @@ This pass covers only the audited Gate B shape:
 - virial/pressure diagnostics recorded and bounded by Gate B assessment
 - restart continuity and repeated GPU noise-floor checks as implemented by Gate B
 
-This evidence does not support Gate I density/volume, transport, production
-handoff, GPU update, PME GPU, GPU bonded PCFF/class2, multi-rank, or broad
-performance claims.
+This historical Gate B evidence does not support Gate I density/volume,
+transport, production handoff, GPU update, PME GPU, broad GPU bonded
+PCFF/class2, multi-rank, or broad performance claims. Later PolyGen-specific
+strict GPU production evidence is documented separately in the 2026-05-10
+handoff and screening notes.
 
 ## Host-Local Experiment Default
 
@@ -145,8 +165,9 @@ audited exactness claim beyond the currently passed GPU manifests.
 
 ## Claim Boundary
 
-No GPU hybrid claim is allowed until the relevant validation manifest is
-`PASS`.  A force-only smoke pass would support only this narrow claim:
+No GPU hybrid claim is allowed until the relevant validation manifest or
+PolyGen-specific screening report is `PASS`. A force-only smoke pass by itself
+would support only this narrow claim:
 
 > On the audited CUDA host and small fixtures, exact r-RESPA single-rank
 > force-only nonbonded GPU offload preserves CPU event order and force dumps
@@ -154,11 +175,14 @@ No GPU hybrid claim is allowed until the relevant validation manifest is
 
 It would not support density/volume Gate I GPU readiness, transport readiness,
 GPU production handoff, energy/virial GPU exactness, or general GPU speedup.
+The later strict PolyGen production run supports only the narrower
+PolyGen-specific CPU/GPU screening boundary recorded in the 2026-05-10 docs.
 
 ## Next Gate
 
-After the Gate B pass, the next gate is still not Gate I.  The next strict gate
-is a short exact-r-RESPA runtime performance probe on the same fixture family:
+For the historical small-fixture track, after the Gate B pass, the next strict
+gate was a short exact-rRESPA runtime performance probe on the same fixture
+family:
 
 - CPU-only exact r-RESPA baseline.
 - `-nb gpu -pme cpu -bonded cpu -update cpu` hybrid.
@@ -166,5 +190,6 @@ is a short exact-r-RESPA runtime performance probe on the same fixture family:
 - Report wall time, Force/GPU-NB wallcycle rows, CPU-GPU copy behavior, and
   restart continuity.
 
-Only after that can the track decide whether to widen to PME GPU, update GPU, or
-longer Gate I-style conditioning.
+The current active GPU issue is no longer "can any GPU hybrid path run"; it is
+whether strict PolyGen GPU production can be made faster without changing the
+physics. See [Current Active Issues](current_active_issues.md).

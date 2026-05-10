@@ -1,10 +1,12 @@
 # Gate I Charged Long-NPT Conditioning
 
-Gate I is the concrete next gate for the remaining CPU-only exact `r-RESPA` blocker.
+Gate I was the concrete gate for the former CPU-only exact `r-RESPA`
+charged long-NPT density/volume conditioning blocker. It now has a dated PASS
+artifact.
 
 Its purpose is narrow:
 
-- close or fail the charged large/medium long-`NPT` density/volume conditioning blocker on `gate_h_dense_salt_polymer_2x2x2`
+- record the charged large/medium long-`NPT` density/volume conditioning result on `gate_h_dense_salt_polymer_2x2x2`
 - freeze predeclared density/volume convergence criteria before any later TP0-scale transport campaign
 - produce a conditioned-state handoff artifact without implying transport readiness
 

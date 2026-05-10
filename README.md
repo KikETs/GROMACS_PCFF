@@ -31,6 +31,8 @@ This screening does not change the broader claim boundary: charged transport rea
 
 ## Key Documentation
 - [Current Status Note](docs/current_status_note.md)
+- [Current Active Issues](docs/current_active_issues.md)
+- [Markdown Issue Audit, 2026-05-11](docs/markdown_issue_audit_20260511.md)
 - [PolyGen CPU/GPU Transport Screening, 2026-05-10](docs/polygen_cpu_gpu_transport_screening_20260510.md)
 - [Exact r-RESPA Kernel Optimization Handoff](docs/exact_respa_kernel_optimization_handoff_20260510.md)
 - [M11.1 Charged Subset Expansion](docs/validation_report_m11_1_pcff_charged_subset.md)

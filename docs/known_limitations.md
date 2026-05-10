@@ -1,26 +1,41 @@
-# Known Limitations (v1.0.0-rc1)
+# Known Limitations
 
-This document lists the known technical and physical limitations of the GROMACS-PCFF bridge as of the `rc1` release.
+This document lists current technical and physical limitations of the GROMACS-PCFF bridge.
 
-## 1. Charged System Density Parity
-**Issue:** Mean density in charged systems can deviate by > 10% from LAMMPS references.
-**Reason:** Differences in reciprocal-space virial stress implementations (PME in GROMACS vs PPPM in LAMMPS) are amplified in small, high-charge boxes.
-**Mitigation:** 
-- Use larger simulation boxes (> 4 nm) where practical.
-- Use high electrostatics accuracy (`ewald-rtol = 1e-5`).
-- Perform manual density drift analysis over at least 500 ps.
+Current issue source of truth:
 
-## 2. Transport Property Validation
-**Issue:** Diffusion coefficients, ionic conductivity, and transference numbers are NOT validated.
-**Reason:** These properties require multi-nanosecond sampling and explicit correlation analysis, which were outside the scope of the v1 ensemble-gate milestones.
-**Status:** Out-of-Scope for `rc1`. Use for exploratory research only.
+- [Current Active Issues](current_active_issues.md)
+- [Current Status Note](current_status_note.md)
+- [Transport Scope Matrix](transport_scope_matrix.md)
+
+## 1. Charged Transport Readiness
+
+**Issue:** Diffusion, conductivity, transference, and cNE0 are not production-validated.
+
+**Current evidence:** The latest PolyGen CPU/GPU transport screening is 10 ns. The local charged transport protocol requires at least 20 ns.
+
+**Boundary:** NE is currently screening-only. HTP-MD-style cNE0 is diagnostic-only.
+
+## 2. LAMMPS-vs-GROMACS Transport Parity
+
+**Issue:** LAMMPS-vs-GROMACS charged transport parity is not closed.
+
+**Current evidence:** The 2026-05-10 transport analysis compares GROMACS CPU and GPU. LAMMPS production dump data was used only for topology metadata in that analysis.
 
 ## 3. Chemistry Scope
-**Issue:** The bridge only supports chemistries present in the `lammps_golden` validation corpus.
-**Reason:** PCFF typing rules are deterministic and restricted to verified functional groups to ensure 100% parameter assignment accuracy.
-**Status:** If your system fails to type, it is likely outside the validated chemical scope.
 
-## 4. Performance Scaling
-**Issue:** GPU acceleration for certain Class2 cross-terms may have limited support or different precision profiles.
-**Reason:** PCFF-specific GROMACS kernels are optimized for accuracy first.
-**Mitigation:** Use CPU-based `mdrun` for high-precision validation before moving to GPU-accelerated production.
+**Issue:** Broad PCFF chemistry remains unsupported.
+
+**Current evidence:** The bridge is bounded to the explicitly validated PT8/M11 subsets. The CSV-scope audit is not a broad chemistry pass.
+
+## 4. Strict GPU Performance
+
+**Issue:** Strict PolyGen GPU production remains below the 200 ns/day target.
+
+**Current evidence:** Final strict GPU full-run production speed is `147.315 ns/day` mean under `-nb gpu -pme cpu -bonded gpu -update cpu`.
+
+**Boundary:** Runtime-condition changes that alter physics are not acceptable as performance fixes.
+
+## 5. Historical rc1 Limitations
+
+Older `v1.0.0-rc1` density/transport wording is superseded by the current status documents. Historical reports are retained as evidence, but they are not active issue definitions unless listed in [Current Active Issues](current_active_issues.md).

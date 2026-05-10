@@ -7,6 +7,7 @@ This file now freezes only the current charged-transport boundary. It is not a n
 Source of truth:
 
 - [Current Status Note](current_status_note.md)
+- [Current Active Issues](current_active_issues.md)
 - [Machine-Readable Support Matrix](../tests/reference_results/pcff_ion_narrow_claim/support_matrix.json)
 
 ## Charged Salt-in-Polymer Status

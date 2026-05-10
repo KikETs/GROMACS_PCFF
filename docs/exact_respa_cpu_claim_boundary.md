@@ -9,7 +9,7 @@ It is also intentionally narrower than any transport-facing discussion.
 
 Use this sentence for the current CPU exact `r-RESPA` state:
 
-> Current evidence supports a narrow CPU exact-r-RESPA claim: for single-rank, CPU-only, standalone exact r-RESPA, exact event order, restart continuity, and small-fixture mechanical behavior are frozen on the Gate A oracle, and a bounded exact CPU OpenMP mechanics claim is allowed across the tested low-core, hybrid-desktop, and chiplet workstation classes only for the audited ntomp>1 buckets `ntompSmall` and `ntompCeiling` under `-pin auto`, `-pin on`, and `-pin inherit`. That OpenMP claim is discrete, not a continuous ntomp envelope: ntomp=1 remains the oracle baseline, host-local throughput benchmarks do not broaden support, and intermediate or larger ntomp counts remain unsupported. Exact long-run ensemble evidence is still narrow: Gate G passes a 40 ps NVT `small_oligomer` check and a 40 ps NPT `small_salt_polymer_box` check, but those are small-fixture gates only. Gate H reuses the exact NVT path on larger transport scaffolds, yet transport production remains NO-GO, and charged medium-scale long-NPT density conditioning is still missing. This claim does not imply conductivity-production readiness, LAMMPS-vs-GROMACS transport parity, generic medium-scale NPT convergence, server-CPU coverage, MPI support, or GPU coexistence support.
+> Current evidence supports a narrow CPU exact-r-RESPA claim: for single-rank, CPU-only, standalone exact r-RESPA, exact event order, restart continuity, and small-fixture mechanical behavior are frozen on the Gate A oracle, and a bounded exact CPU OpenMP mechanics claim is allowed across the tested low-core, hybrid-desktop, and chiplet workstation classes only for the audited ntomp>1 buckets `ntompSmall` and `ntompCeiling` under `-pin auto`, `-pin on`, and `-pin inherit`. That OpenMP claim is discrete, not a continuous ntomp envelope: ntomp=1 remains the oracle baseline, host-local throughput benchmarks do not broaden support, and intermediate or larger ntomp counts remain unsupported. Exact long-run ensemble evidence remains scoped: Gate G passes small-fixture NVT/NPT checks, and the dated Gate I campaign closes the CPU-only exact-rRESPA charged long-NPT density/volume conditioning blocker for `gate_h_dense_salt_polymer_2x2x2`. This claim does not imply conductivity-production readiness, LAMMPS-vs-GROMACS transport parity, broad medium-scale convergence, server-CPU coverage, MPI support, or GPU coexistence support.
 
 ## What Is Closed
 
@@ -43,9 +43,9 @@ Primary machine-readable artifacts:
 ## What Is Not Closed
 
 - Gate G small-fixture NPT is not a medium-scale density/volume convergence claim.
-- Gate H large/medium is still `FAIL` / `NO-GO`.
-- Gate H reuses the exact NVT path, but that does not create transport readiness.
-- No current public artifact proves exact-r-RESPA charged medium-scale long-NPT density/volume convergence.
+- Gate H large/medium historical `FAIL` / `NO-GO` artifacts are superseded only for the specific Gate I density/volume conditioning question.
+- Gate H and Gate I do not create transport readiness.
+- The current public artifact proves CPU-only exact-rRESPA charged medium-scale long-NPT density/volume conditioning only for the dated Gate I `gate_h_dense_salt_polymer_2x2x2` campaign.
 
 ## Mechanical vs Transport
 
@@ -56,7 +56,7 @@ Mechanical parity and transport readiness must stay separate.
 - Ensemble exactness:
   Gate G adds only small-fixture long-run ensemble evidence.
 - Transport readiness:
-  Gate H explicitly remains `NO-GO`, and charged transport still lacks long-NPT density conditioning on the intended scaffold.
+  Gate I closes the CPU-only density/volume conditioning blocker for the intended scaffold, but charged transport still lacks TP0-scale production length, transport uncertainty closure, and LAMMPS-vs-GROMACS transport parity.
 
 Do not promote short-window mechanical closure, small-fixture NPT success, or NVT-only scaffold reuse into conductivity-production wording.
 
@@ -78,24 +78,24 @@ Those files can still support the blocker narrative:
 
 They must not be cited as exact `r-RESPA` proof.
 
-## Sole Immediate Blocker
+## Remaining Active Transport Blockers
 
-The sole immediate blocker for moving from the current exact CPU closure toward charged transport-valid use is missing exact-r-RESPA charged medium-scale long-NPT density/volume convergence evidence.
+The former immediate blocker, missing exact-rRESPA charged medium-scale long-NPT density/volume convergence evidence, is closed only for the dated Gate I CPU-only campaign.
 
-That blocker is explicit in:
+The remaining blockers for charged transport-valid use are:
 
-- [Gate H large/medium manifest](../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_manifest.json)
-- [Gate H small manifest](../tests/reference_results/gate_h_transport_validation/gate_h_manifest.json)
-- [CPU exact boundary and blockers](../tests/reference_results/cpu_exact_respa_claim/boundary_and_blockers.json)
+- TP0-scale production length and block uncertainty.
+- LAMMPS-vs-GROMACS charged transport parity.
+- cNE0 estimator stability beyond the current 10 ns diagnostic window.
+- Explicit claim separation between CPU-only exact-rRESPA and GPU hybrid strict production.
 
-Temperature agreement, short NPT stability, or NVT-only transport-facing observables do not close that blocker.
+Temperature agreement, short NPT stability, or NVT-only transport-facing observables do not close those blockers.
 
-The repository now freezes the blocker as a concrete Gate I contract, but the checked-in Gate I manifest is still pending execution.
-That means the blocker is explicit and machine-readable, not resolved.
+Current active issues are centralized in [Current Active Issues](current_active_issues.md).
 
 ## Next Gate
 
-Run Gate I: a predeclared single-rank CPU exact-r-RESPA long-NPT conditioning gate on the charged large/medium scaffold.
+Do not rerun Gate I as the next gate unless the conditioned-state contract changes. The next gate is a TP0-scale production/transport gate built from a conditioned state.
 
 Primary Gate I public artifacts:
 
@@ -105,10 +105,10 @@ Primary Gate I public artifacts:
 
 That gate must freeze:
 
-- density block-drift thresholds
-- volume block-drift thresholds
-- cross-replica consistency thresholds
-- the conditioned-state handoff that would feed any later TP0-scale production campaign
+- production duration and output cadence
+- NE/cNE0/MSD/diffusion/conductivity/transference analysis inputs
+- block uncertainty and MSD linearity criteria
+- LAMMPS-vs-GROMACS comparison policy
 
 Even if that passes, it still does not automatically grant conductivity-production readiness.
-It only closes the density/volume conditioning blocker that currently prevents an honest transport-valid handoff.
+It only closes the next transport-analysis gate inside the declared scope.
