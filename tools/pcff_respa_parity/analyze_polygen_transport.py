@@ -917,7 +917,7 @@ def write_combined_report(summaries: list[dict], topology: Topology, outdir: Pat
         if row["cNE_lifetime_sigma_S_cm"] > 2.0 * row["NE_sigma_S_cm"]:
             md.append(f"- `{lane}` cNE lifetime diagnostic is >2x NE. That indicates short-lifetime cluster displacement bias; do not treat `cNE_lifetime_*` as production cNE without a stricter cluster lifetime estimator.")
         if row["D_cation_htp_cm2_s"] > 2.0 * row["D_cation_fit_cm2_s"] or row["D_anion_htp_cm2_s"] > 2.0 * row["D_anion_fit_cm2_s"]:
-            md.append(f"- `{lane}` HTP endpoint diffusivity differs by >2x from MSD-fit diffusivity. This is expected sensitivity of the HTP-MD endpoint style, but it makes `cNE0_htp_*` noisy for this 10 ns trajectory.")
+            md.append(f"- `{lane}` HTP endpoint diffusivity differs by >2x from MSD-fit diffusivity. This is expected sensitivity of the HTP-MD endpoint style, but it makes `cNE0_htp_*` noisy for this trajectory.")
     (outdir / "transport_report.md").write_text("\n".join(md) + "\n")
 
 

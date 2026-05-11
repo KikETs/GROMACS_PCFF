@@ -95,6 +95,24 @@ def parse_args() -> argparse.Namespace:
             "speed-mode PME-order-4 outputs."
         ),
     )
+    parser.add_argument(
+        "--prod-duration-ps",
+        type=float,
+        default=None,
+        help=(
+            "Override the production duration used only for expected GROMACS production chunk selection. "
+            "Use 20000 for a 20 ns extension audit without editing the notebook config."
+        ),
+    )
+    parser.add_argument(
+        "--extra-lammps-log",
+        action="append",
+        default=[],
+        help=(
+            "Additional LAMMPS stdout log to parse after equil_from_em.stdout.log and "
+            "prod_from_relaxed.stdout.log. May be passed more than once."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -387,7 +405,14 @@ def expected_gmx_stage_stems(config: dict[str, Any]) -> list[str]:
         (11, "eq11_nvt_800ps", "equil", "md", 800.0, 2.0),
         (12, "eq12_npt_1200ps", "equil", "md", 1200.0, 2.0),
         (13, "eq13_nvt_fixed_volume_1000ps", "equil", "md", 1000.0, 2.0),
-        (14, "prod01_nvt_10000ps", "prod", "md", 10000.0, 2.0),
+        (
+            14,
+            "prod01_nvt_10000ps",
+            "prod",
+            "md",
+            float(config.get("_AUDIT_PROD_DURATION_PS_OVERRIDE", 10000.0) or 10000.0),
+            2.0,
+        ),
     ]
 
     stage_items: list[tuple[int, str, str]] = []
@@ -599,6 +624,58 @@ def parse_lammps_equil_trace(log_path: Path) -> dict[str, dict[str, Any]]:
             continue
         by_stage[base_key] = metrics_from_rows(base_key, "+".join(inputs), combined_rows, True)
     return by_stage
+
+
+def rebuild_lammps_chunk_aggregate(metrics: dict[str, dict[str, Any]], base_key: str) -> None:
+    """Rebuild a split-stage aggregate from all currently loaded chunk rows.
+
+    This is needed when a production run is extended by appending a second
+    stdout log.  Each parsed log contains its own aggregate row, so a plain
+    dict update would make the aggregate represent only the last log.  The
+    chunk rows themselves remain authoritative and are combined here.
+    """
+
+    chunk_re = re.compile(rf"^{re.escape(base_key)}_chunk(\d{{4}})$")
+    chunks = sorted(
+        (
+            (int(match.group(1)), row)
+            for key, row in metrics.items()
+            if (match := chunk_re.match(key))
+        ),
+        key=lambda item: item[0],
+    )
+    if not chunks:
+        return
+    rows = [row for _, row in chunks]
+    total_samples = sum(int(row.get("sample_count") or 0) for row in rows)
+    last = rows[-1]
+    aggregate: dict[str, Any] = {
+        "engine": "lammps",
+        "stage_key": base_key,
+        "input": "+".join(str(row.get("input") or "") for row in rows),
+        "sample_count": total_samples,
+        "completed": all(bool(row.get("completed", True)) for row in rows),
+    }
+    keys = {key for row in rows for key in row}
+    for key in sorted(keys):
+        if key in aggregate or key in {"engine", "stage_key", "input", "sample_count", "completed"}:
+            continue
+        if key.endswith("_final") or key in {"time_ps_final", "fmax_final", "fnorm_final"}:
+            aggregate[key] = last.get(key)
+            continue
+        if key.endswith("_mean") or key == "time_ps_mean":
+            weighted_values = [
+                (float(row[key]), int(row.get("sample_count") or 0))
+                for row in rows
+                if row.get(key) is not None and int(row.get("sample_count") or 0) > 0
+            ]
+            if weighted_values:
+                denom = sum(weight for _, weight in weighted_values)
+                aggregate[key] = sum(value * weight for value, weight in weighted_values) / denom
+            continue
+        if key not in aggregate:
+            aggregate[key] = last.get(key)
+    metrics[base_key] = aggregate
 
 
 def add_lammps_pressure_tensor_metrics(
@@ -2074,6 +2151,8 @@ def main() -> None:
         config["RUN_PRODUCTION_ONLY"] = False
         config["GMX_STAGE_START_NAME"] = None
         config["GMX_STAGE_STOP_NAME"] = None
+    if args.prod_duration_ps is not None:
+        config["_AUDIT_PROD_DURATION_PS_OVERRIDE"] = float(args.prod_duration_ps)
     expected = expected_signature_fragment(config, lammps_log)
     if args.expected_pme_order is not None:
         expected["gmx_pme_order"] = args.expected_pme_order
@@ -2082,6 +2161,9 @@ def main() -> None:
     expected_stems = expected_gmx_stage_stems(config)
     lammps_metrics = parse_lammps_equil_trace(lammps_log)
     lammps_metrics.update(parse_lammps_equil_trace(lammps_prod_log))
+    for extra_log in args.extra_lammps_log:
+        lammps_metrics.update(parse_lammps_equil_trace(Path(extra_log).resolve()))
+    rebuild_lammps_chunk_aggregate(lammps_metrics, "prod01_nvt_10000ps")
     if args.run_lammps_endpoint_probes:
         probe_logs = run_lammps_endpoint_probes(lmp, lammps_work, audit_out / "lammps_endpoint_virial_probe")
         merge_lammps_endpoint_probes(lammps_metrics, probe_logs)
