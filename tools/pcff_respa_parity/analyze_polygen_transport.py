@@ -794,6 +794,14 @@ def analyze_cache(cache_path: Path, topology: Topology, args, outdir: Path):
         args.temperature,
         args.max_cluster,
     )
+    cne0_msd_sigma, cne0_msd_tplus = cne0_htp_conductivity(
+        pop_mat,
+        cat_fit["diffusion_cm2_s"],
+        an_fit["diffusion_cm2_s"],
+        volume_nm3,
+        args.temperature,
+        args.max_cluster,
+    )
 
     collective = collective_conductivity(cat_com, anion_com, time_ps, volume_nm3, args.temperature, args.z)
     cne_sigma, cne_tplus, cne_rows = cne_lifetime_diagnostic(
@@ -850,6 +858,11 @@ def analyze_cache(cache_path: Path, topology: Topology, args, outdir: Path):
             "t_plus": float(cne0_tplus),
             "basis": "HTP-MD polymer.compute_conductivity style: atom-level 3.4 A population matrix, type90/type93 endpoint diffusivity, max_cluster cutoff",
         },
+        "cNE0_msd_fit": {
+            "conductivity_s_cm": float(cne0_msd_sigma),
+            "t_plus": float(cne0_msd_tplus),
+            "basis": "Same HTP-MD atom-level population matrix, but cation/anion diffusivities come from drift-removed molecular COM MSD 20-80% lag-time fits.",
+        },
         "cNE_lifetime_tracked": {
             "conductivity_s_cm": float(cne_sigma),
             "t_plus": float(cne_tplus),
@@ -878,6 +891,8 @@ def write_combined_report(summaries: list[dict], topology: Topology, outdir: Pat
                 "D_anion_htp_cm2_s": s["diffusion_htp_endpoint_raw"]["anion_type93_cm2_s"],
                 "cNE0_htp_sigma_S_cm": s["cNE0_htpmd"]["conductivity_s_cm"],
                 "cNE0_htp_t_plus": s["cNE0_htpmd"]["t_plus"],
+                "cNE0_msd_fit_sigma_S_cm": s["cNE0_msd_fit"]["conductivity_s_cm"],
+                "cNE0_msd_fit_t_plus": s["cNE0_msd_fit"]["t_plus"],
                 "cNE_lifetime_sigma_S_cm": s["cNE_lifetime_tracked"]["conductivity_s_cm"],
                 "cNE_lifetime_t_plus": s["cNE_lifetime_tracked"]["t_plus"],
                 "Einstein_sigma_S_cm": s["Einstein_collective"]["conductivity_s_cm"],
@@ -903,6 +918,7 @@ def write_combined_report(summaries: list[dict], topology: Topology, outdir: Pat
     md.append("")
     md.append("- `NE_*` uses drift-removed cation/anion molecular COM MSD with a 20-80% lag-time linear fit.")
     md.append("- `cNE0_htp_*` uses raw type-90 Li and type-93 anion reference atom endpoint diffusivity, matching the local HTP-MD implementation style.")
+    md.append("- `cNE0_msd_fit_*` keeps the HTP-MD atom-level population matrix but replaces endpoint diffusivity with the same drift-removed molecular COM MSD-fit diffusivities used by `NE_*`.")
     md.append("- `Einstein_*` is the collective charge-displacement conductivity. It is not the same estimator as cluster NE, but it is the direct correlation-inclusive conductivity estimator from the same trajectory.")
     md.append("- `cNE_lifetime_*` is a diagnostic exact-membership molecular cluster estimator. Treat it as unreliable if cluster lifetimes are short or sample counts are sparse; inspect each lane's `cne_lifetime_cluster_diffusivities.csv`.")
     md.append("")

@@ -44,6 +44,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <filesystem>
 #include <iterator>
 #include <memory>
@@ -2023,7 +2024,8 @@ static void checkExclusionDistances(const gmx_mtop_t&              mtop,
                 "%s, which is larger than the cut-off distance. This will "
                 "lead to missing long-range corrections in the forces and energies.",
                 distanceString.c_str());
-        if (EI_ENERGY_MINIMIZATION(ir.eI))
+        const bool allowLongPcffExcluded = (std::getenv("GMX_PCFF_ALLOW_LONG_EXCLUDED") != nullptr);
+        if (EI_ENERGY_MINIMIZATION(ir.eI) || allowLongPcffExcluded)
         {
             text += " If you expect that minimization will bring such distances within the "
                     "cut-off, you can ignore this warning.";
