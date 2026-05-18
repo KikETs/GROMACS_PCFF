@@ -14,12 +14,15 @@ from pathlib import Path
 from statistics import median
 
 
-DEFAULT_RESULTS_ROOT = Path("/home/user/바탕화면/DL/gromacs/eval_top10_bottom10_stratified100/results")
-DEFAULT_REFERENCE_AGGREGATE = Path("/home/user/바탕화면/DL/gromacs/simulation-trajectory-aggregate.csv")
-DEFAULT_LOCAL_GROMACS_ROOT = Path("/home/user/바탕화면/DL/gromacs")
-DEFAULT_LAMMPS_ROOT = Path("/home/user/바탕화면/DL/LAMMPS_NEW")
-DEFAULT_OUT_ROOT = Path("/home/user/바탕화면/gromacs/tests/reference_results/m10")
-DEFAULT_GMX = Path("/usr/local/gromacs/bin/gmx")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+WORKSPACE_ROOT = REPO_ROOT.parent
+
+DEFAULT_RESULTS_ROOT = WORKSPACE_ROOT / "DL" / "gromacs" / "eval_top10_bottom10_stratified100" / "results"
+DEFAULT_REFERENCE_AGGREGATE = WORKSPACE_ROOT / "DL" / "gromacs" / "simulation-trajectory-aggregate.csv"
+DEFAULT_LOCAL_GROMACS_ROOT = WORKSPACE_ROOT / "DL" / "gromacs"
+DEFAULT_LAMMPS_ROOT = WORKSPACE_ROOT / "DL" / "LAMMPS_NEW"
+DEFAULT_OUT_ROOT = REPO_ROOT / "tests" / "reference_results" / "m10"
+DEFAULT_GMX = Path("gmx")
 
 
 def parse_args() -> argparse.Namespace:

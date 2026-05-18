@@ -57,12 +57,12 @@
   "required_systems": [
     {
       "role": "existing dense scaffold strengthening",
-      "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
+      "strict_fixture_manifest": "../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
       "system_id": "gate_h_dense_salt_polymer_2x2x2"
     },
     {
       "role": "second strict paired dense chemistry promoted from M5 workflow",
-      "strict_fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/fixtures/monoglyme_ethane_litfsi_1to1_dense18/fixture_manifest.json",
+      "strict_fixture_manifest": "../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/fixtures/monoglyme_ethane_litfsi_1to1_dense18/fixture_manifest.json",
       "system_id": "monoglyme_ethane_litfsi_1to1_dense18"
     }
   ],

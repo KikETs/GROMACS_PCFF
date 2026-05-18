@@ -1,6 +1,6 @@
 {
   "ensemble": "npt",
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_02/gpu/equil",
+  "equil_deffnm": "../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_02/gpu/equil",
   "layout": "gpu",
   "layout_report": {
     "gpu_mapping_header": "Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:",
@@ -16233,8 +16233,8 @@
       ]
     }
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_02/gpu/prod",
-  "production_observables_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_02/gpu/production_observables.xvg",
+  "prod_deffnm": "../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_02/gpu/prod",
+  "production_observables_xvg": "../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_02/gpu/production_observables.xvg",
   "replica_index": 2,
   "seed": 173530
 }

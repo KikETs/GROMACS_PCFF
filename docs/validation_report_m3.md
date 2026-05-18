@@ -22,7 +22,7 @@ Still excluded from M3:
 - any approximation that collapses Class2 dihedral semantics into an existing simpler torsion model
 
 The reference target remains the frozen M1 specification in
-[docs/pcff_respa_reference_spec.md](/home/user/바탕화면/gromacs/docs/pcff_respa_reference_spec.md).
+[docs/pcff_respa_reference_spec.md](./pcff_respa_reference_spec.md).
 
 ## Architecture decision
 
@@ -32,16 +32,16 @@ That decision is necessary because full PCFF/Class2 dihedral semantics require o
 
 The CPU reference path now runs through these subsystems:
 
-- [ifunc.h](/home/user/바탕화면/gromacs/api/legacy/include/gromacs/topology/ifunc.h)
-- [idef.h](/home/user/바탕화면/gromacs/api/legacy/include/gromacs/topology/idef.h)
-- [ifunc.cpp](/home/user/바탕화면/gromacs/src/gromacs/topology/ifunc.cpp)
-- [idef.cpp](/home/user/바탕화면/gromacs/src/gromacs/topology/idef.cpp)
-- [tpxio.cpp](/home/user/바탕화면/gromacs/src/gromacs/fileio/tpxio.cpp)
-- [topdirs.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/topdirs.cpp)
-- [convparm.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/convparm.cpp)
-- [toppush.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/toppush.cpp)
-- [toputil.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/toputil.cpp)
-- [bonded.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/bonded.cpp)
+- [ifunc.h](../api/legacy/include/gromacs/topology/ifunc.h)
+- [idef.h](../api/legacy/include/gromacs/topology/idef.h)
+- [ifunc.cpp](../src/gromacs/topology/ifunc.cpp)
+- [idef.cpp](../src/gromacs/topology/idef.cpp)
+- [tpxio.cpp](../src/gromacs/fileio/tpxio.cpp)
+- [topdirs.cpp](../src/gromacs/gmxpreprocess/topdirs.cpp)
+- [convparm.cpp](../src/gromacs/gmxpreprocess/convparm.cpp)
+- [toppush.cpp](../src/gromacs/gmxpreprocess/toppush.cpp)
+- [toputil.cpp](../src/gromacs/gmxpreprocess/toputil.cpp)
+- [bonded.cpp](../src/gromacs/listed_forces/bonded.cpp)
 
 ## Parameter traceability and topology semantics
 
@@ -58,15 +58,15 @@ The flattened GROMACS topology order is:
 
 Conversion rules implemented in preprocessing:
 
-- phase and equilibrium angles are read in degrees and converted to radians in [convparm.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/convparm.cpp)
+- phase and equilibrium angles are read in degrees and converted to radians in [convparm.cpp](../src/gromacs/gmxpreprocess/convparm.cpp)
 - force/length coefficients are stored verbatim in the same physical units already used by the bonded runtime
-- `.tpr` serialization/deserialization includes all 32 fields through [tpxio.cpp](/home/user/바탕화면/gromacs/src/gromacs/fileio/tpxio.cpp)
+- `.tpr` serialization/deserialization includes all 32 fields through [tpxio.cpp](../src/gromacs/fileio/tpxio.cpp)
 
-M3 also extends topology parsing so Class2 dihedrals are not truncated by older fixed-width token handling. That parser change lives in [toppush.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/toppush.cpp).
+M3 also extends topology parsing so Class2 dihedrals are not truncated by older fixed-width token handling. That parser change lives in [toppush.cpp](../src/gromacs/gmxpreprocess/toppush.cpp).
 
 ## Term-by-term energy agreement
 
-Term isolation is covered in [pcff_class2_dihedral.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/tests/pcff_class2_dihedral.cpp) with analytic checks for:
+Term isolation is covered in [pcff_class2_dihedral.cpp](../src/gromacs/listed_forces/tests/pcff_class2_dihedral.cpp) with analytic checks for:
 
 - primary dihedral contribution
 - middle-bond-torsion contribution
@@ -77,7 +77,7 @@ Term isolation is covered in [pcff_class2_dihedral.cpp](/home/user/바탕화면/
 - full summed contribution
 
 The frozen LAMMPS regression summary for `dihedral_toy` is stored in
-[dihedral_toy.tsv](/home/user/바탕화면/gromacs/tests/reference_results/m3/dihedral_toy.tsv).
+[dihedral_toy.tsv](../tests/reference_results/m3/dihedral_toy.tsv).
 
 Reference values from LAMMPS are:
 
@@ -120,12 +120,12 @@ The following decisions are now explicit:
 
 ## Numerical stability notes
 
-Targeted stress coverage added in [pcff_class2_dihedral.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/tests/pcff_class2_dihedral.cpp):
+Targeted stress coverage added in [pcff_class2_dihedral.cpp](../src/gromacs/listed_forces/tests/pcff_class2_dihedral.cpp):
 
 - near-linear geometry remains finite and non-NaN
 - mirrored geometry preserves energy while changing the signed torsion orientation
 - phase periodicity at `+180/-180` remains consistent
-- malformed parameter-count input is rejected in [grompp_directives.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/tests/grompp_directives.cpp)
+- malformed parameter-count input is rejected in [grompp_directives.cpp](../src/gromacs/gmxpreprocess/tests/grompp_directives.cpp)
 
 One numerical detail matters: the `+180/-180` force-equivalence check needs a `1e-5` force tolerance in single precision. A stricter `1e-6` threshold is not stable enough to be a useful regression gate.
 

@@ -2020,17 +2020,17 @@
         8.0
       ]
     },
-    "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_01/gpu/production_observables.xvg",
-    "group_coord_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_01/gpu/transport_group_com.xvg",
+    "energy_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_01/gpu/production_observables.xvg",
+    "group_coord_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_01/gpu/transport_group_com.xvg",
     "metrics": {
       "oligomer_diffusivity_cm2_s": {
         "available": false,
         "reason": "com_drift_removal_collapses_single_group_measurement"
       }
     },
-    "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_01/gpu/transport_groups.ndx"
+    "transport_index": "../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_01/gpu/transport_groups.ndx"
   },
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_01/gpu/equil",
+  "equil_deffnm": "../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_01/gpu/equil",
   "layout": "gpu",
   "layout_report": {
     "gpu_mapping_header": "Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:",
@@ -2053,7 +2053,7 @@
     "update_gpu_enabled": true,
     "update_task_line": "PP task will update and constrain coordinates on the GPU"
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_01/gpu/prod",
+  "prod_deffnm": "../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_01/gpu/prod",
   "replica_index": 1,
   "seed": 86113
 }

@@ -16,9 +16,9 @@ Out of scope:
 
 ## Starting Point
 
-- worktree: `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2`
+- worktree: `..`
 - branch: `respa-m2-exact-three-level`
-- build: `/home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx`
+- build: `../ab_builds/respa_m2_exact_three_level/bin/gmx`
 - M2 boundary carried forward:
   - exact 3-level runtime activation is real
   - `dense_oligomer` bookkeeping fails badly
@@ -26,8 +26,8 @@ Out of scope:
 
 ## Files Changed
 
-- updated `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py`
-- added `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/docs/validation_report_respa_m2b.md`
+- updated `../tools/run_respa_m2_microfixtures/run_respa_m2.py`
+- added `./validation_report_respa_m2b.md`
 
 No engine C++ behavior was changed for M2b. The only new runtime evidence comes from the same harness plus a narrow debug rerun of the dense exact path.
 
@@ -44,8 +44,8 @@ Archived M1 used:
 
 Files:
 
-- `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m1/tools/run_respa_m1_microfixtures/run_respa_m1.py`
-- `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m1/tests/reference_results/r_respa_m1_microfixtures/summary.json`
+- `../tools/run_respa_m1_microfixtures/run_respa_m1.py`
+- `../tests/reference_results/r_respa_m1_microfixtures/summary.json`
 
 The simpler split in M2b is therefore renamed and bounded as:
 
@@ -62,17 +62,17 @@ That label means:
 Main M2b harness:
 
 ```bash
-python3 /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py \
-  --gmx-bin /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx \
+python3 ../tools/run_respa_m2_microfixtures/run_respa_m2.py \
+  --gmx-bin ../ab_builds/respa_m2_exact_three_level/bin/gmx \
   --fixture dense_oligomer \
   --dense-bookkeeping-isolation \
   --milestone-name 'R-RESPA M2b' \
-  --out /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation
+  --out ../tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation
 ```
 
 Exact per-case commands, including the dense term extraction, are stored in:
 
-- `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/raw_commands.txt`
+- `../tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/raw_commands.txt`
 
 ## Strongest Confirmed Finding
 
@@ -87,8 +87,8 @@ Direct evidence:
 
 Files:
 
-- `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/fixture_summary.json`
-- `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p0005/exact_three_level/exact_mdrun.stderr.txt`
+- `../tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/fixture_summary.json`
+- `../tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p0005/exact_three_level/exact_mdrun.stderr.txt`
 
 This is strong evidence for a mis-owned excluded-pair Coulomb correction contribution in the exact step-0 bookkeeping path. It is not evidence for generic physics failure.
 

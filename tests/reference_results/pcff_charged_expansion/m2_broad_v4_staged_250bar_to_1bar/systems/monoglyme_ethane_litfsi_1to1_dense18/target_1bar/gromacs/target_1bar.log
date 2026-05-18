@@ -45,9 +45,9 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260329-1811cfe56e-dirty-unknown
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
-Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/gromacs
+Executable:   ../../../../../../../../build/bin/gmx
+Data prefix:  ../../../../../../../.. (source tree)
+Working dir:  ../../../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/gromacs
 Process ID:   786431
 Command line:
   gmx mdrun -s target_1bar.tpr -deffnm target_1bar -nt 8 -pin off -reprod

@@ -2,7 +2,7 @@
   "schema_name": "exact_respa_native_multi_divergence_onset",
   "schema_version": 1,
   "fixture_id": "gate_i_equil_ntomp1_narrow_nbnxm",
-  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+  "tpr": "../../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
   "ntmpi": 1,
   "ntomp": 1,
   "pin": "off",

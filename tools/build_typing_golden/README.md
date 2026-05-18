@@ -21,7 +21,7 @@ python3 tools/build_typing_golden/generate.py manifest
 Stage a deterministic copy of the corpus:
 
 ```bash
-python3 tools/build_typing_golden/generate.py stage --out /tmp/typing_golden_stage
+python3 tools/build_typing_golden/generate.py stage --out output/tmp/typing_golden_stage
 ```
 
 Validate that the checked-in corpus matches a freshly generated manifest:

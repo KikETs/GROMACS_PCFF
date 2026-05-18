@@ -1,12 +1,12 @@
 {
   "baseline_run": {
     "command": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+      "../../../build/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+      "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/baseline/run",
+      "../../../output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/baseline/run",
       "-nsteps",
       "20",
       "-ntmpi",
@@ -27,7 +27,7 @@
       "off",
       "-reprod"
     ],
-    "dump_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/baseline/force_dumps",
+    "dump_dir": "../../../output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/baseline/force_dumps",
     "elapsed_seconds": 0.0658731460571289,
     "exact_respa_update_omp_env": "0",
     "exact_respa_update_omp_mode": "off",
@@ -41,17 +41,17 @@
     "pairloop_sparse_reduction_env": "0",
     "pairloop_tile_env": "0",
     "pairloop_vector_env": "0",
-    "run_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/baseline"
+    "run_dir": "../../../output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/baseline"
   },
   "candidate_runs": [
     {
       "command": [
-        "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+        "../../../build/bin/gmx",
         "mdrun",
         "-s",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+        "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
         "-deffnm",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_auto/run",
+        "../../../output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_auto/run",
         "-nsteps",
         "20",
         "-ntmpi",
@@ -72,7 +72,7 @@
         "off",
         "-reprod"
       ],
-      "dump_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_auto/force_dumps",
+      "dump_dir": "../../../output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_auto/force_dumps",
       "elapsed_seconds": 0.06075644493103027,
       "exact_respa_update_omp_env": "<unset>",
       "exact_respa_update_omp_mode": "auto",
@@ -86,16 +86,16 @@
       "pairloop_sparse_reduction_env": "0",
       "pairloop_tile_env": "0",
       "pairloop_vector_env": "0",
-      "run_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_auto"
+      "run_dir": "../../../output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_auto"
     },
     {
       "command": [
-        "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+        "../../../build/bin/gmx",
         "mdrun",
         "-s",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
+        "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr",
         "-deffnm",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_omp/run",
+        "../../../output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_omp/run",
         "-nsteps",
         "20",
         "-ntmpi",
@@ -116,7 +116,7 @@
         "off",
         "-reprod"
       ],
-      "dump_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_omp/force_dumps",
+      "dump_dir": "../../../output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_omp/force_dumps",
       "elapsed_seconds": 0.06840324401855469,
       "exact_respa_update_omp_env": "1",
       "exact_respa_update_omp_mode": "on",
@@ -130,7 +130,7 @@
       "pairloop_sparse_reduction_env": "0",
       "pairloop_tile_env": "0",
       "pairloop_vector_env": "0",
-      "run_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_omp"
+      "run_dir": "../../../output/exact_respa_update_probe/force_delta_gate_i_ntomp6_20260417/update_omp"
     }
   ],
   "comparisons": [
@@ -172,8 +172,8 @@
     "git_branch": "exact-respa-nbnxm-output-contract",
     "git_commit": "066f777fe1a0b986e29dca5b41650fe1e4b38ad2",
     "git_status_short": "M src/gromacs/mdrun/exactrespastepper.cpp\n M src/gromacs/mdtypes/enerdata.h\n M tools/pcff_respa_parity/bench_exact_respa_pairloop_omp.py\n M tools/pcff_respa_parity/validate_exact_respa_pairloop_force_delta.py\n?? gate_i_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm.nohup.log\n?? output/exact_respa_pairloop_omp_speedup/narrow_nbnxm_runtime_bench_ntomp1_2_6_12_20260417/narrow_nbnxm/\n?? output/exact_respa_pairloop_omp_speedup/narrow_nbnxm_runtime_bench_ntomp1_2_6_12_20260417/scalar_fallback/\n?? output/exact_respa_stepper_overhead_probe/\n?? output/exact_respa_update_probe/\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/",
-    "gmx": "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
-    "gmx_version": ":-) GROMACS - gmx, 2027.0-dev-20260417-066f777fe1-dirty-unknown (-:\n\nExecutable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx\nData prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)\nWorking dir:  /home/kiket/Desktop/test/GROMACS_PCFF\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260417-066f777fe1-dirty-unknown\nGIT SHA1 hash:       066f777fe1a0b986e29dca5b41650fe1e4b38ad2 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         disabled\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     none\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O3 -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal",
+    "gmx": "../../../build/bin/gmx",
+    "gmx_version": ":-) GROMACS - gmx, 2027.0-dev-20260417-066f777fe1-dirty-unknown (-:\n\nExecutable:   ../../../build/bin/gmx\nData prefix:  ../../.. (source tree)\nWorking dir:  ../../..\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260417-066f777fe1-dirty-unknown\nGIT SHA1 hash:       066f777fe1a0b986e29dca5b41650fe1e4b38ad2 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         disabled\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     none\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O3 -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal",
     "host": "KikET",
     "ntmpi": 1,
     "ntomp": 6,
@@ -183,7 +183,7 @@
     "schema_name": "exact_respa_pairloop_force_delta_parity",
     "schema_version": 1,
     "steps": 20,
-    "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr"
+    "tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_narrow_nbnxm/cpu/replica_01/equil.tpr"
   },
   "passed": false
 }

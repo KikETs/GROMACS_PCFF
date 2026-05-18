@@ -2,6 +2,10 @@
 import os
 import subprocess
 import json
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+GMX_BIN = os.environ.get("GMX_BIN", str(REPO_ROOT / "build" / "bin" / "gmx"))
 
 def create_top(filename, comb_rule, reppow):
     with open(filename, 'w') as f:
@@ -59,7 +63,7 @@ ewald-rtol-lj = 1e-5
 """)
 
 def inspect_tpr(comb_rule, reppow, vdwtype):
-    gmx_bin = "/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx"
+    gmx_bin = GMX_BIN
     
     create_top('system.top', comb_rule, reppow)
     create_gro('system.gro')

@@ -1,7 +1,7 @@
 # R-RESPA M2e Validation Report
 
 - Milestone: `R-RESPA M2e — Dense Step-0 Early Accumulation-Site Trace for Excluded-Pair Coulomb Correction`
-- Worktree: `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2`
+- Worktree: `..`
 - Branch: `respa-m2-exact-three-level`
 - Head commit at run start: `0d6c1d0e61e47c22e43f2bd7e1960e23ccb058cd`
 
@@ -30,9 +30,9 @@
 ## Commands Run
 
 - Build:
-  - `cmake --build /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level --target gmx -j4`
+  - `cmake --build ../ab_builds/respa_m2_exact_three_level --target gmx -j4`
 - M2e harness:
-  - `python3 /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --dense-early-accumulation-trace --milestone-name 'R-RESPA M2e' --out /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace`
+  - `python3 ../tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin ../ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --dense-early-accumulation-trace --milestone-name 'R-RESPA M2e' --out ../tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace`
 - Full per-case command log:
   - `tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/raw_commands.txt`
 

@@ -2,7 +2,7 @@
 
 - Status: PASS
 - Gate E allowed: True
-- gmx: `/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx`
+- gmx: `../../../build_gateb_cuda/bin/gmx`
 - precision: `mixed`
 - GPU support: `CUDA`
 - ntmpi / ntomp: `1` / `1`
@@ -30,8 +30,8 @@
 - CPU reciprocal/self/exclusion max abs delta: `1.33514404296875e-05`
 - Layout report: `single-rank colocated PP+PME tasks on rank 0`
 - First failure field: `None`
-- Artifact root: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_d_nb_bonded_pme_gpu_validation/small_oligomer`
-- Command script: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_d_nb_bonded_pme_gpu_validation/small_oligomer/run_commands.sh`
+- Artifact root: `./small_oligomer`
+- Command script: `./small_oligomer/run_commands.sh`
 
 ### small_salt_polymer_box
 
@@ -46,6 +46,6 @@
 - CPU reciprocal/self/exclusion max abs delta: `2.288818359375e-05`
 - Layout report: `single-rank colocated PP+PME tasks on rank 0`
 - First failure field: `None`
-- Artifact root: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_d_nb_bonded_pme_gpu_validation/small_salt_polymer_box`
-- Command script: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_d_nb_bonded_pme_gpu_validation/small_salt_polymer_box/run_commands.sh`
+- Artifact root: `./small_salt_polymer_box`
+- Command script: `./small_salt_polymer_box/run_commands.sh`
 

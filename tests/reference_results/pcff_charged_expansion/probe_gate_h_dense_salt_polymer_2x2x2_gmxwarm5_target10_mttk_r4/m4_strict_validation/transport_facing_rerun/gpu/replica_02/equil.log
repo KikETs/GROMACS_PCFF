@@ -45,12 +45,12 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260405-81d472fe4c-dirty-unknown
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../../../../../../build_gateb_cuda/bin/gmx
+Data prefix:  ../../../../../../../.. (source tree)
+Working dir:  ../../../../../../../..
 Process ID:   530356
 Command line:
-  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_02/equil.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_02/equil -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme gpu -bonded gpu -update gpu -pin off
+  gmx mdrun -s ../../../../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_02/equil.tpr -deffnm ../../../../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/gpu/replica_02/equil -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme gpu -bonded gpu -update gpu -pin off
 
 GROMACS version:     2027.0-dev-20260405-81d472fe4c-dirty-unknown
 GIT SHA1 hash:       81d472fe4cc1163c9e33a981ff8145fc0bf57832 (dirty)

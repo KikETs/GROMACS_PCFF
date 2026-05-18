@@ -12,8 +12,8 @@ This note freezes the measurement stack used for the host-local diagnosis. It do
 - Logical CPUs: `24`
 - Physical cores: `12`
 - L3 cache: `64 MiB (2 instances)`
-- GROMACS binary: [`build/bin/gmx`](/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx)
-- Subcounter diagnostic build: [`build_subcounters/bin/gmx`](/home/kiket/Desktop/test/GROMACS_PCFF/build_subcounters/bin/gmx)
+- GROMACS binary: [`build/bin/gmx`](../build/bin/gmx)
+- Subcounter diagnostic build: [`build_subcounters/bin/gmx`](../build_subcounters/bin/gmx)
   - configured with `GMX_CYCLE_SUBCOUNTERS=ON`
 - Exact runtime shape: CPU-only `md-vv` exact `r-RESPA` with `-nb cpu -pme cpu -bonded cpu -update cpu -notunepme -ntmpi 1`
 
@@ -71,22 +71,22 @@ This note freezes the measurement stack used for the host-local diagnosis. It do
 ## Tooling
 
 - Driver script:
-  - [`tools/pcff_respa_parity/bench_repulsion_power_9_simd_specialized_cpu.py`](/home/kiket/Desktop/test/GROMACS_PCFF/tools/pcff_respa_parity/bench_repulsion_power_9_simd_specialized_cpu.py)
+  - [`tools/pcff_respa_parity/bench_repulsion_power_9_simd_specialized_cpu.py`](../tools/pcff_respa_parity/bench_repulsion_power_9_simd_specialized_cpu.py)
 - Summary outputs:
-  - [`output/repulsion_power_9_scaling_diagnostic/pin_on/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on/summary.md)
-  - [`output/repulsion_power_9_scaling_diagnostic/pin_off/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_off/summary.md)
-  - [`output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/summary.md)
-  - [`output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/summary.md)
+  - [`output/repulsion_power_9_scaling_diagnostic/pin_on/summary.md`](../output/repulsion_power_9_scaling_diagnostic/pin_on/summary.md)
+  - [`output/repulsion_power_9_scaling_diagnostic/pin_off/summary.md`](../output/repulsion_power_9_scaling_diagnostic/pin_off/summary.md)
+  - [`output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/summary.md`](../output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/summary.md)
+  - [`output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/summary.md`](../output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/summary.md)
 - Subcounter probe logs:
-  - [`output/repulsion_power_9_subcounter_probe/small_oligomer/ntomp6/generic/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_subcounter_probe/small_oligomer/ntomp6/generic/run.log)
-  - [`output/repulsion_power_9_subcounter_probe/small_salt_polymer_box/ntomp6/generic/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_subcounter_probe/small_salt_polymer_box/ntomp6/generic/run.log)
-  - [`output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log)
+  - [`output/repulsion_power_9_subcounter_probe/small_oligomer/ntomp6/generic/run.log`](../output/repulsion_power_9_subcounter_probe/small_oligomer/ntomp6/generic/run.log)
+  - [`output/repulsion_power_9_subcounter_probe/small_salt_polymer_box/ntomp6/generic/run.log`](../output/repulsion_power_9_subcounter_probe/small_salt_polymer_box/ntomp6/generic/run.log)
+  - [`output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log`](../output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log)
 
 ## Affinity / Topology Basis
 
 - `pin=on`, `ntomp=6` probe used CPUs `0-5` on the audited host:
-  - [`output/ntomp6_affinity_probe/generic/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/ntomp6_affinity_probe/generic/run.log:469)
-  - [`output/ntomp6_affinity_probe/specialized/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/ntomp6_affinity_probe/specialized/run.log:469)
+  - [`output/ntomp6_affinity_probe/generic/run.log`](../output/ntomp6_affinity_probe/generic/run.log:469)
+  - [`output/ntomp6_affinity_probe/specialized/run.log`](../output/ntomp6_affinity_probe/specialized/run.log:469)
 - Host topology shows two L3 instances, and CPUs `0-5` map to the same L3 slice.
 
 ## Measurement Limits

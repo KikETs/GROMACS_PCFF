@@ -3,13 +3,13 @@
     "average_temperature_k": 311.45830833266734,
     "average_volume_nm3": 85.18400000000003,
     "convergence_flags": [],
-    "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/production_observables.xvg",
+    "energy_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/production_observables.xvg",
     "metrics": {
       "anion_diffusivity_cm2_s": {
         "charge": -1,
         "convergence_flags": [],
         "count": 216,
-        "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/anion_diff_mol.xvg",
+        "diff_mol_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/anion_diff_mol.xvg",
         "diffusion_cm2_s": 4.6017000000000003e-05,
         "fit_end_ps": 9.0,
         "fit_error_cm2_s": 2.9e-06,
@@ -241,18 +241,18 @@
           7.000000000000001e-05,
           5e-05
         ],
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/anion_msd_curve.tsv",
-        "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/anion_msdout.xvg",
+        "msd_curve_tsv": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/anion_msd_curve.tsv",
+        "msdout_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/anion_msdout.xvg",
         "primary": true,
         "relative_fit_error": 0.0630201881913206,
         "relative_molecule_sem": 0.04972682138942553,
-        "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/anion.ndx"
+        "transport_index": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/anion.ndx"
       },
       "cation_diffusivity_cm2_s": {
         "charge": 1,
         "convergence_flags": [],
         "count": 216,
-        "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/cation_diff_mol.xvg",
+        "diff_mol_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/cation_diff_mol.xvg",
         "diffusion_cm2_s": 4.5983000000000003e-05,
         "fit_end_ps": 9.0,
         "fit_error_cm2_s": 2.8000000000000003e-06,
@@ -484,12 +484,12 @@
           5e-05,
           5e-05
         ],
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/cation_msd_curve.tsv",
-        "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/cation_msdout.xvg",
+        "msd_curve_tsv": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/cation_msd_curve.tsv",
+        "msdout_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/cation_msdout.xvg",
         "primary": true,
         "relative_fit_error": 0.060892068808037755,
         "relative_molecule_sem": 0.0516267668276139,
-        "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/cation.ndx"
+        "transport_index": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/cation.ndx"
       },
       "conductivity_cne_s_cm": {
         "available": true,
@@ -502,7 +502,7 @@
         "charge": 0,
         "convergence_flags": [],
         "count": 216,
-        "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/polymer_diff_mol.xvg",
+        "diff_mol_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/polymer_diff_mol.xvg",
         "diffusion_cm2_s": 0.00013837700000000002,
         "fit_end_ps": 9.0,
         "fit_error_cm2_s": 7e-06,
@@ -736,12 +736,12 @@
           0.00030000000000000003,
           3.0000000000000004e-05
         ],
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/polymer_msd_curve.tsv",
-        "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/polymer_msdout.xvg",
+        "msd_curve_tsv": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/polymer_msd_curve.tsv",
+        "msdout_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/polymer_msdout.xvg",
         "primary": false,
         "relative_fit_error": 0.05058644138838101,
         "relative_molecule_sem": 0.05208717429158511,
-        "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/polymer.ndx"
+        "transport_index": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/polymer.ndx"
       },
       "transference_ne": {
         "available": true,
@@ -766,7 +766,7 @@
       }
     }
   },
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/equil",
+  "equil_deffnm": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/equil",
   "layout": "gpu",
   "layout_report": {
     "gpu_mapping_header": "Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:",
@@ -789,7 +789,7 @@
     "update_gpu_enabled": true,
     "update_task_line": "PP task will update and constrain coordinates on the GPU"
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/prod",
+  "prod_deffnm": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_01/prod",
   "replica_index": 1,
   "seed": 74101
 }

@@ -22,8 +22,8 @@ PT4는 다음을 구현하지 않습니다.
 중요한 사실:
 
 - 이 저장소에는 현재 외부 배포형 PCFF parameter library가 포함되어 있지 않습니다.
-- 따라서 [rules/pcff_parameters.json](/home/kiket/바탕화면/test/GROMACS_PCFF/rules/pcff_parameters.json)은 **repository-local frozen Class2 coefficients**를 담습니다.
-- phase1 bridge가 활성화되더라도 runtime lookup은 저장소 내부 [frc_file/pcff.frc](/home/kiket/Desktop/test/GROMACS_PCFF/frc_file/pcff.frc) 와 repository-local rules만 사용합니다.
+- 따라서 [rules/pcff_parameters.json](../rules/pcff_parameters.json)은 **repository-local frozen Class2 coefficients**를 담습니다.
+- phase1 bridge가 활성화되더라도 runtime lookup은 저장소 내부 [frc_file/pcff.frc](../frc_file/pcff.frc) 와 repository-local rules만 사용합니다.
 - provenance는 규칙 파일 경로, `ruleset_id`, `rule_id`, `canonical_signature`로 추적됩니다.
 - CSV scope용으로 추가된 carbonyl subset 계수는 `LUNAR all2lmp + pcff.frc` 대표 추출값을 repository-local rule로 동결한 것입니다.
 - 즉 `LUNAR` 경로는 실행 의존성이 아니라 historical provenance입니다.
@@ -34,15 +34,15 @@ PT4는 다음을 구현하지 않습니다.
 
 근거:
 
-- [docs/pcff_respa_reference_spec.md](/home/kiket/바탕화면/test/GROMACS_PCFF/docs/pcff_respa_reference_spec.md)
-- [tools/pcff_fixture_bridge/common.py](/home/kiket/바탕화면/test/GROMACS_PCFF/tools/pcff_fixture_bridge/common.py)
-- [tools/pcff_short_md_parity/prepare_reference.py](/home/kiket/바탕화면/test/GROMACS_PCFF/tools/pcff_short_md_parity/prepare_reference.py)
+- [docs/pcff_respa_reference_spec.md](./pcff_respa_reference_spec.md)
+- [tools/pcff_fixture_bridge/common.py](../tools/pcff_fixture_bridge/common.py)
+- [tools/pcff_short_md_parity/prepare_reference.py](../tools/pcff_short_md_parity/prepare_reference.py)
 
 ## Module Layout
 
 소스 위치:
 
-- [src/parameter_assignment](/home/kiket/바탕화면/test/GROMACS_PCFF/src/parameter_assignment)
+- [src/parameter_assignment](../src/parameter_assignment)
 
 핵심 진입점:
 
@@ -51,8 +51,8 @@ PT4는 다음을 구현하지 않습니다.
 
 규칙 파일:
 
-- [rules/pcff_parameters.json](/home/kiket/바탕화면/test/GROMACS_PCFF/rules/pcff_parameters.json)
-- [frc_file/pcff.frc](/home/kiket/Desktop/test/GROMACS_PCFF/frc_file/pcff.frc)
+- [rules/pcff_parameters.json](../rules/pcff_parameters.json)
+- [frc_file/pcff.frc](../frc_file/pcff.frc)
 
 ## Input Contract
 
@@ -228,8 +228,8 @@ Dihedral:
 
 근거:
 
-- [tools/pcff_fixture_bridge/common.py](/home/kiket/바탕화면/test/GROMACS_PCFF/tools/pcff_fixture_bridge/common.py)
-- [tools/pcff_short_md_parity/prepare_reference.py](/home/kiket/바탕화면/test/GROMACS_PCFF/tools/pcff_short_md_parity/prepare_reference.py)
+- [tools/pcff_fixture_bridge/common.py](../tools/pcff_fixture_bridge/common.py)
+- [tools/pcff_short_md_parity/prepare_reference.py](../tools/pcff_short_md_parity/prepare_reference.py)
 
 ## Output Contract
 

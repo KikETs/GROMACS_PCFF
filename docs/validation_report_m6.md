@@ -27,7 +27,7 @@ Implemented:
 - explicit base-step trace for the intended LAMMPS recursive event ordering
 - dedicated CPU `integrator = md-vv` exact propagation path
 - machine-readable LAMMPS-vs-GROMACS parity harness under `tools/pcff_respa_parity/`
-- strict in-tree regression for the frozen M6 NVE fixtures in [pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp)
+- strict in-tree regression for the frozen M6 NVE fixtures in [pcff_short_md.cpp](../src/programs/mdrun/tests/pcff_short_md.cpp)
 
 Intentionally not implemented:
 
@@ -37,12 +37,12 @@ Intentionally not implemented:
 
 ## Key Fix In This Pass
 
-The dominant remaining blocker before GPU work was not pairlist buffering anymore. It was the exact kick path in [md.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdrun/md.cpp).
+The dominant remaining blocker before GPU work was not pairlist buffering anymore. It was the exact kick path in [md.cpp](../src/gromacs/mdrun/md.cpp).
 
 Facts:
 
-- on slow MTS steps, [force.h](/home/user/바탕화면/gromacs/src/gromacs/mdlib/force.h) documents that `force()` holds the physical total force
-- [sim_util.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdlib/sim_util.cpp) combines `F_level0 + sum(F_slow)` into that same `force()` buffer
+- on slow MTS steps, [force.h](../src/gromacs/mdlib/force.h) documents that `force()` holds the physical total force
+- [sim_util.cpp](../src/gromacs/mdlib/sim_util.cpp) combines `F_level0 + sum(F_slow)` into that same `force()` buffer
 - the exact kick helper previously used `force()` directly for level 0
 
 That meant the level-0 kick on slow steps used the physical total force instead of the fast force. Slow-level impulses were therefore counted twice: once inside the level-0 kick and again through explicit slow-level kicks.
@@ -72,14 +72,14 @@ Results:
 - `mdrun-test --gtest_filter='*ExactLammpsRespa*'`: 2 passed
 - `mdrun-non-integrator-test --gtest_filter='PcffSinglePointParity*:*PcffRespaObservableDump*'`: 6 passed
 - `mdrun-non-integrator-test --gtest_filter='PcffRespaRestartParity*'`: 2 passed
-- `python3 tools/pcff_respa_parity/run.py --skip-build`: completed and updated [comparison_summary.json](/home/user/바탕화면/gromacs/tests/reference_results/m6_respa/last_run_compare/comparison_summary.json)
-- `python3 tools/pcff_respa_parity/force_compare.py --skip-build`: completed and updated [aggregate_force_compare.json](/home/user/바탕화면/gromacs/tests/reference_results/m6_respa/force_compare_last/aggregate_force_compare.json)
+- `python3 tools/pcff_respa_parity/run.py --skip-build`: completed and updated [comparison_summary.json](../tests/reference_results/m6_respa/last_run_compare/comparison_summary.json)
+- `python3 tools/pcff_respa_parity/force_compare.py --skip-build`: completed and updated [aggregate_force_compare.json](../tests/reference_results/m6_respa/force_compare_last/aggregate_force_compare.json)
 
 ## Numerical Agreement
 
 ### Frozen LAMMPS NVE parity
 
-Current deltas from [comparison_summary.json](/home/user/바탕화면/gromacs/tests/reference_results/m6_respa/last_run_compare/comparison_summary.json):
+Current deltas from [comparison_summary.json](../tests/reference_results/m6_respa/last_run_compare/comparison_summary.json):
 
 - `small_oligomer`
   - `step0_potential_kcal_mol`: `-0.0028642265`
@@ -98,8 +98,8 @@ The frozen structural observables are closer than `1e-4 nm` in both systems.
 
 These values are now enforced in-tree through the M6 reference TSV tolerance contract:
 
-- [small_oligomer/reference_summary.tsv](/home/user/바탕화면/gromacs/tests/reference_results/m6_respa/small_oligomer/reference_summary.tsv)
-- [small_salt_polymer_box/reference_summary.tsv](/home/user/바탕화면/gromacs/tests/reference_results/m6_respa/small_salt_polymer_box/reference_summary.tsv)
+- [small_oligomer/reference_summary.tsv](../tests/reference_results/m6_respa/small_oligomer/reference_summary.tsv)
+- [small_salt_polymer_box/reference_summary.tsv](../tests/reference_results/m6_respa/small_salt_polymer_box/reference_summary.tsv)
 
 The same frozen contract now also includes step-0 virial-pressure tensor components in `atm`:
 
@@ -108,7 +108,7 @@ The same frozen contract now also includes step-0 virial-pressure tensor compone
 
 ### Same-coordinate force parity
 
-Current same-coordinate exact-vs-unsplit force deltas from [aggregate_force_compare.json](/home/user/바탕화면/gromacs/tests/reference_results/m6_respa/force_compare_last/aggregate_force_compare.json):
+Current same-coordinate exact-vs-unsplit force deltas from [aggregate_force_compare.json](../tests/reference_results/m6_respa/force_compare_last/aggregate_force_compare.json):
 
 - overall worst component delta: `9.765625e-4 kJ/mol/nm`
 - overall worst atom-norm delta: `1.0066175843793117e-3 kJ/mol/nm`
@@ -136,7 +136,7 @@ It is also not silently changing unrelated integrator behavior:
 2. Exact 2-level mode is now rejected explicitly instead of being left half-supported.
 3. Virial parity is frozen only for the step-0 tensor in the two M6 fixtures. Broader virial coverage is still missing.
 4. Restart/checkpoint smoke is covered only for outer-boundary restarts. Arbitrary mid-period exact-mode termination is not supported.
-5. GPU work must preserve the current strict M6 regression. If GPU work lands without re-running [pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp) and the Python harness under [tools/pcff_respa_parity](/home/user/바탕화면/gromacs/tools/pcff_respa_parity), the validation bar drops immediately.
+5. GPU work must preserve the current strict M6 regression. If GPU work lands without re-running [pcff_short_md.cpp](../src/programs/mdrun/tests/pcff_short_md.cpp) and the Python harness under [tools/pcff_respa_parity](../tools/pcff_respa_parity), the validation bar drops immediately.
 
 ## Readiness Assessment
 

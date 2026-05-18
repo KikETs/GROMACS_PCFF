@@ -9,13 +9,13 @@ The audited `ntomp=6` regression is not supported as a stable specialized-microk
 ## Experiment Matrix
 
 - Small fixtures, `pin=on`, `ntomp=1,2,4,6,8,12`, `repeats=2`:
-  - [`output/repulsion_power_9_scaling_diagnostic/pin_on/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on/summary.md)
+  - [`output/repulsion_power_9_scaling_diagnostic/pin_on/summary.md`](../output/repulsion_power_9_scaling_diagnostic/pin_on/summary.md)
 - Small fixtures, `pin=off`, `ntomp=1,2,4,6,8,12`, `repeats=2`:
-  - [`output/repulsion_power_9_scaling_diagnostic/pin_off/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_off/summary.md)
+  - [`output/repulsion_power_9_scaling_diagnostic/pin_off/summary.md`](../output/repulsion_power_9_scaling_diagnostic/pin_off/summary.md)
 - Small fixtures, repeat-depth probe, `pin=on`, `ntomp=2,6`, `repeats=6`:
-  - [`output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/summary.md)
+  - [`output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/summary.md`](../output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/summary.md)
 - Larger charged relevance check, `pin=on`, `ntomp=2,6`, `repeats=2`:
-  - [`output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/summary.md)
+  - [`output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/summary.md`](../output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/summary.md)
 
 ## Key Findings
 
@@ -27,16 +27,16 @@ The audited `ntomp=6` regression is not supported as a stable specialized-microk
   - `mts-levels = 3`
   - `mts-respa-inner/middle/outer-*`
 - Basis:
-  - [`output/repulsion_power_9_scaling_diagnostic/pin_on/small_oligomer/exact_respa_specialized_perf.mdp`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on/small_oligomer/exact_respa_specialized_perf.mdp:25)
-  - [`output/repulsion_power_9_scaling_diagnostic/pin_on/small_salt_polymer_box/exact_respa_specialized_perf.mdp`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on/small_salt_polymer_box/exact_respa_specialized_perf.mdp:25)
-  - [`output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/gate_h_dense_salt_polymer_2x2x2/exact_respa_specialized_perf.mdp`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/gate_h_dense_salt_polymer_2x2x2/exact_respa_specialized_perf.mdp:25)
+  - [`output/repulsion_power_9_scaling_diagnostic/pin_on/small_oligomer/exact_respa_specialized_perf.mdp`](../output/repulsion_power_9_scaling_diagnostic/pin_on/small_oligomer/exact_respa_specialized_perf.mdp:25)
+  - [`output/repulsion_power_9_scaling_diagnostic/pin_on/small_salt_polymer_box/exact_respa_specialized_perf.mdp`](../output/repulsion_power_9_scaling_diagnostic/pin_on/small_salt_polymer_box/exact_respa_specialized_perf.mdp:25)
+  - [`output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/gate_h_dense_salt_polymer_2x2x2/exact_respa_specialized_perf.mdp`](../output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/gate_h_dense_salt_polymer_2x2x2/exact_respa_specialized_perf.mdp:25)
 
 2. Exact `r-RESPA` pair splitting on CPU bypasses `dispatchNonbondedKernel()` and calls the exact CPU patch path directly.
 
 - In `do_force()`, when exact `r-RESPA` pair splitting is active and GPU nonbonded offload is not used, the code calls `computeExactRespaNonbondedCpu(...)`.
 - That is a different path from the admitted SIMD short-range kernel dispatch.
 - Basis:
-  - [`src/gromacs/mdlib/sim_util.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/mdlib/sim_util.cpp:8189)
+  - [`src/gromacs/mdlib/sim_util.cpp`](../src/gromacs/mdlib/sim_util.cpp:8189)
 
 3. The exact CPU patch path uses a plain pairlist and scalar nonbonded math, including `std::pow(rinv, repulsionPower)` for non-12 repulsion.
 
@@ -45,8 +45,8 @@ The audited `ntomp=6` regression is not supported as a stable specialized-microk
   - `repulsionPower == 12 ? rinvsix * rinvsix : std::pow(rinv, repulsionPower)`
 - This is not the admitted specialized SIMD short-range kernel path.
 - Basis:
-  - [`src/gromacs/mdlib/sim_util.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/mdlib/sim_util.cpp:3546)
-  - [`src/gromacs/mdlib/sim_util.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/mdlib/sim_util.cpp:4325)
+  - [`src/gromacs/mdlib/sim_util.cpp`](../src/gromacs/mdlib/sim_util.cpp:3546)
+  - [`src/gromacs/mdlib/sim_util.cpp`](../src/gromacs/mdlib/sim_util.cpp:4325)
 
 4. The subcounter-enabled probe is consistent with that bypass: `NB F kernel` does not appear, even on the larger charged fixture.
 
@@ -60,9 +60,9 @@ The audited `ntomp=6` regression is not supported as a stable specialized-microk
   - `NB F buffer ops.`
 - This is exactly what you would expect if the timed real-space exact-`r-RESPA` force work is not flowing through `dispatchNonbondedKernel()`.
 - Basis:
-  - [`output/repulsion_power_9_subcounter_probe/small_oligomer/ntomp6/generic/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_subcounter_probe/small_oligomer/ntomp6/generic/run.log:1014)
-  - [`output/repulsion_power_9_subcounter_probe/small_salt_polymer_box/ntomp6/generic/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_subcounter_probe/small_salt_polymer_box/ntomp6/generic/run.log:1014)
-  - [`output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log:626)
+  - [`output/repulsion_power_9_subcounter_probe/small_oligomer/ntomp6/generic/run.log`](../output/repulsion_power_9_subcounter_probe/small_oligomer/ntomp6/generic/run.log:1014)
+  - [`output/repulsion_power_9_subcounter_probe/small_salt_polymer_box/ntomp6/generic/run.log`](../output/repulsion_power_9_subcounter_probe/small_salt_polymer_box/ntomp6/generic/run.log:1014)
+  - [`output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log`](../output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log:626)
 
 5. The original `pin=on` small-fixture matrix does show an audited `ntomp=6` regression on one tiny fixture.
 
@@ -72,7 +72,7 @@ The audited `ntomp=6` regression is not supported as a stable specialized-microk
   - `Update` `0.871x`
   - `PME mesh` `1.011x`
 - Basis:
-  - [`pin_on/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on/summary.md:43)
+  - [`pin_on/summary.md`](../output/repulsion_power_9_scaling_diagnostic/pin_on/summary.md:43)
 
 6. The admission markers in the logs are real setup markers, but they do not prove specialized-kernel execution inside exact `r-RESPA` pair splitting.
 
@@ -82,8 +82,8 @@ The audited `ntomp=6` regression is not supported as a stable specialized-microk
 - Those messages describe setup and admission state.
 - They do not override the actual exact-`r-RESPA` force-dispatch code path above.
 - Basis:
-  - [`output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log:439)
-  - [`output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log:449)
+  - [`output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log`](../output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log:439)
+  - [`output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log`](../output/repulsion_power_9_subcounter_probe/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/run.log:449)
 
 7. `PME` is not the dominant cause of the small-fixture `ntomp=6` regression signal.
 
@@ -95,8 +95,8 @@ The audited `ntomp=6` regression is not supported as a stable specialized-microk
 - The pinned `ntomp=6` probe binds both generic and specialized runs to CPUs `0-5`.
 - On this host, CPUs `0-5` sit within the same L3 instance.
 - Basis:
-  - [`output/ntomp6_affinity_probe/generic/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/ntomp6_affinity_probe/generic/run.log:470)
-  - [`output/ntomp6_affinity_probe/specialized/run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/ntomp6_affinity_probe/specialized/run.log:469)
+  - [`output/ntomp6_affinity_probe/generic/run.log`](../output/ntomp6_affinity_probe/generic/run.log:470)
+  - [`output/ntomp6_affinity_probe/specialized/run.log`](../output/ntomp6_affinity_probe/specialized/run.log:469)
   - host `lscpu` / sysfs cache-id checks recorded during diagnosis
 
 9. Removing pinning collapses absolute throughput for both modes and removes the strongest relative regression signal.
@@ -108,15 +108,15 @@ The audited `ntomp=6` regression is not supported as a stable specialized-microk
 - But both modes scale much worse in absolute throughput than the pinned best cases.
 - This means “turn pinning off” is not a credible fix. It only proves the regression is pinning-sensitive and host-local.
 - Basis:
-  - [`pin_off/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_off/summary.md:43)
+  - [`pin_off/summary.md`](../output/repulsion_power_9_scaling_diagnostic/pin_off/summary.md:43)
 
 10. The small audited fixtures are too small to support a stable OpenMP scaling story on their own.
 
 - `small_oligomer` has `6` atoms.
 - `small_salt_polymer_box` has `10` atoms.
 - Basis:
-  - [`pin_on/small_oligomer/.../run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on/small_oligomer/ntomp6/generic/repeat1/run.log:467)
-  - [`pin_on/small_salt_polymer_box/.../run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on/small_salt_polymer_box/ntomp6/generic/repeat1/run.log:467)
+  - [`pin_on/small_oligomer/.../run.log`](../output/repulsion_power_9_scaling_diagnostic/pin_on/small_oligomer/ntomp6/generic/repeat1/run.log:467)
+  - [`pin_on/small_salt_polymer_box/.../run.log`](../output/repulsion_power_9_scaling_diagnostic/pin_on/small_salt_polymer_box/ntomp6/generic/repeat1/run.log:467)
 
 11. Repeat-depth data shows large run-to-run variance at the disputed points.
 
@@ -128,7 +128,7 @@ The audited `ntomp=6` regression is not supported as a stable specialized-microk
   - specialized mean `937.215 ns/day`, CV `0.129`
 - That is not the signature of a clean, deterministic microkernel regression. It is the signature of tiny-threaded host-local instability.
 - Basis:
-  - [`pin_on_repeatdepth_2_6/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/summary.md:25)
+  - [`pin_on_repeatdepth_2_6/summary.md`](../output/repulsion_power_9_scaling_diagnostic/pin_on_repeatdepth_2_6/summary.md:25)
 
 12. The larger charged relevance fixture does not reproduce the `ntomp=6` regression pattern, and its subcounter probe also lacks `NB F kernel`.
 
@@ -139,8 +139,8 @@ The audited `ntomp=6` regression is not supported as a stable specialized-microk
 - This shows the small-fixture regression is not a broadly stable large-fixture behavior on the audited host.
 - Combined with the path audit above, it also shows the larger charged relevance run is still not a valid specialized-kernel timing probe under exact `r-RESPA` pair splitting.
 - Basis:
-  - [`gate_h_pin_on/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/summary.md:25)
-  - [`gate_h ... run.log`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/repeat1/run.log:464)
+  - [`gate_h_pin_on/summary.md`](../output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/summary.md:25)
+  - [`gate_h ... run.log`](../output/repulsion_power_9_scaling_diagnostic/gate_h_pin_on/gate_h_dense_salt_polymer_2x2x2/ntomp6/generic/repeat1/run.log:464)
 
 ## Ranked Cause Analysis
 

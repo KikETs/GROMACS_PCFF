@@ -45,12 +45,12 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260422-53781aa0a5-dirty-unknown
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../build_gateb_cuda/bin/gmx
+Data prefix:  ../../.. (source tree)
+Working dir:  ../../..
 Process ID:   1852914
 Command line:
-  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp06/inputs/prod.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp06/prod -ntmpi 1 -ntomp 6 -dlb no -nb gpu -pme cpu -bonded cpu -update cpu -pin on -pinstride 1
+  gmx mdrun -s ../../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp06/inputs/prod.tpr -deffnm ../../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp06/prod -ntmpi 1 -ntomp 6 -dlb no -nb gpu -pme cpu -bonded cpu -update cpu -pin on -pinstride 1
 
 GROMACS version:     2027.0-dev-20260422-53781aa0a5-dirty-unknown
 GIT SHA1 hash:       53781aa0a5d33961bb2b993934478ba97ad16532 (dirty)

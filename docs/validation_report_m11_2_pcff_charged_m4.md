@@ -44,8 +44,8 @@ Separated validation branches:
 
 Runner provenance:
 
-- mechanical parity GROMACS binary: `/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx`
-- transport-facing rerun GROMACS binary: `/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx`
+- mechanical parity GROMACS binary: `../build/bin/gmx`
+- transport-facing rerun GROMACS binary: `../build_gateb_cuda/bin/gmx`
 - transport-facing GPU support: `CUDA`
 
 Transport-facing rerun settings:

@@ -6,7 +6,7 @@ This benchmark compares the generic and specialized exact-r-RESPA CPU pair-split
 
 - hostname: `KikET`
 - cpu: `AMD Ryzen 9 9900X 12-Core Processor`
-- gmx: `/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx`
+- gmx: `../../build/bin/gmx`
 - steps per run: `200`
 - repeats per point: `1`
 - pin mode: `on`

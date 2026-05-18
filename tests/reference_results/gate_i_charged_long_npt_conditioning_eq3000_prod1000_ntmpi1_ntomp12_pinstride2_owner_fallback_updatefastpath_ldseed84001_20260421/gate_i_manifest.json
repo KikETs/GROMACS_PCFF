@@ -723,10 +723,10 @@
         "density_distance_rel": 0.004680192010322412,
         "density_mean": 1462.407105159368,
         "files": {
-          "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.cpt",
-          "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.gro",
-          "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.tpr",
-          "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json"
+          "prod_cpt": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.cpt",
+          "prod_gro": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.gro",
+          "prod_tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.tpr",
+          "replica_summary": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json"
         },
         "replica_index": 3,
         "selection_score": 0.009253460583559634,
@@ -738,10 +738,10 @@
         "density_distance_rel": 0.009589261247669702,
         "density_mean": 1455.1942900673866,
         "files": {
-          "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/prod.cpt",
-          "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/prod.gro",
-          "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/prod.tpr",
-          "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/replica_summary.json"
+          "prod_cpt": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/prod.cpt",
+          "prod_gro": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/prod.gro",
+          "prod_tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/prod.tpr",
+          "replica_summary": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/replica_summary.json"
         },
         "replica_index": 2,
         "selection_score": 0.019166949904127963,
@@ -753,10 +753,10 @@
         "density_distance_rel": 0.01426945325799227,
         "density_mean": 1490.249508835233,
         "files": {
-          "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.cpt",
-          "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.gro",
-          "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.tpr",
-          "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/replica_summary.json"
+          "prod_cpt": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.cpt",
+          "prod_gro": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.gro",
+          "prod_tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.tpr",
+          "replica_summary": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/replica_summary.json"
         },
         "replica_index": 1,
         "selection_score": 0.028420410487687574,
@@ -769,10 +769,10 @@
       "density_distance_rel": 0.004680192010322412,
       "density_mean": 1462.407105159368,
       "files": {
-        "prod_cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.cpt",
-        "prod_gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.gro",
-        "prod_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.tpr",
-        "replica_summary": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json"
+        "prod_cpt": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.cpt",
+        "prod_gro": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.gro",
+        "prod_tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod.tpr",
+        "replica_summary": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json"
       },
       "replica_index": 3,
       "selection_score": 0.009253460583559634,
@@ -780,7 +780,7 @@
       "volume_mean": 39.86225684323136
     }
   },
-  "contract_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/gate_i_contract.json",
+  "contract_path": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/gate_i_contract.json",
   "executed": true,
   "failure_reasons": [],
   "first_failing_metric": null,
@@ -799,7 +799,7 @@
     "estimated_hours_serial_for_all_replicas": 108.816,
     "hour_per_ns": 9.068,
     "ns_per_day": 2.647,
-    "reference_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log"
+    "reference_log": "../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log"
   },
   "prepared_only": false,
   "primary_gate_metrics": {
@@ -873,9 +873,9 @@
     }
   },
   "replica_summaries": [
-    "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/replica_summary.json",
-    "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/replica_summary.json",
-    "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json"
+    "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/replica_summary.json",
+    "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_02/replica_summary.json",
+    "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json"
   ],
   "run_settings": {
     "compressibility_bar_inv": 4.5e-05,
@@ -895,7 +895,7 @@
     "exact_respa_update_omp_threads": null,
     "exact_respa_update_omp_threads_env": {},
     "initial_configuration": {
-      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/generated/system.gro",
+      "path": "../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/generated/system.gro",
       "replica_policy": "all replicas start equilibration from this same coordinate set; replica independence comes from gen-seed and ld-seed",
       "source": "scaffold_manifest_gro"
     },

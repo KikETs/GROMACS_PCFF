@@ -2356,7 +2356,7 @@ void get_ir(const char*     mdparin,
 
     printStringNewline(&inp, "VARIOUS PREPROCESSING OPTIONS");
     printStringNoNewline(&inp, "Preprocessor information: use cpp syntax.");
-    printStringNoNewline(&inp, "e.g.: -I/home/joe/doe -I/home/mary/roe");
+    printStringNoNewline(&inp, "e.g.: -I./joe/doe -I./mary/roe");
     setStringEntry(&inp, "include", opts->include, nullptr);
     printStringNoNewline(
             &inp, "e.g.: -DPOSRES -DFLEXIBLE (note these variable names are case sensitive)");

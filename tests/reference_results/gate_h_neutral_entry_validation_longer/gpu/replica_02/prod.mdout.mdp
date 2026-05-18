@@ -1,5 +1,5 @@
 ;
-;	File '/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/prod.mdout.mdp' was generated
+;	File '../../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/prod.mdout.mdp' was generated
 ;	By user: kiket (1000)
 ;	On host: KikET
 ;	At date: Thu Apr  2 01:17:11 2026
@@ -7,15 +7,15 @@
 ;	Created by:
 ;	  :-) GROMACS - gmx grompp, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 ;	
-;	Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-;	Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-;	Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+;	Executable:   ../../../../../build_gateb_cuda/bin/gmx
+;	Data prefix:  ../../../../.. (source tree)
+;	Working dir:  ../../../../..
 ;	Command line:
-;	  gmx grompp -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/inputs/replica_02/prod.mdp -c /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/equil.gro -p /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/generated/topol.top -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/prod.tpr -po /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/prod.mdout.mdp -maxwarn 1 -t /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/equil.cpt
+;	  gmx grompp -f ../../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/inputs/replica_02/prod.mdp -c ../../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/equil.gro -p ../../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/generated/topol.top -o ../../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/prod.tpr -po ../../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/prod.mdout.mdp -maxwarn 1 -t ../../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/equil.cpt
 
 ; VARIOUS PREPROCESSING OPTIONS
 ; Preprocessor information: use cpp syntax.
-; e.g.: -I/home/joe/doe -I/home/mary/roe
+; e.g.: -I./joe/doe -I./mary/roe
 include                  = 
 ; e.g.: -DPOSRES -DFLEXIBLE (note these variable names are case sensitive)
 define                   = 

@@ -1,7 +1,7 @@
 # R-RESPA M2d Validation Report
 
 - Milestone: `R-RESPA M2d — Dense Step-0 Duplicate-Correction Merge Trace`
-- Worktree: `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2`
+- Worktree: `..`
 - Branch: `respa-m2-exact-three-level`
 - Head commit at run start: `a060b7f81888b4f724de2a07bd3f29b79d706505`
 
@@ -29,9 +29,9 @@
 ## Commands Run
 
 - Build:
-  - `cmake --build /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level --target gmx -j4`
+  - `cmake --build ../ab_builds/respa_m2_exact_three_level --target gmx -j4`
 - M2d harness:
-  - `python3 /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --dense-merge-trace --milestone-name 'R-RESPA M2d' --out /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace`
+  - `python3 ../tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin ../ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --dense-merge-trace --milestone-name 'R-RESPA M2d' --out ../tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace`
 - Full per-case command log:
   - `tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/raw_commands.txt`
 

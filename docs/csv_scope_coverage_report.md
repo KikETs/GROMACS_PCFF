@@ -14,17 +14,17 @@
 
 Coverage audit results:
 
-- [coverage_audit_results.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/csv_scope_audit/coverage_audit_results.json)
+- [coverage_audit_results.json](../tests/reference_results/csv_scope_audit/coverage_audit_results.json)
 
 Coverage summary:
 
-- [coverage_audit_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/csv_scope_audit/coverage_audit_summary.json)
+- [coverage_audit_summary.json](../tests/reference_results/csv_scope_audit/coverage_audit_summary.json)
 
 Scope manifests:
 
-- [simulation_trajectory_aggregate_snapshot.json](/home/kiket/바탕화면/test/GROMACS_PCFF/data_manifests/simulation_trajectory_aggregate_snapshot.json)
-- [simulation_trajectory_aggregate_unique_smiles.json](/home/kiket/바탕화면/test/GROMACS_PCFF/data_manifests/simulation_trajectory_aggregate_unique_smiles.json)
-- [simulation_trajectory_aggregate_row_map.json](/home/kiket/바탕화면/test/GROMACS_PCFF/data_manifests/simulation_trajectory_aggregate_row_map.json)
+- [simulation_trajectory_aggregate_snapshot.json](../data_manifests/simulation_trajectory_aggregate_snapshot.json)
+- [simulation_trajectory_aggregate_unique_smiles.json](../data_manifests/simulation_trajectory_aggregate_unique_smiles.json)
+- [simulation_trajectory_aggregate_row_map.json](../data_manifests/simulation_trajectory_aggregate_row_map.json)
 
 ## Observed Failure Distribution
 
@@ -68,11 +68,11 @@ Observed failure codes:
 
 근거:
 
-- [typing_ir_spec.md](/home/kiket/바탕화면/test/GROMACS_PCFF/docs/typing_ir_spec.md)
-- [polymer_typing_workflow.md](/home/kiket/바탕화면/test/GROMACS_PCFF/docs/polymer_typing_workflow.md)
-- [formats.py](/home/kiket/바탕화면/test/GROMACS_PCFF/src/typing_ir/formats.py)
-- [engine.py](/home/kiket/바탕화면/test/GROMACS_PCFF/src/polymer_workflow/engine.py)
-- [worker.py](/home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_csv_scope_audit/worker.py)
+- [typing_ir_spec.md](./typing_ir_spec.md)
+- [polymer_typing_workflow.md](./polymer_typing_workflow.md)
+- [formats.py](../src/typing_ir/formats.py)
+- [engine.py](../src/polymer_workflow/engine.py)
+- [worker.py](../tools/run_csv_scope_audit/worker.py)
 
 이번 audit에서는 CSV의 pSMILES/SMILES를 `mol2`로 바꾸는 deterministic adapter를 추가로 사용했다.
 

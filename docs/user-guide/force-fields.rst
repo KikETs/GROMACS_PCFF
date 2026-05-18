@@ -132,3 +132,12 @@ As there is no central web-page to point to, the user is advised to consult the
 original literature for the `united atom (OPLS-UA) <https://doi.org/10.1021%2Fja00214a001>`__
 and `all atom (OPLS-AA) <https://doi.org/10.1021%2Fja9621760>`__ force fields, as well as the
 Jorgensen group `page <http://zarbi.chem.yale.edu/>`__
+
+.. _gmx-pcff-class2-bridge:
+
+PCFF/Class2 bridge in this fork
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This derived fork contains a bounded PCFF/Class2 bridge. The supported scope is
+limited to the checked-in evidence described in :doc:`pcff-bridge`; it is not
+broad PCFF chemistry support.

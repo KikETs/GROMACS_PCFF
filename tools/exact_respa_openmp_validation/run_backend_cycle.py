@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--out-dir",
-        default="/tmp/exact-openmp-backend-cycle",
+        default=str(REPO_ROOT / "output" / "tmp" / "exact-openmp-backend-cycle"),
         help="Directory for validate_report_set.py outputs.",
     )
     parser.add_argument(

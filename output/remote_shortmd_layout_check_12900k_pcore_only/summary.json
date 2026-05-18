@@ -2,7 +2,7 @@
   "metadata": {
     "hostname": "user-Z690-AORUS-PRO",
     "cpu_model": "12th Gen Intel(R) Core(TM) i9-12900K",
-    "gmx": "/home/user/tmp/gromacs_pcff_remotecheck/pcore_gmx.sh",
+    "gmx": "tmp/gromacs_pcff_remotecheck/pcore_gmx.sh",
     "steps": 10000,
     "repeats": 3,
     "pin": "on",
@@ -87,8 +87,8 @@
       "mode": "specialized",
       "ns_per_day": 109.401,
       "real_wall_seconds": 3.949,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat1/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat1/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-10:2"
       ],
@@ -120,8 +120,8 @@
       "mode": "specialized",
       "ns_per_day": 109.635,
       "real_wall_seconds": 3.941,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat2/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat2/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-10:2"
       ],
@@ -153,8 +153,8 @@
       "mode": "specialized",
       "ns_per_day": 107.562,
       "real_wall_seconds": 4.017,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat3/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat3/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-10:2"
       ],
@@ -186,8 +186,8 @@
       "mode": "specialized",
       "ns_per_day": 113.77,
       "real_wall_seconds": 3.797,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat1/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat1/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-14:2"
       ],
@@ -219,8 +219,8 @@
       "mode": "specialized",
       "ns_per_day": 112.78,
       "real_wall_seconds": 3.831,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat2/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat2/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-14:2"
       ],
@@ -252,8 +252,8 @@
       "mode": "specialized",
       "ns_per_day": 113.313,
       "real_wall_seconds": 3.813,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat3/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat3/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/omp8/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-14:2"
       ],
@@ -285,8 +285,8 @@
       "mode": "specialized",
       "ns_per_day": 106.92,
       "real_wall_seconds": 4.041,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat1/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat1/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0,2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 4-14:2"
@@ -319,8 +319,8 @@
       "mode": "specialized",
       "ns_per_day": 103.029,
       "real_wall_seconds": 4.193,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat2/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat2/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0,2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 4-14:2"
@@ -353,8 +353,8 @@
       "mode": "specialized",
       "ns_per_day": 104.876,
       "real_wall_seconds": 4.12,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat3/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat3/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp2_pme6/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0,2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 4-14:2"
@@ -387,8 +387,8 @@
       "mode": "specialized",
       "ns_per_day": 139.54,
       "real_wall_seconds": 3.096,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat1/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat1/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-4:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 6-14:2"
@@ -421,8 +421,8 @@
       "mode": "specialized",
       "ns_per_day": 147.536,
       "real_wall_seconds": 2.928,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat2/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat2/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-4:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 6-14:2"
@@ -455,8 +455,8 @@
       "mode": "specialized",
       "ns_per_day": 137.81,
       "real_wall_seconds": 3.135,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat3/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat3/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp3_pme5/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-4:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 6-14:2"
@@ -489,8 +489,8 @@
       "mode": "specialized",
       "ns_per_day": 129.32,
       "real_wall_seconds": 3.341,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat1/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat1/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-6:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 8-14:2"
@@ -523,8 +523,8 @@
       "mode": "specialized",
       "ns_per_day": 131.587,
       "real_wall_seconds": 3.283,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat2/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat2/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-6:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 8-14:2"
@@ -557,8 +557,8 @@
       "mode": "specialized",
       "ns_per_day": 125.136,
       "real_wall_seconds": 3.453,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat3/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat3/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp4_pme4/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-6:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 8-14:2"
@@ -591,8 +591,8 @@
       "mode": "specialized",
       "ns_per_day": 115.169,
       "real_wall_seconds": 3.751,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat1/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat1/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-8:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 10-14:2"
@@ -625,8 +625,8 @@
       "mode": "specialized",
       "ns_per_day": 113.325,
       "real_wall_seconds": 3.812,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat2/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat2/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-8:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 10-14:2"
@@ -659,8 +659,8 @@
       "mode": "specialized",
       "ns_per_day": 113.305,
       "real_wall_seconds": 3.813,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat3/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat3/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp5_pme3/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-8:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 10-14:2"
@@ -693,8 +693,8 @@
       "mode": "specialized",
       "ns_per_day": 84.724,
       "real_wall_seconds": 5.099,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat1/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat1/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-10:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 12,14"
@@ -727,8 +727,8 @@
       "mode": "specialized",
       "ns_per_day": 82.817,
       "real_wall_seconds": 5.217,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat2/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat2/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-10:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 12,14"
@@ -761,8 +761,8 @@
       "mode": "specialized",
       "ns_per_day": 81.052,
       "real_wall_seconds": 5.33,
-      "log_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat3/run.log",
-      "stdout_path": "/home/user/tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat3/run.log",
+      "stdout_path": "tmp/gromacs_pcff_remotecheck/output/remote_shortmd_layout_check_12900k_pcore_only/gate_h_dense_salt_polymer_2x2x2/split8_pp6_pme2/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 0-10:2",
         "Rank     1: External affinity: CPUs: 0-14:2     , package(s): 0. New affinity: CPUs: 12,14"

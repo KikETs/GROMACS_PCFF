@@ -2020,17 +2020,17 @@
         8.0
       ]
     },
-    "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/cpu/production_observables.xvg",
-    "group_coord_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/cpu/transport_group_com.xvg",
+    "energy_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/cpu/production_observables.xvg",
+    "group_coord_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/cpu/transport_group_com.xvg",
     "metrics": {
       "oligomer_diffusivity_cm2_s": {
         "available": false,
         "reason": "com_drift_removal_collapses_single_group_measurement"
       }
     },
-    "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/cpu/transport_groups.ndx"
+    "transport_index": "../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/cpu/transport_groups.ndx"
   },
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/cpu/equil",
+  "equil_deffnm": "../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/cpu/equil",
   "layout": "cpu",
   "layout_report": {
     "gpu_mapping_header": null,
@@ -2051,7 +2051,7 @@
     "update_gpu_enabled": false,
     "update_task_line": null
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/cpu/prod",
+  "prod_deffnm": "../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/cpu/prod",
   "replica_index": 2,
   "seed": 86114
 }

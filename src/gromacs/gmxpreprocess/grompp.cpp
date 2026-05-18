@@ -2120,7 +2120,7 @@ int gmx_grompp(int argc, char* argv[])
         "using the following two flags in your [REF].mdp[ref] file::",
         "",
         "    define = -DVARIABLE1 -DVARIABLE2",
-        "    include = -I/home/john/doe",
+        "    include = -I./john/doe",
         "",
         "For further information a C-programming textbook may help you out.",
         "Specifying the [TT]-pp[tt] flag will get the pre-processed",

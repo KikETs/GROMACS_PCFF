@@ -73,7 +73,7 @@ Validated in the branch `lunar-lammps-data-gromacs-bridge`:
 - Unit/reference tests: `PYTHONPATH=. pytest -q tests/test_unit_conversions.py tests/reference_schema/test_pcff_fixture_bridge.py`
 - Result: `13 passed`
 - Actual LUNAR output imported:
-  - source: `/home/kiket/Desktop/test/MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_14764/build/lunar_pcff/chain_fixed_typed_nodup_IFF.data`
+  - source: `../batch_runs/Traj_14764/build/lunar_pcff/chain_fixed_typed_nodup_IFF.data`
   - atoms: 359
   - bonds: 358
   - angles: 663
@@ -82,7 +82,7 @@ Validated in the branch `lunar-lammps-data-gromacs-bridge`:
   - `grompp` smoke: PASS
   - 0-step `mdrun` smoke: PASS
 - PolyGen example data imported:
-  - source: `/home/kiket/src/PolyGen/Example-simulation-files/equilibration/system.lmp`
+  - source: `../PolyGen/Example-simulation-files/equilibration/system.lmp`
   - atoms: 5475
   - bonds: 5460
   - angles: 10125

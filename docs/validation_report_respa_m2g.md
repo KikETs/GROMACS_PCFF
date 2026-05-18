@@ -1,7 +1,7 @@
 # R-RESPA M2g Validation Report
 
 - Milestone: `R-RESPA M2g — Upstream Ownership/Spec Handoff Trace for Bonded Pair Entering excludedPairs`
-- Worktree: `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2`
+- Worktree: `..`
 - Branch: `respa-m2-exact-three-level`
 - Head commit at run start: `a1d0876e7a35320719e660f672bdca44c4ec3ebf`
 
@@ -33,9 +33,9 @@
 ## Commands Run
 
 - Build:
-  - `cmake --build /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level --target gmx -j4`
+  - `cmake --build ../ab_builds/respa_m2_exact_three_level --target gmx -j4`
 - M2g harness:
-  - `python3 /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --upstream-ownership-handoff-trace --milestone-name 'R-RESPA M2g' --out /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace`
+  - `python3 ../tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin ../ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --upstream-ownership-handoff-trace --milestone-name 'R-RESPA M2g' --out ../tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace`
 - Full command log:
   - `tests/reference_results/r_respa_m2g_upstream_ownership_handoff_trace/raw_commands.txt`
 

@@ -2,8 +2,10 @@
 import os
 import subprocess
 import json
+from pathlib import Path
 
-GMX_BIN = "/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+GMX_BIN = os.environ.get("GMX_BIN", str(REPO_ROOT / "build" / "bin" / "gmx"))
 
 def write_top(filename):
     with open(filename, 'w') as f:
@@ -44,7 +46,7 @@ def run_gmx(cmd, input_str=None):
     return subprocess.run(cmd, shell=True, capture_output=True, text=True, input=input_str)
 
 def main():
-    work_dir = "/home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_tp1_4_pme_proof/work"
+    work_dir = str(REPO_ROOT / "tools" / "run_tp1_4_pme_proof" / "work")
     os.makedirs(work_dir, exist_ok=True)
     os.chdir(work_dir)
     write_top("topol.top")

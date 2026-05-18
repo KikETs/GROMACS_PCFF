@@ -1,10 +1,10 @@
 {
   "artifacts": {
-    "gromacs_energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/gromacs/npt_energy.xvg",
-    "gromacs_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/gromacs",
-    "gromacs_warmup_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/gromacs/warmup.log",
-    "lammps_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/lammps/npt.log",
-    "lammps_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/lammps",
+    "gromacs_energy_xvg": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/gromacs/npt_energy.xvg",
+    "gromacs_root": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/gromacs",
+    "gromacs_warmup_log": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/gromacs/warmup.log",
+    "lammps_log": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/lammps/npt.log",
+    "lammps_root": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/paired_npt/lammps",
     "lammps_warmup_log": null
   },
   "gromacs": {

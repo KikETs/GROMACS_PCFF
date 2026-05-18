@@ -1,13 +1,13 @@
     :-) GROMACS - gmx msd, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../../build_gateb_cuda/bin/gmx
+Data prefix:  ../../../.. (source tree)
+Working dir:  ../../../..
 Command line:
-  gmx msd -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.xtc -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.tpr -n /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation.ndx -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation_msdout.xvg -mol /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation_diff_mol.xvg -trestart 1.0 -maxtau 10.0
+  gmx msd -f ../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.xtc -s ../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.tpr -n ../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation.ndx -o ../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation_msdout.xvg -mol ../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation_diff_mol.xvg -trestart 1.0 -maxtau 10.0
 
-Reading file /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
-Reading file /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Reading file ../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Reading file ../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
 Reading frame       0 time    0.000   Reading frame       1 time    0.100   Reading frame       2 time    0.200   Reading frame       3 time    0.300   Reading frame       4 time    0.400   Reading frame       5 time    0.500   Reading frame       6 time    0.600   Reading frame       7 time    0.700   Reading frame       8 time    0.800   Reading frame       9 time    0.900   Reading frame      10 time    1.000   Reading frame      11 time    1.100   Reading frame      12 time    1.200   Reading frame      13 time    1.300   Reading frame      14 time    1.400   Reading frame      15 time    1.500   Reading frame      16 time    1.600   Reading frame      17 time    1.700   Reading frame      18 time    1.800   Reading frame      19 time    1.900   Reading frame      20 time    2.000   Reading frame      30 time    3.000   Reading frame      40 time    4.000   Reading frame      50 time    5.000   Reading frame      60 time    6.000   Reading frame      70 time    7.000   Reading frame      80 time    8.000   Reading frame      90 time    9.000   Reading frame     100 time   10.000   Reading frame     110 time   11.000   Reading frame     120 time   12.000   Reading frame     130 time   13.000   Reading frame     140 time   14.000   Reading frame     150 time   15.000   Reading frame     160 time   16.000   Reading frame     170 time   17.000   Reading frame     180 time   18.000   Reading frame     190 time   19.000   Reading frame     200 time   20.000   Last frame        200 time   20.000   
 Analyzed 201 frames, last time 20.000
 

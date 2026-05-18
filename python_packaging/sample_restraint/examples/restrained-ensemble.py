@@ -11,10 +11,11 @@ DOI: `10.1093/bioinformatics/bty484 <https://doi.org/10.1093/bioinformatics/bty4
 
 import os
 import sys
+from pathlib import Path
 
 # Of course, the location of the Python plugin module is user-specific and could be
 # passed by PYTHONPATH instead of programatically here.
-sys.path.append("/home/mei2n/sample_restraint/build/src/pythonmodule")
+sys.path.append(str(Path(__file__).resolve().parents[1] / "build" / "src" / "pythonmodule"))
 
 import gmx
 

@@ -15,7 +15,7 @@
 
 ```bash
 PYTHONPATH=src python3 tools/run_csv_scope_audit/generate.py snapshot \
-  --csv /path/to/simulation-trajectory-aggregate.csv
+  --csv data/simulation-trajectory-aggregate.csv
 ```
 
 위 명령은 다음 manifest를 쓴다.
@@ -32,8 +32,8 @@ PYTHONPATH=src python3 tools/run_csv_scope_audit/generate.py audit
 
 필수 런타임:
 
-- adapter python: `/home/kiket/anaconda3/envs/MD/bin/python`
-- local pysoftk root: `/home/kiket/바탕화면/test/torch/pysoftk`
+- adapter python: `python`
+- local pysoftk root: `../torch/pysoftk`
 
 Audit는 내부적으로 다음 경로를 거친다.
 

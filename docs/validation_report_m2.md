@@ -17,35 +17,35 @@ M2 does **not** implement:
 - any GPU/CUDA path
 
 The reference target remains the frozen M1 specification in
-[docs/pcff_respa_reference_spec.md](/home/user/바탕화면/gromacs/docs/pcff_respa_reference_spec.md).
+[docs/pcff_respa_reference_spec.md](./pcff_respa_reference_spec.md).
 
 ## Architectural entry points touched
 
 ### Topology and function typing
 
-- [api/legacy/include/gromacs/topology/ifunc.h](/home/user/바탕화면/gromacs/api/legacy/include/gromacs/topology/ifunc.h)
+- [api/legacy/include/gromacs/topology/ifunc.h](../api/legacy/include/gromacs/topology/ifunc.h)
   adds `BondClass2`, `AngleClass2`, and `ImproperClass2`.
-- [src/gromacs/topology/ifunc.cpp](/home/user/바탕화면/gromacs/src/gromacs/topology/ifunc.cpp)
+- [src/gromacs/topology/ifunc.cpp](../src/gromacs/topology/ifunc.cpp)
   registers the interaction definitions and parameter counts.
-- [api/legacy/include/gromacs/topology/idef.h](/home/user/바탕화면/gromacs/api/legacy/include/gromacs/topology/idef.h)
+- [api/legacy/include/gromacs/topology/idef.h](../api/legacy/include/gromacs/topology/idef.h)
   extends `t_iparams` with Class2 bond, angle, and improper parameter storage.
-- [src/gromacs/topology/idef.cpp](/home/user/바탕화면/gromacs/src/gromacs/topology/idef.cpp)
+- [src/gromacs/topology/idef.cpp](../src/gromacs/topology/idef.cpp)
   adds human-readable parameter printing.
-- [src/gromacs/fileio/tpxio.cpp](/home/user/바탕화면/gromacs/src/gromacs/fileio/tpxio.cpp)
+- [src/gromacs/fileio/tpxio.cpp](../src/gromacs/fileio/tpxio.cpp)
   serializes the new parameter blocks into `.tpr`.
 
 ### Preprocessing and topology conversion
 
-- [src/gromacs/gmxpreprocess/topdirs.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/topdirs.cpp)
+- [src/gromacs/gmxpreprocess/topdirs.cpp](../src/gromacs/gmxpreprocess/topdirs.cpp)
   maps GROMACS topology directive function numbers to the new Class2 function types.
-- [src/gromacs/gmxpreprocess/convparm.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/convparm.cpp)
+- [src/gromacs/gmxpreprocess/convparm.cpp](../src/gromacs/gmxpreprocess/convparm.cpp)
   converts raw topology parameters into runtime `t_iparams`, including degree-to-radian conversion for angular equilibrium values.
-- [src/gromacs/gmxpreprocess/toputil.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/toputil.cpp)
+- [src/gromacs/gmxpreprocess/toputil.cpp](../src/gromacs/gmxpreprocess/toputil.cpp)
   prints the new function numbers back out for topology round-tripping.
 
 ### CPU runtime evaluation
 
-- [src/gromacs/listed_forces/bonded.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/bonded.cpp)
+- [src/gromacs/listed_forces/bonded.cpp](../src/gromacs/listed_forces/bonded.cpp)
   adds CPU listed-force kernels and dispatch wiring for the three new interaction types.
 
 ## Formulas implemented
@@ -79,16 +79,16 @@ with the LAMMPS/Class2 ordering where the second atom is the central atom.
 
 ## Validation artifacts added
 
-- [src/gromacs/listed_forces/tests/pcff_class2.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/tests/pcff_class2.cpp)
-- [src/gromacs/gmxpreprocess/tests/convparm.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/tests/convparm.cpp)
-- [src/gromacs/gmxpreprocess/tests/grompp_directives.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/tests/grompp_directives.cpp)
-- [tests/reference_results/m2/README.md](/home/user/바탕화면/gromacs/tests/reference_results/m2/README.md)
-- [tests/reference_results/m2/bond_toy.tsv](/home/user/바탕화면/gromacs/tests/reference_results/m2/bond_toy.tsv)
-- [tests/reference_results/m2/angle_toy.tsv](/home/user/바탕화면/gromacs/tests/reference_results/m2/angle_toy.tsv)
-- [tests/reference_results/m2/improper_toy.tsv](/home/user/바탕화면/gromacs/tests/reference_results/m2/improper_toy.tsv)
+- [src/gromacs/listed_forces/tests/pcff_class2.cpp](../src/gromacs/listed_forces/tests/pcff_class2.cpp)
+- [src/gromacs/gmxpreprocess/tests/convparm.cpp](../src/gromacs/gmxpreprocess/tests/convparm.cpp)
+- [src/gromacs/gmxpreprocess/tests/grompp_directives.cpp](../src/gromacs/gmxpreprocess/tests/grompp_directives.cpp)
+- [tests/reference_results/m2/README.md](../tests/reference_results/m2/README.md)
+- [tests/reference_results/m2/bond_toy.tsv](../tests/reference_results/m2/bond_toy.tsv)
+- [tests/reference_results/m2/angle_toy.tsv](../tests/reference_results/m2/angle_toy.tsv)
+- [tests/reference_results/m2/improper_toy.tsv](../tests/reference_results/m2/improper_toy.tsv)
 
 M2 also fixes a generator-side normalization bug in
-[tools/generate_lammps_golden/common.py](/home/user/바탕화면/gromacs/tools/generate_lammps_golden/common.py)
+[tools/generate_lammps_golden/common.py](../tools/generate_lammps_golden/common.py)
 so real LAMMPS thermo headers are canonicalized correctly before reference summaries are derived.
 
 ## Energy agreement summary

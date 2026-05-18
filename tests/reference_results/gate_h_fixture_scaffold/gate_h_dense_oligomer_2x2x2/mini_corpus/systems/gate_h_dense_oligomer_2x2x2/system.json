@@ -7,8 +7,8 @@
       2
     ],
     "seed_system": "dense_oligomer",
-    "source_data": "/home/kiket/Desktop/test/GROMACS_PCFF/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
-    "source_input": "/home/kiket/Desktop/test/GROMACS_PCFF/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in"
+    "source_data": "../../../../../../../testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "source_input": "../../../../../../../testdata/lammps_golden/systems/dense_oligomer/lammps/system.in"
   },
   "description": "Derived from dense_oligomer via LAMMPS replicate 2x2x2 for Gate H transport-scope scaffolding.",
   "display_name": "dense oligomer transport scaffold",

@@ -13,7 +13,7 @@
   },
   "systems": {
     "small_oligomer": {
-      "file": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_oligomer_nve.json",
+      "file": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_oligomer_nve.json",
       "sections": {
         "exact_step0_breakdown": {
           "section_line": 41,
@@ -71,7 +71,7 @@
       }
     },
     "small_salt_polymer_box": {
-      "file": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_salt_polymer_box_nve.json",
+      "file": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_salt_polymer_box_nve.json",
       "sections": {
         "exact_step0_breakdown": {
           "section_line": 42,

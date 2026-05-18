@@ -45,9 +45,9 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260314-dc4101b27b-dirty-unknown
-Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
-Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/k1_kernel_audit/bond_class2
+Executable:   home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/k1_kernel_audit/bond_class2
 Process ID:   865453
 Command line:
   gmx mdrun -s test.tpr -rerun test.gro -deffnm test -ntmpi 1

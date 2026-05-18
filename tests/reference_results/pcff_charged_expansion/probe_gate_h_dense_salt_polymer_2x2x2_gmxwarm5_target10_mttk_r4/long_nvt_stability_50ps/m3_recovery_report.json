@@ -1,21 +1,21 @@
 {
   "artifact_checks": {
-    "analysis_script": "/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_pcff_charged_capability_subset/analyze_m3_nvt.py",
+    "analysis_script": "../../../../../tools/run_pcff_charged_capability_subset/analyze_m3_nvt.py",
     "missing": [],
     "required_artifacts": {
-      "checkpoint": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt.cpt",
-      "convert_tpr_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/convert_tpr.stderr",
-      "convert_tpr_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/convert_tpr.stdout",
-      "coordinates": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt.gro",
-      "energy": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt.edr",
-      "energy_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/energy_50ps.stderr",
-      "energy_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/energy_50ps.stdout",
-      "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt_energy_50ps.xvg",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt.log",
-      "mdp": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt.mdp",
-      "mdrun_extend_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/mdrun_extend.stderr",
-      "protocol": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/m3_recovery_protocol.json",
-      "run_input": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt_extend50.tpr"
+      "checkpoint": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt.cpt",
+      "convert_tpr_stderr": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/convert_tpr.stderr",
+      "convert_tpr_stdout": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/convert_tpr.stdout",
+      "coordinates": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt.gro",
+      "energy": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt.edr",
+      "energy_stderr": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/energy_50ps.stderr",
+      "energy_stdout": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/energy_50ps.stdout",
+      "energy_xvg": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt_energy_50ps.xvg",
+      "log": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt.log",
+      "mdp": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt.mdp",
+      "mdrun_extend_stderr": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/mdrun_extend.stderr",
+      "protocol": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/m3_recovery_protocol.json",
+      "run_input": "../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/long_nvt_stability_50ps/nvt_extend50.tpr"
     }
   },
   "claim_scope": "strict-PCFF-qualified charged 2x2x2 subset NVT stability only",

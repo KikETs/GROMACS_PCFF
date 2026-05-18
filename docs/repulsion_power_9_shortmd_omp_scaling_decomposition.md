@@ -14,7 +14,7 @@ This is not an exact-`r-RESPA` note.
 
 Benchmark driver:
 
-- [`tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py`](/home/kiket/Desktop/test/GROMACS_PCFF/tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py)
+- [`tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py`](../tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py)
 
 Clean benchmark controls:
 
@@ -27,9 +27,9 @@ Clean benchmark controls:
 
 Sequential long-run evidence:
 
-- [`output/repulsion_power_9_shortmd_ntomp2_long_seq/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp2_long_seq/summary.md)
-- [`output/repulsion_power_9_shortmd_ntomp6_long_seq/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp6_long_seq/summary.md)
-- [`output/repulsion_power_9_shortmd_ntomp12_long_seq/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp12_long_seq/summary.md)
+- [`output/repulsion_power_9_shortmd_ntomp2_long_seq/summary.md`](../output/repulsion_power_9_shortmd_ntomp2_long_seq/summary.md)
+- [`output/repulsion_power_9_shortmd_ntomp6_long_seq/summary.md`](../output/repulsion_power_9_shortmd_ntomp6_long_seq/summary.md)
+- [`output/repulsion_power_9_shortmd_ntomp12_long_seq/summary.md`](../output/repulsion_power_9_shortmd_ntomp12_long_seq/summary.md)
 
 Representative low-level runs:
 

@@ -66,9 +66,9 @@ The legacy M10 medium-scale NVT/NPT diagnostics are still useful, but they are n
 
 Why:
 
-- [run_m10_2.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_ensemble_gate/run_m10_2.py)
+- [run_m10_2.py](../tools/run_m10_2_ensemble_gate/run_m10_2.py)
   `get_mdp_nvt()` and `get_mdp_npt()` write plain `integrator = md` inputs.
-- [run_m10_2_1.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_1_convergence_gate/run_m10_2_1.py)
+- [run_m10_2_1.py](../tools/run_m10_2_1_convergence_gate/run_m10_2_1.py)
   `get_mdp_npt()` also writes plain `integrator = md`.
 
 Those files can still support the blocker narrative:

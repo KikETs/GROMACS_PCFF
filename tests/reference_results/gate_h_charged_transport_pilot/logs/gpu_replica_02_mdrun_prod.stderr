@@ -1,12 +1,12 @@
    :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../../build_gateb_cuda/bin/gmx
+Data prefix:  ../../../.. (source tree)
+Working dir:  ../../../..
 Command line:
-  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_02/prod.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_02/prod -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme gpu -bonded gpu -update gpu -pin off
+  gmx mdrun -s ../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_02/prod.tpr -deffnm ../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_02/prod -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme gpu -bonded gpu -update gpu -pin off
 
-Reading file /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_02/prod.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Reading file ../../../../tests/reference_results/gate_h_charged_transport_pilot/gpu/replica_02/prod.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
 1 GPU selected for this run.
 Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:
   PP:0,PME:0

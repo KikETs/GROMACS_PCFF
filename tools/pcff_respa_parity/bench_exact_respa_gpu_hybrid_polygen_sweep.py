@@ -11,6 +11,7 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[1]
+BRIDGE_OUTPUT = REPO_ROOT.parent / "GROMACS_PCFF-lunar-data-bridge" / "output" / "lammps_data_bridge_polygen_system"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from validate_gate_i_charged_long_npt_conditioning import make_gate_i_npt_mdp
@@ -43,18 +44,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gmx", default=str(REPO_ROOT / "build_gateb_cuda" / "bin" / "gmx"))
     parser.add_argument(
         "--gro",
-        default="/home/kiket/Desktop/test/GROMACS_PCFF-lunar-data-bridge/output/"
-        "lammps_data_bridge_polygen_system/system.gro",
+        default=str(BRIDGE_OUTPUT / "system.gro"),
     )
     parser.add_argument(
         "--top",
-        default="/home/kiket/Desktop/test/GROMACS_PCFF-lunar-data-bridge/output/"
-        "lammps_data_bridge_polygen_system/topol.top",
+        default=str(BRIDGE_OUTPUT / "topol.top"),
     )
     parser.add_argument(
         "--bridge-manifest",
-        default="/home/kiket/Desktop/test/GROMACS_PCFF-lunar-data-bridge/output/"
-        "lammps_data_bridge_polygen_system/bridge_manifest.json",
+        default=str(BRIDGE_OUTPUT / "bridge_manifest.json"),
     )
     parser.add_argument(
         "--out",

@@ -1,7 +1,7 @@
 # R-RESPA M2i Validation Report
 
 - Milestone: `R-RESPA M2i — First Downstream Mis-Consumption Trace for Valid Exclusion Set in Exact 3-Level Path`
-- Worktree: `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2`
+- Worktree: `..`
 - Branch: `respa-m2-exact-three-level`
 - Head commit at run start: `7f5413f02c50930fae7e023729044c98e9bbf707`
 
@@ -29,9 +29,9 @@
 ## Commands Run
 
 - Build:
-  - `cmake --build /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level --target gmx -j4`
+  - `cmake --build ../ab_builds/respa_m2_exact_three_level --target gmx -j4`
 - M2i harness:
-  - `python3 /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --downstream-misconsumption-trace --milestone-name 'R-RESPA M2i' --out /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2i_downstream_misconsumption_trace`
+  - `python3 ../tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin ../ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --downstream-misconsumption-trace --milestone-name 'R-RESPA M2i' --out ../tests/reference_results/r_respa_m2i_downstream_misconsumption_trace`
 - Full command log:
   - `tests/reference_results/r_respa_m2i_downstream_misconsumption_trace/raw_commands.txt`
 

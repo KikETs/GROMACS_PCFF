@@ -40,9 +40,9 @@
       },
       "step0_potential_abs_diff_kj_per_mol": 8583.465088
     },
-    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level",
+    "exact_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level",
     "nsteps": 8,
-    "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/plain_verlet",
+    "plain_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/plain_verlet",
     "side_reference_vs_plain": {
       "final_coord_diff": {
         "l2_norm": 0.0001465127980758503,
@@ -62,7 +62,7 @@
       },
       "step0_potential_abs_diff_kj_per_mol": 0.0
     },
-    "side_reference_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference"
+    "side_reference_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference"
   },
   "comparison_notes": [
     "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
@@ -106,28 +106,28 @@
         "buffer": "impulse_total",
         "stage": "post_combine"
       },
-      "impulse_postcombine_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_impulse_postcombine.tsv",
+      "impulse_postcombine_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_impulse_postcombine.tsv",
       "impulse_postcombine_vs_exact_diff": {
         "l2_norm": 1001.5734611335781,
         "max_abs": 63.82786178588867,
         "rms": 29.509141092668084
       },
-      "level0_post_postprocess_shift_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level0_post_postprocess_shift.tsv",
-      "level1_post_postprocess_shift_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level1_post_postprocess_shift.tsv",
+      "level0_post_postprocess_shift_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level0_post_postprocess_shift.tsv",
+      "level1_post_postprocess_shift_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level1_post_postprocess_shift.tsv",
       "level2_post_postprocess_shift_metadata": {
         "buffer": "forceWithShiftForces",
         "mts_index": "2",
         "mts_user": "3",
         "stage": "post_postprocess"
       },
-      "level2_post_postprocess_shift_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level2_post_postprocess_shift.tsv",
+      "level2_post_postprocess_shift_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level2_post_postprocess_shift.tsv",
       "level2_pre_postprocess_virial_metadata": {
         "buffer": "forceWithVirial",
         "mts_index": "2",
         "mts_user": "3",
         "stage": "pre_postprocess"
       },
-      "level2_pre_postprocess_virial_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level2_pre_postprocess_virial.tsv",
+      "level2_pre_postprocess_virial_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_level2_pre_postprocess_virial.tsv",
       "outer_post_vs_pre_postprocess_diff": {
         "l2_norm": 0.0,
         "max_abs": 0.0,
@@ -137,7 +137,7 @@
         "buffer": "physical_total",
         "stage": "post_combine"
       },
-      "physical_postcombine_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_physical_postcombine.tsv",
+      "physical_postcombine_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2d_dense_duplicate_correction_merge_trace/dense_oligomer/dt_0p0005/exact_three_level/step0_physical_postcombine.tsv",
       "physical_postcombine_vs_exact_diff": {
         "l2_norm": 0.0,
         "max_abs": 0.0,
@@ -197,9 +197,9 @@
   },
   "fixture_id": "dense_oligomer",
   "fixture_sources": {
-    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
-    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
-    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+    "lammps_data": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "lammps_input": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+    "system_json": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
   },
   "gro_metadata": {
     "box_nm": [
@@ -216,7 +216,7 @@
     "dihedral"
   ],
   "m1_continuity": {
-    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_script": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
     "archived_m1_settings": {
       "coulombtype": "Cut-off",
       "integrator": "md",
@@ -224,7 +224,7 @@
       "mts_levels": 2,
       "mts_mode": "legacy"
     },
-    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "archived_m1_summary": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
     "current_side_reference_settings": {
       "coulombtype": "PME",
       "integrator": "md",

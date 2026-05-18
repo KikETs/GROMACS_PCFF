@@ -8,11 +8,11 @@ The decisive point is not the transport error itself. The decisive point is prov
 
 Primary outputs:
 
-- [comparison_summary.json](/home/user/바탕화면/gromacs/tests/reference_results/m10/comparison_summary.json)
-- [strict_parity_summary.json](/home/user/바탕화면/gromacs/tests/reference_results/m10/strict_parity_summary.json)
-- [screening_usefulness_summary.json](/home/user/바탕화면/gromacs/tests/reference_results/m10/screening_usefulness_summary.json)
-- [method_readiness_summary.json](/home/user/바탕화면/gromacs/tests/reference_results/m10/method_readiness_summary.json)
-- [pcff_paired_provenance_gate.csv](/home/user/바탕화면/gromacs/tests/reference_results/m10/pcff_paired_provenance_gate.csv)
+- [comparison_summary.json](../tests/reference_results/m10/comparison_summary.json)
+- [strict_parity_summary.json](../tests/reference_results/m10/strict_parity_summary.json)
+- [screening_usefulness_summary.json](../tests/reference_results/m10/screening_usefulness_summary.json)
+- [method_readiness_summary.json](../tests/reference_results/m10/method_readiness_summary.json)
+- [pcff_paired_provenance_gate.csv](../tests/reference_results/m10/pcff_paired_provenance_gate.csv)
 
 ## Provenance Gate Result
 
@@ -24,8 +24,8 @@ The strict paired set candidate IDs are still `14748` and `27670`, but the retai
 
 Machine-readable evidence:
 
-- [strict_parity_summary.json](/home/user/바탕화면/gromacs/tests/reference_results/m10/strict_parity_summary.json)
-- [pcff_paired_provenance_gate.csv](/home/user/바탕화면/gromacs/tests/reference_results/m10/pcff_paired_provenance_gate.csv)
+- [strict_parity_summary.json](../tests/reference_results/m10/strict_parity_summary.json)
+- [pcff_paired_provenance_gate.csv](../tests/reference_results/m10/pcff_paired_provenance_gate.csv)
 
 Per-system classification:
 
@@ -33,17 +33,17 @@ Per-system classification:
   - rejected
   - status: `acpype_gaff2_topology`
   - reason: GROMACS paired topology was generated with ACPYPE/GAFF2, not PCFF
-  - direct evidence: [atomtyping_attempt1.log](/home/user/바탕화면/DL/gromacs/eval_top10_bottom10_stratified100/runs/Traj_14748/atomtyping_attempt1.log), [acpype.log](/home/user/바탕화면/DL/gromacs/eval_top10_bottom10_stratified100/runs/Traj_14748/topology/polymer.acpype/acpype.log), [polymer_GMX.itp](/home/user/바탕화면/DL/gromacs/eval_top10_bottom10_stratified100/runs/Traj_14748/topology/polymer_GMX.itp)
+  - direct evidence: [atomtyping_attempt1.log](../DL/gromacs/eval_top10_bottom10_stratified100/runs/Traj_14748/atomtyping_attempt1.log), [acpype.log](../DL/gromacs/eval_top10_bottom10_stratified100/runs/Traj_14748/topology/polymer.acpype/acpype.log), [polymer_GMX.itp](../DL/gromacs/eval_top10_bottom10_stratified100/runs/Traj_14748/topology/polymer_GMX.itp)
 - `27670`
   - rejected
   - status: `acpype_gaff2_atomtyping_failed`
   - reason: paired GROMACS topology is missing and the preserved typing attempt is ACPYPE/GAFF2
-  - direct evidence: [atomtyping_attempt3.log](/home/user/바탕화면/DL/gromacs/eval_top10_bottom10_stratified100/runs/Traj_27670/atomtyping_attempt3.log), [acpype.log](/home/user/바탕화면/DL/gromacs/eval_top10_bottom10_stratified100/runs/Traj_27670/topology/polymer.acpype/acpype.log)
+  - direct evidence: [atomtyping_attempt3.log](../DL/gromacs/eval_top10_bottom10_stratified100/runs/Traj_27670/atomtyping_attempt3.log), [acpype.log](../DL/gromacs/eval_top10_bottom10_stratified100/runs/Traj_27670/topology/polymer.acpype/acpype.log)
 
 Reference side remains PCFF/class2:
 
-- [production.in](/home/user/바탕화면/DL/LAMMPS_NEW/Traj_14748/MD/production.in)
-- [production.in](/home/user/바탕화면/DL/LAMMPS_NEW/Traj_27670/MD/production.in)
+- [production.in](../DL/LAMMPS_NEW/Traj_14748/MD/production.in)
+- [production.in](../DL/LAMMPS_NEW/Traj_27670/MD/production.in)
 
 ## Strict Parity
 
@@ -74,7 +74,7 @@ These numbers are still useful as workflow diagnostics. They are **not** valid P
 
 Global preparation-path evidence:
 
-- [gromacs_new_phase_atomtyping.py](/home/user/바탕화면/DL/gromacs/eval_top10_bottom10_stratified100/phase_scripts/gromacs_new_phase_atomtyping.py)
+- [gromacs_new_phase_atomtyping.py](../DL/gromacs/eval_top10_bottom10_stratified100/phase_scripts/gromacs_new_phase_atomtyping.py)
   - uses ACPYPE
   - includes Li fallback handling
 
@@ -82,22 +82,22 @@ Global preparation-path evidence:
 
 These diagnostics remain important, but they are now secondary to the PCFF provenance gate.
 
-- [paired_density_provenance.csv](/home/user/바탕화면/gromacs/tests/reference_results/m10/paired_density_provenance.csv)
+- [paired_density_provenance.csv](../tests/reference_results/m10/paired_density_provenance.csv)
   - `14748`: `inconsistent`
   - `27670`: `unavailable`
-- [paired_topology_recovery.csv](/home/user/바탕화면/gromacs/tests/reference_results/m10/paired_topology_recovery.csv)
+- [paired_topology_recovery.csv](../tests/reference_results/m10/paired_topology_recovery.csv)
   - `27670` can be dry-run recovered with donor topology `14768`
   - this is topology recovery only, not production recovery
-- [paired_artifact_registry_audit.csv](/home/user/바탕화면/gromacs/tests/reference_results/m10/paired_artifact_registry_audit.csv)
+- [paired_artifact_registry_audit.csv](../tests/reference_results/m10/paired_artifact_registry_audit.csv)
   - both paired systems: `derived_metrics_without_raw_artifacts`
-- [chain_size_artifact_status.csv](/home/user/바탕화면/gromacs/tests/reference_results/m10/chain_size_artifact_status.csv)
+- [chain_size_artifact_status.csv](../tests/reference_results/m10/chain_size_artifact_status.csv)
   - both paired systems: `unavailable`
 
 ## Transport Mismatch Diagnostics
 
 The transport decomposition still exists:
 
-- [transport_decomposition.csv](/home/user/바탕화면/gromacs/tests/reference_results/m10/transport_decomposition.csv)
+- [transport_decomposition.csv](../tests/reference_results/m10/transport_decomposition.csv)
 
 It remains useful for debugging, but it is not a valid PCFF scientific comparison until the provenance problem is fixed.
 

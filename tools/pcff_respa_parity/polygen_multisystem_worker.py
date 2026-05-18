@@ -25,11 +25,6 @@ LANES = ("lammps_cpu", "gmx_cpu", "gmx_gpu")
 BRIDGE_REPO_NAME = "GROMACS_PCFF-lunar-data-bridge"
 DEFAULT_SMOKE_EQFACTOR = 0.00005
 MOLALITY_BASIS_MIXTURE = "salt_mol_per_kg_total_mixture"
-COMMON_NVIDIA_SMI = (
-    "/usr/bin/nvidia-smi",
-    "/usr/local/bin/nvidia-smi",
-    "/usr/lib/wsl/lib/nvidia-smi",
-)
 GMX_PCFF_RUNTIME_ENV = (
     "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT=1;"
     "GMX_PCFF_MIXED_CLASS2_LINEAR_ANGLE_SIN_FLOOR=0.00038;"
@@ -72,13 +67,7 @@ def which(name: str) -> str | None:
 
 
 def detect_nvidia_smi() -> str | None:
-    path = shutil.which("nvidia-smi")
-    if path:
-        return path
-    for candidate in COMMON_NVIDIA_SMI:
-        if Path(candidate).exists():
-            return candidate
-    return None
+    return shutil.which("nvidia-smi")
 
 
 def check_import(module: str) -> str:

@@ -43,7 +43,7 @@
 
 ## Fixed In Engine
 
-- [sim_util.cpp](/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/src/gromacs/mdlib/sim_util.cpp)
+- [sim_util.cpp](../src/gromacs/mdlib/sim_util.cpp)
   - exact path geometry producer를 plain reference shape로 맞추는 shifted-i fix를 유지한다.
   - 핵심은 raw `coord_i - coord_j + shift` 대신 shifted-i coordinate를 먼저 materialize한 뒤 `dx/dy/dz`를 구성하는 것이다.
 
@@ -51,7 +51,7 @@
 
 ## Fixed In Comparator/Analysis
 
-- [run_respa_m2.py](/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py)
+- [run_respa_m2.py](../tools/run_respa_m2_microfixtures/run_respa_m2.py)
   - locked-scope `Coulomb-(SR)` comparator는 plain native total이 아니라 plain patch-contract replay total을 plain reference로 사용한다.
   - locked-scope `LJ-(SR)` comparator도 같은 방식으로 plain patch-contract replay total을 plain reference로 사용한다.
   - artifact에는 native plain total과 replay plain total을 둘 다 남긴다.

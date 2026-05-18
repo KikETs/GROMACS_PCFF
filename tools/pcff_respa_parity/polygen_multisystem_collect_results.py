@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 
-DEFAULT_OUTDIR = Path("GROMACS_PCFF/output/polygen_multisystem_validation_20260511")
+DEFAULT_OUTDIR = Path("GROMACS_PCFF/output/polygen_multisystem_validation_20260512_m1p50")
 METRIC_COLUMNS = [
     "cNE0_raw_htpmd_S_cm",
     "cNE0_raw_t_plus",

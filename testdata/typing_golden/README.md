@@ -29,7 +29,7 @@ This corpus does **not** include a runtime typing engine.
 
 Use:
 
-- [tools/build_typing_golden/generate.py](/home/kiket/바탕화면/test/GROMACS_PCFF/tools/build_typing_golden/generate.py)
+- [tools/build_typing_golden/generate.py](../../tools/build_typing_golden/generate.py)
 
 to regenerate or validate the manifest.
 

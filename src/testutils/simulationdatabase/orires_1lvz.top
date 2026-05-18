@@ -11,7 +11,7 @@
 ;	
 ;	Executable:   /usr/local/gromacs/bin/gmx
 ;	Data prefix:  /usr/local/gromacs
-;	Working dir:  /Users/anna/Git/NMRreader
+;	Working dir:  Users/anna/Git/NMRreader
 ;	Command line:
 ;	  gmx -quiet pdb2gmx -f 1lvz.pdb -ignh -ff amber99sb-ildn -water tip3p -p 1lvz.top -o 1lvz.gro
 ;	Force field was read from the standard GROMACS share directory.

@@ -40243,7 +40243,7 @@
       3.39932,
       3.39932
     ],
-    "prod_grompp_input_checkpoint": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/equil.cpt",
+    "prod_grompp_input_checkpoint": "../../../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/equil.cpt",
     "prod_initial_box_nm": [
       3.425262,
       3.425262,
@@ -40251,11 +40251,11 @@
     ],
     "prod_mdp_continuation": true
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod",
+  "prod_deffnm": "../../../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/prod",
   "prod_ld_seed_requested": 184003,
   "prod_ld_seed_resolved": null,
   "replica_index": 3,
-  "replica_summary_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json",
+  "replica_summary_json": "../../../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_03/replica_summary.json",
   "seed": 61003,
   "velocity_seed": 61003
 }

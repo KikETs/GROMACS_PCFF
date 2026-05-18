@@ -1,7 +1,7 @@
 # R-RESPA M2c Validation Report
 
 - Milestone: `R-RESPA M2c — Dense Exact-Path Force-Buffer Ownership Isolation`
-- Worktree: `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2`
+- Worktree: `..`
 - Branch: `respa-m2-exact-three-level`
 - Head commit at run start: `47a2c482027d7c910f527b0d8cd619281bcf9022`
 
@@ -20,9 +20,9 @@
 ## Commands Run
 
 - Build:
-  - `cmake --build /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level --target gmx -j4`
+  - `cmake --build ../ab_builds/respa_m2_exact_three_level --target gmx -j4`
 - M2c harness:
-  - `python3 /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --dense-force-ownership-isolation --milestone-name 'R-RESPA M2c' --out /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation`
+  - `python3 ../tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin ../ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --dense-force-ownership-isolation --milestone-name 'R-RESPA M2c' --out ../tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation`
 - Full per-case command log:
   - `tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/raw_commands.txt`
 

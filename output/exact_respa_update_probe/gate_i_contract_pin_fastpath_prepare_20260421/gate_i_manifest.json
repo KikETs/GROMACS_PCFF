@@ -22,7 +22,7 @@
     "candidates": [],
     "selected": null
   },
-  "contract_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/gate_i_contract_pin_fastpath_prepare_20260421/gate_i_contract.json",
+  "contract_path": "../../../output/exact_respa_update_probe/gate_i_contract_pin_fastpath_prepare_20260421/gate_i_contract.json",
   "executed": false,
   "failure_reasons": [
     "Checked-in repository now freezes the Gate I contract, but no completed CPU-only exact long-NPT campaign has been checked in yet."
@@ -43,7 +43,7 @@
     "estimated_hours_serial_for_all_replicas": 108.816,
     "hour_per_ns": 9.068,
     "ns_per_day": 2.647,
-    "reference_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log"
+    "reference_log": "../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log"
   },
   "prepared_only": true,
   "run_settings": {
@@ -64,7 +64,7 @@
     "exact_respa_update_omp_threads": null,
     "exact_respa_update_omp_threads_env": {},
     "initial_configuration": {
-      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/generated/system.gro",
+      "path": "../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/generated/system.gro",
       "replica_policy": "all replicas start equilibration from this same coordinate set; replica independence comes from gen-seed and ld-seed",
       "source": "scaffold_manifest_gro"
     },

@@ -7,15 +7,15 @@
 ;	Created by:
 ;	     :-) GROMACS - gmx grompp, 2027.0-dev-20260322-0ebd29773e-unknown (-:
 ;	
-;	Executable:   /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx
-;	Data prefix:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
-;	Working dir:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2f_exact_pair_write_ownership_proof/dense_oligomer/dt_0p0005/pme_legacy_side_reference
+;	Executable:   ../../../../../../../ab_builds/respa_m2_exact_three_level/bin/gmx
+;	Data prefix:  ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
+;	Working dir:  ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2f_exact_pair_write_ownership_proof/dense_oligomer/dt_0p0005/pme_legacy_side_reference
 ;	Command line:
-;	  gmx grompp -f /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2f_exact_pair_write_ownership_proof/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy.mdp -c system.gro -p system.top -o legacy.tpr -maxwarn 10
+;	  gmx grompp -f ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2f_exact_pair_write_ownership_proof/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy.mdp -c system.gro -p system.top -o legacy.tpr -maxwarn 10
 
 ; VARIOUS PREPROCESSING OPTIONS
 ; Preprocessor information: use cpp syntax.
-; e.g.: -I/home/joe/doe -I/home/mary/roe
+; e.g.: -I./joe/doe -I./mary/roe
 include                  = 
 ; e.g.: -DPOSRES -DFLEXIBLE (note these variable names are case sensitive)
 define                   = 

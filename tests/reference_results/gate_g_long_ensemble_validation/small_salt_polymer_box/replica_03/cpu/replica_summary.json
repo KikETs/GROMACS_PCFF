@@ -1,6 +1,6 @@
 {
   "ensemble": "npt",
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/equil",
+  "equil_deffnm": "../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/equil",
   "layout": "cpu",
   "layout_report": {
     "gpu_mapping_header": null,
@@ -16231,8 +16231,8 @@
       ]
     }
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/prod",
-  "production_observables_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/production_observables.xvg",
+  "prod_deffnm": "../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/prod",
+  "production_observables_xvg": "../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/production_observables.xvg",
   "replica_index": 3,
   "seed": 173531
 }

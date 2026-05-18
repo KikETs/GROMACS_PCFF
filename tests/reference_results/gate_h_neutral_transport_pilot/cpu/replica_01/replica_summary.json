@@ -1,7 +1,7 @@
 {
   "analysis": {
     "convergence_flags": [],
-    "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/diff_mol.xvg",
+    "diff_mol_xvg": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/diff_mol.xvg",
     "diffusion_cm2_s": 0.00011655900000000002,
     "fit_end_ps": 45.0,
     "fit_error_cm2_s": 1.0500000000000001e-05,
@@ -525,13 +525,13 @@
       5e-05,
       5e-05
     ],
-    "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/msd_curve.tsv",
-    "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/msdout.xvg",
+    "msd_curve_tsv": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/msd_curve.tsv",
+    "msdout_xvg": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/msdout.xvg",
     "relative_fit_error": 0.09008313386353692,
     "relative_molecule_sem": 0.03263168257836173,
-    "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/transport_molecules.ndx"
+    "transport_index": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/transport_molecules.ndx"
   },
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/equil",
+  "equil_deffnm": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/equil",
   "layout": "cpu",
   "layout_report": {
     "gpu_mapping_header": null,
@@ -552,7 +552,7 @@
     "update_gpu_enabled": false,
     "update_task_line": null
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/prod",
+  "prod_deffnm": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/prod",
   "replica_index": 1,
   "seed": 63101
 }

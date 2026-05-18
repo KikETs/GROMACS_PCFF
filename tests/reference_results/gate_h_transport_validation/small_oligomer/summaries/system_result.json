@@ -13,8 +13,8 @@
     "replicas": 3
   },
   "artifacts": {
-    "system_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer",
-    "transport_comparison_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/summaries/transport_comparison.tsv"
+    "system_root": "../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer",
+    "transport_comparison_tsv": "../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/summaries/transport_comparison.tsv"
   },
   "failure_reasons": [
     "oligomer_diffusivity_cm2_s is missing.",

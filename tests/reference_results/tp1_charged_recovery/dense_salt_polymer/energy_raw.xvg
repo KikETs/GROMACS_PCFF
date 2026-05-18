@@ -2,11 +2,11 @@
 # Created by:
 #   :-) GROMACS - gmx energy, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
 # 
-# Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
-# Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
-# Working dir:  /home/kiket
+# Executable:   ../../../../build/bin/gmx
+# Data prefix:  ../../../.. (source tree)
+# Working dir:  home/kiket
 # Command line:
-#   gmx energy -f /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/tp1_charged_recovery/dense_salt_polymer/tp1_equil.edr -o /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/tp1_charged_recovery/dense_salt_polymer/energy_raw.xvg
+#   gmx energy -f ../../../../tests/reference_results/tp1_charged_recovery/dense_salt_polymer/tp1_equil.edr -o ../../../../tests/reference_results/tp1_charged_recovery/dense_salt_polymer/energy_raw.xvg
 # gmx energy is part of G R O M A C S:
 #
 # Guyana Rwanda Oman Macau Angola Cameroon Senegal

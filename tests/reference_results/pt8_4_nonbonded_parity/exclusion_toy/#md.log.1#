@@ -45,12 +45,12 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260314-dc4101b27b-dirty-unknown
-Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
-Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_4_nonbonded_parity/exclusion_toy
+Executable:   home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
+Data prefix:  home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
+Working dir:  home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_4_nonbonded_parity/exclusion_toy
 Process ID:   281249
 Command line:
-  gmx mdrun -s topol.tpr -rerun /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_4_nonbonded_parity/exclusion_toy/system.gro -e ener.edr
+  gmx mdrun -s topol.tpr -rerun home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_4_nonbonded_parity/exclusion_toy/system.gro -e ener.edr
 
 GROMACS version:     2027.0-dev-20260314-dc4101b27b-dirty-unknown
 GIT SHA1 hash:       dc4101b27bf405b33bdd0803572c4174b964647c (dirty)

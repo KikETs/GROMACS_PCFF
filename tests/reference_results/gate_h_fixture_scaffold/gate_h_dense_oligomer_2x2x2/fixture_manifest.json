@@ -1,12 +1,12 @@
 {
   "artifacts": {
-    "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/generated/system.gro",
-    "mini_corpus_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/mini_corpus",
-    "system_data": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/mini_corpus/systems/gate_h_dense_oligomer_2x2x2/lammps/system.data",
-    "system_in": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/mini_corpus/systems/gate_h_dense_oligomer_2x2x2/lammps/system.in",
-    "system_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/mini_corpus/systems/gate_h_dense_oligomer_2x2x2/system.json",
-    "topology": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/generated/topol.top",
-    "typed_system": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/generated/typed_system.json"
+    "gro": "../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/generated/system.gro",
+    "mini_corpus_root": "../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/mini_corpus",
+    "system_data": "../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/mini_corpus/systems/gate_h_dense_oligomer_2x2x2/lammps/system.data",
+    "system_in": "../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/mini_corpus/systems/gate_h_dense_oligomer_2x2x2/lammps/system.in",
+    "system_json": "../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/mini_corpus/systems/gate_h_dense_oligomer_2x2x2/system.json",
+    "topology": "../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/generated/topol.top",
+    "typed_system": "../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/generated/typed_system.json"
   },
   "box_nm": [
     4.4,

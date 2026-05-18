@@ -1,13 +1,13 @@
 {
   "coarse": {
     "dispatch_probe_work_dirs": {
-      "active_contributions": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed",
-      "correction_outer_selection": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed",
-      "includepair_policy": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted",
-      "outer_routing": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
+      "active_contributions": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed",
+      "correction_outer_selection": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed",
+      "includepair_policy": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted",
+      "outer_routing": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
     },
     "dt_ps": 0.0005,
-    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level",
+    "exact_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level",
     "nsteps": 8
   },
   "comparison_notes": [
@@ -44,7 +44,7 @@
             },
             "physical_outer_realization": false,
             "routing_row": null,
-            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted"
+            "work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted"
           },
           "semantic_result": "Target is blocked before consumer evaluation; first-bad semantics disappears.",
           "verdict": "SUFFICIENT-BUT-NOT-MINIMAL"
@@ -105,7 +105,7 @@
               "semantic_result": "no_physical_outer_realization",
               "stage": "dispatch_internal_outer_routing"
             },
-            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed"
+            "work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed"
           },
           "semantic_result": "Target remains admitted, but no non-zero outer contribution remains; first-bad semantics disappears.",
           "verdict": "SUFFICIENT-BUT-NOT-MINIMAL"
@@ -166,7 +166,7 @@
               "semantic_result": "no_physical_outer_realization",
               "stage": "dispatch_internal_outer_routing"
             },
-            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
+            "work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
           },
           "semantic_result": "Bad semantics still exists before routing, but physical outer realization is suppressed.",
           "verdict": "NOT-CAUSAL"
@@ -227,7 +227,7 @@
               "semantic_result": "no_physical_outer_realization",
               "stage": "dispatch_internal_outer_routing"
             },
-            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed"
+            "work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed"
           },
           "semantic_result": "Target remains admitted with outer contribution active, but effective_outer_scalar becomes zero; first-bad semantics disappears.",
           "verdict": "MINIMAL-FIX-CANDIDATE"
@@ -291,7 +291,7 @@
             "semantic_result": "physical_outer_behavior_realized",
             "stage": "dispatch_internal_outer_routing"
           },
-          "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level"
+          "work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level"
         },
         "control_clean": true,
         "pair": [
@@ -350,7 +350,7 @@
               "semantic_result": "physical_outer_behavior_realized",
               "stage": "dispatch_internal_outer_routing"
             },
-            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed"
+            "work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed"
           },
           "correction_outer_selection": {
             "active_row": {
@@ -403,7 +403,7 @@
               "semantic_result": "physical_outer_behavior_realized",
               "stage": "dispatch_internal_outer_routing"
             },
-            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed"
+            "work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed"
           },
           "includepair_policy": {
             "active_row": {
@@ -456,7 +456,7 @@
               "semantic_result": "physical_outer_behavior_realized",
               "stage": "dispatch_internal_outer_routing"
             },
-            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted"
+            "work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted"
           },
           "outer_routing": {
             "active_row": {
@@ -509,14 +509,14 @@
               "semantic_result": "physical_outer_behavior_realized",
               "stage": "dispatch_internal_outer_routing"
             },
-            "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
+            "work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
           }
         },
         "why_clean": "The clean control remains admitted through the standard pairs path and keeps the same active contribution and routing semantics across all dispatch probes."
       },
       "minimal_fix_candidate": {
         "classification": "excluded correction -> outer contribution selection",
-        "code_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/src/gromacs/mdlib/sim_util.cpp",
+        "code_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/src/gromacs/mdlib/sim_util.cpp",
         "why": "Blocking only correction promotion into the effective outer scalar removes the bad semantics while preserving admission, baseline activeContributions, and baseline outer routing."
       },
       "pair_dispatch_internal_trace": {
@@ -588,7 +588,7 @@
             "semantic_result": "physical_outer_behavior_realized",
             "stage": "dispatch_internal_outer_routing"
           },
-          "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level"
+          "work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level"
         },
         "excluded_dispatch_contract": {
           "control_in_list": "false",
@@ -793,9 +793,9 @@
   },
   "fixture_id": "dense_oligomer",
   "fixture_sources": {
-    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
-    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
-    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+    "lammps_data": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "lammps_input": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+    "system_json": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
   },
   "gro_metadata": {
     "box_nm": [
@@ -812,7 +812,7 @@
     "dihedral"
   ],
   "m1_continuity": {
-    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_script": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
     "archived_m1_settings": {
       "coulombtype": "Cut-off",
       "integrator": "md",
@@ -820,7 +820,7 @@
       "mts_levels": 2,
       "mts_mode": "legacy"
     },
-    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "archived_m1_summary": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
     "current_side_reference_settings": {
       "coulombtype": "PME",
       "integrator": "md",

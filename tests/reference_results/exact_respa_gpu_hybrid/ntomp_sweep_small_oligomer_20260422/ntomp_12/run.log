@@ -45,12 +45,12 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260422-53781aa0a5-dirty-unknown
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../../../build_gateb_cuda/bin/gmx
+Data prefix:  ../../../../.. (source tree)
+Working dir:  ../../../../..
 Process ID:   38503
 Command line:
-  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_oligomer/inputs/exact_respa_force_only.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_12/run -ntmpi 1 -ntomp 12 -dlb no -nb gpu -pme cpu -bonded cpu -update cpu -pin off
+  gmx mdrun -s ../../../../../tests/reference_results/exact_respa_gpu_hybrid/force_only_narrow_final_20260422/small_oligomer/inputs/exact_respa_force_only.tpr -deffnm ../../../../../tests/reference_results/exact_respa_gpu_hybrid/ntomp_sweep_small_oligomer_20260422/ntomp_12/run -ntmpi 1 -ntomp 12 -dlb no -nb gpu -pme cpu -bonded cpu -update cpu -pin off
 
 GROMACS version:     2027.0-dev-20260422-53781aa0a5-dirty-unknown
 GIT SHA1 hash:       53781aa0a5d33961bb2b993934478ba97ad16532 (dirty)

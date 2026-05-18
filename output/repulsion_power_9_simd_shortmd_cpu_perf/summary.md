@@ -6,7 +6,7 @@ This benchmark is designed to exercise the admitted CPU short-range nonbonded ke
 
 - hostname: `KikET`
 - cpu: `AMD Ryzen 9 9900X 12-Core Processor`
-- gmx: `/home/kiket/Desktop/test/GROMACS_PCFF/build_subcounters/bin/gmx`
+- gmx: `../../build_subcounters/bin/gmx`
 - steps per run: `200`
 - repeats per point: `1`
 - pin mode: `on`

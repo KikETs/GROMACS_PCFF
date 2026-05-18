@@ -836,7 +836,7 @@ installation. For instance,
 
 ::
 
-    gmxapi_ROOT=/Users/eric/gromacs pip install --verbose gmxapi
+    gmxapi_ROOT=./gromacs pip install --verbose gmxapi
 
 Pip and related Python package management tools can be a little too
 flexible and ambiguous sometimes. If things get really messed up, try

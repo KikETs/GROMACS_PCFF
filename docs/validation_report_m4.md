@@ -18,34 +18,34 @@ M4 still does **not** implement:
 - free-energy support for non-`12` repulsion powers
 
 The frozen target remains
-[docs/pcff_respa_reference_spec.md](/home/user/바탕화면/gromacs/docs/pcff_respa_reference_spec.md).
+[docs/pcff_respa_reference_spec.md](./pcff_respa_reference_spec.md).
 
 ## Architecture entry points touched
 
 ### Topology and mixing semantics
 
-- [api/legacy/include/gromacs/mdtypes/md_enums.h](/home/user/바탕화면/gromacs/api/legacy/include/gromacs/mdtypes/md_enums.h)
+- [api/legacy/include/gromacs/mdtypes/md_enums.h](../api/legacy/include/gromacs/mdtypes/md_enums.h)
   adds `CombinationRule::SixthPower`.
-- [src/gromacs/mdtypes/md_enums.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdtypes/md_enums.cpp)
+- [src/gromacs/mdtypes/md_enums.cpp](../src/gromacs/mdtypes/md_enums.cpp)
   adds enum-string support.
-- [src/gromacs/gmxpreprocess/toppush.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/toppush.cpp)
+- [src/gromacs/gmxpreprocess/toppush.cpp](../src/gromacs/gmxpreprocess/toppush.cpp)
   implements sixth-power atom-type mixing.
-- [src/gromacs/gmxpreprocess/topio.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/topio.cpp)
+- [src/gromacs/gmxpreprocess/topio.cpp](../src/gromacs/gmxpreprocess/topio.cpp)
   updates generated `1-4` scaling semantics for sixth-power mixing.
-- [src/gromacs/gmxpreprocess/convparm.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/convparm.cpp)
+- [src/gromacs/gmxpreprocess/convparm.cpp](../src/gromacs/gmxpreprocess/convparm.cpp)
   converts sigma/epsilon input to exact Class2 `9-6` coefficient form for both normal nonbonded and listed pair interactions.
 
 ### Runtime evaluation
 
-- [src/gromacs/mdtypes/interaction_const.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdtypes/interaction_const.cpp)
+- [src/gromacs/mdtypes/interaction_const.cpp](../src/gromacs/mdtypes/interaction_const.cpp)
   generalizes VdW shift/switch handling from fixed `12`-power to arbitrary repulsion power.
-- [src/gromacs/mdlib/forcerec.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdlib/forcerec.cpp)
+- [src/gromacs/mdlib/forcerec.cpp](../src/gromacs/mdlib/forcerec.cpp)
   allows non-`12` repulsion powers on CPU and routes them away from unsupported optimized kernels.
-- [src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h](/home/user/바탕화면/gromacs/src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h)
+- [src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h](../src/gromacs/nbnxm/kernels_reference/kernel_ref_inner.h)
   evaluates exact `r^-9` repulsion in the plain-C nonbonded kernel.
-- [src/gromacs/listed_forces/pairs.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/pairs.cpp)
+- [src/gromacs/listed_forces/pairs.cpp](../src/gromacs/listed_forces/pairs.cpp)
   generalizes listed-pair evaluation and softcore-related coefficient handling to arbitrary repulsion powers.
-- [src/gromacs/tables/forcetable.cpp](/home/user/바탕화면/gromacs/src/gromacs/tables/forcetable.cpp)
+- [src/gromacs/tables/forcetable.cpp](../src/gromacs/tables/forcetable.cpp)
   updates table scaling from hard-coded `1/12` to `1/reppow`.
 
 ## Exact semantics implemented
@@ -88,15 +88,15 @@ Negative sigma handling remains consistent with existing GROMACS convention:
 
 ## Validation artifacts added
 
-- [src/gromacs/gmxpreprocess/tests/convparm.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/tests/convparm.cpp)
-- [src/gromacs/gmxpreprocess/tests/grompp_directives.cpp](/home/user/바탕화면/gromacs/src/gromacs/gmxpreprocess/tests/grompp_directives.cpp)
-- [src/gromacs/listed_forces/tests/pairs.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/tests/pairs.cpp)
-- [src/gromacs/nbnxm/tests/pcff_class2_nonbonded.cpp](/home/user/바탕화면/gromacs/src/gromacs/nbnxm/tests/pcff_class2_nonbonded.cpp)
-- [src/programs/mdrun/tests/pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp)
-- [tests/reference_results/m4/README.md](/home/user/바탕화면/gromacs/tests/reference_results/m4/README.md)
-- [tests/reference_results/m4/small_oligomer/single_point.json](/home/user/바탕화면/gromacs/tests/reference_results/m4/small_oligomer/single_point.json)
-- [tests/reference_results/m4/small_salt_polymer_box/single_point.json](/home/user/바탕화면/gromacs/tests/reference_results/m4/small_salt_polymer_box/single_point.json)
-- [tests/reference_schema/test_corpus_schema.py](/home/user/바탕화면/gromacs/tests/reference_schema/test_corpus_schema.py)
+- [src/gromacs/gmxpreprocess/tests/convparm.cpp](../src/gromacs/gmxpreprocess/tests/convparm.cpp)
+- [src/gromacs/gmxpreprocess/tests/grompp_directives.cpp](../src/gromacs/gmxpreprocess/tests/grompp_directives.cpp)
+- [src/gromacs/listed_forces/tests/pairs.cpp](../src/gromacs/listed_forces/tests/pairs.cpp)
+- [src/gromacs/nbnxm/tests/pcff_class2_nonbonded.cpp](../src/gromacs/nbnxm/tests/pcff_class2_nonbonded.cpp)
+- [src/programs/mdrun/tests/pcff_short_md.cpp](../src/programs/mdrun/tests/pcff_short_md.cpp)
+- [tests/reference_results/m4/README.md](../tests/reference_results/m4/README.md)
+- [tests/reference_results/m4/small_oligomer/single_point.json](../tests/reference_results/m4/small_oligomer/single_point.json)
+- [tests/reference_results/m4/small_salt_polymer_box/single_point.json](../tests/reference_results/m4/small_salt_polymer_box/single_point.json)
+- [tests/reference_schema/test_corpus_schema.py](../tests/reference_schema/test_corpus_schema.py)
 
 ## Agreement summary
 
@@ -113,7 +113,7 @@ These checks are exact coefficient-semantic checks, not loose tolerance tests.
 
 ### Pair-curve energy and force agreement
 
-[pairs.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/tests/pairs.cpp) validates the listed `1-4` runtime against the analytic Class2 `9-6` curve.
+[pairs.cpp](../src/gromacs/listed_forces/tests/pairs.cpp) validates the listed `1-4` runtime against the analytic Class2 `9-6` curve.
 
 Acceptance tolerances:
 
@@ -125,7 +125,7 @@ All M4 listed-pair tests pass.
 
 ### Plain-C CPU nonbonded kernel agreement
 
-[pcff_class2_nonbonded.cpp](/home/user/바탕화면/gromacs/src/gromacs/nbnxm/tests/pcff_class2_nonbonded.cpp) validates:
+[pcff_class2_nonbonded.cpp](../src/gromacs/nbnxm/tests/pcff_class2_nonbonded.cpp) validates:
 
 - exact `9-6` energy and force curves across multiple distances
 - independence of Coulomb energy from the added Class2 VdW term in the tabulated/PME-style path
@@ -143,8 +143,8 @@ All M4 plain-C CPU nonbonded tests pass.
 
 Whole-system LAMMPS normalized outputs are now committed for:
 
-- [small_oligomer](/home/user/바탕화면/gromacs/tests/reference_results/m4/small_oligomer)
-- [small_salt_polymer_box](/home/user/바탕화면/gromacs/tests/reference_results/m4/small_salt_polymer_box)
+- [small_oligomer](../tests/reference_results/m4/small_oligomer)
+- [small_salt_polymer_box](../tests/reference_results/m4/small_salt_polymer_box)
 
 Key frozen single-point values:
 
@@ -154,14 +154,14 @@ Key frozen single-point values:
 | `small_salt_polymer_box` | `92.11412` | `-0.33788696` | `6.3682874` | `-64.379354` |
 
 The committed JSON payloads are schema-tested and key observables are frozen in
-[tests/reference_schema/test_corpus_schema.py](/home/user/바탕화면/gromacs/tests/reference_schema/test_corpus_schema.py).
+[tests/reference_schema/test_corpus_schema.py](../tests/reference_schema/test_corpus_schema.py).
 
 ### Whole-system single-point regression against frozen M4 outputs
 
-[pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp)
+[pcff_short_md.cpp](../src/programs/mdrun/tests/pcff_short_md.cpp)
 now contains a dedicated `PcffSinglePointParity` regression that runs GROMACS CPU single-point
 calculations from committed GROMACS fixtures under
-[tests/reference_results/m4](/home/user/바탕화면/gromacs/tests/reference_results/m4)
+[tests/reference_results/m4](../tests/reference_results/m4)
 and compares them against the frozen LAMMPS `single_point.json` and `forces.json` payloads for:
 
 - `small_oligomer`

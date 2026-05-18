@@ -1,6 +1,6 @@
 {
   "schema": "exact_respa_update_dataflow_patch_best_repeat_probe",
-  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
+  "tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
   "steps": 10000,
   "rows": [
     {
@@ -20,7 +20,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "0e223751288557c9de836015bac751e9a4d3e1c3bebb164b7ca88d2a626bccd0",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp6_on_fused_on/rep01/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp6_on_fused_on/rep01/run.log"
     },
     {
       "label": "ntomp6_on_fused_on",
@@ -39,7 +39,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "5802d215ad16387de75a6cc7594f26ad56923d184124e189e35672aadf0a1b1d",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp6_on_fused_on/rep02/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp6_on_fused_on/rep02/run.log"
     },
     {
       "label": "ntomp6_on_fused_on",
@@ -58,7 +58,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "ae32aeffc3beefbfd9239e5eecee3922faecc2152340807720ee8d838cf9131b",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp6_on_fused_on/rep03/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp6_on_fused_on/rep03/run.log"
     },
     {
       "label": "ntomp10_on_fused_off",
@@ -77,7 +77,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "91178eb38084a228a39bc9b23aa1d4fd2424aef8506704ac2a0d47773b2ae5d1",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp10_on_fused_off/rep01/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp10_on_fused_off/rep01/run.log"
     },
     {
       "label": "ntomp10_on_fused_off",
@@ -96,7 +96,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "6c023b0eed2b8d39e837a6f5b47ff40ebae3726894b179933d3a51d97331622e",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp10_on_fused_off/rep02/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp10_on_fused_off/rep02/run.log"
     },
     {
       "label": "ntomp10_on_fused_off",
@@ -115,7 +115,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "a44af293c789b06814624556a39ee6fbe437413cde9e8b372d8d5f5fdd293ddf",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp10_on_fused_off/rep03/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp10_on_fused_off/rep03/run.log"
     },
     {
       "label": "ntomp12_off_fused_off",
@@ -134,7 +134,7 @@
       "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
       "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
       "cpt": "003545529bfcfd5c4d24b3d4978a4872dc2ffc5fe36172d9964932bc4b0dad49",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp12_off_fused_off/rep01/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp12_off_fused_off/rep01/run.log"
     },
     {
       "label": "ntomp12_off_fused_off",
@@ -153,7 +153,7 @@
       "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
       "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
       "cpt": "faa16cff5325ebb4afb204c35b53d5aa20a59d59fe7d256ba07ee58063069bbe",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp12_off_fused_off/rep02/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp12_off_fused_off/rep02/run.log"
     },
     {
       "label": "ntomp12_off_fused_off",
@@ -172,7 +172,7 @@
       "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
       "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
       "cpt": "a7d131a64d478694cdd218ebdf855da89ecd658b17929a88ff1fa93d0b94706b",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp12_off_fused_off/rep03/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_best_repeats_10000_20260421/ntomp12_off_fused_off/rep03/run.log"
     }
   ],
   "summary": [

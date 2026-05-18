@@ -17,7 +17,7 @@ GMX = REPO / "build_gateb_cuda/bin/gmx"
 OUT_ROOT = REPO / "output/polygen_pcff_gromacs_initial_em_notebook"
 GMX_CPU_WORK = OUT_ROOT / "gromacs_cpu_openmp"
 LAMMPS_WORK = OUT_ROOT / "lammps_openmp"
-LAMMPS = Path("/home/kiket/anaconda3/envs/MD/bin/lmp")
+LAMMPS = Path(os.environ.get("LMP_BIN", "lmp"))
 
 ATM_TO_BAR = 1.01325
 LAMMPS_VELOCITY_A_PER_FS_TO_NM_PER_PS = 100.0

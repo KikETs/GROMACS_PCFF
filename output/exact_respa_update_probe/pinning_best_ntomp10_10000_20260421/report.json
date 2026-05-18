@@ -1,6 +1,6 @@
 {
   "schema": "exact_respa_pinning_probe",
-  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
+  "tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
   "steps": 10000,
   "ntomp": 10,
   "rows": [
@@ -22,7 +22,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "ad9c7616fe08b6697d263ccdbf33d3ef9a6945103ffdcdfcb3d412f5d8d74c15",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_off/rep01/run.log"
+      "log": "../../../output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_off/rep01/run.log"
     },
     {
       "label": "pin_off",
@@ -42,7 +42,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "d4c983fec006d237ee49619f9ca6e0c89dd3b87dd323d82c922b2ebe477e5b98",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_off/rep02/run.log"
+      "log": "../../../output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_off/rep02/run.log"
     },
     {
       "label": "pin_on_auto_stride",
@@ -64,7 +64,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "d0ec94dd1153914743bbf894f3ca723a81ed1ca5da7e978ad3bd9d145265756d",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_auto_stride/rep01/run.log"
+      "log": "../../../output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_auto_stride/rep01/run.log"
     },
     {
       "label": "pin_on_auto_stride",
@@ -86,7 +86,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "167d3db165a34dbce21d8a25aebf58e307b29df9d5ad10c0a0cd34f46f929435",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_auto_stride/rep02/run.log"
+      "log": "../../../output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_auto_stride/rep02/run.log"
     },
     {
       "label": "pin_on_stride1",
@@ -108,7 +108,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "69065d3296e98d6e1ed0675bf59119ae104304e759ad8726782d334d78c137b9",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride1/rep01/run.log"
+      "log": "../../../output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride1/rep01/run.log"
     },
     {
       "label": "pin_on_stride1",
@@ -130,7 +130,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "2e5ead2b239e643c8f1aefc3d7a51604aaaf3b32129989ee02cb193d5015d28a",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride1/rep02/run.log"
+      "log": "../../../output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride1/rep02/run.log"
     },
     {
       "label": "pin_on_stride2",
@@ -152,7 +152,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "cfb41b50bbe59975237d0db268ba2ab50814b5081c62de2fabff339e850a3a93",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride2/rep01/run.log"
+      "log": "../../../output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride2/rep01/run.log"
     },
     {
       "label": "pin_on_stride2",
@@ -174,7 +174,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "8e2c36bb0c56ca8c017a628b13bc8ad4cc6e859c0ed987739bf4a0c6dbd39880",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride2/rep02/run.log"
+      "log": "../../../output/exact_respa_update_probe/pinning_best_ntomp10_10000_20260421/pin_on_stride2/rep02/run.log"
     }
   ],
   "summary": [

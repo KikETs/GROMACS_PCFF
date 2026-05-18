@@ -1,4 +1,4 @@
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 0:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 0:
    natoms=        10  step=         0  time=0.0000000e+00  lambda=         0
    box (3x3):
       box[    0]={ 2.40000e+00,  0.00000e+00,  0.00000e+00}
@@ -26,7 +26,7 @@
       v[    7]={ 5.36968e-01, -2.51514e-01,  9.85671e-02}
       v[    8]={ 5.06102e-01, -1.51758e-02,  2.47375e-01}
       v[    9]={-1.02079e-02,  1.02975e-01,  2.06134e-01}
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 1:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 1:
    natoms=        10  step=         4  time=2.0000001e-03  lambda=         0
    box (3x3):
       box[    0]={ 2.40000e+00,  0.00000e+00,  0.00000e+00}
@@ -54,7 +54,7 @@
       v[    7]={ 1.17090e-01, -5.05767e-01,  1.29245e-01}
       v[    8]={ 5.08744e-01, -2.45076e-02,  2.36049e-01}
       v[    9]={-1.16300e-02,  1.09816e-01,  2.12458e-01}
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 2:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 2:
    natoms=        10  step=         8  time=4.0000002e-03  lambda=         0
    box (3x3):
       box[    0]={ 2.40000e+00,  0.00000e+00,  0.00000e+00}
@@ -82,7 +82,7 @@
       v[    7]={-2.91107e-01, -7.42872e-01,  1.60829e-01}
       v[    8]={ 5.11412e-01, -3.36903e-02,  2.24915e-01}
       v[    9]={-1.30745e-02,  1.16547e-01,  2.18670e-01}
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 3:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 3:
    natoms=        10  step=        12  time=6.0000001e-03  lambda=         0
    box (3x3):
       box[    0]={ 2.40000e+00,  0.00000e+00,  0.00000e+00}
@@ -110,7 +110,7 @@
       v[    7]={-6.60376e-01, -9.36357e-01,  1.91012e-01}
       v[    8]={ 5.14099e-01, -4.25818e-02,  2.14192e-01}
       v[    9]={-1.45513e-02,  1.23043e-01,  2.24660e-01}
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 4:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 4:
    natoms=        10  step=        16  time=8.0000004e-03  lambda=         0
    box (3x3):
       box[    0]={ 2.40000e+00,  0.00000e+00,  0.00000e+00}
@@ -138,7 +138,7 @@
       v[    7]={-9.68133e-01, -1.06699e+00,  2.16950e-01}
       v[    8]={ 5.16790e-01, -5.10741e-02,  2.04046e-01}
       v[    9]={-1.60651e-02,  1.29209e-01,  2.30346e-01}
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 5:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.trr frame 5:
    natoms=        10  step=        20  time=9.9999998e-03  lambda=         0
    box (3x3):
       box[    0]={ 2.40000e+00,  0.00000e+00,  0.00000e+00}

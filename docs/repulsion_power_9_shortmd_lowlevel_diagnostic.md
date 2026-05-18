@@ -38,8 +38,8 @@ Perf stack:
 
 Summary evidence:
 
-- [`output/repulsion_power_9_shortmd_lowlevel_profile/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_lowlevel_profile/summary.md)
-- [`output/repulsion_power_9_shortmd_lowlevel_profile_post_pmegather/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_lowlevel_profile_post_pmegather/summary.md)
+- [`output/repulsion_power_9_shortmd_lowlevel_profile/summary.md`](../output/repulsion_power_9_shortmd_lowlevel_profile/summary.md)
+- [`output/repulsion_power_9_shortmd_lowlevel_profile_post_pmegather/summary.md`](../output/repulsion_power_9_shortmd_lowlevel_profile_post_pmegather/summary.md)
 
 Limits:
 
@@ -163,8 +163,8 @@ The repulsion-power-9 specialized PP kernel is no longer the right place to spen
 
 One secondary PME-side cost was worth fixing immediately because it was not physics work at all:
 
-- [`src/gromacs/ewald/pme_gather.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/ewald/pme_gather.cpp)
-- [`src/gromacs/ewald/pme.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/ewald/pme.cpp)
+- [`src/gromacs/ewald/pme_gather.cpp`](../src/gromacs/ewald/pme_gather.cpp)
+- [`src/gromacs/ewald/pme.cpp`](../src/gromacs/ewald/pme.cpp)
 
 Applied change:
 
@@ -211,7 +211,7 @@ Updated priority after this cleanup:
 
 The next PME-side follow-up targeted `spread_on_grid()` itself:
 
-- [`src/gromacs/ewald/pme_spread.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/ewald/pme_spread.cpp)
+- [`src/gromacs/ewald/pme_spread.cpp`](../src/gromacs/ewald/pme_spread.cpp)
 
 Applied change:
 
@@ -222,8 +222,8 @@ Applied change:
 
 Post-change layout sweep:
 
-- [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md)
-- [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md)
+- [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md`](../output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md)
+- [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md`](../output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md)
 
 Representative impact:
 
@@ -261,7 +261,7 @@ Updated priority after this cleanup:
 After lowering the host restrictions to allow broader PMU access, the same three representative
 specialized layouts were profiled again with additional branch, L1, and TLB events:
 
-- [`output/repulsion_power_9_shortmd_deep_profile_post_pmegather/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_deep_profile_post_pmegather/summary.md)
+- [`output/repulsion_power_9_shortmd_deep_profile_post_pmegather/summary.md`](../output/repulsion_power_9_shortmd_deep_profile_post_pmegather/summary.md)
 
 Representative results:
 

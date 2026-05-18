@@ -4,9 +4,9 @@ This toolchain freezes the current M10 evidence into machine-readable summaries.
 
 It does not rerun heavy production MD. It ingests already generated analysis artifacts from:
 
-- `/home/user/바탕화면/DL/gromacs/eval_top10_bottom10_stratified100/results`
-- `/home/user/바탕화면/DL/gromacs`
-- `/home/user/바탕화면/DL/LAMMPS_NEW`
+- `../DL/gromacs/eval_top10_bottom10_stratified100/results`
+- `../DL/gromacs`
+- `../DL/LAMMPS_NEW`
 
 The workflow separates:
 

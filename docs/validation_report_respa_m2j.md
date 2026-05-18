@@ -1,7 +1,7 @@
 # R-RESPA M2j Validation Report
 
 - Milestone: `R-RESPA M2j — Dispatch-Internal Minimal-Fix Isolation Inside exact_excludedPairs_dispatch_contract`
-- Worktree: `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2`
+- Worktree: `..`
 - Branch: `respa-m2-exact-three-level`
 - Head commit at run start: `3be070f6714214d8c30addd012a3e34978f8569f`
 
@@ -33,9 +33,9 @@
 ## Commands Run
 
 - Build:
-  - `cmake --build /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level --target gmx -j4`
+  - `cmake --build ../ab_builds/respa_m2_exact_three_level --target gmx -j4`
 - M2j harness:
-  - `python3 /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --dispatch-minimal-fix-isolation --milestone-name 'R-RESPA M2j' --out /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation`
+  - `python3 ../tools/run_respa_m2_microfixtures/run_respa_m2.py --gmx-bin ../ab_builds/respa_m2_exact_three_level/bin/gmx --fixture dense_oligomer --dispatch-minimal-fix-isolation --milestone-name 'R-RESPA M2j' --out ../tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation`
 - Full command log:
   - `tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/raw_commands.txt`
 

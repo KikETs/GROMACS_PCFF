@@ -45,9 +45,9 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260314-dc4101b27b-dirty-unknown
-Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
-Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/m10_0_short_workflow/small_oligomer
+Executable:   ../../../../build/bin/gmx
+Data prefix:  ../../../.. (source tree)
+Working dir:  ../../../../tests/reference_results/m10_0_short_workflow/small_oligomer
 Process ID:   340724
 Command line:
   gmx mdrun -s equil.tpr -c equil.gro -e equil.edr -g equil.log -o equil.trr

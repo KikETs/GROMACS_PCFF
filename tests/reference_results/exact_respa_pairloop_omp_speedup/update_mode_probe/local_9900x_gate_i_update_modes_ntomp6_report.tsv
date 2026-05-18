@@ -1,4 +1,4 @@
 fixture_id	mode	ntomp	repeat_index	ns_per_day	ms_per_step	exact_respa_update_omp_mode	force_seconds	update_seconds	total_wallcycle_seconds	log_path
-gate_i_eq750_ntomp6_update_modes	baseline	6	1	25.516	1.693	off	0.813	1.655	3.388	/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/script_bench_gate_i_ntomp6_hash_20260417/baseline/ntomp_6/repeat_01/run.log
-gate_i_eq750_ntomp6_update_modes	update_auto	6	1	26.752	1.615	auto	0.781	1.565	3.231	/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/script_bench_gate_i_ntomp6_hash_20260417/update_auto/ntomp_6/repeat_01/run.log
-gate_i_eq750_ntomp6_update_modes	update_omp	6	1	26.795	1.612	on	0.779	1.563	3.226	/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/script_bench_gate_i_ntomp6_hash_20260417/update_omp/ntomp_6/repeat_01/run.log
+gate_i_eq750_ntomp6_update_modes	baseline	6	1	25.516	1.693	off	0.813	1.655	3.388	../../../../output/exact_respa_update_probe/script_bench_gate_i_ntomp6_hash_20260417/baseline/ntomp_6/repeat_01/run.log
+gate_i_eq750_ntomp6_update_modes	update_auto	6	1	26.752	1.615	auto	0.781	1.565	3.231	../../../../output/exact_respa_update_probe/script_bench_gate_i_ntomp6_hash_20260417/update_auto/ntomp_6/repeat_01/run.log
+gate_i_eq750_ntomp6_update_modes	update_omp	6	1	26.795	1.612	on	0.779	1.563	3.226	../../../../output/exact_respa_update_probe/script_bench_gate_i_ntomp6_hash_20260417/update_omp/ntomp_6/repeat_01/run.log

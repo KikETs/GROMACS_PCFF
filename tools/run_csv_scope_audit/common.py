@@ -14,7 +14,7 @@ WORKSPACE_ROOT = REPO_ROOT.parent
 MANIFEST_ROOT = REPO_ROOT / "data_manifests"
 DEFAULT_REFERENCE_ROOT = REPO_ROOT / "tests" / "reference_results" / "csv_scope_audit"
 WORKER_SCRIPT = REPO_ROOT / "tools" / "run_csv_scope_audit" / "worker.py"
-DEFAULT_ADAPTER_PYTHON = Path("/home/kiket/anaconda3/envs/MD/bin/python")
+DEFAULT_ADAPTER_PYTHON = Path(os.environ.get("CSV_SCOPE_ADAPTER_PYTHON", "python"))
 DEFAULT_PYSOFTK_ROOT = WORKSPACE_ROOT / "torch" / "pysoftk"
 SNAPSHOT_FILENAME = "simulation-trajectory-aggregate.csv"
 

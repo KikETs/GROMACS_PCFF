@@ -164,7 +164,7 @@ TEST_F(GetIrTest, HandlesDifferentKindsOfMdpLines)
                                       "define = -DBOOLVAR -DVAR=VALUE",
                                       ";",
                                       "xtc_grps = System ; was Protein",
-                                      "include = -I/home/me/stuff",
+                                      "include = -I./me/stuff",
                                       "",
                                       "tau-t = 0.1 0.3",
                                       "ref-t = ;290 290",
@@ -192,7 +192,7 @@ TEST_F(GetIrTest, AcceptsKeyWithoutValue)
 
 TEST_F(GetIrTest, RejectsValueWithoutKey)
 {
-    const char* inputMdpFile = "= -I/home/me/stuff";
+    const char* inputMdpFile = "= -I./me/stuff";
     GMX_EXPECT_DEATH_IF_SUPPORTED(runTest(inputMdpFile), "No .mdp parameter name was found");
 }
 

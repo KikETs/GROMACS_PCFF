@@ -49,12 +49,12 @@
   "protocol": {
     "analysis_window_ps": 1000.0,
     "artifacts": {
-      "coordinates": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.gro",
-      "lammps_data": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.data",
-      "lammps_input": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.in",
-      "system_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.json",
-      "topology": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.top",
-      "typed_system": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/typed_system.json"
+      "coordinates": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.gro",
+      "lammps_data": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.data",
+      "lammps_input": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.in",
+      "system_json": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.json",
+      "topology": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/system.top",
+      "typed_system": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/typed_system.json"
     },
     "corrected_old_runner_defect": "tcouple/pcouple/gen_vel typo corrected to tcoupl/pcoupl/gen-vel",
     "duration_ps": 5000.0,
@@ -72,15 +72,15 @@
     }
   },
   "raw_artifacts": {
-    "checkpoint": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.cpt",
-    "coordinates": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.gro",
-    "energy": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.edr",
-    "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_energy.xvg",
-    "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.log",
-    "mdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil_mdout.mdp",
-    "mdp": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.mdp",
-    "mdrun_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/mdrun_tp1.stderr",
-    "run_input": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.tpr"
+    "checkpoint": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.cpt",
+    "coordinates": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.gro",
+    "energy": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.edr",
+    "energy_xvg": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_energy.xvg",
+    "log": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.log",
+    "mdout": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil_mdout.mdp",
+    "mdp": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.mdp",
+    "mdrun_stderr": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/mdrun_tp1.stderr",
+    "run_input": "../../../../tests/reference_results/tp1_exact_recovery/dense_salt_polymer_corrected_npt_5ns/tp1_equil.tpr"
   },
   "status": "PASS",
   "system_id": "dense_salt_polymer"

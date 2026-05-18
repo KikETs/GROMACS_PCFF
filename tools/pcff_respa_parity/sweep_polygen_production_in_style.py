@@ -29,7 +29,7 @@ from sweep_polygen_gpu_offload_ntomp import (
 OUT_ROOT = REPO / "output" / "polygen_pcff_gromacs_initial_em_notebook"
 STRICT_WORK = OUT_ROOT / "gromacs_gpu_hybrid_strict_pme5"
 LAMMPS_WORK = OUT_ROOT / "lammps_openmp"
-DEFAULT_LMP = Path("/home/kiket/anaconda3/envs/MD/bin/lmp")
+DEFAULT_LMP = Path(os.environ.get("LMP_BIN", "lmp"))
 DEFAULT_GMX_CPU = REPO / "build-znver4" / "bin" / "gmx"
 DEFAULT_GMX_GPU = REPO / "build_gateb_cuda" / "bin" / "gmx"
 
@@ -366,7 +366,7 @@ def main() -> int:
     config = load_notebook_config(args.notebook.resolve())
     manifest = {
         "claim_boundary": "Short production-style speed probe only; not a full equilibration or transport parity audit.",
-        "polygen_production_in": "/home/kiket/Desktop/test/MY_PAPER_RELATED/LAMMPS_BATCH/BASE/production.in",
+        "polygen_production_in": str(REPO.parent / "MY_PAPER_RELATED" / "LAMMPS_BATCH" / "BASE" / "production.in"),
         "matched_settings": {
             "lammps_run_style": "respa 3 2 2 bond 1 angle 1 dihedral 1 improper 1 pair 2 kspace 3",
             "prod_dt_fs": args.prod_dt_fs,

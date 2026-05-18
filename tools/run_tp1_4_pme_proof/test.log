@@ -45,9 +45,9 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260314-dc4101b27b-dirty-unknown
-Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
-Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/tools/run_tp1_4_pme_proof
+Executable:   ../../build/bin/gmx
+Data prefix:  ../.. (source tree)
+Working dir:  .
 Process ID:   1090858
 Command line:
   gmx mdrun -s test.tpr -rerun system.gro -e energy.edr -deffnm test

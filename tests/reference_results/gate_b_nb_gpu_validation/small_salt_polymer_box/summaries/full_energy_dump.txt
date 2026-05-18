@@ -1,4 +1,4 @@
-gmx dump: /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.edr
+gmx dump: ../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.edr
 energy components:
     0  Class2 Bond              (kJ/mol)
     1  Class2 Angle             (kJ/mol)

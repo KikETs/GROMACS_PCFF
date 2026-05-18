@@ -169181,8 +169181,8 @@
   "pipeline_contract": {
     "csv_smiles_adapter_output_format": "mol2",
     "csv_smiles_adapter_placeholder": "Br",
-    "csv_smiles_adapter_pysoftk_root": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/torch/pysoftk",
-    "csv_smiles_adapter_python": "/home/kiket/anaconda3/envs/MD/bin/python",
+    "csv_smiles_adapter_pysoftk_root": "../../../../torch/pysoftk",
+    "csv_smiles_adapter_python": "python",
     "csv_smiles_adapter_status": "pysoftk_proto_polymer_active",
     "polymer_workflow_supported_input_formats": [
       "mol_v2000"

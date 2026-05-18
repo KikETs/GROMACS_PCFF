@@ -1,12 +1,12 @@
 Traceback (most recent call last):
-  File "/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_pcff_charged_capability_subset/run_m1_m3.py", line 992, in <module>
+  File "../../../../tools/run_pcff_charged_capability_subset/run_m1_m3.py", line 992, in <module>
     raise SystemExit(main())
                      ~~~~^^
-  File "/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_pcff_charged_capability_subset/run_m1_m3.py", line 960, in main
+  File "../../../../tools/run_pcff_charged_capability_subset/run_m1_m3.py", line 960, in main
     parity_report = run_paired_npt(args, generated_paths, out_root)
-  File "/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_pcff_charged_capability_subset/run_m1_m3.py", line 745, in run_paired_npt
+  File "../../../../tools/run_pcff_charged_capability_subset/run_m1_m3.py", line 745, in run_paired_npt
     wait_for_process(lmp_npt)
     ~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_pcff_charged_capability_subset/run_m1_m3.py", line 128, in wait_for_process
+  File "../../../../tools/run_pcff_charged_capability_subset/run_m1_m3.py", line 128, in wait_for_process
     raise RuntimeError(f"Command failed ({returncode}): {' '.join(cmd)}")
 RuntimeError: Command failed (1): mpirun -np 4 lmp -log npt.log -in npt.in

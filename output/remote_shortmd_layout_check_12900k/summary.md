@@ -6,7 +6,7 @@ This benchmark compares pure-OpenMP and PME-split CPU layouts on the non-MTS sho
 
 - hostname: `user-Z690-AORUS-PRO`
 - cpu: `12th Gen Intel(R) Core(TM) i9-12900K`
-- gmx: `/home/user/tmp/gromacs_pcff_remotecheck/build_subcounters_remote/bin/gmx`
+- gmx: `tmp/gromacs_pcff_remotecheck/build_subcounters_remote/bin/gmx`
 - steps per run: `10000`
 - repeats per point: `3`
 - pin mode: `on`

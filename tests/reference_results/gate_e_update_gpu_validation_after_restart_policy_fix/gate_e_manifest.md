@@ -2,7 +2,7 @@
 
 - Status: PASS
 - Gate F allowed: True
-- gmx: `/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx`
+- gmx: `../../../build_gateb_cuda/bin/gmx`
 - precision: `mixed`
 - GPU support: `CUDA`
 - ntmpi / ntomp: `1` / `1`
@@ -31,8 +31,8 @@
 - FFT-backend arithmetic evidence available: `False`
 - Layout report: `single-rank colocated PP+PME tasks on rank 0`
 - First failure field: `None`
-- Artifact root: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_e_update_gpu_validation_after_restart_policy_fix/small_oligomer`
-- Command script: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_e_update_gpu_validation_after_restart_policy_fix/small_oligomer/run_commands.sh`
+- Artifact root: `./small_oligomer`
+- Command script: `./small_oligomer/run_commands.sh`
 
 ### small_salt_polymer_box
 
@@ -50,6 +50,6 @@
 - FFT-backend arithmetic evidence available: `True`
 - Layout report: `single-rank colocated PP+PME tasks on rank 0`
 - First failure field: `None`
-- Artifact root: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_e_update_gpu_validation_after_restart_policy_fix/small_salt_polymer_box`
-- Command script: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_e_update_gpu_validation_after_restart_policy_fix/small_salt_polymer_box/run_commands.sh`
+- Artifact root: `./small_salt_polymer_box`
+- Command script: `./small_salt_polymer_box/run_commands.sh`
 

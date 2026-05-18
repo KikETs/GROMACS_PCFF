@@ -1,12 +1,12 @@
    :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../../../build_gateb_cuda/bin/gmx
+Data prefix:  ../../../../.. (source tree)
+Working dir:  ../../../../..
 Command line:
-  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/gpu_split.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/gpu_split -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme gpu -bonded gpu -update gpu -pin off -cpi /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/gpu_split.cpt
+  gmx mdrun -s ../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/gpu_split.tpr -deffnm ../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/gpu_split -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme gpu -bonded gpu -update gpu -pin off -cpi ../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/gpu_split.cpt
 
-Reading file /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/gpu_split.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Reading file ../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/gpu_split.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
 1 GPU selected for this run.
 Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:
   PP:0,PME:0
@@ -21,7 +21,7 @@ starting mdrun 'small_salt_polymer_box'
 
 Writing final coordinates.
 
-Back Off! I just backed up /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/gpu_split.gro to /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/#gpu_split.gro.1#
+Back Off! I just backed up ../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/gpu_split.gro to ../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/gpu_split/#gpu_split.gro.1#
 
                Core t (s)   Wall t (s)        (%)
        Time:        0.024        0.024       99.6

@@ -29,15 +29,15 @@ Remote clean worktree:
 
 - base code: `61fefe8f86`
 - local unpushed PME follow-up was overlaid for:
-  - [`src/gromacs/ewald/pme.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/ewald/pme.cpp)
-  - [`src/gromacs/ewald/pme_gather.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/ewald/pme_gather.cpp)
+  - [`src/gromacs/ewald/pme.cpp`](../src/gromacs/ewald/pme.cpp)
+  - [`src/gromacs/ewald/pme_gather.cpp`](../src/gromacs/ewald/pme_gather.cpp)
 
 Remote summaries copied back locally:
 
 - mixed-core check:
-  [`output/remote_shortmd_layout_check_12900k/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/remote_shortmd_layout_check_12900k/summary.md)
+  [`output/remote_shortmd_layout_check_12900k/summary.md`](../output/remote_shortmd_layout_check_12900k/summary.md)
 - P-core-only sweep:
-  [`output/remote_shortmd_layout_check_12900k_pcore_only/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/remote_shortmd_layout_check_12900k_pcore_only/summary.md)
+  [`output/remote_shortmd_layout_check_12900k_pcore_only/summary.md`](../output/remote_shortmd_layout_check_12900k_pcore_only/summary.md)
 
 Benchmark shape:
 

@@ -26,7 +26,7 @@ from analyze_polygen_transport import (
 )
 
 
-DEFAULT_OUTDIR = Path("GROMACS_PCFF/output/polygen_multisystem_validation_20260511")
+DEFAULT_OUTDIR = Path("GROMACS_PCFF/output/polygen_multisystem_validation_20260512_m1p50")
 
 
 def batch_traj_id(row: pd.Series) -> int:

@@ -14,8 +14,8 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 GMX = Path(os.environ.get("GMX_BIN", REPO / "build_gateb_cuda/bin/gmx"))
-LMP = Path("/home/kiket/anaconda3/envs/MD/bin/lmp")
-BRIDGE_REPO = Path("/home/kiket/Desktop/test/GROMACS_PCFF-lunar-data-bridge")
+LMP = Path(os.environ.get("LMP_BIN", "lmp"))
+BRIDGE_REPO = Path(os.environ.get("PCFF_BRIDGE_REPO", REPO.parent / "GROMACS_PCFF-lunar-data-bridge"))
 BRIDGE_SCRIPT = BRIDGE_REPO / "tools/pcff_fixture_bridge/lammps_data_bridge.py"
 OUT_ROOT = REPO / "output/polygen_pcff_gromacs_initial_em_notebook"
 GMX_CPU_WORK = OUT_ROOT / "gromacs_cpu_openmp"

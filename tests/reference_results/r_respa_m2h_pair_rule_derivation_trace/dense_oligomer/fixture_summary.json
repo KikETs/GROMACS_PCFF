@@ -1,7 +1,7 @@
 {
   "coarse": {
     "dt_ps": 0.0005,
-    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2h_pair_rule_derivation_trace/dense_oligomer/dt_0p0005/exact_three_level",
+    "exact_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2h_pair_rule_derivation_trace/dense_oligomer/dt_0p0005/exact_three_level",
     "nsteps": 8
   },
   "comparison_notes": [
@@ -250,7 +250,7 @@
         "target_topology_sources": [
           "bond"
         ],
-        "topology_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2h_pair_rule_derivation_trace/dense_oligomer/dt_0p0005/exact_three_level/system.top"
+        "topology_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2h_pair_rule_derivation_trace/dense_oligomer/dt_0p0005/exact_three_level/system.top"
       },
       "why_not_fully_closed": "This closes only the pair-specific rule meaning inside generate_excl for dense_oligomer step 0."
     }
@@ -297,9 +297,9 @@
   },
   "fixture_id": "dense_oligomer",
   "fixture_sources": {
-    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
-    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
-    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+    "lammps_data": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "lammps_input": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+    "system_json": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
   },
   "gro_metadata": {
     "box_nm": [
@@ -316,7 +316,7 @@
     "dihedral"
   ],
   "m1_continuity": {
-    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_script": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
     "archived_m1_settings": {
       "coulombtype": "Cut-off",
       "integrator": "md",
@@ -324,7 +324,7 @@
       "mts_levels": 2,
       "mts_mode": "legacy"
     },
-    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "archived_m1_summary": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
     "current_side_reference_settings": {
       "coulombtype": "PME",
       "integrator": "md",

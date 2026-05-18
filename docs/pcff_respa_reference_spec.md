@@ -14,8 +14,8 @@ M1 does **not** change runtime behavior in this repository. It only freezes the 
 
 The current repository already contains a limited multiple-time-stepping implementation, but it is not the target behavior for this project:
 
-- [src/gromacs/mdtypes/multipletimestepping.h](/home/user/바탕화면/gromacs/src/gromacs/mdtypes/multipletimestepping.h#L50) defines a fixed set of force groups and asserts that only 0 or 2 MTS levels are supported.
-- [src/gromacs/mdtypes/multipletimestepping.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdtypes/multipletimestepping.cpp#L51) hard-codes two-level handling and rejects `mts-levels != 2`.
+- [src/gromacs/mdtypes/multipletimestepping.h](../src/gromacs/mdtypes/multipletimestepping.h#L50) defines a fixed set of force groups and asserts that only 0 or 2 MTS levels are supported.
+- [src/gromacs/mdtypes/multipletimestepping.cpp](../src/gromacs/mdtypes/multipletimestepping.cpp#L51) hard-codes two-level handling and rejects `mts-levels != 2`.
 - A repository search under `src/` and `share/` for `class2`, `pcff`, `lj/class2`, and `coul/long` returns no current implementation hits.
 
 Therefore M1 treats current GROMACS runtime physics as **non-reference** for PCFF/Class2 and full LAMMPS `respa`.

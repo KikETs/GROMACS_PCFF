@@ -1,6 +1,6 @@
 {
   "schema": "gate_i_raw_scaffold_update_omp_probe",
-  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
+  "tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
   "steps": 10000,
   "ntomp": 12,
   "rows": [
@@ -15,7 +15,7 @@
       "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
       "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
       "cpt": "02fa7158c14dbec327adfe6db5e494c6045f28d20f79bd43e83ddb227790d74c",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/gate_i_raw_scaffold_update_omp_10000_ntomp12_20260421/off/run.log"
+      "log": "../../../output/exact_respa_update_probe/gate_i_raw_scaffold_update_omp_10000_ntomp12_20260421/off/run.log"
     },
     {
       "mode": "auto",
@@ -28,7 +28,7 @@
       "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
       "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
       "cpt": "26a302991dc5684188ad5d40ee2fdc4d003e73d13353bd53759f87583dc6aef4",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/gate_i_raw_scaffold_update_omp_10000_ntomp12_20260421/auto/run.log"
+      "log": "../../../output/exact_respa_update_probe/gate_i_raw_scaffold_update_omp_10000_ntomp12_20260421/auto/run.log"
     },
     {
       "mode": "on",
@@ -41,7 +41,7 @@
       "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
       "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
       "cpt": "35595679fc1564b0ef73e78baccae0b045ed7e84f711e115eef6bdd912cfbbd6",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/gate_i_raw_scaffold_update_omp_10000_ntomp12_20260421/on/run.log"
+      "log": "../../../output/exact_respa_update_probe/gate_i_raw_scaffold_update_omp_10000_ntomp12_20260421/on/run.log"
     }
   ],
   "comparisons": {

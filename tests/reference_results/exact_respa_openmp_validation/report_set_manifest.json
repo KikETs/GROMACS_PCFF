@@ -30,8 +30,8 @@
       "system": "small_salt_polymer_box",
       "tsan_required": true,
       "tsan_env": {
-        "LD_LIBRARY_PATH": "/home/kiket/Desktop/test/local_toolchains/libtinfo5/lib/x86_64-linux-gnu:/home/kiket/Desktop/test/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib:/home/kiket/Desktop/test/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/clang/18/lib/x86_64-unknown-linux-gnu",
-        "TSAN_OPTIONS": "halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=/home/kiket/Desktop/test/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/bin/llvm-symbolizer"
+        "LD_LIBRARY_PATH": "../../local_toolchains/libtinfo5/lib/x86_64-linux-gnu:../../local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib:../../local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/clang/18/lib/x86_64-unknown-linux-gnu",
+        "TSAN_OPTIONS": "halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=../../local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/bin/llvm-symbolizer"
       }
     },
     "amd_ryzen_7_5800x_low_core_workstation_lab": {
@@ -47,7 +47,7 @@
         "backend_target": {
           "mode": "ssh",
           "ssh_target": "lab@100.121.61.51",
-          "repo_path": "/home/lab/바탕화면/GROMACS_PCFF"
+          "repo_path": "바탕화면/GROMACS_PCFF"
         }
       },
       "release_binary": "build-worktree/bin/mdrun-non-integrator-test",
@@ -57,8 +57,8 @@
       "system": "small_salt_polymer_box",
       "tsan_required": true,
       "tsan_env": {
-        "LD_LIBRARY_PATH": "/home/lab/local_toolchains/libtinfo5/lib/x86_64-linux-gnu:/home/lab/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib:/home/lab/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/clang/18/lib/x86_64-unknown-linux-gnu",
-        "TSAN_OPTIONS": "halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=/home/lab/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/bin/llvm-symbolizer"
+        "LD_LIBRARY_PATH": "../../local_toolchains/libtinfo5/lib/x86_64-linux-gnu:../../local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib:../../local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/clang/18/lib/x86_64-unknown-linux-gnu",
+        "TSAN_OPTIONS": "halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=../../local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/bin/llvm-symbolizer"
       }
     },
     "intel_i9_12900k_mid_core_hybrid_desktop": {
@@ -74,7 +74,7 @@
         "backend_target": {
           "mode": "ssh",
           "ssh_target": "user@100.83.33.61",
-          "repo_path": "/home/user/Desktop/GROMACS_PCFF"
+          "repo_path": "Desktop/GROMACS_PCFF"
         }
       },
       "release_binary": "build-worktree/bin/mdrun-non-integrator-test",
@@ -84,8 +84,8 @@
       "system": "small_salt_polymer_box",
       "tsan_required": true,
       "tsan_env": {
-        "LD_LIBRARY_PATH": "/home/user/local_toolchains/libtinfo5/lib/x86_64-linux-gnu:/home/user/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib:/home/user/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/clang/18/lib/x86_64-unknown-linux-gnu",
-        "TSAN_OPTIONS": "halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=/home/user/local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/bin/llvm-symbolizer"
+        "LD_LIBRARY_PATH": "../../local_toolchains/libtinfo5/lib/x86_64-linux-gnu:../../local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib:../../local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/clang/18/lib/x86_64-unknown-linux-gnu",
+        "TSAN_OPTIONS": "halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=../../local_toolchains/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/bin/llvm-symbolizer"
       }
     }
   },

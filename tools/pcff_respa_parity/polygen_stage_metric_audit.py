@@ -5,6 +5,7 @@ import ast
 import csv
 import json
 import math
+import os
 import re
 import statistics
 import subprocess
@@ -18,7 +19,7 @@ DEFAULT_NOTEBOOK = REPO_ROOT / "output/jupyter-notebook/polygen_pcff_rrespa_lamm
 DEFAULT_OUT_ROOT = REPO_ROOT / "output/polygen_pcff_gromacs_initial_em_notebook"
 DEFAULT_AUDIT_OUT = DEFAULT_OUT_ROOT / "current_stage_metric_audit"
 DEFAULT_GMX = REPO_ROOT / "build_gateb_cuda/bin/gmx"
-DEFAULT_LMP = Path("/home/kiket/anaconda3/envs/MD/bin/lmp")
+DEFAULT_LMP = Path(os.environ.get("LMP_BIN", "lmp"))
 
 ATM_TO_BAR = 1.01325
 KCAL_TO_KJ = 4.184

@@ -1,9 +1,9 @@
 {
   "artifacts": {
-    "gromacs_energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/gromacs/target_1bar_energy.xvg",
-    "gromacs_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/gromacs",
-    "lammps_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/lammps/target_1bar.log",
-    "lammps_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/lammps"
+    "gromacs_energy_xvg": "../../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/gromacs/target_1bar_energy.xvg",
+    "gromacs_root": "../../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/gromacs",
+    "lammps_log": "../../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/lammps/target_1bar.log",
+    "lammps_root": "../../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/target_1bar/lammps"
   },
   "claim_boundary_if_pass": "pressure-preconditioned 1 bar staged dense parity only",
   "gromacs": {
@@ -67,7 +67,7 @@
     "density_rel_diff": 0.037764712115395525,
     "volume_rel_diff": 0.03977580260686641
   },
-  "precondition_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/paired_npt/dense_npt_parity_report.json",
+  "precondition_report": "../../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v4_staged_250bar_to_1bar/systems/monoglyme_ethane_litfsi_1to1_dense18/precondition_250bar/paired_npt/dense_npt_parity_report.json",
   "protocol": {
     "analysis_window_ps": 50.0,
     "density_rel_diff_max": 0.05,

@@ -2,8 +2,10 @@ import os
 import subprocess
 import json
 import math
+from pathlib import Path
 
-GMX_BIN = "/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+GMX_BIN = os.environ.get("GMX_BIN", str(REPO_ROOT / "build" / "bin" / "gmx"))
 
 def run_command(cmd, cwd=None, input_str=None):
     env = os.environ.copy()

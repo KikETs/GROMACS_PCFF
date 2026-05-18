@@ -1,3 +1,3 @@
 fixture_id	mode	ntomp	repeat_index	ns_per_day	ms_per_step	force_seconds	update_seconds	total_wallcycle_seconds	log_path
-gate_i_local_9900x_direct_cpulist_ntomp12_direct_only	pairloop_direct	12	1	11.221	3.85	5.229	2.636	7.704	/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp12_direct_only/pairloop_direct/ntomp_12/repeat_01/run.log
-gate_i_local_9900x_direct_cpulist_ntomp12_direct_only	pairloop_direct_block	12	1	11.289	3.827	5.197	2.636	7.657	/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp12_direct_only/pairloop_direct_block/ntomp_12/repeat_01/run.log
+gate_i_local_9900x_direct_cpulist_ntomp12_direct_only	pairloop_direct	12	1	11.221	3.85	5.229	2.636	7.704	../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp12_direct_only/pairloop_direct/ntomp_12/repeat_01/run.log
+gate_i_local_9900x_direct_cpulist_ntomp12_direct_only	pairloop_direct_block	12	1	11.289	3.827	5.197	2.636	7.657	../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_bench_ntomp12_direct_only/pairloop_direct_block/ntomp_12/repeat_01/run.log

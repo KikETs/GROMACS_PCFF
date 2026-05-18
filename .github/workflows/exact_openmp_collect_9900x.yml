@@ -13,11 +13,36 @@ jobs:
       - x64
       - exact-openmp-9900x
     env:
-      EXACT_OPENMP_REPO_ROOT: /home/kiket/Desktop/test/ab_worktrees/GROMACS_PCFF_9900x_runner
+      EXACT_OPENMP_REPO_ROOT_RELATIVE: ab_worktrees/GROMACS_PCFF_9900x_runner
+      EXACT_OPENMP_OUT_DIR: ${{ runner.temp }}/exact-openmp-desktop-recurring
     steps:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Resolve dedicated runner repo
+        run: |
+          for base in \
+            "${GITHUB_WORKSPACE}/../../../../.." \
+            "${GITHUB_WORKSPACE}/../../../.." \
+            "${GITHUB_WORKSPACE}/../../.." \
+            "${GITHUB_WORKSPACE}/../.." \
+            "${GITHUB_WORKSPACE}/.." \
+            "${GITHUB_WORKSPACE}" \
+            "${{ runner.workspace }}/../../.." \
+            "${{ runner.workspace }}/../.." \
+            "${{ runner.workspace }}/.." \
+            "${{ runner.workspace }}"
+          do
+            candidate="${base}/${EXACT_OPENMP_REPO_ROOT_RELATIVE}"
+            if [ -e "${candidate}/.git" ]; then
+              resolved="$(cd "${candidate}" && pwd -P)"
+              echo "EXACT_OPENMP_REPO_ROOT=${resolved}" >> "${GITHUB_ENV}"
+              exit 0
+            fi
+          done
+          echo "Could not resolve ${EXACT_OPENMP_REPO_ROOT_RELATIVE}" >&2
+          exit 1
 
       - name: Sync dedicated runner repo to workflow ref
         run: |
@@ -40,10 +65,10 @@ jobs:
             --manifest tests/reference_results/exact_respa_openmp_validation/report_set_manifest.json \
             --collection-mode ci \
             --strict \
-            --out-dir /tmp/exact-openmp-desktop-recurring
+            --out-dir "${EXACT_OPENMP_OUT_DIR}"
 
       - name: Upload backend validation summary
         uses: actions/upload-artifact@v4
         with:
           name: exact-openmp-desktop-recurring
-          path: /tmp/exact-openmp-desktop-recurring
+          path: ${{ env.EXACT_OPENMP_OUT_DIR }}

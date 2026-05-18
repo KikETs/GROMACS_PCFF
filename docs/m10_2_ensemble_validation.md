@@ -13,8 +13,8 @@ The updated gate separates two different questions:
 Only the first question is blocking for `M10.2`.
 
 ## Execution Prerequisite
-- runner: [run_m10_2.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_ensemble_gate/run_m10_2.py)
-- required interpreter: `/home/kiket/anaconda3/envs/MD/bin/python3`
+- runner: [run_m10_2.py](../tools/run_m10_2_ensemble_gate/run_m10_2.py)
+- required interpreter: `python3`
 - reason: this runner imports `numpy` and was validated in the `MD` conda environment, not bare system `python3`
 
 ## System
@@ -65,7 +65,7 @@ Non-blocking:
 - `small_oligomer_medium.npt_stability`
 
 Final machine-readable decision:
-- [m10_2_gate_decision.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json)
+- [m10_2_gate_decision.json](../tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json)
 - overall status: `pass`
 
 ## Limits

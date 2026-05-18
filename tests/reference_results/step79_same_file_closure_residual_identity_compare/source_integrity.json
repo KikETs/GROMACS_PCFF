@@ -1,5 +1,5 @@
 {
-  "artifact": "/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/step79_same_file_closure_residual_identity_compare/closure_residual_identity_compare.tsv",
+  "artifact": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/step79_same_file_closure_residual_identity_compare/closure_residual_identity_compare.tsv",
   "comparison_boundary": "same-file residual identity comparison: (exact_step0_breakdown closure residual - single_time_step_breakdown closure residual) vs exact_minus_single_time_step closure residual",
   "mapping": {
     "type": "same_file_closure_residual_identity",
@@ -19,7 +19,7 @@
   },
   "systems": {
     "small_oligomer": {
-      "actual_json_path": "/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_oligomer_nve.json",
+      "actual_json_path": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_oligomer_nve.json",
       "exact_step0_breakdown_source_lines": {
         "angle": 42,
         "bond": 43,
@@ -52,7 +52,7 @@
       "interpretation": "exact identity"
     },
     "small_salt_polymer_box": {
-      "actual_json_path": "/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_salt_polymer_box_nve.json",
+      "actual_json_path": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/m6_respa/last_run_actual/small_salt_polymer_box_nve.json",
       "exact_step0_breakdown_source_lines": {
         "angle": 43,
         "bond": 44,

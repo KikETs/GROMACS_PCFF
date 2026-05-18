@@ -30,7 +30,7 @@ Preprocessing
 .. mdp:: include
 
    directories to include in your topology. Format:
-   ``-I/home/john/mylib -I../otherlib``
+   ``-I./mylib -I../otherlib``
 
 .. mdp:: define
 

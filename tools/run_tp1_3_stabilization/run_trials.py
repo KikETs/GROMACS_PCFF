@@ -8,8 +8,10 @@ import subprocess
 import json
 import shutil
 import argparse
+from pathlib import Path
 
-GMX_BIN = "/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+GMX_BIN = os.environ.get("GMX_BIN", str(REPO_ROOT / "build" / "bin" / "gmx"))
 
 def run_command(cmd, cwd=None):
     # print(f"Executing: {' '.join(cmd)}")
@@ -87,7 +89,7 @@ def main():
     parser.add_argument("--trial", help="Run specific trial (TRL-0 to TRL-4)")
     args = parser.parse_args()
 
-    project_root = "/home/kiket/바탕화면/test/GROMACS_PCFF"
+    project_root = str(REPO_ROOT)
     output_base = os.path.join(project_root, "tests/reference_results/tp1_3_stabilization")
     os.makedirs(output_base, exist_ok=True)
 

@@ -9,9 +9,9 @@
 ;	Created by:
 ;	    :-) GROMACS - gmx pdb2gmx, 2017-dev-20170512-bd242e8-dirty-unknown (-:
 ;	
-;	Executable:   /home/chaosit/gromacs/bin/gmx_mpi
-;	Data prefix:  /home/chaosit/gromacs
-;	Working dir:  /home/chaosit/models/alala
+;	Executable:   home/chaosit/gromacs/bin/gmx_mpi
+;	Data prefix:  home/chaosit/gromacs
+;	Working dir:  home/chaosit/models/alala
 ;	Command line:
 ;	  gmx_mpi pdb2gmx -f alaala.pdb
 ;	Force field was read from the standard GROMACS share directory.

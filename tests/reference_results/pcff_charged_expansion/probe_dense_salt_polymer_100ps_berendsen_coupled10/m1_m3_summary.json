@@ -1,8 +1,8 @@
 {
   "artifacts": {
-    "dense_npt_parity_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen_coupled10/paired_npt/dense_npt_parity_report.json",
+    "dense_npt_parity_report": "../../../../tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen_coupled10/paired_npt/dense_npt_parity_report.json",
     "long_nvt_stability_report": null,
-    "qualified_pair_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen_coupled10/qualified_pair_manifest.json"
+    "qualified_pair_manifest": "../../../../tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen_coupled10/qualified_pair_manifest.json"
   },
   "capability_subset_status": "FAIL",
   "dense_parity_status": "FAIL",

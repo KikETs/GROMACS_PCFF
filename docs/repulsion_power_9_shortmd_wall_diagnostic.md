@@ -9,7 +9,7 @@ whole-run wall result at `ntomp=2` and `ntomp=6` on the audited host?
 
 Benchmark driver:
 
-- [`tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py`](/home/kiket/Desktop/test/GROMACS_PCFF/tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py)
+- [`tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py`](../tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py)
 
 Key controls now supported by the driver:
 
@@ -40,7 +40,7 @@ Low-level limitation on this host:
 
 ### Historical short run, now treated as insufficient
 
-- [`output/repulsion_power_9_simd_shortmd_cpu_perf/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_simd_shortmd_cpu_perf/summary.md)
+- [`output/repulsion_power_9_simd_shortmd_cpu_perf/summary.md`](../output/repulsion_power_9_simd_shortmd_cpu_perf/summary.md)
 - `steps=200`, `repeats=1`, `pin=on`, `dlb=auto`, fixed mode order
 
 This run is still valid for proving the kernel is reachable, but it is too short and too noisy for
@@ -48,8 +48,8 @@ wall-clock interpretation at `ntomp=2` and `ntomp=6`.
 
 ### DLB control sweep
 
-- [`output/repulsion_power_9_shortmd_wall_diag_auto/`](</home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_wall_diag_auto>)
-- [`output/repulsion_power_9_shortmd_wall_diag_dlb_no/`](</home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_wall_diag_dlb_no>)
+- [`output/repulsion_power_9_shortmd_wall_diag_auto/`](<../output/repulsion_power_9_shortmd_wall_diag_auto>)
+- [`output/repulsion_power_9_shortmd_wall_diag_dlb_no/`](<../output/repulsion_power_9_shortmd_wall_diag_dlb_no>)
 - `steps=4000`, `repeats=5`, `pin=on`, completed evidence set `ntomp=1,2,6`
 
 These runs show that `dlb=auto` versus `dlb=no` does not materially change the medians. DLB is not
@@ -57,27 +57,27 @@ the dominant cause of the earlier mixed wall result.
 
 ### Clean fixed-`ntomp` runs
 
-- [`output/repulsion_power_9_shortmd_ntomp2_only_clean/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp2_only_clean/summary.md)
-- [`output/repulsion_power_9_shortmd_ntomp6_only_clean/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp6_only_clean/summary.md)
+- [`output/repulsion_power_9_shortmd_ntomp2_only_clean/summary.md`](../output/repulsion_power_9_shortmd_ntomp2_only_clean/summary.md)
+- [`output/repulsion_power_9_shortmd_ntomp6_only_clean/summary.md`](../output/repulsion_power_9_shortmd_ntomp6_only_clean/summary.md)
 - `steps=2000`, `repeats=6`, `pin=on`, `dlb=no`, alternating mode order
 
 ### Clean fixed-`ntomp` run with explicit warmup
 
-- [`output/repulsion_power_9_shortmd_ntomp2_warmup_clean/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp2_warmup_clean/summary.md)
+- [`output/repulsion_power_9_shortmd_ntomp2_warmup_clean/summary.md`](../output/repulsion_power_9_shortmd_ntomp2_warmup_clean/summary.md)
 - `steps=2000`, `repeats=3`, `pin=on`, `dlb=no`, alternating mode order, `warmup-cycles-per-ntomp=1`
 
 ### Longer sequential fixed-`ntomp` runs
 
-- [`output/repulsion_power_9_shortmd_ntomp2_long_seq/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp2_long_seq/summary.md)
-- [`output/repulsion_power_9_shortmd_ntomp6_long_seq/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_ntomp6_long_seq/summary.md)
+- [`output/repulsion_power_9_shortmd_ntomp2_long_seq/summary.md`](../output/repulsion_power_9_shortmd_ntomp2_long_seq/summary.md)
+- [`output/repulsion_power_9_shortmd_ntomp6_long_seq/summary.md`](../output/repulsion_power_9_shortmd_ntomp6_long_seq/summary.md)
 - `steps=10000`, `repeats=3`, `pin=on`, `dlb=no`, alternating mode order, `warmup-cycles-per-ntomp=1`
 
 ### Representative software-level low-level runs
 
-- [`output/repulsion_power_9_shortmd_timev/ntomp2/generic/timev.stderr.txt`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_timev/ntomp2/generic/timev.stderr.txt)
-- [`output/repulsion_power_9_shortmd_timev/ntomp2/specialized/timev.stderr.txt`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_timev/ntomp2/specialized/timev.stderr.txt)
-- [`output/repulsion_power_9_shortmd_timev/ntomp6/generic/timev.stderr.txt`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_timev/ntomp6/generic/timev.stderr.txt)
-- [`output/repulsion_power_9_shortmd_timev/ntomp6/specialized/timev.stderr.txt`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_timev/ntomp6/specialized/timev.stderr.txt)
+- [`output/repulsion_power_9_shortmd_timev/ntomp2/generic/timev.stderr.txt`](../output/repulsion_power_9_shortmd_timev/ntomp2/generic/timev.stderr.txt)
+- [`output/repulsion_power_9_shortmd_timev/ntomp2/specialized/timev.stderr.txt`](../output/repulsion_power_9_shortmd_timev/ntomp2/specialized/timev.stderr.txt)
+- [`output/repulsion_power_9_shortmd_timev/ntomp6/generic/timev.stderr.txt`](../output/repulsion_power_9_shortmd_timev/ntomp6/generic/timev.stderr.txt)
+- [`output/repulsion_power_9_shortmd_timev/ntomp6/specialized/timev.stderr.txt`](../output/repulsion_power_9_shortmd_timev/ntomp6/specialized/timev.stderr.txt)
 - same `10000`-step TPRs, `pin=on`, `dlb=no`
 
 ## Findings
@@ -110,7 +110,7 @@ Evidence:
 
 - In the mixed fixed-order clean run, `ntomp=2` had anomalously slow early repeats while later repeats
   stabilized:
-  - [`output/repulsion_power_9_shortmd_wall_diag_clean_alt/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_wall_diag_clean_alt/summary.md)
+  - [`output/repulsion_power_9_shortmd_wall_diag_clean_alt/summary.md`](../output/repulsion_power_9_shortmd_wall_diag_clean_alt/summary.md)
 - In the fixed-`ntomp=2` run, the same system was stable and the specialized path won:
   - wall `1.091x`
   - `NB F kernel` `1.547x`

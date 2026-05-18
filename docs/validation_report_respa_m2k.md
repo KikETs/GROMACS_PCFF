@@ -1,7 +1,7 @@
 # R-RESPA M2k Validation Report
 
 - Milestone: `R-RESPA M2k — Narrow Patch Proof for Excluded-Correction Outer Promotion`
-- Worktree: `/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2`
+- Worktree: `..`
 - Branch: `respa-m2-exact-three-level`
 - Clean head commit at run start: `cb211f1ee161c3abc5b4b143430385049b27f982`
 

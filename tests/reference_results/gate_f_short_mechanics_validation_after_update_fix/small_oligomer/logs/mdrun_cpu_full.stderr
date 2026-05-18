@@ -1,12 +1,12 @@
    :-) GROMACS - gmx mdrun, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../../../build_gateb_cuda/bin/gmx
+Data prefix:  ../../../../.. (source tree)
+Working dir:  ../../../../..
 Command line:
-  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full -ntmpi 1 -ntomp 1 -dlb no -nb cpu -pme cpu -bonded cpu -update cpu -pin off -reprod
+  gmx mdrun -s ../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full.tpr -deffnm ../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full -ntmpi 1 -ntomp 1 -dlb no -nb cpu -pme cpu -bonded cpu -update cpu -pin off -reprod
 
-Reading file /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
+Reading file ../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full.tpr, VERSION 2027.0-dev-20260329-1811cfe56e-dirty-unknown (single precision)
 Using 1 MPI thread
 Using 1 OpenMP thread 
 

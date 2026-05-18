@@ -121,7 +121,7 @@ It refuses to stamp `ci` or `scheduled` collection modes unless the run is attes
 python3 tools/exact_respa_openmp_validation/run_backend_cycle.py \
   --profile-id amd_ryzen_9_9900x_numa_or_chiplet \
   --collection-mode-override scheduled \
-  --out-dir /tmp/exact-openmp-backend-9900x
+  --out-dir output/tmp/exact-openmp-backend-9900x
 ```
 
 Use `scheduled` for local cron/systemd timers and `ci` for self-hosted CI runners.
@@ -138,8 +138,8 @@ python3 tools/exact_respa_openmp_validation/collect_host_report.py \
   --release-binary build-worktree/bin/mdrun-non-integrator-test \
   --tsan-binary build-clang-tsan-o2/bin/mdrun-non-integrator-test \
   --gmx-bin build-worktree/bin/gmx \
-  --tsan-env LD_LIBRARY_PATH=/path/to/clang/lib \
-  --tsan-env TSAN_OPTIONS='halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=/path/to/llvm-symbolizer'
+  --tsan-env LD_LIBRARY_PATH=relative/toolchain/clang/lib \
+  --tsan-env TSAN_OPTIONS='halt_on_error=1 history_size=7 second_deadlock_stack=1 ignore_noninstrumented_modules=1 external_symbolizer_path=relative/toolchain/llvm-symbolizer'
 ```
 
 Important:
@@ -159,7 +159,7 @@ Important:
 ```bash
 python3 tools/exact_respa_openmp_validation/validate_report_set.py \
   --manifest tests/reference_results/exact_respa_openmp_validation/report_set_manifest.json \
-  --out-dir /tmp/exact-openmp-validation-v2
+  --out-dir output/tmp/exact-openmp-validation-v2
 ```
 
 This produces:
@@ -174,7 +174,7 @@ Use `--strict` when you need the full broader desktop/workstation claim gate:
 ```bash
 python3 tools/exact_respa_openmp_validation/validate_report_set.py \
   --manifest tests/reference_results/exact_respa_openmp_validation/report_set_manifest.json \
-  --out-dir /tmp/exact-openmp-validation-v2 \
+  --out-dir output/tmp/exact-openmp-validation-v2 \
   --strict
 ```
 
@@ -189,7 +189,7 @@ In strict mode, the command exits nonzero unless the active inventory still defe
 
 ```bash
 python3 tools/exact_respa_openmp_validation/aggregate_reports.py \
-  --out /tmp/exact-openmp-aggregate.json \
+  --out output/tmp/exact-openmp-aggregate.json \
   tests/reference_results/exact_respa_openmp_validation/host_reports/amd_ryzen_7_5800x_low_core_workstation.json \
   tests/reference_results/exact_respa_openmp_validation/host_reports/intel_i9_12900k_mid_core_hybrid_desktop.json \
   tests/reference_results/exact_respa_openmp_validation/host_reports/amd_ryzen_9_9900x_numa_or_chiplet.json

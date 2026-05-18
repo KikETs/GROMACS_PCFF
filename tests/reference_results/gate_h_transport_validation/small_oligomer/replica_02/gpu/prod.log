@@ -45,12 +45,12 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260329-1811cfe56e-dirty-unknown
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../../../../build_gateb_cuda/bin/gmx
+Data prefix:  ../../../../../.. (source tree)
+Working dir:  ../../../../../..
 Process ID:   893753
 Command line:
-  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/gpu/prod.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/gpu/prod -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme gpu -bonded gpu -update gpu -pin off
+  gmx mdrun -s ../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/gpu/prod.tpr -deffnm ../../../../../../tests/reference_results/gate_h_transport_validation/small_oligomer/replica_02/gpu/prod -ntmpi 1 -ntomp 1 -dlb no -nb gpu -pme gpu -bonded gpu -update gpu -pin off
 
 GROMACS version:     2027.0-dev-20260329-1811cfe56e-dirty-unknown
 GIT SHA1 hash:       1811cfe56e5b4eaa9dc80a68ea138318fec38459 (dirty)

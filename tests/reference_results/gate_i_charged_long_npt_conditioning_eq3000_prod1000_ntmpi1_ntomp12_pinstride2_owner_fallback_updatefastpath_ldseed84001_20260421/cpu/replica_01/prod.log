@@ -45,12 +45,12 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260417-066f777fe1-dirty-unknown
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../../../build/bin/gmx
+Data prefix:  ../../../../.. (source tree)
+Working dir:  ../../../../..
 Process ID:   41384
 Command line:
-  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod -ntmpi 1 -ntomp 12 -dlb no -nb cpu -pme cpu -bonded cpu -update cpu -pin on -pinstride 2 -reprod
+  gmx mdrun -s ../../../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod.tpr -deffnm ../../../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod1000_ntmpi1_ntomp12_pinstride2_owner_fallback_updatefastpath_ldseed84001_20260421/cpu/replica_01/prod -ntmpi 1 -ntomp 12 -dlb no -nb cpu -pme cpu -bonded cpu -update cpu -pin on -pinstride 2 -reprod
 
 GROMACS version:     2027.0-dev-20260417-066f777fe1-dirty-unknown
 GIT SHA1 hash:       066f777fe1a0b986e29dca5b41650fe1e4b38ad2 (dirty)

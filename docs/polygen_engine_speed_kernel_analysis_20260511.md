@@ -70,7 +70,7 @@ Matched smoke: `output/perf_kernel_lammps_kokkos_current_20260511/kokkos_respa24
 This was run from the current `prod_chunk0050.restart` with the same force-field and `run_style respa 2 4` production semantics:
 
 ```bash
-/home/kiket/src/lammps/build-kokkos/lmp \
+../lammps/build-kokkos/lmp \
   -nonbuf -k on g 1 t 12 -sf kk \
   -pk kokkos neigh full newton off \
   -log kokkos_respa24_smoke_bound.log \
@@ -109,8 +109,8 @@ Interpretation:
 
 The LAMMPS KOKKOS documentation matches this behavior: GPU+OpenMP hybrid use is supported, but CPU/GPU overlap has conditions, and unsupported fixes/styles force host-device movement. See local source docs:
 
-- `/home/kiket/src/lammps/doc/src/Speed_kokkos.rst`
-- `/home/kiket/src/lammps/doc/src/package.rst`
+- `../lammps/doc/src/Speed_kokkos.rst`
+- `../lammps/doc/src/package.rst`
 
 ### GROMACS CPU OpenMP
 
@@ -323,5 +323,5 @@ High-value targets:
   - `src/gromacs/listed_forces/manage_threading.cpp`
   - `src/gromacs/timing/include/gromacs/timing/wallcycle.h`
 - LAMMPS KOKKOS source/docs:
-  - `/home/kiket/src/lammps/doc/src/Speed_kokkos.rst`
-  - `/home/kiket/src/lammps/doc/src/package.rst`
+  - `../lammps/doc/src/Speed_kokkos.rst`
+  - `../lammps/doc/src/package.rst`

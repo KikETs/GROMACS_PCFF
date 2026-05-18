@@ -1,8 +1,8 @@
 {
   "artifacts": {
-    "dense_npt_parity_report": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
+    "dense_npt_parity_report": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
     "long_nvt_stability_report": null,
-    "qualified_pair_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/qualified_pair_manifest.json"
+    "qualified_pair_manifest": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/qualified_pair_manifest.json"
   },
   "capability_subset_status": "PASS",
   "dense_parity_status": "PASS",

@@ -43,18 +43,18 @@
       }
     },
     "schema_version": 1,
-    "source_data": "/home/kiket/src/PolyGen/Example-simulation-files/equilibration/system.lmp"
+    "source_data": "../../../PolyGen/Example-simulation-files/equilibration/system.lmp"
   },
   "claim_boundary": "Short host-local performance calibration only. This artifact does not prove density/volume convergence, transport readiness, or broad GPU production readiness.",
   "host": {
-    "gmx_version": "      :-) GROMACS - gmx, 2027.0-dev-20260422-53781aa0a5-dirty-unknown (-:\n\nExecutable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx\nData prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)\nWorking dir:  /home/kiket/Desktop/test/GROMACS_PCFF\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260422-53781aa0a5-dirty-unknown\nGIT SHA1 hash:       53781aa0a5d33961bb2b993934478ba97ad16532 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         CUDA\nNBNxM GPU setup:     super-cluster 2x2x2 / cluster 8 (cluster-pair splitting on)\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     cuFFT\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\nCUDA compiler:       /usr/local/cuda-12.8/bin/nvcc (NVIDIA 12.8.93)\nCUDA compiler flags:  -O2 -g -DNDEBUG -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -O2 -g -DNDEBUG\nCUDA targets:        50;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;100-real;120\nCUDA driver:         12.80\nCUDA runtime:        12.80\nNVSHMEM:             disabled\n\n",
+    "gmx_version": "      :-) GROMACS - gmx, 2027.0-dev-20260422-53781aa0a5-dirty-unknown (-:\n\nExecutable:   ../../build_gateb_cuda/bin/gmx\nData prefix:  ../.. (source tree)\nWorking dir:  ../..\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260422-53781aa0a5-dirty-unknown\nGIT SHA1 hash:       53781aa0a5d33961bb2b993934478ba97ad16532 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         CUDA\nNBNxM GPU setup:     super-cluster 2x2x2 / cluster 8 (cluster-pair splitting on)\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     cuFFT\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\nCUDA compiler:       /usr/local/cuda-12.8/bin/nvcc (NVIDIA 12.8.93)\nCUDA compiler flags:  -O2 -g -DNDEBUG -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -O2 -g -DNDEBUG\nCUDA targets:        50;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;100-real;120\nCUDA driver:         12.80\nCUDA runtime:        12.80\nNVSHMEM:             disabled\n\n",
     "nvidia_smi_L": "GPU 0: NVIDIA GeForce RTX 5070 Ti (UUID: GPU-0b2174db-af3a-581c-e9a5-098511dfba1d)"
   },
   "inputs": {
-    "bridge_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF-lunar-data-bridge/output/lammps_data_bridge_polygen_system/bridge_manifest.json",
+    "bridge_manifest": "../..-lunar-data-bridge/output/lammps_data_bridge_polygen_system/bridge_manifest.json",
     "equil_ps": 5.0,
-    "gmx": "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
-    "gro": "/home/kiket/Desktop/test/GROMACS_PCFF-lunar-data-bridge/output/lammps_data_bridge_polygen_system/system.gro",
+    "gmx": "../../build_gateb_cuda/bin/gmx",
+    "gro": "../..-lunar-data-bridge/output/lammps_data_bridge_polygen_system/system.gro",
     "mdrun_flags": "-nb gpu -pme cpu -bonded cpu -update cpu -dlb no",
     "ntmpi": 1,
     "ntomp_list": [
@@ -69,7 +69,7 @@
     "pinstride": 1,
     "prod_ps": 10.0,
     "sample_interval": 400,
-    "top": "/home/kiket/Desktop/test/GROMACS_PCFF-lunar-data-bridge/output/lammps_data_bridge_polygen_system/topol.top"
+    "top": "../..-lunar-data-bridge/output/lammps_data_bridge_polygen_system/topol.top"
   },
   "kind": "exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep",
   "runs": [
@@ -98,8 +98,8 @@
       },
       "ntomp": 2,
       "paths": {
-        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp02/equil.log",
-        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp02/prod.log"
+        "equil_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp02/equil.log",
+        "prod_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp02/prod.log"
       },
       "prod_elapsed_seconds": 91.88206171989441,
       "prod_metrics": {
@@ -142,8 +142,8 @@
       },
       "ntomp": 4,
       "paths": {
-        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp04/equil.log",
-        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp04/prod.log"
+        "equil_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp04/equil.log",
+        "prod_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp04/prod.log"
       },
       "prod_elapsed_seconds": 49.575602531433105,
       "prod_metrics": {
@@ -186,8 +186,8 @@
       },
       "ntomp": 6,
       "paths": {
-        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp06/equil.log",
-        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp06/prod.log"
+        "equil_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp06/equil.log",
+        "prod_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp06/prod.log"
       },
       "prod_elapsed_seconds": 37.258769273757935,
       "prod_metrics": {
@@ -230,8 +230,8 @@
       },
       "ntomp": 8,
       "paths": {
-        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp08/equil.log",
-        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp08/prod.log"
+        "equil_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp08/equil.log",
+        "prod_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp08/prod.log"
       },
       "prod_elapsed_seconds": 30.288946628570557,
       "prod_metrics": {
@@ -274,8 +274,8 @@
       },
       "ntomp": 10,
       "paths": {
-        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp10/equil.log",
-        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp10/prod.log"
+        "equil_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp10/equil.log",
+        "prod_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp10/prod.log"
       },
       "prod_elapsed_seconds": 27.02190399169922,
       "prod_metrics": {
@@ -318,8 +318,8 @@
       },
       "ntomp": 12,
       "paths": {
-        "equil_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp12/equil.log",
-        "prod_log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp12/prod.log"
+        "equil_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp12/equil.log",
+        "prod_log": "../../output/exact_respa_gpu_hybrid_polygen_5475_ntomp_sweep_20260422/ntomp12/prod.log"
       },
       "prod_elapsed_seconds": 24.15741205215454,
       "prod_metrics": {

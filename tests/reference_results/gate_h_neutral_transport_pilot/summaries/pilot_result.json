@@ -79,14 +79,14 @@
   },
   "failure_reasons": [],
   "first_failing_observable": null,
-  "gmx_binary": "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+  "gmx_binary": "../../../../build_gateb_cuda/bin/gmx",
   "gpu_support": "CUDA",
   "per_layout_replicas": {
     "cpu": [
       {
         "analysis": {
           "convergence_flags": [],
-          "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/diff_mol.xvg",
+          "diff_mol_xvg": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/diff_mol.xvg",
           "diffusion_cm2_s": 0.00011655900000000002,
           "fit_end_ps": 45.0,
           "fit_error_cm2_s": 1.0500000000000001e-05,
@@ -610,13 +610,13 @@
             5e-05,
             5e-05
           ],
-          "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/msd_curve.tsv",
-          "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/msdout.xvg",
+          "msd_curve_tsv": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/msd_curve.tsv",
+          "msdout_xvg": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/msdout.xvg",
           "relative_fit_error": 0.09008313386353692,
           "relative_molecule_sem": 0.03263168257836173,
-          "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/transport_molecules.ndx"
+          "transport_index": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/transport_molecules.ndx"
         },
-        "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/equil",
+        "equil_deffnm": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/equil",
         "layout": "cpu",
         "layout_report": {
           "gpu_mapping_header": null,
@@ -637,14 +637,14 @@
           "update_gpu_enabled": false,
           "update_task_line": null
         },
-        "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/prod",
+        "prod_deffnm": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_01/prod",
         "replica_index": 1,
         "seed": 63101
       },
       {
         "analysis": {
           "convergence_flags": [],
-          "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/diff_mol.xvg",
+          "diff_mol_xvg": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/diff_mol.xvg",
           "diffusion_cm2_s": 0.00011435400000000001,
           "fit_end_ps": 45.0,
           "fit_error_cm2_s": 1.1100000000000002e-05,
@@ -1168,13 +1168,13 @@
             0.0002,
             5e-05
           ],
-          "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/msd_curve.tsv",
-          "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/msdout.xvg",
+          "msd_curve_tsv": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/msd_curve.tsv",
+          "msdout_xvg": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/msdout.xvg",
           "relative_fit_error": 0.09706700246602656,
           "relative_molecule_sem": 0.03249010265689073,
-          "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/transport_molecules.ndx"
+          "transport_index": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/transport_molecules.ndx"
         },
-        "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/equil",
+        "equil_deffnm": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/equil",
         "layout": "cpu",
         "layout_report": {
           "gpu_mapping_header": null,
@@ -1195,7 +1195,7 @@
           "update_gpu_enabled": false,
           "update_task_line": null
         },
-        "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/prod",
+        "prod_deffnm": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/cpu/replica_02/prod",
         "replica_index": 2,
         "seed": 63102
       }
@@ -1204,7 +1204,7 @@
       {
         "analysis": {
           "convergence_flags": [],
-          "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/diff_mol.xvg",
+          "diff_mol_xvg": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/diff_mol.xvg",
           "diffusion_cm2_s": 0.000112457,
           "fit_end_ps": 45.0,
           "fit_error_cm2_s": 2.5e-06,
@@ -1728,13 +1728,13 @@
             0.0001,
             7.000000000000001e-05
           ],
-          "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/msd_curve.tsv",
-          "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/msdout.xvg",
+          "msd_curve_tsv": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/msd_curve.tsv",
+          "msdout_xvg": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/msdout.xvg",
           "relative_fit_error": 0.022230719297153582,
           "relative_molecule_sem": 0.030707500595437722,
-          "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/transport_molecules.ndx"
+          "transport_index": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/transport_molecules.ndx"
         },
-        "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/equil",
+        "equil_deffnm": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/equil",
         "layout": "gpu",
         "layout_report": {
           "gpu_mapping_header": "Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:",
@@ -1757,14 +1757,14 @@
           "update_gpu_enabled": true,
           "update_task_line": "PP task will update and constrain coordinates on the GPU"
         },
-        "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/prod",
+        "prod_deffnm": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/prod",
         "replica_index": 1,
         "seed": 63101
       },
       {
         "analysis": {
           "convergence_flags": [],
-          "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/diff_mol.xvg",
+          "diff_mol_xvg": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/diff_mol.xvg",
           "diffusion_cm2_s": 0.00011377900000000001,
           "fit_end_ps": 45.0,
           "fit_error_cm2_s": 5.000000000000001e-07,
@@ -2288,13 +2288,13 @@
             7.000000000000001e-05,
             8e-05
           ],
-          "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/msd_curve.tsv",
-          "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/msdout.xvg",
+          "msd_curve_tsv": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/msd_curve.tsv",
+          "msdout_xvg": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/msdout.xvg",
           "relative_fit_error": 0.004394484043628438,
           "relative_molecule_sem": 0.03368837957522014,
-          "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/transport_molecules.ndx"
+          "transport_index": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/transport_molecules.ndx"
         },
-        "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/equil",
+        "equil_deffnm": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/equil",
         "layout": "gpu",
         "layout_report": {
           "gpu_mapping_header": "Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:",
@@ -2317,7 +2317,7 @@
           "update_gpu_enabled": true,
           "update_task_line": "PP task will update and constrain coordinates on the GPU"
         },
-        "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/prod",
+        "prod_deffnm": "../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_02/prod",
         "replica_index": 2,
         "seed": 63102
       }
@@ -2325,9 +2325,9 @@
   },
   "precision_mode": "mixed",
   "prerequisites": {
-    "entry_result": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/summaries/entry_result.json",
+    "entry_result": "../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/summaries/entry_result.json",
     "entry_status": "PASS",
-    "scaffold_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/fixture_manifest.json"
+    "scaffold_manifest": "../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/fixture_manifest.json"
   },
   "production_recommendation": "NO-GO",
   "recommendation": "Neutral MSD pilot is internally consistent enough to justify longer neutral Gate H scaling, but this is still not TP0 production sign-off.",

@@ -70,12 +70,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--workdir",
-        default="/tmp/pcff_respa_parity",
+        default=str(REPO_ROOT / "output" / "tmp" / "pcff_respa_parity"),
         help="Temporary directory used for LAMMPS runs.",
     )
     parser.add_argument(
         "--lammps-cmd",
-        default="/home/user/.local/bin/lmp",
+        default="lmp",
         help="LAMMPS executable for generating the frozen run_style respa reference.",
     )
     parser.add_argument(

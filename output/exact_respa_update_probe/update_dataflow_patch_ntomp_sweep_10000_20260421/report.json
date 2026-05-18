@@ -1,6 +1,6 @@
 {
   "schema": "exact_respa_update_dataflow_patch_thread_sweep",
-  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
+  "tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
   "steps": 10000,
   "rows": [
     {
@@ -19,7 +19,7 @@
       "gro": "65f3e6fa4f0240215231309d8d90bd60cc8a17341fcc8923f6d6adda8935d6ae",
       "edr": "253f8d6f74c1908605c182dd4dc18d713d533e165c5973b1d3ce2899c61b6992",
       "cpt": "b6b86e3633737527ef367aa440d65e3cff094667d2bd5cff334a5be425376ed1",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_auto_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_auto_fused_off/run.log"
     },
     {
       "label": "ntomp4_update_auto_fused_on",
@@ -37,7 +37,7 @@
       "gro": "65f3e6fa4f0240215231309d8d90bd60cc8a17341fcc8923f6d6adda8935d6ae",
       "edr": "253f8d6f74c1908605c182dd4dc18d713d533e165c5973b1d3ce2899c61b6992",
       "cpt": "0c338247e8dd03a7e4d18425bf30e36fb2299bb2955ab78f0accea979c6aaae0",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_auto_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_auto_fused_on/run.log"
     },
     {
       "label": "ntomp4_update_on_fused_off",
@@ -55,7 +55,7 @@
       "gro": "65f3e6fa4f0240215231309d8d90bd60cc8a17341fcc8923f6d6adda8935d6ae",
       "edr": "253f8d6f74c1908605c182dd4dc18d713d533e165c5973b1d3ce2899c61b6992",
       "cpt": "4ebe15ad7263528595897565657bbf06718d69d4bc8b3b6dbaa7cdaa76d1ae39",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_on_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_on_fused_off/run.log"
     },
     {
       "label": "ntomp4_update_on_fused_on",
@@ -73,7 +73,7 @@
       "gro": "65f3e6fa4f0240215231309d8d90bd60cc8a17341fcc8923f6d6adda8935d6ae",
       "edr": "253f8d6f74c1908605c182dd4dc18d713d533e165c5973b1d3ce2899c61b6992",
       "cpt": "bd5bbc6bbd1d9d609d66e7198481376982ed4365a867dd1c1065286f2634833d",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_on_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_on_fused_on/run.log"
     },
     {
       "label": "ntomp4_update_off_fused_off",
@@ -91,7 +91,7 @@
       "gro": "65f3e6fa4f0240215231309d8d90bd60cc8a17341fcc8923f6d6adda8935d6ae",
       "edr": "253f8d6f74c1908605c182dd4dc18d713d533e165c5973b1d3ce2899c61b6992",
       "cpt": "3e600058a37f55a60515990bd41e164cbc8afafae1cdbf486b1f019d51be01f2",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_off_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_off_fused_off/run.log"
     },
     {
       "label": "ntomp4_update_off_fused_on",
@@ -109,7 +109,7 @@
       "gro": "65f3e6fa4f0240215231309d8d90bd60cc8a17341fcc8923f6d6adda8935d6ae",
       "edr": "253f8d6f74c1908605c182dd4dc18d713d533e165c5973b1d3ce2899c61b6992",
       "cpt": "4bbb1777ede4d23ced801370410cc324e9939a6d7d0d54a54b4a295ae76a0967",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_off_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_off_fused_on/run.log"
     },
     {
       "label": "ntomp8_update_auto_fused_off",
@@ -127,7 +127,7 @@
       "gro": "c752bb7547653dd885de0c5e62129f7f605c6972d6c064e79ff1a6eb0ca533ce",
       "edr": "480fd7991b95602a3fb68b8648e494be755bb76ac911f3835464a58d329b5ffd",
       "cpt": "7f9100278e52721f22434bf7416abd27eb996825807c6d1bddff0db28a73a505",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_auto_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_auto_fused_off/run.log"
     },
     {
       "label": "ntomp8_update_auto_fused_on",
@@ -145,7 +145,7 @@
       "gro": "c752bb7547653dd885de0c5e62129f7f605c6972d6c064e79ff1a6eb0ca533ce",
       "edr": "480fd7991b95602a3fb68b8648e494be755bb76ac911f3835464a58d329b5ffd",
       "cpt": "e8255cccb73ea7cac0c60a3aa713432bfbd75e0a1f5c310204386997690c3f9c",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_auto_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_auto_fused_on/run.log"
     },
     {
       "label": "ntomp8_update_on_fused_off",
@@ -163,7 +163,7 @@
       "gro": "c752bb7547653dd885de0c5e62129f7f605c6972d6c064e79ff1a6eb0ca533ce",
       "edr": "480fd7991b95602a3fb68b8648e494be755bb76ac911f3835464a58d329b5ffd",
       "cpt": "a2913355812103e422061faffd465de4066f497c2bd1a745cc51f5340b42ec46",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_on_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_on_fused_off/run.log"
     },
     {
       "label": "ntomp8_update_on_fused_on",
@@ -181,7 +181,7 @@
       "gro": "c752bb7547653dd885de0c5e62129f7f605c6972d6c064e79ff1a6eb0ca533ce",
       "edr": "480fd7991b95602a3fb68b8648e494be755bb76ac911f3835464a58d329b5ffd",
       "cpt": "7b472ce9f2f7db65a33f8b673aac40d8ce988947a5fd599026786ad4fd2c4d5d",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_on_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_on_fused_on/run.log"
     },
     {
       "label": "ntomp8_update_off_fused_off",
@@ -199,7 +199,7 @@
       "gro": "c752bb7547653dd885de0c5e62129f7f605c6972d6c064e79ff1a6eb0ca533ce",
       "edr": "480fd7991b95602a3fb68b8648e494be755bb76ac911f3835464a58d329b5ffd",
       "cpt": "5c6c407cad4371faa5a0e3c42d79c57b6bf0ed68445bff196cf01323ba4197bc",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_off_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_off_fused_off/run.log"
     },
     {
       "label": "ntomp8_update_off_fused_on",
@@ -217,7 +217,7 @@
       "gro": "c752bb7547653dd885de0c5e62129f7f605c6972d6c064e79ff1a6eb0ca533ce",
       "edr": "480fd7991b95602a3fb68b8648e494be755bb76ac911f3835464a58d329b5ffd",
       "cpt": "c4f807e7f6b480399f6ed034969313007eadf850a2bd0405962d73e81bb07a70",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_off_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_off_fused_on/run.log"
     },
     {
       "label": "ntomp10_update_auto_fused_off",
@@ -235,7 +235,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "c49bfe67db1a91ff0c6a42757adb9406e2d744f33dc2410dcbc5539efb69d76f",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_auto_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_auto_fused_off/run.log"
     },
     {
       "label": "ntomp10_update_auto_fused_on",
@@ -253,7 +253,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "aff1bb03b9ace47e2bfe884997f1806b9a91a752195dc2fcff410fb229258325",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_auto_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_auto_fused_on/run.log"
     },
     {
       "label": "ntomp10_update_on_fused_off",
@@ -271,7 +271,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "d082aa3c6c184e9fdaa1c53aa8980b96d81455231f18e0773a38d060bfe2933f",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_on_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_on_fused_off/run.log"
     },
     {
       "label": "ntomp10_update_on_fused_on",
@@ -289,7 +289,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "8ae0aeba6c7fb0a326310fa899116325ecfed85ccab52fad017ba873b3d182f8",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_on_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_on_fused_on/run.log"
     },
     {
       "label": "ntomp10_update_off_fused_off",
@@ -307,7 +307,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "8501c4b8de9ecf8d86d56c3989f5ef0e64ef137c88665308d38ca737340c52f5",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_off_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_off_fused_off/run.log"
     },
     {
       "label": "ntomp10_update_off_fused_on",
@@ -325,7 +325,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "9f1179c3299b115f087ed31696ea9e723db82e9ad33651b1390c4e39a028dde7",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_off_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_off_fused_on/run.log"
     }
   ],
   "summary_best_by_ntomp": [
@@ -345,7 +345,7 @@
       "gro": "65f3e6fa4f0240215231309d8d90bd60cc8a17341fcc8923f6d6adda8935d6ae",
       "edr": "253f8d6f74c1908605c182dd4dc18d713d533e165c5973b1d3ce2899c61b6992",
       "cpt": "0c338247e8dd03a7e4d18425bf30e36fb2299bb2955ab78f0accea979c6aaae0",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_auto_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp4_update_auto_fused_on/run.log"
     },
     {
       "label": "ntomp8_update_on_fused_on",
@@ -363,7 +363,7 @@
       "gro": "c752bb7547653dd885de0c5e62129f7f605c6972d6c064e79ff1a6eb0ca533ce",
       "edr": "480fd7991b95602a3fb68b8648e494be755bb76ac911f3835464a58d329b5ffd",
       "cpt": "7b472ce9f2f7db65a33f8b673aac40d8ce988947a5fd599026786ad4fd2c4d5d",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_on_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp8_update_on_fused_on/run.log"
     },
     {
       "label": "ntomp10_update_on_fused_off",
@@ -381,7 +381,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "d082aa3c6c184e9fdaa1c53aa8980b96d81455231f18e0773a38d060bfe2933f",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_on_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp_sweep_10000_20260421/ntomp10_update_on_fused_off/run.log"
     }
   ],
   "comparisons_by_ntomp": {

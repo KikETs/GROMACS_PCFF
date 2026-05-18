@@ -4,23 +4,23 @@ Date: `2026-04-02`
 
 System:
 
-- [gate_h_dense_oligomer_2x2x2 scaffold manifest](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/fixture_manifest.json)
+- [gate_h_dense_oligomer_2x2x2 scaffold manifest](../gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/fixture_manifest.json)
 
 Commands:
 
 ```bash
-python3 /home/kiket/Desktop/test/GROMACS_PCFF/tools/pcff_respa_parity/bringup_gate_h_scaffold.py \
-  --gmx /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx \
-  --scaffold-manifest /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/fixture_manifest.json \
-  --out /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_scaffold_bringup
+python3 ../../../tools/pcff_respa_parity/bringup_gate_h_scaffold.py \
+  --gmx ../../../build_gateb_cuda/bin/gmx \
+  --scaffold-manifest ../gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/fixture_manifest.json \
+  --out .
 ```
 
 Artifacts:
 
-- [bringup_result.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_scaffold_bringup/summaries/bringup_result.json)
-- [run_commands.sh](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_scaffold_bringup/run_commands.sh)
-- [mdrun_cpu.stderr](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_scaffold_bringup/logs/mdrun_cpu.stderr)
-- [mdrun_gpu.stderr](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_scaffold_bringup/logs/mdrun_gpu.stderr)
+- [bringup_result.json](./summaries/bringup_result.json)
+- [run_commands.sh](./run_commands.sh)
+- [mdrun_cpu.stderr](./logs/mdrun_cpu.stderr)
+- [mdrun_gpu.stderr](./logs/mdrun_gpu.stderr)
 
 ## Result
 

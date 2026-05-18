@@ -1,7 +1,7 @@
 {
   "claim_scope_statement": "This checked-in artifact freezes host-local explicit ntomp evidence on one audited host. It is not a cross-host CPU OpenMP support claim and it does not broaden the bounded desktop/workstation claim frozen in cpu_exact_respa_claim.",
   "collection": {
-    "binary": "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/mdrun-non-integrator-test",
+    "binary": "../../../../build/bin/mdrun-non-integrator-test",
     "finished_at": "2026-04-15T13:14:22+09:00",
     "overall_blockers": [],
     "overall_ok": true,

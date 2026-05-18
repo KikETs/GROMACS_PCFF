@@ -34,15 +34,15 @@ Before discussing performance, the existing GPU bonded/listed path had to be che
 That check found a real semantic blocker:
 
 - the current GPU listed-pair kernel hardcodes `12-6` force/energy evaluation:
-  [listed_forces_gpu_internal_shared.h](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/listed_forces_gpu_internal_shared.h#L751)
+  [listed_forces_gpu_internal_shared.h](../src/gromacs/listed_forces/listed_forces_gpu_internal_shared.h#L751)
 - the CPU listed-pair path already uses the general repulsion power from `fr->ic->vdw.repulsionPower`:
-  [pairs.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/pairs.cpp#L656)
+  [pairs.cpp](../src/gromacs/listed_forces/pairs.cpp#L656)
 
 PCFF/class2 uses sixth-power mixing and `9-6` listed `1-4` interactions, so the existing `-bonded gpu` path would have been unsafe for PCFF if left unchecked.
 
 The milestone therefore adds an explicit runtime gate:
 
-- [listed_forces_gpu_impl.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/listed_forces_gpu_impl.cpp#L129)
+- [listed_forces_gpu_impl.cpp](../src/gromacs/listed_forces/listed_forces_gpu_impl.cpp#L129)
 
 That gate rejects `-bonded gpu` when `reppow != 12` and the topology contains GPU-capable listed interactions.
 
@@ -51,17 +51,17 @@ That gate rejects `-bonded gpu` when `reppow != 12` and the topology contains GP
 M9 adds three things:
 
 1. a correctness guard that rejects unsafe bonded-GPU use for PCFF/class2:
-   [listed_forces_gpu_impl.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/listed_forces_gpu_impl.cpp#L145)
+   [listed_forces_gpu_impl.cpp](../src/gromacs/listed_forces/listed_forces_gpu_impl.cpp#L145)
 2. unit tests that prove the guard behaves as intended:
-   [listed_forces_gpu.cpp](/home/user/바탕화면/gromacs/src/gromacs/listed_forces/tests/listed_forces_gpu.cpp#L59)
+   [listed_forces_gpu.cpp](../src/gromacs/listed_forces/tests/listed_forces_gpu.cpp#L59)
 3. a benchmark-oriented smoke test that measures whether class2 bonded work is large enough to justify a GPU port:
-   [pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp#L1895)
+   [pcff_short_md.cpp](../src/programs/mdrun/tests/pcff_short_md.cpp#L1895)
 
 No class2 bonded CUDA kernels were added in M9.
 
 ## Tests Run
 
-Executed in the CUDA build at [build-cuda](/home/user/바탕화면/gromacs/build-cuda):
+Executed in the CUDA build at [build-cuda](../build-cuda):
 
 - `./build-cuda/bin/listed_forces-test --gtest_filter='ListedForcesGpuInputSupportTest.*'`
 - `./build-cuda/bin/mdrun-non-integrator-test --gtest_filter='PcffGpuSinglePointParity*:*PcffGpuResidentParity*:*PcffGpuPerfSmokeTest.ReplicatedSaltBoxBenchmarkReportsCpuBondedShare'`
@@ -84,8 +84,8 @@ The benchmark smoke test is:
 
 The existing nonbonded GPU parity gates also continued to pass:
 
-- [PcffGpuSinglePointParityTest](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp#L1805)
-- [PcffGpuResidentParityTest](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp#L1937)
+- [PcffGpuSinglePointParityTest](../src/programs/mdrun/tests/pcff_short_md.cpp#L1805)
+- [PcffGpuResidentParityTest](../src/programs/mdrun/tests/pcff_short_md.cpp#L1937)
 
 That matters because M9 must not silently damage the already validated M7/M8 GPU path.
 
@@ -94,11 +94,11 @@ That matters because M9 must not silently damage the already validated M7/M8 GPU
 The benchmark fixture is generated from the frozen salt/polymer system and replicated `8 x 8 x 8`:
 
 - input builder:
-  [writeReplicatedSaltBoxFixture](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp#L1495)
+  [writeReplicatedSaltBoxFixture](../src/programs/mdrun/tests/pcff_short_md.cpp#L1495)
 - benchmark MDP:
-  [makeGpuBondedBenchmarkMdp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp#L1608)
+  [makeGpuBondedBenchmarkMdp](../src/programs/mdrun/tests/pcff_short_md.cpp#L1608)
 - benchmark driver:
-  [benchmarkCpuBondedOnReplicatedSaltBox](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp#L1643)
+  [benchmarkCpuBondedOnReplicatedSaltBox](../src/programs/mdrun/tests/pcff_short_md.cpp#L1643)
 
 Validated runtime mode:
 
@@ -115,8 +115,8 @@ The test extracts:
 
 Extraction helpers:
 
-- [extractWallcycleSeconds](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp#L1416)
-- [extractMegaFlopsPercent](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp#L1444)
+- [extractWallcycleSeconds](../src/programs/mdrun/tests/pcff_short_md.cpp#L1416)
+- [extractMegaFlopsPercent](../src/programs/mdrun/tests/pcff_short_md.cpp#L1444)
 
 ## Measured Result
 
@@ -137,7 +137,7 @@ The executed benchmark reported:
 
 Those numbers are emitted directly by:
 
-- [PcffGpuPerfSmokeTest.ReplicatedSaltBoxBenchmarkReportsCpuBondedShare](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp#L1895)
+- [PcffGpuPerfSmokeTest.ReplicatedSaltBoxBenchmarkReportsCpuBondedShare](../src/programs/mdrun/tests/pcff_short_md.cpp#L1895)
 
 ## Interpretation
 

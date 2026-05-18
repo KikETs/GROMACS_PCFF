@@ -1,6 +1,6 @@
 {
   "schema": "exact_respa_update_dataflow_patch_probe",
-  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
+  "tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
   "steps": 10000,
   "ntomp": 6,
   "rows": [
@@ -19,7 +19,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "6177fdcdb74d9d7d91ef562bd53499510db327f9ef24917cbe1f07298cb5c244",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_auto_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_auto_fused_off/run.log"
     },
     {
       "label": "update_auto_fused_on",
@@ -36,7 +36,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "9afe4ad25b13d56c7cb99b354ec4bf5b1a21e58cbd500a19e6a82bb9f5419222",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_auto_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_auto_fused_on/run.log"
     },
     {
       "label": "update_on_fused_off",
@@ -53,7 +53,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "1f508f121ff43f117cc04dac17db6b017f6e855c7746373b0f4dbfe7888552c4",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_on_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_on_fused_off/run.log"
     },
     {
       "label": "update_on_fused_on",
@@ -70,7 +70,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "43ae21f478c9c63fe46a039bb57f94e691f38c941fcdea7ec3d13514d2da3db3",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_on_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_on_fused_on/run.log"
     },
     {
       "label": "update_off_fused_off",
@@ -87,7 +87,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "61e68128213b04e97625c4882331a5164363848952490a8c1d263b8a1d7fd7b7",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_off_fused_off/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_off_fused_off/run.log"
     },
     {
       "label": "update_off_fused_on",
@@ -104,7 +104,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "52543d8f4e395b00e14485a8003b1970b70b60482c5cf6921eac993123126a6f",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_off_fused_on/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_dataflow_patch_ntomp6_10000_20260421/update_off_fused_on/run.log"
     }
   ],
   "comparisons": {

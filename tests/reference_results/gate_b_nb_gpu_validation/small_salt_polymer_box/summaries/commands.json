@@ -1,38 +1,38 @@
 [
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "grompp",
       "-f",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
       "-c",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro",
+      "../../../../../tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro",
       "-p",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/topol.top",
+      "../../../../../tests/reference_results/m6_respa/small_salt_polymer_box/topol.top",
       "-o",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.tpr",
       "-po",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/full_mdout.mdp",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/full_mdout.mdp",
       "-maxwarn",
       "1"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "grompp_full",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_full.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_full.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_full.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_full.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/exact_full",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -50,14 +50,14 @@
       "-pin",
       "off"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/event_trace.tsv",
-      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/total_force.tsv",
+      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/event_trace.tsv",
+      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/total_force.tsv",
       "GMX_PCFF_RESPA_M2P_CASE_LABEL": "full",
-      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/m2p_trace",
-      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/merge_trace",
+      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/m2p_trace",
+      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/full/merge_trace",
       "GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS": "1",
       "GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
       "GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS": "1",
@@ -67,43 +67,43 @@
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_full",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_full.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_full.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_full.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_full.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "grompp",
       "-f",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
       "-c",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro",
+      "../../../../../tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro",
       "-p",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/topol.top",
+      "../../../../../tests/reference_results/m6_respa/small_salt_polymer_box/topol.top",
       "-o",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/exact_full.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/exact_full.tpr",
       "-po",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/repeat_01_mdout.mdp",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/repeat_01_mdout.mdp",
       "-maxwarn",
       "1"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "grompp_repeat_01",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_repeat_01.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_repeat_01.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_repeat_01.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_repeat_01.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/exact_full.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/exact_full.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/exact_full",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/exact_full",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -121,14 +121,14 @@
       "-pin",
       "off"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/event_trace.tsv",
-      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/total_force.tsv",
+      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/event_trace.tsv",
+      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/total_force.tsv",
       "GMX_PCFF_RESPA_M2P_CASE_LABEL": "repeat_01",
-      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/m2p_trace",
-      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/merge_trace",
+      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/m2p_trace",
+      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_01/merge_trace",
       "GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS": "1",
       "GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
       "GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS": "1",
@@ -138,43 +138,43 @@
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_repeat_01",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_repeat_01.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_repeat_01.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_repeat_01.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_repeat_01.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "grompp",
       "-f",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
       "-c",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro",
+      "../../../../../tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro",
       "-p",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/topol.top",
+      "../../../../../tests/reference_results/m6_respa/small_salt_polymer_box/topol.top",
       "-o",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/exact_full.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/exact_full.tpr",
       "-po",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/repeat_02_mdout.mdp",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/repeat_02_mdout.mdp",
       "-maxwarn",
       "1"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "grompp_repeat_02",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_repeat_02.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_repeat_02.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_repeat_02.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_repeat_02.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/exact_full.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/exact_full.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/exact_full",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/exact_full",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -192,14 +192,14 @@
       "-pin",
       "off"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/event_trace.tsv",
-      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/total_force.tsv",
+      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/event_trace.tsv",
+      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/total_force.tsv",
       "GMX_PCFF_RESPA_M2P_CASE_LABEL": "repeat_02",
-      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/m2p_trace",
-      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/merge_trace",
+      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/m2p_trace",
+      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/repeat_02/merge_trace",
       "GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS": "1",
       "GMX_PCFF_RESPA_TRACE_FORCE_COMPONENTS_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
       "GMX_PCFF_RESPA_TRACE_REALSPACE_FORCE_SUBCOMPONENTS": "1",
@@ -209,43 +209,43 @@
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_repeat_02",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_repeat_02.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_repeat_02.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_repeat_02.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_repeat_02.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "grompp",
       "-f",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
       "-c",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro",
+      "../../../../../tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro",
       "-p",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/topol.top",
+      "../../../../../tests/reference_results/m6_respa/small_salt_polymer_box/topol.top",
       "-o",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_full/exact_full.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_full/exact_full.tpr",
       "-po",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_restart_full_mdout.mdp",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_restart_full_mdout.mdp",
       "-maxwarn",
       "1"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "grompp_restart_full",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_restart_full.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_restart_full.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_restart_full.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_restart_full.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_full/exact_full.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_full/exact_full.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_full/exact_full",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_full/exact_full",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -263,49 +263,49 @@
       "-pin",
       "off"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_restart_full",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_full.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_full.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_full.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_full.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "grompp",
       "-f",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
       "-c",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro",
+      "../../../../../tests/reference_results/m6_respa/small_salt_polymer_box/initial_nve.gro",
       "-p",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_salt_polymer_box/topol.top",
+      "../../../../../tests/reference_results/m6_respa/small_salt_polymer_box/topol.top",
       "-o",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split.tpr",
       "-po",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_restart_split_mdout.mdp",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/inputs/exact_respa_restart_split_mdout.mdp",
       "-maxwarn",
       "1"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "grompp_restart_split",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_restart_split.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_restart_split.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_restart_split.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/grompp_restart_split.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -325,23 +325,23 @@
       "-nsteps",
       "8"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_restart_split_first",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_split_first.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_split_first.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_split_first.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_split_first.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split.tpr",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split",
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -359,15 +359,15 @@
       "-pin",
       "off",
       "-cpi",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split.cpt"
+      "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/restart_split/exact_split.cpt"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_restart_split_second",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_split_second.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_split_second.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_split_second.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_salt_polymer_box/logs/mdrun_restart_split_second.stdout"
   }
 ]

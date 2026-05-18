@@ -7,8 +7,8 @@
       2
     ],
     "seed_system": "dense_salt_polymer",
-    "source_data": "/home/kiket/Desktop/test/GROMACS_PCFF/testdata/lammps_golden/systems/dense_salt_polymer/lammps/system.data",
-    "source_input": "/home/kiket/Desktop/test/GROMACS_PCFF/testdata/lammps_golden/systems/dense_salt_polymer/lammps/system.in"
+    "source_data": "../../../../../../../testdata/lammps_golden/systems/dense_salt_polymer/lammps/system.data",
+    "source_input": "../../../../../../../testdata/lammps_golden/systems/dense_salt_polymer/lammps/system.in"
   },
   "description": "Derived from dense_salt_polymer via LAMMPS replicate 2x2x2 for Gate H transport-scope scaffolding.",
   "display_name": "dense salt-containing polymer box transport scaffold",

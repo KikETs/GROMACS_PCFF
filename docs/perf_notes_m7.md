@@ -5,7 +5,7 @@
 M7 adds a smoke test, not a benchmark.
 
 The performance-oriented test is
-[PcffGpuPerfSmokeTest](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp)
+[PcffGpuPerfSmokeTest](../src/programs/mdrun/tests/pcff_short_md.cpp)
 and it runs the `small_oligomer` single-point case on the GPU three times.
 
 The pass condition is intentionally weak:
@@ -42,7 +42,7 @@ So the observed runtime is not a pure measure of the short-range CUDA kernel alo
 
 ## Environment Used
 
-Validation was run in the CUDA build at [build-cuda](/home/user/바탕화면/gromacs/build-cuda) with:
+Validation was run in the CUDA build at [build-cuda](../build-cuda) with:
 
 - `GMX_GPU=CUDA`
 - release build

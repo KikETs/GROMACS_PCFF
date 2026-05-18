@@ -1,6 +1,6 @@
 {
-  "lammps_root": "/home/user/\ubc14\ud0d5\ud654\uba74/DL/LAMMPS_NEW",
-  "local_gromacs_root": "/home/user/\ubc14\ud0d5\ud654\uba74/DL/gromacs",
+  "lammps_root": "home/user/\ubc14\ud0d5\ud654\uba74/DL/LAMMPS_NEW",
+  "local_gromacs_root": "../../..",
   "method_readiness": {
     "artifact_registry_status_counts": {
       "derived_metrics_without_raw_artifacts": 2
@@ -81,8 +81,8 @@
       }
     }
   },
-  "reference_aggregate": "/home/user/\ubc14\ud0d5\ud654\uba74/DL/gromacs/simulation-trajectory-aggregate.csv",
-  "results_root": "/home/user/\ubc14\ud0d5\ud654\uba74/DL/gromacs/eval_top10_bottom10_stratified100/results",
+  "reference_aggregate": "../../../simulation-trajectory-aggregate.csv",
+  "results_root": "../../../eval_top10_bottom10_stratified100/results",
   "screening_usefulness": {
     "completion": {
       "n_completed": 107,

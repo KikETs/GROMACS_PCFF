@@ -1,12 +1,12 @@
 {
   "acpype_gaff2_dependency": false,
   "artifacts": {
-    "gromacs_coordinates": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/system.gro",
-    "gromacs_topology": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/system.top",
-    "lammps_data": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/system.data",
-    "lammps_input": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/system.in",
-    "system_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/system.json",
-    "typed_system": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/typed_system.json"
+    "gromacs_coordinates": "../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/system.gro",
+    "gromacs_topology": "../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/system.top",
+    "lammps_data": "../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/system.data",
+    "lammps_input": "../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/system.in",
+    "system_json": "../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/system.json",
+    "typed_system": "../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/m5_gmxwarm_1bar_crescale_20ps/generated_pair/typed_system.json"
   },
   "audit_basis": [
     "GROMACS topology is generated directly from the repository PCFF/Class2 LAMMPS golden fixture.",
@@ -27,7 +27,7 @@
     "replicate": null,
     "seed_system": "monoglyme_ethane_litfsi_1to1"
   },
-  "fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/fixture_manifest.json",
+  "fixture_manifest": "../../../../../tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/fixture_manifest.json",
   "gromacs_preparation": "pcff_fixture_bridge_generated_topology",
   "lammps_reference": "pcff_class2_fixture",
   "lammps_styles": {
@@ -56,7 +56,7 @@
     "derived_from": {
       "formula_count": 18,
       "packing": "gmx insert-molecules deterministic seeded pack; LAMMPS data converted from the same coordinates",
-      "source_spec": "/home/kiket/Desktop/test/GROMACS_PCFF/testdata/polymer_workflow_m5/cases/monoglyme_ethane_litfsi_1to1/spec.json",
+      "source_spec": "../../../../../testdata/polymer_workflow_m5/cases/monoglyme_ethane_litfsi_1to1/spec.json",
       "source_system": "monoglyme_ethane_litfsi_1to1"
     },
     "description": "M2 broader dense charged scaffold generated from the strict PCFF M5 workflow components.",

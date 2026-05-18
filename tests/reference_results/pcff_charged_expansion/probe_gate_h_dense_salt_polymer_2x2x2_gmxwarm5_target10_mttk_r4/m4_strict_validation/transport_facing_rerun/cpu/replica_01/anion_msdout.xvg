@@ -2,11 +2,11 @@
 # Created by:
 #    :-) GROMACS - gmx msd, 2027.0-dev-20260405-81d472fe4c-dirty-unknown (-:
 # 
-# Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-# Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-# Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+# Executable:   ../../../../../../../../build_gateb_cuda/bin/gmx
+# Data prefix:  ../../../../../../../.. (source tree)
+# Working dir:  ../../../../../../../..
 # Command line:
-#   gmx msd -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/prod.xtc -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/prod.tpr -n /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/anion.ndx -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/anion_msdout.xvg -mol /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/anion_diff_mol.xvg -trestart 0.5 -maxtau 5.0 -beginfit 0.5 -endfit 4.5
+#   gmx msd -f ../../../../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/prod.xtc -s ../../../../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/prod.tpr -n ../../../../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/anion.ndx -o ../../../../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/anion_msdout.xvg -mol ../../../../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/anion_diff_mol.xvg -trestart 0.5 -maxtau 5.0 -beginfit 0.5 -endfit 4.5
 # gmx msd is part of G R O M A C S:
 #
 # GROup of MAchos and Cynical Suckers

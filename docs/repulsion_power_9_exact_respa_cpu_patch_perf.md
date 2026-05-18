@@ -3,7 +3,7 @@
 ## Bottom Line
 
 Once the wrong-benchmark issue is removed, the real exact-`r-RESPA` CPU optimization target is
-[`computeExactRespaNonbondedCpu()`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/mdlib/sim_util.cpp:3498).
+[`computeExactRespaNonbondedCpu()`](../src/gromacs/mdlib/sim_util.cpp:3498).
 
 That path now has a repulsion-power-9 specialization:
 
@@ -24,17 +24,17 @@ than the generic patch baseline at `ntomp=1,2,6`.
 
 Benchmark script:
 
-- [`tools/pcff_respa_parity/bench_repulsion_power_9_exact_respa_cpu_patch.py`](/home/kiket/Desktop/test/GROMACS_PCFF/tools/pcff_respa_parity/bench_repulsion_power_9_exact_respa_cpu_patch.py)
+- [`tools/pcff_respa_parity/bench_repulsion_power_9_exact_respa_cpu_patch.py`](../tools/pcff_respa_parity/bench_repulsion_power_9_exact_respa_cpu_patch.py)
 
 Executed output bundle:
 
-- [`output/repulsion_power_9_exact_respa_cpu_patch_perf/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_exact_respa_cpu_patch_perf/summary.md)
-- [`output/repulsion_power_9_exact_respa_cpu_patch_perf/summary.json`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_exact_respa_cpu_patch_perf/summary.json)
+- [`output/repulsion_power_9_exact_respa_cpu_patch_perf/summary.md`](../output/repulsion_power_9_exact_respa_cpu_patch_perf/summary.md)
+- [`output/repulsion_power_9_exact_respa_cpu_patch_perf/summary.json`](../output/repulsion_power_9_exact_respa_cpu_patch_perf/summary.json)
 
 Audited run settings:
 
 - host: `AMD Ryzen 9 9900X 12-Core Processor`
-- binary: [`build/bin/gmx`](/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx)
+- binary: [`build/bin/gmx`](../build/bin/gmx)
 - exact `r-RESPA` CPU pair splitting
 - `pin=on`
 - `steps=200`
@@ -51,13 +51,13 @@ The optimized code path is the exact CPU patch path, not the admitted SIMD short
 Relevant implementation points:
 
 - path dispatch:
-  - [`src/gromacs/mdlib/sim_util.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/mdlib/sim_util.cpp:8189)
+  - [`src/gromacs/mdlib/sim_util.cpp`](../src/gromacs/mdlib/sim_util.cpp:8189)
 - generic baseline:
-  - [`src/gromacs/mdlib/sim_util.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/mdlib/sim_util.cpp:4325)
+  - [`src/gromacs/mdlib/sim_util.cpp`](../src/gromacs/mdlib/sim_util.cpp:4325)
 - specialization toggle:
-  - [`src/gromacs/mdlib/sim_util.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/mdlib/sim_util.cpp:186)
+  - [`src/gromacs/mdlib/sim_util.cpp`](../src/gromacs/mdlib/sim_util.cpp:186)
 - step-0 log markers:
-  - [`src/gromacs/mdlib/sim_util.cpp`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/mdlib/sim_util.cpp:8203)
+  - [`src/gromacs/mdlib/sim_util.cpp`](../src/gromacs/mdlib/sim_util.cpp:8203)
 
 ## Exactness Basis
 

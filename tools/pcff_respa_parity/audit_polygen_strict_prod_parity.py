@@ -31,7 +31,7 @@ OUT_ROOT = REPO / "output" / "polygen_pcff_gromacs_initial_em_notebook"
 LAMMPS_WORK = OUT_ROOT / "lammps_openmp"
 GMX_STRICT_WORK = OUT_ROOT / "gromacs_gpu_hybrid_strict_pme5"
 
-DEFAULT_LMP = Path("/home/kiket/anaconda3/envs/MD/bin/lmp")
+DEFAULT_LMP = Path(os.environ.get("LMP_BIN", "lmp"))
 DEFAULT_GMX_CPU = REPO / "build-znver4" / "bin" / "gmx"
 DEFAULT_GMX_GPU = REPO / "build_gateb_cuda" / "bin" / "gmx"
 
@@ -698,7 +698,7 @@ def main() -> int:
     config = load_notebook_config(args.notebook.resolve())
     manifest = {
         "claim_boundary": "Short strict production physical audit. It checks 20 ps-scale thermodynamic consistency only; it is not a full equilibration, production, or transport-ready gate.",
-        "polygen_reference": "/home/kiket/src/PolyGen/Example-simulation-files/production/production.in",
+        "polygen_reference": str(REPO.parent / "PolyGen" / "Example-simulation-files" / "production" / "production.in"),
         "matched_settings": {
             "run_style": "LAMMPS respa 2 4",
             "gmx_exact_respa_levels": 2,

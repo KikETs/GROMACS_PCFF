@@ -6,7 +6,7 @@ This file is host-local. It is not a cross-machine claim.
 
 - hostname: `KikET`
 - cpu: `AMD Ryzen 9 9900X 12-Core Processor`
-- gmx: `/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx`
+- gmx: `../../../build/bin/gmx`
 - steps per run: `8000`
 - repeats per point: `6`
 - pin mode: `on`

@@ -33,7 +33,7 @@ DEFAULT_OUT = (
     REPO_ROOT
     / "tests/reference_results/lammps_gromacs_cpu_respa_speed_protocol_20260424"
 )
-DEFAULT_LMP = Path("/home/kiket/anaconda3/envs/MD/bin/lmp")
+DEFAULT_LMP = Path(os.environ.get("LMP_BIN", "lmp"))
 
 
 def parse_env_assignment(value: str) -> tuple[str, str]:

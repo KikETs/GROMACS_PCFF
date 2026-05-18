@@ -1,6 +1,6 @@
 {
   "schema": "exact_respa_update_schedule_specialization_best_repeat_probe",
-  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
+  "tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr",
   "steps": 10000,
   "rows": [
     {
@@ -20,7 +20,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "5e80dd332e13ddaef1135bf186a64c3ca0b881607f123a9d4456033720005ae4",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp6_on_fused_on/rep01/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp6_on_fused_on/rep01/run.log"
     },
     {
       "label": "ntomp6_on_fused_on",
@@ -39,7 +39,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "e6cf4e6fb7615bb4c491b8fdf0488d9bc57f4a48b0862c31fafc09534bd9cda4",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp6_on_fused_on/rep02/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp6_on_fused_on/rep02/run.log"
     },
     {
       "label": "ntomp6_on_fused_on",
@@ -58,7 +58,7 @@
       "gro": "86816e60295a2fe2a5446b8c587a0265e1d0770716bac06dc53b8517c7d065f4",
       "edr": "a48eccac9530a8b88e7209d6d6ea369075557e1342f4700cdb6575c0fc35ad58",
       "cpt": "8f82bf883cf193c0a33a64bd6aca402799f8390975fccd2e6eb72873e4f75ca7",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp6_on_fused_on/rep03/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp6_on_fused_on/rep03/run.log"
     },
     {
       "label": "ntomp10_on_fused_off",
@@ -77,7 +77,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "2f36e0e28f6db06dae60d98a608b02169b94ad171e9248b97376a3c1eb6d06bf",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp10_on_fused_off/rep01/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp10_on_fused_off/rep01/run.log"
     },
     {
       "label": "ntomp10_on_fused_off",
@@ -96,7 +96,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "b7cc6dfd00ba1c20adabf79bf5d892693b53aae9fb793e0cb4167809da94fe3c",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp10_on_fused_off/rep02/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp10_on_fused_off/rep02/run.log"
     },
     {
       "label": "ntomp10_on_fused_off",
@@ -115,7 +115,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "edr": "3711871205af3bcf261a46d155eb33fa091577474efcb4e76995e75f522b3723",
       "cpt": "27e0aaa54056d991d5e7ebaf78ad84b5740fafeab2a59dc059a80e45d6764e70",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp10_on_fused_off/rep03/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp10_on_fused_off/rep03/run.log"
     },
     {
       "label": "ntomp12_off_fused_off",
@@ -134,7 +134,7 @@
       "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
       "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
       "cpt": "e20ea4d09cbdc930e71beef27bf964c075b70b0909b4712d4c258acbc9fb0a18",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp12_off_fused_off/rep01/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp12_off_fused_off/rep01/run.log"
     },
     {
       "label": "ntomp12_off_fused_off",
@@ -153,7 +153,7 @@
       "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
       "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
       "cpt": "202c56927e95d8215a4be9ca3a9a879aa6fd3f08f18b25869c456e5ef3b62526",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp12_off_fused_off/rep02/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp12_off_fused_off/rep02/run.log"
     },
     {
       "label": "ntomp12_off_fused_off",
@@ -172,7 +172,7 @@
       "gro": "1e61f8b4eec21742b627093c35b4534fd4e433e5712a9e014413f79fc2502d3e",
       "edr": "57a731f5a1fd8b6f0b8fbe9df0a61177cf9e0052f449372174cdbe0909a98392",
       "cpt": "1360e008a715cb6ecc3343029c2206b0f9d25b5cb40fe7c7e5d211c109228ba1",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp12_off_fused_off/rep03/run.log"
+      "log": "../../../output/exact_respa_update_probe/update_schedule_specialization_best_repeats_10000_20260421/ntomp12_off_fused_off/rep03/run.log"
     }
   ],
   "summary": [

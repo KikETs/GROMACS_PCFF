@@ -19,12 +19,12 @@
 
 ## M1 deliverables in this repository
 
-- [docs/pcff_respa_reference_spec.md](/home/user/바탕화면/gromacs/docs/pcff_respa_reference_spec.md)
-- [testdata/lammps_golden/corpus_manifest.json](/home/user/바탕화면/gromacs/testdata/lammps_golden/corpus_manifest.json)
-- [tools/generate_lammps_golden/README.md](/home/user/바탕화면/gromacs/tools/generate_lammps_golden/README.md)
-- [tools/generate_lammps_golden/generate.py](/home/user/바탕화면/gromacs/tools/generate_lammps_golden/generate.py)
-- [tools/generate_lammps_golden/compare.py](/home/user/바탕화면/gromacs/tools/generate_lammps_golden/compare.py)
-- [tests/reference_schema/test_corpus_schema.py](/home/user/바탕화면/gromacs/tests/reference_schema/test_corpus_schema.py)
+- [docs/pcff_respa_reference_spec.md](./pcff_respa_reference_spec.md)
+- [testdata/lammps_golden/corpus_manifest.json](../testdata/lammps_golden/corpus_manifest.json)
+- [tools/generate_lammps_golden/README.md](../tools/generate_lammps_golden/README.md)
+- [tools/generate_lammps_golden/generate.py](../tools/generate_lammps_golden/generate.py)
+- [tools/generate_lammps_golden/compare.py](../tools/generate_lammps_golden/compare.py)
+- [tests/reference_schema/test_corpus_schema.py](../tests/reference_schema/test_corpus_schema.py)
 
 ## Risks that will affect M2 and M3
 

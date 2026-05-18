@@ -1,4 +1,4 @@
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr:
+../../../../../tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr:
 inputrec:
    integrator                     = md-vv
    tinit                          = 0

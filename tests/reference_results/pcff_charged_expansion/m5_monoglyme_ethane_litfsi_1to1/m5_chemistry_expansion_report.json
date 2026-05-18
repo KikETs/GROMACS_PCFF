@@ -89,7 +89,7 @@
     "tfsi_like_sulfonimide": 1
   },
   "gromacs_smoke": {
-    "gmx_binary": "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+    "gmx_binary": "../../../../build/bin/gmx",
     "grompp_returncode": 0,
     "grompp_warning_count": 0,
     "grompp_warning_policy": "no_maxwarn; grompp warnings fail this M5 smoke gate",

@@ -1,7 +1,7 @@
 {
   "artifacts": {
-    "observable_comparison_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/summaries/observable_comparison.tsv",
-    "system_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box"
+    "observable_comparison_tsv": "../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/summaries/observable_comparison.tsv",
+    "system_root": "../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box"
   },
   "ensemble": "npt",
   "failure_reasons": [],

@@ -6,7 +6,7 @@ This benchmark compares pure-OpenMP and PME-split CPU layouts on the non-MTS sho
 
 - hostname: `KikET`
 - cpu: `AMD Ryzen 9 9900X 12-Core Processor`
-- gmx: `/home/kiket/Desktop/test/GROMACS_PCFF/build_subcounters/bin/gmx`
+- gmx: `../../build_subcounters/bin/gmx`
 - steps per run: `10000`
 - repeats per point: `6`
 - pin mode: `on`

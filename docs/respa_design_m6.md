@@ -157,7 +157,7 @@ The force-buffer layout was generalized from a single slow-force buffer to:
 
 This is required because exact `r-RESPA` needs separate ownership and later weighted combination for more than one slow level.
 
-One subtle point turned out to matter more than the pair-splitting details: on slow steps, `force()` is the physical total force after MTS combination, not the fast level-0 force. The exact kick path in [md.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdrun/md.cpp) therefore now reconstructs the level-0 kick force as `F_total - sum(F_slow_levels)` before applying the explicit slow-level kicks. Without that reconstruction, slow-level impulses are counted twice.
+One subtle point turned out to matter more than the pair-splitting details: on slow steps, `force()` is the physical total force after MTS combination, not the fast level-0 force. The exact kick path in [md.cpp](../src/gromacs/mdrun/md.cpp) therefore now reconstructs the level-0 kick force as `F_total - sum(F_slow_levels)` before applying the explicit slow-level kicks. Without that reconstruction, slow-level impulses are counted twice.
 
 ### Exact split nonbonded execution
 
@@ -173,7 +173,7 @@ It:
 
 The switching logic was modeled against the local LAMMPS reference source:
 
-- `/home/user/lammps/src/CLASS2/pair_lj_class2_coul_long.cpp`
+- `../lammps/src/CLASS2/pair_lj_class2_coul_long.cpp`
 
 Basis:
 
@@ -181,7 +181,7 @@ Basis:
 - `compute_middle()`
 - `compute_outer()`
 
-The exact parity harness also needs a real Verlet buffer. LAMMPS `units real` defaults the neighbor skin to `2.0 Angstrom` in `/home/user/lammps/src/update.cpp`, but the frozen `small_oligomer` box is only `2.0 nm` wide, so a literal `rlist = 1.1 nm` would exceed half the shortest box vector and be rejected by GROMACS. The M6 fixtures therefore now use the largest valid buffered setting that still fits the frozen box, `rlist = 0.99 nm` for `rcoulomb = rvdw = 0.9 nm`. The earlier `rlist = cutoff` setup with `nstlist > 1` was not a meaningful scheduler comparison, because it let the plain pairlist go stale over the outer-step interval.
+The exact parity harness also needs a real Verlet buffer. LAMMPS `units real` defaults the neighbor skin to `2.0 Angstrom` in `../lammps/src/update.cpp`, but the frozen `small_oligomer` box is only `2.0 nm` wide, so a literal `rlist = 1.1 nm` would exceed half the shortest box vector and be rejected by GROMACS. The M6 fixtures therefore now use the largest valid buffered setting that still fits the frozen box, `rlist = 0.99 nm` for `rcoulomb = rvdw = 0.9 nm`. The earlier `rlist = cutoff` setup with `nstlist > 1` was not a meaningful scheduler comparison, because it let the plain pairlist go stale over the outer-step interval.
 
 ## Explicit Constraints
 

@@ -45,12 +45,12 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260416-49c393e496-dirty-unknown
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_subcounters/bin/gmx
-Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test
+Executable:   ../../../../../build_subcounters/bin/gmx
+Data prefix:  ../../../../.. (source tree)
+Working dir:  ../../../../../..
 Process ID:   57045
 Command line:
-  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_scaling_diagnostic/pin_on/small_oligomer/exact_respa_specialized_perf.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_subcounter_probe/small_oligomer/ntomp6/generic/run -pin on -nb cpu -pme cpu -bonded cpu -update cpu -notunepme -ntmpi 1 -ntomp 6
+  gmx mdrun -s ../../../../../output/repulsion_power_9_scaling_diagnostic/pin_on/small_oligomer/exact_respa_specialized_perf.tpr -deffnm ../../../../../output/repulsion_power_9_subcounter_probe/small_oligomer/ntomp6/generic/run -pin on -nb cpu -pme cpu -bonded cpu -update cpu -notunepme -ntmpi 1 -ntomp 6
 
 GROMACS version:     2027.0-dev-20260416-49c393e496-dirty-unknown
 GIT SHA1 hash:       49c393e4960beaa98b2f1bb427ba1e0355ea2a94 (dirty)

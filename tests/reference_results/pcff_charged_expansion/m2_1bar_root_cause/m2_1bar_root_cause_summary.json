@@ -27,7 +27,7 @@
         "density_rel_diff": 0.42135016217090554,
         "volume_rel_diff": 0.5708016395087039
       },
-      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
+      "path": "../../../../tests/reference_results/pcff_charged_expansion/m2_broad/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
       "protocol": {
         "analysis_window_ps": 50.0,
         "duration_ps": 100.0,
@@ -54,7 +54,7 @@
         "density_rel_diff": 0.03978330099184161,
         "volume_rel_diff": 0.04393341199598194
       },
-      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
+      "path": "../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v3_250bar_mttk_skin4_lmp1/systems/monoglyme_ethane_litfsi_1to1_dense18/paired_npt/dense_npt_parity_report.json",
       "protocol": {
         "analysis_window_ps": 50.0,
         "duration_ps": 100.0,
@@ -81,7 +81,7 @@
         "time_ps": 20.0,
         "volume_nm3": 10.50426
       },
-      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_250bar_endpoint_to_1bar_gmx_mttk_20ps/gromacs/npt_1bar_from_250bar_final_energy.xvg",
+      "path": "../../../../tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_250bar_endpoint_to_1bar_gmx_mttk_20ps/gromacs/npt_1bar_from_250bar_final_energy.xvg",
       "rows": 201,
       "window_end_ps": 20.0,
       "window_mean": {
@@ -107,7 +107,7 @@
         "time_ps": 100.0,
         "volume_nm3": 850.24941
       },
-      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_1bar_lmp1_skin4_100ps_lammps_only/lammps/npt.log",
+      "path": "../../../../tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_1bar_lmp1_skin4_100ps_lammps_only/lammps/npt.log",
       "rows": 1001,
       "window_end_ps": null,
       "window_mean": {
@@ -133,7 +133,7 @@
         "time_ps": 100.0,
         "volume_nm3": 8.9018634
       },
-      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_250bar_endpoint_to_1bar_lmp_skin4_100ps/lammps/npt_1bar_from_250bar_final.log",
+      "path": "../../../../tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_250bar_endpoint_to_1bar_lmp_skin4_100ps/lammps/npt_1bar_from_250bar_final.log",
       "rows": 1001,
       "window_end_ps": null,
       "window_mean": {
@@ -159,7 +159,7 @@
         "time_ps": 100.0,
         "volume_nm3": 8.9018634
       },
-      "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_250bar_endpoint_to_1bar_lmp_skin4_100ps/lammps/npt_1bar_from_250bar_final.log",
+      "path": "../../../../tests/reference_results/pcff_charged_expansion/m2_1bar_root_cause/m5_250bar_endpoint_to_1bar_lmp_skin4_100ps/lammps/npt_1bar_from_250bar_final.log",
       "rows": 1001,
       "window_end_ps": 20.0,
       "window_mean": {

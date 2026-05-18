@@ -1,7 +1,7 @@
 # exact r-RESPA GPU Hybrid Force-Only Smoke
 
 - Status: PASS
-- gmx: `/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx`
+- gmx: `../../../../build_gateb_cuda/bin/gmx`
 - GPU support: `CUDA`
 - ntmpi / ntomp: `1` / `2`
 - force tolerance: `0.001`

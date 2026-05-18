@@ -14,7 +14,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "hour_per_ns": 0.265,
       "label": "direct_off",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_off/rep01/run.log",
+      "log": "../../../output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_off/rep01/run.log",
       "ms_per_step": 0.478,
       "neighbor_search_seconds": 0.426,
       "ns_per_day": 90.397,
@@ -29,7 +29,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "hour_per_ns": 0.256,
       "label": "direct_off",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_off/rep02/run.log",
+      "log": "../../../output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_off/rep02/run.log",
       "ms_per_step": 0.461,
       "neighbor_search_seconds": 0.403,
       "ns_per_day": 93.715,
@@ -44,7 +44,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "hour_per_ns": 0.259,
       "label": "direct_on",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_on/rep01/run.log",
+      "log": "../../../output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_on/rep01/run.log",
       "ms_per_step": 0.466,
       "neighbor_search_seconds": 0.429,
       "ns_per_day": 92.681,
@@ -59,7 +59,7 @@
       "gro": "f75dfea77ef581838b11aeedd605946ee22d710787d165988c7db5a89f32558c",
       "hour_per_ns": 0.26,
       "label": "direct_on",
-      "log": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_on/rep02/run.log",
+      "log": "../../../output/exact_respa_update_probe/update_direct_fastpath_pinning_ntomp10_10000_20260421/direct_on/rep02/run.log",
       "ms_per_step": 0.468,
       "neighbor_search_seconds": 0.425,
       "ns_per_day": 92.331,
@@ -103,5 +103,5 @@
       "label": "direct_on_vs_off"
     }
   ],
-  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr"
+  "tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq3000_prod10000_ntmpi1_ntomp6_local_raw_scaffold_continuation_phase_ldseed83001_20260421/cpu/replica_01/equil.tpr"
 }

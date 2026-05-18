@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import json
+from pathlib import Path
 
 def linear_regression(x, y):
     n = len(x)
@@ -15,7 +16,7 @@ def linear_regression(x, y):
     return slope, intercept
 
 def main():
-    output_path = "/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/tp1_charged_recovery/dense_salt_polymer"
+    output_path = str(Path(__file__).resolve().parents[2] / "tests" / "reference_results" / "tp1_charged_recovery" / "dense_salt_polymer")
     xvg_file = os.path.join(output_path, "energy_raw.xvg")
     
     data = []

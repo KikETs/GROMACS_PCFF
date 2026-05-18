@@ -31,7 +31,7 @@ PT1 sits strictly before typing.
   - `pdb`
 - typing support:
   - unchanged from PT0
-  - still defined by [docs/pcff_typing_scope.md](/home/kiket/바탕화면/test/GROMACS_PCFF/docs/pcff_typing_scope.md)
+  - still defined by [docs/pcff_typing_scope.md](./pcff_typing_scope.md)
 
 The parser layer normalizes structure data into IR and preserves missing information explicitly. It does not guess bond orders, atom types, protonation states, or formal charges when the source format does not encode them.
 

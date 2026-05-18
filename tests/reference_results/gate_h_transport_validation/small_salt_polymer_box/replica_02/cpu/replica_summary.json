@@ -2025,8 +2025,8 @@
         13.824
       ]
     },
-    "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/production_observables.xvg",
-    "group_coord_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/transport_group_com.xvg",
+    "energy_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/production_observables.xvg",
+    "group_coord_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/transport_group_com.xvg",
     "metrics": {
       "anion_diffusivity_cm2_s": {
         "available": true,
@@ -2043,7 +2043,7 @@
         "fit_end_ps": 400.0,
         "fit_points": 301,
         "fit_start_ps": 100.0,
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/anion_diffusivity_cm2_s_msd.tsv",
+        "msd_curve_tsv": "../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/anion_diffusivity_cm2_s_msd.tsv",
         "r_squared": 0.004319665187080157,
         "value": 8.855523582095408e-09,
         "value_nm2_ps": 8.855523582095408e-07
@@ -2063,7 +2063,7 @@
         "fit_end_ps": 400.0,
         "fit_points": 301,
         "fit_start_ps": 100.0,
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/cation_diffusivity_cm2_s_msd.tsv",
+        "msd_curve_tsv": "../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/cation_diffusivity_cm2_s_msd.tsv",
         "r_squared": 0.41451961163798545,
         "value": -5.014438744637288e-08,
         "value_nm2_ps": -5.014438744637288e-06
@@ -2088,7 +2088,7 @@
         "fit_end_ps": 400.0,
         "fit_points": 301,
         "fit_start_ps": 100.0,
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/polymer_diffusivity_cm2_s_msd.tsv",
+        "msd_curve_tsv": "../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/polymer_diffusivity_cm2_s_msd.tsv",
         "r_squared": 0.05193048336218087,
         "value": -6.468863432533089e-09,
         "value_nm2_ps": -6.468863432533089e-07
@@ -2099,9 +2099,9 @@
         "value": 1.2144772888690958
       }
     },
-    "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/transport_groups.ndx"
+    "transport_index": "../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/transport_groups.ndx"
   },
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/equil",
+  "equil_deffnm": "../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/equil",
   "layout": "cpu",
   "layout_report": {
     "gpu_mapping_header": null,
@@ -2122,7 +2122,7 @@
     "update_gpu_enabled": false,
     "update_task_line": null
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/prod",
+  "prod_deffnm": "../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/prod",
   "replica_index": 2,
   "seed": 86114
 }

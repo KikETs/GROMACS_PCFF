@@ -43,10 +43,7 @@ def parse_env_assignments(value: str) -> dict[str, str]:
 
 
 def default_mpirun_binary() -> str:
-    for candidate in (Path("/usr/bin/mpirun"), Path("/usr/bin/mpiexec")):
-        if candidate.exists():
-            return str(candidate)
-    return str(Path.home() / "anaconda3/envs/torch_env/bin/mpirun")
+    return shutil.which("mpirun") or shutil.which("mpiexec") or "mpirun"
 
 
 def run(cmd: list[str], *, cwd: Path, env: dict[str, str] | None = None, stdout: Path | None = None) -> tuple[int, float]:

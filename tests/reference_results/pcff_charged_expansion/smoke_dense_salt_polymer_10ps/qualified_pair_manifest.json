@@ -1,11 +1,11 @@
 {
   "acpype_gaff2_dependency": false,
   "artifacts": {
-    "gromacs_coordinates": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/generated_pair/system.gro",
-    "gromacs_topology": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/generated_pair/system.top",
-    "lammps_data": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/generated_pair/system.data",
-    "lammps_input": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/generated_pair/system.in",
-    "typed_system": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/generated_pair/typed_system.json"
+    "gromacs_coordinates": "../../../../tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/generated_pair/system.gro",
+    "gromacs_topology": "../../../../tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/generated_pair/system.top",
+    "lammps_data": "../../../../tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/generated_pair/system.data",
+    "lammps_input": "../../../../tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/generated_pair/system.in",
+    "typed_system": "../../../../tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/generated_pair/typed_system.json"
   },
   "audit_basis": [
     "GROMACS topology is generated directly from the repository PCFF/Class2 LAMMPS golden fixture.",

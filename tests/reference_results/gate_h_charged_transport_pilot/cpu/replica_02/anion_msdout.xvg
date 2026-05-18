@@ -2,11 +2,11 @@
 # Created by:
 #    :-) GROMACS - gmx msd, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 # 
-# Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-# Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-# Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+# Executable:   ../../../../../build_gateb_cuda/bin/gmx
+# Data prefix:  ../../../../.. (source tree)
+# Working dir:  ../../../../..
 # Command line:
-#   gmx msd -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.xtc -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.tpr -n /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion.ndx -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion_msdout.xvg -mol /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion_diff_mol.xvg -trestart 1.0 -maxtau 10.0
+#   gmx msd -f ../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.xtc -s ../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod.tpr -n ../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion.ndx -o ../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion_msdout.xvg -mol ../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion_diff_mol.xvg -trestart 1.0 -maxtau 10.0
 # gmx msd is part of G R O M A C S:
 #
 # Grunge ROck MAChoS

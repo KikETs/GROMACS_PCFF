@@ -40,7 +40,7 @@
       },
       "step0_potential_abs_diff_kj_per_mol": 0.0
     },
-    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/exact_three_level",
+    "exact_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/exact_three_level",
     "legacy_vs_plain": {
       "final_coord_diff": {
         "l2_norm": 0.00012122280460376552,
@@ -60,9 +60,9 @@
       },
       "step0_potential_abs_diff_kj_per_mol": 0.0
     },
-    "legacy_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/legacy_two_level",
+    "legacy_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/legacy_two_level",
     "nsteps": 8,
-    "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/plain_verlet"
+    "plain_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/plain_verlet"
   },
   "comparison_notes": [
     "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
@@ -144,7 +144,7 @@
       },
       "step0_potential_abs_diff_kj_per_mol": 0.0
     },
-    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level",
+    "exact_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level",
     "legacy_vs_plain": {
       "final_coord_diff": {
         "l2_norm": 6.061351664441776e-05,
@@ -164,16 +164,16 @@
       },
       "step0_potential_abs_diff_kj_per_mol": 0.0
     },
-    "legacy_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level",
+    "legacy_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level",
     "nsteps": 16,
-    "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/plain_verlet"
+    "plain_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/plain_verlet"
   },
   "fine_exact_no_worse_than_legacy": true,
   "fixture_id": "coulomb_toy",
   "fixture_sources": {
-    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/lammps/system.data",
-    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/lammps/system.in",
-    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/system.json"
+    "lammps_data": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/lammps/system.data",
+    "lammps_input": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/lammps/system.in",
+    "system_json": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/system.json"
   },
   "gro_metadata": {
     "box_nm": [

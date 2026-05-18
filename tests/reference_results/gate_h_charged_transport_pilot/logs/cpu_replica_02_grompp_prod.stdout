@@ -1300,7 +1300,7 @@ Excluding 1 bonded neighbours molecule type 'CAT'
 
 Excluding 1 bonded neighbours molecule type 'ANI'
 
-Taking velocities from '/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/equil.gro'
+Taking velocities from '../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/equil.gro'
 Analysing residue names:
 There are:   648      Other residues
 Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...

@@ -1,9 +1,9 @@
 {
   "artifacts": {
-    "gromacs_energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen/paired_npt/gromacs/npt_energy.xvg",
-    "gromacs_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen/paired_npt/gromacs",
-    "lammps_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen/paired_npt/lammps/log.lammps",
-    "lammps_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen/paired_npt/lammps"
+    "gromacs_energy_xvg": "../../../../../tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen/paired_npt/gromacs/npt_energy.xvg",
+    "gromacs_root": "../../../../../tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen/paired_npt/gromacs",
+    "lammps_log": "../../../../../tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen/paired_npt/lammps/log.lammps",
+    "lammps_root": "../../../../../tests/reference_results/pcff_charged_expansion/probe_dense_salt_polymer_100ps_berendsen/paired_npt/lammps"
   },
   "gromacs": {
     "density_kg_m3": {

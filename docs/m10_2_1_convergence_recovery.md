@@ -15,8 +15,8 @@ After aligning the runner with the current `M10.2` semantics:
 the longer 100 ps NPT run still does **not** support conductivity handoff.
 
 ## Execution Prerequisite
-- runner: [run_m10_2_1.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_1_convergence_gate/run_m10_2_1.py)
-- required interpreter: `/home/kiket/anaconda3/envs/MD/bin/python3`
+- runner: [run_m10_2_1.py](../tools/run_m10_2_1_convergence_gate/run_m10_2_1.py)
+- required interpreter: `python3`
 - reason: this runner imports `numpy` and was validated in the `MD` conda environment, not bare system `python3`
 
 ## System & Runtime
@@ -51,9 +51,9 @@ The 100 ps run changed the diagnosis:
 So the method is not ready for conductivity production.
 
 ## Machine-Readable Artifacts
-- [m10_2_1_summary.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_1_convergence_gate/m10_2_1_summary.json)
-- [m10_2_1_gate_decision.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_1_convergence_gate/m10_2_1_gate_decision.json)
-- [report.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_1_convergence_gate/small_oligomer_medium_100ps/report.json)
+- [m10_2_1_summary.json](../tests/reference_results/m10_2_1_convergence_gate/m10_2_1_summary.json)
+- [m10_2_1_gate_decision.json](../tests/reference_results/m10_2_1_convergence_gate/m10_2_1_gate_decision.json)
+- [report.json](../tests/reference_results/m10_2_1_convergence_gate/small_oligomer_medium_100ps/report.json)
 
 ## Bottom Line
 `M10.2.1` is currently a `partial` result.

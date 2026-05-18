@@ -49,7 +49,7 @@
     "estimated_hours_serial_for_all_replicas": 34.004999999999995,
     "hour_per_ns": 9.068,
     "ns_per_day": 2.647,
-    "reference_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log"
+    "reference_log": "../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/prod.log"
   },
   "prerequisites": {
     "gate_a_status": "PASS",
@@ -103,7 +103,7 @@
       4.4,
       4.4
     ],
-    "fixture_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
+    "fixture_manifest": "../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
     "natoms": 2160,
     "seed_system": "dense_salt_polymer",
     "system_id": "gate_h_dense_salt_polymer_2x2x2",

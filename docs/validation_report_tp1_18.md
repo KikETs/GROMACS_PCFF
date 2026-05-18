@@ -47,18 +47,18 @@ Forbidden overclaims:
 
 Repository-local evidence used:
 
-- intended-regime vcoul A/B: [comparison_summary.json](/home/kiket/바탕화면/test/ab_runs/tp1_14_archived_auto_buffered_trl5_rebaseline/20260321_trl5_archived_auto/comparison_summary.json)
-- intended-regime dynamic comparator A/B: [comparison_summary.json](/home/kiket/바탕화면/test/ab_runs/tp1_15b_intended_regime_dynamic_reuse_probe/20260321_trl5_fullsystem_auto_vbt/comparison_summary.json)
-- cadence-vs-margin separation: [tp1_16_three_way_summary.json](/home/kiket/바탕화면/test/ab_runs/tp1_16_intended_regime_cadence_vs_margin_separation/20260321_trl5_fullsystem_auto_vbt_sep/tp1_16_three_way_summary.json)
-- manual-unsafe contract downgrade basis: [tp1_5e_contract_verdict.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/tp1_5e_pairlist_contract_audit/tp1_5e_contract_verdict.json)
-- intended-regime contract interpretation basis: [20260321_tp1_13_contract_audit_summary.json](/home/kiket/바탕화면/test/ab_runs/tp1_13_contract_audit/20260321_tp1_13_contract_audit_summary.json)
+- intended-regime vcoul A/B: [comparison_summary.json](../ab_runs/tp1_14_archived_auto_buffered_trl5_rebaseline/20260321_trl5_archived_auto/comparison_summary.json)
+- intended-regime dynamic comparator A/B: [comparison_summary.json](../ab_runs/tp1_15b_intended_regime_dynamic_reuse_probe/20260321_trl5_fullsystem_auto_vbt/comparison_summary.json)
+- cadence-vs-margin separation: [tp1_16_three_way_summary.json](../ab_runs/tp1_16_intended_regime_cadence_vs_margin_separation/20260321_trl5_fullsystem_auto_vbt_sep/tp1_16_three_way_summary.json)
+- manual-unsafe contract downgrade basis: [tp1_5e_contract_verdict.json](../tests/reference_results/tp1_5e_pairlist_contract_audit/tp1_5e_contract_verdict.json)
+- intended-regime contract interpretation basis: [20260321_tp1_13_contract_audit_summary.json](../ab_runs/tp1_13_contract_audit/20260321_tp1_13_contract_audit_summary.json)
 
 ## Reporting
 
 - files changed
-  - [docs/validation_report_tp1_18.md](/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_fix_rf_vcoul/docs/validation_report_tp1_18.md)
-  - [docs/tp1_18_trl5_rebaseline_policy.md](/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_fix_rf_vcoul/docs/tp1_18_trl5_rebaseline_policy.md)
-  - [tests/reference_results/tp1_18_rebaseline_policy/tp1_18_policy.json](/home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_fix_rf_vcoul/tests/reference_results/tp1_18_rebaseline_policy/tp1_18_policy.json)
+  - [docs/validation_report_tp1_18.md](./validation_report_tp1_18.md)
+  - [docs/tp1_18_trl5_rebaseline_policy.md](./tp1_18_trl5_rebaseline_policy.md)
+  - [tests/reference_results/tp1_18_rebaseline_policy/tp1_18_policy.json](../tests/reference_results/tp1_18_rebaseline_policy/tp1_18_policy.json)
 - strongest confirmed finding
   - intended positive-VBT `nstlist=1` is the tighter authoritative comparator currently supported by repository evidence for future TRL-5 Cut-off validation
 - strongest unresolved uncertainty

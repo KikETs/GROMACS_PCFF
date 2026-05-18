@@ -1,5 +1,5 @@
 {
-  "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer",
+  "artifact_root": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer",
   "class2_trace_bucket_assessments": {
     "class2_cross_terms": {
       "compared_row_count": 130,
@@ -1306,8 +1306,8 @@
       ]
     }
   },
-  "commands_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/summaries/commands.json",
-  "commands_sh": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/run_commands.sh",
+  "commands_json": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/summaries/commands.json",
+  "commands_sh": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/run_commands.sh",
   "cpu_correction_trace_bucket_assessments": {
     "cpu_reciprocal_self_exclusion_corrections": {
       "compared_row_count": 18,
@@ -5251,8 +5251,8 @@
   },
   "first_failure_field": null,
   "first_mismatching_term": null,
-  "gate_a_artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer",
-  "gate_a_commands_sh": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/run_commands.sh",
+  "gate_a_artifact_root": "../../../../../tests/reference_results/gate_a_cpu_oracle/small_oligomer",
+  "gate_a_commands_sh": "../../../../../tests/reference_results/gate_a_cpu_oracle/small_oligomer/run_commands.sh",
   "gate_a_term_coverage": {
     "first_insufficient_bucket": null,
     "has_insufficient_visibility": false,
@@ -5392,7 +5392,7 @@
       }
     ]
   },
-  "gate_a_tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr",
+  "gate_a_tpr": "../../../../../tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr",
   "gate_c_assessment": {
     "broken_pcff_specific_claims": [],
     "exact_ambiguous_or_wrong_terms": [],
@@ -5409,7 +5409,7 @@
         "atom_count": 6,
         "bound": 0.005048908176831901,
         "max_abs_component": 3529.442626953125,
-        "relative_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/merge_trace/step2_level0_post_postprocess_shift.tsv"
+        "relative_path": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/merge_trace/step2_level0_post_postprocess_shift.tsv"
       }
     },
     "per_level_force_max_abs_component_delta": 0.001434326171875,
@@ -6143,12 +6143,12 @@
       }
     ],
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr",
+      "../../../../../tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/exact_full",
+      "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/exact_full",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -6166,7 +6166,7 @@
       "-pin",
       "off"
     ],
-    "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full",
+    "artifact_root": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full",
     "class2_subterm_energy_trace": {
       "entries": [
         {
@@ -19676,11 +19676,11 @@
     ],
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/event_trace.tsv",
-      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/total_force.tsv",
+      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/event_trace.tsv",
+      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/total_force.tsv",
       "GMX_PCFF_RESPA_M2P_CASE_LABEL": "full",
-      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/m2p_trace",
-      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/merge_trace",
+      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/m2p_trace",
+      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/merge_trace",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
       "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -19696,14 +19696,14 @@
     },
     "failure_markers": [],
     "full_outputs": {
-      "class2_subterm_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/m2p_trace/class2_subterm_energy_trace.tsv",
-      "cpu_correction_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/m2p_trace/cpu_correction_energy_trace.tsv",
-      "deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/exact_full",
-      "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/exact_full.edr",
-      "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/event_trace.tsv",
-      "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/m2p_trace",
-      "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/merge_trace",
-      "total_force_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/total_force.tsv"
+      "class2_subterm_trace_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/m2p_trace/class2_subterm_energy_trace.tsv",
+      "cpu_correction_trace_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/m2p_trace/cpu_correction_energy_trace.tsv",
+      "deffnm": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/exact_full",
+      "edr": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/exact_full.edr",
+      "event_trace_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/event_trace.tsv",
+      "m2p_trace_dir": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/m2p_trace",
+      "merge_trace_dir": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/merge_trace",
+      "total_force_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/full/total_force.tsv"
     },
     "per_level_force_totals": {
       "entries": [
@@ -21272,8 +21272,8 @@
     },
     "returncode": 0,
     "run_id": "full",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/full.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/full.stdout",
+    "stderr": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/full.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/full.stdout",
     "total_force_summary": {
       "entries": [
         {
@@ -24225,12 +24225,12 @@
         }
       ],
       "argv": [
-        "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+        "../../../../../build_gateb_cuda/bin/gmx",
         "mdrun",
         "-s",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr",
+        "../../../../../tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr",
         "-deffnm",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/exact_full",
+        "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/exact_full",
         "-ntmpi",
         "1",
         "-ntomp",
@@ -24248,7 +24248,7 @@
         "-pin",
         "off"
       ],
-      "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1",
+      "artifact_root": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1",
       "class2_subterm_energy_trace": {
         "entries": [
           {
@@ -37758,11 +37758,11 @@
       ],
       "env_overrides": {
         "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-        "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/event_trace.tsv",
-        "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/total_force.tsv",
+        "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/event_trace.tsv",
+        "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/total_force.tsv",
         "GMX_PCFF_RESPA_M2P_CASE_LABEL": "repeat_1",
-        "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/m2p_trace",
-        "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/merge_trace",
+        "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/m2p_trace",
+        "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/merge_trace",
         "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
         "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
         "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -37778,14 +37778,14 @@
       },
       "failure_markers": [],
       "full_outputs": {
-        "class2_subterm_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/m2p_trace/class2_subterm_energy_trace.tsv",
-        "cpu_correction_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/m2p_trace/cpu_correction_energy_trace.tsv",
-        "deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/exact_full",
-        "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/exact_full.edr",
-        "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/event_trace.tsv",
-        "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/m2p_trace",
-        "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/merge_trace",
-        "total_force_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/total_force.tsv"
+        "class2_subterm_trace_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/m2p_trace/class2_subterm_energy_trace.tsv",
+        "cpu_correction_trace_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/m2p_trace/cpu_correction_energy_trace.tsv",
+        "deffnm": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/exact_full",
+        "edr": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/exact_full.edr",
+        "event_trace_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/event_trace.tsv",
+        "m2p_trace_dir": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/m2p_trace",
+        "merge_trace_dir": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/merge_trace",
+        "total_force_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_1/total_force.tsv"
       },
       "per_level_force_totals": {
         "entries": [
@@ -39354,8 +39354,8 @@
       },
       "returncode": 0,
       "run_id": "repeat_1",
-      "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/repeat_1.stderr",
-      "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/repeat_1.stdout",
+      "stderr": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/repeat_1.stderr",
+      "stdout": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/repeat_1.stdout",
       "total_force_summary": {
         "entries": [
           {
@@ -40475,12 +40475,12 @@
         }
       ],
       "argv": [
-        "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+        "../../../../../build_gateb_cuda/bin/gmx",
         "mdrun",
         "-s",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr",
+        "../../../../../tests/reference_results/gate_a_cpu_oracle/small_oligomer/full/exact_full.tpr",
         "-deffnm",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/exact_full",
+        "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/exact_full",
         "-ntmpi",
         "1",
         "-ntomp",
@@ -40498,7 +40498,7 @@
         "-pin",
         "off"
       ],
-      "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2",
+      "artifact_root": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2",
       "class2_subterm_energy_trace": {
         "entries": [
           {
@@ -54008,11 +54008,11 @@
       ],
       "env_overrides": {
         "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-        "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/event_trace.tsv",
-        "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/total_force.tsv",
+        "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/event_trace.tsv",
+        "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/total_force.tsv",
         "GMX_PCFF_RESPA_M2P_CASE_LABEL": "repeat_2",
-        "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/m2p_trace",
-        "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/merge_trace",
+        "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/m2p_trace",
+        "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/merge_trace",
         "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
         "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
         "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -54028,14 +54028,14 @@
       },
       "failure_markers": [],
       "full_outputs": {
-        "class2_subterm_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/m2p_trace/class2_subterm_energy_trace.tsv",
-        "cpu_correction_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/m2p_trace/cpu_correction_energy_trace.tsv",
-        "deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/exact_full",
-        "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/exact_full.edr",
-        "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/event_trace.tsv",
-        "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/m2p_trace",
-        "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/merge_trace",
-        "total_force_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/total_force.tsv"
+        "class2_subterm_trace_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/m2p_trace/class2_subterm_energy_trace.tsv",
+        "cpu_correction_trace_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/m2p_trace/cpu_correction_energy_trace.tsv",
+        "deffnm": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/exact_full",
+        "edr": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/exact_full.edr",
+        "event_trace_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/event_trace.tsv",
+        "m2p_trace_dir": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/m2p_trace",
+        "merge_trace_dir": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/merge_trace",
+        "total_force_tsv": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/repeat_2/total_force.tsv"
       },
       "per_level_force_totals": {
         "entries": [
@@ -55604,8 +55604,8 @@
       },
       "returncode": 0,
       "run_id": "repeat_2",
-      "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/repeat_2.stderr",
-      "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/repeat_2.stdout",
+      "stderr": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/repeat_2.stderr",
+      "stdout": "../../../../../tests/reference_results/gate_c_nb_bonded_gpu_validation/small_oligomer/logs/repeat_2.stdout",
       "total_force_summary": {
         "entries": [
           {

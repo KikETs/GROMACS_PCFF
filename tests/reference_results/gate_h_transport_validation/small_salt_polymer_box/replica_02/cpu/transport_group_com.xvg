@@ -2,11 +2,11 @@
 # Created by:
 #    :-) GROMACS - gmx traj, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 # 
-# Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-# Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-# Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+# Executable:   ../../../../../../build_gateb_cuda/bin/gmx
+# Data prefix:  ../../../../../.. (source tree)
+# Working dir:  ../../../../../..
 # Command line:
-#   gmx traj -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/prod.trr -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/prod.tpr -n /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/transport_groups.ndx -com -nojump -fp -ng 4 -ox /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/transport_group_com.xvg
+#   gmx traj -f ../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/prod.trr -s ../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/prod.tpr -n ../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/transport_groups.ndx -com -nojump -fp -ng 4 -ox ../../../../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/replica_02/cpu/transport_group_com.xvg
 # gmx traj is part of G R O M A C S:
 #
 # Good gRace! Old Maple Actually Chews Slate

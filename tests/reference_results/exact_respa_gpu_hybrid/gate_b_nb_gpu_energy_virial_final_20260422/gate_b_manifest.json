@@ -1,14 +1,14 @@
 {
-  "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422",
+  "artifact_root": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422",
   "binary_reproducibility_supported": false,
   "blocking_reasons": [],
   "comparison_basis": "Frozen Gate A CPU oracle manifest and per-system summaries.",
   "dlb": "no",
   "gate": "Gate B",
-  "gate_a_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/oracle_manifest.json",
+  "gate_a_manifest": "../../../../tests/reference_results/gate_a_cpu_oracle/oracle_manifest.json",
   "gate_a_status": "PASS",
-  "gmx": "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
-  "gmx_version": "      :-) GROMACS - gmx, 2027.0-dev-20260422-53781aa0a5-dirty-unknown (-:\n\nExecutable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx\nData prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)\nWorking dir:  /home/kiket/Desktop/test/GROMACS_PCFF\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260422-53781aa0a5-dirty-unknown\nGIT SHA1 hash:       53781aa0a5d33961bb2b993934478ba97ad16532 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         CUDA\nNBNxM GPU setup:     super-cluster 2x2x2 / cluster 8 (cluster-pair splitting on)\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     cuFFT\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\nCUDA compiler:       /usr/local/cuda-12.8/bin/nvcc (NVIDIA 12.8.93)\nCUDA compiler flags:  -O2 -g -DNDEBUG -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -O2 -g -DNDEBUG\nCUDA targets:        50;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;100-real;120\nCUDA driver:         12.80\nCUDA runtime:        12.80\nNVSHMEM:             disabled\n\n",
+  "gmx": "../../../../build_gateb_cuda/bin/gmx",
+  "gmx_version": "      :-) GROMACS - gmx, 2027.0-dev-20260422-53781aa0a5-dirty-unknown (-:\n\nExecutable:   ../../../../build_gateb_cuda/bin/gmx\nData prefix:  ../../../.. (source tree)\nWorking dir:  ../../../..\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260422-53781aa0a5-dirty-unknown\nGIT SHA1 hash:       53781aa0a5d33961bb2b993934478ba97ad16532 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         CUDA\nNBNxM GPU setup:     super-cluster 2x2x2 / cluster 8 (cluster-pair splitting on)\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     cuFFT\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\nCUDA compiler:       /usr/local/cuda-12.8/bin/nvcc (NVIDIA 12.8.93)\nCUDA compiler flags:  -O2 -g -DNDEBUG -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -use_fast_math -static-global-template-stub=false -Xptxas=-warn-double-usage -Xptxas=-Werror -diag-suppress=177 -O2 -g -DNDEBUG\nCUDA targets:        50;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;100-real;120\nCUDA driver:         12.80\nCUDA runtime:        12.80\nNVSHMEM:             disabled\n\n",
   "gpu_support": "CUDA",
   "hardware_configuration": {
     "nvcc_version": {
@@ -68,9 +68,9 @@
   "status": "PASS",
   "systems": [
     {
-      "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer",
-      "commands_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/summaries/commands.json",
-      "commands_sh": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/run_commands.sh",
+      "artifact_root": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer",
+      "commands_json": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/summaries/commands.json",
+      "commands_sh": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/run_commands.sh",
       "energy_comparison": {
         "actual_frame_count": 6,
         "expected_frame_count": 6,
@@ -355,7 +355,7 @@
         },
         "field": "total_force_comparison"
       },
-      "gate_a_artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer",
+      "gate_a_artifact_root": "../../../../tests/reference_results/gate_a_cpu_oracle/small_oligomer",
       "gate_b_assessment": {
         "event_order_identical": true,
         "full_energy_display_resolution_assessment": {
@@ -401,7 +401,7 @@
             "atom_count": 6,
             "bound": 0.00504879467189312,
             "max_abs_component": 3529.36328125,
-            "relative_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/merge_trace/step2_level0_post_postprocess_shift.tsv"
+            "relative_path": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/merge_trace/step2_level0_post_postprocess_shift.tsv"
           }
         },
         "per_level_force_max_abs_component_delta": 0.001819610595703125,
@@ -1117,12 +1117,12 @@
           }
         ],
         "argv": [
-          "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+          "../../../../build_gateb_cuda/bin/gmx",
           "mdrun",
           "-s",
-          "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.tpr",
+          "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.tpr",
           "-deffnm",
-          "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full",
+          "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full",
           "-ntmpi",
           "1",
           "-ntomp",
@@ -1140,7 +1140,7 @@
           "-pin",
           "off"
         ],
-        "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full",
+        "artifact_root": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full",
         "energy_frames": [
           {
             "step": 0,
@@ -1706,11 +1706,11 @@
         },
         "env_overrides": {
           "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-          "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/event_trace.tsv",
-          "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/total_force.tsv",
+          "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/event_trace.tsv",
+          "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/total_force.tsv",
           "GMX_PCFF_RESPA_M2P_CASE_LABEL": "full",
-          "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/m2p_trace",
-          "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/merge_trace",
+          "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/m2p_trace",
+          "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/merge_trace",
           "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
           "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
           "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -1726,19 +1726,19 @@
         },
         "failure_markers": [],
         "full_outputs": {
-          "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.cpt",
-          "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.edr",
-          "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/event_trace.tsv",
-          "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.gro",
-          "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.log",
-          "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/m2p_trace",
-          "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/merge_trace",
-          "total_force_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/total_force.tsv",
-          "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.tpr",
-          "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.trr"
+          "cpt": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.cpt",
+          "edr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.edr",
+          "event_trace_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/event_trace.tsv",
+          "gro": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.gro",
+          "log": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.log",
+          "m2p_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/m2p_trace",
+          "merge_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/merge_trace",
+          "total_force_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/total_force.tsv",
+          "tpr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.tpr",
+          "trr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/full/exact_full.trr"
         },
-        "grompp_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_full.stderr",
-        "grompp_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_full.stdout",
+        "grompp_stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_full.stderr",
+        "grompp_stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_full.stdout",
         "per_level_force_totals": {
           "entries": [
             {
@@ -3306,8 +3306,8 @@
         },
         "returncode": 0,
         "run_id": "full",
-        "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_full.stderr",
-        "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_full.stdout",
+        "stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_full.stderr",
+        "stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_full.stdout",
         "total_force_summary": {
           "entries": [
             {
@@ -3814,7 +3814,7 @@
           "schema_version": 1
         }
       },
-      "mdp": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/inputs/exact_respa_gate_b.mdp",
+      "mdp": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/inputs/exact_respa_gate_b.mdp",
       "per_level_force_comparison": {
         "extra_in_actual": [],
         "first_mismatch": {
@@ -4489,12 +4489,12 @@
             }
           ],
           "argv": [
-            "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+            "../../../../build_gateb_cuda/bin/gmx",
             "mdrun",
             "-s",
-            "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.tpr",
+            "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.tpr",
             "-deffnm",
-            "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full",
+            "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full",
             "-ntmpi",
             "1",
             "-ntomp",
@@ -4512,7 +4512,7 @@
             "-pin",
             "off"
           ],
-          "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01",
+          "artifact_root": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01",
           "energy_frames": [
             {
               "step": 0,
@@ -5078,11 +5078,11 @@
           },
           "env_overrides": {
             "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-            "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/event_trace.tsv",
-            "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/total_force.tsv",
+            "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/event_trace.tsv",
+            "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/total_force.tsv",
             "GMX_PCFF_RESPA_M2P_CASE_LABEL": "repeat_01",
-            "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/m2p_trace",
-            "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/merge_trace",
+            "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/m2p_trace",
+            "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/merge_trace",
             "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
             "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
             "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -5098,19 +5098,19 @@
           },
           "failure_markers": [],
           "full_outputs": {
-            "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.cpt",
-            "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.edr",
-            "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/event_trace.tsv",
-            "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.gro",
-            "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.log",
-            "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/m2p_trace",
-            "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/merge_trace",
-            "total_force_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/total_force.tsv",
-            "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.tpr",
-            "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.trr"
+            "cpt": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.cpt",
+            "edr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.edr",
+            "event_trace_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/event_trace.tsv",
+            "gro": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.gro",
+            "log": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.log",
+            "m2p_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/m2p_trace",
+            "merge_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/merge_trace",
+            "total_force_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/total_force.tsv",
+            "tpr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.tpr",
+            "trr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_01/exact_full.trr"
           },
-          "grompp_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_repeat_01.stderr",
-          "grompp_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_repeat_01.stdout",
+          "grompp_stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_repeat_01.stderr",
+          "grompp_stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_repeat_01.stdout",
           "per_level_force_totals": {
             "entries": [
               {
@@ -6678,8 +6678,8 @@
           },
           "returncode": 0,
           "run_id": "repeat_01",
-          "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_repeat_01.stderr",
-          "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_repeat_01.stdout",
+          "stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_repeat_01.stderr",
+          "stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_repeat_01.stdout",
           "total_force_summary": {
             "entries": [
               {
@@ -7835,12 +7835,12 @@
             }
           ],
           "argv": [
-            "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+            "../../../../build_gateb_cuda/bin/gmx",
             "mdrun",
             "-s",
-            "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.tpr",
+            "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.tpr",
             "-deffnm",
-            "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full",
+            "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full",
             "-ntmpi",
             "1",
             "-ntomp",
@@ -7858,7 +7858,7 @@
             "-pin",
             "off"
           ],
-          "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02",
+          "artifact_root": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02",
           "energy_frames": [
             {
               "step": 0,
@@ -8424,11 +8424,11 @@
           },
           "env_overrides": {
             "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-            "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/event_trace.tsv",
-            "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/total_force.tsv",
+            "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/event_trace.tsv",
+            "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/total_force.tsv",
             "GMX_PCFF_RESPA_M2P_CASE_LABEL": "repeat_02",
-            "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/m2p_trace",
-            "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/merge_trace",
+            "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/m2p_trace",
+            "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/merge_trace",
             "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
             "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
             "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -8444,19 +8444,19 @@
           },
           "failure_markers": [],
           "full_outputs": {
-            "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.cpt",
-            "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.edr",
-            "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/event_trace.tsv",
-            "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.gro",
-            "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.log",
-            "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/m2p_trace",
-            "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/merge_trace",
-            "total_force_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/total_force.tsv",
-            "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.tpr",
-            "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.trr"
+            "cpt": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.cpt",
+            "edr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.edr",
+            "event_trace_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/event_trace.tsv",
+            "gro": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.gro",
+            "log": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.log",
+            "m2p_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/m2p_trace",
+            "merge_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/merge_trace",
+            "total_force_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/total_force.tsv",
+            "tpr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.tpr",
+            "trr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/repeat_02/exact_full.trr"
           },
-          "grompp_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_repeat_02.stderr",
-          "grompp_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_repeat_02.stdout",
+          "grompp_stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_repeat_02.stderr",
+          "grompp_stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/grompp_repeat_02.stdout",
           "per_level_force_totals": {
             "entries": [
               {
@@ -10024,8 +10024,8 @@
           },
           "returncode": 0,
           "run_id": "repeat_02",
-          "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_repeat_02.stderr",
-          "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_repeat_02.stdout",
+          "stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_repeat_02.stderr",
+          "stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_oligomer/logs/mdrun_repeat_02.stdout",
           "total_force_summary": {
             "entries": [
               {
@@ -10674,9 +10674,9 @@
       }
     },
     {
-      "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box",
-      "commands_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/summaries/commands.json",
-      "commands_sh": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/run_commands.sh",
+      "artifact_root": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box",
+      "commands_json": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/summaries/commands.json",
+      "commands_sh": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/run_commands.sh",
       "energy_comparison": {
         "actual_frame_count": 6,
         "expected_frame_count": 6,
@@ -10961,7 +10961,7 @@
         },
         "field": "total_force_comparison"
       },
-      "gate_a_artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box",
+      "gate_a_artifact_root": "../../../../tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box",
       "gate_b_assessment": {
         "event_order_identical": true,
         "full_energy_display_resolution_assessment": {
@@ -11007,7 +11007,7 @@
             "atom_count": 10,
             "bound": 0.022586549166589975,
             "max_abs_component": 9473.4853515625,
-            "relative_path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/merge_trace/step0_level0_post_postprocess_shift.tsv"
+            "relative_path": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/merge_trace/step0_level0_post_postprocess_shift.tsv"
           }
         },
         "per_level_force_max_abs_component_delta": 0.00384521484375,
@@ -11723,12 +11723,12 @@
           }
         ],
         "argv": [
-          "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+          "../../../../build_gateb_cuda/bin/gmx",
           "mdrun",
           "-s",
-          "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.tpr",
+          "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.tpr",
           "-deffnm",
-          "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full",
+          "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full",
           "-ntmpi",
           "1",
           "-ntomp",
@@ -11746,7 +11746,7 @@
           "-pin",
           "off"
         ],
-        "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full",
+        "artifact_root": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full",
         "energy_frames": [
           {
             "step": 0,
@@ -12312,11 +12312,11 @@
         },
         "env_overrides": {
           "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-          "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/event_trace.tsv",
-          "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/total_force.tsv",
+          "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/event_trace.tsv",
+          "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/total_force.tsv",
           "GMX_PCFF_RESPA_M2P_CASE_LABEL": "full",
-          "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/m2p_trace",
-          "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/merge_trace",
+          "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/m2p_trace",
+          "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/merge_trace",
           "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
           "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
           "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -12332,19 +12332,19 @@
         },
         "failure_markers": [],
         "full_outputs": {
-          "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.cpt",
-          "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.edr",
-          "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/event_trace.tsv",
-          "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.gro",
-          "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.log",
-          "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/m2p_trace",
-          "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/merge_trace",
-          "total_force_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/total_force.tsv",
-          "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.tpr",
-          "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.trr"
+          "cpt": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.cpt",
+          "edr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.edr",
+          "event_trace_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/event_trace.tsv",
+          "gro": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.gro",
+          "log": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.log",
+          "m2p_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/m2p_trace",
+          "merge_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/merge_trace",
+          "total_force_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/total_force.tsv",
+          "tpr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.tpr",
+          "trr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/full/exact_full.trr"
         },
-        "grompp_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_full.stderr",
-        "grompp_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_full.stdout",
+        "grompp_stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_full.stderr",
+        "grompp_stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_full.stdout",
         "per_level_force_totals": {
           "entries": [
             {
@@ -13912,8 +13912,8 @@
         },
         "returncode": 0,
         "run_id": "full",
-        "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_full.stderr",
-        "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_full.stdout",
+        "stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_full.stderr",
+        "stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_full.stdout",
         "total_force_summary": {
           "entries": [
             {
@@ -14708,7 +14708,7 @@
           "schema_version": 1
         }
       },
-      "mdp": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
+      "mdp": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/inputs/exact_respa_gate_b.mdp",
       "per_level_force_comparison": {
         "extra_in_actual": [],
         "first_mismatch": {
@@ -15383,12 +15383,12 @@
             }
           ],
           "argv": [
-            "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+            "../../../../build_gateb_cuda/bin/gmx",
             "mdrun",
             "-s",
-            "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.tpr",
+            "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.tpr",
             "-deffnm",
-            "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full",
+            "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full",
             "-ntmpi",
             "1",
             "-ntomp",
@@ -15406,7 +15406,7 @@
             "-pin",
             "off"
           ],
-          "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01",
+          "artifact_root": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01",
           "energy_frames": [
             {
               "step": 0,
@@ -15972,11 +15972,11 @@
           },
           "env_overrides": {
             "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-            "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/event_trace.tsv",
-            "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/total_force.tsv",
+            "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/event_trace.tsv",
+            "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/total_force.tsv",
             "GMX_PCFF_RESPA_M2P_CASE_LABEL": "repeat_01",
-            "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/m2p_trace",
-            "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/merge_trace",
+            "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/m2p_trace",
+            "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/merge_trace",
             "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
             "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
             "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -15992,19 +15992,19 @@
           },
           "failure_markers": [],
           "full_outputs": {
-            "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.cpt",
-            "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.edr",
-            "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/event_trace.tsv",
-            "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.gro",
-            "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.log",
-            "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/m2p_trace",
-            "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/merge_trace",
-            "total_force_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/total_force.tsv",
-            "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.tpr",
-            "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.trr"
+            "cpt": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.cpt",
+            "edr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.edr",
+            "event_trace_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/event_trace.tsv",
+            "gro": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.gro",
+            "log": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.log",
+            "m2p_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/m2p_trace",
+            "merge_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/merge_trace",
+            "total_force_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/total_force.tsv",
+            "tpr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.tpr",
+            "trr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_01/exact_full.trr"
           },
-          "grompp_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_repeat_01.stderr",
-          "grompp_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_repeat_01.stdout",
+          "grompp_stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_repeat_01.stderr",
+          "grompp_stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_repeat_01.stdout",
           "per_level_force_totals": {
             "entries": [
               {
@@ -17572,8 +17572,8 @@
           },
           "returncode": 0,
           "run_id": "repeat_01",
-          "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_repeat_01.stderr",
-          "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_repeat_01.stdout",
+          "stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_repeat_01.stderr",
+          "stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_repeat_01.stdout",
           "total_force_summary": {
             "entries": [
               {
@@ -19017,12 +19017,12 @@
             }
           ],
           "argv": [
-            "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+            "../../../../build_gateb_cuda/bin/gmx",
             "mdrun",
             "-s",
-            "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.tpr",
+            "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.tpr",
             "-deffnm",
-            "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full",
+            "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full",
             "-ntmpi",
             "1",
             "-ntomp",
@@ -19040,7 +19040,7 @@
             "-pin",
             "off"
           ],
-          "artifact_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02",
+          "artifact_root": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02",
           "energy_frames": [
             {
               "step": 0,
@@ -19606,11 +19606,11 @@
           },
           "env_overrides": {
             "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-            "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/event_trace.tsv",
-            "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/total_force.tsv",
+            "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/event_trace.tsv",
+            "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/total_force.tsv",
             "GMX_PCFF_RESPA_M2P_CASE_LABEL": "repeat_02",
-            "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/m2p_trace",
-            "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/merge_trace",
+            "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/m2p_trace",
+            "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/merge_trace",
             "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
             "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
             "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -19626,19 +19626,19 @@
           },
           "failure_markers": [],
           "full_outputs": {
-            "cpt": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.cpt",
-            "edr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.edr",
-            "event_trace_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/event_trace.tsv",
-            "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.gro",
-            "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.log",
-            "m2p_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/m2p_trace",
-            "merge_trace_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/merge_trace",
-            "total_force_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/total_force.tsv",
-            "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.tpr",
-            "trr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.trr"
+            "cpt": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.cpt",
+            "edr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.edr",
+            "event_trace_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/event_trace.tsv",
+            "gro": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.gro",
+            "log": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.log",
+            "m2p_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/m2p_trace",
+            "merge_trace_dir": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/merge_trace",
+            "total_force_tsv": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/total_force.tsv",
+            "tpr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.tpr",
+            "trr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/repeat_02/exact_full.trr"
           },
-          "grompp_stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_repeat_02.stderr",
-          "grompp_stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_repeat_02.stdout",
+          "grompp_stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_repeat_02.stderr",
+          "grompp_stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/grompp_repeat_02.stdout",
           "per_level_force_totals": {
             "entries": [
               {
@@ -21206,8 +21206,8 @@
           },
           "returncode": 0,
           "run_id": "repeat_02",
-          "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_repeat_02.stderr",
-          "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_repeat_02.stdout",
+          "stderr": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_repeat_02.stderr",
+          "stdout": "../../../../tests/reference_results/exact_respa_gpu_hybrid/gate_b_nb_gpu_energy_virial_final_20260422/small_salt_polymer_box/logs/mdrun_repeat_02.stdout",
           "total_force_summary": {
             "entries": [
               {

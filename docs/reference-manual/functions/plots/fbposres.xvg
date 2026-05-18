@@ -340,7 +340,7 @@
 @    s1 errorbar riser linestyle 1
 @    s1 errorbar riser clip off
 @    s1 errorbar riser clip length 0.100000
-@    s1 comment "/Users/jhub/projects/fb_posres-implementation/manual-fig/pot.dat"
+@    s1 comment "./manual-fig/pot.dat"
 @    s1 legend  ""
 @g1 on
 @g1 hidden false

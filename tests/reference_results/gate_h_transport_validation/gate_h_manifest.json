@@ -1,8 +1,8 @@
 {
   "artifacts": {
-    "manifest_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/gate_h_manifest.json",
-    "manifest_md": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/gate_h_manifest.md",
-    "root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation"
+    "manifest_json": "../../../tests/reference_results/gate_h_transport_validation/gate_h_manifest.json",
+    "manifest_md": "../../../tests/reference_results/gate_h_transport_validation/gate_h_manifest.md",
+    "root": "../../../tests/reference_results/gate_h_transport_validation"
   },
   "coord_stride_ps": 1.0,
   "dlb": "no",
@@ -42,8 +42,8 @@
         "replicas": 3
       },
       "artifacts": {
-        "system_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer",
-        "transport_comparison_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_oligomer/summaries/transport_comparison.tsv"
+        "system_root": "../../../tests/reference_results/gate_h_transport_validation/small_oligomer",
+        "transport_comparison_tsv": "../../../tests/reference_results/gate_h_transport_validation/small_oligomer/summaries/transport_comparison.tsv"
       },
       "failure_reasons": [
         "oligomer_diffusivity_cm2_s is missing.",
@@ -112,8 +112,8 @@
         "replicas": 3
       },
       "artifacts": {
-        "system_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box",
-        "transport_comparison_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/summaries/transport_comparison.tsv"
+        "system_root": "../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box",
+        "transport_comparison_tsv": "../../../tests/reference_results/gate_h_transport_validation/small_salt_polymer_box/summaries/transport_comparison.tsv"
       },
       "failure_reasons": [
         "polymer_diffusivity_cm2_s MSD linearity is weak (R^2=0.000334).",
@@ -614,7 +614,7 @@
       "charged_transference_abs_err_max": 0.05,
       "neutral_diffusion_rel_err_max": 0.15
     },
-    "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/transport_protocol_metadata/tp0.json",
+    "path": "../../../tests/reference_results/transport_protocol_metadata/tp0.json",
     "protocol": {
       "analysis": {
         "block_averaging_count": 5,
@@ -655,7 +655,7 @@
   },
   "tp1_status": {
     "audit_reason": "TP1.2 rerun completed but failed at 3ns due to thermal runaway (T > 500K).",
-    "path": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/transport_protocol_metadata/tp1_status.json",
+    "path": "../../../tests/reference_results/transport_protocol_metadata/tp1_status.json",
     "status": "FAIL (Physical Failure)"
   }
 }

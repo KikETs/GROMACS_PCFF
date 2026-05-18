@@ -1,19 +1,19 @@
       :-) GROMACS - gmx grompp, 2027.0-dev-20260322-0d6c1d0e61-unknown (-:
 
-Executable:   /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx
-Data prefix:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
-Working dir:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference
+Executable:   ../../../../../../../ab_builds/respa_m2_exact_three_level/bin/gmx
+Data prefix:  ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
+Working dir:  ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference
 Command line:
-  gmx grompp -f /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy.mdp -c system.gro -p system.top -o legacy.tpr -maxwarn 10
+  gmx grompp -f ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy.mdp -c system.gro -p system.top -o legacy.tpr -maxwarn 10
 
 
-NOTE 1 [file /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy.mdp]:
+NOTE 1 [file ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy.mdp]:
   With Verlet lists and no buffer tolerance, the optimal nstlist is >= 10,
   with GPUs >= 20. Note that with the Verlet scheme, nstlist has no effect
   on the accuracy of your simulation.
 
 
-NOTE 2 [file /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy.mdp]:
+NOTE 2 [file ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy.mdp]:
   verlet-buffer-pressure-tolerance is ignored when verlet-buffer-tolerance
   < 0
 
@@ -21,7 +21,7 @@ Generating 1-4 interactions: fudge = 1
 Number of degrees of freedom in T-Coupling group rest is 1152.00
 The integrator does not provide a ensemble temperature, there is no system ensemble temperature
 
-NOTE 3 [file /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy.mdp]:
+NOTE 3 [file ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2e_dense_early_accumulation_site_trace/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy.mdp]:
   The optimal PME mesh load for parallel simulations is below 0.5
   and for highly parallel simulations between 0.25 and 0.33,
   for higher performance, increase the cut-off and the PME grid spacing.

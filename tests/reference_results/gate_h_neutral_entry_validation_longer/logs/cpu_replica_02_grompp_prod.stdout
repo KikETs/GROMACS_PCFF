@@ -6,7 +6,7 @@ Generated 3 of the 3 1-4 parameter combinations
 
 Excluding 3 bonded neighbours molecule type 'MOL1'
 
-Taking velocities from '/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/cpu/replica_02/equil.gro'
+Taking velocities from '../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/cpu/replica_02/equil.gro'
 Analysing residue names:
 There are:   512      Other residues
 Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...

@@ -1,5 +1,5 @@
 ;
-;	File '/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_oligomer/replica_01/gpu/equil_mdout.mdp' was generated
+;	File '../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_oligomer/replica_01/gpu/equil_mdout.mdp' was generated
 ;	By user: kiket (1000)
 ;	On host: KikET
 ;	At date: Fri Apr  3 00:39:15 2026
@@ -7,15 +7,15 @@
 ;	Created by:
 ;	  :-) GROMACS - gmx grompp, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 ;	
-;	Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-;	Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-;	Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+;	Executable:   ../../../../../../build_gateb_cuda/bin/gmx
+;	Data prefix:  ../../../../../.. (source tree)
+;	Working dir:  ../../../../../..
 ;	Command line:
-;	  gmx grompp -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_oligomer/inputs/replica_01_nvt_equil.mdp -c /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/initial_nve.gro -p /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/topol.top -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_oligomer/replica_01/gpu/equil.tpr -po /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_oligomer/replica_01/gpu/equil_mdout.mdp -maxwarn 1
+;	  gmx grompp -f ../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_oligomer/inputs/replica_01_nvt_equil.mdp -c ../../../../../../tests/reference_results/m6_respa/small_oligomer/initial_nve.gro -p ../../../../../../tests/reference_results/m6_respa/small_oligomer/topol.top -o ../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_oligomer/replica_01/gpu/equil.tpr -po ../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_oligomer/replica_01/gpu/equil_mdout.mdp -maxwarn 1
 
 ; VARIOUS PREPROCESSING OPTIONS
 ; Preprocessor information: use cpp syntax.
-; e.g.: -I/home/joe/doe -I/home/mary/roe
+; e.g.: -I./joe/doe -I./mary/roe
 include                  = 
 ; e.g.: -DPOSRES -DFLEXIBLE (note these variable names are case sensitive)
 define                   = 

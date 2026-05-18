@@ -81,7 +81,7 @@ GROMACS smoke:
 - `grompp_warning_count`: `0`
 - `mdrun_returncode`: `0`
 - smoke status: `PASS`
-- GROMACS binary: `/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx`
+- GROMACS binary: `../build/bin/gmx`
 
 ## Capability Delta
 

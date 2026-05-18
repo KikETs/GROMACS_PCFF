@@ -3,13 +3,13 @@
     "average_temperature_k": 311.8847522927073,
     "average_volume_nm3": 85.18400000000003,
     "convergence_flags": [],
-    "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/production_observables.xvg",
+    "energy_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/production_observables.xvg",
     "metrics": {
       "anion_diffusivity_cm2_s": {
         "charge": -1,
         "convergence_flags": [],
         "count": 216,
-        "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion_diff_mol.xvg",
+        "diff_mol_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion_diff_mol.xvg",
         "diffusion_cm2_s": 4.2989e-05,
         "fit_end_ps": 9.0,
         "fit_error_cm2_s": 7.4e-06,
@@ -241,18 +241,18 @@
           4e-05,
           1e-05
         ],
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion_msd_curve.tsv",
-        "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion_msdout.xvg",
+        "msd_curve_tsv": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion_msd_curve.tsv",
+        "msdout_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion_msdout.xvg",
         "primary": true,
         "relative_fit_error": 0.17213705831724396,
         "relative_molecule_sem": 0.046139402467101236,
-        "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion.ndx"
+        "transport_index": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/anion.ndx"
       },
       "cation_diffusivity_cm2_s": {
         "charge": 1,
         "convergence_flags": [],
         "count": 216,
-        "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation_diff_mol.xvg",
+        "diff_mol_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation_diff_mol.xvg",
         "diffusion_cm2_s": 4.418300000000001e-05,
         "fit_end_ps": 9.0,
         "fit_error_cm2_s": 7.800000000000002e-06,
@@ -484,12 +484,12 @@
           4e-05,
           4e-05
         ],
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation_msd_curve.tsv",
-        "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation_msdout.xvg",
+        "msd_curve_tsv": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation_msd_curve.tsv",
+        "msdout_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation_msdout.xvg",
         "primary": true,
         "relative_fit_error": 0.17653848765362243,
         "relative_molecule_sem": 0.045721165253265715,
-        "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation.ndx"
+        "transport_index": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/cation.ndx"
       },
       "conductivity_cne_s_cm": {
         "available": true,
@@ -502,7 +502,7 @@
         "charge": 0,
         "convergence_flags": [],
         "count": 216,
-        "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/polymer_diff_mol.xvg",
+        "diff_mol_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/polymer_diff_mol.xvg",
         "diffusion_cm2_s": 0.000143453,
         "fit_end_ps": 9.0,
         "fit_error_cm2_s": 2.3500000000000002e-05,
@@ -736,12 +736,12 @@
           8e-05,
           8e-05
         ],
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/polymer_msd_curve.tsv",
-        "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/polymer_msdout.xvg",
+        "msd_curve_tsv": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/polymer_msd_curve.tsv",
+        "msdout_xvg": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/polymer_msdout.xvg",
         "primary": false,
         "relative_fit_error": 0.16381672045896567,
         "relative_molecule_sem": 0.06421598683376796,
-        "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/polymer.ndx"
+        "transport_index": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/polymer.ndx"
       },
       "transference_ne": {
         "available": true,
@@ -766,7 +766,7 @@
       }
     }
   },
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/equil",
+  "equil_deffnm": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/equil",
   "layout": "cpu",
   "layout_report": {
     "gpu_mapping_header": null,
@@ -787,7 +787,7 @@
     "update_gpu_enabled": false,
     "update_task_line": null
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod",
+  "prod_deffnm": "../../../../../tests/reference_results/gate_h_charged_transport_pilot/cpu/replica_02/prod",
   "replica_index": 2,
   "seed": 74102
 }

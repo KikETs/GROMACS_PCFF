@@ -2,9 +2,9 @@
   "branch": "respa-m2-exact-three-level",
   "build_provenance": {
     "git_sha": "c02f3b86caeb385d8e7c38089d276cc2f0c0ebd8",
-    "gmx_bin": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_builds/respa_m2_exact_three_level/bin/gmx",
-    "source_tree": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2",
-    "version_text": "         :-) GROMACS - gmx, 2027.0-dev-20260321-c02f3b86ca-unknown (-:\n\nExecutable:   /home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_builds/respa_m2_exact_three_level/bin/gmx\nData prefix:  /home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)\nWorking dir:  /home/kiket/\ubc14\ud0d5\ud654\uba74/test\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260321-c02f3b86ca-unknown\nGIT SHA1 hash:       c02f3b86caeb385d8e7c38089d276cc2f0c0ebd8\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         disabled\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     none\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\n\n"
+    "gmx_bin": "../../../../ab_builds/respa_m2_exact_three_level/bin/gmx",
+    "source_tree": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2",
+    "version_text": "         :-) GROMACS - gmx, 2027.0-dev-20260321-c02f3b86ca-unknown (-:\n\nExecutable:   ../../../../ab_builds/respa_m2_exact_three_level/bin/gmx\nData prefix:  ../../../../ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)\nWorking dir:  ../../../..\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260321-c02f3b86ca-unknown\nGIT SHA1 hash:       c02f3b86caeb385d8e7c38089d276cc2f0c0ebd8\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         disabled\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     none\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\n\n"
   },
   "exact_three_level_path": {
     "integrator": "md-vv",
@@ -80,7 +80,7 @@
           },
           "step0_potential_abs_diff_kj_per_mol": 0.0
         },
-        "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/exact_three_level",
+        "exact_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/exact_three_level",
         "legacy_vs_plain": {
           "final_coord_diff": {
             "l2_norm": 0.00012122280460376552,
@@ -100,9 +100,9 @@
           },
           "step0_potential_abs_diff_kj_per_mol": 0.0
         },
-        "legacy_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/legacy_two_level",
+        "legacy_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/legacy_two_level",
         "nsteps": 8,
-        "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/plain_verlet"
+        "plain_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p0005/plain_verlet"
       },
       "comparison_notes": [
         "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
@@ -184,7 +184,7 @@
           },
           "step0_potential_abs_diff_kj_per_mol": 0.0
         },
-        "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level",
+        "exact_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/exact_three_level",
         "legacy_vs_plain": {
           "final_coord_diff": {
             "l2_norm": 6.061351664441776e-05,
@@ -204,16 +204,16 @@
           },
           "step0_potential_abs_diff_kj_per_mol": 0.0
         },
-        "legacy_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level",
+        "legacy_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/legacy_two_level",
         "nsteps": 16,
-        "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/plain_verlet"
+        "plain_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/coulomb_toy/dt_0p00025/plain_verlet"
       },
       "fine_exact_no_worse_than_legacy": true,
       "fixture_id": "coulomb_toy",
       "fixture_sources": {
-        "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/lammps/system.data",
-        "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/lammps/system.in",
-        "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/system.json"
+        "lammps_data": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/lammps/system.data",
+        "lammps_input": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/lammps/system.in",
+        "system_json": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/coulomb_toy/system.json"
       },
       "gro_metadata": {
         "box_nm": [
@@ -274,7 +274,7 @@
           },
           "step0_potential_abs_diff_kj_per_mol": 8583.465088
         },
-        "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level",
+        "exact_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/exact_three_level",
         "legacy_vs_plain": {
           "final_coord_diff": {
             "l2_norm": 0.0001465127980758503,
@@ -294,9 +294,9 @@
           },
           "step0_potential_abs_diff_kj_per_mol": 0.0
         },
-        "legacy_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level",
+        "legacy_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level",
         "nsteps": 8,
-        "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet"
+        "plain_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/plain_verlet"
       },
       "comparison_notes": [
         "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
@@ -382,7 +382,7 @@
           },
           "step0_potential_abs_diff_kj_per_mol": 8583.465088
         },
-        "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/exact_three_level",
+        "exact_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/exact_three_level",
         "legacy_vs_plain": {
           "final_coord_diff": {
             "l2_norm": 7.756287771857844e-05,
@@ -402,16 +402,16 @@
           },
           "step0_potential_abs_diff_kj_per_mol": 0.0
         },
-        "legacy_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/legacy_two_level",
+        "legacy_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/legacy_two_level",
         "nsteps": 16,
-        "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/plain_verlet"
+        "plain_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p00025/plain_verlet"
       },
       "fine_exact_no_worse_than_legacy": false,
       "fixture_id": "dense_oligomer",
       "fixture_sources": {
-        "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
-        "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
-        "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+        "lammps_data": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+        "lammps_input": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+        "system_json": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
       },
       "gro_metadata": {
         "box_nm": [
@@ -443,5 +443,5 @@
   "head_commit": "c02f3b86caeb385d8e7c38089d276cc2f0c0ebd8",
   "milestone": "R-RESPA M2",
   "verdict": "EXACT 3-LEVEL PATH RUNS BUT BOOKKEEPING/CONVERGENCE IS STILL PARTIAL",
-  "worktree": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2"
+  "worktree": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2"
 }

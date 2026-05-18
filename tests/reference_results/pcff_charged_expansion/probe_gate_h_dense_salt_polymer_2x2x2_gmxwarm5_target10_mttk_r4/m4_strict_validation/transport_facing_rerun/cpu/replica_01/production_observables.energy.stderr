@@ -1,12 +1,12 @@
    :-) GROMACS - gmx energy, 2027.0-dev-20260405-81d472fe4c-dirty-unknown (-:
 
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../../../../../../build_gateb_cuda/bin/gmx
+Data prefix:  ../../../../../../../.. (source tree)
+Working dir:  ../../../../../../../..
 Command line:
-  gmx energy -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/prod.edr -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/production_observables.xvg
+  gmx energy -f ../../../../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/prod.edr -o ../../../../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/production_observables.xvg
 
-Opened /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/prod.edr as single precision energy file
+Opened ../../../../../../../../tests/reference_results/pcff_charged_expansion/probe_gate_h_dense_salt_polymer_2x2x2_gmxwarm5_target10_mttk_r4/m4_strict_validation/transport_facing_rerun/cpu/replica_01/prod.edr as single precision energy file
 
 Select the terms you want from the following list by
 selecting either (part of) the name or the number or a combination.

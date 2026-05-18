@@ -177,10 +177,10 @@ def deploy_role(
         dry_run=dry_run,
         excludes=[
             ".git",
-            "/build*/",
-            "/tmp/",
+            "build*/",
+            "tmp/",
             "tests/reference_results",
-            "/output/",
+            "output/",
             "__pycache__",
         ],
     )

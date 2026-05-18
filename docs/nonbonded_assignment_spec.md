@@ -32,9 +32,9 @@ PT5는 다음을 구현하지 않습니다.
 
 근거:
 
-- [docs/pcff_respa_reference_spec.md](/home/kiket/바탕화면/test/GROMACS_PCFF/docs/pcff_respa_reference_spec.md)
-- [docs/validation_report_m4.md](/home/kiket/바탕화면/test/GROMACS_PCFF/docs/validation_report_m4.md)
-- [tools/pcff_fixture_bridge/common.py](/home/kiket/바탕화면/test/GROMACS_PCFF/tools/pcff_fixture_bridge/common.py)
+- [docs/pcff_respa_reference_spec.md](./pcff_respa_reference_spec.md)
+- [docs/validation_report_m4.md](./validation_report_m4.md)
+- [tools/pcff_fixture_bridge/common.py](../tools/pcff_fixture_bridge/common.py)
 
 이건 범위 축소가 아니라 현재 typed IR contract의 빈칸을 숨기지 않고 ruleset으로 고정한 것입니다.
 
@@ -42,7 +42,7 @@ PT5는 다음을 구현하지 않습니다.
 
 소스 위치:
 
-- [src/nonbonded_assignment](/home/kiket/바탕화면/test/GROMACS_PCFF/src/nonbonded_assignment)
+- [src/nonbonded_assignment](../src/nonbonded_assignment)
 
 핵심 진입점:
 
@@ -51,8 +51,8 @@ PT5는 다음을 구현하지 않습니다.
 
 규칙 파일:
 
-- [rules/pcff_nonbonded.json](/home/kiket/바탕화면/test/GROMACS_PCFF/rules/pcff_nonbonded.json)
-- phase1 bridge lookup source: [frc_file/pcff.frc](/home/kiket/Desktop/test/GROMACS_PCFF/frc_file/pcff.frc)
+- [rules/pcff_nonbonded.json](../rules/pcff_nonbonded.json)
+- phase1 bridge lookup source: [frc_file/pcff.frc](../frc_file/pcff.frc)
 
 중요한 제약:
 
@@ -164,8 +164,8 @@ PT5는 charge를 추정하지 않습니다.
 
 근거:
 
-- [docs/pcff_respa_reference_spec.md](/home/kiket/바탕화면/test/GROMACS_PCFF/docs/pcff_respa_reference_spec.md)
-- [docs/validation_report_m4.md](/home/kiket/바탕화면/test/GROMACS_PCFF/docs/validation_report_m4.md)
+- [docs/pcff_respa_reference_spec.md](./pcff_respa_reference_spec.md)
+- [docs/validation_report_m4.md](./validation_report_m4.md)
 
 ## Class2 Coefficient Forms
 
@@ -183,7 +183,7 @@ PT5 report는 human-readable sigma/epsilon뿐 아니라 later emitter를 위한 
 
 근거:
 
-- [docs/validation_report_m4.md](/home/kiket/바탕화면/test/GROMACS_PCFF/docs/validation_report_m4.md)
+- [docs/validation_report_m4.md](./validation_report_m4.md)
 
 ## Exclusions and `1-4`
 

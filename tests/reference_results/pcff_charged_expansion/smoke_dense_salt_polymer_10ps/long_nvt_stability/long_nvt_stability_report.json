@@ -1,9 +1,9 @@
 {
   "artifacts": {
-    "checkpoint": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability/nvt.cpt",
-    "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability/nvt_energy.xvg",
-    "gromacs_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability",
-    "log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability/nvt.log"
+    "checkpoint": "../../../../../tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability/nvt.cpt",
+    "energy_xvg": "../../../../../tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability/nvt_energy.xvg",
+    "gromacs_root": "../../../../../tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability",
+    "log": "../../../../../tests/reference_results/pcff_charged_expansion/smoke_dense_salt_polymer_10ps/long_nvt_stability/nvt.log"
   },
   "potential_energy_kj_mol": {
     "max": -25993.308594,

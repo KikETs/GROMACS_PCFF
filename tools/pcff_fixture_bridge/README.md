@@ -43,7 +43,7 @@ Emit typed IR only:
 
 ```bash
 python3 tools/pcff_fixture_bridge/generate.py \
-  --out /tmp/pcff_bridge_ir \
+  --out output/tmp/pcff_bridge_ir \
   typed-ir
 ```
 
@@ -51,7 +51,7 @@ Emit typed IR and GROMACS topologies:
 
 ```bash
 python3 tools/pcff_fixture_bridge/generate.py \
-  --out /tmp/pcff_bridge_top \
+  --out output/tmp/pcff_bridge_top \
   export-gromacs
 ```
 
@@ -59,7 +59,7 @@ Limit export to selected systems:
 
 ```bash
 python3 tools/pcff_fixture_bridge/generate.py \
-  --out /tmp/pcff_bridge_top \
+  --out output/tmp/pcff_bridge_top \
   --system small_oligomer \
   --system small_salt_polymer_box \
   export-gromacs
@@ -69,8 +69,8 @@ Import a LUNAR/LAMMPS `.data` file with inline coefficients:
 
 ```bash
 python3 tools/pcff_fixture_bridge/lammps_data_bridge.py \
-  --data /path/to/chain_fixed_typed_nodup_IFF.data \
-  --out /tmp/lunar_gromacs_pcff \
+  --data path/to/chain_fixed_typed_nodup_IFF.data \
+  --out output/tmp/lunar_gromacs_pcff \
   --system-id Traj_14764
 ```
 

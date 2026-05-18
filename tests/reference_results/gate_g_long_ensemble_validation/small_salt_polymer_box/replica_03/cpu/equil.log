@@ -45,12 +45,12 @@ of the License, or (at your option) any later version.
                            Berk Hess and Erik Lindahl
 
 GROMACS:      gmx mdrun, version 2027.0-dev-20260329-1811cfe56e-dirty-unknown
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+Executable:   ../../../../../../build_gateb_cuda/bin/gmx
+Data prefix:  ../../../../../.. (source tree)
+Working dir:  ../../../../../..
 Process ID:   888997
 Command line:
-  gmx mdrun -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/equil.tpr -deffnm /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/equil -ntmpi 1 -ntomp 1 -dlb no -nb cpu -pme cpu -bonded cpu -update cpu -pin off -reprod
+  gmx mdrun -s ../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/equil.tpr -deffnm ../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/equil -ntmpi 1 -ntomp 1 -dlb no -nb cpu -pme cpu -bonded cpu -update cpu -pin off -reprod
 
 GROMACS version:     2027.0-dev-20260329-1811cfe56e-dirty-unknown
 GIT SHA1 hash:       1811cfe56e5b4eaa9dc80a68ea138318fec38459 (dirty)

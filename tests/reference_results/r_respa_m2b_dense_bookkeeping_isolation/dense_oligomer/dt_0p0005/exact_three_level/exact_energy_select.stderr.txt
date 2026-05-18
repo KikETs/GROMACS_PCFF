@@ -1,8 +1,8 @@
       :-) GROMACS - gmx energy, 2027.0-dev-20260321-c02f3b86ca-unknown (-:
 
-Executable:   /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx
-Data prefix:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
-Working dir:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p0005/exact_three_level
+Executable:   ../../../../../../../ab_builds/respa_m2_exact_three_level/bin/gmx
+Data prefix:  ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
+Working dir:  ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2b_dense_bookkeeping_isolation/dense_oligomer/dt_0p0005/exact_three_level
 Command line:
   gmx energy -f exact.edr -o exact_potential.xvg -xvg none
 

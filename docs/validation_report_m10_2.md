@@ -9,11 +9,11 @@ The gate is now split into:
 - **Diagnostic only:** longer short-horizon **NPT stability / trend**
 
 This change is explicit in the machine-readable decision artifact:
-- [m10_2_gate_decision.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json)
+- [m10_2_gate_decision.json](../tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json)
 
 ## Execution Prerequisite
-- runner: [run_m10_2.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_ensemble_gate/run_m10_2.py)
-- required interpreter: `/home/kiket/anaconda3/envs/MD/bin/python3`
+- runner: [run_m10_2.py](../tools/run_m10_2_ensemble_gate/run_m10_2.py)
+- required interpreter: `python3`
 - reason: the runner imports `numpy`; validation was performed in the `MD` conda environment
 
 ## Result
@@ -68,10 +68,10 @@ Interpretation:
 - It does **not** replace longer convergence checks for density/volume relaxation.
 
 ## Artifacts
-- runner: [run_m10_2.py](/home/kiket/Desktop/test/GROMACS_PCFF/tools/run_m10_2_ensemble_gate/run_m10_2.py)
-- summary: [m10_2_summary.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/m10_2_summary.json)
-- decision: [m10_2_gate_decision.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json)
-- detailed report: [report.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_2_ensemble_gate/small_oligomer_medium/report.json)
+- runner: [run_m10_2.py](../tools/run_m10_2_ensemble_gate/run_m10_2.py)
+- summary: [m10_2_summary.json](../tests/reference_results/m10_2_ensemble_gate/m10_2_summary.json)
+- decision: [m10_2_gate_decision.json](../tests/reference_results/m10_2_ensemble_gate/m10_2_gate_decision.json)
+- detailed report: [report.json](../tests/reference_results/m10_2_ensemble_gate/small_oligomer_medium/report.json)
 
 ## Conclusion
 `M10.2` is closed only as a **plain-`md` medium-scale NVT parity + NPT stability handoff gate**.

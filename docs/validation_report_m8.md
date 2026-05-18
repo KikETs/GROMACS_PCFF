@@ -30,7 +30,7 @@ The validated M8 runtime subset is:
 - no constraints
 
 The `integrator = md` restriction is not a PCFF choice. It is an existing GPU-update runtime restriction in
-[decidegpuusage.cpp](/home/user/바탕화면/gromacs/src/gromacs/taskassignment/decidegpuusage.cpp#L779).
+[decidegpuusage.cpp](../src/gromacs/taskassignment/decidegpuusage.cpp#L779).
 
 ## Why This Subset Matters
 
@@ -50,7 +50,7 @@ That is the maximum useful subset before bonded GPU work exists.
 No production CUDA kernel changes were required beyond M7.
 
 The M8 code changes are targeted validation and runtime-selection coverage in
-[pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp):
+[pcff_short_md.cpp](../src/programs/mdrun/tests/pcff_short_md.cpp):
 
 - `PcffGpuResidentParityTest`
 - `getGpuResidentSkipMessages()`
@@ -65,19 +65,19 @@ This is the correct cut. There was no evidence that the PCFF GPU kernels themsel
 The relevant runtime rules are:
 
 - GPU X/F buffer ops are only allowed when nonbonded is offloaded and MTS is off:
-  [decidesimulationworkload.cpp](/home/user/바탕화면/gromacs/src/gromacs/taskassignment/decidesimulationworkload.cpp#L160)
+  [decidesimulationworkload.cpp](../src/gromacs/taskassignment/decidesimulationworkload.cpp#L160)
 - GPU update or direct GPU communication requires those buffer ops:
-  [decidesimulationworkload.cpp](/home/user/바탕화면/gromacs/src/gromacs/taskassignment/decidesimulationworkload.cpp#L166)
+  [decidesimulationworkload.cpp](../src/gromacs/taskassignment/decidesimulationworkload.cpp#L166)
 - per-step GPU F buffer ops are disabled on virial steps:
-  [decidesimulationworkload.cpp](/home/user/바탕화면/gromacs/src/gromacs/taskassignment/decidesimulationworkload.cpp#L301)
+  [decidesimulationworkload.cpp](../src/gromacs/taskassignment/decidesimulationworkload.cpp#L301)
 - GPU PME force reduction depends on GPU F buffer ops being active:
-  [decidesimulationworkload.cpp](/home/user/바탕화면/gromacs/src/gromacs/taskassignment/decidesimulationworkload.cpp#L304)
+  [decidesimulationworkload.cpp](../src/gromacs/taskassignment/decidesimulationworkload.cpp#L304)
 - with GPU update and CPU local force work, coordinates are still copied back to the CPU:
-  [sim_util.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdlib/sim_util.cpp#L2174)
+  [sim_util.cpp](../src/gromacs/mdlib/sim_util.cpp#L2174)
 - when GPU update is active and the step is not a search step, coordinates stay on device and are consumed through device events rather than a fresh H2D copy:
-  [sim_util.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdlib/sim_util.cpp#L2187)
+  [sim_util.cpp](../src/gromacs/mdlib/sim_util.cpp#L2187)
 - when GPU X buffer ops are active, nonbonded coordinate conversion uses device coordinates directly:
-  [sim_util.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdlib/sim_util.cpp#L2267)
+  [sim_util.cpp](../src/gromacs/mdlib/sim_util.cpp#L2267)
 
 ## Test Design
 
@@ -99,7 +99,7 @@ Reason:
 - then the test would no longer exercise the intended resident-style force reduction path
 
 This choice is documented inline in
-[pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp#L1280).
+[pcff_short_md.cpp](../src/programs/mdrun/tests/pcff_short_md.cpp#L1280).
 
 ## Tests Run
 
@@ -131,7 +131,7 @@ The M8 resident test compares CPU vs GPU for:
 - final velocity RMS / max difference
 
 Acceptance tolerances in
-[pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp):
+[pcff_short_md.cpp](../src/programs/mdrun/tests/pcff_short_md.cpp):
 
 - scalar energy observables: `3e-2 kcal/mol`
 - structural observables: `2e-4 nm`

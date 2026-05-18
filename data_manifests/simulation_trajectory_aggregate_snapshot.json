@@ -51,7 +51,7 @@
     ],
     "provided_path": "MY_PAPER_RELATED/LAMMPS_BATCH/data/simulation-trajectory-aggregate.csv",
     "sha256": "a67a8f86f1842cd9d35ffe6cce2de8a3cf3577635aed19564b910242dd226fcf",
-    "workspace_root": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test"
+    "workspace_root": "../.."
   },
   "unique_smiles_count": 6042
 }

@@ -1,8 +1,8 @@
       :-) GROMACS - gmx mdrun, 2027.0-dev-20260321-c02f3b86ca-unknown (-:
 
-Executable:   /home/kiket/바탕화면/test/ab_builds/respa_m2_exact_three_level/bin/gmx
-Data prefix:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
-Working dir:  /home/kiket/바탕화면/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level
+Executable:   ../../../../../../../ab_builds/respa_m2_exact_three_level/bin/gmx
+Data prefix:  ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)
+Working dir:  ../../../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2_microfixtures/dense_oligomer/dt_0p0005/legacy_two_level
 Command line:
   gmx mdrun -s legacy.tpr -deffnm legacy -ntmpi 1 -ntomp 1 -pin off -nb cpu -bonded cpu -pme cpu -update cpu -reprod
 

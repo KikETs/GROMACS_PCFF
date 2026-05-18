@@ -2,7 +2,7 @@
 
 - Status: PASS
 - Gate G allowed: True
-- gmx: `/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx`
+- gmx: `../../../build_gateb_cuda/bin/gmx`
 - precision: `mixed`
 - GPU support: `CUDA`
 - Exact GPU bonded validation mode: `combined_kernel`
@@ -26,8 +26,8 @@
 - Bonded reduction noise floor: `{'available': True, 'successful_run_count': 3, 'reference_run_id': 'gpu_full', 'max_abs_component_delta': 0.00048828125, 'max_abs_component_delta_by_bucket': {'after_reduce/0': 0.00048828125, 'before_reduce/0': 0.0, 'reduction_delta/0': 0.00048828125, 'nbat_output_buffer/0': 0.00048828125}, 'worst_repeat': {'run_id': 'mdrun_gpu_repeat_1', 'max_abs_component_delta': 0.00048828125, 'first_nonzero_delta': {'key': [2, 0, 'after_reduce', 0], 'deltas': {'fx': 0.0, 'fy': 1.52587890625e-05, 'fz': 1.9073486328125e-06}, 'expected': {'fx': 904.5487060546875, 'fy': -59.32267761230469, 'fz': 16.126388549804688}, 'actual': {'fx': 904.5487060546875, 'fy': -59.322662353515625, 'fz': 16.12639045715332}}}}`
 - Restart comparison: `PASS`
 - First failing observable: `None`
-- Drift TSV: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/summaries/cpu_gpu_total_pressure_drift.tsv`
-- Artifact root: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer`
+- Drift TSV: `./small_oligomer/summaries/cpu_gpu_total_pressure_drift.tsv`
+- Artifact root: `./small_oligomer`
 
 ### small_salt_polymer_box
 
@@ -40,6 +40,6 @@
 - Bonded reduction noise floor: `{'available': True, 'successful_run_count': 3, 'reference_run_id': 'gpu_full', 'max_abs_component_delta': 0.08154296875, 'max_abs_component_delta_by_bucket': {'after_reduce/0': 0.08154296875, 'before_reduce/0': 0.0, 'reduction_delta/0': 0.08154296875, 'nbat_output_buffer/0': 0.08154296875}, 'worst_repeat': {'run_id': 'mdrun_gpu_repeat_1', 'max_abs_component_delta': 0.08154296875, 'first_nonzero_delta': {'key': [4, 0, 'after_reduce', 0], 'deltas': {'fx': 0.0, 'fy': -1.52587890625e-05, 'fz': 0.0}, 'expected': {'fx': 1088.957763671875, 'fy': 169.47119140625, 'fz': 67.00653076171875}, 'actual': {'fx': 1088.957763671875, 'fy': 169.47117614746094, 'fz': 67.00653076171875}}}}`
 - Restart comparison: `PASS`
 - First failing observable: `None`
-- Drift TSV: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box/summaries/cpu_gpu_total_pressure_drift.tsv`
-- Artifact root: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_salt_polymer_box`
+- Drift TSV: `./small_salt_polymer_box/summaries/cpu_gpu_total_pressure_drift.tsv`
+- Artifact root: `./small_salt_polymer_box`
 

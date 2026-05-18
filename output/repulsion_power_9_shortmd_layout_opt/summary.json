@@ -2,7 +2,7 @@
   "metadata": {
     "hostname": "KikET",
     "cpu_model": "AMD Ryzen 9 9900X 12-Core Processor",
-    "gmx": "/home/kiket/Desktop/test/GROMACS_PCFF/build_subcounters/bin/gmx",
+    "gmx": "../../build_subcounters/bin/gmx",
     "steps": 10000,
     "repeats": 3,
     "pin": "on",
@@ -61,8 +61,8 @@
       "mode": "generic",
       "ns_per_day": 60.97,
       "real_wall_seconds": 7.086,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat1/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat1/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat1/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0,1"
       ],
@@ -94,8 +94,8 @@
       "mode": "specialized",
       "ns_per_day": 68.103,
       "real_wall_seconds": 6.344,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat1/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat1/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0,1"
       ],
@@ -127,8 +127,8 @@
       "mode": "specialized",
       "ns_per_day": 68.25,
       "real_wall_seconds": 6.33,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat2/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat2/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0,1"
       ],
@@ -160,8 +160,8 @@
       "mode": "generic",
       "ns_per_day": 60.739,
       "real_wall_seconds": 7.113,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat2/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat2/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat2/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0,1"
       ],
@@ -193,8 +193,8 @@
       "mode": "generic",
       "ns_per_day": 60.793,
       "real_wall_seconds": 7.107,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat3/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat3/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat3/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/generic/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0,1"
       ],
@@ -226,8 +226,8 @@
       "mode": "specialized",
       "ns_per_day": 67.774,
       "real_wall_seconds": 6.375,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat3/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat3/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp2/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0,1"
       ],
@@ -259,8 +259,8 @@
       "mode": "generic",
       "ns_per_day": 157.011,
       "real_wall_seconds": 2.752,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat1/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat1/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat1/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5"
       ],
@@ -292,8 +292,8 @@
       "mode": "specialized",
       "ns_per_day": 172.745,
       "real_wall_seconds": 2.501,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat1/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat1/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5"
       ],
@@ -325,8 +325,8 @@
       "mode": "specialized",
       "ns_per_day": 171.246,
       "real_wall_seconds": 2.523,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat2/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat2/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5"
       ],
@@ -358,8 +358,8 @@
       "mode": "generic",
       "ns_per_day": 155.767,
       "real_wall_seconds": 2.774,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat2/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat2/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat2/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5"
       ],
@@ -391,8 +391,8 @@
       "mode": "generic",
       "ns_per_day": 155.731,
       "real_wall_seconds": 2.774,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat3/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat3/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat3/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/generic/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5"
       ],
@@ -424,8 +424,8 @@
       "mode": "specialized",
       "ns_per_day": 172.017,
       "real_wall_seconds": 2.512,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat3/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat3/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp6/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5"
       ],
@@ -457,8 +457,8 @@
       "mode": "generic",
       "ns_per_day": 146.483,
       "real_wall_seconds": 2.949,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat1/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat1/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat1/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-11"
       ],
@@ -490,8 +490,8 @@
       "mode": "specialized",
       "ns_per_day": 154.234,
       "real_wall_seconds": 2.801,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat1/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat1/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-11"
       ],
@@ -523,8 +523,8 @@
       "mode": "specialized",
       "ns_per_day": 153.761,
       "real_wall_seconds": 2.81,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat2/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat2/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-11"
       ],
@@ -556,8 +556,8 @@
       "mode": "generic",
       "ns_per_day": 147.429,
       "real_wall_seconds": 2.931,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat2/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat2/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat2/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-11"
       ],
@@ -589,8 +589,8 @@
       "mode": "generic",
       "ns_per_day": 146.94,
       "real_wall_seconds": 2.94,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat3/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat3/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat3/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/generic/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-11"
       ],
@@ -622,8 +622,8 @@
       "mode": "specialized",
       "ns_per_day": 153.089,
       "real_wall_seconds": 2.822,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat3/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat3/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/omp12/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-11"
       ],
@@ -655,8 +655,8 @@
       "mode": "generic",
       "ns_per_day": 236.618,
       "real_wall_seconds": 1.826,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat1/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat1/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat1/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5",
         "Rank     1: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 6-11"
@@ -689,8 +689,8 @@
       "mode": "specialized",
       "ns_per_day": 232.234,
       "real_wall_seconds": 1.86,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat1/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat1/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat1/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat1/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5",
         "Rank     1: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 6-11"
@@ -723,8 +723,8 @@
       "mode": "specialized",
       "ns_per_day": 237.794,
       "real_wall_seconds": 1.817,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat2/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat2/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat2/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5",
         "Rank     1: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 6-11"
@@ -757,8 +757,8 @@
       "mode": "generic",
       "ns_per_day": 229.645,
       "real_wall_seconds": 1.881,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat2/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat2/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat2/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat2/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5",
         "Rank     1: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 6-11"
@@ -791,8 +791,8 @@
       "mode": "generic",
       "ns_per_day": 234.906,
       "real_wall_seconds": 1.839,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat3/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat3/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat3/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/generic/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5",
         "Rank     1: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 6-11"
@@ -825,8 +825,8 @@
       "mode": "specialized",
       "ns_per_day": 233.601,
       "real_wall_seconds": 1.849,
-      "log_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat3/run.log",
-      "stdout_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat3/mdrun.stdout.txt",
+      "log_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat3/run.log",
+      "stdout_path": "../../output/repulsion_power_9_shortmd_layout_opt/gate_h_dense_salt_polymer_2x2x2/split12_pp6_pme6/specialized/repeat3/mdrun.stdout.txt",
       "reported_affinity": [
         "Rank     0: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 0-5",
         "Rank     1: External affinity: CPUs: 0-23       , package(s): 0. New affinity: CPUs: 6-11"

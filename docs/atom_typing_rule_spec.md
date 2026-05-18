@@ -23,12 +23,12 @@ PT3 does **not** implement:
 
 Rules live at:
 
-- [rules/pcff_atom_types.json](/home/kiket/바탕화면/test/GROMACS_PCFF/rules/pcff_atom_types.json)
-- optional phase1 bundle: [rules/phase1_family_rule_bundle.json](/home/kiket/Desktop/test/GROMACS_PCFF/rules/phase1_family_rule_bundle.json)
+- [rules/pcff_atom_types.json](../rules/pcff_atom_types.json)
+- optional phase1 bundle: [rules/phase1_family_rule_bundle.json](../rules/phase1_family_rule_bundle.json)
 
 Engine code lives at:
 
-- [src/atom_typing](/home/kiket/바탕화면/test/GROMACS_PCFF/src/atom_typing)
+- [src/atom_typing](../src/atom_typing)
 
 Important constraint:
 

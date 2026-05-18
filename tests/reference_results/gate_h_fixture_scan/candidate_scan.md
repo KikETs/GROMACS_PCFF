@@ -12,7 +12,7 @@ Repo 안에는 Gate H production-signoff에 바로 쓸 수 있는 exact-r-RESPA 
 
 ## TP0 Constraints Used
 
-Source: [transport_protocol_freeze.md](/home/kiket/Desktop/test/GROMACS_PCFF/docs/transport_protocol_freeze.md), [transport_scope_matrix.md](/home/kiket/Desktop/test/GROMACS_PCFF/docs/transport_scope_matrix.md)
+Source: [transport_protocol_freeze.md](../../../docs/transport_protocol_freeze.md), [transport_scope_matrix.md](../../../docs/transport_scope_matrix.md)
 
 - minimum `1000 atoms`
 - minimum box dimension `> 3.0 nm`
@@ -25,11 +25,11 @@ Source: [transport_protocol_freeze.md](/home/kiket/Desktop/test/GROMACS_PCFF/doc
 ### `dense_oligomer`
 
 Evidence:
-- [system.json](/home/kiket/Desktop/test/GROMACS_PCFF/testdata/lammps_golden/systems/dense_oligomer/system.json)
-- [system.gro](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_3_dense_ensemble_gate/dense_oligomer/system.gro)
-- [system.top](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_3_dense_ensemble_gate/dense_oligomer/system.top)
-- [report.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_3_dense_ensemble_gate/dense_oligomer/report.json)
-- [m10_3_dense_ensemble_parity.md](/home/kiket/Desktop/test/GROMACS_PCFF/docs/m10_3_dense_ensemble_parity.md)
+- [system.json](../../../testdata/lammps_golden/systems/dense_oligomer/system.json)
+- [system.gro](../m10_3_dense_ensemble_gate/dense_oligomer/system.gro)
+- [system.top](../m10_3_dense_ensemble_gate/dense_oligomer/system.top)
+- [report.json](../m10_3_dense_ensemble_gate/dense_oligomer/report.json)
+- [m10_3_dense_ensemble_parity.md](../../../docs/m10_3_dense_ensemble_parity.md)
 
 Facts:
 - `384 atoms`
@@ -48,12 +48,12 @@ Assessment:
 ### `dense_salt_polymer`
 
 Evidence:
-- [system.json](/home/kiket/Desktop/test/GROMACS_PCFF/testdata/lammps_golden/systems/dense_salt_polymer/system.json)
-- [system.gro](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_4_charged_ensemble_gate/dense_salt_polymer/system.gro)
-- [system.top](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_4_charged_ensemble_gate/dense_salt_polymer/system.top)
-- [report.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m10_4_charged_ensemble_gate/dense_salt_polymer/report.json)
-- [validation_report_tp1.md](/home/kiket/Desktop/test/GROMACS_PCFF/docs/validation_report_tp1.md)
-- [tp1_status.json](/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/transport_protocol_metadata/tp1_status.json)
+- [system.json](../../../testdata/lammps_golden/systems/dense_salt_polymer/system.json)
+- [system.gro](../m10_4_charged_ensemble_gate/dense_salt_polymer/system.gro)
+- [system.top](../m10_4_charged_ensemble_gate/dense_salt_polymer/system.top)
+- [report.json](../m10_4_charged_ensemble_gate/dense_salt_polymer/report.json)
+- [validation_report_tp1.md](../../../docs/validation_report_tp1.md)
+- [tp1_status.json](../transport_protocol_metadata/tp1_status.json)
 
 Facts:
 - `270 atoms`
@@ -70,7 +70,7 @@ Assessment:
 
 ## Repo-Wide Scan Result
 
-Source: [testdata/lammps_golden/systems](/home/kiket/Desktop/test/GROMACS_PCFF/testdata/lammps_golden/systems)
+Source: [testdata/lammps_golden/systems](../../../testdata/lammps_golden/systems)
 
 `system.json`이 있는 in-repo fixtures는 아래뿐이다.
 

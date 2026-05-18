@@ -1,7 +1,7 @@
 # Gate A Oracle Manifest
 
 - Status: `PASS`
-- Artifact root: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle`
+- Artifact root: `.`
 - Precision mode: `mixed`
 - ntmpi / ntomp: `1` / `1`
 - DLB: `no`
@@ -12,18 +12,18 @@
 - Normal MD used: `yes`
 
 ## Systems
-- `small_oligomer` event trace: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/event_trace.json`
-- `small_oligomer` per-level totals: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/per_level_force_totals.json`
-- `small_oligomer` class2 subterms: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/class2_subterm_energy_trace.json`
-- `small_oligomer` cpu corrections: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/cpu_correction_energy_trace.json`
-- `small_oligomer` energy terms: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/energy_terms.json`
-- `small_oligomer` restart summary: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_oligomer/summaries/restart_summary.json`
-- `small_salt_polymer_box` event trace: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/event_trace.json`
-- `small_salt_polymer_box` per-level totals: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/per_level_force_totals.json`
-- `small_salt_polymer_box` class2 subterms: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/class2_subterm_energy_trace.json`
-- `small_salt_polymer_box` cpu corrections: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/cpu_correction_energy_trace.json`
-- `small_salt_polymer_box` energy terms: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/energy_terms.json`
-- `small_salt_polymer_box` restart summary: `/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_a_cpu_oracle/small_salt_polymer_box/summaries/restart_summary.json`
+- `small_oligomer` event trace: `./small_oligomer/summaries/event_trace.json`
+- `small_oligomer` per-level totals: `./small_oligomer/summaries/per_level_force_totals.json`
+- `small_oligomer` class2 subterms: `./small_oligomer/summaries/class2_subterm_energy_trace.json`
+- `small_oligomer` cpu corrections: `./small_oligomer/summaries/cpu_correction_energy_trace.json`
+- `small_oligomer` energy terms: `./small_oligomer/summaries/energy_terms.json`
+- `small_oligomer` restart summary: `./small_oligomer/summaries/restart_summary.json`
+- `small_salt_polymer_box` event trace: `./small_salt_polymer_box/summaries/event_trace.json`
+- `small_salt_polymer_box` per-level totals: `./small_salt_polymer_box/summaries/per_level_force_totals.json`
+- `small_salt_polymer_box` class2 subterms: `./small_salt_polymer_box/summaries/class2_subterm_energy_trace.json`
+- `small_salt_polymer_box` cpu corrections: `./small_salt_polymer_box/summaries/cpu_correction_energy_trace.json`
+- `small_salt_polymer_box` energy terms: `./small_salt_polymer_box/summaries/energy_terms.json`
+- `small_salt_polymer_box` restart summary: `./small_salt_polymer_box/summaries/restart_summary.json`
 
 ## Known Limitations
 - The standalone exact r-RESPA path is frozen from the direct CLI mdrun path, but it still executes inside the legacy simulator container; the trace itself comes from exactrespastepper.cpp standalone exact-r-RESPA entrypoints.

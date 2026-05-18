@@ -11,11 +11,15 @@ import json
 import shutil
 import argparse
 import math
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+GMX_BIN = os.environ.get("GMX_BIN", str(REPO_ROOT / "build" / "bin" / "gmx"))
 
 def run_command(cmd, cwd=None):
     print(f"Executing: {' '.join(cmd)}")
     if cmd[0] == "gmx":
-        cmd[0] = "/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx"
+        cmd[0] = GMX_BIN
     
     result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
     if result.returncode != 0:
@@ -169,7 +173,7 @@ def main():
     parser.add_argument("--output_dir", default="tests/reference_results/tp1_charged_recovery/dense_salt_polymer", help="Output directory")
     args = parser.parse_args()
 
-    project_root = "/home/kiket/바탕화면/test/GROMACS_PCFF"
+    project_root = str(REPO_ROOT)
     output_path = os.path.join(project_root, args.output_dir)
     os.makedirs(output_path, exist_ok=True)
 
@@ -196,7 +200,7 @@ def main():
     run_command(["gmx", "mdrun", "-s", "tp1_equil.tpr", "-deffnm", "tp1_equil", "-ntmpi", "1"], cwd=output_path)
 
     # 3. Post-processing
-    gmx_bin = "/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx"
+    gmx_bin = GMX_BIN
     energy_input = "Density\nPotential\nVolume\nTemperature\n0\n"
     process = subprocess.Popen([gmx_bin, "energy", "-f", "tp1_equil.edr", "-o", "energy.xvg"], 
                                cwd=output_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)

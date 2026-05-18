@@ -20018,13 +20018,13 @@
         85.18400000000003
       ]
     },
-    "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/production_observables.xvg",
+    "energy_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/production_observables.xvg",
     "metrics": {
       "anion_diffusivity_cm2_s": {
         "available": true,
         "block_sem": 3.8265584441205724e-08,
         "count": 216,
-        "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/anion_diff_mol.xvg",
+        "diff_mol_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/anion_diff_mol.xvg",
         "fit_end_ps": 80.0,
         "fit_error_cm2_s": 0.0,
         "fit_r_squared": 0.9997549777633917,
@@ -20036,19 +20036,19 @@
         "molecule_types": [
           "ANI"
         ],
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/anion_msd_curve.tsv",
-        "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/anion_msdout.xvg",
+        "msd_curve_tsv": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/anion_msd_curve.tsv",
+        "msdout_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/anion_msdout.xvg",
         "r_squared": 0.9997549777633917,
         "relative_fit_error": 0.0,
         "relative_molecule_sem": 0.01766103897286418,
-        "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/anion.ndx",
+        "transport_index": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/anion.ndx",
         "value": 2.191e-06
       },
       "cation_diffusivity_cm2_s": {
         "available": true,
         "block_sem": 3.916043784452224e-08,
         "count": 216,
-        "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/cation_diff_mol.xvg",
+        "diff_mol_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/cation_diff_mol.xvg",
         "fit_end_ps": 80.0,
         "fit_error_cm2_s": 0.0,
         "fit_r_squared": 0.9997643368266721,
@@ -20060,12 +20060,12 @@
         "molecule_types": [
           "CAT"
         ],
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/cation_msd_curve.tsv",
-        "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/cation_msdout.xvg",
+        "msd_curve_tsv": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/cation_msd_curve.tsv",
+        "msdout_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/cation_msdout.xvg",
         "r_squared": 0.9997643368266721,
         "relative_fit_error": 0.0,
         "relative_molecule_sem": 0.01788299064358732,
-        "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/cation.ndx",
+        "transport_index": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/cation.ndx",
         "value": 2.1970000000000003e-06
       },
       "conductivity_cne_s_cm": {
@@ -20078,7 +20078,7 @@
         "available": true,
         "block_sem": 5.3714756874352095e-06,
         "count": 216,
-        "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/polymer_diff_mol.xvg",
+        "diff_mol_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/polymer_diff_mol.xvg",
         "fit_end_ps": 60.0,
         "fit_error_cm2_s": 3.0000000000000004e-07,
         "fit_r_squared": 0.9999927708910573,
@@ -20092,12 +20092,12 @@
           "POL10",
           "POL28"
         ],
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/polymer_msd_curve.tsv",
-        "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/polymer_msdout.xvg",
+        "msd_curve_tsv": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/polymer_msd_curve.tsv",
+        "msdout_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/polymer_msdout.xvg",
         "r_squared": 0.9999927708910573,
         "relative_fit_error": 0.0024418633044922147,
         "relative_molecule_sem": 0.044065277192784094,
-        "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/polymer.ndx",
+        "transport_index": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/polymer.ndx",
         "value": 0.000122857
       },
       "transference_ne": {
@@ -20122,7 +20122,7 @@
       }
     }
   },
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/equil",
+  "equil_deffnm": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/equil",
   "layout": "gpu",
   "layout_report": {
     "gpu_mapping_header": "Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:",
@@ -20145,7 +20145,7 @@
     "update_gpu_enabled": true,
     "update_task_line": "PP task will update and constrain coordinates on the GPU"
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/prod",
+  "prod_deffnm": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/gpu/prod",
   "replica_index": 1,
   "seed": 86113
 }

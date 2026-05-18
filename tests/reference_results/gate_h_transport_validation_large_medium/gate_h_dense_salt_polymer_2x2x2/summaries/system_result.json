@@ -13,9 +13,9 @@
     "replicas": 2
   },
   "artifacts": {
-    "scaffold_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
-    "system_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2",
-    "transport_comparison_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/summaries/transport_comparison.tsv"
+    "scaffold_manifest": "../../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_salt_polymer_2x2x2/fixture_manifest.json",
+    "system_root": "../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2",
+    "transport_comparison_tsv": "../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/summaries/transport_comparison.tsv"
   },
   "failure_reasons": [
     "Production duration 500.0 ps is below the TP0 minimum 20000.0 ps."

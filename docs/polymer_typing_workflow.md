@@ -17,8 +17,8 @@ PT7는 general polymer builder가 아니다.
 
 ## Source Layout
 
-- workflow code: [src/polymer_workflow](/home/kiket/바탕화면/test/GROMACS_PCFF/src/polymer_workflow)
-- PT7 golden inputs: [testdata/polymer_workflow_golden](/home/kiket/바탕화면/test/GROMACS_PCFF/testdata/polymer_workflow_golden)
+- workflow code: [src/polymer_workflow](../src/polymer_workflow)
+- PT7 golden inputs: [testdata/polymer_workflow_golden](../testdata/polymer_workflow_golden)
 
 주요 진입점:
 
@@ -91,7 +91,7 @@ PT7는 workflow-local augmented ruleset으로 다음을 수행한다.
 중요:
 
 - 기본 PT3/PT4/PT5 frozen rules 파일은 수정하지 않는다
-- PT7는 [src/polymer_workflow/rules.py](/home/kiket/바탕화면/test/GROMACS_PCFF/src/polymer_workflow/rules.py)에서 workflow-local augmented ruleset을 구성해 기존 엔진에 주입한다
+- PT7는 [src/polymer_workflow/rules.py](../src/polymer_workflow/rules.py)에서 workflow-local augmented ruleset을 구성해 기존 엔진에 주입한다
 
 ## End-Group Model
 

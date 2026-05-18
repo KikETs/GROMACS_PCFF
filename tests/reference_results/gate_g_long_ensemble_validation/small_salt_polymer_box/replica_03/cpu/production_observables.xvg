@@ -2,11 +2,11 @@
 # Created by:
 #   :-) GROMACS - gmx energy, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 # 
-# Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-# Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-# Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+# Executable:   ../../../../../../build_gateb_cuda/bin/gmx
+# Data prefix:  ../../../../../.. (source tree)
+# Working dir:  ../../../../../..
 # Command line:
-#   gmx energy -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/prod.edr -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/production_observables.xvg
+#   gmx energy -f ../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/prod.edr -o ../../../../../../tests/reference_results/gate_g_long_ensemble_validation/small_salt_polymer_box/replica_03/cpu/production_observables.xvg
 # gmx energy is part of G R O M A C S:
 #
 # Gravel Rubs Often Many Awfully Cauterized Sores

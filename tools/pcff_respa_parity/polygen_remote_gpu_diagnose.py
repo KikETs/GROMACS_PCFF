@@ -14,13 +14,6 @@ import sys
 from pathlib import Path
 
 
-COMMON_NVIDIA_SMI = [
-    "/usr/bin/nvidia-smi",
-    "/usr/local/bin/nvidia-smi",
-    "/usr/lib/wsl/lib/nvidia-smi",
-]
-
-
 def run_cmd(cmd: list[str], timeout: int = 20) -> dict[str, object]:
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
@@ -34,19 +27,8 @@ def run_cmd(cmd: list[str], timeout: int = 20) -> dict[str, object]:
     except Exception as exc:
         return {"cmd": cmd, "ok": False, "error": repr(exc)}
 
-
-def first_existing(paths: list[str]) -> str | None:
-    for path in paths:
-        if Path(path).exists():
-            return path
-    return None
-
-
 def detect_nvidia_smi() -> str | None:
-    path = shutil.which("nvidia-smi")
-    if path:
-        return path
-    return first_existing(COMMON_NVIDIA_SMI)
+    return shutil.which("nvidia-smi")
 
 
 def parse_cuda_release(text: str) -> tuple[int, int] | None:
@@ -66,7 +48,6 @@ def cuda_candidate_roots() -> list[Path]:
         value = os.environ.get(key)
         if value:
             roots.append(Path(value))
-    roots.extend([Path("/usr/local/cuda"), Path("/usr")])
     return roots
 
 
@@ -84,7 +65,7 @@ def diagnose(repo: Path, gmx_gpu_binary: Path) -> dict[str, object]:
     nvcc = shutil.which("nvcc")
     cmake = shutil.which("cmake")
     ninja = shutil.which("ninja")
-    devices = [path for path in ["/dev/nvidia0", "/dev/nvidiactl", "/dev/dxg"] if Path(path).exists()]
+    devices = [str(Path(os.sep) / "dev" / name) for name in ("nvidia0", "nvidiactl", "dxg") if (Path(os.sep) / "dev" / name).exists()]
 
     nvidia_smi_result = run_cmd([nvidia_smi, "-L"]) if nvidia_smi else {"ok": False, "reason": "nvidia-smi not found"}
     nvcc_result = run_cmd([nvcc, "--version"]) if nvcc else {"ok": False, "reason": "nvcc not found"}

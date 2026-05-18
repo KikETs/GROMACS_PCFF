@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--out-dir",
-        default="/tmp/exact-openmp-recurring-backend",
+        default=str(REPO_ROOT / "output" / "tmp" / "exact-openmp-recurring-backend"),
         help="Directory used by validate_report_set.py after recollection.",
     )
     parser.add_argument(
@@ -146,7 +146,7 @@ def prepare_remote_repo(
     profile_id: str,
     target_commit: str,
 ) -> str:
-    state_path = f"/tmp/exact-openmp-{profile_id}.state"
+    state_path = f".exact-openmp-{profile_id}.state"
     cleanup_backend = remote_backend_cleanup_snippet()
     prepare_cmd = f"""
 cd {shlex.quote(remote_repo_path)}
@@ -224,7 +224,7 @@ def recollect_remote_profile(
     backend_target = profile["recurring_backend"]["backend_target"]
     ssh_target = backend_target["ssh_target"]
     remote_repo_path = backend_target["repo_path"]
-    remote_temp_report = f"/tmp/exact-openmp-{profile_id}.json"
+    remote_temp_report = f".exact-openmp-{profile_id}.json"
     local_report_path = (
         REPO_ROOT
         / "tests"
@@ -257,12 +257,18 @@ def recollect_remote_profile(
             [
                 "rsync",
                 "-az",
-                f"{ssh_target}:{remote_temp_report}",
+                f"{ssh_target}:{remote_repo_path}/{remote_temp_report}",
                 str(local_report_path),
             ]
         )
     finally:
-        run_checked(["ssh", ssh_target, f"rm -f {shlex.quote(remote_temp_report)}"])
+        run_checked(
+            [
+                "ssh",
+                ssh_target,
+                f"cd {shlex.quote(remote_repo_path)} && rm -f {shlex.quote(remote_temp_report)}",
+            ]
+        )
         restore_remote_repo(
             ssh_target,
             remote_repo_path,

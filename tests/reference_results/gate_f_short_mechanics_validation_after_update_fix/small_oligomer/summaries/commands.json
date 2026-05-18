@@ -1,38 +1,38 @@
 [
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "grompp",
       "-f",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_short_exact_respa.mdp",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_short_exact_respa.mdp",
       "-c",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
+      "../../../../../tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
       "-p",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/topol.top",
+      "../../../../../tests/reference_results/m6_respa/small_oligomer/topol.top",
       "-o",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full.tpr",
       "-po",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_cpu_mdout.mdp",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_cpu_mdout.mdp",
       "-maxwarn",
       "1"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "grompp_cpu_full",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_cpu_full.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_cpu_full.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_cpu_full.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_cpu_full.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/cpu_full/cpu_full",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -51,40 +51,40 @@
       "off",
       "-reprod"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_cpu_full",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_cpu_full.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_cpu_full.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_cpu_full.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_cpu_full.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "grompp",
       "-f",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_short_exact_respa.mdp",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_short_exact_respa.mdp",
       "-c",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
+      "../../../../../tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
       "-p",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/topol.top",
+      "../../../../../tests/reference_results/m6_respa/small_oligomer/topol.top",
       "-o",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/gpu_full.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/gpu_full.tpr",
       "-po",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_gpu_mdout.mdp",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_gpu_mdout.mdp",
       "-maxwarn",
       "1"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/event_trace.tsv",
-      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/total_force.tsv",
+      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/event_trace.tsv",
+      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/total_force.tsv",
       "GMX_PCFF_RESPA_M2P_CASE_LABEL": "gpu_full",
-      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/m2p_trace",
-      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/merge_trace",
+      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/m2p_trace",
+      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/merge_trace",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80",
       "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -99,17 +99,17 @@
       "OMP_NUM_THREADS": "1"
     },
     "name": "grompp_gpu_full",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_full.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_full.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_full.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_full.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/gpu_full.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/gpu_full.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/gpu_full",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/gpu_full",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -127,14 +127,14 @@
       "-pin",
       "off"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/event_trace.tsv",
-      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/total_force.tsv",
+      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/event_trace.tsv",
+      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/total_force.tsv",
       "GMX_PCFF_RESPA_M2P_CASE_LABEL": "gpu_full",
-      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/m2p_trace",
-      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/merge_trace",
+      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/m2p_trace",
+      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_full/merge_trace",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80",
       "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -149,34 +149,34 @@
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_gpu_full",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_full.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_full.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_full.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_full.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "grompp",
       "-f",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_short_exact_respa.mdp",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_short_exact_respa.mdp",
       "-c",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
+      "../../../../../tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
       "-p",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/topol.top",
+      "../../../../../tests/reference_results/m6_respa/small_oligomer/topol.top",
       "-o",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/gpu_repeat.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/gpu_repeat.tpr",
       "-po",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_gpu_repeat_1_mdout.mdp",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_gpu_repeat_1_mdout.mdp",
       "-maxwarn",
       "1"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/event_trace.tsv",
-      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/total_force.tsv",
+      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/event_trace.tsv",
+      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/total_force.tsv",
       "GMX_PCFF_RESPA_M2P_CASE_LABEL": "gpu_repeat_1",
-      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/m2p_trace",
-      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/merge_trace",
+      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/m2p_trace",
+      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/merge_trace",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80",
       "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -191,17 +191,17 @@
       "OMP_NUM_THREADS": "1"
     },
     "name": "grompp_gpu_repeat_1",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_repeat_1.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_repeat_1.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_repeat_1.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_repeat_1.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/gpu_repeat.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/gpu_repeat.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/gpu_repeat",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/gpu_repeat",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -219,14 +219,14 @@
       "-pin",
       "off"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/event_trace.tsv",
-      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/total_force.tsv",
+      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/event_trace.tsv",
+      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/total_force.tsv",
       "GMX_PCFF_RESPA_M2P_CASE_LABEL": "gpu_repeat_1",
-      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/m2p_trace",
-      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/merge_trace",
+      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/m2p_trace",
+      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_1/merge_trace",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80",
       "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -241,34 +241,34 @@
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_gpu_repeat_1",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_repeat_1.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_repeat_1.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_repeat_1.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_repeat_1.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "grompp",
       "-f",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_short_exact_respa.mdp",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_short_exact_respa.mdp",
       "-c",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
+      "../../../../../tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
       "-p",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/topol.top",
+      "../../../../../tests/reference_results/m6_respa/small_oligomer/topol.top",
       "-o",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/gpu_repeat.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/gpu_repeat.tpr",
       "-po",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_gpu_repeat_2_mdout.mdp",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_gpu_repeat_2_mdout.mdp",
       "-maxwarn",
       "1"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/event_trace.tsv",
-      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/total_force.tsv",
+      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/event_trace.tsv",
+      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/total_force.tsv",
       "GMX_PCFF_RESPA_M2P_CASE_LABEL": "gpu_repeat_2",
-      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/m2p_trace",
-      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/merge_trace",
+      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/m2p_trace",
+      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/merge_trace",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80",
       "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -283,17 +283,17 @@
       "OMP_NUM_THREADS": "1"
     },
     "name": "grompp_gpu_repeat_2",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_repeat_2.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_repeat_2.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_repeat_2.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_repeat_2.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/gpu_repeat.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/gpu_repeat.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/gpu_repeat",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/gpu_repeat",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -311,14 +311,14 @@
       "-pin",
       "off"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
-      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/event_trace.tsv",
-      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/total_force.tsv",
+      "GMX_EXACT_RESPA_RUNTIME_EVENT_TRACE_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/event_trace.tsv",
+      "GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/total_force.tsv",
       "GMX_PCFF_RESPA_M2P_CASE_LABEL": "gpu_repeat_2",
-      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/m2p_trace",
-      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/merge_trace",
+      "GMX_PCFF_RESPA_M2P_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/m2p_trace",
+      "GMX_PCFF_RESPA_MERGE_TRACE_DIR": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_repeat_2/merge_trace",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES": "1",
       "GMX_PCFF_RESPA_TRACE_CLASS2_SUBTERM_ENERGIES_STEPS": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80",
       "GMX_PCFF_RESPA_TRACE_CPU_CORRECTION_ENERGIES": "1",
@@ -333,43 +333,43 @@
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_gpu_repeat_2",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_repeat_2.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_repeat_2.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_repeat_2.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_repeat_2.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "grompp",
       "-f",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_short_exact_respa.mdp",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_short_exact_respa.mdp",
       "-c",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
+      "../../../../../tests/reference_results/m6_respa/small_oligomer/initial_nve.gro",
       "-p",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/m6_respa/small_oligomer/topol.top",
+      "../../../../../tests/reference_results/m6_respa/small_oligomer/topol.top",
       "-o",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split.tpr",
       "-po",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_gpu_split_mdout.mdp",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/inputs/gate_f_gpu_split_mdout.mdp",
       "-maxwarn",
       "1"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "grompp_gpu_split",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_split.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_split.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_split.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/grompp_gpu_split.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -389,23 +389,23 @@
       "-nsteps",
       "40"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_gpu_split_first",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_split_first.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_split_first.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_split_first.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_split_first.stdout"
   },
   {
     "argv": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+      "../../../../../build_gateb_cuda/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split.tpr",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split",
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split",
       "-ntmpi",
       "1",
       "-ntomp",
@@ -423,15 +423,15 @@
       "-pin",
       "off",
       "-cpi",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split.cpt"
+      "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/gpu_split/gpu_split.cpt"
     ],
-    "cwd": "/home/kiket/Desktop/test/GROMACS_PCFF",
+    "cwd": "../../../../..",
     "env_overrides": {
       "GMX_DISABLE_MODULAR_SIMULATOR": "1",
       "OMP_NUM_THREADS": "1"
     },
     "name": "mdrun_gpu_split_second",
-    "stderr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_split_second.stderr",
-    "stdout": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_split_second.stdout"
+    "stderr": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_split_second.stderr",
+    "stdout": "../../../../../tests/reference_results/gate_f_short_mechanics_validation_after_update_fix/small_oligomer/logs/mdrun_gpu_split_second.stdout"
   }
 ]

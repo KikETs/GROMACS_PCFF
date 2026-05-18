@@ -2,7 +2,7 @@
   "schema_name": "exact_respa_native_multi_divergence_onset",
   "schema_version": 1,
   "fixture_id": "gate_h_dense_salt_polymer_2x2x2_equil_serial_reduction",
-  "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/equil.tpr",
+  "tpr": "../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_01/cpu/equil.tpr",
   "ntmpi": 1,
   "ntomp": 6,
   "pin": "off",

@@ -20018,13 +20018,13 @@
         85.18400000000003
       ]
     },
-    "energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/production_observables.xvg",
+    "energy_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/production_observables.xvg",
     "metrics": {
       "oligomer_diffusivity_cm2_s": {
         "available": true,
         "block_sem": 2.6477717195174184e-06,
         "count": 512,
-        "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/oligomer_diff_mol.xvg",
+        "diff_mol_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/oligomer_diff_mol.xvg",
         "fit_end_ps": 90.0,
         "fit_error_cm2_s": 9.000000000000001e-07,
         "fit_r_squared": 0.9999936075244218,
@@ -20036,12 +20036,12 @@
         "molecule_types": [
           "MOL1"
         ],
-        "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/oligomer_msd_curve.tsv",
-        "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/oligomer_msdout.xvg",
+        "msd_curve_tsv": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/oligomer_msd_curve.tsv",
+        "msdout_xvg": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/oligomer_msdout.xvg",
         "r_squared": 0.9999936075244218,
         "relative_fit_error": 0.008493851395351032,
         "relative_molecule_sem": 0.025588661153646417,
-        "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/oligomer.ndx",
+        "transport_index": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/oligomer.ndx",
         "value": 0.000105959
       }
     },
@@ -20052,7 +20052,7 @@
       }
     }
   },
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/equil",
+  "equil_deffnm": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/equil",
   "layout": "cpu",
   "layout_report": {
     "gpu_mapping_header": null,
@@ -20073,7 +20073,7 @@
     "update_gpu_enabled": false,
     "update_task_line": null
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/prod",
+  "prod_deffnm": "../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_oligomer_2x2x2/replica_01/cpu/prod",
   "replica_index": 1,
   "seed": 86113
 }

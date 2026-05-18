@@ -10,8 +10,8 @@
 ;	Created by:
 ;	 :-) GROMACS - gmx pdb2gmx, 2016-dev-20151226-ae98b19 (double precision) (-:
 ;	
-;	Executable:   /Users/spoel/software-master/bin/gmx
-;	Data prefix:  /Users/spoel/software-master
+;	Executable:   Users/spoel/software-master/bin/gmx
+;	Data prefix:  Users/spoel/software-master
 ;	Command line:
 ;	  gmx pdb2gmx -f 2BP4.pdb -ignh
 ;	Force field was read from the standard GROMACS share directory.

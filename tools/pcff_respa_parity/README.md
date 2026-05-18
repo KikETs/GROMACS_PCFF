@@ -1,8 +1,9 @@
 # `pcff_respa_parity`
 
-This toolchain measures the standalone GROMACS exact `r-RESPA` path against a frozen LAMMPS `run_style respa` reference.
+This toolchain measures the standalone GROMACS exact `r-RESPA` path against a
+frozen LAMMPS `run_style respa` reference.
 
-It is intentionally narrower than the M5 short-MD parity workflow:
+It is intentionally narrower than the short-MD parity workflows:
 
 - scope is `run_style respa`
 - ensemble is `NVE` only
@@ -10,10 +11,10 @@ It is intentionally narrower than the M5 short-MD parity workflow:
 
 ## Basis
 
-The schedule is frozen from local LAMMPS primary sources:
+The schedule is frozen from LAMMPS primary documentation:
 
-- `/home/user/lammps/doc/src/run_style.rst`
-- `/home/user/lammps/doc/src/pair_class2.rst`
+- `doc/src/run_style.rst`
+- `doc/src/pair_class2.rst`
 
 The current harness uses:
 
@@ -30,25 +31,23 @@ The current harness uses:
   - runs LAMMPS and freezes `nve_respa.json` and `reference_summary.json`
 - `compare.py`
   - compares actual GROMACS summaries against the frozen reference
-  - override-only helper for legacy M6 parity diagnostics; it is not the authoritative dense plain-facing comparator path
-  - default output now lands under `tests/reference_results/m6_respa/last_run_compare/legacy_m6_parity/`
 - `run.py`
   - optional reference regeneration, GROMACS build/run, and comparison orchestration
-  - current default workflow entrypoint; now also runs the authoritative offline/plain-facing comparator post-step for `dense_oligomer` `dt_0p0005` unless `--offline-oracle-mode off` is passed
+  - current default workflow entrypoint for the checked-in M6 exact `r-RESPA` comparison path
 - `drift_scan.py`
   - sweeps outer-step counts and GROMACS `exact-respa-pair14-level` settings to localize short-NVE drift
   - can optionally enable the nested CPU prototype with `--nested-prototype`
 - `force_compare.py`
   - runs exact `r-RESPA` on CPU, extracts outer-step coordinates at high precision, and compares the exact total force against an unsplit legacy single-point force on the same coordinates
 - `lammps_force_trace_compare.py`
-  - runs standalone exact `r-RESPA`, records exact outer-step force frames in the exact `.trr`, extracts the matching outer-step coordinates as `.g96`, and compares that exact force trace directly against LAMMPS `run 0`
+  - runs standalone exact `r-RESPA`, records exact outer-step force frames in the exact `.trr`, extracts matching outer-step coordinates as `.g96`, and compares that exact force trace directly against LAMMPS `run 0`
   - current fallback acceptance path for M9 when frozen thermo parity remains narrower than direct force-trace parity
-- `offline_oracle_compare_v1.py`
-  - authoritative plain-facing comparator generator for the current `dense_oligomer` `dt_0p0005` fixture
-  - uses explicit semantic classes and joins plain `STEP{next}_POST_FORCE_XVF` only against exact `producer_safe_total`
-  - legacy `refresh_restore_oracle_compare.tsv` and `nextstep_workload_oracle_compare.tsv` remain diagnostic-only and must not be treated as truth sources for this fixture
 
-## Output layout
+No separate offline oracle comparator is currently checked into this tree. Do
+not cite an offline/plain-facing comparator as an available authoritative
+workflow unless the script and its output artifacts are restored together.
+
+## Output Layout
 
 Frozen references live under:
 
@@ -80,29 +79,14 @@ Run the full harness:
 python3 tools/pcff_respa_parity/run.py --prepare-reference
 ```
 
-This now also runs the authoritative offline/plain-facing comparator for the current `dense_oligomer` `dt_0p0005` fixture by default.
-The default workflow root also receives:
-
-- `tests/reference_results/m6_respa/last_run_compare/plain_facing_truth_source.json`
-- `tests/reference_results/m6_respa/last_run_compare/authoritative_dense_oligomer_dt_0p0005/`
-- `tests/reference_results/m6_respa/last_run_compare/legacy_m6_parity/`
-
-The default workflow root itself should no longer be interpreted as containing competing root-level truth JSONs for this fixture.
-Legacy M6 parity JSONs are emitted under `legacy_m6_parity/` and are explicitly non-authoritative.
-
-If you need only the authoritative offline comparator workflow for the current fixture:
-
-```bash
-python3 tools/pcff_respa_parity/run.py --offline-oracle-mode only
-```
-
 Run the same harness with the nested CPU prototype enabled:
 
 ```bash
 python3 tools/pcff_respa_parity/run.py --prepare-reference --nested-prototype
 ```
 
-This prototype path is not part of the supported M6 gate. It exists only for debugging alternative CPU propagation semantics.
+The nested prototype path is not part of the supported M6 gate. It exists only
+for debugging alternative CPU propagation semantics.
 
 Run the outer-step / pair14 drift scan:
 
@@ -122,32 +106,24 @@ Run the direct exact-frame-vs-LAMMPS force-trace comparison:
 python3 tools/pcff_respa_parity/lammps_force_trace_compare.py
 ```
 
-Generate the authoritative offline/plain-facing comparator output for the current `dense_oligomer` fixture:
+Run the M6 parity compare helper directly:
 
 ```bash
-python3 tools/pcff_respa_parity/offline_oracle_compare_v1.py
+python3 tools/pcff_respa_parity/compare.py
 ```
 
-Run the legacy M6 parity compare helper directly only with explicit override:
+## Important Limitations
 
-```bash
-python3 tools/pcff_respa_parity/compare.py --allow-non-authoritative-plain-facing-use
-```
+The frozen `3-level` CPU path has explicit pass/fail tolerances:
 
-This override writes legacy outputs under `tests/reference_results/m6_respa/last_run_compare/legacy_m6_parity/` by default.
-
-## Important limitations
-
-The frozen `3-level` CPU path now has explicit pass/fail tolerances:
-
-- the in-tree regression in [pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp) enforces them directly
+- the in-tree regression in [pcff_short_md.cpp](../../src/programs/mdrun/tests/pcff_short_md.cpp) enforces them directly
 - `compare.py` also loads the same tolerances from `reference_summary.tsv` and marks per-system `pass` / `measured` / `incomplete`
 
 What is still not covered:
 
 - exact `2-level` mode is not part of the supported contract and should be rejected by validation
 - virial parity is frozen only for the step-0 tensor in the two M6 fixtures
-- restart/checkpoint parity is covered only as an outer-boundary smoke test in [pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp)
+- restart/checkpoint parity is covered only as an outer-boundary smoke test in [pcff_short_md.cpp](../../src/programs/mdrun/tests/pcff_short_md.cpp)
 - arbitrary mid-period exact-mode termination is not a supported restart contract
 
 The force-compare helper is narrower:
@@ -162,13 +138,3 @@ The direct LAMMPS force-trace helper is also narrow:
 - it extracts later outer-step coordinates as `.g96` rather than `.gro` to avoid coordinate truncation before the LAMMPS `run 0` probe
 - it compares those exact outer-step total forces against LAMMPS `run 0` at the same extracted outer-step coordinates
 - it is intended to answer one question only: whether the standalone exact path itself produces total forces that directly match LAMMPS
-
-The offline oracle-compare helper is also narrow:
-
-- it is currently validated only for `dense_oligomer` at `dt_0p0005`
-- it does not claim a universal comparator rule across fixtures
-- it is the authoritative plain-facing comparator path only for that fixture
-- historical outputs under
-  - `tests/reference_results/step3_md_refresh_restore_review_summary/.../refresh_restore_oracle_compare.tsv`
-  - `tests/reference_results/step4_nextstep_workload_review_summary/.../nextstep_workload_oracle_compare.tsv`
-  are legacy diagnostic outputs and must not be treated as comparator truth for that fixture

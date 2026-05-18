@@ -612,7 +612,7 @@
   },
   "failure_reasons": [],
   "first_failing_observable": null,
-  "gmx_binary": "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+  "gmx_binary": "../../../../build_gateb_cuda/bin/gmx",
   "gpu_support": "CUDA",
   "layout_report": {
     "gpu_mapping_header": "Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:",
@@ -1362,7 +1362,7 @@
             "values": []
           }
         },
-        "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/cpu/replica_01/prod",
+        "prod_deffnm": "../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/cpu/replica_01/prod",
         "replica_index": 1
       },
       {
@@ -2085,7 +2085,7 @@
             "values": []
           }
         },
-        "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/cpu/replica_02/prod",
+        "prod_deffnm": "../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/cpu/replica_02/prod",
         "replica_index": 2
       },
       {
@@ -2808,7 +2808,7 @@
             "values": []
           }
         },
-        "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/cpu/replica_03/prod",
+        "prod_deffnm": "../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/cpu/replica_03/prod",
         "replica_index": 3
       }
     ],
@@ -3535,7 +3535,7 @@
             "values": []
           }
         },
-        "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_01/prod",
+        "prod_deffnm": "../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_01/prod",
         "replica_index": 1
       },
       {
@@ -4260,7 +4260,7 @@
             "values": []
           }
         },
-        "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/prod",
+        "prod_deffnm": "../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_02/prod",
         "replica_index": 2
       },
       {
@@ -4985,7 +4985,7 @@
             "values": []
           }
         },
-        "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_03/prod",
+        "prod_deffnm": "../../../../tests/reference_results/gate_h_neutral_entry_validation_longer/gpu/replica_03/prod",
         "replica_index": 3
       }
     ]
@@ -5005,10 +5005,10 @@
     "tau_t_ps": 0.5,
     "temperature_k": 300.0
   },
-  "scaffold_manifest": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/fixture_manifest.json",
+  "scaffold_manifest": "../../../../tests/reference_results/gate_h_fixture_scaffold/gate_h_dense_oligomer_2x2x2/fixture_manifest.json",
   "schema_version": 1,
   "scope": "large-neutral exact-r-RESPA entry gate before full Gate H transport runs",
-  "short_prerequisite": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_scaffold_bringup/summaries/bringup_result.json",
+  "short_prerequisite": "../../../../tests/reference_results/gate_h_neutral_scaffold_bringup/summaries/bringup_result.json",
   "status": "PASS",
   "system_id": "gate_h_dense_oligomer_2x2x2"
 }

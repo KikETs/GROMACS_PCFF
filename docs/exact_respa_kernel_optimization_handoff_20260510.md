@@ -8,11 +8,11 @@ The next pass must optimize CPU/GPU kernels without changing the physical run pr
 
 ## Current Branch State
 
-- Repository: `/home/kiket/Desktop/test/GROMACS_PCFF`
+- Repository: `..`
 - Branch: `exact-respa-cpu-only-speedups-20260422`
 - Base commit before this handoff: `d927afa16f Add CPU exact r-RESPA current binary revalidation`
-- Main notebook: `/home/kiket/Desktop/test/GROMACS_PCFF/output/jupyter-notebook/polygen_pcff_rrespa_lammps_gromacs_benchmark.ipynb`
-- Main run root: `/home/kiket/Desktop/test/GROMACS_PCFF/output/polygen_pcff_gromacs_initial_em_notebook`
+- Main notebook: `../output/jupyter-notebook/polygen_pcff_rrespa_lammps_gromacs_benchmark.ipynb`
+- Main run root: `../output/polygen_pcff_gromacs_initial_em_notebook`
 
 ## Current Measured Performance
 

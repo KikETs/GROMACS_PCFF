@@ -1,12 +1,12 @@
 {
   "baseline_run": {
     "command": [
-      "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+      "../../../build/bin/gmx",
       "mdrun",
       "-s",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr",
+      "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr",
       "-deffnm",
-      "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/run",
+      "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/run",
       "-nsteps",
       "20",
       "-ntmpi",
@@ -27,7 +27,7 @@
       "off",
       "-reprod"
     ],
-    "dump_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps",
+    "dump_dir": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps",
     "elapsed_seconds": 0.30208659172058105,
     "exact_respa_update_omp_env": "0",
     "mode": "baseline",
@@ -40,17 +40,17 @@
     "pairloop_sparse_reduction_env": "0",
     "pairloop_tile_env": "0",
     "pairloop_vector_env": "0",
-    "run_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline"
+    "run_dir": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline"
   },
   "candidate_runs": [
     {
       "command": [
-        "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+        "../../../build/bin/gmx",
         "mdrun",
         "-s",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr",
+        "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr",
         "-deffnm",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/run",
+        "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/run",
         "-nsteps",
         "20",
         "-ntmpi",
@@ -71,7 +71,7 @@
         "off",
         "-reprod"
       ],
-      "dump_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps",
+      "dump_dir": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps",
       "elapsed_seconds": 0.22285246849060059,
       "exact_respa_update_omp_env": "0",
       "mode": "pairloop_direct",
@@ -84,16 +84,16 @@
       "pairloop_sparse_reduction_env": "0",
       "pairloop_tile_env": "0",
       "pairloop_vector_env": "0",
-      "run_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct"
+      "run_dir": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct"
     },
     {
       "command": [
-        "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+        "../../../build/bin/gmx",
         "mdrun",
         "-s",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr",
+        "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr",
         "-deffnm",
-        "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/run",
+        "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/run",
         "-nsteps",
         "20",
         "-ntmpi",
@@ -114,7 +114,7 @@
         "off",
         "-reprod"
       ],
-      "dump_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps",
+      "dump_dir": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps",
       "elapsed_seconds": 0.22381877899169922,
       "exact_respa_update_omp_env": "0",
       "mode": "pairloop_direct_block",
@@ -127,7 +127,7 @@
       "pairloop_sparse_reduction_env": "0",
       "pairloop_tile_env": "0",
       "pairloop_vector_env": "0",
-      "run_dir": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block"
+      "run_dir": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block"
     }
   ],
   "comparisons": [
@@ -138,11 +138,11 @@
       "compared_fast_path_snapshot_count": 28,
       "comparisons": [
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000002.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000002.tsv",
           "baseline_step": 1,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000002.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000002.tsv",
           "candidate_step": 1,
           "component_count": 6480,
           "failure_count": 0,
@@ -174,11 +174,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000003.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000003.tsv",
           "baseline_step": 1,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000003.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000003.tsv",
           "candidate_step": 1,
           "component_count": 6480,
           "failure_count": 0,
@@ -210,11 +210,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000004.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000004.tsv",
           "baseline_step": 2,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000004.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000004.tsv",
           "candidate_step": 2,
           "component_count": 12960,
           "failure_count": 0,
@@ -246,11 +246,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000005.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000005.tsv",
           "baseline_step": 2,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000005.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000005.tsv",
           "candidate_step": 2,
           "component_count": 12960,
           "failure_count": 0,
@@ -282,11 +282,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000006.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000006.tsv",
           "baseline_step": 3,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000006.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000006.tsv",
           "candidate_step": 3,
           "component_count": 6480,
           "failure_count": 0,
@@ -318,11 +318,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000007.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000007.tsv",
           "baseline_step": 3,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000007.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000007.tsv",
           "candidate_step": 3,
           "component_count": 6480,
           "failure_count": 0,
@@ -354,11 +354,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000008.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000008.tsv",
           "baseline_step": 4,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000008.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000008.tsv",
           "candidate_step": 4,
           "component_count": 19440,
           "failure_count": 0,
@@ -390,11 +390,11 @@
           "row_count": 6480
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000010.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000010.tsv",
           "baseline_step": 5,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000010.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000010.tsv",
           "candidate_step": 5,
           "component_count": 6480,
           "failure_count": 0,
@@ -426,11 +426,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000011.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000011.tsv",
           "baseline_step": 5,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000011.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000011.tsv",
           "candidate_step": 5,
           "component_count": 6480,
           "failure_count": 0,
@@ -462,11 +462,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000012.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000012.tsv",
           "baseline_step": 6,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000012.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000012.tsv",
           "candidate_step": 6,
           "component_count": 12960,
           "failure_count": 0,
@@ -498,11 +498,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000013.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000013.tsv",
           "baseline_step": 6,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000013.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000013.tsv",
           "candidate_step": 6,
           "component_count": 12960,
           "failure_count": 0,
@@ -534,11 +534,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000014.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000014.tsv",
           "baseline_step": 7,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000014.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000014.tsv",
           "candidate_step": 7,
           "component_count": 6480,
           "failure_count": 0,
@@ -570,11 +570,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000015.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000015.tsv",
           "baseline_step": 7,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000015.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000015.tsv",
           "candidate_step": 7,
           "component_count": 6480,
           "failure_count": 0,
@@ -606,11 +606,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000016.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000016.tsv",
           "baseline_step": 8,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000016.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000016.tsv",
           "candidate_step": 8,
           "component_count": 19440,
           "failure_count": 0,
@@ -642,11 +642,11 @@
           "row_count": 6480
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000018.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000018.tsv",
           "baseline_step": 9,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000018.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000018.tsv",
           "candidate_step": 9,
           "component_count": 6480,
           "failure_count": 0,
@@ -678,11 +678,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000019.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000019.tsv",
           "baseline_step": 9,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000019.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000019.tsv",
           "candidate_step": 9,
           "component_count": 6480,
           "failure_count": 0,
@@ -714,11 +714,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000020.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000020.tsv",
           "baseline_step": 10,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000020.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000020.tsv",
           "candidate_step": 10,
           "component_count": 12960,
           "failure_count": 0,
@@ -750,11 +750,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000021.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000021.tsv",
           "baseline_step": 10,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000021.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000021.tsv",
           "candidate_step": 10,
           "component_count": 12960,
           "failure_count": 0,
@@ -786,11 +786,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000022.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000022.tsv",
           "baseline_step": 11,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000022.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000022.tsv",
           "candidate_step": 11,
           "component_count": 6480,
           "failure_count": 0,
@@ -822,11 +822,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000023.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000023.tsv",
           "baseline_step": 11,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000023.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000023.tsv",
           "candidate_step": 11,
           "component_count": 6480,
           "failure_count": 0,
@@ -858,11 +858,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000024.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000024.tsv",
           "baseline_step": 12,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000024.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000024.tsv",
           "candidate_step": 12,
           "component_count": 19440,
           "failure_count": 0,
@@ -894,11 +894,11 @@
           "row_count": 6480
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000026.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000026.tsv",
           "baseline_step": 13,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000026.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000026.tsv",
           "candidate_step": 13,
           "component_count": 6480,
           "failure_count": 0,
@@ -930,11 +930,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000027.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000027.tsv",
           "baseline_step": 13,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000027.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000027.tsv",
           "candidate_step": 13,
           "component_count": 6480,
           "failure_count": 0,
@@ -966,11 +966,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000028.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000028.tsv",
           "baseline_step": 14,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000028.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000028.tsv",
           "candidate_step": 14,
           "component_count": 12960,
           "failure_count": 0,
@@ -1002,11 +1002,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000029.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000029.tsv",
           "baseline_step": 14,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000029.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000029.tsv",
           "candidate_step": 14,
           "component_count": 12960,
           "failure_count": 0,
@@ -1038,11 +1038,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000030.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000030.tsv",
           "baseline_step": 15,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000030.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000030.tsv",
           "candidate_step": 15,
           "component_count": 6480,
           "failure_count": 0,
@@ -1074,11 +1074,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000031.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000031.tsv",
           "baseline_step": 15,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000031.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000031.tsv",
           "candidate_step": 15,
           "component_count": 6480,
           "failure_count": 0,
@@ -1110,11 +1110,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000032.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000032.tsv",
           "baseline_step": 16,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000032.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct/force_dumps/pairloop_force_delta_000032.tsv",
           "candidate_step": 16,
           "component_count": 19440,
           "failure_count": 0,
@@ -1176,11 +1176,11 @@
       "compared_fast_path_snapshot_count": 28,
       "comparisons": [
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000002.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000002.tsv",
           "baseline_step": 1,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000002.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000002.tsv",
           "candidate_step": 1,
           "component_count": 6480,
           "failure_count": 0,
@@ -1212,11 +1212,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000003.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000003.tsv",
           "baseline_step": 1,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000003.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000003.tsv",
           "candidate_step": 1,
           "component_count": 6480,
           "failure_count": 0,
@@ -1248,11 +1248,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000004.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000004.tsv",
           "baseline_step": 2,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000004.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000004.tsv",
           "candidate_step": 2,
           "component_count": 12960,
           "failure_count": 0,
@@ -1284,11 +1284,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000005.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000005.tsv",
           "baseline_step": 2,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000005.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000005.tsv",
           "candidate_step": 2,
           "component_count": 12960,
           "failure_count": 0,
@@ -1320,11 +1320,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000006.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000006.tsv",
           "baseline_step": 3,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000006.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000006.tsv",
           "candidate_step": 3,
           "component_count": 6480,
           "failure_count": 0,
@@ -1356,11 +1356,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000007.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000007.tsv",
           "baseline_step": 3,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000007.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000007.tsv",
           "candidate_step": 3,
           "component_count": 6480,
           "failure_count": 0,
@@ -1392,11 +1392,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000008.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000008.tsv",
           "baseline_step": 4,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000008.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000008.tsv",
           "candidate_step": 4,
           "component_count": 19440,
           "failure_count": 0,
@@ -1428,11 +1428,11 @@
           "row_count": 6480
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000010.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000010.tsv",
           "baseline_step": 5,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000010.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000010.tsv",
           "candidate_step": 5,
           "component_count": 6480,
           "failure_count": 0,
@@ -1464,11 +1464,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000011.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000011.tsv",
           "baseline_step": 5,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000011.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000011.tsv",
           "candidate_step": 5,
           "component_count": 6480,
           "failure_count": 0,
@@ -1500,11 +1500,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000012.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000012.tsv",
           "baseline_step": 6,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000012.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000012.tsv",
           "candidate_step": 6,
           "component_count": 12960,
           "failure_count": 0,
@@ -1536,11 +1536,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000013.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000013.tsv",
           "baseline_step": 6,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000013.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000013.tsv",
           "candidate_step": 6,
           "component_count": 12960,
           "failure_count": 0,
@@ -1572,11 +1572,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000014.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000014.tsv",
           "baseline_step": 7,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000014.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000014.tsv",
           "candidate_step": 7,
           "component_count": 6480,
           "failure_count": 0,
@@ -1608,11 +1608,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000015.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000015.tsv",
           "baseline_step": 7,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000015.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000015.tsv",
           "candidate_step": 7,
           "component_count": 6480,
           "failure_count": 0,
@@ -1644,11 +1644,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000016.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000016.tsv",
           "baseline_step": 8,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000016.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000016.tsv",
           "candidate_step": 8,
           "component_count": 19440,
           "failure_count": 0,
@@ -1680,11 +1680,11 @@
           "row_count": 6480
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000018.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000018.tsv",
           "baseline_step": 9,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000018.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000018.tsv",
           "candidate_step": 9,
           "component_count": 6480,
           "failure_count": 0,
@@ -1716,11 +1716,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000019.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000019.tsv",
           "baseline_step": 9,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000019.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000019.tsv",
           "candidate_step": 9,
           "component_count": 6480,
           "failure_count": 0,
@@ -1752,11 +1752,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000020.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000020.tsv",
           "baseline_step": 10,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000020.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000020.tsv",
           "candidate_step": 10,
           "component_count": 12960,
           "failure_count": 0,
@@ -1788,11 +1788,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000021.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000021.tsv",
           "baseline_step": 10,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000021.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000021.tsv",
           "candidate_step": 10,
           "component_count": 12960,
           "failure_count": 0,
@@ -1824,11 +1824,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000022.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000022.tsv",
           "baseline_step": 11,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000022.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000022.tsv",
           "candidate_step": 11,
           "component_count": 6480,
           "failure_count": 0,
@@ -1860,11 +1860,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000023.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000023.tsv",
           "baseline_step": 11,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000023.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000023.tsv",
           "candidate_step": 11,
           "component_count": 6480,
           "failure_count": 0,
@@ -1896,11 +1896,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000024.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000024.tsv",
           "baseline_step": 12,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000024.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000024.tsv",
           "candidate_step": 12,
           "component_count": 19440,
           "failure_count": 0,
@@ -1932,11 +1932,11 @@
           "row_count": 6480
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000026.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000026.tsv",
           "baseline_step": 13,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000026.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000026.tsv",
           "candidate_step": 13,
           "component_count": 6480,
           "failure_count": 0,
@@ -1968,11 +1968,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000027.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000027.tsv",
           "baseline_step": 13,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000027.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000027.tsv",
           "candidate_step": 13,
           "component_count": 6480,
           "failure_count": 0,
@@ -2004,11 +2004,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000028.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000028.tsv",
           "baseline_step": 14,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000028.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000028.tsv",
           "candidate_step": 14,
           "component_count": 12960,
           "failure_count": 0,
@@ -2040,11 +2040,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000029.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000029.tsv",
           "baseline_step": 14,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000029.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000029.tsv",
           "candidate_step": 14,
           "component_count": 12960,
           "failure_count": 0,
@@ -2076,11 +2076,11 @@
           "row_count": 4320
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000030.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000030.tsv",
           "baseline_step": 15,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000030.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000030.tsv",
           "candidate_step": 15,
           "component_count": 6480,
           "failure_count": 0,
@@ -2112,11 +2112,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000031.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000031.tsv",
           "baseline_step": 15,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000031.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000031.tsv",
           "candidate_step": 15,
           "component_count": 6480,
           "failure_count": 0,
@@ -2148,11 +2148,11 @@
           "row_count": 2160
         },
         {
-          "baseline_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000032.tsv",
+          "baseline_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/baseline/force_dumps/pairloop_force_delta_000032.tsv",
           "baseline_step": 16,
           "candidate_excluded_pair_fast_path_used": true,
           "candidate_pair_fast_path_used": true,
-          "candidate_path": "/home/kiket/Desktop/test/GROMACS_PCFF/output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000032.tsv",
+          "candidate_path": "../../../output/exact_respa_pairloop_omp_speedup/direct_cpulist_flags_fullmask_partition_force_delta_ntomp6/pairloop_direct_block/force_dumps/pairloop_force_delta_000032.tsv",
           "candidate_step": 16,
           "component_count": 19440,
           "failure_count": 0,
@@ -2221,8 +2221,8 @@
     "git_branch": "exact-respa-omp-pairloop-speedup",
     "git_commit": "ae09a8e8b1327ffa5c469fe21b6446f2e1e1d361",
     "git_status_short": "M docs/exact_respa_pairloop_omp_speedup_track.md\n M src/gromacs/mdlib/sim_util.cpp\n M src/gromacs/nbnxm/nbnxm.cpp\n M src/gromacs/nbnxm/nbnxm.h\n M tests/reference_results/exact_respa_pairloop_omp_speedup/README.md\n M tools/pcff_respa_parity/bench_exact_respa_pairloop_omp.py\n M tools/pcff_respa_parity/validate_exact_respa_pairloop_force_delta.py\n?? gate_i_eq750_prod10000_ntmpi1_ntomp6_local_fastest.nohup.log\n?? gate_i_eq750_prod10000_split12_pp6_pme6_local.nohup.log\n?? output/exact_respa_pairloop_omp_speedup/\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_block_tile_force_delta_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_block_tile_ntomp6_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_blockindexed_tile_force_delta_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_blockindexed_tile_ntomp6_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_direct_cpulist_force_delta_ntomp12_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_direct_cpulist_force_delta_ntomp6_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_direct_cpulist_ntomp12_direct_vs_block_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_direct_cpulist_ntomp12_direct_vs_block_report.tsv\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_direct_cpulist_ntomp1_baseline_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_direct_cpulist_ntomp1_baseline_report.tsv\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_direct_cpulist_ntomp2_12_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_direct_cpulist_ntomp2_12_report.tsv\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_direct_cpulist_ntomp6_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_direct_cpulist_ntomp6_report.tsv\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_nbnxm4x4_force_delta_report.json\n?? tests/reference_results/exact_respa_pairloop_omp_speedup/local_9900x_gate_i_nbnxm4x4_ntomp6_report.json\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_ntmpi1_ntomp6_local_fastest/\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.cpt\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.edr\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.log\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.mdout.mdp\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil_prev.cpt\n?? tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/logs/",
-    "gmx": "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
-    "gmx_version": ":-) GROMACS - gmx, 2027.0-dev-20260417-ae09a8e8b1-dirty-unknown (-:\n\nExecutable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx\nData prefix:  /home/kiket/\ubc14\ud0d5\ud654\uba74/test/GROMACS_PCFF (source tree)\nWorking dir:  /home/kiket/Desktop/test/GROMACS_PCFF\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260417-ae09a8e8b1-dirty-unknown\nGIT SHA1 hash:       ae09a8e8b1327ffa5c469fe21b6446f2e1e1d361 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         disabled\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     none\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O3 -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal",
+    "gmx": "../../../build/bin/gmx",
+    "gmx_version": ":-) GROMACS - gmx, 2027.0-dev-20260417-ae09a8e8b1-dirty-unknown (-:\n\nExecutable:   ../../../build/bin/gmx\nData prefix:  ../../.. (source tree)\nWorking dir:  ../../..\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260417-ae09a8e8b1-dirty-unknown\nGIT SHA1 hash:       ae09a8e8b1327ffa5c469fe21b6446f2e1e1d361 (dirty)\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         disabled\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     none\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O3 -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -Wno-array-bounds -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O3 -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal",
     "host": "KikET",
     "ntmpi": 1,
     "ntomp": 6,
@@ -2232,7 +2232,7 @@
     "schema_name": "exact_respa_pairloop_force_delta_parity",
     "schema_version": 1,
     "steps": 20,
-    "tpr": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr"
+    "tpr": "../../../tests/reference_results/gate_i_charged_long_npt_conditioning_eq750_prod10000_split12_pp6_pme6_local/cpu/replica_01/equil.tpr"
   },
   "passed": true
 }

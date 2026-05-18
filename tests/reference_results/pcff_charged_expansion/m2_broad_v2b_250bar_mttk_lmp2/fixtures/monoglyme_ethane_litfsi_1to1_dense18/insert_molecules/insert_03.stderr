@@ -1,8 +1,8 @@
  :-) GROMACS - gmx insert-molecules, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 
-Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx
-Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
-Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_v2b_250bar_mttk_lmp2/fixtures/monoglyme_ethane_litfsi_1to1_dense18/insert_molecules
+Executable:   ../../../../../../../build/bin/gmx
+Data prefix:  ../../../../../../.. (source tree)
+Working dir:  ../../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_v2b_250bar_mttk_lmp2/fixtures/monoglyme_ethane_litfsi_1to1_dense18/insert_molecules
 Command line:
   gmx insert-molecules -ci li.gro -nmol 18 -o packed_03_li.gro -try 10000 -seed 20260410 -radius 0.04 -scale 0.35 -f packed_02_ethane.gro
 

@@ -18,7 +18,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--out",
-        default="/tmp/pcff_respa_drift_scan",
+        default=str(REPO_ROOT / "output" / "tmp" / "pcff_respa_drift_scan"),
         help="Output directory for generated references, actual summaries, and aggregate scan JSON.",
     )
     parser.add_argument(
@@ -53,7 +53,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--lammps-cmd",
-        default="/home/user/.local/bin/lmp",
+        default="lmp",
         help="LAMMPS executable used for reference regeneration.",
     )
     parser.add_argument(

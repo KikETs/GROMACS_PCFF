@@ -17,29 +17,29 @@ Two measurement stacks were used.
 
 Pure-OpenMP scaling basis:
 
-- [`docs/repulsion_power_9_shortmd_omp_scaling_decomposition.md`](/home/kiket/Desktop/test/GROMACS_PCFF/docs/repulsion_power_9_shortmd_omp_scaling_decomposition.md)
+- [`docs/repulsion_power_9_shortmd_omp_scaling_decomposition.md`](./repulsion_power_9_shortmd_omp_scaling_decomposition.md)
 - cleaned single-rank `ntomp=2/6/12` runs with fixed `pin=on`, `dlb=no`, alternating mode order,
   one warmup cycle, and median-of-repeats accounting
 
 Runtime layout basis:
 
-- runner: [`tools/pcff_respa_parity/bench_repulsion_power_9_shortmd_layout_cpu.py`](/home/kiket/Desktop/test/GROMACS_PCFF/tools/pcff_respa_parity/bench_repulsion_power_9_shortmd_layout_cpu.py)
+- runner: [`tools/pcff_respa_parity/bench_repulsion_power_9_shortmd_layout_cpu.py`](../tools/pcff_respa_parity/bench_repulsion_power_9_shortmd_layout_cpu.py)
 - 3-repeat layout sweep:
-  [`output/repulsion_power_9_shortmd_layout_opt/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt/summary.md)
+  [`output/repulsion_power_9_shortmd_layout_opt/summary.md`](../output/repulsion_power_9_shortmd_layout_opt/summary.md)
 - 3-repeat 12-thread PP/PME split sweep:
-  [`output/repulsion_power_9_shortmd_layout_split12_sweep/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_split12_sweep/summary.md)
+  [`output/repulsion_power_9_shortmd_layout_split12_sweep/summary.md`](../output/repulsion_power_9_shortmd_layout_split12_sweep/summary.md)
 - 3-repeat 6-thread layout sweep:
-  [`output/repulsion_power_9_shortmd_layout_6t_sweep/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_6t_sweep/summary.md)
+  [`output/repulsion_power_9_shortmd_layout_6t_sweep/summary.md`](../output/repulsion_power_9_shortmd_layout_6t_sweep/summary.md)
 - 6-repeat confirmation of the best 12-thread layout:
-  [`output/repulsion_power_9_shortmd_layout_opt_split12_repeatdepth/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_opt_split12_repeatdepth/summary.md)
+  [`output/repulsion_power_9_shortmd_layout_opt_split12_repeatdepth/summary.md`](../output/repulsion_power_9_shortmd_layout_opt_split12_repeatdepth/summary.md)
 - post-PME-gather-cleanup 3-repeat layout sweep:
-  [`output/repulsion_power_9_shortmd_layout_post_pmegather_opt/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmegather_opt/summary.md)
+  [`output/repulsion_power_9_shortmd_layout_post_pmegather_opt/summary.md`](../output/repulsion_power_9_shortmd_layout_post_pmegather_opt/summary.md)
 - post-PME-gather-cleanup 6-repeat confirmation of the best 12-thread layout:
-  [`output/repulsion_power_9_shortmd_layout_post_pmegather_split12_repeatdepth/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmegather_split12_repeatdepth/summary.md)
+  [`output/repulsion_power_9_shortmd_layout_post_pmegather_split12_repeatdepth/summary.md`](../output/repulsion_power_9_shortmd_layout_post_pmegather_split12_repeatdepth/summary.md)
 - post-PME-spread-thread-merge 3-repeat layout sweep:
-  [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md)
+  [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md`](../output/repulsion_power_9_shortmd_layout_post_pmespread_merge/summary.md)
 - post-PME-spread-thread-merge 6-repeat confirmation:
-  [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md)
+  [`output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md`](../output/repulsion_power_9_shortmd_layout_post_pmespread_merge_repeatdepth/summary.md)
 
 Important interpretation rule:
 
@@ -100,7 +100,7 @@ The reason is the PME side, not the repulsion-power-9 PP kernel:
 
 Basis:
 
-- [`repulsion_power_9_shortmd_omp_scaling_decomposition.md`](/home/kiket/Desktop/test/GROMACS_PCFF/docs/repulsion_power_9_shortmd_omp_scaling_decomposition.md:75)
+- [`repulsion_power_9_shortmd_omp_scaling_decomposition.md`](./repulsion_power_9_shortmd_omp_scaling_decomposition.md:75)
 
 ## What Actually Improves Final Speed
 

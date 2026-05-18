@@ -1,12 +1,12 @@
 {
   "acpype_gaff2_dependency": false,
   "artifacts": {
-    "gro": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/system.gro",
-    "system_data": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/system.data",
-    "system_in": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/system.in",
-    "system_json": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/system.json",
-    "topology": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/topol.top",
-    "typed_system": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/typed_system.json"
+    "gro": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/system.gro",
+    "system_data": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/system.data",
+    "system_in": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/system.in",
+    "system_json": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/system.json",
+    "topology": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/topol.top",
+    "typed_system": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad/fixtures/monoglyme_ethane_litfsi_1to1_dense18/generated/typed_system.json"
   },
   "box_nm": [
     2.4,

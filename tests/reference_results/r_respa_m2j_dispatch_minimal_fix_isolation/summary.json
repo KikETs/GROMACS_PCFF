@@ -2,9 +2,9 @@
   "branch": "respa-m2-exact-three-level",
   "build_provenance": {
     "git_sha": "3be070f6714214d8c30addd012a3e34978f8569f",
-    "gmx_bin": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_builds/respa_m2_exact_three_level/bin/gmx",
-    "source_tree": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2",
-    "version_text": "         :-) GROMACS - gmx, 2027.0-dev-20260322-3be070f671-unknown (-:\n\nExecutable:   /home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_builds/respa_m2_exact_three_level/bin/gmx\nData prefix:  /home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)\nWorking dir:  /home/kiket/\ubc14\ud0d5\ud654\uba74/test\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260322-3be070f671-unknown\nGIT SHA1 hash:       3be070f6714214d8c30addd012a3e34978f8569f\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         disabled\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     none\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\n\n"
+    "gmx_bin": "../../../../ab_builds/respa_m2_exact_three_level/bin/gmx",
+    "source_tree": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2",
+    "version_text": "         :-) GROMACS - gmx, 2027.0-dev-20260322-3be070f671-unknown (-:\n\nExecutable:   ../../../../ab_builds/respa_m2_exact_three_level/bin/gmx\nData prefix:  ../../../../ab_worktrees/GROMACS_PCFF_respa_m2 (source tree)\nWorking dir:  ../../../..\nCommand line:\n  gmx --version\n\nGROMACS version:     2027.0-dev-20260322-3be070f671-unknown\nGIT SHA1 hash:       3be070f6714214d8c30addd012a3e34978f8569f\nBranched from:       unknown\nPrecision:           mixed\nMemory model:        64 bit\nMPI library:         thread_mpi\nMPI version:         built in\nOpenMP support:      enabled (GMX_OPENMP_MAX_THREADS = 128)\nGPU support:         disabled\nSIMD instructions:   AVX_512\nCPU FFT library:     fftw-3.3.10-sse2-avx-avx2-avx2_128-avx512\nGPU FFT library:     none\nMulti-GPU FFT:       none\nRDTSCP:              enabled\nTNG support:         enabled\nHwloc support:       disabled\nTracing support:     disabled\nColvars support:     enabled (version 2025-10-13)\nCP2K support:        disabled\nTorch support:       disabled\nPlumed support:      enabled\nC compiler:          /usr/bin/cc GNU 13.3.0\nC compiler flags:    -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wno-unused -Wunused-value -Wunused-parameter -Wextra -Wno-sign-compare -Wpointer-arith -Wpedantic -Wundef -Werror=stringop-truncation -Wshadow -Wno-missing-field-initializers -O2 -g -DNDEBUG\nC++ compiler:        /usr/bin/c++ GNU 13.3.0\nC++ compiler flags:  -fexcess-precision=fast -funroll-all-loops -march=skylake-avx512 -Wall -Wextra -Wpointer-arith -Wmissing-declarations -Wpedantic -Wundef -Wstringop-truncation -Wshadow -Wno-missing-field-initializers -Wno-stringop-truncation -Wno-cast-function-type-strict SHELL:-fopenmp -O2 -g -DNDEBUG\nBLAS library:        Internal\nLAPACK library:      Internal\n\n"
   },
   "exact_three_level_path": {
     "integrator": "md-vv",
@@ -41,13 +41,13 @@
     {
       "coarse": {
         "dispatch_probe_work_dirs": {
-          "active_contributions": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed",
-          "correction_outer_selection": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed",
-          "includepair_policy": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted",
-          "outer_routing": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
+          "active_contributions": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed",
+          "correction_outer_selection": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed",
+          "includepair_policy": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted",
+          "outer_routing": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
         },
         "dt_ps": 0.0005,
-        "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level",
+        "exact_work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level",
         "nsteps": 8
       },
       "comparison_notes": [
@@ -84,7 +84,7 @@
                 },
                 "physical_outer_realization": false,
                 "routing_row": null,
-                "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted"
+                "work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted"
               },
               "semantic_result": "Target is blocked before consumer evaluation; first-bad semantics disappears.",
               "verdict": "SUFFICIENT-BUT-NOT-MINIMAL"
@@ -145,7 +145,7 @@
                   "semantic_result": "no_physical_outer_realization",
                   "stage": "dispatch_internal_outer_routing"
                 },
-                "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed"
+                "work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed"
               },
               "semantic_result": "Target remains admitted, but no non-zero outer contribution remains; first-bad semantics disappears.",
               "verdict": "SUFFICIENT-BUT-NOT-MINIMAL"
@@ -206,7 +206,7 @@
                   "semantic_result": "no_physical_outer_realization",
                   "stage": "dispatch_internal_outer_routing"
                 },
-                "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
+                "work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
               },
               "semantic_result": "Bad semantics still exists before routing, but physical outer realization is suppressed.",
               "verdict": "NOT-CAUSAL"
@@ -267,7 +267,7 @@
                   "semantic_result": "no_physical_outer_realization",
                   "stage": "dispatch_internal_outer_routing"
                 },
-                "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed"
+                "work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed"
               },
               "semantic_result": "Target remains admitted with outer contribution active, but effective_outer_scalar becomes zero; first-bad semantics disappears.",
               "verdict": "MINIMAL-FIX-CANDIDATE"
@@ -331,7 +331,7 @@
                 "semantic_result": "physical_outer_behavior_realized",
                 "stage": "dispatch_internal_outer_routing"
               },
-              "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level"
+              "work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level"
             },
             "control_clean": true,
             "pair": [
@@ -390,7 +390,7 @@
                   "semantic_result": "physical_outer_behavior_realized",
                   "stage": "dispatch_internal_outer_routing"
                 },
-                "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed"
+                "work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_active_outer_narrowed"
               },
               "correction_outer_selection": {
                 "active_row": {
@@ -443,7 +443,7 @@
                   "semantic_result": "physical_outer_behavior_realized",
                   "stage": "dispatch_internal_outer_routing"
                 },
-                "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed"
+                "work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_correction_outer_suppressed"
               },
               "includepair_policy": {
                 "active_row": {
@@ -496,7 +496,7 @@
                   "semantic_result": "physical_outer_behavior_realized",
                   "stage": "dispatch_internal_outer_routing"
                 },
-                "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted"
+                "work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_includepair_restricted"
               },
               "outer_routing": {
                 "active_row": {
@@ -549,14 +549,14 @@
                   "semantic_result": "physical_outer_behavior_realized",
                   "stage": "dispatch_internal_outer_routing"
                 },
-                "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
+                "work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/probe_outer_routing_suppressed"
               }
             },
             "why_clean": "The clean control remains admitted through the standard pairs path and keeps the same active contribution and routing semantics across all dispatch probes."
           },
           "minimal_fix_candidate": {
             "classification": "excluded correction -> outer contribution selection",
-            "code_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/src/gromacs/mdlib/sim_util.cpp",
+            "code_path": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/src/gromacs/mdlib/sim_util.cpp",
             "why": "Blocking only correction promotion into the effective outer scalar removes the bad semantics while preserving admission, baseline activeContributions, and baseline outer routing."
           },
           "pair_dispatch_internal_trace": {
@@ -628,7 +628,7 @@
                 "semantic_result": "physical_outer_behavior_realized",
                 "stage": "dispatch_internal_outer_routing"
               },
-              "work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level"
+              "work_dir": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2j_dispatch_minimal_fix_isolation/dense_oligomer/dt_0p0005/exact_three_level"
             },
             "excluded_dispatch_contract": {
               "control_in_list": "false",
@@ -833,9 +833,9 @@
       },
       "fixture_id": "dense_oligomer",
       "fixture_sources": {
-        "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
-        "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
-        "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+        "lammps_data": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+        "lammps_input": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+        "system_json": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
       },
       "gro_metadata": {
         "box_nm": [
@@ -852,7 +852,7 @@
         "dihedral"
       ],
       "m1_continuity": {
-        "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+        "archived_m1_script": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
         "archived_m1_settings": {
           "coulombtype": "Cut-off",
           "integrator": "md",
@@ -860,7 +860,7 @@
           "mts_levels": 2,
           "mts_mode": "legacy"
         },
-        "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+        "archived_m1_summary": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
         "current_side_reference_settings": {
           "coulombtype": "PME",
           "integrator": "md",
@@ -881,7 +881,7 @@
   ],
   "head_commit": "3be070f6714214d8c30addd012a3e34978f8569f",
   "m1_continuity": {
-    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_script": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
     "archived_m1_settings": {
       "coulombtype": "Cut-off",
       "integrator": "md",
@@ -889,7 +889,7 @@
       "mts_levels": 2,
       "mts_mode": "legacy"
     },
-    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "archived_m1_summary": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
     "current_side_reference_settings": {
       "coulombtype": "PME",
       "integrator": "md",
@@ -905,5 +905,5 @@
   },
   "milestone": "R-RESPA M2j",
   "verdict": "DISPATCH-INTERNAL MINIMAL FIX CANDIDATE ISOLATED",
-  "worktree": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2"
+  "worktree": "../../../../ab_worktrees/GROMACS_PCFF_respa_m2"
 }

@@ -18,11 +18,11 @@
 
 ## Primary Outputs
 
-- [validation_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/validation_summary.json)
-- [per_case_results.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/per_case_results.json)
-- [failure_probe_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/failure_probe_summary.json)
-- [lammps_smoke_parity_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json)
-- validation runner: [tools/run_typing_validation](/home/kiket/바탕화면/test/GROMACS_PCFF/tools/run_typing_validation)
+- [validation_summary.json](../tests/reference_results/pt8_typing_validation/validation_summary.json)
+- [per_case_results.json](../tests/reference_results/pt8_typing_validation/per_case_results.json)
+- [failure_probe_summary.json](../tests/reference_results/pt8_typing_validation/failure_probe_summary.json)
+- [lammps_smoke_parity_summary.json](../tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json)
+- validation runner: [tools/run_typing_validation](../tools/run_typing_validation)
 
 ## End-to-End SPE Result
 
@@ -41,14 +41,14 @@ Observed result:
 
 Evidence basis:
 
-- per-case bundle hashes and source-chain hashes are frozen in [per_case_results.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/per_case_results.json)
-- PT7 workflow contract remains the execution path: [src/polymer_workflow/engine.py](/home/kiket/바탕화면/test/GROMACS_PCFF/src/polymer_workflow/engine.py)
+- per-case bundle hashes and source-chain hashes are frozen in [per_case_results.json](../tests/reference_results/pt8_typing_validation/per_case_results.json)
+- PT7 workflow contract remains the execution path: [src/polymer_workflow/engine.py](../src/polymer_workflow/engine.py)
 
 ## Golden Reference Validation
 
 PT8 freezes the machine-readable validation summaries themselves as the golden reference set under:
 
-- [tests/reference_results/pt8_typing_validation](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation)
+- [tests/reference_results/pt8_typing_validation](../tests/reference_results/pt8_typing_validation)
 
 Regeneration contract:
 
@@ -81,7 +81,7 @@ Frozen probe evidence:
 
 Direct evidence:
 
-- [failure_probe_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/failure_probe_summary.json)
+- [failure_probe_summary.json](../tests/reference_results/pt8_typing_validation/failure_probe_summary.json)
 
 ## LAMMPS Smoke Parity
 
@@ -89,7 +89,7 @@ Direct evidence:
 
 Reference used:
 
-- [testdata/lammps_golden/systems/small_salt_polymer_box/system.json](/home/kiket/바탕화면/test/GROMACS_PCFF/testdata/lammps_golden/systems/small_salt_polymer_box/system.json)
+- [testdata/lammps_golden/systems/small_salt_polymer_box/system.json](../testdata/lammps_golden/systems/small_salt_polymer_box/system.json)
 
 Checked contract items:
 
@@ -105,7 +105,7 @@ Observed result:
 
 Direct evidence:
 
-- [lammps_smoke_parity_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json)
+- [lammps_smoke_parity_summary.json](../tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json)
 
 ## Honest Readout
 

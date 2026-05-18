@@ -27,31 +27,31 @@ translate into a broad audited wall-clock speedup claim on this host.`
 Withdrawn as microkernel evidence:
 
 - historical bundle:
-  - [`output/repulsion_power_9_simd_specialized_cpu_perf/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_simd_specialized_cpu_perf/summary.md)
+  - [`output/repulsion_power_9_simd_specialized_cpu_perf/summary.md`](../output/repulsion_power_9_simd_specialized_cpu_perf/summary.md)
 - reason:
   - exact `r-RESPA` pair splitting routes CPU force evaluation through
-    [`computeExactRespaNonbondedCpu()`](/home/kiket/Desktop/test/GROMACS_PCFF/src/gromacs/mdlib/sim_util.cpp:3498),
+    [`computeExactRespaNonbondedCpu()`](../src/gromacs/mdlib/sim_util.cpp:3498),
     not the admitted specialized SIMD short-range kernel
 
 See:
 
-- [`docs/repulsion_power_9_ntomp6_regression_analysis.md`](/home/kiket/Desktop/test/GROMACS_PCFF/docs/repulsion_power_9_ntomp6_regression_analysis.md)
+- [`docs/repulsion_power_9_ntomp6_regression_analysis.md`](./repulsion_power_9_ntomp6_regression_analysis.md)
 
 ## Valid Benchmark Driver
 
 Reproducible host-local benchmark script:
 
-- [`tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py`](/home/kiket/Desktop/test/GROMACS_PCFF/tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py)
+- [`tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py`](../tools/pcff_respa_parity/bench_repulsion_power_9_simd_shortmd_cpu.py)
 
 Executed output bundle:
 
-- [`output/repulsion_power_9_simd_shortmd_cpu_perf/summary.md`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_simd_shortmd_cpu_perf/summary.md)
-- [`output/repulsion_power_9_simd_shortmd_cpu_perf/summary.json`](/home/kiket/Desktop/test/GROMACS_PCFF/output/repulsion_power_9_simd_shortmd_cpu_perf/summary.json)
+- [`output/repulsion_power_9_simd_shortmd_cpu_perf/summary.md`](../output/repulsion_power_9_simd_shortmd_cpu_perf/summary.md)
+- [`output/repulsion_power_9_simd_shortmd_cpu_perf/summary.json`](../output/repulsion_power_9_simd_shortmd_cpu_perf/summary.json)
 
 Audited run settings:
 
 - host: `AMD Ryzen 9 9900X 12-Core Processor`
-- binary: [`build_subcounters/bin/gmx`](/home/kiket/Desktop/test/GROMACS_PCFF/build_subcounters/bin/gmx)
+- binary: [`build_subcounters/bin/gmx`](../build_subcounters/bin/gmx)
 - CPU-only non-MTS short-MD
 - `pin=on`
 - `steps=200`

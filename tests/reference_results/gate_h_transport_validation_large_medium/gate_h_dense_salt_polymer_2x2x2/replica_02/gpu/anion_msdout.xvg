@@ -2,11 +2,11 @@
 # Created by:
 #    :-) GROMACS - gmx msd, 2027.0-dev-20260329-1811cfe56e-dirty-unknown (-:
 # 
-# Executable:   /home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx
-# Data prefix:  /home/kiket/Desktop/test/GROMACS_PCFF (source tree)
-# Working dir:  /home/kiket/Desktop/test/GROMACS_PCFF
+# Executable:   ../../../../../../build_gateb_cuda/bin/gmx
+# Data prefix:  ../../../../../.. (source tree)
+# Working dir:  ../../../../../..
 # Command line:
-#   gmx msd -f /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_02/gpu/prod.xtc -s /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_02/gpu/prod.tpr -n /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_02/gpu/anion.ndx -o /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_02/gpu/anion_msdout.xvg -mol /home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_02/gpu/anion_diff_mol.xvg -trestart 2.0 -maxtau 100.0 -beginfit 30 -endfit 60
+#   gmx msd -f ../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_02/gpu/prod.xtc -s ../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_02/gpu/prod.tpr -n ../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_02/gpu/anion.ndx -o ../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_02/gpu/anion_msdout.xvg -mol ../../../../../../tests/reference_results/gate_h_transport_validation_large_medium/gate_h_dense_salt_polymer_2x2x2/replica_02/gpu/anion_diff_mol.xvg -trestart 2.0 -maxtau 100.0 -beginfit 30 -endfit 60
 # gmx msd is part of G R O M A C S:
 #
 # GROwing Monsters And Cloning Shrimps

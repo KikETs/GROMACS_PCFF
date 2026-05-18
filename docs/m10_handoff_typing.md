@@ -21,14 +21,14 @@ M10이 받아야 하는 상위 입력은 PT7 polymer workflow spec이다.
 
 Entry point:
 
-- [src/polymer_workflow/engine.py](/home/kiket/바탕화면/test/GROMACS_PCFF/src/polymer_workflow/engine.py)
+- [src/polymer_workflow/engine.py](../src/polymer_workflow/engine.py)
 - CLI: `PYTHONPATH=src python3 -m polymer_workflow <spec.json> --out <dir>`
 
 Validated supported examples:
 
-- [testdata/polymer_workflow_golden/cases/monoglyme_litfsi_1to1/spec.json](/home/kiket/바탕화면/test/GROMACS_PCFF/testdata/polymer_workflow_golden/cases/monoglyme_litfsi_1to1/spec.json)
-- [testdata/polymer_workflow_golden/cases/diglyme_litfsi_1to1/spec.json](/home/kiket/바탕화면/test/GROMACS_PCFF/testdata/polymer_workflow_golden/cases/diglyme_litfsi_1to1/spec.json)
-- [testdata/polymer_workflow_golden/cases/triglyme_litfsi_2to2/spec.json](/home/kiket/바탕화면/test/GROMACS_PCFF/testdata/polymer_workflow_golden/cases/triglyme_litfsi_2to2/spec.json)
+- [testdata/polymer_workflow_golden/cases/monoglyme_litfsi_1to1/spec.json](../testdata/polymer_workflow_golden/cases/monoglyme_litfsi_1to1/spec.json)
+- [testdata/polymer_workflow_golden/cases/diglyme_litfsi_1to1/spec.json](../testdata/polymer_workflow_golden/cases/diglyme_litfsi_1to1/spec.json)
+- [testdata/polymer_workflow_golden/cases/triglyme_litfsi_2to2/spec.json](../testdata/polymer_workflow_golden/cases/triglyme_litfsi_2to2/spec.json)
 
 ## Required Output Artifacts
 
@@ -61,7 +61,7 @@ M10 stage가 topology를 수용하기 전에 최소한 다음을 검사해야 �
    - `fragment_consistency`
 4. M10 run registry에 `spec_path`, `spec_sha256`, output file sha256를 같이 기록
 
-이 네 단계를 생략하면, 다시 M10에서 provenance가 흐려진다. 그건 이미 [docs/validation_report_m10.md](/home/kiket/바탕화면/test/GROMACS_PCFF/docs/validation_report_m10.md)가 막으려는 문제다.
+이 네 단계를 생략하면, 다시 M10에서 provenance가 흐려진다. 그건 이미 [docs/validation_report_m10.md](./validation_report_m10.md)가 막으려는 문제다.
 
 ## Failure Routing
 
@@ -76,7 +76,7 @@ M10은 PT8 validation에서 확인한 failure class를 그대로 사용해야 �
 
 Machine-readable source:
 
-- [failure_probe_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/failure_probe_summary.json)
+- [failure_probe_summary.json](../tests/reference_results/pt8_typing_validation/failure_probe_summary.json)
 
 Recommendation:
 
@@ -109,10 +109,10 @@ PYTHONPATH=src python3 tools/run_typing_validation/generate.py validate
 
 이 명령은 다음 reference JSON과 byte-for-byte 일치하는지 확인한다.
 
-- [tests/reference_results/pt8_typing_validation/validation_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/validation_summary.json)
-- [tests/reference_results/pt8_typing_validation/per_case_results.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/per_case_results.json)
-- [tests/reference_results/pt8_typing_validation/failure_probe_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/failure_probe_summary.json)
-- [tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json)
+- [tests/reference_results/pt8_typing_validation/validation_summary.json](../tests/reference_results/pt8_typing_validation/validation_summary.json)
+- [tests/reference_results/pt8_typing_validation/per_case_results.json](../tests/reference_results/pt8_typing_validation/per_case_results.json)
+- [tests/reference_results/pt8_typing_validation/failure_probe_summary.json](../tests/reference_results/pt8_typing_validation/failure_probe_summary.json)
+- [tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json](../tests/reference_results/pt8_typing_validation/lammps_smoke_parity_summary.json)
 
 ## Handoff Limits
 

@@ -37,6 +37,7 @@ and search for a potential answer or ask a question from the community.
    managing-simulations
    faq
    force-fields
+   pcff-bridge
    mdp-options
    mdrun-features
    mdrun-performance

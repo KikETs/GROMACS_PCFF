@@ -2,9 +2,9 @@
 # Created by:
 #   :-) GROMACS - gmx energy, 2027.0-dev-20260314-dc4101b27b-dirty-unknown (-:
 # 
-# Executable:   /home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx
-# Data prefix:  /home/kiket/바탕화면/test/GROMACS_PCFF (source tree)
-# Working dir:  /home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/k1_kernel_audit/dihedral_aat_only
+# Executable:   ../../../../build/bin/gmx
+# Data prefix:  ../../../.. (source tree)
+# Working dir:  ../../../../tests/reference_results/k1_kernel_audit/dihedral_aat_only
 # Command line:
 #   gmx energy -f test.edr -o energy.xvg
 # gmx energy is part of G R O M A C S:

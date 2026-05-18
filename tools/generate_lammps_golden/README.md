@@ -10,12 +10,12 @@ M1 toolchain for staging and generating the LAMMPS-side golden corpus for the PC
 
 ## Layout
 
-- [generate.py](/home/user/바탕화면/gromacs/tools/generate_lammps_golden/generate.py)
+- [generate.py](./generate.py)
   - stages deterministic LAMMPS input bundles
   - optionally runs LAMMPS and normalizes raw outputs to JSON
-- [compare.py](/home/user/바탕화면/gromacs/tools/generate_lammps_golden/compare.py)
+- [compare.py](./compare.py)
   - compares normalized candidate outputs against normalized golden outputs
-- [common.py](/home/user/바탕화면/gromacs/tools/generate_lammps_golden/common.py)
+- [common.py](./common.py)
   - shared manifest loading, parsing, and JSON helpers
 
 ## Supported M1 observables
@@ -31,21 +31,21 @@ M1 toolchain for staging and generating the LAMMPS-side golden corpus for the PC
 Stage deterministic bundles:
 
 ```bash
-python3 tools/generate_lammps_golden/generate.py stage --out /tmp/lammps_golden_stage
+python3 tools/generate_lammps_golden/generate.py stage --out output/tmp/lammps_golden_stage
 ```
 
 Run LAMMPS and normalize outputs:
 
 ```bash
-python3 tools/generate_lammps_golden/generate.py run --out /tmp/lammps_golden_run --lammps-cmd lmp
+python3 tools/generate_lammps_golden/generate.py run --out output/tmp/lammps_golden_run --lammps-cmd lmp
 ```
 
 Compare candidate normalized outputs against a normalized golden directory:
 
 ```bash
 python3 tools/generate_lammps_golden/compare.py \
-  --golden /tmp/lammps_golden_run \
-  --candidate /tmp/gromacs_candidate \
+  --golden output/tmp/lammps_golden_run \
+  --candidate output/tmp/gromacs_candidate \
   --energy-abs-tol 1e-8 \
   --force-abs-tol 1e-8 \
   --trace-abs-tol 1e-8

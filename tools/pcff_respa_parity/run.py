@@ -61,7 +61,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--lammps-cmd",
-        default="/home/user/.local/bin/lmp",
+        default="lmp",
         help="LAMMPS executable forwarded to prepare_reference.py when requested.",
     )
     parser.add_argument(

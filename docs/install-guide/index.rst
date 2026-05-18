@@ -763,7 +763,7 @@ For example, the following command line
 ::
 
     cmake .. -DGMX_GPU=CUDA -DGMX_MPI=ON \
-             -DCMAKE_INSTALL_PREFIX=/home/marydoe/programs
+             -DCMAKE_INSTALL_PREFIX=./programs
 
 can be used to build with CUDA GPUs, MPI and install in a custom
 location. You can even save that in a shell script to make it even

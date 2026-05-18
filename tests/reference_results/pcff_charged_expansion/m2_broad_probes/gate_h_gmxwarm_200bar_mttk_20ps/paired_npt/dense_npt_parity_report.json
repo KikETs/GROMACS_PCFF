@@ -1,10 +1,10 @@
 {
   "artifacts": {
-    "gromacs_energy_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/gromacs/npt_energy.xvg",
-    "gromacs_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/gromacs",
-    "gromacs_warmup_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/gromacs/warmup.log",
-    "lammps_log": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/lammps/npt.log",
-    "lammps_root": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/lammps",
+    "gromacs_energy_xvg": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/gromacs/npt_energy.xvg",
+    "gromacs_root": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/gromacs",
+    "gromacs_warmup_log": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/gromacs/warmup.log",
+    "lammps_log": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/lammps/npt.log",
+    "lammps_root": "../../../../../../tests/reference_results/pcff_charged_expansion/m2_broad_probes/gate_h_gmxwarm_200bar_mttk_20ps/paired_npt/lammps",
     "lammps_warmup_log": null
   },
   "gromacs": {

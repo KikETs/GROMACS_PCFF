@@ -1,6 +1,10 @@
 
 import os
 import subprocess
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+GMX_BIN = os.environ.get("GMX_BIN", str(REPO_ROOT / "build" / "bin" / "gmx"))
 
 def create_top(filename):
     with open(filename, 'w') as f:
@@ -57,7 +61,7 @@ ewald-rtol-lj = 1e-5
 """)
 
 def run_gmx(rcut, dist):
-    gmx_bin = "/home/kiket/바탕화면/test/GROMACS_PCFF/build/bin/gmx"
+    gmx_bin = GMX_BIN
     create_top('system.top')
     create_gro('system.gro', dist)
     create_mdp('test.mdp', rcut)

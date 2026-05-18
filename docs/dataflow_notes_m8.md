@@ -16,7 +16,7 @@ The runtime only allows GPU X/F buffer ops when:
 
 Basis:
 
-- [decidesimulationworkload.cpp](/home/user/바탕화면/gromacs/src/gromacs/taskassignment/decidesimulationworkload.cpp#L160)
+- [decidesimulationworkload.cpp](../src/gromacs/taskassignment/decidesimulationworkload.cpp#L160)
 
 This matters for PCFF because the new `9-6` path participates in the same nonbonded buffer-op machinery as the standard GPU short-range path. There is no separate PCFF-specific residency path.
 
@@ -26,7 +26,7 @@ If GPU update or direct GPU communication is enabled, the runtime asserts that X
 
 Basis:
 
-- [decidesimulationworkload.cpp](/home/user/바탕화면/gromacs/src/gromacs/taskassignment/decidesimulationworkload.cpp#L166)
+- [decidesimulationworkload.cpp](../src/gromacs/taskassignment/decidesimulationworkload.cpp#L166)
 
 This is why M8 validation had to include `-update gpu` explicitly.
 
@@ -36,11 +36,11 @@ Per-step force buffer ops are disabled when virial is computed.
 
 Basis:
 
-- [decidesimulationworkload.cpp](/home/user/바탕화면/gromacs/src/gromacs/taskassignment/decidesimulationworkload.cpp#L301)
+- [decidesimulationworkload.cpp](../src/gromacs/taskassignment/decidesimulationworkload.cpp#L301)
 
 And GPU PME force reduction depends on GPU F buffer ops being active:
 
-- [decidesimulationworkload.cpp](/home/user/바탕화면/gromacs/src/gromacs/taskassignment/decidesimulationworkload.cpp#L304)
+- [decidesimulationworkload.cpp](../src/gromacs/taskassignment/decidesimulationworkload.cpp#L304)
 
 Consequence:
 
@@ -53,7 +53,7 @@ When GPU update is enabled and there is CPU local force work, coordinates are co
 
 Basis:
 
-- [sim_util.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdlib/sim_util.cpp#L2174)
+- [sim_util.cpp](../src/gromacs/mdlib/sim_util.cpp#L2174)
 
 This is the main reason M8 does **not** claim full no-copy execution.
 
@@ -63,7 +63,7 @@ When GPU update is active and the step is not a search step, the runtime uses th
 
 Basis:
 
-- [sim_util.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdlib/sim_util.cpp#L2187)
+- [sim_util.cpp](../src/gromacs/mdlib/sim_util.cpp#L2187)
 
 ### 6. GPU X buffer ops consume device coordinates directly
 
@@ -71,7 +71,7 @@ On non-search steps with GPU X buffer ops enabled, nonbonded coordinate conversi
 
 Basis:
 
-- [sim_util.cpp](/home/user/바탕화면/gromacs/src/gromacs/mdlib/sim_util.cpp#L2267)
+- [sim_util.cpp](../src/gromacs/mdlib/sim_util.cpp#L2267)
 
 ## M8 Validation Configuration
 
@@ -90,7 +90,7 @@ The `md` integrator is not optional here. GPU update currently rejects anything 
 
 Basis:
 
-- [decidegpuusage.cpp](/home/user/바탕화면/gromacs/src/gromacs/taskassignment/decidegpuusage.cpp#L779)
+- [decidegpuusage.cpp](../src/gromacs/taskassignment/decidegpuusage.cpp#L779)
 
 ## Transfer Decisions
 

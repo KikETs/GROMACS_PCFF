@@ -5,8 +5,8 @@
   <String Name="OutputMdpFile">
 ; VARIOUS PREPROCESSING OPTIONS
 ; Preprocessor information: use cpp syntax.
-; e.g.: -I/home/joe/doe -I/home/mary/roe
-include                  = -I/home/me/stuff
+; e.g.: -I./joe/doe -I./mary/roe
+include                  = -I./me/stuff
 ; e.g.: -DPOSRES -DFLEXIBLE (note these variable names are case sensitive)
 define                   = -DBOOLVAR -DVAR=VALUE
 

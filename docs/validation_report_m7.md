@@ -34,21 +34,21 @@ Still intentionally excluded:
 
 ### CUDA nonbonded kernel data
 
-- [gpu_types_common.h](/home/user/바탕화면/gromacs/src/gromacs/nbnxm/gpu_types_common.h)
+- [gpu_types_common.h](../src/gromacs/nbnxm/gpu_types_common.h)
   adds `repulsionPower` and `inverseRepulsionPower` to `NBParamGpu`.
-- [nbnxm_gpu_data_mgmt.cpp](/home/user/바탕화면/gromacs/src/gromacs/nbnxm/nbnxm_gpu_data_mgmt.cpp)
+- [nbnxm_gpu_data_mgmt.cpp](../src/gromacs/nbnxm/nbnxm_gpu_data_mgmt.cpp)
   populates those fields from `interaction_const` and rejects unsupported `ForceSwitch` + non-`12` combinations on the GPU.
 
 ### CUDA real-space evaluation
 
-- [nbnxm_cuda_kernel.cuh](/home/user/바탕화면/gromacs/src/gromacs/nbnxm/cuda/nbnxm_cuda_kernel.cuh)
+- [nbnxm_cuda_kernel.cuh](../src/gromacs/nbnxm/cuda/nbnxm_cuda_kernel.cuh)
   evaluates the repulsive term as `r^-12` only for the legacy fast path and falls back to `powf(inv_r, repulsionPower)` otherwise.
-- [kernel_gpu_ref.cpp](/home/user/바탕화면/gromacs/src/gromacs/nbnxm/kernels_reference/kernel_gpu_ref.cpp)
+- [kernel_gpu_ref.cpp](../src/gromacs/nbnxm/kernels_reference/kernel_gpu_ref.cpp)
   mirrors the same generic repulsion-power semantics in the GPU reference kernel.
 
 ### Validation path
 
-- [pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp)
+- [pcff_short_md.cpp](../src/programs/mdrun/tests/pcff_short_md.cpp)
   adds:
   - `PcffGpuSinglePointParityTest`
   - `PcffGpuPerfSmokeTest`
@@ -83,7 +83,7 @@ This is the right M7 cut:
 
 ## Tests Run
 
-Executed in the CUDA build under [build-cuda](/home/user/바탕화면/gromacs/build-cuda):
+Executed in the CUDA build under [build-cuda](../build-cuda):
 
 - `./build-cuda/bin/mdrun-non-integrator-test --gtest_filter='PcffGpuSinglePointParity*:*PcffGpuPerfSmokeTest*'`
 - `./build-cuda/bin/nbnxm-test --gtest_filter='PcffClass2NonbondedCurveTest.*'`
@@ -118,7 +118,7 @@ Compared quantities:
 - `potential_total`
 - per-atom force components from `.trr`
 
-Acceptance tolerances enforced in [pcff_short_md.cpp](/home/user/바탕화면/gromacs/src/programs/mdrun/tests/pcff_short_md.cpp):
+Acceptance tolerances enforced in [pcff_short_md.cpp](../src/programs/mdrun/tests/pcff_short_md.cpp):
 
 - energy breakdown terms: `8e-3 kcal/mol`
 - force component parity: `6e-2 kJ/mol/nm`

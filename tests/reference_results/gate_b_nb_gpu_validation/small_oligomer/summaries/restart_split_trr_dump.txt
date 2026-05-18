@@ -1,4 +1,4 @@
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 0:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 0:
    natoms=         6  step=         0  time=0.0000000e+00  lambda=         0
    box (3x3):
       box[    0]={ 2.00000e+00,  0.00000e+00,  0.00000e+00}
@@ -18,7 +18,7 @@
       v[    3]={ 9.08201e-02, -1.12771e-01,  4.46354e-01}
       v[    4]={ 3.98889e-02,  7.02797e-01,  5.01650e-01}
       v[    5]={-7.72495e-01, -2.13525e-01, -4.88471e-01}
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 1:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 1:
    natoms=         6  step=         4  time=2.0000001e-03  lambda=         0
    box (3x3):
       box[    0]={ 2.00000e+00,  0.00000e+00,  0.00000e+00}
@@ -38,7 +38,7 @@
       v[    3]={-4.19355e-02,  3.88389e-01,  1.81321e-01}
       v[    4]={ 6.36045e-02,  1.94285e-01,  7.08647e-01}
       v[    5]={-1.13017e+00, -1.11265e-02, -5.63931e-01}
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 2:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 2:
    natoms=         6  step=         8  time=4.0000002e-03  lambda=         0
    box (3x3):
       box[    0]={ 2.00000e+00,  0.00000e+00,  0.00000e+00}
@@ -58,7 +58,7 @@
       v[    3]={-1.57066e-01,  8.55183e-01, -6.88545e-02}
       v[    4]={ 3.30647e-02, -2.75868e-01,  8.92686e-01}
       v[    5]={-1.43732e+00,  1.65842e-01, -6.25149e-01}
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 3:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 3:
    natoms=         6  step=        12  time=6.0000001e-03  lambda=         0
    box (3x3):
       box[    0]={ 2.00000e+00,  0.00000e+00,  0.00000e+00}
@@ -78,7 +78,7 @@
       v[    3]={-2.42142e-01,  1.23733e+00, -2.75754e-01}
       v[    4]={-6.03521e-02, -6.54951e-01,  1.03568e+00}
       v[    5]={-1.67079e+00,  2.96409e-01, -6.67380e-01}
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 4:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 4:
    natoms=         6  step=        16  time=8.0000004e-03  lambda=         0
    box (3x3):
       box[    0]={ 2.00000e+00,  0.00000e+00,  0.00000e+00}
@@ -98,7 +98,7 @@
       v[    3]={-2.88894e-01,  1.49694e+00, -4.16149e-01}
       v[    4]={-2.17000e-01, -9.01931e-01,  1.12666e+00}
       v[    5]={-1.81441e+00,  3.65192e-01, -6.89460e-01}
-/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 5:
+../../../../../tests/reference_results/gate_b_nb_gpu_validation/small_oligomer/restart_split/exact_split.trr frame 5:
    natoms=         6  step=        20  time=9.9999998e-03  lambda=         0
    box (3x3):
       box[    0]={ 2.00000e+00,  0.00000e+00,  0.00000e+00}

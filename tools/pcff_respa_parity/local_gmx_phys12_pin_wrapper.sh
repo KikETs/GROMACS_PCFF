@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REAL_GMX="/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx"
+REAL_GMX="${GMX_BIN:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/build/bin/gmx}"
 CPUSET="0-11"
 
 args=("$@")

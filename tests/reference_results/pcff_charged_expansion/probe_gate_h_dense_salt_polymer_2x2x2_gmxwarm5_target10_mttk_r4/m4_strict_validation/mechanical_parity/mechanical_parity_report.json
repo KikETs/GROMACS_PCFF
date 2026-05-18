@@ -23,7 +23,7 @@
   },
   "protocol": {
     "gromacs": {
-      "binary": "/home/kiket/Desktop/test/GROMACS_PCFF/build/bin/gmx",
+      "binary": "../../../../../../build/bin/gmx",
       "coulombtype": "PME",
       "cutoffs_nm": 0.9,
       "ewald_rtol": 0.0001,

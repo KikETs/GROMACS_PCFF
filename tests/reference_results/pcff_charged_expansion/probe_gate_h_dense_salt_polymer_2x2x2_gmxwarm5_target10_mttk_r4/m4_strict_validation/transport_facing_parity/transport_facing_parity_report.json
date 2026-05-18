@@ -1,6 +1,6 @@
 {
   "fresh_m4_rerun": true,
-  "gmx_binary": "/home/kiket/Desktop/test/GROMACS_PCFF/build_gateb_cuda/bin/gmx",
+  "gmx_binary": "../../../../../../build_gateb_cuda/bin/gmx",
   "gpu_support": "CUDA",
   "non_claimable_statement": "Do not use this as charged transport readiness; it only shows short-horizon transport-facing observable generation/comparison on the qualified scaffold.",
   "observable_comparisons": {

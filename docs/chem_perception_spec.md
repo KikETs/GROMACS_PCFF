@@ -28,7 +28,7 @@ That boundary is intentional. PT2 computes the feature surface that later determ
 
 Source lives under:
 
-- [src/chem_perception](/home/kiket/바탕화면/test/GROMACS_PCFF/src/chem_perception)
+- [src/chem_perception](../src/chem_perception)
 
 Main entry points:
 

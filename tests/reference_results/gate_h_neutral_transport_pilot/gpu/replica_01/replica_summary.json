@@ -1,7 +1,7 @@
 {
   "analysis": {
     "convergence_flags": [],
-    "diff_mol_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/diff_mol.xvg",
+    "diff_mol_xvg": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/diff_mol.xvg",
     "diffusion_cm2_s": 0.000112457,
     "fit_end_ps": 45.0,
     "fit_error_cm2_s": 2.5e-06,
@@ -525,13 +525,13 @@
       0.0001,
       7.000000000000001e-05
     ],
-    "msd_curve_tsv": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/msd_curve.tsv",
-    "msdout_xvg": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/msdout.xvg",
+    "msd_curve_tsv": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/msd_curve.tsv",
+    "msdout_xvg": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/msdout.xvg",
     "relative_fit_error": 0.022230719297153582,
     "relative_molecule_sem": 0.030707500595437722,
-    "transport_index": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/transport_molecules.ndx"
+    "transport_index": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/transport_molecules.ndx"
   },
-  "equil_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/equil",
+  "equil_deffnm": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/equil",
   "layout": "gpu",
   "layout_report": {
     "gpu_mapping_header": "Mapping of GPU IDs to the 2 GPU tasks in the 1 rank on this node:",
@@ -554,7 +554,7 @@
     "update_gpu_enabled": true,
     "update_task_line": "PP task will update and constrain coordinates on the GPU"
   },
-  "prod_deffnm": "/home/kiket/Desktop/test/GROMACS_PCFF/tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/prod",
+  "prod_deffnm": "../../../../../tests/reference_results/gate_h_neutral_transport_pilot/gpu/replica_01/prod",
   "replica_index": 1,
   "seed": 63101
 }

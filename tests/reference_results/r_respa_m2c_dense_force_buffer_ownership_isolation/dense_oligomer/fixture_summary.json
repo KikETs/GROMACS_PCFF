@@ -40,9 +40,9 @@
       },
       "step0_potential_abs_diff_kj_per_mol": 8583.465088
     },
-    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/exact_three_level",
+    "exact_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/exact_three_level",
     "nsteps": 8,
-    "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/plain_verlet",
+    "plain_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/plain_verlet",
     "side_reference_vs_plain": {
       "final_coord_diff": {
         "l2_norm": 0.0001465127980758503,
@@ -62,7 +62,7 @@
       },
       "step0_potential_abs_diff_kj_per_mol": 0.0
     },
-    "side_reference_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/pme_legacy_side_reference"
+    "side_reference_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/pme_legacy_side_reference"
   },
   "comparison_notes": [
     "Plain Verlet uses integrator = md-vv with the same PME/Cut-off settings as the exact 3-level path.",
@@ -85,13 +85,13 @@
         "max_abs": 71.84243392944336,
         "rms": 43.74328602082071
       },
-      "exact_step0_total_force_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/exact_three_level/exact_total_force.tsv",
+      "exact_step0_total_force_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/exact_three_level/exact_total_force.tsv",
       "exact_vs_plain_step0_force_diff": {
         "l2_norm": 742.3482152950181,
         "max_abs": 35.921241760253906,
         "rms": 21.871644043201602
       },
-      "excluded_correction_force_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/exact_three_level/exact_excluded_pairs_correction_force.tsv",
+      "excluded_correction_force_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/exact_three_level/exact_excluded_pairs_correction_force.tsv",
       "excluded_force_dump_metadata": {
         "contribution": "excluded_pairs_coulomb_correction",
         "final_merge": "combineMtsForces",
@@ -110,8 +110,8 @@
         "max_abs": 71.84243392944336,
         "rms": 43.74328602082071
       },
-      "plain_step0_total_force_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/plain_verlet/plain_total_force.tsv",
-      "side_reference_step0_total_force_path": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy_total_force.tsv",
+      "plain_step0_total_force_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/plain_verlet/plain_total_force.tsv",
+      "side_reference_step0_total_force_path": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p0005/pme_legacy_side_reference/legacy_total_force.tsv",
       "side_reference_vs_plain_step0_force_diff": {
         "l2_norm": 1891.5154552574957,
         "max_abs": 113.18973862304688,
@@ -204,9 +204,9 @@
       },
       "step0_potential_abs_diff_kj_per_mol": 8583.465088
     },
-    "exact_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p00025/exact_three_level",
+    "exact_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p00025/exact_three_level",
     "nsteps": 16,
-    "plain_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p00025/plain_verlet",
+    "plain_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p00025/plain_verlet",
     "side_reference_vs_plain": {
       "final_coord_diff": {
         "l2_norm": 7.756287771857844e-05,
@@ -226,14 +226,14 @@
       },
       "step0_potential_abs_diff_kj_per_mol": 0.0
     },
-    "side_reference_work_dir": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p00025/pme_legacy_side_reference"
+    "side_reference_work_dir": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m2c_dense_force_buffer_ownership_isolation/dense_oligomer/dt_0p00025/pme_legacy_side_reference"
   },
   "fine_exact_no_worse_than_pme_side_reference": false,
   "fixture_id": "dense_oligomer",
   "fixture_sources": {
-    "lammps_data": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
-    "lammps_input": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
-    "system_json": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
+    "lammps_data": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.data",
+    "lammps_input": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/lammps/system.in",
+    "system_json": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/testdata/lammps_golden/systems/dense_oligomer/system.json"
   },
   "gro_metadata": {
     "box_nm": [
@@ -250,7 +250,7 @@
     "dihedral"
   ],
   "m1_continuity": {
-    "archived_m1_script": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
+    "archived_m1_script": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tools/run_respa_m1_microfixtures/run_respa_m1.py",
     "archived_m1_settings": {
       "coulombtype": "Cut-off",
       "integrator": "md",
@@ -258,7 +258,7 @@
       "mts_levels": 2,
       "mts_mode": "legacy"
     },
-    "archived_m1_summary": "/home/kiket/\ubc14\ud0d5\ud654\uba74/test/ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
+    "archived_m1_summary": "../../../../../ab_worktrees/GROMACS_PCFF_respa_m2/tests/reference_results/r_respa_m1_microfixtures/summary.json",
     "current_side_reference_settings": {
       "coulombtype": "PME",
       "integrator": "md",

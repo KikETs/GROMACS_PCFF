@@ -42,20 +42,20 @@ Source path used to build the checked-in manifests:
 
 Snapshot manifest:
 
-- [simulation_trajectory_aggregate_snapshot.json](/home/kiket/바탕화면/test/GROMACS_PCFF/data_manifests/simulation_trajectory_aggregate_snapshot.json)
+- [simulation_trajectory_aggregate_snapshot.json](../data_manifests/simulation_trajectory_aggregate_snapshot.json)
 
 Unique SMILES manifest:
 
-- [simulation_trajectory_aggregate_unique_smiles.json](/home/kiket/바탕화면/test/GROMACS_PCFF/data_manifests/simulation_trajectory_aggregate_unique_smiles.json)
+- [simulation_trajectory_aggregate_unique_smiles.json](../data_manifests/simulation_trajectory_aggregate_unique_smiles.json)
 
 Row-to-unique map:
 
-- [simulation_trajectory_aggregate_row_map.json](/home/kiket/바탕화면/test/GROMACS_PCFF/data_manifests/simulation_trajectory_aggregate_row_map.json)
+- [simulation_trajectory_aggregate_row_map.json](../data_manifests/simulation_trajectory_aggregate_row_map.json)
 
 Coverage audit outputs:
 
-- [coverage_audit_results.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/csv_scope_audit/coverage_audit_results.json)
-- [coverage_audit_summary.json](/home/kiket/바탕화면/test/GROMACS_PCFF/tests/reference_results/csv_scope_audit/coverage_audit_summary.json)
+- [coverage_audit_results.json](../tests/reference_results/csv_scope_audit/coverage_audit_results.json)
+- [coverage_audit_summary.json](../tests/reference_results/csv_scope_audit/coverage_audit_summary.json)
 
 ## Deterministic ID Policy
 
