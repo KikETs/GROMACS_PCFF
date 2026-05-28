@@ -1,0 +1,46 @@
+{
+  "command": [
+    "/home/lab/Desktop/test/GROMACS_PCFF/build_pcff_cpu/bin/gmx",
+    "grompp",
+    "-f",
+    "/home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24482/grompp/smoke.mdp",
+    "-c",
+    "/home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24482/system.gro",
+    "-p",
+    "/home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24482/topol.top",
+    "-o",
+    "/home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24482/grompp/smoke.tpr",
+    "-po",
+    "/home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24482/grompp/mdout.mdp"
+  ],
+  "cutoff_nm": 0.9,
+  "generated_outputs": {
+    "mdout_mdp": {
+      "exists": true,
+      "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24482/grompp/mdout.mdp",
+      "sha256": "442fc398ae61b5b281c6c04cd2b645381f5a13d134025c5a13020335a2dc70cf"
+    },
+    "smoke_tpr": {
+      "exists": true,
+      "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24482/grompp/smoke.tpr",
+      "sha256": "6147d1f7f489f2d3bd2468d143f4c5eae372523fd814efed5e4042b14e4e756b"
+    }
+  },
+  "note_count": 1,
+  "returncode": 0,
+  "schema_name": "lunar_gromacs_pcff_database_lunar_grompp_smoke",
+  "schema_version": 1,
+  "scope": "polymer-only LUNAR PCFF single-chain data smoke; not charged electrolyte conversion",
+  "smiles": "CC(CCN(CCOC(=O)*)C(C)C)O*",
+  "status": "PASS",
+  "stderr_path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24482/grompp/grompp.stderr",
+  "stdout_path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24482/grompp/grompp.stdout",
+  "success_criteria": {
+    "returncode_zero": true,
+    "tpr_generated": true,
+    "warning_count_zero": true
+  },
+  "trajectory_id": "24482",
+  "warning_count": 0,
+  "working_directory": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24482"
+}

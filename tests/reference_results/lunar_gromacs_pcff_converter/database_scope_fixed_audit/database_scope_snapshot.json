@@ -1,0 +1,151 @@
+{
+  "checked_in_csv_scope_comparison": {
+    "aligned_minus_checked_in_unique_smiles_count": 0,
+    "available": true,
+    "checked_in_minus_aligned_unique_smiles_count": 0,
+    "checked_in_snapshot_manifest": "data_manifests/simulation_trajectory_aggregate_snapshot.json",
+    "checked_in_snapshot_sha256": "a67a8f86f1842cd9d35ffe6cce2de8a3cf3577635aed19564b910242dd226fcf",
+    "checked_in_unique_manifest": "data_manifests/simulation_trajectory_aggregate_unique_smiles.json",
+    "same_row_count": true,
+    "same_snapshot_hash": false,
+    "same_unique_smiles_count": true,
+    "same_unique_smiles_set": true
+  },
+  "columns": {
+    "blank_header_indexes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "count": 18,
+    "names": [
+      "Trajectory ID",
+      "SMILES",
+      "Molality",
+      "Monomer Molecular Weight",
+      "Degree of Polymerization",
+      "Density",
+      "CONDUCTIVITY",
+      "TFSI Diffusivity",
+      "Li Diffusivity",
+      "Poly Diffusivity",
+      "Transference Number",
+      "Label",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "optional_columns": [
+      {
+        "distinct_count": 3,
+        "distinct_sample": [
+          "0",
+          "1",
+          "2"
+        ],
+        "index": 11,
+        "name": "Label",
+        "nonempty_count": 6270
+      },
+      {
+        "distinct_count": 0,
+        "distinct_sample": [],
+        "index": 12,
+        "name": "",
+        "nonempty_count": 0
+      },
+      {
+        "distinct_count": 3,
+        "distinct_sample": [
+          "0",
+          "1",
+          "2"
+        ],
+        "index": 13,
+        "name": "",
+        "nonempty_count": 6270
+      },
+      {
+        "distinct_count": 0,
+        "distinct_sample": [],
+        "index": 14,
+        "name": "",
+        "nonempty_count": 0
+      },
+      {
+        "distinct_count": 3,
+        "distinct_sample": [
+          "340",
+          "5246",
+          "684"
+        ],
+        "index": 15,
+        "name": "",
+        "nonempty_count": 3
+      },
+      {
+        "distinct_count": 0,
+        "distinct_sample": [],
+        "index": 16,
+        "name": "",
+        "nonempty_count": 0
+      },
+      {
+        "distinct_count": 1,
+        "distinct_sample": [
+          "0.000002"
+        ],
+        "index": 17,
+        "name": "",
+        "nonempty_count": 1
+      }
+    ],
+    "required_core_columns": [
+      "Trajectory ID",
+      "SMILES",
+      "Molality",
+      "Monomer Molecular Weight",
+      "Degree of Polymerization",
+      "Density",
+      "CONDUCTIVITY",
+      "TFSI Diffusivity",
+      "Li Diffusivity",
+      "Poly Diffusivity",
+      "Transference Number"
+    ]
+  },
+  "counts": {
+    "degree_of_polymerization_conflict_unique_smiles_count": 0,
+    "duplicate_smiles_row_count": 228,
+    "duplicate_trajectory_id_count": 0,
+    "row_count": 6270,
+    "unique_smiles_count": 6042,
+    "unique_trajectory_id_count": 6270
+  },
+  "degree_of_polymerization_conflicts": [],
+  "important_interpretation": [
+    "This CSV is a database snapshot and not itself a LUNAR/LAMMPS topology conversion artifact.",
+    "A database-wide success claim requires per-case parser, mapping, emission, and grompp artifacts.",
+    "The Li/TFSI/molality columns indicate electrolyte-context records; they do not prove charged GROMACS conversion support."
+  ],
+  "label_counts": {
+    "0": 3399,
+    "1": 1162,
+    "2": 1709
+  },
+  "schema_name": "lunar_gromacs_pcff_database_scope_snapshot",
+  "schema_version": 1,
+  "scope_id": "simulation_trajectory_aggregate_aligned_csv_snapshot",
+  "source_csv": {
+    "absolute_path": "/home/kiket/Desktop/test/MY_PAPER_RELATED/MODELS/data/simulation-trajectory-aggregate_aligned.csv",
+    "byte_count": 711395,
+    "path": "MY_PAPER_RELATED/MODELS/data/simulation-trajectory-aggregate_aligned.csv",
+    "sha256": "d4a804b3322463a2edf45be6949f3e85478668dc8bce631023f94c2673d71223"
+  }
+}

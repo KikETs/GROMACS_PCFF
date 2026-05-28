@@ -1,0 +1,94 @@
+{
+  "charged_extension_gate": {
+    "minimum_to_open": [
+      "public charged parser summaries",
+      "public charged mapping summaries including ions/salts and net charge accounting",
+      "public emitted charged topology and coordinate artifacts",
+      "custom GROMACS_PCFF grompp PASS with zero warnings for at least one charged case",
+      "separate unsupported-term list for charged PCFF/IFF terms"
+    ],
+    "status": "closed_to_claim"
+  },
+  "claim_status_as_of": "2026-05-28",
+  "current_database_result": {
+    "failure_count": 0,
+    "missing_lunar_pcff_data_count": 0,
+    "pass_count": 6270,
+    "selected_row_count": 6270
+  },
+  "explicitly_unsupported": [
+    "charged Li/TFSI or separate ion topology conversion",
+    "dense polymer-electrolyte system conversion",
+    "physical parameter completeness for fallback atom types",
+    "mdrun stability, ensemble validity, or transport/conductivity production readiness",
+    "stock upstream GROMACS preprocessing of PCFF function types"
+  ],
+  "grompp_pass_criteria": {
+    "custom_gromacs_pcff_build_required": true,
+    "returncode_zero": true,
+    "smoke_tpr_generated": true,
+    "stock_gromacs_supported": false,
+    "warning_count_zero": true
+  },
+  "parameter_fallback_summary": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/parameter_fallback_summary.json",
+  "pipeline_contract": [
+    {
+      "artifact": "parser_summary.json",
+      "required_public_evidence": "section counts, coefficient counts, source LUNAR data hash",
+      "stage": "parser"
+    },
+    {
+      "artifact": "mapping_summary.json",
+      "required_public_evidence": "molecule scope, generated 1-4 pair count, styles, charge sum, parameter fallback records when used",
+      "stage": "mapping"
+    },
+    {
+      "artifact": "emission_summary.json",
+      "required_public_evidence": "topology hash, line count, section list",
+      "stage": "emission"
+    },
+    {
+      "artifact": "grompp/grompp_smoke_report.json",
+      "required_public_evidence": "custom GROMACS_PCFF command, return code, warning count, tpr existence/hash",
+      "stage": "grompp_smoke"
+    }
+  ],
+  "schema_name": "lunar_gromacs_pcff_conversion_contract",
+  "schema_version": 2,
+  "strongest_supported_statement": "All selected existing LUNAR PCFF single-chain data artifacts pass parser -> mapping -> emission -> grompp smoke.",
+  "supported_case_path": {
+    "case_root": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764",
+    "coordinates": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/system.gro",
+    "emission_summary": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/emission_summary.json",
+    "grompp_report": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/grompp/grompp_smoke_report.json",
+    "mapping_summary": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/mapping_summary.json",
+    "parser_summary": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/parser_summary.json",
+    "smoke_tpr": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/grompp/smoke.tpr",
+    "topology": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/topol.top",
+    "trajectory_id": "14764"
+  },
+  "supported_input_boundary": {
+    "charged_electrolyte_conversion": false,
+    "database_snapshot": {
+      "path": "MY_PAPER_RELATED/MODELS/data/simulation-trajectory-aggregate_aligned.csv",
+      "row_count": 6270,
+      "sha256": "d4a804b3322463a2edf45be6949f3e85478668dc8bce631023f94c2673d71223"
+    },
+    "input_kind": "Existing LUNAR/all2lmp PCFF single-chain LAMMPS data file",
+    "polymer_only": true,
+    "required_sections": [
+      "Masses",
+      "Pair Coeffs",
+      "Bond Coeffs",
+      "Angle Coeffs",
+      "Dihedral Coeffs",
+      "Improper Coeffs",
+      "Atoms",
+      "Bonds",
+      "Angles",
+      "Dihedrals",
+      "Impropers"
+    ],
+    "separate_ion_or_salt_molecules": false
+  }
+}

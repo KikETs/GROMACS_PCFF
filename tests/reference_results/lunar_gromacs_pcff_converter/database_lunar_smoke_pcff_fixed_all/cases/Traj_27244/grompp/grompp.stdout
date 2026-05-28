@@ -1,0 +1,26 @@
+Generated 120 of the 120 non-bonded parameter combinations
+
+Generated 120 of the 120 1-4 parameter combinations
+
+Excluding 3 bonded neighbours molecule type 'POL'
+
+Velocities were taken from a Maxwell distribution at 300 K
+Analysing residue names:
+There are:     1      Other residues
+Analysing residues not classified as Protein/DNA/RNA/Water and splitting into groups...
+
+The largest distance between excluded atoms is 0.396 nm between atom 124 and 130
+
+Determining Verlet buffer for a tolerance of 0.005 kJ/mol/ps at 300 K
+
+Calculated rlist for 1x1 atom pair-list as 0.907 nm, buffer size 0.007 nm
+
+Set rlist, assuming 4x4 atom pair-list, to 0.900 nm, buffer size 0.000 nm
+
+Note that mdrun will redetermine rlist based on the actual pair-list setup
+Calculating fourier grid dimensions for X Y Z
+Using a fourier grid of 20x32x32, spacing 0.107 0.114 0.105
+
+Estimate for the relative computational load of the PME mesh part: 0.49
+
+This run will generate roughly 0 Mb of data

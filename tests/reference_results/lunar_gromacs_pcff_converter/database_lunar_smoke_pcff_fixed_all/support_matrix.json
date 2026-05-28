@@ -1,0 +1,137 @@
+{
+  "claim_status_as_of": "2026-05-28",
+  "custom_gromacs_pcff_build_required": true,
+  "items": [
+    {
+      "claimable_statement": "All 6270 selected rows in the frozen CSV snapshot pass parser -> mapping -> emission -> zero-warning grompp smoke with the custom GROMACS_PCFF build.",
+      "evidence": [
+        {
+          "key": "totals",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/database_lunar_smoke_summary.json",
+          "value": {
+            "failure_count": 0,
+            "missing_lunar_pcff_data_count": 0,
+            "pass_count": 6270,
+            "selected_row_count": 6270
+          }
+        },
+        {
+          "key": "final_status",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/notebook_batch_logs/20260528_fixed_all_smoke.log",
+          "value": "claimable"
+        }
+      ],
+      "id": "polymer_only.frozen_csv_snapshot_all_rows",
+      "non_claimable_statement": "This does not imply charged Li/TFSI support, production mdrun stability, physical parameter validation, or stock GROMACS support.",
+      "status": "supported"
+    },
+    {
+      "claimable_statement": "Trajectory 14764 remains a fully inspectable no-fallback polymer-only conversion case with a zero-warning grompp PASS and generated smoke.tpr.",
+      "evidence": [
+        {
+          "key": "status",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/parser_summary.json",
+          "value": "PASS"
+        },
+        {
+          "key": "status",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/mapping_summary.json",
+          "value": "PASS"
+        },
+        {
+          "key": "status",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/emission_summary.json",
+          "value": "PASS"
+        },
+        {
+          "key": "success_criteria",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14764/grompp/grompp_smoke_report.json",
+          "value": {
+            "returncode_zero": true,
+            "tpr_generated": true,
+            "warning_count_zero": true
+          }
+        }
+      ],
+      "id": "polymer_only.representative_full_pass_case_traj_14764",
+      "non_claimable_statement": "One representative case alone is not the database claim; the database claim relies on all per-row reports plus summary.",
+      "status": "supported"
+    },
+    {
+      "claimable_statement": "870 passing rows used explicit zero-parameter fallbacks for source LUNAR labels ['S-type-yourself', 'c4o', 's_m'].",
+      "evidence": [
+        {
+          "key": "fallback_label_case_counts",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/parameter_fallback_summary.json",
+          "value": {
+            "S-type-yourself": 7,
+            "c4o": 806,
+            "s_m": 58
+          }
+        },
+        {
+          "key": "representative_fallback",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14261/mapping_summary.json",
+          "value": "c4o"
+        },
+        {
+          "key": "representative_fallback",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_13651/mapping_summary.json",
+          "value": "s_m"
+        },
+        {
+          "key": "representative_fallback",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_14746/mapping_summary.json",
+          "value": "S-type-yourself"
+        }
+      ],
+      "id": "parameter_fallbacks.zero_mass_unblock",
+      "non_claimable_statement": "Fallback use is not physical parameter-completion evidence; S-type-yourself remains a LUNAR atom-typing failure fallback.",
+      "status": "gated"
+    },
+    {
+      "claimable_statement": "Excluded-distance cutoff failures are unblocked for the frozen smoke scope by deriving cutoff and smoke box dimensions from topological exclusion distances and coordinate extents.",
+      "evidence": [
+        {
+          "key": "representative_prior_error_now_pass",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_13262/grompp/grompp_smoke_report.json",
+          "value": "excluded distance error"
+        },
+        {
+          "key": "representative_prior_warning_now_pass",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_27612/grompp/grompp_smoke_report.json",
+          "value": "excluded distance warning"
+        }
+      ],
+      "id": "smoke_geometry.excluded_distance_unblock",
+      "non_claimable_statement": "The smoke-expanded box is a preprocessing artifact and not a production simulation box, density claim, or physical equilibration claim.",
+      "status": "gated"
+    },
+    {
+      "claimable_statement": "None.",
+      "evidence": [
+        {
+          "key": "claim_evaluation.charged_ion_boundary",
+          "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/database_lunar_smoke_summary.json",
+          "value": "closed_to_claim_until_separate_Li_TFSI_parser_mapping_emission_grompp_artifacts_exist"
+        }
+      ],
+      "id": "charged_li_tfsi_extension",
+      "non_claimable_statement": "No charged Li/TFSI, ion, dense electrolyte, conductivity-production, or general charged topology conversion support is implied by this polymer-only smoke run.",
+      "status": "unsupported"
+    }
+  ],
+  "schema_name": "lunar_gromacs_pcff_converter_support_matrix",
+  "schema_version": 2,
+  "source_snapshot": {
+    "path": "MY_PAPER_RELATED/MODELS/data/simulation-trajectory-aggregate_aligned.csv",
+    "row_count": 6270,
+    "sha256": "d4a804b3322463a2edf45be6949f3e85478668dc8bce631023f94c2673d71223"
+  },
+  "status_definitions": {
+    "gated": "Evidence exists only as a gate or smoke condition and must not broaden the claim.",
+    "supported": "Direct parser -> mapping -> emission -> grompp PASS artifacts exist for the stated polymer-only scope.",
+    "unsupported": "No public artifact chain currently closes this claim."
+  },
+  "top_level_claim": "The frozen CSV snapshot has 6270 / 6270 polymer-only LUNAR PCFF single-chain `.data` rows with parser -> mapping -> emission -> zero-warning grompp PASS evidence using the custom GROMACS_PCFF build. This remains a preprocessing smoke claim, not charged electrolyte or mdrun/transport validation."
+}
