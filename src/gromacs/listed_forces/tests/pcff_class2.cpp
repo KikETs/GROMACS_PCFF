@@ -198,7 +198,9 @@ OutputQuantities evaluateSingleType(InteractionFunction       ftype,
                                     const std::vector<t_iatom>& iatoms,
                                     const t_iparams&           iparams,
                                     const PaddedVector<RVec>&  coordinates,
-                                    const int                  numAtoms)
+                                    const int                  numAtoms,
+                                    const BondedKernelFlavor   bondedKernelFlavor =
+                                            BondedKernelFlavor::ForcesAndVirialAndEnergy)
 {
     OutputQuantities output;
     std::vector<int> globalAtomIndex(numAtoms);
@@ -228,7 +230,7 @@ OutputQuantities evaluateSingleType(InteractionFunction       ftype,
                                         nullptr,
                                         nullptr,
                                         globalAtomIndex.data(),
-                                        BondedKernelFlavor::ForcesAndVirialAndEnergy);
+                                        bondedKernelFlavor);
     return output;
 }
 
@@ -366,6 +368,22 @@ PcffSystemDefinition makeImproperToy()
     return system;
 }
 
+PcffSystemDefinition makeImproperToyWithSingleAngleAngleTerm(const int term)
+{
+    PcffSystemDefinition system = makeImproperToy();
+    auto&                params = system.improperParams.improper_class2;
+    const real           k1     = params.aa_k1;
+    const real           k2     = params.aa_k2;
+    const real           k3     = params.aa_k3;
+
+    params.k0    = 0.0_real;
+    params.aa_k1 = (term == 1) ? k1 : 0.0_real;
+    params.aa_k2 = (term == 2) ? k2 : 0.0_real;
+    params.aa_k3 = (term == 3) ? k3 : 0.0_real;
+
+    return system;
+}
+
 real bondClass2AnalyticEnergy(const PcffSystemDefinition& system)
 {
     const rvec* coordinates = as_rvec_array(system.coordinates.data());
@@ -399,51 +417,63 @@ real angleClass2AnalyticEnergy(const PcffSystemDefinition& system)
            + system.angleParams.angle_class2.ba_k2 * dr2 * dtheta;
 }
 
-real improperClass2AnalyticEnergy(const PcffSystemDefinition& system)
+double improperClass2AnalyticEnergy(const PcffSystemDefinition& system)
 {
     const rvec* coordinates = as_rvec_array(system.coordinates.data());
-    rvec        delr[3];
-    rvec_sub(coordinates[0], coordinates[1], delr[0]);
-    rvec_sub(coordinates[2], coordinates[1], delr[1]);
-    rvec_sub(coordinates[3], coordinates[1], delr[2]);
-
-    real rmag[3];
-    for (int i = 0; i < 3; ++i)
+    double      delr[3][DIM];
+    for (int d = 0; d < DIM; ++d)
     {
-        rmag[i] = norm(delr[i]);
+        delr[0][d] = static_cast<double>(coordinates[0][d]) - static_cast<double>(coordinates[1][d]);
+        delr[1][d] = static_cast<double>(coordinates[2][d]) - static_cast<double>(coordinates[1][d]);
+        delr[2][d] = static_cast<double>(coordinates[3][d]) - static_cast<double>(coordinates[1][d]);
     }
 
-    real costheta[3];
-    costheta[0] = std::clamp(iprod(delr[0], delr[1]) / (rmag[0] * rmag[1]), -1.0_real, 1.0_real);
-    costheta[1] = std::clamp(iprod(delr[1], delr[2]) / (rmag[1] * rmag[2]), -1.0_real, 1.0_real);
-    costheta[2] = std::clamp(iprod(delr[0], delr[2]) / (rmag[0] * rmag[2]), -1.0_real, 1.0_real);
+    const auto dot = [](const double a[DIM], const double b[DIM]) {
+        return a[XX] * b[XX] + a[YY] * b[YY] + a[ZZ] * b[ZZ];
+    };
+    const auto cross = [](const double a[DIM], const double b[DIM], double c[DIM]) {
+        c[XX] = a[YY] * b[ZZ] - a[ZZ] * b[YY];
+        c[YY] = a[ZZ] * b[XX] - a[XX] * b[ZZ];
+        c[ZZ] = a[XX] * b[YY] - a[YY] * b[XX];
+    };
 
-    real theta[3];
-    real invstheta[3];
+    double rmag[3];
+    for (int i = 0; i < 3; ++i)
+    {
+        rmag[i] = std::sqrt(dot(delr[i], delr[i]));
+    }
+
+    double costheta[3];
+    costheta[0] = std::clamp(dot(delr[0], delr[1]) / (rmag[0] * rmag[1]), -1.0, 1.0);
+    costheta[1] = std::clamp(dot(delr[1], delr[2]) / (rmag[1] * rmag[2]), -1.0, 1.0);
+    costheta[2] = std::clamp(dot(delr[0], delr[2]) / (rmag[0] * rmag[2]), -1.0, 1.0);
+
+    double theta[3];
+    double invstheta[3];
     for (int i = 0; i < 3; ++i)
     {
         theta[i] = std::acos(costheta[i]);
-        invstheta[i] = 1.0_real / std::sin(theta[i]);
+        invstheta[i] = 1.0 / std::sin(theta[i]);
     }
 
-    rvec rABxrCB, rDBxrAB, rCBxrDB;
-    cprod(delr[0], delr[1], rABxrCB);
-    cprod(delr[2], delr[0], rDBxrAB);
-    cprod(delr[1], delr[2], rCBxrDB);
+    double rABxrCB[DIM], rDBxrAB[DIM], rCBxrDB[DIM];
+    cross(delr[0], delr[1], rABxrCB);
+    cross(delr[2], delr[0], rDBxrAB);
+    cross(delr[1], delr[2], rCBxrDB);
 
-    const real inv3r = 1.0_real / (rmag[0] * rmag[1] * rmag[2]);
-    const real chiABCD =
-            std::asin(std::clamp(iprod(rCBxrDB, delr[0]) * invstheta[1] * inv3r, -1.0_real, 1.0_real));
-    const real chiCBDA =
-            std::asin(std::clamp(iprod(rDBxrAB, delr[1]) * invstheta[2] * inv3r, -1.0_real, 1.0_real));
-    const real chiDBAC =
-            std::asin(std::clamp(iprod(rABxrCB, delr[2]) * invstheta[0] * inv3r, -1.0_real, 1.0_real));
-    const real chi = (chiABCD + chiCBDA + chiDBAC) / 3.0_real;
+    const double inv3r = 1.0 / (rmag[0] * rmag[1] * rmag[2]);
+    const double chiABCD =
+            std::asin(std::clamp(dot(rCBxrDB, delr[0]) * invstheta[1] * inv3r, -1.0, 1.0));
+    const double chiCBDA =
+            std::asin(std::clamp(dot(rDBxrAB, delr[1]) * invstheta[2] * inv3r, -1.0, 1.0));
+    const double chiDBAC =
+            std::asin(std::clamp(dot(rABxrCB, delr[2]) * invstheta[0] * inv3r, -1.0, 1.0));
+    const double chi = (chiABCD + chiCBDA + chiDBAC) / 3.0;
 
-    const real dchi   = chi - system.improperParams.improper_class2.chi0;
-    const real dthABC = theta[0] - system.improperParams.improper_class2.aa_theta0_1;
-    const real dthCBD = theta[1] - system.improperParams.improper_class2.aa_theta0_3;
-    const real dthABD = theta[2] - system.improperParams.improper_class2.aa_theta0_2;
+    const double dchi   = chi - system.improperParams.improper_class2.chi0;
+    const double dthABC = theta[0] - system.improperParams.improper_class2.aa_theta0_1;
+    const double dthCBD = theta[1] - system.improperParams.improper_class2.aa_theta0_3;
+    const double dthABD = theta[2] - system.improperParams.improper_class2.aa_theta0_2;
 
     return system.improperParams.improper_class2.k0 * dchi * dchi
            + system.improperParams.improper_class2.aa_k2 * dthABC * dthABD
@@ -463,6 +493,21 @@ void expectForcesMatchGolden(const OutputQuantities& output,
         {
             EXPECT_NEAR(forceToLammpsUnits(output.f[atom][d]), reference.forces[atom][d], tolerance)
                     << "Force mismatch for atom " << atom + 1 << " component " << d;
+        }
+    }
+}
+
+void expectForcesMatch(const OutputQuantities& actual,
+                       const OutputQuantities& expected,
+                       const int               numAtoms,
+                       const real              tolerance)
+{
+    for (int atom = 0; atom < numAtoms; ++atom)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            EXPECT_NEAR(actual.f[atom][d], expected.f[atom][d], tolerance)
+                    << "Force mismatch for atom " << atom << " component " << d;
         }
     }
 }
@@ -518,6 +563,22 @@ TEST(PcffClass2FormulaTest, ImproperEnergyMatchesAnalyticExpression)
                                            system.numAtoms);
 
     EXPECT_NEAR(output.energy, improperClass2AnalyticEnergy(system), 1e-4);
+}
+
+TEST(PcffClass2FormulaTest, ImproperSingleAngleAngleTermsMatchAnalyticExpression)
+{
+    for (const int term : { 1, 2, 3 })
+    {
+        SCOPED_TRACE(testing::Message() << "term=" << term);
+        const auto system = makeImproperToyWithSingleAngleAngleTerm(term);
+        const auto output = evaluateSingleType(InteractionFunction::ImproperClass2,
+                                               system.improperIatoms,
+                                               system.improperParams,
+                                               system.coordinates,
+                                               system.numAtoms);
+
+        EXPECT_NEAR(output.energy, improperClass2AnalyticEnergy(system), 1e-4);
+    }
 }
 
 TEST(PcffClass2GoldenTest, BondToyMatchesGoldenSummary)
@@ -591,6 +652,25 @@ TEST(PcffClass2ForceValidationTest, BondToyFiniteDifferenceMatchesAnalyticForce)
     expectFiniteDifferenceMatches(makeBondToy(), 1, XX, 1e-4, 2e-1);
 }
 
+TEST(PcffClass2SimdForceTest, BondClass2ForceOnlyMatchesScalar)
+{
+    const auto system = makeBondToy();
+    const auto scalar = evaluateSingleType(InteractionFunction::BondClass2,
+                                           system.bondIatoms,
+                                           system.bondParams,
+                                           system.coordinates,
+                                           system.numAtoms,
+                                           BondedKernelFlavor::ForcesNoSimd);
+    const auto simd   = evaluateSingleType(InteractionFunction::BondClass2,
+                                           system.bondIatoms,
+                                           system.bondParams,
+                                           system.coordinates,
+                                           system.numAtoms,
+                                           BondedKernelFlavor::ForcesSimdWhenAvailable);
+
+    expectForcesMatch(simd, scalar, system.numAtoms, GMX_DOUBLE ? 1e-10 : 2e-3);
+}
+
 TEST(PcffClass2ForceValidationTest, AngleToyFiniteDifferenceMatchesAnalyticForce)
 {
     expectFiniteDifferenceMatches(makeAngleToy(), 1, XX, 1e-4, 5e-1);
@@ -599,9 +679,37 @@ TEST(PcffClass2ForceValidationTest, AngleToyFiniteDifferenceMatchesAnalyticForce
     expectFiniteDifferenceMatches(makeAngleToy(), 2, YY, 1e-4, 5e-1);
 }
 
+TEST(PcffClass2SimdForceTest, AngleClass2ForceOnlyMatchesScalar)
+{
+    const auto system = makeAngleToy();
+    const auto scalar = evaluateSingleType(InteractionFunction::AngleClass2,
+                                           system.angleIatoms,
+                                           system.angleParams,
+                                           system.coordinates,
+                                           system.numAtoms,
+                                           BondedKernelFlavor::ForcesNoSimd);
+    const auto simd   = evaluateSingleType(InteractionFunction::AngleClass2,
+                                           system.angleIatoms,
+                                           system.angleParams,
+                                           system.coordinates,
+                                           system.numAtoms,
+                                           BondedKernelFlavor::ForcesSimdWhenAvailable);
+
+    expectForcesMatch(simd, scalar, system.numAtoms, GMX_DOUBLE ? 1e-10 : 5e-3);
+}
+
 TEST(PcffClass2ForceValidationTest, ImproperToyFiniteDifferenceMatchesAnalyticForce)
 {
     expectFiniteDifferenceMatches(makeImproperToy(), 3, ZZ, 1e-4, 5.0);
+}
+
+TEST(PcffClass2ForceValidationTest, ImproperSingleAngleAngleTermsFiniteDifferenceMatchesAnalyticForce)
+{
+    for (const int term : { 1, 2, 3 })
+    {
+        SCOPED_TRACE(testing::Message() << "term=" << term);
+        expectFiniteDifferenceMatches(makeImproperToyWithSingleAngleAngleTerm(term), 3, ZZ, 1e-4, 2e-1);
+    }
 }
 
 } // namespace

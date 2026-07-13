@@ -90,19 +90,33 @@ void appendPairlistTraceLine(const char* traceDirPath, const std::string& line)
     appendTraceLine(traceDirPath, "step0_pairlist_builder_append_trace.txt", line);
 }
 
-void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
-                            const NbnxnPairlistCpu& pairlist,
-                            const PairlistParams&   params,
-                            const real              range,
-                            const nbnxn_atomdata_t& nbat,
-                            ArrayRef<const int>     atomIndices)
+template<typename CoordinateLoader>
+void appendPlainPairlistCpuWithLoader(PlainPairlist*          plainPairlist,
+                                      const NbnxnPairlistCpu& pairlist,
+                                      const PairlistParams&   params,
+                                      const real              range,
+                                      const nbnxn_atomdata_t& nbat,
+                                      ArrayRef<const int>     atomIndices,
+                                      const CoordinateLoader& loadCoordinate)
 {
-    constexpr int                      c_maxClusterSize = 8;
+    constexpr int                      c_maxIClusterSize = 8;
+    constexpr int                      c_maxJClusterSize = 32;
     constexpr int                      c_maxTracedPairs = 8;
-    std::array<int, c_maxClusterSize>  atomI;
-    std::array<RVec, c_maxClusterSize> xI;
-    const char*                        pairWriteProofDirPath = std::getenv("GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR");
-    const char* ownershipTraceDirPath = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+    std::array<int, c_maxIClusterSize> atomI;
+    std::array<int, c_maxJClusterSize> atomJ;
+    std::array<int, c_maxJClusterSize> atomJIndex;
+    std::array<RVec, c_maxIClusterSize> xI;
+    std::array<RVec, c_maxJClusterSize> xJ;
+    static const char*                 pairWriteProofDirPath = [] {
+        const char* value = std::getenv("GMX_PCFF_RESPA_PAIR_WRITE_PROOF_DIR");
+        return (value != nullptr && *value != '\0') ? value : nullptr;
+    }();
+    static const char* ownershipTraceDirPath = [] {
+        const char* value = std::getenv("GMX_PCFF_RESPA_OWNERSHIP_HANDOFF_TRACE_DIR");
+        return (value != nullptr && *value != '\0') ? value : nullptr;
+    }();
+    const bool tracePairWriteProof = pairWriteProofDirPath != nullptr;
+    const bool traceOwnership      = ownershipTraceDirPath != nullptr;
     static int                         tracedPairsAppended   = 0;
     static int                         tracedExcludedAppended = 0;
     static bool                        dumpedTargetBranchTrace = false;
@@ -126,22 +140,180 @@ void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
     }
 
     const real rangeSquared = square(range);
+    GMX_RELEASE_ASSERT(pairlist.na_ci <= c_maxIClusterSize && pairlist.na_cj <= c_maxJClusterSize,
+                       "Plain CPU pairlist materialization cluster size exceeds the prefetch buffer");
 
     for (const nbnxn_ci_t& iEntry : ciList)
     {
-        const int shiftIndex = (iEntry.shift & NBNXN_CI_SHIFT);
+        const int  shiftIndex       = (iEntry.shift & NBNXN_CI_SHIFT);
+        const bool haveCentralShift = (shiftIndex == gmx::c_centralShiftIndex);
 
         // Prefetch the i-atom indices
         for (int i = 0; i < pairlist.na_ci; i++)
         {
             const int iAtomIndex = iEntry.ci * pairlist.na_ci + i;
-            atomI[i]             = atomIndices[iAtomIndex];
-            xI[i]                = getCoordinate(nbat, iAtomIndex) + nbat.shift_vec[shiftIndex];
+            atomI[i] = atomIndices[iAtomIndex];
+            if (atomI[i] >= 0)
+            {
+                xI[i] = loadCoordinate(iAtomIndex) + nbat.shift_vec[shiftIndex];
+            }
         }
 
         for (int jClusterIndex = iEntry.cj_ind_start; jClusterIndex < iEntry.cj_ind_end; jClusterIndex++)
         {
             const nbnxn_cj_t& jEntry = cjList[jClusterIndex];
+            const bool fullMaskPairsOnly =
+                    (jEntry.excl == NBNXN_INTERACTION_MASK_ALL) && !traceOwnership;
+            for (int j = 0; j < pairlist.na_cj; j++)
+            {
+                const int jAtomIndex = jEntry.cj * pairlist.na_cj + j;
+                if (!fullMaskPairsOnly || tracePairWriteProof)
+                {
+                    atomJIndex[j] = jAtomIndex;
+                }
+                atomJ[j] = atomIndices[jAtomIndex];
+                if (atomJ[j] >= 0)
+                {
+                    xJ[j] = loadCoordinate(jAtomIndex);
+                }
+            }
+
+            if (fullMaskPairsOnly)
+            {
+                if (!tracePairWriteProof)
+                {
+                    for (int i = 0; i < pairlist.na_ci; i++)
+                    {
+                        const int atomIi = atomI[i];
+                        if (atomIi < 0)
+                        {
+                            // This is a filler particle
+                            continue;
+                        }
+                        const real xIx = xI[i][XX];
+                        const real xIy = xI[i][YY];
+                        const real xIz = xI[i][ZZ];
+
+                        for (int j = 0; j < pairlist.na_cj; j++)
+                        {
+                            const int atomJj = atomJ[j];
+                            if (atomJj < 0)
+                            {
+                                continue;
+                            }
+                            const real xJx = xJ[j][XX];
+                            const real xJy = xJ[j][YY];
+                            const real xJz = xJ[j][ZZ];
+                            const real dx  = xIx - xJx;
+                            const real dy  = xIy - xJy;
+                            const real dz  = xIz - xJz;
+                            if (dx * dx + dy * dy + dz * dz >= rangeSquared)
+                            {
+                                continue;
+                            }
+
+                            plainPairlist->pairs.push_back({ { atomIi, atomJj }, shiftIndex });
+                        }
+                    }
+                    continue;
+                }
+
+                for (int i = 0; i < pairlist.na_ci; i++)
+                {
+                    if (atomI[i] < 0)
+                    {
+                        // This is a filler particle
+                        continue;
+                    }
+
+                    const int iAtomIndex = iEntry.ci * pairlist.na_ci + i;
+
+                    for (int j = 0; j < pairlist.na_cj; j++)
+                    {
+                        const int jAtomIndex = atomJIndex[j];
+
+                        if (atomJ[j] >= 0)
+                        {
+                            const real dx = xI[i][XX] - xJ[j][XX];
+                            const real dy = xI[i][YY] - xJ[j][YY];
+                            const real dz = xI[i][ZZ] - xJ[j][ZZ];
+                            if (dx * dx + dy * dy + dz * dz >= rangeSquared)
+                            {
+                                continue;
+                            }
+
+                            if (tracePairWriteProof && tracedPairsAppended < c_maxTracedPairs)
+                            {
+                                appendPairlistTraceLine(pairWriteProofDirPath,
+                                                        "kind=pairs ordinal=" + std::to_string(tracedPairsAppended)
+                                                                + " source=appendPlainPairlistCpu ai="
+                                                                + std::to_string(atomI[i]) + " aj="
+                                                                + std::to_string(atomJ[j]) + " shift_index="
+                                                                + std::to_string(shiftIndex) + " i_atom_index="
+                                                                + std::to_string(iAtomIndex) + " j_atom_index="
+                                                                + std::to_string(jAtomIndex) + " excl_bit=1");
+                                tracedPairsAppended++;
+                            }
+                            plainPairlist->pairs.emplace_back(
+                                    PlainPairlist::ParticlePair{ atomI[i], atomJ[j] }, shiftIndex);
+                        }
+                    }
+                }
+                continue;
+            }
+
+            if (!tracePairWriteProof && !traceOwnership)
+            {
+                for (int i = 0; i < pairlist.na_ci; i++)
+                {
+                    const int atomIi = atomI[i];
+                    if (atomIi < 0)
+                    {
+                        // This is a filler particle
+                        continue;
+                    }
+
+                    const int iAtomIndex = iEntry.ci * pairlist.na_ci + i;
+                    const unsigned int pairBitBase = (1U << (i * pairlist.na_cj));
+                    const real         xIx         = xI[i][XX];
+                    const real         xIy         = xI[i][YY];
+                    const real         xIz         = xI[i][ZZ];
+
+                    for (int j = 0; j < pairlist.na_cj; j++)
+                    {
+                        const int jAtomIndex = atomJIndex[j];
+                        const int atomJj     = atomJ[j];
+
+                        if (atomJj < 0)
+                        {
+                            continue;
+                        }
+
+                        const real xJx = xJ[j][XX];
+                        const real xJy = xJ[j][YY];
+                        const real xJz = xJ[j][ZZ];
+                        const real dx  = xIx - xJx;
+                        const real dy  = xIy - xJy;
+                        const real dz  = xIz - xJz;
+                        if (dx * dx + dy * dy + dz * dz >= rangeSquared)
+                        {
+                            continue;
+                        }
+                        const unsigned int pairBit = (pairBitBase << j);
+                        const bool         branchToPairs = (jEntry.excl & pairBit) != 0;
+                        if (branchToPairs)
+                        {
+                            plainPairlist->pairs.push_back({ { atomIi, atomJj }, shiftIndex });
+                        }
+                        else if (!haveCentralShift || jAtomIndex > iAtomIndex)
+                        {
+                            GMX_ASSERT(atomJj != atomIi, "We should not add self-pairs");
+                            plainPairlist->excludedPairs.push_back({ { atomIi, atomJj }, shiftIndex });
+                        }
+                    }
+                }
+                continue;
+            }
 
             for (int i = 0; i < pairlist.na_ci; i++)
             {
@@ -152,30 +324,37 @@ void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
                 }
 
                 const int iAtomIndex = iEntry.ci * pairlist.na_ci + i;
+                const unsigned int pairBitBase = (1U << (i * pairlist.na_cj));
 
                 for (int j = 0; j < pairlist.na_cj; j++)
                 {
-                    const int jAtomIndex = jEntry.cj * pairlist.na_cj + j;
-                    const int atomJ      = atomIndices[jAtomIndex];
+                    const int jAtomIndex = atomJIndex[j];
 
-                    if (atomJ >= 0 && norm2(xI[i] - getCoordinate(nbat, jAtomIndex)) < rangeSquared)
+                    if (atomJ[j] >= 0)
                     {
-                        const unsigned int pairBit = (1U << (i * pairlist.na_cj + j));
+                        const real dx = xI[i][XX] - xJ[j][XX];
+                        const real dy = xI[i][YY] - xJ[j][YY];
+                        const real dz = xI[i][ZZ] - xJ[j][ZZ];
+                        if (dx * dx + dy * dy + dz * dz >= rangeSquared)
+                        {
+                            continue;
+                        }
+                        const unsigned int pairBit = (pairBitBase << j);
                         const unsigned int maskedValue = jEntry.excl & pairBit;
                         const bool         branchToPairs = maskedValue != 0;
                         const bool         branchToExcluded =
-                                !branchToPairs && (shiftIndex != gmx::c_centralShiftIndex || jAtomIndex > iAtomIndex);
-                        const bool isTargetPair = (atomI[i] == 0 && atomJ == 1);
-                        const bool isControlPair = (atomI[i] == 0 && atomJ == 4);
-                        if (ownershipTraceDirPath != nullptr && *ownershipTraceDirPath != '\0'
-                            && ((isTargetPair && !dumpedTargetBranchTrace)
-                                || (isControlPair && !dumpedControlBranchTrace)))
+                                !branchToPairs && (!haveCentralShift || jAtomIndex > iAtomIndex);
+                        if (traceOwnership
+                            && ((!dumpedTargetBranchTrace && atomI[i] == 0 && atomJ[j] == 1)
+                                || (!dumpedControlBranchTrace && atomI[i] == 0 && atomJ[j] == 4)))
                         {
+                            const bool isTargetPair  = (atomI[i] == 0 && atomJ[j] == 1);
+                            const bool isControlPair = (atomI[i] == 0 && atomJ[j] == 4);
                             appendTraceLine(
                                     ownershipTraceDirPath,
                                     "step0_append_branch_trace.txt",
                                     "stage=append_plain_pairlist_branch ai=" + std::to_string(atomI[i]) + " aj="
-                                            + std::to_string(atomJ) + " shift_index=" + std::to_string(shiftIndex)
+                                            + std::to_string(atomJ[j]) + " shift_index=" + std::to_string(shiftIndex)
                                             + " i_atom_index=" + std::to_string(iAtomIndex) + " j_atom_index="
                                             + std::to_string(jAtomIndex) + " mask_word="
                                             + std::to_string(jEntry.excl) + " pair_bit="
@@ -204,45 +383,115 @@ void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
                         }
                         if (branchToPairs)
                         {
-                            if (pairWriteProofDirPath != nullptr && *pairWriteProofDirPath != '\0'
-                                && tracedPairsAppended < c_maxTracedPairs)
+                            if (tracePairWriteProof && tracedPairsAppended < c_maxTracedPairs)
                             {
                                 appendPairlistTraceLine(pairWriteProofDirPath,
                                                         "kind=pairs ordinal=" + std::to_string(tracedPairsAppended)
                                                                 + " source=appendPlainPairlistCpu ai="
                                                                 + std::to_string(atomI[i]) + " aj="
-                                                                + std::to_string(atomJ) + " shift_index="
+                                                                + std::to_string(atomJ[j]) + " shift_index="
                                                                 + std::to_string(shiftIndex) + " i_atom_index="
                                                                 + std::to_string(iAtomIndex) + " j_atom_index="
                                                                 + std::to_string(jAtomIndex) + " excl_bit=1");
                                 tracedPairsAppended++;
                             }
-                            plainPairlist->pairs.push_back({ { atomI[i], atomJ }, shiftIndex });
+                            plainPairlist->pairs.emplace_back(
+                                    PlainPairlist::ParticlePair{ atomI[i], atomJ[j] }, shiftIndex);
                         }
                         else if (branchToExcluded)
                         {
-                            GMX_ASSERT(atomJ != atomI[i], "We should not add self-pairs");
+                            GMX_ASSERT(atomJ[j] != atomI[i], "We should not add self-pairs");
 
-                            if (pairWriteProofDirPath != nullptr && *pairWriteProofDirPath != '\0'
-                                && tracedExcludedAppended < 1)
+                            if (tracePairWriteProof && tracedExcludedAppended < 1)
                             {
                                 appendPairlistTraceLine(pairWriteProofDirPath,
                                                         "kind=excludedPairs ordinal="
                                                                 + std::to_string(tracedExcludedAppended)
                                                                 + " source=appendPlainPairlistCpu ai="
                                                                 + std::to_string(atomI[i]) + " aj="
-                                                                + std::to_string(atomJ) + " shift_index="
+                                                                + std::to_string(atomJ[j]) + " shift_index="
                                                                 + std::to_string(shiftIndex) + " i_atom_index="
                                                                 + std::to_string(iAtomIndex) + " j_atom_index="
                                                                 + std::to_string(jAtomIndex) + " excl_bit=0");
                                 tracedExcludedAppended++;
                             }
-                            plainPairlist->excludedPairs.push_back({ { atomI[i], atomJ }, shiftIndex });
+                            plainPairlist->excludedPairs.emplace_back(
+                                    PlainPairlist::ParticlePair{ atomI[i], atomJ[j] }, shiftIndex);
                         }
                     }
                 }
             }
         }
+    }
+}
+
+void appendPlainPairlistCpu(PlainPairlist*          plainPairlist,
+                            const NbnxnPairlistCpu& pairlist,
+                            const PairlistParams&   params,
+                            const real              range,
+                            const nbnxn_atomdata_t& nbat,
+                            ArrayRef<const int>     atomIndices)
+{
+    const auto x = nbat.x();
+    switch (nbat.XFormat)
+    {
+        case nbatXYZQ:
+            return appendPlainPairlistCpuWithLoader(
+                    plainPairlist,
+                    pairlist,
+                    params,
+                    range,
+                    nbat,
+                    atomIndices,
+                    [x](const int atomIndex)
+                    {
+                        const int base = atomIndex * STRIDE_XYZQ;
+                        return RVec{ x[base], x[base + 1], x[base + 2] };
+                    });
+        case nbatXYZ:
+            return appendPlainPairlistCpuWithLoader(
+                    plainPairlist,
+                    pairlist,
+                    params,
+                    range,
+                    nbat,
+                    atomIndices,
+                    [x](const int atomIndex)
+                    {
+                        const int base = atomIndex * STRIDE_XYZ;
+                        return RVec{ x[base], x[base + 1], x[base + 2] };
+                    });
+        case nbatX4:
+            return appendPlainPairlistCpuWithLoader(
+                    plainPairlist,
+                    pairlist,
+                    params,
+                    range,
+                    nbat,
+                    atomIndices,
+                    [x](const int atomIndex)
+                    {
+                        const int base = atom_to_x_index<c_packX4>(atomIndex);
+                        return RVec{ x[base + XX * c_packX4],
+                                     x[base + YY * c_packX4],
+                                     x[base + ZZ * c_packX4] };
+                    });
+        case nbatX8:
+            return appendPlainPairlistCpuWithLoader(
+                    plainPairlist,
+                    pairlist,
+                    params,
+                    range,
+                    nbat,
+                    atomIndices,
+                    [x](const int atomIndex)
+                    {
+                        const int base = atom_to_x_index<c_packX8>(atomIndex);
+                        return RVec{ x[base + XX * c_packX8],
+                                     x[base + YY * c_packX8],
+                                     x[base + ZZ * c_packX8] };
+                    });
+        default: GMX_ASSERT(false, "Unsupported nbnxn_atomdata_t format");
     }
 }
 

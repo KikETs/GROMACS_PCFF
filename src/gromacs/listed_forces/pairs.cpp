@@ -850,7 +850,7 @@ static real do_pairs_general(InteractionFunction                 ftype,
  *
  * This function is templated for real/SimdReal and for optimization.
  */
-template<typename T, int pack_size, typename pbc_type>
+template<typename T, int pack_size, typename pbc_type, int repulsionPower>
 static void do_pairs_simple(int                       nbonds,
                             const t_iatom             iatoms[],
                             const t_iparams           iparams[],
@@ -859,61 +859,38 @@ static void do_pairs_simple(int                       nbonds,
                             const pbc_type            pbc,
                             gmx::ArrayRef<const real> charge,
                             const real                scale_factor,
-                            const int                 repulsionPower)
+                            const bool                computeEnergy,
+                            gmx::ArrayRef<const unsigned short> cENER,
+                            const int                            numEnergyGroups,
+                            gmx_grppairener_t*                   grppener)
 {
     const int nfa1 = 1 + 2;
 
     T six(6);
     T repulsionPowerFactor(repulsionPower);
     T ef(scale_factor);
-    const bool useNineSix = (repulsionPower == 9);
+    real*      energygrp_elec = nullptr;
+    real*      energygrp_vdw  = nullptr;
+    if (computeEnergy)
+    {
+        GMX_ASSERT(grppener != nullptr, "Energy output is required for listed pair energy accumulation");
+        energygrp_elec = grppener->energyGroupPairTerms[NonBondedEnergyTerms::Coulomb14].data();
+        energygrp_vdw  = grppener->energyGroupPairTerms[NonBondedEnergyTerms::LJ14].data();
+    }
 
 #if GMX_SIMD_HAVE_REAL
     alignas(GMX_SIMD_ALIGNMENT) std::int32_t ai[pack_size];
     alignas(GMX_SIMD_ALIGNMENT) std::int32_t aj[pack_size];
     alignas(GMX_SIMD_ALIGNMENT) real         coeff[3 * pack_size];
+    alignas(GMX_SIMD_ALIGNMENT) real         energyBuffer[2 * pack_size];
 #else
     std::int32_t ai[pack_size];
     std::int32_t aj[pack_size];
     real         coeff[3 * pack_size];
 #endif
 
-    /* nbonds is #pairs*nfa1, here we step pack_size pairs */
-    for (int i = 0; i < nbonds; i += pack_size * nfa1)
+    auto evaluatePackedPairs = [&](const int i)
     {
-        /* Collect atoms for pack_size pairs.
-         * iu indexes into iatoms, we should not let iu go beyond nbonds.
-         */
-        int iu = i;
-        for (int s = 0; s < pack_size; s++)
-        {
-            int itype = iatoms[iu];
-            ai[s]     = iatoms[iu + 1];
-            aj[s]     = iatoms[iu + 2];
-
-            if (i + s * nfa1 < nbonds)
-            {
-                coeff[0 * pack_size + s] = iparams[itype].lj14.c6A;
-                coeff[1 * pack_size + s] = iparams[itype].lj14.c12A;
-                coeff[2 * pack_size + s] = charge[ai[s]] * charge[aj[s]];
-
-                /* Avoid indexing the iatoms array out of bounds.
-                 * We pad the coordinate indices with the last atom pair.
-                 */
-                if (iu + nfa1 < nbonds)
-                {
-                    iu += nfa1;
-                }
-            }
-            else
-            {
-                /* Pad the coefficient arrays with zeros to get zero forces */
-                coeff[0 * pack_size + s] = 0;
-                coeff[1 * pack_size + s] = 0;
-                coeff[2 * pack_size + s] = 0;
-            }
-        }
-
         /* Load the coordinates */
         T xi[DIM], xj[DIM];
         gatherLoadUTranspose<3>(reinterpret_cast<const real*>(x), ai, &xi[XX], &xi[YY], &xi[ZZ]);
@@ -924,8 +901,8 @@ static void do_pairs_simple(int                       nbonds,
         T qq  = load<T>(coeff + 2 * pack_size);
 
         /* We could save these operations by storing 6*C6,n*C_n */
-        c6  = six * c6;
-        c12 = repulsionPowerFactor * c12;
+        const T c6Force  = six * c6;
+        const T c12Force = repulsionPowerFactor * c12;
 
         T dr[DIM];
         pbc_dx_aiuc(pbc, xi, xj, dr);
@@ -939,11 +916,11 @@ static void do_pairs_simple(int                       nbonds,
         T cfr = ef * qq * rinv;
 
         /* Calculate the LJ force * r and add it to the Coulomb part */
-        T fr = gmx::fma(fms(c12, rinv6, c6), rinv6, cfr);
-        if (useNineSix)
+        T fr = gmx::fma(fms(c12Force, rinv6, c6Force), rinv6, cfr);
+        if constexpr (repulsionPower == 9)
         {
             const T rinv9 = rinv6 * rinv2 * rinv;
-            fr            = c12 * rinv9 - c6 * rinv6 + cfr;
+            fr            = c12Force * rinv9 - c6Force * rinv6 + cfr;
         }
 
         T finvr = fr * rinv2;
@@ -957,6 +934,91 @@ static void do_pairs_simple(int                       nbonds,
          */
         transposeScatterIncrU<4>(reinterpret_cast<real*>(f), ai, fx, fy, fz);
         transposeScatterDecrU<4>(reinterpret_cast<real*>(f), aj, fx, fy, fz);
+
+        if (computeEnergy)
+        {
+            const T coulombEnergy = cfr;
+            T       vdwEnergy     = gmx::fma(c12 * rinv6, rinv6, -c6 * rinv6);
+            if constexpr (repulsionPower == 9)
+            {
+                const T rinv9 = rinv6 * rinv2 * rinv;
+                vdwEnergy     = c12 * rinv9 - c6 * rinv6;
+            }
+
+            if constexpr (pack_size == 1)
+            {
+                const int gid = GID(cENER[ai[0]], cENER[aj[0]], numEnergyGroups);
+                energygrp_elec[gid] += coulombEnergy;
+                energygrp_vdw[gid] += vdwEnergy;
+            }
+#if GMX_SIMD_HAVE_REAL
+            else
+            {
+                store(energyBuffer, coulombEnergy);
+                store(energyBuffer + pack_size, vdwEnergy);
+                for (int s = 0; s < pack_size && i + s * nfa1 < nbonds; s++)
+                {
+                    const int gid = GID(cENER[ai[s]], cENER[aj[s]], numEnergyGroups);
+                    energygrp_elec[gid] += energyBuffer[s];
+                    energygrp_vdw[gid] += energyBuffer[pack_size + s];
+                }
+            }
+#endif
+        }
+    };
+
+    const int packForceAtoms = pack_size * nfa1;
+    const int fullPackEnd    = (nbonds / packForceAtoms) * packForceAtoms;
+
+    /* nbonds is #pairs*nfa1. Keep the common full-pack path free of tail padding
+     * checks; only the last partial pack needs zero-coefficient padding. */
+    for (int i = 0; i < fullPackEnd; i += packForceAtoms)
+    {
+        for (int s = 0; s < pack_size; s++)
+        {
+            const int iu    = i + s * nfa1;
+            const int itype = iatoms[iu];
+            ai[s]           = iatoms[iu + 1];
+            aj[s]           = iatoms[iu + 2];
+
+            coeff[0 * pack_size + s] = iparams[itype].lj14.c6A;
+            coeff[1 * pack_size + s] = iparams[itype].lj14.c12A;
+            coeff[2 * pack_size + s] = charge[ai[s]] * charge[aj[s]];
+        }
+
+        evaluatePackedPairs(i);
+    }
+
+    if (fullPackEnd < nbonds)
+    {
+        const int numTailPairs = (nbonds - fullPackEnd) / nfa1;
+        GMX_ASSERT(numTailPairs > 0 && numTailPairs < pack_size,
+                   "The tail path should only handle a non-empty partial SIMD pack");
+
+        const int padIu = fullPackEnd + (numTailPairs - 1) * nfa1;
+        for (int s = 0; s < pack_size; s++)
+        {
+            const bool havePair = (s < numTailPairs);
+            const int  iu       = havePair ? fullPackEnd + s * nfa1 : padIu;
+            const int  itype    = iatoms[iu];
+            ai[s]               = iatoms[iu + 1];
+            aj[s]               = iatoms[iu + 2];
+
+            if (havePair)
+            {
+                coeff[0 * pack_size + s] = iparams[itype].lj14.c6A;
+                coeff[1 * pack_size + s] = iparams[itype].lj14.c12A;
+                coeff[2 * pack_size + s] = charge[ai[s]] * charge[aj[s]];
+            }
+            else
+            {
+                coeff[0 * pack_size + s] = 0;
+                coeff[1 * pack_size + s] = 0;
+                coeff[2 * pack_size + s] = 0;
+            }
+        }
+
+        evaluatePackedPairs(fullPackEnd);
     }
 }
 
@@ -989,34 +1051,47 @@ void do_pairs(InteractionFunction                 ftype,
 
     if (ftype == InteractionFunction::LennardJones14 && fr->ic->vdw.type != VanDerWaalsType::User
         && !usingUserTableElectrostatics(fr->ic->coulomb.type) && !havePerturbedInteractions
-        && (useAnalyticPower12 || useAnalyticPower9)
-        && (!stepWork.computeVirial && !stepWork.computeEnergy))
+        && (useAnalyticPower12 || useAnalyticPower9) && !stepWork.computeVirial)
     {
-        /* We use a fast code-path for plain LJ 1-4 without FEP.
-         *
-         * TODO: Add support for energies (straightforward) and virial
-         * in the SIMD template. For the virial it's inconvenient to store
-         * the force sums for the shifts and we should directly calculate
-         * and sum the virial for the shifts. But we should do this
-         * at once for the angles and dihedrals as well.
-         */
-        const int repulsionPower = useAnalyticPower9 ? 9 : 12;
+        /* We use a fast code-path for plain LJ 1-4 without FEP. */
 #if GMX_SIMD_HAVE_REAL
         if (fr->use_simd_kernels)
         {
             alignas(GMX_SIMD_ALIGNMENT) real pbc_simd[9 * GMX_SIMD_REAL_WIDTH];
             set_pbc_simd(pbc, pbc_simd);
 
-            do_pairs_simple<SimdReal, GMX_SIMD_REAL_WIDTH, const real*>(
-                    nbonds,
-                    iatoms,
-                    iparams,
-                    x,
-                    f,
-                    pbc_simd,
-                    chargeA,
-                    fr->ic->coulomb.epsfac * fr->fudgeQQ,
-                    repulsionPower);
+            if (useAnalyticPower9)
+            {
+                do_pairs_simple<SimdReal, GMX_SIMD_REAL_WIDTH, const real*, 9>(
+                        nbonds,
+                        iatoms,
+                        iparams,
+                        x,
+                        f,
+                        pbc_simd,
+                        chargeA,
+                        fr->ic->coulomb.epsfac * fr->fudgeQQ,
+                        stepWork.computeEnergy,
+                        cENER,
+                        numEnergyGroups,
+                        grppener);
+            }
+            else
+            {
+                do_pairs_simple<SimdReal, GMX_SIMD_REAL_WIDTH, const real*, 12>(
+                        nbonds,
+                        iatoms,
+                        iparams,
+                        x,
+                        f,
+                        pbc_simd,
+                        chargeA,
+                        fr->ic->coulomb.epsfac * fr->fudgeQQ,
+                        stepWork.computeEnergy,
+                        cENER,
+                        numEnergyGroups,
+                        grppener);
+            }
         }
         else
 #endif
@@ -1035,16 +1110,36 @@ void do_pairs(InteractionFunction                 ftype,
                 pbc_nonnull = &pbc_no;
             }
 
-            do_pairs_simple<real, 1, const t_pbc*>(
-                    nbonds,
-                    iatoms,
-                    iparams,
-                    x,
-                    f,
-                    pbc_nonnull,
-                    chargeA,
-                    fr->ic->coulomb.epsfac * fr->fudgeQQ,
-                    repulsionPower);
+            if (useAnalyticPower9)
+            {
+                do_pairs_simple<real, 1, const t_pbc*, 9>(nbonds,
+                                                          iatoms,
+                                                          iparams,
+                                                          x,
+                                                          f,
+                                                          pbc_nonnull,
+                                                          chargeA,
+                                                          fr->ic->coulomb.epsfac * fr->fudgeQQ,
+                                                          stepWork.computeEnergy,
+                                                          cENER,
+                                                          numEnergyGroups,
+                                                          grppener);
+            }
+            else
+            {
+                do_pairs_simple<real, 1, const t_pbc*, 12>(nbonds,
+                                                           iatoms,
+                                                           iparams,
+                                                           x,
+                                                           f,
+                                                           pbc_nonnull,
+                                                           chargeA,
+                                                           fr->ic->coulomb.epsfac * fr->fudgeQQ,
+                                                           stepWork.computeEnergy,
+                                                           cENER,
+                                                           numEnergyGroups,
+                                                           grppener);
+            }
         }
     }
     else if (stepWork.computeVirial)

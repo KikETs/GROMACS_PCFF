@@ -4141,6 +4141,7 @@ void PairlistSets::construct(const InteractionLocality iLocality,
                              t_nrnb*                   nrnb)
 {
     includesAllPairs_ = includeAllPairs;
+    invalidatePlainPairlistCache();
 
     const auto& gridSet = pairSearch->gridSet();
     const auto* ddZones = gridSet.domainSetup().zones;

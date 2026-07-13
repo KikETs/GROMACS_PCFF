@@ -68,6 +68,7 @@ void PairlistSets::dispatchPruneKernel(const InteractionLocality iLocality,
                                        const nbnxn_atomdata_t*   nbat,
                                        ArrayRef<const RVec>      shift_vec)
 {
+    invalidatePlainPairlistCache();
     pairlistSet(iLocality).dispatchPruneKernel(nbat, shift_vec);
 }
 

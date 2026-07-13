@@ -47,6 +47,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 
@@ -97,13 +98,26 @@ static int chooseBondedThreadsPerBlock()
     if (value != nullptr && value[0] != '\0')
     {
         const int threadsPerBlock = std::atoi(value);
-        if (threadsPerBlock == 64 || threadsPerBlock == 128 || threadsPerBlock == 256
-            || threadsPerBlock == 512)
+        if ((threadsPerBlock == 64 || threadsPerBlock == 128 || threadsPerBlock == 256)
+            && threadsPerBlock <= c_threadsBondedPerBlock)
         {
             return threadsPerBlock;
         }
     }
     return c_threadsBondedPerBlock;
+}
+
+static bool improperClass2HasChiTerm(const gmx_ffparams_t& ffparams)
+{
+    for (size_t i = 0; i < ffparams.functype.size(); ++i)
+    {
+        if (ffparams.functype[i] == InteractionFunction::ImproperClass2
+            && ffparams.iparams[i].improper_class2.k0 != 0.0_real)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 ListedForcesGpu::Impl::Impl(const gmx_ffparams_t& ffparams,
@@ -144,6 +158,7 @@ ListedForcesGpu::Impl::Impl(const gmx_ffparams_t& ffparams,
 
     kernelParams_.electrostaticsScaleFactor = electrostaticsScaleFactor;
     kernelParams_.repulsionPower            = static_cast<int>(ffparams.reppow + 0.5);
+    kernelParams_.improperClass2HasChiTerm  = improperClass2HasChiTerm(ffparams);
     kernelBuffers_.d_forceParams            = d_forceParams_;
     kernelBuffers_.d_vTot                   = d_vTot_;
     for (int i = 0; i < numFTypesOnGpu; i++)

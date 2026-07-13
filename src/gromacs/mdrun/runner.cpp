@@ -837,6 +837,104 @@ static bool localStateHasFillerParticles(const gmx_mtop_t& mtop,
     return haveFillerParticlesInLocalState;
 }
 
+#if GMX_OPENMP
+static int exactRespaGpuOpenmpThreadLimit()
+{
+    constexpr int c_defaultExactRespaGpuOpenmpThreadLimit = 8;
+
+    const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_NTOMP_MAX");
+    if (value == nullptr || value[0] == '\0')
+    {
+        value = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_AUTO_NTOMP_MAX");
+    }
+    if (value == nullptr || value[0] == '\0')
+    {
+        return c_defaultExactRespaGpuOpenmpThreadLimit;
+    }
+
+    char* end         = nullptr;
+    long  parsedValue = std::strtol(value, &end, 10);
+    if (end == value || *end != '\0' || parsedValue < 0 || parsedValue > GMX_OPENMP_MAX_THREADS)
+    {
+        gmx_fatal(FARGS,
+                  "GMX_PCFF_EXACT_RESPA_GPU_NTOMP_MAX must be an integer in [0, %d], got '%s'",
+                  GMX_OPENMP_MAX_THREADS,
+                  value);
+    }
+
+    return static_cast<int>(parsedValue);
+}
+
+static bool exactRespaGpuOpenmpThreadLimitAppliesToExplicitRequests()
+{
+    const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_CAP_EXPLICIT_NTOMP");
+    if (value == nullptr || value[0] == '\0')
+    {
+        return true;
+    }
+    return std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0
+           && std::strcmp(value, "FALSE") != 0 && std::strcmp(value, "off") != 0;
+}
+
+#endif
+
+static void limitExactRespaGpuOpenmpThreads(const MDLogger&           mdlog,
+                                            const SimulationWorkload& simulationWork,
+                                            const t_inputrec&         inputrec,
+                                            const MdrunOptions&       mdrunOptions,
+                                            gmx_hw_opt_t*             hwOpt)
+{
+#if GMX_OPENMP
+    if (hwOpt == nullptr || !gmx::useExactRespa(inputrec) || !simulationWork.useGpuNonbonded)
+    {
+        return;
+    }
+
+    const bool explicitThreadRequest =
+            mdrunOptions.ntompOptionIsSet || std::getenv("OMP_NUM_THREADS") != nullptr
+            || !hwOpt->totNumThreadsIsAuto;
+    if (explicitThreadRequest && !exactRespaGpuOpenmpThreadLimitAppliesToExplicitRequests())
+    {
+        return;
+    }
+
+    const int threadLimit = exactRespaGpuOpenmpThreadLimit();
+    if (threadLimit <= 0 || (hwOpt->nthreads_omp > 0 && hwOpt->nthreads_omp <= threadLimit))
+    {
+        return;
+    }
+
+    // Exact r-RESPA GPU runs do several force copy-back/reduction passes per step.
+    // On the PCFF benchmark this regressed sharply above 8 OpenMP threads, so the
+    // cap is applied before module thread counts are initialized.
+    const int previousThreadCount = hwOpt->nthreads_omp;
+    hwOpt->nthreads_omp           = threadLimit;
+    if (hwOpt->nthreads_omp_pme <= 0 || hwOpt->nthreads_omp_pme > threadLimit)
+    {
+        hwOpt->nthreads_omp_pme = threadLimit;
+    }
+
+    const std::string previousThreadText =
+            previousThreadCount > 0 ? std::to_string(previousThreadCount) : "auto";
+    GMX_LOG(mdlog.info)
+            .asParagraph()
+            .appendTextFormatted(
+                    "Limiting OpenMP threads for exact r-RESPA GPU nonbonded to %d "
+                    "(previous %s value: %s). Set GMX_PCFF_EXACT_RESPA_GPU_NTOMP_MAX=0 "
+                    "to disable, or GMX_PCFF_EXACT_RESPA_GPU_CAP_EXPLICIT_NTOMP=0 to "
+                    "preserve explicit thread requests.",
+                    threadLimit,
+                    explicitThreadRequest ? "requested" : "automatic",
+                    previousThreadText.c_str());
+#else
+    GMX_UNUSED_VALUE(mdlog);
+    GMX_UNUSED_VALUE(simulationWork);
+    GMX_UNUSED_VALUE(inputrec);
+    GMX_UNUSED_VALUE(mdrunOptions);
+    GMX_UNUSED_VALUE(hwOpt);
+#endif
+}
+
 int Mdrunner::mdrunner()
 {
     std::unique_ptr<t_forcerec> fr;
@@ -1802,6 +1900,9 @@ int Mdrunner::mdrunner()
     /* Check and update the number of OpenMP threads requested */
     checkAndUpdateRequestedNumOpenmpThreads(
             &hw_opt, *hwinfo_, cr->commMySim, ms, physicalNodeComm.size_, pmeRunMode, mtop, *inputrec);
+
+    limitExactRespaGpuOpenmpThreads(
+            mdlog, runScheduleWork.simulationWork, *inputrec, mdrunOptions, &hw_opt);
 
     gmx_omp_nthreads_init(mdlog,
                           cr->commMySim,

@@ -78,7 +78,55 @@
 namespace gmx
 {
 
-template<bool calcVir, bool calcEner>
+namespace
+{
+
+constexpr int c_bondClass2GpuIndex     = 1;
+constexpr int c_angleClass2GpuIndex    = 4;
+constexpr int c_dihedralClass2GpuIndex = 7;
+constexpr int c_improperClass2GpuIndex = 9;
+
+static_assert(fTypesOnGpu[c_bondClass2GpuIndex] == InteractionFunction::BondClass2);
+static_assert(fTypesOnGpu[c_angleClass2GpuIndex] == InteractionFunction::AngleClass2);
+static_assert(fTypesOnGpu[c_dihedralClass2GpuIndex] == InteractionFunction::DihedralClass2);
+static_assert(fTypesOnGpu[c_improperClass2GpuIndex] == InteractionFunction::ImproperClass2);
+
+bool useSpecializedPcffClass2ForceKernel(const BondedGpuKernelParameters& kernelParams)
+{
+    static const bool enabled = [] {
+        const char* value = std::getenv("GMX_PCFF_GPU_BONDED_CLASS2_SPECIALIZED");
+        return value == nullptr || (std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0
+                                    && std::strcmp(value, "FALSE") != 0);
+    }();
+    if (!enabled)
+    {
+        return false;
+    }
+
+    bool haveClass2Interaction = false;
+    for (int gpuIndex = 0; gpuIndex < numFTypesOnGpu; ++gpuIndex)
+    {
+        if (kernelParams.numFTypeBonds[gpuIndex] == 0)
+        {
+            continue;
+        }
+        const InteractionFunction fType = kernelParams.fTypesOnGpu[gpuIndex];
+        const bool isClass2 = fType == InteractionFunction::BondClass2
+                              || fType == InteractionFunction::AngleClass2
+                              || fType == InteractionFunction::DihedralClass2
+                              || fType == InteractionFunction::ImproperClass2;
+        if (!isClass2)
+        {
+            return false;
+        }
+        haveClass2Interaction = true;
+    }
+    return haveClass2Interaction;
+}
+
+} // namespace
+
+template<bool calcVir, bool calcEner, bool allowImproperChiTerm>
 __global__ void bonded_kernel_gpu(BondedGpuKernelParameters kernelParams,
                                   BondedGpuKernelBuffers    kernelBuffers,
                                   float4*                   gm_xq_in,
@@ -234,15 +282,16 @@ __global__ void bonded_kernel_gpu(BondedGpuKernelParameters kernelParams,
                                                  threadIdx.x);
                     break;
                 case InteractionFunction::ImproperClass2:
-                    improper_class2_gpu<calcVir, calcEner>(fTypeTid,
-                                                           &vtot_loc,
-                                                           iatoms,
-                                                           kernelBuffers.d_forceParams,
-                                                           gm_xq,
-                                                           gm_f,
-                                                           sm_fShiftLoc,
-                                                           kernelParams.pbcAiuc,
-                                                           threadIdx.x);
+                    improper_class2_gpu<calcVir, calcEner, allowImproperChiTerm>(
+                            fTypeTid,
+                            &vtot_loc,
+                            iatoms,
+                            kernelBuffers.d_forceParams,
+                            gm_xq,
+                            gm_f,
+                            sm_fShiftLoc,
+                            kernelParams.pbcAiuc,
+                            threadIdx.x);
                     break;
                 case InteractionFunction::LennardJones14:
                     pairs_gpu<calcVir, calcEner>(fTypeTid,
@@ -305,6 +354,108 @@ __global__ void bonded_kernel_gpu(BondedGpuKernelParameters kernelParams,
     }
 }
 
+template<bool allowImproperChiTerm>
+__device__ __forceinline__ void pcffClass2ForceKernelBody(BondedGpuKernelParameters kernelParams,
+                                                         BondedGpuKernelBuffers    kernelBuffers,
+                                                         float4*                   gm_xq_in,
+                                                         float3*                   gm_f)
+{
+    GMX_DEVICE_ASSERT(blockDim.y == 1 && blockDim.z == 1);
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    static_assert(sizeof(DeviceFloat4) == sizeof(float4));
+    DeviceFloat4* gm_xq = reinterpret_cast<DeviceFloat4*>(gm_xq_in);
+
+    if (tid >= kernelParams.fTypeRangeStart[c_bondClass2GpuIndex]
+        && tid <= kernelParams.fTypeRangeEnd[c_bondClass2GpuIndex])
+    {
+        const int fTypeTid = tid - kernelParams.fTypeRangeStart[c_bondClass2GpuIndex];
+        if (fTypeTid < kernelParams.numFTypeBonds[c_bondClass2GpuIndex])
+        {
+            float ignoredEnergy = 0.0F;
+            bond_class2_gpu<false, false>(fTypeTid,
+                                          &ignoredEnergy,
+                                          kernelBuffers.d_iatoms[c_bondClass2GpuIndex],
+                                          kernelBuffers.d_forceParams,
+                                          gm_xq,
+                                          gm_f,
+                                          nullptr,
+                                          kernelParams.pbcAiuc,
+                                          kernelParams.pcffClass2DebugMode,
+                                          threadIdx.x);
+        }
+        return;
+    }
+    if (tid >= kernelParams.fTypeRangeStart[c_angleClass2GpuIndex]
+        && tid <= kernelParams.fTypeRangeEnd[c_angleClass2GpuIndex])
+    {
+        const int fTypeTid = tid - kernelParams.fTypeRangeStart[c_angleClass2GpuIndex];
+        if (fTypeTid < kernelParams.numFTypeBonds[c_angleClass2GpuIndex])
+        {
+            float ignoredEnergy = 0.0F;
+            angle_class2_gpu<false, false>(fTypeTid,
+                                           &ignoredEnergy,
+                                           kernelBuffers.d_iatoms[c_angleClass2GpuIndex],
+                                           kernelBuffers.d_forceParams,
+                                           gm_xq,
+                                           gm_f,
+                                           nullptr,
+                                           kernelParams.pbcAiuc,
+                                           kernelParams.pcffClass2DebugMode,
+                                           threadIdx.x);
+        }
+        return;
+    }
+    if (tid >= kernelParams.fTypeRangeStart[c_dihedralClass2GpuIndex]
+        && tid <= kernelParams.fTypeRangeEnd[c_dihedralClass2GpuIndex])
+    {
+        const int fTypeTid = tid - kernelParams.fTypeRangeStart[c_dihedralClass2GpuIndex];
+        if (fTypeTid < kernelParams.numFTypeBonds[c_dihedralClass2GpuIndex])
+        {
+            float ignoredEnergy = 0.0F;
+            dihedral_class2_gpu<false, false>(fTypeTid,
+                                              &ignoredEnergy,
+                                              kernelBuffers.d_iatoms[c_dihedralClass2GpuIndex],
+                                              kernelBuffers.d_forceParams,
+                                              gm_xq,
+                                              gm_f,
+                                              nullptr,
+                                              kernelParams.pbcAiuc,
+                                              threadIdx.x);
+        }
+        return;
+    }
+    if (tid >= kernelParams.fTypeRangeStart[c_improperClass2GpuIndex]
+        && tid <= kernelParams.fTypeRangeEnd[c_improperClass2GpuIndex])
+    {
+        const int fTypeTid = tid - kernelParams.fTypeRangeStart[c_improperClass2GpuIndex];
+        if (fTypeTid < kernelParams.numFTypeBonds[c_improperClass2GpuIndex])
+        {
+            float ignoredEnergy = 0.0F;
+            improper_class2_gpu<false, false, allowImproperChiTerm>(
+                    fTypeTid,
+                    &ignoredEnergy,
+                    kernelBuffers.d_iatoms[c_improperClass2GpuIndex],
+                    kernelBuffers.d_forceParams,
+                    gm_xq,
+                    gm_f,
+                    nullptr,
+                    kernelParams.pbcAiuc,
+                    threadIdx.x);
+        }
+    }
+}
+
+template<bool allowImproperChiTerm>
+__global__ void pcff_class2_force_kernel_gpu(BondedGpuKernelParameters kernelParams,
+                                             BondedGpuKernelBuffers    kernelBuffers,
+                                             float4*                   gm_xq_in,
+                                             float3*                   gm_f,
+                                             float3* /* gm_fShift */)
+{
+    pcffClass2ForceKernelBody<allowImproperChiTerm>(kernelParams, kernelBuffers, gm_xq_in, gm_f);
+}
+
 
 /*-------------------------------- End CUDA kernels-----------------------------*/
 
@@ -325,7 +476,32 @@ void ListedForcesGpu::Impl::launchKernel()
         return;
     }
 
-    auto kernelPtr = bonded_kernel_gpu<calcVir, calcEner>;
+    if constexpr (!calcVir && !calcEner)
+    {
+        if (useSpecializedPcffClass2ForceKernel(kernelParams_))
+        {
+            const auto launchSpecializedKernel = [&](auto kernelPtr, const char* kernelName)
+            {
+                KernelLaunchConfig launchConfig = kernelLaunchConfig_;
+                launchConfig.sharedMemorySize   = 0;
+                const auto kernelArgs = prepareGpuKernelArguments(
+                        kernelPtr, launchConfig, &kernelParams_, &kernelBuffers_, &d_xq_, &d_f_, &d_fShift_);
+                launchGpuKernel(
+                        kernelPtr, launchConfig, deviceStream_, nullptr, kernelName, kernelArgs);
+            };
+            auto kernelPtr = kernelParams_.improperClass2HasChiTerm
+                                     ? pcff_class2_force_kernel_gpu<true>
+                                     : pcff_class2_force_kernel_gpu<false>;
+            launchSpecializedKernel(kernelPtr, "pcff_class2_force_kernel_gpu");
+            wallcycle_sub_stop(wcycle_, WallCycleSubCounter::LaunchGpuBonded);
+            wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
+            return;
+        }
+    }
+
+    auto kernelPtr = kernelParams_.improperClass2HasChiTerm
+                             ? bonded_kernel_gpu<calcVir, calcEner, true>
+                             : bonded_kernel_gpu<calcVir, calcEner, false>;
 
     const auto kernelArgs = prepareGpuKernelArguments(
             kernelPtr, kernelLaunchConfig_, &kernelParams_, &kernelBuffers_, &d_xq_, &d_f_, &d_fShift_);

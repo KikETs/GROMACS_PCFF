@@ -325,6 +325,7 @@ OutputQuantities evaluateSinglePairInteraction(const ListInput&          input,
     mdatoms.chargeB    = chargeB;
     mdatoms.bPerturbed = perturbed;
     mdatoms.cENER      = egrp;
+    mdatoms.nenergrp   = 1;
     mdatoms.nPerturbed = 0;
 
     ForcerecHelper localFrHelper(repulsionPower);
@@ -336,8 +337,7 @@ OutputQuantities evaluateSinglePairInteraction(const ListInput&          input,
     StepWorkload stepWork;
     stepWork.computeEnergy = true;
 
-    const int numEnergyTerms = static_cast<int>(NonBondedEnergyTerms::Count);
-    OutputQuantities output(numEnergyTerms);
+    OutputQuantities output(mdatoms.nenergrp);
     std::vector<real> lambdas(static_cast<int>(FreeEnergyPerturbationCouplingType::Count), 0.0_real);
 
     do_pairs(input.fType.value(),
@@ -354,7 +354,7 @@ OutputQuantities evaluateSinglePairInteraction(const ListInput&          input,
              mdatoms.chargeB,
              makeArrayRef(mdatoms.bPerturbed),
              mdatoms.cENER,
-             mdatoms.nPerturbed,
+             mdatoms.nenergrp,
              fr,
              false,
              stepWork,
@@ -410,6 +410,7 @@ protected:
         mdatoms.chargeB    = chargeB;
         mdatoms.bPerturbed = perturbed;
         mdatoms.cENER      = egrp;
+        mdatoms.nenergrp   = 1;
         mdatoms.nPerturbed = 3;
 
         t_forcerec* fr = frHelper.get();
@@ -442,9 +443,8 @@ protected:
                 havePerturbedInteractions = false;
             }
 
-            int numEnergyTerms      = static_cast<int>(NonBondedEnergyTerms::Count);
             int numFepCouplingTerms = static_cast<int>(FreeEnergyPerturbationCouplingType::Count);
-            OutputQuantities  output(numEnergyTerms);
+            OutputQuantities  output(mdatoms.nenergrp);
             std::vector<real> lambdas(numFepCouplingTerms, lambda);
 
             do_pairs(input_.fType.value(),
@@ -461,7 +461,7 @@ protected:
                      mdatoms.chargeB,
                      makeArrayRef(mdatoms.bPerturbed),
                      mdatoms.cENER,
-                     mdatoms.nPerturbed,
+                     mdatoms.nenergrp,
                      fr,
                      havePerturbedInteractions,
                      stepWork,

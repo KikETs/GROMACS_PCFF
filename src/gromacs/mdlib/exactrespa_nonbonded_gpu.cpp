@@ -19,7 +19,9 @@
 #include "exactrespa_nonbonded_gpu_internal.h"
 
 #include "gromacs/gpu_utils/devicebuffer.h"
+#include "gromacs/gpu_utils/gpu_utils.h"
 #include "gromacs/gpu_utils/gputraits.h"
+#include "gromacs/gpu_utils/hostallocator.h"
 #include "gromacs/mdtypes/enerdata.h"
 #include "gromacs/mdtypes/exactrespaparameters.h"
 #include "gromacs/mdtypes/exactrespaschedule.h"
@@ -232,21 +234,21 @@ void addVirialContributionFromFlat(ForceWithVirial* output, const float* values,
     output->addVirialContribution(virial);
 }
 
-std::vector<ExactRespaGpuPairEntry> packPairEntries(const PlainPairlist& plainPairlist)
+int packPairEntries(const PlainPairlist& plainPairlist, HostVector<ExactRespaGpuPairEntry>* pairEntries)
 {
-    std::vector<ExactRespaGpuPairEntry> pairEntries;
-    pairEntries.reserve(plainPairlist.pairs.size() + plainPairlist.excludedPairs.size());
+    pairEntries->clear();
+    pairEntries->reserve(plainPairlist.pairs.size() + plainPairlist.excludedPairs.size());
 
     for (const auto& entry : plainPairlist.pairs)
     {
-        pairEntries.push_back({ entry.first.first, entry.first.second, entry.second, 0 });
+        pairEntries->push_back({ entry.first.first, entry.first.second, entry.second, 0 });
     }
     for (const auto& entry : plainPairlist.excludedPairs)
     {
-        pairEntries.push_back({ entry.first.first, entry.first.second, entry.second, 1 });
+        pairEntries->push_back({ entry.first.first, entry.first.second, entry.second, 1 });
     }
 
-    return pairEntries;
+    return static_cast<int>(plainPairlist.excludedPairs.size());
 }
 
 template<typename ValueType>
@@ -258,7 +260,116 @@ void freeDeviceBufferIfAllocated(DeviceBuffer<ValueType>* buffer)
     }
 }
 
+template<typename ValueType>
+struct CachedDeviceBuffer
+{
+    DeviceBuffer<ValueType> buffer       = nullptr;
+    int                     numValues    = 0;
+    int                     maxNumValues = -1;
+
+    ~CachedDeviceBuffer() { freeDeviceBufferIfAllocated(&buffer); }
+
+    void ensureCapacity(const size_t requestedValues, const DeviceContext& deviceContext)
+    {
+        reallocateDeviceBuffer(&buffer, requestedValues, &numValues, &maxNumValues, deviceContext);
+    }
+};
+
+struct CachedHostUpload
+{
+    const void* hostPtr   = nullptr;
+    size_t      numValues = 0;
+    float       scale     = 0.0F;
+    float       shift     = 0.0F;
+
+    bool shouldUpload(const void* newHostPtr, const size_t newNumValues)
+    {
+        const bool upload = hostPtr != newHostPtr || numValues != newNumValues;
+        hostPtr           = newHostPtr;
+        numValues         = newNumValues;
+        return upload;
+    }
+
+    bool shouldUpload(const void* newHostPtr, const size_t newNumValues, const float newScale, const float newShift)
+    {
+        const bool upload = hostPtr != newHostPtr || numValues != newNumValues || scale != newScale
+                            || shift != newShift;
+        hostPtr           = newHostPtr;
+        numValues         = newNumValues;
+        scale             = newScale;
+        shift             = newShift;
+        return upload;
+    }
+};
+
+GpuApiCallBehavior copyKindForHostBuffer(const void* hostBuffer)
+{
+    return (hostBuffer != nullptr && isHostMemoryPinned(hostBuffer)) ? GpuApiCallBehavior::Async
+                                                                     : GpuApiCallBehavior::Sync;
+}
+
+template<typename ValueType>
+const ValueType* pinnedHostBufferForGpuCopy(const ValueType*       hostBuffer,
+                                            const size_t           numValues,
+                                            HostVector<ValueType>* stagedBuffer)
+{
+    GMX_ASSERT(stagedBuffer != nullptr, "Need a pinned staging buffer");
+    if (numValues == 0 || hostBuffer == nullptr || isHostMemoryPinned(hostBuffer))
+    {
+        return hostBuffer;
+    }
+
+    stagedBuffer->assign(hostBuffer, hostBuffer + numValues);
+    return stagedBuffer->data();
+}
+
 } // namespace
+
+struct ExactRespaNonbondedGpuScratch
+{
+    HostVector<ExactRespaGpuPairEntry> pairEntriesHost = {
+        {}, HostAllocationPolicy(PinningPolicy::PinnedIfSupported)
+    };
+    bool         pairEntriesHostValid          = false;
+    const void* pairEntriesPairsPtr           = nullptr;
+    size_t       pairEntriesPairsCount         = 0;
+    const void* pairEntriesExcludedPairsPtr   = nullptr;
+    size_t       pairEntriesExcludedPairsCount = 0;
+    int          pairEntriesExcludedPairCount  = 0;
+    CachedDeviceBuffer<ExactRespaGpuPairEntry> pairEntries;
+    CachedDeviceBuffer<Float3>                 levelForces;
+    CachedDeviceBuffer<Float3>                 levelShiftForces;
+    CachedDeviceBuffer<float>                  levelEnergies;
+    CachedDeviceBuffer<float>                  levelVirials;
+    CachedDeviceBuffer<Float3>                 coordinates;
+    CachedDeviceBuffer<Float3>                 shiftVectors;
+    CachedDeviceBuffer<int>                    atomTypes;
+    CachedDeviceBuffer<float>                  atomCharges;
+    CachedDeviceBuffer<float>                  nbfp;
+    CachedDeviceBuffer<float>                  coulombTable;
+    HostVector<Float3>                         coordinatesHost = {
+        {}, HostAllocationPolicy(PinningPolicy::PinnedIfSupported)
+    };
+    HostVector<Float3> shiftVectorsHost = { {}, HostAllocationPolicy(PinningPolicy::PinnedIfSupported) };
+    HostVector<int>    atomTypesHost    = { {}, HostAllocationPolicy(PinningPolicy::PinnedIfSupported) };
+    HostVector<float> atomChargesHost = { {}, HostAllocationPolicy(PinningPolicy::PinnedIfSupported) };
+    HostVector<float> nbfpHost        = { {}, HostAllocationPolicy(PinningPolicy::PinnedIfSupported) };
+    HostVector<float> coulombTableHost = { {}, HostAllocationPolicy(PinningPolicy::PinnedIfSupported) };
+    HostVector<float>                          levelEnergiesHost = {
+        {}, HostAllocationPolicy(PinningPolicy::PinnedIfSupported)
+    };
+    HostVector<float> levelVirialsHost = { {}, HostAllocationPolicy(PinningPolicy::PinnedIfSupported) };
+    CachedHostUpload pairEntriesUpload;
+    CachedHostUpload atomTypesUpload;
+    CachedHostUpload atomChargesUpload;
+    CachedHostUpload                           nbfpUpload;
+    CachedHostUpload                           coulombTableUpload;
+};
+
+void ExactRespaNonbondedGpuScratchDeleter::operator()(ExactRespaNonbondedGpuScratch* scratch) const
+{
+    delete scratch;
+}
 
 bool exactRespaNonbondedGpuSupported(const t_inputrec& inputrec, const t_forcerec& fr)
 {
@@ -279,6 +390,8 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
 {
     static_assert(sizeof(real) == sizeof(float),
                   "CUDA exact r-RESPA GPU path currently supports mixed/single precision builds only");
+    static_assert(c_exactRespaGpuNumEnergyLevels == ExactRespaGpuOutputView::c_numLevels,
+                  "Exact r-RESPA GPU energy buffer layout must match the output level count");
 
     GMX_RELEASE_ASSERT(sizeof(real) == sizeof(float),
                        "CUDA exact r-RESPA GPU path currently supports mixed/single precision builds only");
@@ -307,12 +420,35 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
         return;
     }
 
+    if (fr->exactRespaNonbondedGpuScratch == nullptr)
+    {
+        fr->exactRespaNonbondedGpuScratch.reset(new ExactRespaNonbondedGpuScratch);
+    }
+    auto& scratch = *fr->exactRespaNonbondedGpuScratch;
+
     const auto& plainPairlist = fr->nbv->plainPairlist(fr->completePairlistRange.value(), fr->shift_vec);
-    const auto  pairEntries   = packPairEntries(plainPairlist);
-    const int   excludedPairCount =
-            static_cast<int>(std::count_if(pairEntries.begin(),
-                                           pairEntries.end(),
-                                           [](const ExactRespaGpuPairEntry& entry) { return entry.excluded != 0; }));
+    const void* pairsPtr =
+            plainPairlist.pairs.empty() ? nullptr : static_cast<const void*>(plainPairlist.pairs.data());
+    const void* excludedPairsPtr = plainPairlist.excludedPairs.empty()
+                                           ? nullptr
+                                           : static_cast<const void*>(plainPairlist.excludedPairs.data());
+    const bool rebuildPackedPairEntries =
+            stepWork.doNeighborSearch || !scratch.pairEntriesHostValid
+            || scratch.pairEntriesPairsPtr != pairsPtr
+            || scratch.pairEntriesPairsCount != plainPairlist.pairs.size()
+            || scratch.pairEntriesExcludedPairsPtr != excludedPairsPtr
+            || scratch.pairEntriesExcludedPairsCount != plainPairlist.excludedPairs.size();
+    if (rebuildPackedPairEntries)
+    {
+        scratch.pairEntriesExcludedPairCount = packPairEntries(plainPairlist, &scratch.pairEntriesHost);
+        scratch.pairEntriesHostValid         = true;
+        scratch.pairEntriesPairsPtr          = pairsPtr;
+        scratch.pairEntriesPairsCount        = plainPairlist.pairs.size();
+        scratch.pairEntriesExcludedPairsPtr  = excludedPairsPtr;
+        scratch.pairEntriesExcludedPairsCount = plainPairlist.excludedPairs.size();
+    }
+    const int   excludedPairCount = scratch.pairEntriesExcludedPairCount;
+    const auto& pairEntries       = scratch.pairEntriesHost;
     const int pairCount = static_cast<int>(pairEntries.size()) - excludedPairCount;
     if (pairEntries.empty())
     {
@@ -381,114 +517,208 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
     {
         params.accumulateEnergyMask |= (1 << params.outerLevel);
     }
+    const bool accumulateAnyEnergy = params.accumulateEnergyMask != 0;
+    const bool accumulateAnyShift  = params.shiftLevelMask != 0;
+    const bool accumulateAnyDirectVirial = params.directVirialLevelMask != 0;
 
-    DeviceBuffer<ExactRespaGpuPairEntry> d_pairEntries = nullptr;
-    DeviceBuffer<Float3>                 d_levelForces = nullptr;
-    DeviceBuffer<Float3>                 d_levelShiftForces = nullptr;
-    DeviceBuffer<float>                  d_levelLjEnergies = nullptr;
-    DeviceBuffer<float>                  d_levelCoulombEnergies = nullptr;
-    DeviceBuffer<float>                  d_levelExcludedCoulombEnergies = nullptr;
-    DeviceBuffer<float>                  d_levelVirials = nullptr;
-    DeviceBuffer<Float3>                 d_coordinates = nullptr;
-    DeviceBuffer<Float3>                 d_shiftVectors = nullptr;
-    DeviceBuffer<int>                    d_atomTypes = nullptr;
-    DeviceBuffer<float>                  d_atomCharges = nullptr;
-    DeviceBuffer<float>                  d_nbfp = nullptr;
-    DeviceBuffer<float>                  d_coulombTable = nullptr;
-
-    allocateDeviceBuffer(&d_pairEntries, pairEntries.size(), deviceContext);
-    allocateDeviceBuffer(&d_levelForces,
-                         ExactRespaGpuOutputView::c_numLevels * static_cast<int>(coordinates.size()),
-                         deviceContext);
-    allocateDeviceBuffer(&d_levelShiftForces,
-                         ExactRespaGpuOutputView::c_numLevels * c_numShiftVectors,
-                         deviceContext);
-    allocateDeviceBuffer(&d_levelLjEnergies, ExactRespaGpuOutputView::c_numLevels, deviceContext);
-    allocateDeviceBuffer(&d_levelCoulombEnergies, ExactRespaGpuOutputView::c_numLevels, deviceContext);
-    allocateDeviceBuffer(&d_levelExcludedCoulombEnergies,
-                         ExactRespaGpuOutputView::c_numLevels,
-                         deviceContext);
-    allocateDeviceBuffer(&d_levelVirials, ExactRespaGpuOutputView::c_numLevels * DIM * DIM, deviceContext);
-    allocateDeviceBuffer(&d_coordinates, coordinates.size(), deviceContext);
-    allocateDeviceBuffer(&d_shiftVectors, fr->shift_vec.size(), deviceContext);
-    allocateDeviceBuffer(&d_atomTypes, mdatoms.typeA.size(), deviceContext);
-    allocateDeviceBuffer(&d_atomCharges, mdatoms.chargeA.size(), deviceContext);
-    allocateDeviceBuffer(&d_nbfp, fr->nbfp.size(), deviceContext);
+    scratch.pairEntries.ensureCapacity(pairEntries.size(), deviceContext);
+    scratch.levelForces.ensureCapacity(
+            ExactRespaGpuOutputView::c_numLevels * static_cast<int>(coordinates.size()), deviceContext);
+    if (accumulateAnyShift)
+    {
+        scratch.levelShiftForces.ensureCapacity(ExactRespaGpuOutputView::c_numLevels * c_numShiftVectors,
+                                                deviceContext);
+    }
+    if (accumulateAnyEnergy)
+    {
+        scratch.levelEnergies.ensureCapacity(c_exactRespaGpuNumEnergyValues, deviceContext);
+    }
+    if (accumulateAnyDirectVirial)
+    {
+        scratch.levelVirials.ensureCapacity(ExactRespaGpuOutputView::c_numLevels * DIM * DIM,
+                                            deviceContext);
+    }
+    scratch.coordinates.ensureCapacity(coordinates.size(), deviceContext);
+    scratch.shiftVectors.ensureCapacity(fr->shift_vec.size(), deviceContext);
+    scratch.atomTypes.ensureCapacity(mdatoms.typeA.size(), deviceContext);
+    scratch.atomCharges.ensureCapacity(mdatoms.chargeA.size(), deviceContext);
+    scratch.nbfp.ensureCapacity(fr->nbfp.size(), deviceContext);
     if (usingEwaldCoulomb)
     {
-        allocateDeviceBuffer(&d_coulombTable,
-                             fr->ic->coulombEwaldTables->tableFDV0.size(),
-                             deviceContext);
+        scratch.coulombTable.ensureCapacity(fr->ic->coulombEwaldTables->tableFDV0.size(),
+                                            deviceContext);
     }
 
-    clearDeviceBufferAsync(&d_levelForces,
-                           0,
-                           ExactRespaGpuOutputView::c_numLevels * static_cast<int>(coordinates.size()),
-                           deviceStream);
-    clearDeviceBufferAsync(
-            &d_levelShiftForces, 0, ExactRespaGpuOutputView::c_numLevels * c_numShiftVectors, deviceStream);
-    clearDeviceBufferAsync(&d_levelLjEnergies, 0, ExactRespaGpuOutputView::c_numLevels, deviceStream);
-    clearDeviceBufferAsync(&d_levelCoulombEnergies, 0, ExactRespaGpuOutputView::c_numLevels, deviceStream);
-    clearDeviceBufferAsync(&d_levelExcludedCoulombEnergies,
-                           0,
-                           ExactRespaGpuOutputView::c_numLevels,
-                           deviceStream);
-    clearDeviceBufferAsync(&d_levelVirials,
-                           0,
-                           ExactRespaGpuOutputView::c_numLevels * DIM * DIM,
-                           deviceStream);
+    auto& d_pairEntries                  = scratch.pairEntries.buffer;
+    auto& d_levelForces                  = scratch.levelForces.buffer;
+    auto& d_levelShiftForces             = scratch.levelShiftForces.buffer;
+    auto& d_levelEnergies                = scratch.levelEnergies.buffer;
+    auto& d_levelVirials                 = scratch.levelVirials.buffer;
+    auto& d_coordinates                  = scratch.coordinates.buffer;
+    auto& d_shiftVectors                 = scratch.shiftVectors.buffer;
+    auto& d_atomTypes                    = scratch.atomTypes.buffer;
+    auto& d_atomCharges                  = scratch.atomCharges.buffer;
+    auto& d_nbfp                         = scratch.nbfp.buffer;
+    auto& d_coulombTable                 = scratch.coulombTable.buffer;
 
-    copyToDeviceBuffer(&d_pairEntries,
-                       pairEntries.data(),
-                       0,
-                       pairEntries.size(),
-                       deviceStream,
-                       GpuApiCallBehavior::Sync,
-                       nullptr);
+    const int numAtoms = static_cast<int>(coordinates.size());
+    for (int level = 0; level < ExactRespaGpuOutputView::c_numLevels; ++level)
+    {
+        if ((params.activeLevelMask & (1 << level)) == 0)
+        {
+            continue;
+        }
+        clearDeviceBufferAsync(&d_levelForces, level * numAtoms, numAtoms, deviceStream);
+    }
+    if (accumulateAnyShift)
+    {
+        for (int level = 0; level < ExactRespaGpuOutputView::c_numLevels; ++level)
+        {
+            if ((params.shiftLevelMask & (1 << level)) == 0)
+            {
+                continue;
+            }
+            clearDeviceBufferAsync(&d_levelShiftForces,
+                                   level * c_numShiftVectors,
+                                   c_numShiftVectors,
+                                   deviceStream);
+        }
+    }
+    if (accumulateAnyEnergy)
+    {
+        for (int level = 0; level < ExactRespaGpuOutputView::c_numLevels; ++level)
+        {
+            if ((params.accumulateEnergyMask & (1 << level)) == 0)
+            {
+                continue;
+            }
+            clearDeviceBufferAsync(&d_levelEnergies,
+                                   c_exactRespaGpuLjEnergyOffset + level,
+                                   1,
+                                   deviceStream);
+            clearDeviceBufferAsync(&d_levelEnergies,
+                                   c_exactRespaGpuCoulombEnergyOffset + level,
+                                   1,
+                                   deviceStream);
+            clearDeviceBufferAsync(&d_levelEnergies,
+                                   c_exactRespaGpuExcludedCoulombEnergyOffset + level,
+                                   1,
+                                   deviceStream);
+        }
+    }
+    if (accumulateAnyDirectVirial)
+    {
+        for (int level = 0; level < ExactRespaGpuOutputView::c_numLevels; ++level)
+        {
+            if ((params.directVirialLevelMask & (1 << level)) == 0)
+            {
+                continue;
+            }
+            clearDeviceBufferAsync(&d_levelVirials, level * DIM * DIM, DIM * DIM, deviceStream);
+        }
+    }
+
+    bool pendingAsyncGpuWork = false;
+    const Float3* h_coordinates =
+            pinnedHostBufferForGpuCopy(asGenericFloat3Pointer(coordinates.data()),
+                                       coordinates.size(),
+                                       &scratch.coordinatesHost);
+    const Float3* h_shiftVectors = pinnedHostBufferForGpuCopy(asGenericFloat3Pointer(fr->shift_vec.data()),
+                                                              fr->shift_vec.size(),
+                                                              &scratch.shiftVectorsHost);
+
+    const bool pairEntriesPointerOrSizeChanged =
+            scratch.pairEntriesUpload.shouldUpload(pairEntries.data(), pairEntries.size());
+    if (stepWork.doNeighborSearch || pairEntriesPointerOrSizeChanged)
+    {
+        copyToDeviceBuffer(&d_pairEntries,
+                           pairEntries.data(),
+                           0,
+                           pairEntries.size(),
+                           deviceStream,
+                           GpuApiCallBehavior::Async,
+                           nullptr);
+        pendingAsyncGpuWork = true;
+    }
     copyToDeviceBuffer(&d_coordinates,
-                       asGenericFloat3Pointer(coordinates.data()),
+                       h_coordinates,
                        0,
                        coordinates.size(),
                        deviceStream,
-                       GpuApiCallBehavior::Sync,
+                       GpuApiCallBehavior::Async,
                        nullptr);
+    pendingAsyncGpuWork = true;
     copyToDeviceBuffer(&d_shiftVectors,
-                       asGenericFloat3Pointer(fr->shift_vec),
+                       h_shiftVectors,
                        0,
                        fr->shift_vec.size(),
                        deviceStream,
-                       GpuApiCallBehavior::Sync,
+                       GpuApiCallBehavior::Async,
                        nullptr);
-    copyToDeviceBuffer(&d_atomTypes,
-                       mdatoms.typeA.data(),
-                       0,
-                       mdatoms.typeA.size(),
-                       deviceStream,
-                       GpuApiCallBehavior::Sync,
-                       nullptr);
-    copyToDeviceBuffer(&d_atomCharges,
-                       mdatoms.chargeA.data(),
-                       0,
-                       mdatoms.chargeA.size(),
-                       deviceStream,
-                       GpuApiCallBehavior::Sync,
-                       nullptr);
-    copyToDeviceBuffer(&d_nbfp,
-                       fr->nbfp.data(),
-                       0,
-                       fr->nbfp.size(),
-                       deviceStream,
-                       GpuApiCallBehavior::Sync,
-                       nullptr);
+    pendingAsyncGpuWork = true;
+    const bool uploadAtomTypes = mdatoms.nTypePerturbed != 0
+                                 || scratch.atomTypesUpload.shouldUpload(mdatoms.typeA.data(),
+                                                                         mdatoms.typeA.size());
+    if (uploadAtomTypes)
+    {
+        const int* h_atomTypes = pinnedHostBufferForGpuCopy(mdatoms.typeA.data(),
+                                                            mdatoms.typeA.size(),
+                                                            &scratch.atomTypesHost);
+        copyToDeviceBuffer(&d_atomTypes,
+                           h_atomTypes,
+                           0,
+                           mdatoms.typeA.size(),
+                           deviceStream,
+                           GpuApiCallBehavior::Async,
+                           nullptr);
+        pendingAsyncGpuWork = true;
+    }
+    const bool uploadAtomCharges = mdatoms.nChargePerturbed != 0
+                                   || scratch.atomChargesUpload.shouldUpload(mdatoms.chargeA.data(),
+                                                                             mdatoms.chargeA.size());
+    if (uploadAtomCharges)
+    {
+        const float* h_atomCharges = pinnedHostBufferForGpuCopy(mdatoms.chargeA.data(),
+                                                                mdatoms.chargeA.size(),
+                                                                &scratch.atomChargesHost);
+        copyToDeviceBuffer(&d_atomCharges,
+                           h_atomCharges,
+                           0,
+                           mdatoms.chargeA.size(),
+                           deviceStream,
+                           GpuApiCallBehavior::Async,
+                           nullptr);
+        pendingAsyncGpuWork = true;
+    }
+    if (scratch.nbfpUpload.shouldUpload(fr->nbfp.data(), fr->nbfp.size()))
+    {
+        const float* h_nbfp = pinnedHostBufferForGpuCopy(fr->nbfp.data(), fr->nbfp.size(), &scratch.nbfpHost);
+        copyToDeviceBuffer(&d_nbfp,
+                           h_nbfp,
+                           0,
+                           fr->nbfp.size(),
+                           deviceStream,
+                           GpuApiCallBehavior::Async,
+                           nullptr);
+        pendingAsyncGpuWork = true;
+    }
     if (usingEwaldCoulomb)
     {
-        copyToDeviceBuffer(&d_coulombTable,
-                           fr->ic->coulombEwaldTables->tableFDV0.data(),
-                           0,
-                           fr->ic->coulombEwaldTables->tableFDV0.size(),
-                           deviceStream,
-                           GpuApiCallBehavior::Sync,
-                           nullptr);
+        const auto& ewaldTable = fr->ic->coulombEwaldTables->tableFDV0;
+        if (scratch.coulombTableUpload.shouldUpload(
+                    ewaldTable.data(), ewaldTable.size(), params.coulombTableScale, params.ewaldShift))
+        {
+            const float* h_coulombTable = pinnedHostBufferForGpuCopy(
+                    ewaldTable.data(), ewaldTable.size(), &scratch.coulombTableHost);
+            copyToDeviceBuffer(&d_coulombTable,
+                               h_coulombTable,
+                               0,
+                               ewaldTable.size(),
+                               deviceStream,
+                               GpuApiCallBehavior::Async,
+                               nullptr);
+            pendingAsyncGpuWork = true;
+        }
     }
 
     launchExactRespaNonbondedGpuKernel(params,
@@ -501,16 +731,15 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
                                        d_coulombTable,
                                        d_levelForces,
                                        d_levelShiftForces,
-                                       d_levelLjEnergies,
-                                       d_levelCoulombEnergies,
-                                       d_levelExcludedCoulombEnergies,
+                                       d_levelEnergies,
                                        d_levelVirials,
                                        deviceStream);
 
-    std::array<float, ExactRespaGpuOutputView::c_numLevels> h_levelLjEnergies = { 0.0F, 0.0F, 0.0F };
-    std::array<float, ExactRespaGpuOutputView::c_numLevels> h_levelCoulombEnergies = { 0.0F, 0.0F, 0.0F };
-    std::array<float, ExactRespaGpuOutputView::c_numLevels> h_levelExcludedCoulombEnergies = { 0.0F, 0.0F, 0.0F };
-    std::array<float, ExactRespaGpuOutputView::c_numLevels * DIM * DIM> h_levelVirials = {};
+    bool pendingAsyncReadback = false;
+    scratch.levelEnergiesHost.resize(accumulateAnyEnergy ? c_exactRespaGpuNumEnergyValues : 0);
+    scratch.levelVirialsHost.resize(accumulateAnyDirectVirial
+                                            ? ExactRespaGpuOutputView::c_numLevels * DIM * DIM
+                                            : 0);
 
     for (int level = 0; level < ExactRespaGpuOutputView::c_numLevels; ++level)
     {
@@ -519,55 +748,62 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
             continue;
         }
 
+        const GpuApiCallBehavior forceCopyKind =
+                copyKindForHostBuffer(outputView.levels[level].force.data());
+        pendingAsyncReadback = pendingAsyncReadback || forceCopyKind == GpuApiCallBehavior::Async;
         copyFromDeviceBuffer(asGenericFloat3Pointer(outputView.levels[level].force.data()),
                              &d_levelForces,
                              level * params.numAtoms,
                              params.numAtoms,
                              deviceStream,
-                             GpuApiCallBehavior::Sync,
+                             forceCopyKind,
                              nullptr);
         if (!outputView.levels[level].shift.empty())
         {
+            const GpuApiCallBehavior shiftCopyKind =
+                    copyKindForHostBuffer(outputView.levels[level].shift.data());
+            pendingAsyncReadback = pendingAsyncReadback
+                                   || shiftCopyKind == GpuApiCallBehavior::Async;
             copyFromDeviceBuffer(asGenericFloat3Pointer(outputView.levels[level].shift.data()),
                                  &d_levelShiftForces,
                                  level * c_numShiftVectors,
                                  c_numShiftVectors,
                                  deviceStream,
-                                 GpuApiCallBehavior::Sync,
+                                 shiftCopyKind,
                                  nullptr);
         }
     }
 
-    copyFromDeviceBuffer(h_levelLjEnergies.data(),
-                         &d_levelLjEnergies,
-                         0,
-                         ExactRespaGpuOutputView::c_numLevels,
-                         deviceStream,
-                         GpuApiCallBehavior::Sync,
-                         nullptr);
-    copyFromDeviceBuffer(h_levelCoulombEnergies.data(),
-                         &d_levelCoulombEnergies,
-                         0,
-                         ExactRespaGpuOutputView::c_numLevels,
-                         deviceStream,
-                         GpuApiCallBehavior::Sync,
-                         nullptr);
-    copyFromDeviceBuffer(h_levelExcludedCoulombEnergies.data(),
-                         &d_levelExcludedCoulombEnergies,
-                         0,
-                         ExactRespaGpuOutputView::c_numLevels,
-                         deviceStream,
-                         GpuApiCallBehavior::Sync,
-                         nullptr);
-    if (anyDirectVirialLevel(outputView))
+    if (accumulateAnyEnergy)
     {
-        copyFromDeviceBuffer(h_levelVirials.data(),
+        const GpuApiCallBehavior energyCopyKind =
+                copyKindForHostBuffer(scratch.levelEnergiesHost.data());
+        pendingAsyncReadback = pendingAsyncReadback || energyCopyKind == GpuApiCallBehavior::Async;
+        copyFromDeviceBuffer(scratch.levelEnergiesHost.data(),
+                             &d_levelEnergies,
+                             0,
+                             c_exactRespaGpuNumEnergyValues,
+                             deviceStream,
+                             energyCopyKind,
+                             nullptr);
+    }
+    if (accumulateAnyDirectVirial)
+    {
+        const GpuApiCallBehavior virialCopyKind =
+                copyKindForHostBuffer(scratch.levelVirialsHost.data());
+        pendingAsyncReadback = pendingAsyncReadback || virialCopyKind == GpuApiCallBehavior::Async;
+        copyFromDeviceBuffer(scratch.levelVirialsHost.data(),
                              &d_levelVirials,
                              0,
                              ExactRespaGpuOutputView::c_numLevels * DIM * DIM,
                              deviceStream,
-                             GpuApiCallBehavior::Sync,
+                             virialCopyKind,
                              nullptr);
+    }
+
+    if (pendingAsyncGpuWork || pendingAsyncReadback)
+    {
+        deviceStream.synchronize();
     }
 
     for (int level = 0; level < ExactRespaGpuOutputView::c_numLevels; ++level)
@@ -575,15 +811,24 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
         if (outputView.levels[level].active && outputView.levels[level].directVirialOutput != nullptr)
         {
             addVirialContributionFromFlat(
-                    outputView.levels[level].directVirialOutput, h_levelVirials.data(), level);
+                    outputView.levels[level].directVirialOutput,
+                    scratch.levelVirialsHost.data(),
+                    level);
         }
     }
 
     if ((params.accumulateEnergyMask & (1 << params.outerLevel)) != 0)
     {
-        enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::LJSR][0] += h_levelLjEnergies[params.outerLevel];
+        const float levelLjEnergy =
+                scratch.levelEnergiesHost[c_exactRespaGpuLjEnergyOffset + params.outerLevel];
+        const float levelCoulombEnergy =
+                scratch.levelEnergiesHost[c_exactRespaGpuCoulombEnergyOffset + params.outerLevel];
+        const float levelExcludedCoulombEnergy =
+                scratch.levelEnergiesHost[c_exactRespaGpuExcludedCoulombEnergyOffset + params.outerLevel];
+
+        enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::LJSR][0] += levelLjEnergy;
         enerd->grpp.energyGroupPairTerms[NonBondedEnergyTerms::CoulombSR][0] +=
-                h_levelCoulombEnergies[params.outerLevel];
+                levelCoulombEnergy;
 
         float       selfEnergyTotal = 0.0F;
         int         selfEnergyCount = 0;
@@ -608,11 +853,11 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
             const double reciprocalEnergy =
                     static_cast<double>(enerd->term[InteractionFunction::CoulombReciprocalSpace]);
             const double excludedCorrectionEnergy =
-                    static_cast<double>(h_levelExcludedCoulombEnergies[params.outerLevel]);
-            const double shortRangePairEnergy =
-                    static_cast<double>(h_levelCoulombEnergies[params.outerLevel]) - excludedCorrectionEnergy;
+                    static_cast<double>(levelExcludedCoulombEnergy);
+            const double shortRangePairEnergy = static_cast<double>(levelCoulombEnergy)
+                                                - excludedCorrectionEnergy;
             const double shortRangeTotalEnergy =
-                    static_cast<double>(h_levelCoulombEnergies[params.outerLevel]) + selfEnergyTotal;
+                    static_cast<double>(levelCoulombEnergy) + selfEnergyTotal;
             appendCpuCorrectionEnergyTrace(step,
                                            params.outerLevel,
                                            "gpu_offload_enabled",
@@ -628,29 +873,23 @@ void computeExactRespaNonbondedGpu(const t_inputrec&              inputrec,
         }
     }
 
-    freeDeviceBufferIfAllocated(&d_levelExcludedCoulombEnergies);
-    freeDeviceBufferIfAllocated(&d_coulombTable);
-    freeDeviceBufferIfAllocated(&d_nbfp);
-    freeDeviceBufferIfAllocated(&d_atomCharges);
-    freeDeviceBufferIfAllocated(&d_atomTypes);
-    freeDeviceBufferIfAllocated(&d_shiftVectors);
-    freeDeviceBufferIfAllocated(&d_coordinates);
-    freeDeviceBufferIfAllocated(&d_levelVirials);
-    freeDeviceBufferIfAllocated(&d_levelCoulombEnergies);
-    freeDeviceBufferIfAllocated(&d_levelLjEnergies);
-    freeDeviceBufferIfAllocated(&d_levelShiftForces);
-    freeDeviceBufferIfAllocated(&d_levelForces);
-    freeDeviceBufferIfAllocated(&d_pairEntries);
 }
 
 } // namespace gmx
 
 #else
 
+#include "gromacs/mdtypes/forcerec.h"
 #include "gromacs/utility/gmxassert.h"
 
 namespace gmx
 {
+
+void ExactRespaNonbondedGpuScratchDeleter::operator()(ExactRespaNonbondedGpuScratch* scratch) const
+{
+    GMX_RELEASE_ASSERT(scratch == nullptr,
+                       "Exact r-RESPA GPU scratch should not be allocated in non-CUDA builds");
+}
 
 bool exactRespaNonbondedGpuSupported(const t_inputrec&, const t_forcerec&)
 {

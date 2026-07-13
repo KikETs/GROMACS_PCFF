@@ -106,6 +106,8 @@ struct BondedGpuKernelParameters
     int fTypeRangeEnd[numFTypesOnGpu];
     //! Debug-only selector for tracing PCFF/class2 subterms.
     int pcffClass2DebugMode;
+    //! Whether any improper class2 parameter needs the chi term on the GPU.
+    bool improperClass2HasChiTerm;
     BondedGpuKernelParameters()
     {
         matrix boxDummy = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
@@ -113,6 +115,7 @@ struct BondedGpuKernelParameters
         electrostaticsScaleFactor = 1.0F;
         repulsionPower            = 12;
         pcffClass2DebugMode       = static_cast<int>(PcffClass2DebugMode::None);
+        improperClass2HasChiTerm  = true;
     }
 };
 struct BondedGpuKernelBuffers

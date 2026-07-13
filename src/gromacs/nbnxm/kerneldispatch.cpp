@@ -165,6 +165,75 @@ bool shouldTraceMultiStepCoulombStep(const int64_t step)
     return std::find(traceSteps.begin(), traceSteps.end(), step) != traceSteps.end();
 }
 
+struct NbnxmM2TraceEnv
+{
+    const char* m2wTraceDirPath = nullptr;
+    const char* m2wCaseLabel    = nullptr;
+    bool        dumpM2wTrace    = false;
+    const char* m2xTraceDirPath = nullptr;
+    const char* m2xCaseLabel    = nullptr;
+    bool        dumpM2xTrace    = false;
+    const char* m2vTraceDirPath = nullptr;
+    const char* m2vCaseLabel    = nullptr;
+    bool        dumpM2vTrace    = false;
+    const char* m2uTraceDirPath = nullptr;
+    const char* m2uCaseLabel    = nullptr;
+    bool        dumpM2uTrace    = false;
+    const char* m2sTraceDirPath = nullptr;
+    const char* m2sCaseLabel    = nullptr;
+    bool        dumpM2sTrace    = false;
+    const char* m2rTraceDirPath = nullptr;
+    const char* m2rCaseLabel    = nullptr;
+    bool        dumpM2rTrace    = false;
+    const char* m2qTraceDirPath = nullptr;
+    const char* m2qCaseLabel    = nullptr;
+    bool        dumpM2qTrace    = false;
+    const char* m2pTraceDirPath = nullptr;
+    const char* m2pCaseLabel    = nullptr;
+    bool        dumpM2pTrace    = false;
+};
+
+const NbnxmM2TraceEnv& nbnxmM2TraceEnv()
+{
+    static const NbnxmM2TraceEnv env = [] {
+        NbnxmM2TraceEnv result;
+        result.m2wTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2W_TRACE_DIR");
+        result.m2wCaseLabel    = std::getenv("GMX_PCFF_RESPA_M2W_CASE_LABEL");
+        result.dumpM2wTrace =
+                (result.m2wTraceDirPath != nullptr && *result.m2wTraceDirPath != '\0');
+        result.m2xTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2X_TRACE_DIR");
+        result.m2xCaseLabel    = std::getenv("GMX_PCFF_RESPA_M2X_CASE_LABEL");
+        result.dumpM2xTrace =
+                (result.m2xTraceDirPath != nullptr && *result.m2xTraceDirPath != '\0');
+        result.m2vTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2V_TRACE_DIR");
+        result.m2vCaseLabel    = std::getenv("GMX_PCFF_RESPA_M2V_CASE_LABEL");
+        result.dumpM2vTrace =
+                (result.m2vTraceDirPath != nullptr && *result.m2vTraceDirPath != '\0');
+        result.m2uTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2U_TRACE_DIR");
+        result.m2uCaseLabel    = std::getenv("GMX_PCFF_RESPA_M2U_CASE_LABEL");
+        result.dumpM2uTrace =
+                (result.m2uTraceDirPath != nullptr && *result.m2uTraceDirPath != '\0');
+        result.m2sTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2S_TRACE_DIR");
+        result.m2sCaseLabel    = std::getenv("GMX_PCFF_RESPA_M2S_CASE_LABEL");
+        result.dumpM2sTrace =
+                (result.m2sTraceDirPath != nullptr && *result.m2sTraceDirPath != '\0');
+        result.m2rTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2R_TRACE_DIR");
+        result.m2rCaseLabel    = std::getenv("GMX_PCFF_RESPA_M2R_CASE_LABEL");
+        result.dumpM2rTrace =
+                (result.m2rTraceDirPath != nullptr && *result.m2rTraceDirPath != '\0');
+        result.m2qTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2Q_TRACE_DIR");
+        result.m2qCaseLabel    = std::getenv("GMX_PCFF_RESPA_M2Q_CASE_LABEL");
+        result.dumpM2qTrace =
+                (result.m2qTraceDirPath != nullptr && *result.m2qTraceDirPath != '\0');
+        result.m2pTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+        result.m2pCaseLabel    = std::getenv("GMX_PCFF_RESPA_M2P_CASE_LABEL");
+        result.dumpM2pTrace =
+                (result.m2pTraceDirPath != nullptr && *result.m2pTraceDirPath != '\0');
+        return result;
+    }();
+    return env;
+}
+
 struct KernelEnergyReadTrace
 {
     double firstReadTotal = 0.0;
@@ -390,30 +459,29 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
                                        ic.vdw.pmeCombinationRule);
 
     const bool usingSimdKernel = kernelTypeIsSimd(kernelSetup.kernelType);
-    const char* m2wTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2W_TRACE_DIR");
-    const char* m2wCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2W_CASE_LABEL");
-    const bool  dumpM2wTrace = (m2wTraceDirPath != nullptr && *m2wTraceDirPath != '\0');
-    const char* m2xTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2X_TRACE_DIR");
-    const char* gmx_unused m2xCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2X_CASE_LABEL");
-    const bool  dumpM2xTrace = (m2xTraceDirPath != nullptr && *m2xTraceDirPath != '\0');
-    const char* m2vTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2V_TRACE_DIR");
-    const char* m2vCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2V_CASE_LABEL");
-    const bool  dumpM2vTrace = (m2vTraceDirPath != nullptr && *m2vTraceDirPath != '\0');
-    const char* m2uTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2U_TRACE_DIR");
-    const char* m2uCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2U_CASE_LABEL");
-    const bool  dumpM2uTrace = (m2uTraceDirPath != nullptr && *m2uTraceDirPath != '\0');
-    const char* m2sTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2S_TRACE_DIR");
-    const char* m2sCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2S_CASE_LABEL");
-    const bool  dumpM2sTrace = (m2sTraceDirPath != nullptr && *m2sTraceDirPath != '\0');
-    const char* m2rTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2R_TRACE_DIR");
-    const char* m2rCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2R_CASE_LABEL");
-    const bool  dumpM2rTrace = (m2rTraceDirPath != nullptr && *m2rTraceDirPath != '\0');
-    const char* m2qTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2Q_TRACE_DIR");
-    const char* m2qCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2Q_CASE_LABEL");
-    const bool  dumpM2qTrace = (m2qTraceDirPath != nullptr && *m2qTraceDirPath != '\0');
-    const char* m2pTraceDirPath = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
-    const char* m2pCaseLabelEnv = std::getenv("GMX_PCFF_RESPA_M2P_CASE_LABEL");
-    const bool  dumpM2pTrace = (m2pTraceDirPath != nullptr && *m2pTraceDirPath != '\0');
+    const auto& m2TraceEnv = nbnxmM2TraceEnv();
+    const char* m2wTraceDirPath = m2TraceEnv.m2wTraceDirPath;
+    const char* m2wCaseLabelEnv = m2TraceEnv.m2wCaseLabel;
+    const bool  dumpM2wTrace = m2TraceEnv.dumpM2wTrace;
+    const bool  dumpM2xTrace = m2TraceEnv.dumpM2xTrace;
+    const char* m2vTraceDirPath = m2TraceEnv.m2vTraceDirPath;
+    const char* m2vCaseLabelEnv = m2TraceEnv.m2vCaseLabel;
+    const bool  dumpM2vTrace = m2TraceEnv.dumpM2vTrace;
+    const char* m2uTraceDirPath = m2TraceEnv.m2uTraceDirPath;
+    const char* m2uCaseLabelEnv = m2TraceEnv.m2uCaseLabel;
+    const bool  dumpM2uTrace = m2TraceEnv.dumpM2uTrace;
+    const char* m2sTraceDirPath = m2TraceEnv.m2sTraceDirPath;
+    const char* m2sCaseLabelEnv = m2TraceEnv.m2sCaseLabel;
+    const bool  dumpM2sTrace = m2TraceEnv.dumpM2sTrace;
+    const char* m2rTraceDirPath = m2TraceEnv.m2rTraceDirPath;
+    const char* m2rCaseLabelEnv = m2TraceEnv.m2rCaseLabel;
+    const bool  dumpM2rTrace = m2TraceEnv.dumpM2rTrace;
+    const char* m2qTraceDirPath = m2TraceEnv.m2qTraceDirPath;
+    const char* m2qCaseLabelEnv = m2TraceEnv.m2qCaseLabel;
+    const bool  dumpM2qTrace = m2TraceEnv.dumpM2qTrace;
+    const char* m2pTraceDirPath = m2TraceEnv.m2pTraceDirPath;
+    const char* m2pCaseLabelEnv = m2TraceEnv.m2pCaseLabel;
+    const bool  dumpM2pTrace = m2TraceEnv.dumpM2pTrace;
     if ((dumpM2wTrace || dumpM2xTrace || dumpM2vTrace || dumpM2uTrace || dumpM2qTrace || dumpM2rTrace
          || dumpM2sTrace || dumpM2pTrace)
         && kernelSetup.kernelType == NbnxmKernelType::Cpu4x4_PlainC)
@@ -628,8 +696,7 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
                              : (dumpM2sTrace ? m2sTraceDirPath
                                              : (dumpM2rTrace ? m2rTraceDirPath
                                                              : (dumpM2qTrace ? m2qTraceDirPath
-                                                                             : std::getenv(
-                                                                                       "GMX_PCFF_RESPA_M2P_TRACE_DIR"))))));
+                                                                             : m2pTraceDirPath)))));
         const char* ljSrCaseLabelEnv =
                 dumpM2wTrace ? m2wCaseLabelEnv
                              : (dumpM2vTrace ? m2vCaseLabelEnv
@@ -637,8 +704,7 @@ static void nbnxn_kernel_cpu(const PairlistSet&             pairlistSet,
                              : (dumpM2sTrace ? m2sCaseLabelEnv
                                              : (dumpM2rTrace ? m2rCaseLabelEnv
                                                              : (dumpM2qTrace ? m2qCaseLabelEnv
-                                                                             : std::getenv(
-                                                                                       "GMX_PCFF_RESPA_M2P_CASE_LABEL"))))));
+                                                                             : m2pCaseLabelEnv)))));
         if ((dumpM2qTrace || dumpM2rTrace || dumpM2sTrace || dumpM2uTrace || dumpM2vTrace || dumpM2wTrace)
             && kernelSetup.kernelType == NbnxmKernelType::Cpu4x4_PlainC)
         {

@@ -44,6 +44,8 @@
 
 #include "nbnxm.h"
 
+#include <vector>
+
 #include "gromacs/domdec/domdec_zones.h"
 #include "gromacs/nbnxm/atomdata.h"
 #include "gromacs/timing/wallcycle.h"
@@ -207,6 +209,25 @@ void nonbonded_verlet_t::atomdata_add_nbat_f_to_f(const AtomLocality locality, A
     wallcycle_sub_start(wcycle_, WallCycleSubCounter::NBFBufOps);
 
     nbat_->reduceForces(locality, pairSearch_->gridSet(), force);
+
+    wallcycle_sub_stop(wcycle_, WallCycleSubCounter::NBFBufOps);
+    wallcycle_stop(wcycle_, WallCycleCounter::NbXFBufOps);
+}
+
+void nonbonded_verlet_t::atomdata_add_native_multi_nbat_f_to_f(
+        const int contributionOutputIndex, const AtomLocality locality, ArrayRef<RVec> force)
+{
+    if (!pairlistIsSimple() && !haveGpuShortRangeWork(gpuNbv_, atomToInteractionLocality(locality)))
+    {
+        return;
+    }
+
+    wallcycle_start(wcycle_, WallCycleCounter::NbXFBufOps);
+    wallcycle_sub_start(wcycle_, WallCycleSubCounter::NBFBufOps);
+
+    auto contributionOutputBuffers = nbat_->nativeMultiContributionOutputBuffers(contributionOutputIndex);
+    nbat_->reduceForceOutputBuffers(
+            locality, pairSearch_->gridSet(), contributionOutputBuffers, force, true);
 
     wallcycle_sub_stop(wcycle_, WallCycleSubCounter::NBFBufOps);
     wallcycle_stop(wcycle_, WallCycleCounter::NbXFBufOps);

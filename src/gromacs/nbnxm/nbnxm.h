@@ -543,6 +543,15 @@ public:
      */
     void atomdata_add_nbat_f_to_f(AtomLocality locality, ArrayRef<RVec> force);
 
+    /*! \brief Add one native multi-contribution force output buffer to \p force.
+     *
+     * This is used when GPU exact r-RESPA stages force-only contribution copy-backs
+     * into contribution-indexed host buffers before reducing them to their MTS sinks.
+     */
+    void atomdata_add_native_multi_nbat_f_to_f(int            contributionOutputIndex,
+                                               AtomLocality   locality,
+                                               ArrayRef<RVec> force);
+
     /*! \brief Reduce one exact r-RESPA contribution into the matching nbnxm output sink.
      *
      * This contract currently supports one reduced sink per contribution. It

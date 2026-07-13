@@ -41,6 +41,8 @@
 
 #include "reportgpuusage.h"
 
+#include <cstdlib>
+#include <cstring>
 #include <set>
 #include <string>
 
@@ -83,6 +85,60 @@ size_t countUniqueGpuIdsUsed(ArrayRef<const GpuTaskAssignment> gpuTaskAssignment
 bool isAuditedExactRespaHybridGpuReport(const t_inputrec& inputrec, const SimulationWorkload& simulationWork)
 {
     return simulationWork.useGpuNonbonded && isSupportedExactRespaHybridNbGpuInput(inputrec);
+}
+
+const char* exactRespaGpuBondedReportSuffix(const SimulationWorkload& simulationWork)
+{
+    if (!simulationWork.useGpuBonded)
+    {
+        return "";
+    }
+
+    const char* mode = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES");
+    if (mode == nullptr || *mode == '\0')
+    {
+        mode = "class2";
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "pair14") == 0 || std::strcmp(mode, "lj14") == 0
+            || std::strcmp(mode, "listed-pair") == 0 || std::strcmp(mode, "listed_pair") == 0))
+    {
+        return " and Lennard-Jones 1-4 listed-pair";
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "off") == 0 || std::strcmp(mode, "none") == 0
+            || std::strcmp(mode, "cpu") == 0 || std::strcmp(mode, "cpu-listed") == 0
+            || std::strcmp(mode, "cpu_listed") == 0))
+    {
+        return "";
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "class2-pair14") == 0
+            || std::strcmp(mode, "class2_pair14") == 0 || std::strcmp(mode, "pcff") == 0
+            || std::strcmp(mode, "pcff-class2-pair14") == 0
+            || std::strcmp(mode, "pcff_class2_pair14") == 0))
+    {
+        return " and PCFF class2 bonded plus Lennard-Jones 1-4 listed-pair";
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "all") == 0 || std::strcmp(mode, "wide") == 0
+            || std::strcmp(mode, "gpu-all") == 0 || std::strcmp(mode, "gpu_all") == 0))
+    {
+        return " and selected listed bonded";
+    }
+    if (mode != nullptr
+        && (std::strcmp(mode, "class2") == 0 || std::strcmp(mode, "pcff-class2") == 0
+            || std::strcmp(mode, "bond-class2") == 0 || std::strcmp(mode, "bond_class2") == 0
+            || std::strcmp(mode, "angle-class2") == 0 || std::strcmp(mode, "angle_class2") == 0
+            || std::strcmp(mode, "dihedral-class2") == 0
+            || std::strcmp(mode, "dihedral_class2") == 0
+            || std::strcmp(mode, "improper-class2") == 0
+            || std::strcmp(mode, "improper_class2") == 0))
+    {
+        return " and PCFF class2 bonded";
+    }
+
+    return "";
 }
 
 } // namespace
@@ -149,7 +205,7 @@ void reportGpuUsage(const MDLogger&                   mdlog,
         {
             output += gmx::formatString(
                     "PP tasks will do non-perturbed short-ranged%s interactions on the GPU\n",
-                    simulationWork.useGpuBonded ? " and Lennard-Jones 1-4 listed-pair" : "");
+                    exactRespaGpuBondedReportSuffix(simulationWork));
             output += gmx::formatString("PP task will update coordinates on the %s\n",
                                         simulationWork.useGpuUpdate ? "GPU" : "CPU");
         }

@@ -760,7 +760,7 @@ TEST(PcffClass2DihedralStressTest, PhasePeriodicityAtPlusMinus180DegreesMatches)
     {
         for (int d = 0; d < DIM; ++d)
         {
-            EXPECT_NEAR(plusOutput.f[atom][d], minusOutput.f[atom][d], 1e-5);
+            EXPECT_NEAR(plusOutput.f[atom][d], minusOutput.f[atom][d], GMX_DOUBLE ? 1e-10 : 2e-5);
         }
     }
 }

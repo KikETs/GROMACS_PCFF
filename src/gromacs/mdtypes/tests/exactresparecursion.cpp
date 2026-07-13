@@ -309,6 +309,7 @@ TEST(ExactRespaStandalone, SimulationWorkloadSeparatesLegacyMtsAndExactSubsteps)
 TEST(ExactRespaStandalone, ExactStepWorkloadDoesNotPopulateLegacyMtsFlags)
 {
     t_inputrec ir;
+    configureExactRespaInputRecord(&ir);
     ir.exactRespa = threeLevelExactRespa();
 
     SimulationWorkload simulationWork;

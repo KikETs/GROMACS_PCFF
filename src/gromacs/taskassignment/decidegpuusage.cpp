@@ -918,6 +918,27 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
         return false;
     }
 
+    if (exactLammpsRespa && updateTarget == TaskTarget::Auto)
+    {
+        const char* exactAutoGpuUpdateEnv = std::getenv("GMX_PCFF_EXACT_RESPA_AUTO_GPU_UPDATE");
+        const bool  exactAutoGpuUpdateRequested =
+                exactAutoGpuUpdateEnv != nullptr && exactAutoGpuUpdateEnv[0] != '\0'
+                && std::strcmp(exactAutoGpuUpdateEnv, "0") != 0
+                && std::strcmp(exactAutoGpuUpdateEnv, "false") != 0
+                && std::strcmp(exactAutoGpuUpdateEnv, "FALSE") != 0
+                && std::strcmp(exactAutoGpuUpdateEnv, "off") != 0;
+        if (!exactAutoGpuUpdateRequested)
+        {
+            GMX_LOG(mdlog.info)
+                    .asParagraph()
+                    .appendText(
+                            "Exact r-RESPA will default '-update auto' to CPU update. Use "
+                            "'-update gpu' or set GMX_PCFF_EXACT_RESPA_AUTO_GPU_UPDATE=1 to "
+                            "select GPU update explicitly.");
+            return false;
+        }
+    }
+
     return (updateTarget == TaskTarget::Gpu
             || (updateTarget == TaskTarget::Auto && !forceCpuUpdateDefault));
 }

@@ -383,7 +383,8 @@ struct nbnxn_atomdata_t
     void reduceForceOutputBuffers(AtomLocality                  locality,
                                   const GridSet&                gridSet,
                                   ArrayRef<nbnxn_atomdata_output_t>     outputBuffers,
-                                  ArrayRef<RVec>                totalForce);
+                                  ArrayRef<RVec>                totalForce,
+                                  bool                          preferSmallSerialAdd = false);
 
     /*! \brief Clears the force buffer.
      *

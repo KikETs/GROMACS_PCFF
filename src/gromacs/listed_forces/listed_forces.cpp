@@ -46,8 +46,13 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <iterator>
+#include <mutex>
 #include <numeric>
 #include <string>
 
@@ -254,6 +259,58 @@ namespace
 
 using gmx::ArrayRef;
 
+using ListedCpuFtypeTimingClock = std::chrono::steady_clock;
+
+static const char* listedCpuFtypeTimingFilePath()
+{
+    static const char* value = std::getenv("GMX_PCFF_LISTED_CPU_FTYPE_TIMING_FILE");
+    return value;
+}
+
+static const char* listedCpuFtypeTimingLabel()
+{
+    static const char* value = std::getenv("GMX_PCFF_LISTED_CPU_FTYPE_TIMING_LABEL");
+    return value != nullptr ? value : "";
+}
+
+static void appendListedCpuFtypeTiming(const char*               timingFilePath,
+                                       const InteractionFunction ftype,
+                                       const BondedKernelFlavor  flavor,
+                                       const int                 thread,
+                                       const int                 numForceAtoms,
+                                       const int                 numInteractions,
+                                       const int64_t             elapsedNs)
+{
+    static std::mutex timingMutex;
+    std::lock_guard<std::mutex> lock(timingMutex);
+
+    const bool needHeader = !std::filesystem::exists(timingFilePath)
+                            || std::filesystem::file_size(timingFilePath) == 0;
+    FILE* file = std::fopen(timingFilePath, "a");
+    if (file == nullptr)
+    {
+        return;
+    }
+    if (needHeader)
+    {
+        std::fprintf(file,
+                     "schema=pcff_listed_cpu_ftype_timing_v1 label=%s\n",
+                     listedCpuFtypeTimingLabel());
+        std::fprintf(file,
+                     "ftype name flavor_id thread num_forceatoms num_interactions elapsed_ns\n");
+    }
+    std::fprintf(file,
+                 "%d %s %d %d %d %d %" PRId64 "\n",
+                 static_cast<int>(ftype),
+                 interaction_function[ftype].name,
+                 static_cast<int>(flavor),
+                 thread,
+                 numForceAtoms,
+                 numInteractions,
+                 elapsedNs);
+    std::fclose(file);
+}
+
 /*! \brief Return true if ftype is an explicit pair-listed LJ or
  * COULOMB interaction type: bonded LJ (usually 1-4), or special
  * listed non-bonded for FEP. */
@@ -355,6 +412,13 @@ real calc_one_bond(int                                 thread,
     ArrayRef<const t_iparams> iparams = idef.iparams;
 
     real v = 0;
+    const char* timingFilePath = listedCpuFtypeTimingFilePath();
+    const bool  timingEnabled  = (timingFilePath != nullptr);
+    ListedCpuFtypeTimingClock::time_point timingBegin;
+    if (timingEnabled)
+    {
+        timingBegin = ListedCpuFtypeTimingClock::now();
+    }
     if (!isPairInteraction(ftype))
     {
         if (ftype == InteractionFunction::DihedralEnergyCorrectionMap)
@@ -424,6 +488,20 @@ real calc_one_bond(int                                 thread,
                  stepWork,
                  grpp,
                  global_atom_index);
+    }
+
+    if (timingEnabled)
+    {
+        const auto timingEnd = ListedCpuFtypeTimingClock::now();
+        appendListedCpuFtypeTiming(
+                timingFilePath,
+                ftype,
+                flavor,
+                thread,
+                nbn,
+                nbn / nat1,
+                std::chrono::duration_cast<std::chrono::nanoseconds>(timingEnd - timingBegin)
+                        .count());
     }
 
     if (thread == 0)

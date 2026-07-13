@@ -82,6 +82,10 @@ typedef struct
 static bool exactRespaGpuBondedModeOffloadsFtype(const InteractionFunction fType)
 {
     const char* mode = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES");
+    if (mode == nullptr || *mode == '\0')
+    {
+        mode = "class2";
+    }
 
     if (mode != nullptr
         && (std::strcmp(mode, "off") == 0 || std::strcmp(mode, "none") == 0
@@ -143,7 +147,7 @@ static bool exactRespaGpuBondedModeOffloadsFtype(const InteractionFunction fType
         return fType == InteractionFunction::ImproperClass2;
     }
 
-    return fType == InteractionFunction::LennardJones14;
+    return false;
 }
 
 /*! \brief Divides listed interactions over threads
@@ -512,7 +516,7 @@ bonded_threading_t::bonded_threading_t(const int numThreads,
      * bonded interaction distribution is 3, 4 or 5 depending on the system
      * and hardware.
      */
-    const int max_nthread_uniform_default = 4;
+    const int max_nthread_uniform_default = 8;
     char*     ptr;
 
     if ((ptr = std::getenv("GMX_BONDED_NTHREAD_UNIFORM")) != nullptr)

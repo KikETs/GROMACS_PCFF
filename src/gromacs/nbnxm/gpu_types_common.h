@@ -175,8 +175,16 @@ struct NBAtomDataGpu
     DeviceBuffer<Float4> xq;
     //! atom charge(A&B), size numAtoms, only in FEP, use Float4 for coalesencing
     DeviceBuffer<Float4> q4;
-    //! force output array, size \ref numAtoms
+    //! Active force output array, size \ref numAtoms
     DeviceBuffer<Float3> f;
+    //! Default force output array storage, size \ref numAtoms
+    DeviceBuffer<Float3> fDefault;
+    //! Exact r-RESPA force-only contribution output storage, size numAtomsAlloc * count
+    DeviceBuffer<Float3> exactRespaMultiF;
+    //! Allocated size of exactRespaMultiF
+    int exactRespaMultiFAlloc;
+    //! Number of contribution output buffers available in exactRespaMultiF
+    int exactRespaMultiFCount;
 
     //! LJ energy output, size 1
     DeviceBuffer<float> eLJ;
@@ -199,6 +207,12 @@ struct NBAtomDataGpu
 
     //! shift forces
     DeviceBuffer<Float3> fShift;
+    //! Default shift-force output array storage, size c_numShiftVectors
+    DeviceBuffer<Float3> fShiftDefault;
+    //! Exact r-RESPA shift-force contribution output storage, size c_numShiftVectors * count
+    DeviceBuffer<Float3> exactRespaMultiFShift;
+    //! Allocated size of exactRespaMultiFShift
+    int exactRespaMultiFShiftAlloc;
 
     //! number of atom types
     int numTypes;
@@ -269,6 +283,8 @@ struct NBParamGpu
 
     //! Exact LAMMPS-style r-RESPA per-launch contribution selector.
     int exactRespaContribution;
+    //! Bit mask for force-only exact r-RESPA native multi-contribution output.
+    int exactRespaNativeMultiMask;
     //! Whether the exact split uses an intermediate middle shell.
     int exactRespaHasMiddle;
     //! Exact split transition radii.

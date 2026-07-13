@@ -101,7 +101,17 @@ static bool exactRespaFusedInitialDriftEnabled()
     static const bool enabled = []()
     {
         const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT");
-        return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+        return env == nullptr || *env == '\0' || std::strcmp(env, "0") != 0;
+    }();
+    return enabled;
+}
+
+static bool exactRespaFusedUpdateVectorEnabled()
+{
+    static const bool enabled = []()
+    {
+        const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_FUSED_UPDATE_VECTOR");
+        return env == nullptr || *env == '\0' || std::strcmp(env, "0") != 0;
     }();
     return enabled;
 }
@@ -118,15 +128,18 @@ static bool exactRespaReturnNextVirialEnabled()
 
 static bool exactRespaPostTrotterReplayIncludesFinalHalf()
 {
-    const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_POST_TROTTER");
-    if (value == nullptr || *value == '\0')
-    {
-        return false;
-    }
-    return std::strcmp(value, "2") == 0 || std::strcmp(value, "two") == 0
-           || std::strcmp(value, "3") == 0 || std::strcmp(value, "three") == 0
-           || std::strcmp(value, "2,3") == 0 || std::strcmp(value, "two-three") == 0
-           || std::strcmp(value, "3,2") == 0 || std::strcmp(value, "three-two") == 0;
+    static const bool enabled = [] {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_POST_TROTTER");
+        if (value == nullptr || *value == '\0')
+        {
+            return false;
+        }
+        return std::strcmp(value, "2") == 0 || std::strcmp(value, "two") == 0
+               || std::strcmp(value, "3") == 0 || std::strcmp(value, "three") == 0
+               || std::strcmp(value, "2,3") == 0 || std::strcmp(value, "two-three") == 0
+               || std::strcmp(value, "3,2") == 0 || std::strcmp(value, "three-two") == 0;
+    }();
+    return enabled;
 }
 
 static bool exactRespaMttkPostTrotterNeedsNextVirial(const t_inputrec& inputRecord,
@@ -241,6 +254,95 @@ static void exactRespaUpdateForAtoms(const int numAtoms, const Body& body)
     for (int atom = 0; atom < numAtoms; atom++)
     {
         body(atom);
+    }
+}
+
+template<int NumKicks>
+static void exactRespaFusedPlainKickDriftRange(const int                   beginAtom,
+                                              const int                   endAtom,
+                                              const RVec* gmx_restrict    invMassPerDim,
+                                              const RVec* gmx_restrict    force0,
+                                              const RVec* gmx_restrict    force1,
+                                              const RVec* gmx_restrict    force2,
+                                              const real                  scale0,
+                                              const real                  scale1,
+                                              const real                  scale2,
+                                              const real                  driftDt,
+                                              RVec* gmx_restrict          position,
+                                              RVec* gmx_restrict          velocity)
+{
+    static_assert(NumKicks >= 1 && NumKicks <= ExactRespaForceStore::c_numStoredLevels);
+    for (int atom = beginAtom; atom < endAtom; ++atom)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            const real inverseMass = invMassPerDim[atom][d];
+            real       updatedVelocity = velocity[atom][d];
+            updatedVelocity += scale0 * inverseMass * force0[atom][d];
+            if constexpr (NumKicks >= 2)
+            {
+                updatedVelocity += scale1 * inverseMass * force1[atom][d];
+            }
+            if constexpr (NumKicks >= 3)
+            {
+                updatedVelocity += scale2 * inverseMass * force2[atom][d];
+            }
+            velocity[atom][d] = updatedVelocity;
+            position[atom][d] += driftDt * updatedVelocity;
+        }
+    }
+}
+
+template<int NumKicks>
+static void exactRespaFusedPlainKickDrift(const int                numAtoms,
+                                         const RVec* gmx_restrict invMassPerDim,
+                                         const RVec* gmx_restrict force0,
+                                         const RVec* gmx_restrict force1,
+                                         const RVec* gmx_restrict force2,
+                                         const real               scale0,
+                                         const real               scale1,
+                                         const real               scale2,
+                                         const real               driftDt,
+                                         RVec* gmx_restrict       position,
+                                         RVec* gmx_restrict       velocity)
+{
+    const int numThreads = exactRespaUpdateThreadCount(numAtoms);
+    if (numThreads <= 1)
+    {
+        exactRespaFusedPlainKickDriftRange<NumKicks>(0,
+                                                    numAtoms,
+                                                    invMassPerDim,
+                                                    force0,
+                                                    force1,
+                                                    force2,
+                                                    scale0,
+                                                    scale1,
+                                                    scale2,
+                                                    driftDt,
+                                                    position,
+                                                    velocity);
+        return;
+    }
+
+#pragma omp parallel for num_threads(numThreads) schedule(static)
+    for (int atom = 0; atom < numAtoms; ++atom)
+    {
+        for (int d = 0; d < DIM; ++d)
+        {
+            const real inverseMass = invMassPerDim[atom][d];
+            real       updatedVelocity = velocity[atom][d];
+            updatedVelocity += scale0 * inverseMass * force0[atom][d];
+            if constexpr (NumKicks >= 2)
+            {
+                updatedVelocity += scale1 * inverseMass * force1[atom][d];
+            }
+            if constexpr (NumKicks >= 3)
+            {
+                updatedVelocity += scale2 * inverseMass * force2[atom][d];
+            }
+            velocity[atom][d] = updatedVelocity;
+            position[atom][d] += driftDt * updatedVelocity;
+        }
     }
 }
 
@@ -671,28 +773,38 @@ struct ExactRespaExtendedVvUpdate
 
 static real exactRespaMttkVetaScale()
 {
-    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_VETA_SCALE");
-    if (env == nullptr || *env == '\0')
-    {
-        return 1.0_real;
-    }
-    char*      end    = nullptr;
-    const real parsed = static_cast<real>(std::strtod(env, &end));
-    GMX_RELEASE_ASSERT(end != env && (end == nullptr || *end == '\0'),
-                       "GMX_PCFF_EXACT_RESPA_MTTK_VETA_SCALE must be a floating point value");
-    return parsed;
+    static const real scale = [] {
+        const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_VETA_SCALE");
+        if (env == nullptr || *env == '\0')
+        {
+            return 1.0_real;
+        }
+        char*      end    = nullptr;
+        const real parsed = static_cast<real>(std::strtod(env, &end));
+        GMX_RELEASE_ASSERT(end != env && (end == nullptr || *end == '\0'),
+                           "GMX_PCFF_EXACT_RESPA_MTTK_VETA_SCALE must be a floating point value");
+        return parsed;
+    }();
+    return scale;
 }
 
 static real exactRespaLammpsFixNhVelocityAlpha(const t_inputrec& inputRecord)
 {
-    const char* natomsText = std::getenv("GMX_PCFF_MTTK_LAMMPS_NATOMS");
-    if (natomsText != nullptr && *natomsText != '\0')
-    {
+    static const double natomsOverride = [] {
+        const char* natomsText = std::getenv("GMX_PCFF_MTTK_LAMMPS_NATOMS");
+        if (natomsText == nullptr || *natomsText == '\0')
+        {
+            return 0.0;
+        }
         char*        end    = nullptr;
         const double natoms = std::strtod(natomsText, &end);
         GMX_RELEASE_ASSERT(end != natomsText && (end == nullptr || *end == '\0') && natoms > 0,
                            "GMX_PCFF_MTTK_LAMMPS_NATOMS must be a positive floating point value");
-        return 1.0_real + 1.0_real / static_cast<real>(natoms);
+        return natoms;
+    }();
+    if (natomsOverride > 0.0)
+    {
+        return 1.0_real + 1.0_real / static_cast<real>(natomsOverride);
     }
 
     GMX_RELEASE_ASSERT(inputRecord.opts.nrdf[0] > 0,
@@ -706,7 +818,10 @@ ExactRespaExtendedVvUpdate exactRespaExtendedVvUpdateFromState(const t_inputrec&
     ExactRespaExtendedVvUpdate update;
     const bool mttkVv = inputRecord.eI == IntegrationAlgorithm::VV
                         && inputRecord.pressureCouplingOptions.epc == PressureCoupling::Mttk;
-    const char* mode = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_EXTENDED_UPDATE");
+    static const char* mode = [] {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_EXTENDED_UPDATE");
+        return (value != nullptr && *value != '\0') ? value : nullptr;
+    }();
     if (mttkVv)
     {
         const bool useDefault = false;
@@ -753,20 +868,24 @@ static bool exactRespaMttkInlineBoxRemapEnabled(const t_inputrec& inputRecord)
     {
         return false;
     }
-    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP");
-    const bool requested = env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+    static const bool requested = [] {
+        const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP");
+        return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+    }();
     if (!requested)
     {
         return false;
     }
-    const char* realOnlyEnv = std::getenv("GMX_PCFF_EWALD_REAL_ONLY");
-    const bool  realOnlyRequested =
-            realOnlyEnv != nullptr && *realOnlyEnv != '\0' && std::strcmp(realOnlyEnv, "0") != 0;
+    static const bool realOnlyRequested = [] {
+        const char* realOnlyEnv = std::getenv("GMX_PCFF_EWALD_REAL_ONLY");
+        return realOnlyEnv != nullptr && *realOnlyEnv != '\0' && std::strcmp(realOnlyEnv, "0") != 0;
+    }();
     if (usingPmeOrEwald(inputRecord.coulombtype) && !realOnlyRequested)
     {
-        const char* allowPmeEnv = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP_PME");
-        const bool  allowPmeInlineRemap =
-                allowPmeEnv != nullptr && *allowPmeEnv != '\0' && std::strcmp(allowPmeEnv, "0") != 0;
+        static const bool allowPmeInlineRemap = [] {
+            const char* allowPmeEnv = std::getenv("GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP_PME");
+            return allowPmeEnv != nullptr && *allowPmeEnv != '\0' && std::strcmp(allowPmeEnv, "0") != 0;
+        }();
         if (allowPmeInlineRemap)
         {
             return true;
@@ -781,8 +900,11 @@ static bool exactRespaMttkInlineBoxRemapEnabled(const t_inputrec& inputRecord)
 
 static bool exactRespaStatePbcWrappingEnabled()
 {
-    const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_WRAP_STATE_IN_BOX");
-    return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+    static const bool enabled = [] {
+        const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_WRAP_STATE_IN_BOX");
+        return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+    }();
+    return enabled;
 }
 
 static void exactRespaMttkScaleBox(t_state& state, const real deltaT)
@@ -1411,21 +1533,38 @@ void applyPreparedRespaInitialHalfKicksAndDrift(
         const real scale0 = 0.5_real * preparedHalfKicks.dtPerKick[0];
         if (exactRespaCanUseDirectUpdatePath(homenr, ptype, invMassPerDim))
         {
-            exactRespaUpdateForAtoms(homenr, [&](const int atom)
+            if (exactRespaFusedUpdateVectorEnabled())
             {
-                const real updatedVelocityX =
-                        velocity[atom][XX] + scale0 * invMassPerDim[atom][XX] * force0[atom][XX];
-                const real updatedVelocityY =
-                        velocity[atom][YY] + scale0 * invMassPerDim[atom][YY] * force0[atom][YY];
-                const real updatedVelocityZ =
-                        velocity[atom][ZZ] + scale0 * invMassPerDim[atom][ZZ] * force0[atom][ZZ];
-                velocity[atom][XX] = updatedVelocityX;
-                velocity[atom][YY] = updatedVelocityY;
-                velocity[atom][ZZ] = updatedVelocityZ;
-                position[atom][XX] += driftDt * updatedVelocityX;
-                position[atom][YY] += driftDt * updatedVelocityY;
-                position[atom][ZZ] += driftDt * updatedVelocityZ;
-            });
+                exactRespaFusedPlainKickDrift<1>(homenr,
+                                                 invMassPerDim.data(),
+                                                 force0.data(),
+                                                 nullptr,
+                                                 nullptr,
+                                                 scale0,
+                                                 0,
+                                                 0,
+                                                 driftDt,
+                                                 position.data(),
+                                                 velocity.data());
+            }
+            else
+            {
+                exactRespaUpdateForAtoms(homenr, [&](const int atom)
+                {
+                    const real updatedVelocityX =
+                            velocity[atom][XX] + scale0 * invMassPerDim[atom][XX] * force0[atom][XX];
+                    const real updatedVelocityY =
+                            velocity[atom][YY] + scale0 * invMassPerDim[atom][YY] * force0[atom][YY];
+                    const real updatedVelocityZ =
+                            velocity[atom][ZZ] + scale0 * invMassPerDim[atom][ZZ] * force0[atom][ZZ];
+                    velocity[atom][XX] = updatedVelocityX;
+                    velocity[atom][YY] = updatedVelocityY;
+                    velocity[atom][ZZ] = updatedVelocityZ;
+                    position[atom][XX] += driftDt * updatedVelocityX;
+                    position[atom][YY] += driftDt * updatedVelocityY;
+                    position[atom][ZZ] += driftDt * updatedVelocityZ;
+                });
+            }
             return;
         }
         exactRespaUpdateForAtoms(homenr, [&](const int atom)
@@ -1457,27 +1596,44 @@ void applyPreparedRespaInitialHalfKicksAndDrift(
         const real scale1 = 0.5_real * preparedHalfKicks.dtPerKick[1];
         if (exactRespaCanUseDirectUpdatePath(homenr, ptype, invMassPerDim))
         {
-            exactRespaUpdateForAtoms(homenr, [&](const int atom)
+            if (exactRespaFusedUpdateVectorEnabled())
             {
-                const real invMassX = invMassPerDim[atom][XX];
-                const real invMassY = invMassPerDim[atom][YY];
-                const real invMassZ = invMassPerDim[atom][ZZ];
-                real       updatedVelocityX = velocity[atom][XX];
-                real       updatedVelocityY = velocity[atom][YY];
-                real       updatedVelocityZ = velocity[atom][ZZ];
-                updatedVelocityX += scale0 * invMassX * force0[atom][XX];
-                updatedVelocityX += scale1 * invMassX * force1[atom][XX];
-                updatedVelocityY += scale0 * invMassY * force0[atom][YY];
-                updatedVelocityY += scale1 * invMassY * force1[atom][YY];
-                updatedVelocityZ += scale0 * invMassZ * force0[atom][ZZ];
-                updatedVelocityZ += scale1 * invMassZ * force1[atom][ZZ];
-                velocity[atom][XX] = updatedVelocityX;
-                velocity[atom][YY] = updatedVelocityY;
-                velocity[atom][ZZ] = updatedVelocityZ;
-                position[atom][XX] += driftDt * updatedVelocityX;
-                position[atom][YY] += driftDt * updatedVelocityY;
-                position[atom][ZZ] += driftDt * updatedVelocityZ;
-            });
+                exactRespaFusedPlainKickDrift<2>(homenr,
+                                                 invMassPerDim.data(),
+                                                 force0.data(),
+                                                 force1.data(),
+                                                 nullptr,
+                                                 scale0,
+                                                 scale1,
+                                                 0,
+                                                 driftDt,
+                                                 position.data(),
+                                                 velocity.data());
+            }
+            else
+            {
+                exactRespaUpdateForAtoms(homenr, [&](const int atom)
+                {
+                    const real invMassX = invMassPerDim[atom][XX];
+                    const real invMassY = invMassPerDim[atom][YY];
+                    const real invMassZ = invMassPerDim[atom][ZZ];
+                    real       updatedVelocityX = velocity[atom][XX];
+                    real       updatedVelocityY = velocity[atom][YY];
+                    real       updatedVelocityZ = velocity[atom][ZZ];
+                    updatedVelocityX += scale0 * invMassX * force0[atom][XX];
+                    updatedVelocityX += scale1 * invMassX * force1[atom][XX];
+                    updatedVelocityY += scale0 * invMassY * force0[atom][YY];
+                    updatedVelocityY += scale1 * invMassY * force1[atom][YY];
+                    updatedVelocityZ += scale0 * invMassZ * force0[atom][ZZ];
+                    updatedVelocityZ += scale1 * invMassZ * force1[atom][ZZ];
+                    velocity[atom][XX] = updatedVelocityX;
+                    velocity[atom][YY] = updatedVelocityY;
+                    velocity[atom][ZZ] = updatedVelocityZ;
+                    position[atom][XX] += driftDt * updatedVelocityX;
+                    position[atom][YY] += driftDt * updatedVelocityY;
+                    position[atom][ZZ] += driftDt * updatedVelocityZ;
+                });
+            }
             return;
         }
         exactRespaUpdateForAtoms(homenr, [&](const int atom)
@@ -1513,30 +1669,47 @@ void applyPreparedRespaInitialHalfKicksAndDrift(
         const real scale2 = 0.5_real * preparedHalfKicks.dtPerKick[2];
         if (exactRespaCanUseDirectUpdatePath(homenr, ptype, invMassPerDim))
         {
-            exactRespaUpdateForAtoms(homenr, [&](const int atom)
+            if (exactRespaFusedUpdateVectorEnabled())
             {
-                const real invMassX = invMassPerDim[atom][XX];
-                const real invMassY = invMassPerDim[atom][YY];
-                const real invMassZ = invMassPerDim[atom][ZZ];
-                real       updatedVelocityX = velocity[atom][XX];
-                real       updatedVelocityY = velocity[atom][YY];
-                real       updatedVelocityZ = velocity[atom][ZZ];
-                updatedVelocityX += scale0 * invMassX * force0[atom][XX];
-                updatedVelocityX += scale1 * invMassX * force1[atom][XX];
-                updatedVelocityX += scale2 * invMassX * force2[atom][XX];
-                updatedVelocityY += scale0 * invMassY * force0[atom][YY];
-                updatedVelocityY += scale1 * invMassY * force1[atom][YY];
-                updatedVelocityY += scale2 * invMassY * force2[atom][YY];
-                updatedVelocityZ += scale0 * invMassZ * force0[atom][ZZ];
-                updatedVelocityZ += scale1 * invMassZ * force1[atom][ZZ];
-                updatedVelocityZ += scale2 * invMassZ * force2[atom][ZZ];
-                velocity[atom][XX] = updatedVelocityX;
-                velocity[atom][YY] = updatedVelocityY;
-                velocity[atom][ZZ] = updatedVelocityZ;
-                position[atom][XX] += driftDt * updatedVelocityX;
-                position[atom][YY] += driftDt * updatedVelocityY;
-                position[atom][ZZ] += driftDt * updatedVelocityZ;
-            });
+                exactRespaFusedPlainKickDrift<3>(homenr,
+                                                 invMassPerDim.data(),
+                                                 force0.data(),
+                                                 force1.data(),
+                                                 force2.data(),
+                                                 scale0,
+                                                 scale1,
+                                                 scale2,
+                                                 driftDt,
+                                                 position.data(),
+                                                 velocity.data());
+            }
+            else
+            {
+                exactRespaUpdateForAtoms(homenr, [&](const int atom)
+                {
+                    const real invMassX = invMassPerDim[atom][XX];
+                    const real invMassY = invMassPerDim[atom][YY];
+                    const real invMassZ = invMassPerDim[atom][ZZ];
+                    real       updatedVelocityX = velocity[atom][XX];
+                    real       updatedVelocityY = velocity[atom][YY];
+                    real       updatedVelocityZ = velocity[atom][ZZ];
+                    updatedVelocityX += scale0 * invMassX * force0[atom][XX];
+                    updatedVelocityX += scale1 * invMassX * force1[atom][XX];
+                    updatedVelocityX += scale2 * invMassX * force2[atom][XX];
+                    updatedVelocityY += scale0 * invMassY * force0[atom][YY];
+                    updatedVelocityY += scale1 * invMassY * force1[atom][YY];
+                    updatedVelocityY += scale2 * invMassY * force2[atom][YY];
+                    updatedVelocityZ += scale0 * invMassZ * force0[atom][ZZ];
+                    updatedVelocityZ += scale1 * invMassZ * force1[atom][ZZ];
+                    updatedVelocityZ += scale2 * invMassZ * force2[atom][ZZ];
+                    velocity[atom][XX] = updatedVelocityX;
+                    velocity[atom][YY] = updatedVelocityY;
+                    velocity[atom][ZZ] = updatedVelocityZ;
+                    position[atom][XX] += driftDt * updatedVelocityX;
+                    position[atom][YY] += driftDt * updatedVelocityY;
+                    position[atom][ZZ] += driftDt * updatedVelocityZ;
+                });
+            }
             return;
         }
         exactRespaUpdateForAtoms(homenr, [&](const int atom)
@@ -1788,7 +1961,10 @@ void LegacySimulator::dispatchExactRespaVelocityVerletStep(const t_inputrec&    
             ed,
             ddBalanceRegionHandler };
     doExactRespaVelocityVerletStep(exactRespaStep);
-    wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
+    if (!simulationWork.useGpuUpdate)
+    {
+        wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
+    }
 }
 
 void LegacySimulator::dispatchExactRespaNestedPrototypeStep(const t_inputrec&              inputRecord,
@@ -1822,7 +1998,10 @@ void LegacySimulator::dispatchExactRespaNestedPrototypeStep(const t_inputrec&   
             ed,
             ddBalanceRegionHandler };
     doExactRespaNestedPrototypeStep(exactRespaStep);
-    wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
+    if (!simulationWork.useGpuUpdate)
+    {
+        wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
+    }
 }
 
 void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext& exactRespaStep)
@@ -2166,6 +2345,7 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
 void LegacySimulator::doExactRespaNestedPrototypeStep(const ExactRespaStepContext& exactRespaStep)
 {
     const t_inputrec& inputRecord = exactRespaStep.inputRecord;
+    const bool        useGpuUpdate = exactRespaStep.simulationWork.useGpuUpdate;
     const ExactRespaExtendedVvUpdate extendedUpdate =
             exactRespaExtendedVvUpdateFromState(inputRecord, *state_);
     const int*        ddGlobalAtomIndices =
@@ -2242,7 +2422,10 @@ void LegacySimulator::doExactRespaNestedPrototypeStep(const ExactRespaStepContex
     gmx_enerdata_t& nextEnerd   = exactRespaNestedForceScratchEnerd(exactRespaStep.enerd);
     rvec           nextMuTot    = { 0, 0, 0 };
 
-    wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
+    if (!useGpuUpdate)
+    {
+        wallcycle_stop(wallCycleCounters_, WallCycleCounter::Update);
+    }
 
     {
         const char* previousForceContextLabel = g_respaDoForceContextLabel;
@@ -2284,7 +2467,10 @@ void LegacySimulator::doExactRespaNestedPrototypeStep(const ExactRespaStepContex
         copy_mat(nextForceVir, exactRespaStep.forceVir);
     }
 
-    wallcycle_start(wallCycleCounters_, WallCycleCounter::Update);
+    if (!useGpuUpdate)
+    {
+        wallcycle_start(wallCycleCounters_, WallCycleCounter::Update);
+    }
 
     recordExactRespaRefreshEventsForTesting(inputRecord.exactRespa, exactRespaStep.step);
 

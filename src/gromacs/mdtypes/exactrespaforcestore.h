@@ -44,6 +44,11 @@ public:
                 ArrayRef<const RVec> recomputedLevel2Total,
                 int                  numLevels);
 
+    void updateFromLevelTotals(ArrayRef<const RVec> level0Total,
+                               ArrayRef<const RVec> recomputedLevel1Total,
+                               ArrayRef<const RVec> recomputedLevel2Total,
+                               int                  numLevels);
+
     bool hasLevel(int level) const;
 
     ArrayRef<const RVec> levelTotal(int level) const;

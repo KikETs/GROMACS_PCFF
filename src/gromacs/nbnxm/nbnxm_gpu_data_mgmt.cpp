@@ -231,12 +231,13 @@ static inline void set_cutoff_parameters(NBParamGpu*                nbp,
     nbp->sh_lj_ewald   = ic.vdw.ewaldShift;
     nbp->ewaldcoeff_lj = ic.vdw.ewaldCoeff;
 
-    nbp->exactRespaContribution = 3;
-    nbp->exactRespaHasMiddle    = 0;
-    nbp->exactRespaInnerOff     = 0.0F;
-    nbp->exactRespaInnerOn      = 0.0F;
-    nbp->exactRespaOuterOn      = 0.0F;
-    nbp->exactRespaOuterOff     = 0.0F;
+    nbp->exactRespaContribution    = 3;
+    nbp->exactRespaNativeMultiMask = 0;
+    nbp->exactRespaHasMiddle       = 0;
+    nbp->exactRespaInnerOff        = 0.0F;
+    nbp->exactRespaInnerOn         = 0.0F;
+    nbp->exactRespaOuterOn         = 0.0F;
+    nbp->exactRespaOuterOff        = 0.0F;
 
     nbp->rvdw_switch      = ic.vdw.switchDistance;
     nbp->dispersion_shift = ic.vdw.dispersionShift;
@@ -335,6 +336,7 @@ static inline void initAtomdataFirst(NBAtomDataGpu*           atomdata,
     atomdata->shiftVecUploaded = false;
 
     allocateDeviceBuffer(&atomdata->fShift, c_numShiftVectors, deviceContext);
+    atomdata->fShiftDefault = atomdata->fShift;
     allocateDeviceBuffer(&atomdata->eLJ, 1, deviceContext);
     allocateDeviceBuffer(&atomdata->eElec, 1, deviceContext);
     allocateDeviceBuffer(&atomdata->dvdlLJ, 1, deviceContext);
@@ -362,8 +364,14 @@ static inline void initAtomdataFirst(NBAtomDataGpu*           atomdata,
 
     /* initialize to nullptr pointers to data that is not allocated here and will
        need reallocation in later */
-    atomdata->xq = nullptr;
-    atomdata->f  = nullptr;
+    atomdata->xq                   = nullptr;
+    atomdata->f                    = nullptr;
+    atomdata->fDefault             = nullptr;
+    atomdata->exactRespaMultiF           = nullptr;
+    atomdata->exactRespaMultiFAlloc      = 0;
+    atomdata->exactRespaMultiFCount      = 0;
+    atomdata->exactRespaMultiFShift      = nullptr;
+    atomdata->exactRespaMultiFShiftAlloc = 0;
 
     /* size -1 indicates that the respective array hasn't been initialized yet */
     atomdata->numAtoms      = -1;
@@ -1040,7 +1048,20 @@ void gpu_init_atomdata(NbnxmGpu* nb, const nbnxn_atomdata_t* nbat)
             // Wait for the force-buffer clearing from the previous step
             localStream.synchronize();
 
-            freeDeviceBuffer(&atdat->f);
+            freeDeviceBuffer(&atdat->fDefault);
+            if (atdat->exactRespaMultiFAlloc > 0)
+            {
+                freeDeviceBuffer(&atdat->exactRespaMultiF);
+                atdat->exactRespaMultiF      = nullptr;
+                atdat->exactRespaMultiFAlloc = 0;
+                atdat->exactRespaMultiFCount = 0;
+            }
+            if (atdat->exactRespaMultiFShiftAlloc > 0)
+            {
+                freeDeviceBuffer(&atdat->exactRespaMultiFShift);
+                atdat->exactRespaMultiFShift      = nullptr;
+                atdat->exactRespaMultiFShiftAlloc = 0;
+            }
             freeDeviceBuffer(&atdat->xq);
             if (useLjCombRule(nb->nbparam->vdwType))
             {
@@ -1065,7 +1086,8 @@ void gpu_init_atomdata(NbnxmGpu* nb, const nbnxn_atomdata_t* nbat)
         }
 
 
-        allocateDeviceBuffer(&atdat->f, numAlloc, deviceContext);
+        allocateDeviceBuffer(&atdat->fDefault, numAlloc, deviceContext);
+        atdat->f = atdat->fDefault;
         allocateDeviceBuffer(&atdat->xq, numAlloc, deviceContext);
 
         if (useLjCombRule(nb->nbparam->vdwType))
@@ -1101,7 +1123,11 @@ void gpu_init_atomdata(NbnxmGpu* nb, const nbnxn_atomdata_t* nbat)
     /* need to clear GPU f output if realloc happened */
     if (realloced)
     {
-        clearDeviceBufferAsync(&atdat->f, 0, atdat->numAtomsAlloc, localStream);
+        clearDeviceBufferAsync(&atdat->fDefault, 0, atdat->numAtomsAlloc, localStream);
+    }
+    else
+    {
+        atdat->f = atdat->fDefault;
     }
 
     if (useLjCombRule(nb->nbparam->vdwType))
@@ -1227,6 +1253,79 @@ void gpu_clear_outputs(NbnxmGpu* nb, bool computeVirial)
     issueClFlushInStream(localStream);
 }
 
+void gpu_prepare_exact_respa_multi_force_outputs(NbnxmGpu* nb, const int numContributions)
+{
+    GMX_ASSERT(nb != nullptr && nb->atdat != nullptr, "Need initialized GPU atom data");
+    GMX_RELEASE_ASSERT(numContributions >= 0, "Invalid exact r-RESPA force output count");
+    if (numContributions == 0)
+    {
+        gpu_restore_default_force_output(nb);
+        return;
+    }
+
+#if GMX_GPU_CUDA || GMX_GPU_HIP
+    NBAtomDataGpu*      adat        = nb->atdat;
+    const DeviceStream& localStream = *nb->deviceStreams[InteractionLocality::Local];
+    const DeviceContext& deviceContext     = *nb->deviceContext_;
+    const int            requiredForceSize = numContributions * adat->numAtomsAlloc;
+    const int            requiredShiftSize = numContributions * c_numShiftVectors;
+
+    if (requiredForceSize > adat->exactRespaMultiFAlloc)
+    {
+        localStream.synchronize();
+        if (adat->exactRespaMultiFAlloc > 0)
+        {
+            freeDeviceBuffer(&adat->exactRespaMultiF);
+        }
+        allocateDeviceBuffer(&adat->exactRespaMultiF, requiredForceSize, deviceContext);
+        adat->exactRespaMultiFAlloc = requiredForceSize;
+    }
+    if (requiredShiftSize > adat->exactRespaMultiFShiftAlloc)
+    {
+        localStream.synchronize();
+        if (adat->exactRespaMultiFShiftAlloc > 0)
+        {
+            freeDeviceBuffer(&adat->exactRespaMultiFShift);
+        }
+        allocateDeviceBuffer(&adat->exactRespaMultiFShift, requiredShiftSize, deviceContext);
+        adat->exactRespaMultiFShiftAlloc = requiredShiftSize;
+    }
+    adat->exactRespaMultiFCount = numContributions;
+
+    clearDeviceBufferAsync(&adat->exactRespaMultiF, 0, requiredForceSize, localStream);
+    clearDeviceBufferAsync(&adat->exactRespaMultiFShift, 0, requiredShiftSize, localStream);
+    issueClFlushInStream(localStream);
+#else
+    GMX_UNUSED_VALUE(nb);
+    GMX_UNUSED_VALUE(numContributions);
+    GMX_RELEASE_ASSERT(false, "Exact r-RESPA multi-force GPU outputs are implemented for CUDA/HIP only");
+#endif
+}
+
+void gpu_select_exact_respa_multi_force_output(NbnxmGpu* nb, const int contributionOutputIndex)
+{
+    GMX_ASSERT(nb != nullptr && nb->atdat != nullptr, "Need initialized GPU atom data");
+#if GMX_GPU_CUDA || GMX_GPU_HIP
+    NBAtomDataGpu* adat = nb->atdat;
+    GMX_RELEASE_ASSERT(contributionOutputIndex >= 0
+                               && contributionOutputIndex < adat->exactRespaMultiFCount,
+                       "Invalid exact r-RESPA multi-force output index");
+    adat->f = adat->exactRespaMultiF + contributionOutputIndex * adat->numAtomsAlloc;
+    adat->fShift = adat->exactRespaMultiFShift + contributionOutputIndex * c_numShiftVectors;
+#else
+    GMX_UNUSED_VALUE(nb);
+    GMX_UNUSED_VALUE(contributionOutputIndex);
+    GMX_RELEASE_ASSERT(false, "Exact r-RESPA multi-force GPU outputs are implemented for CUDA/HIP only");
+#endif
+}
+
+void gpu_restore_default_force_output(NbnxmGpu* nb)
+{
+    GMX_ASSERT(nb != nullptr && nb->atdat != nullptr, "Need initialized GPU atom data");
+    nb->atdat->f      = nb->atdat->fDefault;
+    nb->atdat->fShift = nb->atdat->fShiftDefault;
+}
+
 //! This function is documented in the header file
 gmx_wallclock_gpu_nbnxn_t* gpu_get_timings(NbnxmGpu* nb)
 {
@@ -1275,7 +1374,8 @@ bool haveGpuShortRangeWork(const NbnxmGpu* nb, const InteractionLocality interac
 void gpu_launch_cpyback(NbnxmGpu*                nb,
                         struct nbnxn_atomdata_t* nbatom,
                         const StepWorkload&      stepWork,
-                        const AtomLocality       atomLocality)
+                        const AtomLocality       atomLocality,
+                        const int                nativeMultiContributionOutputIndex)
 {
     GMX_ASSERT(nb, "Need a valid nbnxn_gpu object");
 
@@ -1309,6 +1409,25 @@ void gpu_launch_cpyback(NbnxmGpu*                nb,
 
     /* local/nonlocal offset and length used for xq and f */
     auto atomsRange = getGpuAtomRange(adat, atomLocality);
+    ArrayRef<nbnxn_atomdata_output_t> nativeMultiOutputBuffers;
+    nbnxn_atomdata_output_t*          forceOutputBuffer = &nbatom->outputBuffer(0);
+    Float3*                           shiftForceOutputBuffer = nb->nbst.fShift.data();
+    if (nativeMultiContributionOutputIndex >= 0)
+    {
+        GMX_RELEASE_ASSERT(atomLocality == AtomLocality::Local,
+                           "Native multi-contribution GPU copy-back currently supports only local atoms");
+        GMX_RELEASE_ASSERT(!stepWork.computeEnergy && !stepWork.computeDhdl,
+                           "Native multi-contribution GPU copy-back does not support energy or DHDL contributions");
+        nativeMultiOutputBuffers =
+                nbatom->nativeMultiContributionOutputBuffers(nativeMultiContributionOutputIndex);
+        forceOutputBuffer = &nativeMultiOutputBuffers[0];
+        if (stepWork.computeVirial)
+        {
+            static_assert(sizeof(*forceOutputBuffer->fshift.data()) == sizeof(float),
+                          "The host shift-force buffer should be in single precision to match device data size.");
+            shiftForceOutputBuffer = reinterpret_cast<Float3*>(forceOutputBuffer->fshift.data());
+        }
+    }
 
     /* beginning of timed D2H section */
     if (bDoTime)
@@ -1331,7 +1450,7 @@ void gpu_launch_cpyback(NbnxmGpu*                nb,
                 sizeof(*nbatom->outputBuffer(0).f.data()) == sizeof(float),
                 "The host force buffer should be in single precision to match device data size.");
         copyFromDeviceBuffer(
-                reinterpret_cast<Float3*>(nbatom->outputBuffer(0).f.data()) + atomsRange.begin(),
+                reinterpret_cast<Float3*>(forceOutputBuffer->f.data()) + atomsRange.begin(),
                 &adat->f,
                 atomsRange.begin(),
                 atomsRange.size(),
@@ -1361,7 +1480,7 @@ void gpu_launch_cpyback(NbnxmGpu*                nb,
             static_assert(
                     sizeof(*nb->nbst.fShift.data()) == sizeof(Float3),
                     "Sizes of host- and device-side shift vector elements should be the same.");
-            copyFromDeviceBuffer(nb->nbst.fShift.data(),
+            copyFromDeviceBuffer(shiftForceOutputBuffer,
                                  &adat->fShift,
                                  0,
                                  c_numShiftVectors,
@@ -1700,7 +1819,15 @@ void gpu_free(NbnxmGpu* nb)
 
     /* Free atdat */
     freeDeviceBuffer(&(nb->atdat->xq));
-    freeDeviceBuffer(&(nb->atdat->f));
+    freeDeviceBuffer(&(nb->atdat->fDefault));
+    if (nb->atdat->exactRespaMultiFAlloc > 0)
+    {
+        freeDeviceBuffer(&(nb->atdat->exactRespaMultiF));
+    }
+    if (nb->atdat->exactRespaMultiFShiftAlloc > 0)
+    {
+        freeDeviceBuffer(&(nb->atdat->exactRespaMultiFShift));
+    }
     freeDeviceBuffer(&(nb->atdat->eLJ));
     freeDeviceBuffer(&(nb->atdat->eElec));
     freeDeviceBuffer(&(nb->atdat->dvdlLJ));

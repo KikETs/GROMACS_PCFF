@@ -81,5 +81,37 @@ TEST(ExactRespaForceStore, PreservesInactiveSlowLevelsAcrossFastSteps)
     expectRVecEq(store.levelTotal(0)[0], RVec{ 6, 0, 0 });
 }
 
+TEST(ExactRespaForceStore, DirectLevelUpdatePreservesInactiveSlowLevels)
+{
+    ExactRespaForceStore store;
+    const std::vector<RVec> level0Total = { RVec{ 5, 0, 0 } };
+    const std::vector<RVec> level1Total = { RVec{ 3, 0, 0 } };
+    const std::vector<RVec> level2Total = { RVec{ 2, 0, 0 } };
+    store.updateFromLevelTotals(makeConstArrayRef(level0Total),
+                                makeConstArrayRef(level1Total),
+                                makeConstArrayRef(level2Total),
+                                3);
+
+    const std::vector<RVec> fastLevel0Total = { RVec{ 7, 0, 0 } };
+    store.updateFromLevelTotals(makeConstArrayRef(fastLevel0Total), {}, {}, 3);
+
+    ASSERT_TRUE(store.hasLevel(0));
+    ASSERT_TRUE(store.hasLevel(1));
+    ASSERT_TRUE(store.hasLevel(2));
+    expectRVecEq(store.levelTotal(0)[0], fastLevel0Total[0]);
+    expectRVecEq(store.levelTotal(1)[0], level1Total[0]);
+    expectRVecEq(store.levelTotal(2)[0], level2Total[0]);
+}
+
+TEST(ExactRespaForceStore, DirectLevelUpdateAllowsEmptySingleLevel)
+{
+    ExactRespaForceStore store;
+
+    store.updateFromLevelTotals({}, {}, {}, 1);
+
+    ASSERT_TRUE(store.hasLevel(0));
+    EXPECT_TRUE(store.levelTotal(0).empty());
+}
+
 } // namespace
 } // namespace gmx

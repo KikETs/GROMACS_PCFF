@@ -602,6 +602,34 @@ InteractionDefinitions::InteractionDefinitions(const gmx_ffparams_t& ffparams) :
 {
 }
 
+InteractionDefinitions::InteractionDefinitions(
+        const InteractionDefinitions&                              source,
+        const gmx::EnumerationArray<InteractionFunction, bool>& includeInteractionFunction) :
+    iparams(source.iparams),
+    functype(source.functype),
+    iparams_posres(source.iparams_posres),
+    iparams_fbposres(source.iparams_fbposres),
+    ilsort(source.ilsort)
+{
+    for (const auto ftype : gmx::EnumerationWrapper<InteractionFunction>{})
+    {
+        if (includeInteractionFunction[ftype])
+        {
+            il[ftype] = source.il[ftype];
+            numNonperturbedInteractions[ftype] = source.numNonperturbedInteractions[ftype];
+        }
+        else
+        {
+            numNonperturbedInteractions[ftype] = 0;
+        }
+    }
+
+    if (includeInteractionFunction[InteractionFunction::DihedralEnergyCorrectionMap])
+    {
+        cmap_grid = source.cmap_grid;
+    }
+}
+
 void InteractionDefinitions::clear()
 {
     /* Clear the counts */

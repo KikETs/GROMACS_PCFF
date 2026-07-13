@@ -72,6 +72,7 @@ static constexpr int c_exactRespaContributionInner  = 0;
 static constexpr int c_exactRespaContributionMiddle = 1;
 static constexpr int c_exactRespaContributionOuter  = 2;
 static constexpr int c_exactRespaContributionFull   = 3;
+static constexpr int c_exactRespaNativeMultiMaxContributions = 3;
 
 static __forceinline__ __device__ float exactRespaSwitchIn(const float r, const float off, const float on)
 {
@@ -92,28 +93,44 @@ static __forceinline__ __device__ float exactRespaSwitchIn(const float r, const 
     return x * x * (3.0F - 2.0F * x);
 }
 
-static __forceinline__ __device__ float exactRespaSplitWeight(const NBParamGpu& nbparam, const float r)
+static __forceinline__ __device__ float exactRespaSplitWeightForContribution(const NBParamGpu& nbparam,
+                                                                             const int         contribution,
+                                                                             const float       r)
 {
-    if (nbparam.exactRespaContribution == c_exactRespaContributionFull)
+    if (contribution == c_exactRespaContributionFull)
     {
         return 1.0F;
     }
 
-    const float switchIntoOuter = exactRespaSwitchIn(r, nbparam.exactRespaOuterOn, nbparam.exactRespaOuterOff);
     if (nbparam.exactRespaHasMiddle == 0)
     {
-        return (nbparam.exactRespaContribution == c_exactRespaContributionInner) ? (1.0F - switchIntoOuter)
-                                                                                  : switchIntoOuter;
+        const float switchIntoOuter =
+                exactRespaSwitchIn(r, nbparam.exactRespaOuterOn, nbparam.exactRespaOuterOff);
+        return (contribution == c_exactRespaContributionInner) ? (1.0F - switchIntoOuter)
+                                                               : switchIntoOuter;
     }
 
-    const float switchIntoMiddle = exactRespaSwitchIn(r, nbparam.exactRespaInnerOff, nbparam.exactRespaInnerOn);
-    switch (nbparam.exactRespaContribution)
+    switch (contribution)
     {
-        case c_exactRespaContributionInner: return 1.0F - switchIntoMiddle;
-        case c_exactRespaContributionMiddle: return switchIntoMiddle * (1.0F - switchIntoOuter);
-        case c_exactRespaContributionOuter: return switchIntoOuter;
+        case c_exactRespaContributionInner:
+            return 1.0F - exactRespaSwitchIn(r, nbparam.exactRespaInnerOff, nbparam.exactRespaInnerOn);
+        case c_exactRespaContributionMiddle:
+        {
+            const float switchIntoMiddle =
+                    exactRespaSwitchIn(r, nbparam.exactRespaInnerOff, nbparam.exactRespaInnerOn);
+            const float switchIntoOuter =
+                    exactRespaSwitchIn(r, nbparam.exactRespaOuterOn, nbparam.exactRespaOuterOff);
+            return switchIntoMiddle * (1.0F - switchIntoOuter);
+        }
+        case c_exactRespaContributionOuter:
+            return exactRespaSwitchIn(r, nbparam.exactRespaOuterOn, nbparam.exactRespaOuterOff);
         default: return 1.0F;
     }
+}
+
+static __forceinline__ __device__ float exactRespaSplitWeight(const NBParamGpu& nbparam, const float r)
+{
+    return exactRespaSplitWeightForContribution(nbparam, nbparam.exactRespaContribution, r);
 }
 
 /*! Convert LJ sigma,epsilon parameters to C6,C12. */

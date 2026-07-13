@@ -1,0 +1,48 @@
+{
+  "assumptions": {
+    "coordinates_shifted_to_box_origin": true,
+    "kspace_style": "pppm 0.0001",
+    "pair_modify": "mix sixthpower",
+    "pair_style": {
+      "args": [
+        "9.5"
+      ],
+      "kind": "lj/class2/coul/long"
+    },
+    "special_bonds_effective": "lj/coul 0.0 0.0 1.0 angle no dihedral no",
+    "special_bonds_input": "lj/coul 0.0 0.0 1.0"
+  },
+  "claim_boundary": "This is a topology/coordinate bridge from a PCFF Class2 LAMMPS data file with inline coefficients. It does not by itself prove LAMMPS-vs-GROMACS energy, force, density, or transport parity.",
+  "command": "lammps-data-export-gromacs",
+  "counts": {
+    "angles": 23290,
+    "atoms": 12730,
+    "bonds": 12500,
+    "dihedrals": 27240,
+    "impropers": 14560,
+    "molecule_instances": 230,
+    "molecule_templates": 131
+  },
+  "outputs": {
+    "gromacs_coordinates": {
+      "bytes": 840259,
+      "line_count": 12733,
+      "path": "system.gro",
+      "sha256": "cf8ba6c40138b8b14829638239123fa2e1596adf41b6221d8e3e451a3df5b210"
+    },
+    "gromacs_topology": {
+      "bytes": 17900801,
+      "line_count": 120091,
+      "path": "topol.top",
+      "sha256": "ae9893649b492f753d2f163c7b257f824839955f8e0609c6db32c5ad11932ca0"
+    },
+    "typed_system": {
+      "bytes": 38014113,
+      "line_count": 1662211,
+      "path": "typed_system.json",
+      "sha256": "e9bd232e37944fe127e3ed4f15a8be5a32150bb592a4e63a44d1e49ad94520cc"
+    }
+  },
+  "schema_version": 1,
+  "source_data": "/home/user/\ubc14\ud0d5\ud654\uba74/DL/LAMMPS_BATCH/batch_runs/Traj_14748/MD/relaxed.lmp"
+}

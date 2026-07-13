@@ -72,6 +72,11 @@ class MdGpuGraph;
 class StatePropagatorDataGpu;
 class PmePpCommGpu;
 class WholeMoleculeTransform;
+struct ExactRespaNonbondedGpuScratch;
+struct ExactRespaNonbondedGpuScratchDeleter
+{
+    void operator()(ExactRespaNonbondedGpuScratch* scratch) const;
+};
 } // namespace gmx
 
 /* Value to be used in mdrun for an infinite cut-off.
@@ -123,9 +128,9 @@ private:
     //! True when we have contributions that are directly added to the virial
     bool haveDirectVirialContributions_ = false;
     //! Force buffer for force computation with direct virial contributions
-    std::vector<gmx::RVec> forceBufferForDirectVirialContributions_;
+    gmx::HostVector<gmx::RVec> forceBufferForDirectVirialContributions_;
     //! Shift force array for computing the virial, size c_numShiftVectors
-    std::vector<gmx::RVec> shiftForces_;
+    gmx::HostVector<gmx::RVec> shiftForces_;
 };
 // NOLINTNEXTLINE (clang-analyzer-optin.performance.Padding)
 struct t_forcerec
@@ -200,6 +205,14 @@ struct t_forcerec
 
     /* The Nbnxm Verlet non-bonded machinery */
     std::unique_ptr<gmx::nonbonded_verlet_t> nbv;
+    std::unique_ptr<gmx::ExactRespaNonbondedGpuScratch, gmx::ExactRespaNonbondedGpuScratchDeleter>
+            exactRespaNonbondedGpuScratch;
+    gmx::HostVector<gmx::RVec> exactRespaCpuNbnxmDirectVirialShiftForces = {
+        {}, gmx::HostAllocationPolicy(gmx::PinningPolicy::PinnedIfSupported)
+    };
+    gmx::HostVector<gmx::RVec> exactRespaGpuDirectVirialShiftForces = {
+        {}, gmx::HostAllocationPolicy(gmx::PinningPolicy::PinnedIfSupported)
+    };
 
     /* The wall tables (if used) */
     int                                                     nwall = 0;

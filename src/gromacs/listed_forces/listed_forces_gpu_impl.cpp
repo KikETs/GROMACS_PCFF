@@ -144,6 +144,42 @@ static bool exactRespaGpuBondedModeRequestsWideGpuListed()
                || std::strcmp(mode, "gpu-all") == 0 || std::strcmp(mode, "gpu_all") == 0);
 }
 
+static const char* exactRespaGpuBondedMode()
+{
+    const char* mode = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES");
+    return (mode != nullptr && *mode != '\0') ? mode : "class2";
+}
+
+static bool exactRespaGpuBondedModeDisablesGpuListed(const char* mode)
+{
+    return mode != nullptr
+           && (std::strcmp(mode, "off") == 0 || std::strcmp(mode, "none") == 0
+               || std::strcmp(mode, "cpu") == 0 || std::strcmp(mode, "cpu-listed") == 0
+               || std::strcmp(mode, "cpu_listed") == 0);
+}
+
+static bool exactRespaGpuBondedModeRequestsClass2Listed(const char* mode)
+{
+    return mode != nullptr
+           && (std::strcmp(mode, "class2-pair14") == 0
+               || std::strcmp(mode, "class2_pair14") == 0 || std::strcmp(mode, "pcff") == 0
+               || std::strcmp(mode, "pcff-class2-pair14") == 0
+               || std::strcmp(mode, "pcff_class2_pair14") == 0 || std::strcmp(mode, "class2") == 0
+               || std::strcmp(mode, "pcff-class2") == 0 || std::strcmp(mode, "bond-class2") == 0
+               || std::strcmp(mode, "bond_class2") == 0 || std::strcmp(mode, "angle-class2") == 0
+               || std::strcmp(mode, "angle_class2") == 0
+               || std::strcmp(mode, "dihedral-class2") == 0
+               || std::strcmp(mode, "dihedral_class2") == 0
+               || std::strcmp(mode, "improper-class2") == 0
+               || std::strcmp(mode, "improper_class2") == 0);
+}
+
+static bool exactRespaGpuBondedModeRequestsGpuListed()
+{
+    const char* mode = exactRespaGpuBondedMode();
+    return !exactRespaGpuBondedModeDisablesGpuListed(mode);
+}
+
 bool buildSupportsListedForcesGpu(std::string* error)
 {
     MessageStringCollector errorReasons;
@@ -164,8 +200,18 @@ bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, 
 {
     MessageStringCollector errorReasons;
     const bool isExactLammpsRespa = useExactRespa(ir);
-    const bool hasLennardJones14Pairs =
-            topologyContainsInteractionType(mtop, InteractionFunction::LennardJones14);
+    const char* exactHybridGpuListedMode = exactRespaGpuBondedMode();
+    const bool  exactHybridClass2GpuListedRequested =
+            isExactLammpsRespa && exactRespaGpuBondedModeRequestsClass2Listed(exactHybridGpuListedMode);
+    const bool hasExactHybridClass2GpuBondedTypes =
+            topologyContainsAnyInteractionType(mtop,
+                                               { InteractionFunction::BondClass2,
+                                                 InteractionFunction::AngleClass2,
+                                                 InteractionFunction::DihedralClass2,
+                                                 InteractionFunction::ImproperClass2 });
+    const bool hasExactHybridRequestedGpuBondedTypes =
+            topologyContainsInteractionType(mtop, InteractionFunction::LennardJones14)
+            || (exactHybridClass2GpuListedRequested && hasExactHybridClass2GpuBondedTypes);
     const bool hasListedPairGpuSemantics =
             topologyContainsAnyInteractionType(mtop,
                                               { InteractionFunction::LennardJones14,
@@ -182,6 +228,8 @@ bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, 
                                                  InteractionFunction::PeriodicImproperDihedrals });
     const bool exactHybridWideGpuListedRequested =
             isExactLammpsRespa && exactRespaGpuBondedModeRequestsWideGpuListed();
+    const bool exactHybridGpuListedRequested =
+            isExactLammpsRespa && exactRespaGpuBondedModeRequestsGpuListed();
     const bool hasExactHybridUnsupportedPairInteractionTypes =
             topologyContainsAnyInteractionType(mtop,
                                                { InteractionFunction::LennardJonesCoulomb14Q,
@@ -202,16 +250,20 @@ bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, 
     if (isExactLammpsRespa)
     {
         errorReasons.appendIf(
-                !hasLennardJones14Pairs,
-                "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the pair14-only "
-                "narrow mode, so the topology must contain Lennard-Jones 1-4 listed pairs.");
+                exactHybridGpuListedRequested && !hasExactHybridRequestedGpuBondedTypes
+                        && !exactHybridWideGpuListedRequested,
+                "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the "
+                "PCFF class2/listed-pair narrow mode, so the topology must contain "
+                "the requested PCFF class2 bonded interactions or Lennard-Jones 1-4 listed pairs.");
         errorReasons.appendIf(
-                hasExactHybridUnsupportedGpuBondedTypes && !exactHybridWideGpuListedRequested,
-                "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the pair14-only "
-                "narrow mode unless GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES=all is set. "
-                "GPU-capable bond/angle/dihedral/improper kernels must otherwise remain on the CPU.");
+                exactHybridGpuListedRequested && hasExactHybridUnsupportedGpuBondedTypes
+                        && !exactHybridWideGpuListedRequested,
+                "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted in the "
+                "PCFF class2/listed-pair narrow mode unless "
+                "GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES=all is set. Ordinary "
+                "bond/angle/dihedral/improper GPU kernels must otherwise remain on the CPU.");
         errorReasons.appendIf(
-                hasExactHybridUnsupportedPairInteractionTypes,
+                exactHybridGpuListedRequested && hasExactHybridUnsupportedPairInteractionTypes,
                 "Exact LAMMPS-style r-RESPA hybrid bonded GPU is only admitted for "
                 "InteractionFunction::LennardJones14 listed pairs. Coulomb14 and "
                 "LennardJonesCoulomb14Q remain unsupported in the exact GPU path.");
@@ -227,7 +279,7 @@ bool inputSupportsListedForcesGpu(const t_inputrec& ir, const gmx_mtop_t& mtop, 
                                   ? "Exact LAMMPS-style r-RESPA hybrid bonded GPU only supports 12-6 "
                                     "and 9-6 listed 1-4 Lennard-Jones semantics."
                                   : "The bonded GPU path only supports 12-6 listed 1-4 Lennard-Jones "
-                                    "semantics outside the exact LAMMPS-style r-RESPA pair14-only mode.");
+                                    "semantics outside the exact LAMMPS-style r-RESPA listed-pair path.");
     errorReasons.finishContext();
     if (error != nullptr)
     {

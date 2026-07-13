@@ -444,7 +444,7 @@ static void copyRVecToNbatPackedReal(int numAtoms, const rvec* x, real* xnb, int
 }
 
 /* Stores the LJ parameter data in a format convenient for different kernels */
-static void set_lj_parameter_data(nbnxn_atomdata_t::Params* params, gmx_bool bSIMD)
+static void set_lj_parameter_data(nbnxn_atomdata_t::Params* params, gmx_bool bSIMD, const bool usingLJPme)
 {
     int nt = params->numTypes;
 
@@ -808,7 +808,7 @@ static void nbnxn_atomdata_params_init(const MDLogger&                         m
 
     const bool bSIMD = kernelTypeIsSimd(kernelType);
 
-    set_lj_parameter_data(params, bSIMD);
+    set_lj_parameter_data(params, bSIMD, usingLJPme);
 
     params->numEnergyGroups = numEnergyGroups;
     if (!simple)
@@ -1580,13 +1580,16 @@ static void addNbatFPackedToFPart(const nbnxn_atomdata_output_t& out,
         for (int iPack = a0; iPack < a1; iPack += packSize)
         {
             const int offset = iPack * DIM;
+            const int xOffset = offset + XX * packSize;
+            const int yOffset = offset + YY * packSize;
+            const int zOffset = offset + ZZ * packSize;
 
             for (int iInPack = 0; iInPack < packSize; iInPack++)
             {
-                for (int d = 0; d < DIM; d++)
-                {
-                    f[iPack + iInPack][d] += fnb[offset + d * packSize + iInPack];
-                }
+                RVec& atomForce = f[iPack + iInPack];
+                atomForce[XX] += fnb[xOffset + iInPack];
+                atomForce[YY] += fnb[yOffset + iInPack];
+                atomForce[ZZ] += fnb[zOffset + iInPack];
             }
         }
     }
@@ -1596,10 +1599,10 @@ static void addNbatFPackedToFPart(const nbnxn_atomdata_output_t& out,
         {
             const int i = atom_to_x_index<packSize>(cellIndices[a]);
 
-            for (int d = 0; d < DIM; d++)
-            {
-                f[a][d] += fnb[i + d * packSize];
-            }
+            RVec& atomForce = f[a];
+            atomForce[XX] += fnb[i + XX * packSize];
+            atomForce[YY] += fnb[i + YY * packSize];
+            atomForce[ZZ] += fnb[i + ZZ * packSize];
         }
     }
 }
@@ -1708,6 +1711,21 @@ static bool threadedReductionSupportsLocality(const AtomLocality locality,
            && int(atomRange.end()) == int(allAtomRange.end());
 }
 
+static int exactRespaNativeMultiSerialAddAtomThreshold()
+{
+    static const int threshold = []()
+    {
+        const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_NATIVE_MULTI_SERIAL_ADD_ATOMS");
+        if (env == nullptr || *env == '\0')
+        {
+            return 32768;
+        }
+
+        return std::max(0, std::atoi(env));
+    }();
+    return threshold;
+}
+
 /* Add the force array(s) from nbnxn_atomdata_t to f */
 void nbnxn_atomdata_t::reduceForces(const AtomLocality locality, const GridSet& gridSet, ArrayRef<RVec> f)
 {
@@ -1717,7 +1735,8 @@ void nbnxn_atomdata_t::reduceForces(const AtomLocality locality, const GridSet& 
 void nbnxn_atomdata_t::reduceForceOutputBuffers(const AtomLocality                locality,
                                                 const GridSet&                    gridSet,
                                                 ArrayRef<nbnxn_atomdata_output_t> outputBuffers,
-                                                ArrayRef<RVec>                    f)
+                                                ArrayRef<RVec>                    f,
+                                                const bool                        preferSmallSerialAdd)
 {
     const auto atomRange = getAtomRange(locality, gridSet);
 
@@ -1748,41 +1767,57 @@ void nbnxn_atomdata_t::reduceForceOutputBuffers(const AtomLocality              
     const int* binIndices =
             (gridSet.localAtomOrderMatchesNbnxmOrder() ? nullptr : gridSet.bins().data());
 
-#pragma omp parallel for num_threads(nth) schedule(static)
-    for (int th = 0; th < nth; th++)
+    const int atomSplit = (gridSet.localAtomOrderMatchesNbnxmOrder() ? (FFormat == nbatX8 ? 8 : 4) : 1);
+    GMX_ASSERT(atomRange.size() % atomSplit == 0, "atomRange should be divisible by atomSplit");
+
+    const bool canUseSerialAdd = preferSmallSerialAdd && nth >= 16 && outputBuffers.size() == 1;
+    const int  serialAddThreshold =
+            canUseSerialAdd ? exactRespaNativeMultiSerialAddAtomThreshold() : 0;
+    const int  addWorkers =
+            (serialAddThreshold > 0 && atomRange.size() <= serialAddThreshold)
+                    ? 1
+                    : nth;
+
+    const auto addForceRange = [&](const int atomStart, const int atomEnd)
     {
-        try
+        switch (FFormat)
         {
-            // The granularity for dividing the force reduction over threads.
-            // With matching atom order, this should be at least as large as the largest cluster size.
-            const int atomSplit =
-                    (gridSet.localAtomOrderMatchesNbnxmOrder() ? (FFormat == nbatX8 ? 8 : 4) : 1);
-            GMX_ASSERT(atomRange.size() % atomSplit == 0,
-                       "atomRange should be divisible by atomSplit");
-
-            const int atomStart =
-                    *atomRange.begin() + ((th + 0) * atomRange.size() / atomSplit) / nth * atomSplit;
-            const int atomEnd =
-                    *atomRange.begin() + ((th + 1) * atomRange.size() / atomSplit) / nth * atomSplit;
-
-            switch (FFormat)
-            {
-                case nbatXYZ:
-                    addNbatFXYZToFPart<STRIDE_XYZ>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
-                    break;
-                case nbatXYZQ:
-                    addNbatFXYZToFPart<STRIDE_XYZQ>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
-                    break;
-                case nbatX4:
-                    addNbatFPackedToFPart<c_packX4>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
-                    break;
-                case nbatX8:
-                    addNbatFPackedToFPart<c_packX8>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
-                    break;
-                default: GMX_RELEASE_ASSERT(false, "Unsupported force format");
-            }
+            case nbatXYZ:
+                addNbatFXYZToFPart<STRIDE_XYZ>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
+                break;
+            case nbatXYZQ:
+                addNbatFXYZToFPart<STRIDE_XYZQ>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
+                break;
+            case nbatX4:
+                addNbatFPackedToFPart<c_packX4>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
+                break;
+            case nbatX8:
+                addNbatFPackedToFPart<c_packX8>(outputBuffers[0], atomStart, atomEnd, binIndices, f);
+                break;
+            default: GMX_RELEASE_ASSERT(false, "Unsupported force format");
         }
-        GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
+    };
+
+    if (addWorkers == 1)
+    {
+        addForceRange(*atomRange.begin(), *atomRange.end());
+    }
+    else
+    {
+#pragma omp parallel for num_threads(addWorkers) schedule(static)
+        for (int th = 0; th < addWorkers; th++)
+        {
+            try
+            {
+            const int atomStart =
+                    *atomRange.begin() + ((th + 0) * atomRange.size() / atomSplit) / addWorkers * atomSplit;
+            const int atomEnd =
+                    *atomRange.begin() + ((th + 1) * atomRange.size() / atomSplit) / addWorkers * atomSplit;
+
+                addForceRange(atomStart, atomEnd);
+            }
+            GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
+        }
     }
 }
 

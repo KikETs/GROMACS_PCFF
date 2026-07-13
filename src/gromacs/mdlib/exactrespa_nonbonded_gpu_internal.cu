@@ -66,6 +66,22 @@ __device__ SplitWeights computeSplitWeightsGpu(const ExactRespaGpuRuntimeParams&
     return weights;
 }
 
+__device__ float repulsionPowerTermGpu(const float rinv,
+                                       const float rinvsq,
+                                       const float rinvsix,
+                                       const float repulsionPower)
+{
+    if (repulsionPower == 12.0F)
+    {
+        return rinvsix * rinvsix;
+    }
+    if (repulsionPower == 9.0F)
+    {
+        return rinvsix * rinvsq * rinv;
+    }
+    return powf(rinv, repulsionPower);
+}
+
 __device__ void atomicAddForce(float3* forces,
                                const int numAtoms,
                                const int level,
@@ -108,6 +124,19 @@ __device__ void atomicAddVirial(float* virials, const int level, const float3 dx
     atomicAdd(&virials[offset + ZZ * DIM + ZZ], -0.5F * dx.z * force.z);
 }
 
+__device__ void accumulateLocalVirial(float* virial, const float3 dx, const float3 force)
+{
+    virial[XX * DIM + XX] += -0.5F * dx.x * force.x;
+    virial[XX * DIM + YY] += -0.5F * dx.x * force.y;
+    virial[XX * DIM + ZZ] += -0.5F * dx.x * force.z;
+    virial[YY * DIM + XX] += -0.5F * dx.y * force.x;
+    virial[YY * DIM + YY] += -0.5F * dx.y * force.y;
+    virial[YY * DIM + ZZ] += -0.5F * dx.y * force.z;
+    virial[ZZ * DIM + XX] += -0.5F * dx.z * force.x;
+    virial[ZZ * DIM + YY] += -0.5F * dx.z * force.y;
+    virial[ZZ * DIM + ZZ] += -0.5F * dx.z * force.z;
+}
+
 __device__ void accumulateLevelContribution(const ExactRespaGpuRuntimeParams& params,
                                             const int                        level,
                                             const float                      scalar,
@@ -118,7 +147,8 @@ __device__ void accumulateLevelContribution(const ExactRespaGpuRuntimeParams& pa
                                             const int                        shiftIndex,
                                             float3*                          levelForces,
                                             float3*                          levelShiftForces,
-                                            float*                           levelVirials)
+                                            float*                           levelVirials,
+                                            float*                           outerLevelVirial)
 {
     if ((params.activeLevelMask & (1 << level)) == 0 || scalar == 0.0F)
     {
@@ -140,7 +170,14 @@ __device__ void accumulateLevelContribution(const ExactRespaGpuRuntimeParams& pa
 
     if ((params.directVirialLevelMask & (1 << level)) != 0)
     {
-        atomicAddVirial(levelVirials, level, dx, force);
+        if (outerLevelVirial != nullptr && level == params.outerLevel)
+        {
+            accumulateLocalVirial(outerLevelVirial, dx, force);
+        }
+        else
+        {
+            atomicAddVirial(levelVirials, level, dx, force);
+        }
     }
 }
 
@@ -154,140 +191,271 @@ __global__ void exactRespaNonbondedKernel(const ExactRespaGpuRuntimeParams param
                                           const float*                     coulombTable,
                                           float3*                          levelForces,
                                           float3*                          levelShiftForces,
-                                          float*                           levelLjEnergies,
-                                          float*                           levelCoulombEnergies,
-                                          float*                           levelExcludedCoulombEnergies,
+                                          float*                           levelEnergies,
                                           float*                           levelVirials)
 {
     const int index = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
-    if (index >= params.numPairs)
+    const int threadIndex = static_cast<int>(threadIdx.x);
+    const bool havePair = index < params.numPairs;
+    const bool accumulateOuterEnergy =
+            (params.accumulateEnergyMask & (1 << params.outerLevel)) != 0;
+    const bool accumulateOuterDirectVirial =
+            (params.directVirialLevelMask & (1 << params.outerLevel)) != 0;
+
+    float threadLjEnergy              = 0.0F;
+    float threadCoulombEnergy         = 0.0F;
+    float threadExcludedCoulombEnergy = 0.0F;
+    float threadVirial[DIM * DIM]     = {};
+    __shared__ float sharedEnergy[3][c_exactRespaGpuThreadsPerBlock];
+    __shared__ float sharedVirial[DIM * DIM][c_exactRespaGpuThreadsPerBlock];
+
+    if (havePair)
     {
-        return;
-    }
+        const ExactRespaGpuPairEntry entry      = pairEntries[index];
+        const int                    ai         = entry.ai;
+        const int                    aj         = entry.aj;
+        const int                    shiftIndex = entry.shiftIndex;
+        const bool                   excluded   = (entry.excluded != 0);
 
-    const ExactRespaGpuPairEntry entry      = pairEntries[index];
-    const int                    ai         = entry.ai;
-    const int                    aj         = entry.aj;
-    const int                    shiftIndex = entry.shiftIndex;
-    const bool                   excluded   = (entry.excluded != 0);
+        const float3 xi    = coordinates[ai];
+        const float3 xj    = coordinates[aj];
+        const float3 shift = shiftVectors[shiftIndex];
+        const float3 dx =
+                make_float3(xi.x + shift.x - xj.x, xi.y + shift.y - xj.y, xi.z + shift.z - xj.z);
 
-    const float3 xi    = coordinates[ai];
-    const float3 xj    = coordinates[aj];
-    const float3 shift = shiftVectors[shiftIndex];
-    const float3 dx =
-            make_float3(xi.x + shift.x - xj.x, xi.y + shift.y - xj.y, xi.z + shift.z - xj.z);
+        float rsq = dx.x * dx.x + dx.y * dx.y + dx.z * dx.z;
+        rsq       = fmaxf(rsq, c_nbnxnMinDistanceSquared);
 
-    float rsq = dx.x * dx.x + dx.y * dx.y + dx.z * dx.z;
-    rsq       = fmaxf(rsq, c_nbnxnMinDistanceSquared);
+        const float rinv   = rsqrtf(rsq);
+        const float rinvsq = rinv * rinv;
+        const float r      = rsq * rinv;
 
-    const float rinv   = rsqrtf(rsq);
-    const float rinvsq = rinv * rinv;
-    const float r      = rsq * rinv;
-
-    const float factorLj      = excluded ? 0.0F : 1.0F;
-    const float factorCoulomb = excluded ? 0.0F : 1.0F;
-    const auto  splitWeights  = computeSplitWeightsGpu(params, r);
-
-    float rawLjScalar = 0.0F;
-    float rawLjEnergy = 0.0F;
-    if (factorLj != 0.0F && rsq < params.vdwCutoff2)
-    {
-        const int   typeI         = atomTypes[ai];
-        const int   typeJ         = atomTypes[aj];
-        const float c6            = nbfp[typeI * params.ntype2 + typeJ * 2];
-        const float cRepulsive    = nbfp[typeI * params.ntype2 + typeJ * 2 + 1];
-        const float rinvsix       = rinvsq * rinvsq * rinvsq;
-        const float repulsiveTerm = (params.repulsionPower == 12.0F) ? (rinvsix * rinvsix)
-                                                                     : powf(rinv, params.repulsionPower);
-        rawLjScalar = cRepulsive * repulsiveTerm - c6 * rinvsix;
-        rawLjEnergy = cRepulsive * repulsiveTerm * params.invRepulsionPower - c6 * rinvsix * (1.0F / 6.0F);
-    }
-
-    float bareCoulombScalar = 0.0F;
-    float correctionScalar  = 0.0F;
-    float fullCoulombEnergy = 0.0F;
-    if (rsq < params.coulombCutoff2)
-    {
-        const float qq = atomCharges[ai] * atomCharges[aj] * params.epsfac;
-        if (qq != 0.0F)
+        if (excluded)
         {
-            bareCoulombScalar = factorCoulomb * qq * rinv;
-            if (params.coulombUsesEwaldTable != 0
-                && !(excluded && params.suppressEwaldExcludedAndSelf != 0))
+            float correctionScalar  = 0.0F;
+            float fullCoulombEnergy = 0.0F;
+            if (rsq < params.coulombCutoff2 && params.coulombUsesEwaldTable != 0
+                && params.suppressEwaldExcludedAndSelf == 0)
             {
-                const float scaledR = r * params.coulombTableScale;
-                const int   tableIndex = static_cast<int>(scaledR);
-                const float frac       = scaledR - tableIndex;
-                const float halfsp     = 0.5F / params.coulombTableScale;
-                const float baseF      = coulombTable[tableIndex * 4];
-                const float fexcl      = baseF + frac * coulombTable[tableIndex * 4 + 1];
-                const float vcorr =
-                        coulombTable[tableIndex * 4 + 2] - halfsp * frac * (baseF + fexcl);
-                correctionScalar  = -qq * fexcl / rinv;
-                fullCoulombEnergy = qq * (factorCoulomb * (rinv - params.ewaldShift) - vcorr);
+                const float qq = atomCharges[ai] * atomCharges[aj] * params.epsfac;
+                if (qq != 0.0F)
+                {
+                    const float scaledR    = r * params.coulombTableScale;
+                    const int   tableIndex = static_cast<int>(scaledR);
+                    const float frac       = scaledR - tableIndex;
+                    const float halfsp     = 0.5F / params.coulombTableScale;
+                    const float baseF      = coulombTable[tableIndex * 4];
+                    const float fexcl      = baseF + frac * coulombTable[tableIndex * 4 + 1];
+                    const float vcorr =
+                            coulombTable[tableIndex * 4 + 2] - halfsp * frac * (baseF + fexcl);
+                    correctionScalar  = -qq * fexcl * r;
+                    fullCoulombEnergy = -qq * vcorr;
+                }
             }
-            else
+
+            if ((params.activeLevelMask & (1 << params.outerLevel)) != 0)
             {
-                fullCoulombEnergy = factorCoulomb * qq * rinv;
+                accumulateLevelContribution(params,
+                                            params.outerLevel,
+                                            correctionScalar,
+                                            rinvsq,
+                                            dx,
+                                            ai,
+                                            aj,
+                                            shiftIndex,
+                                            levelForces,
+                                            levelShiftForces,
+                                            levelVirials,
+                                            accumulateOuterDirectVirial ? threadVirial : nullptr);
+            }
+
+            if (accumulateOuterEnergy)
+            {
+                threadCoulombEnergy         = fullCoulombEnergy;
+                threadExcludedCoulombEnergy = fullCoulombEnergy;
+            }
+        }
+        else
+        {
+            const auto splitWeights = computeSplitWeightsGpu(params, r);
+
+            float rawLjScalar = 0.0F;
+            if (rsq < params.vdwCutoff2)
+            {
+                const int   typeI         = atomTypes[ai];
+                const int   typeJ         = atomTypes[aj];
+                const float c6            = nbfp[typeI * params.ntype2 + typeJ * 2];
+                const float cRepulsive    = nbfp[typeI * params.ntype2 + typeJ * 2 + 1];
+                const float rinvsix       = rinvsq * rinvsq * rinvsq;
+                const float repulsiveTerm =
+                        repulsionPowerTermGpu(rinv, rinvsq, rinvsix, params.repulsionPower);
+                rawLjScalar = cRepulsive * repulsiveTerm - c6 * rinvsix;
+                if (accumulateOuterEnergy)
+                {
+                    threadLjEnergy = cRepulsive * repulsiveTerm * params.invRepulsionPower
+                                     - c6 * rinvsix * (1.0F / 6.0F);
+                }
+            }
+
+            float bareCoulombScalar = 0.0F;
+            float correctionScalar  = 0.0F;
+            float fullCoulombEnergy = 0.0F;
+            if (rsq < params.coulombCutoff2)
+            {
+                const float qq = atomCharges[ai] * atomCharges[aj] * params.epsfac;
+                if (qq != 0.0F)
+                {
+                    bareCoulombScalar = qq * rinv;
+                    if (params.coulombUsesEwaldTable != 0)
+                    {
+                        const float scaledR = r * params.coulombTableScale;
+                        const int   tableIndex = static_cast<int>(scaledR);
+                        const float frac       = scaledR - tableIndex;
+                        const float halfsp     = 0.5F / params.coulombTableScale;
+                        const float baseF      = coulombTable[tableIndex * 4];
+                        const float fexcl      = baseF + frac * coulombTable[tableIndex * 4 + 1];
+                        const float vcorr =
+                                coulombTable[tableIndex * 4 + 2] - halfsp * frac * (baseF + fexcl);
+                        correctionScalar  = -qq * fexcl * r;
+                        fullCoulombEnergy = qq * (rinv - params.ewaldShift - vcorr);
+                    }
+                    else
+                    {
+                        fullCoulombEnergy = qq * rinv;
+                    }
+                }
+            }
+
+            const float innerScalar =
+                    bareCoulombScalar * splitWeights.inner + rawLjScalar * splitWeights.inner;
+            const float middleScalar = bareCoulombScalar * splitWeights.middle
+                                       + rawLjScalar * splitWeights.middle;
+            const float bareOuterScalar =
+                    bareCoulombScalar * splitWeights.outer + rawLjScalar * splitWeights.outer;
+            const float outerScalar = correctionScalar + bareOuterScalar;
+
+            if ((params.activeLevelMask & (1 << params.innerLevel)) != 0)
+            {
+                accumulateLevelContribution(params,
+                                            params.innerLevel,
+                                            innerScalar,
+                                            rinvsq,
+                                            dx,
+                                            ai,
+                                            aj,
+                                            shiftIndex,
+                                            levelForces,
+                                            levelShiftForces,
+                                            levelVirials,
+                                            accumulateOuterDirectVirial ? threadVirial : nullptr);
+            }
+            if (params.hasMiddle != 0 && params.middleLevel >= 0
+                && (params.activeLevelMask & (1 << params.middleLevel)) != 0)
+            {
+                accumulateLevelContribution(params,
+                                            params.middleLevel,
+                                            middleScalar,
+                                            rinvsq,
+                                            dx,
+                                            ai,
+                                            aj,
+                                            shiftIndex,
+                                            levelForces,
+                                            levelShiftForces,
+                                            levelVirials,
+                                            accumulateOuterDirectVirial ? threadVirial : nullptr);
+            }
+            if ((params.activeLevelMask & (1 << params.outerLevel)) != 0)
+            {
+                accumulateLevelContribution(params,
+                                            params.outerLevel,
+                                            outerScalar,
+                                            rinvsq,
+                                            dx,
+                                            ai,
+                                            aj,
+                                            shiftIndex,
+                                            levelForces,
+                                            levelShiftForces,
+                                            levelVirials,
+                                            accumulateOuterDirectVirial ? threadVirial : nullptr);
+            }
+
+            if (accumulateOuterEnergy)
+            {
+                threadCoulombEnergy = fullCoulombEnergy;
             }
         }
     }
 
-    const float innerCorrectionScalar  = excluded ? 0.0F : correctionScalar * splitWeights.inner;
-    const float middleCorrectionScalar = excluded ? 0.0F : correctionScalar * splitWeights.middle;
-    const float outerCorrectionScalar  = excluded ? correctionScalar : correctionScalar * splitWeights.outer;
-    const float innerScalar =
-            bareCoulombScalar * splitWeights.inner + factorLj * rawLjScalar * splitWeights.inner + innerCorrectionScalar;
-    const float middleScalar = bareCoulombScalar * splitWeights.middle
-                               + factorLj * rawLjScalar * splitWeights.middle + middleCorrectionScalar;
-    const float bareOuterScalar =
-            bareCoulombScalar * splitWeights.outer + factorLj * rawLjScalar * splitWeights.outer;
-    const float outerScalar = outerCorrectionScalar + bareOuterScalar;
-
-    accumulateLevelContribution(params,
-                                params.innerLevel,
-                                innerScalar,
-                                rinvsq,
-                                dx,
-                                ai,
-                                aj,
-                                shiftIndex,
-                                levelForces,
-                                levelShiftForces,
-                                levelVirials);
-    if (params.hasMiddle != 0 && params.middleLevel >= 0)
+    if (accumulateOuterDirectVirial)
     {
-        accumulateLevelContribution(params,
-                                    params.middleLevel,
-                                    middleScalar,
-                                    rinvsq,
-                                    dx,
-                                    ai,
-                                    aj,
-                                    shiftIndex,
-                                    levelForces,
-                                    levelShiftForces,
-                                    levelVirials);
-    }
-    accumulateLevelContribution(params,
-                                params.outerLevel,
-                                outerScalar,
-                                rinvsq,
-                                dx,
-                                ai,
-                                aj,
-                                shiftIndex,
-                                levelForces,
-                                levelShiftForces,
-                                levelVirials);
-
-    if ((params.accumulateEnergyMask & (1 << params.outerLevel)) != 0)
-    {
-        atomicAdd(&levelLjEnergies[params.outerLevel], factorLj * rawLjEnergy);
-        atomicAdd(&levelCoulombEnergies[params.outerLevel], fullCoulombEnergy);
-        if (excluded)
+        for (int component = 0; component < DIM * DIM; ++component)
         {
-            atomicAdd(&levelExcludedCoulombEnergies[params.outerLevel], fullCoulombEnergy);
+            sharedVirial[component][threadIndex] = threadVirial[component];
+        }
+        __syncthreads();
+
+        for (int stride = c_exactRespaGpuThreadsPerBlock / 2; stride > 0; stride >>= 1)
+        {
+            if (threadIndex < stride)
+            {
+                for (int component = 0; component < DIM * DIM; ++component)
+                {
+                    sharedVirial[component][threadIndex] += sharedVirial[component][threadIndex + stride];
+                }
+            }
+            __syncthreads();
+        }
+
+        if (threadIndex == 0)
+        {
+            const int offset = params.outerLevel * DIM * DIM;
+            for (int component = 0; component < DIM * DIM; ++component)
+            {
+                if (sharedVirial[component][0] != 0.0F)
+                {
+                    atomicAdd(&levelVirials[offset + component], sharedVirial[component][0]);
+                }
+            }
+        }
+    }
+
+    if (accumulateOuterEnergy)
+    {
+        sharedEnergy[0][threadIndex] = threadLjEnergy;
+        sharedEnergy[1][threadIndex] = threadCoulombEnergy;
+        sharedEnergy[2][threadIndex] = threadExcludedCoulombEnergy;
+        __syncthreads();
+
+        for (int stride = c_exactRespaGpuThreadsPerBlock / 2; stride > 0; stride >>= 1)
+        {
+            if (threadIndex < stride)
+            {
+                sharedEnergy[0][threadIndex] += sharedEnergy[0][threadIndex + stride];
+                sharedEnergy[1][threadIndex] += sharedEnergy[1][threadIndex + stride];
+                sharedEnergy[2][threadIndex] += sharedEnergy[2][threadIndex + stride];
+            }
+            __syncthreads();
+        }
+
+        if (threadIndex == 0)
+        {
+            if (sharedEnergy[0][0] != 0.0F)
+            {
+                atomicAdd(&levelEnergies[c_exactRespaGpuLjEnergyOffset + params.outerLevel],
+                          sharedEnergy[0][0]);
+            }
+            if (sharedEnergy[1][0] != 0.0F)
+            {
+                atomicAdd(&levelEnergies[c_exactRespaGpuCoulombEnergyOffset + params.outerLevel],
+                          sharedEnergy[1][0]);
+            }
+            if (sharedEnergy[2][0] != 0.0F)
+            {
+                atomicAdd(&levelEnergies[c_exactRespaGpuExcludedCoulombEnergyOffset + params.outerLevel],
+                          sharedEnergy[2][0]);
+            }
         }
     }
 }
@@ -304,9 +472,7 @@ void launchExactRespaNonbondedGpuKernel(const ExactRespaGpuRuntimeParams&       
                                         const DeviceBuffer<float>&                 d_coulombTable,
                                         DeviceBuffer<Float3>                       d_levelForces,
                                         DeviceBuffer<Float3>                       d_levelShiftForces,
-                                        DeviceBuffer<float>                        d_levelLjEnergies,
-                                        DeviceBuffer<float>                        d_levelCoulombEnergies,
-                                        DeviceBuffer<float>                        d_levelExcludedCoulombEnergies,
+                                        DeviceBuffer<float>                        d_levelEnergies,
                                         DeviceBuffer<float>                        d_levelVirials,
                                         const DeviceStream&                        deviceStream)
 {
@@ -331,9 +497,7 @@ void launchExactRespaNonbondedGpuKernel(const ExactRespaGpuRuntimeParams&       
             d_coulombTable,
             d_levelForcesFloat3,
             d_levelShiftForcesFloat3,
-            d_levelLjEnergies,
-            d_levelCoulombEnergies,
-            d_levelExcludedCoulombEnergies,
+            d_levelEnergies,
             d_levelVirials);
     CU_RET_ERR(cudaGetLastError(), "Launching exact r-RESPA GPU nonbonded kernel failed. ");
 }

@@ -47,6 +47,7 @@
 #define GMX_NBNXM_PAIRLISTSETS_H
 
 #include <memory>
+#include <vector>
 
 #include "gromacs/mdtypes/locality.h"
 #include "gromacs/nbnxm/nbnxm.h"
@@ -119,6 +120,7 @@ public:
     {
         params_.rlistOuter = rlistOuter;
         params_.rlistInner = rlistInner;
+        invalidatePlainPairlistCache();
     }
 
     //! Returns the pair-list set for the given locality
@@ -139,6 +141,12 @@ public:
     const PlainPairlist& plainPairlist(real range, const nbnxn_atomdata_t& nbat, ArrayRef<const int> atomIndices);
 
 private:
+    //! Invalidates the cached plain pairlist materialization
+    void invalidatePlainPairlistCache()
+    {
+        plainPairlistCacheValid_ = false;
+    }
+
     //! Returns the pair-list set for the given locality
     PairlistSet& pairlistSet(InteractionLocality iLocality)
     {
@@ -168,6 +176,16 @@ private:
 
     //! Storage for returning a plain pairlist
     PlainPairlist plainPairlist_;
+    //! Whether the cached plain pairlist is valid for the stored snapshots
+    bool plainPairlistCacheValid_ = false;
+    //! Range used to build the cached plain pairlist
+    real plainPairlistRange_ = 0;
+    //! Coordinate snapshot for exact plain-pairlist cache validation
+    std::vector<real> plainPairlistCoordinateSnapshot_;
+    //! Shift-vector snapshot for exact plain-pairlist cache validation
+    std::vector<RVec> plainPairlistShiftVectorSnapshot_;
+    //! Atom-index snapshot for exact plain-pairlist cache validation
+    std::vector<int> plainPairlistAtomIndicesSnapshot_;
 };
 
 } // namespace gmx

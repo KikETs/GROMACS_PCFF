@@ -35,6 +35,13 @@
 
 #include "mdrun/mdrun_main.h"
 
+#include <cstdlib>
+#include <cstring>
+
+#if !defined(_WIN32)
+#    include <unistd.h>
+#endif
+
 #include "gromacs/commandline/cmdlinemodule.h"
 #include "gromacs/commandline/cmdlinemodulemanager.h"
 
@@ -47,10 +54,73 @@ void initSettingsNoNice(gmx::CommandLineModuleSettings* settings)
     settings->setDefaultNiceLevel(0);
 }
 
+bool envValueIsFalse(const char* value)
+{
+    return value != nullptr
+           && (std::strcmp(value, "0") == 0 || std::strcmp(value, "false") == 0
+               || std::strcmp(value, "FALSE") == 0 || std::strcmp(value, "off") == 0);
+}
+
+bool commandLineRequestsAtLeast16OpenmpThreads(int argc, char* argv[])
+{
+    for (int i = 1; i + 1 < argc; ++i)
+    {
+        if (std::strcmp(argv[i], "-ntomp") == 0)
+        {
+            return std::atoi(argv[i + 1]) >= 16;
+        }
+    }
+
+    const char* ompNumThreads = std::getenv("OMP_NUM_THREADS");
+    return ompNumThreads != nullptr && std::atoi(ompNumThreads) >= 16;
+}
+
+bool setEnvDefault(const char* name, const char* value)
+{
+    if (std::getenv(name) != nullptr)
+    {
+        return false;
+    }
+#if defined(_WIN32)
+    _putenv_s(name, value);
+#else
+    setenv(name, value, 0);
+#endif
+    return true;
+}
+
+void tuneActual16OpenmpWaitPolicyBeforeRuntimeInit(int argc, char* argv[])
+{
+    if (!commandLineRequestsAtLeast16OpenmpThreads(argc, argv))
+    {
+        return;
+    }
+    if (!envValueIsFalse(std::getenv("GMX_PCFF_EXACT_RESPA_GPU_CAP_EXPLICIT_NTOMP"))
+        && !envValueIsFalse(std::getenv("GMX_PCFF_EXACT_RESPA_GPU_NTOMP_MAX")))
+    {
+        return;
+    }
+
+    bool changed = false;
+    changed = setEnvDefault("GOMP_SPINCOUNT", "7000") || changed;
+    changed = setEnvDefault("OMP_WAIT_POLICY", "active") || changed;
+
+#if !defined(_WIN32)
+    if (changed && std::getenv("GMX_PCFF_ACTUAL16_GOMP_REEXEC") == nullptr)
+    {
+        setenv("GMX_PCFF_ACTUAL16_GOMP_REEXEC", "1", 1);
+        execv(argv[0], argv);
+    }
+#else
+    GMX_UNUSED_VALUE(changed);
+#endif
+}
+
 } // namespace
 
 int main(int argc, char* argv[])
 {
+    tuneActual16OpenmpWaitPolicyBeforeRuntimeInit(argc, argv);
     return gmx::CommandLineModuleManager::runAsMainCMainWithSettings(
             argc, argv, &gmx::gmx_mdrun, &initSettingsNoNice);
 }

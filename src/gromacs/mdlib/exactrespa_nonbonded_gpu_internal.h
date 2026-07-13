@@ -12,6 +12,12 @@
 namespace gmx
 {
 
+constexpr int c_exactRespaGpuNumEnergyLevels             = 3;
+constexpr int c_exactRespaGpuLjEnergyOffset              = 0;
+constexpr int c_exactRespaGpuCoulombEnergyOffset         = c_exactRespaGpuNumEnergyLevels;
+constexpr int c_exactRespaGpuExcludedCoulombEnergyOffset = 2 * c_exactRespaGpuNumEnergyLevels;
+constexpr int c_exactRespaGpuNumEnergyValues             = 3 * c_exactRespaGpuNumEnergyLevels;
+
 struct ExactRespaGpuPairEntry
 {
     int ai         = 0;
@@ -61,9 +67,7 @@ void launchExactRespaNonbondedGpuKernel(const ExactRespaGpuRuntimeParams&      p
                                         const DeviceBuffer<float>&              d_coulombTable,
                                         DeviceBuffer<Float3>                    d_levelForces,
                                         DeviceBuffer<Float3>                    d_levelShiftForces,
-                                        DeviceBuffer<float>                     d_levelLjEnergies,
-                                        DeviceBuffer<float>                     d_levelCoulombEnergies,
-                                        DeviceBuffer<float>                     d_levelExcludedCoulombEnergies,
+                                        DeviceBuffer<float>                     d_levelEnergies,
                                         DeviceBuffer<float>                     d_levelVirials,
                                         const DeviceStream&                     deviceStream);
 

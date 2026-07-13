@@ -388,6 +388,7 @@ std::vector<LammpsRespaNonbondedOutputSink> activeLammpsRespaNonbondedOutputSink
                                                                                    const bool        computeEnergy)
 {
     std::vector<LammpsRespaNonbondedOutputSink> sinks;
+    sinks.reserve(3);
     if (!useExactRespa(ir))
     {
         GMX_RELEASE_ASSERT(ir.mtsMode != MtsMode::LammpsRespa && !ir.lammpsRespa.enabled,

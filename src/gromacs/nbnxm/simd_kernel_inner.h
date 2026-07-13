@@ -373,6 +373,34 @@
                     return zero_S;
                 });
 
+        const auto distanceV = genArr<nR>([&](int i) { return rSquaredV[i] * rInvV[i]; });
+        const auto switchIntoOuterV =
+                genArr<nR>([&](int i)
+                           { return exactRespaSwitchInV(distanceV[i],
+                                                        ic.exactRespaCpuPairSplit.outerOn,
+                                                        ic.exactRespaCpuPairSplit.outerOff); });
+        const auto switchIntoMiddleV =
+                genArr<nR>([&](int i)
+                           {
+                               if (ic.exactRespaCpuPairSplit.hasMiddle)
+                               {
+                                   return exactRespaSwitchInV(distanceV[i],
+                                                             ic.exactRespaCpuPairSplit.innerOff,
+                                                             ic.exactRespaCpuPairSplit.innerOn);
+                               }
+                               return switchIntoOuterV[i];
+                           });
+        const auto innerWeightV = genArr<nR>([&](int i) { return one_S - switchIntoMiddleV[i]; });
+        const auto middleWeightV =
+                genArr<nR>([&](int i)
+                           {
+                               if (!ic.exactRespaCpuPairSplit.hasMiddle)
+                               {
+                                   return zero_S;
+                               }
+                               return switchIntoMiddleV[i] * (one_S - switchIntoOuterV[i]);
+                           });
+
         const bool twoContributionInnerMiddle =
                 exactRespaNativeContributionCount == 2
                 && exactRespaCpuPairSplitNativeMultiContribution(ic, 0)
@@ -382,37 +410,6 @@
         if (twoContributionInnerMiddle
             && exactRespaCpuPairSplitNativeMultiTwoContributionFastPathEnabled())
         {
-            const auto innerWeightV = genArr<nR>(
-                    [&](int i)
-                    {
-                        const SimdReal rV = rSquaredV[i] * rInvV[i];
-                        if (ic.exactRespaCpuPairSplit.hasMiddle)
-                        {
-                            return one_S
-                                   - exactRespaSwitchInV(rV,
-                                                         ic.exactRespaCpuPairSplit.innerOff,
-                                                         ic.exactRespaCpuPairSplit.innerOn);
-                        }
-                        return one_S
-                               - exactRespaSwitchInV(rV,
-                                                     ic.exactRespaCpuPairSplit.outerOn,
-                                                     ic.exactRespaCpuPairSplit.outerOff);
-                    });
-            const auto middleWeightV = genArr<nR>(
-                    [&](int i)
-                    {
-                        const SimdReal rV = rSquaredV[i] * rInvV[i];
-                        if (!ic.exactRespaCpuPairSplit.hasMiddle)
-                        {
-                            return zero_S;
-                        }
-                        const SimdReal switchIntoMiddle = exactRespaSwitchInV(
-                                rV, ic.exactRespaCpuPairSplit.innerOff, ic.exactRespaCpuPairSplit.innerOn);
-                        const SimdReal switchIntoOuter = exactRespaSwitchInV(
-                                rV, ic.exactRespaCpuPairSplit.outerOn, ic.exactRespaCpuPairSplit.outerOff);
-                        return switchIntoMiddle * (one_S - switchIntoOuter);
-                    });
-
             const auto innerScalarV =
                     genArr<nR>([&](int i) { return innerWeightV[i] * directForceScalarV[i]; });
             const auto middleScalarV =
@@ -471,36 +468,11 @@
                 const auto directWeightV = genArr<nR>(
                         [&](int i)
                         {
-                            const SimdReal rV = rSquaredV[i] * rInvV[i];
                             switch (contribution)
                             {
-                                case MtsNonbondedRespaContribution::Inner:
-                                    if (ic.exactRespaCpuPairSplit.hasMiddle)
-                                    {
-                                        return one_S
-                                               - exactRespaSwitchInV(rV,
-                                                                     ic.exactRespaCpuPairSplit.innerOff,
-                                                                     ic.exactRespaCpuPairSplit.innerOn);
-                                    }
-                                    return one_S
-                                           - exactRespaSwitchInV(rV,
-                                                                 ic.exactRespaCpuPairSplit.outerOn,
-                                                                 ic.exactRespaCpuPairSplit.outerOff);
-                                case MtsNonbondedRespaContribution::Middle:
-                                {
-                                    if (!ic.exactRespaCpuPairSplit.hasMiddle)
-                                    {
-                                        return zero_S;
-                                    }
-                                    const SimdReal switchIntoMiddle = exactRespaSwitchInV(
-                                            rV, ic.exactRespaCpuPairSplit.innerOff, ic.exactRespaCpuPairSplit.innerOn);
-                                    const SimdReal switchIntoOuter = exactRespaSwitchInV(
-                                            rV, ic.exactRespaCpuPairSplit.outerOn, ic.exactRespaCpuPairSplit.outerOff);
-                                    return switchIntoMiddle * (one_S - switchIntoOuter);
-                                }
-                                case MtsNonbondedRespaContribution::Outer:
-                                    return exactRespaSwitchInV(
-                                            rV, ic.exactRespaCpuPairSplit.outerOn, ic.exactRespaCpuPairSplit.outerOff);
+                                case MtsNonbondedRespaContribution::Inner: return innerWeightV[i];
+                                case MtsNonbondedRespaContribution::Middle: return middleWeightV[i];
+                                case MtsNonbondedRespaContribution::Outer: return switchIntoOuterV[i];
                                 case MtsNonbondedRespaContribution::Full: return one_S;
                                 case MtsNonbondedRespaContribution::Count:
                                     GMX_RELEASE_ASSERT(false, "Invalid exact r-RESPA CPU contribution");

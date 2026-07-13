@@ -42,6 +42,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 
 #include <cub/device/device_scan.cuh>
 
@@ -89,6 +90,24 @@
 #define FUNCTION_DECLARATION_ONLY
 /** Force only **/
 #include "nbnxm_cuda_kernels.cuh"
+/** Force only native exact r-RESPA multi-contribution output **/
+#define EXACT_RESPA_NATIVE_MULTI_NB_KERNEL
+#define EXACT_RESPA_NATIVE_MULTI_NB_COUNT 2
+#define NB_KERNEL_FUNC_VARIANT_SUFFIX _nativeMulti2
+#include "nbnxm_cuda_kernels.cuh"
+#undef NB_KERNEL_FUNC_VARIANT_SUFFIX
+#undef EXACT_RESPA_NATIVE_MULTI_NB_COUNT
+#define EXACT_RESPA_NATIVE_MULTI_NB_COUNT 3
+#define NB_KERNEL_FUNC_VARIANT_SUFFIX _nativeMulti
+#include "nbnxm_cuda_kernels.cuh"
+#undef NB_KERNEL_FUNC_VARIANT_SUFFIX
+#define EXACT_RESPA_NATIVE_MULTI_NB_MIN_BLOCKS_PER_MP 16
+#define NB_KERNEL_FUNC_VARIANT_SUFFIX _nativeMultiLowReg
+#include "nbnxm_cuda_kernels.cuh"
+#undef NB_KERNEL_FUNC_VARIANT_SUFFIX
+#undef EXACT_RESPA_NATIVE_MULTI_NB_MIN_BLOCKS_PER_MP
+#undef EXACT_RESPA_NATIVE_MULTI_NB_COUNT
+#undef EXACT_RESPA_NATIVE_MULTI_NB_KERNEL
 /** Force & energy **/
 #define CALC_ENERGIES
 #include "nbnxm_cuda_kernels.cuh"
@@ -98,6 +117,24 @@
 /** Force only **/
 #define PRUNE_NBL
 #include "nbnxm_cuda_kernels.cuh"
+/** Force only native exact r-RESPA multi-contribution output **/
+#define EXACT_RESPA_NATIVE_MULTI_NB_KERNEL
+#define EXACT_RESPA_NATIVE_MULTI_NB_COUNT 2
+#define NB_KERNEL_FUNC_VARIANT_SUFFIX _nativeMulti2
+#include "nbnxm_cuda_kernels.cuh"
+#undef NB_KERNEL_FUNC_VARIANT_SUFFIX
+#undef EXACT_RESPA_NATIVE_MULTI_NB_COUNT
+#define EXACT_RESPA_NATIVE_MULTI_NB_COUNT 3
+#define NB_KERNEL_FUNC_VARIANT_SUFFIX _nativeMulti
+#include "nbnxm_cuda_kernels.cuh"
+#undef NB_KERNEL_FUNC_VARIANT_SUFFIX
+#define EXACT_RESPA_NATIVE_MULTI_NB_MIN_BLOCKS_PER_MP 16
+#define NB_KERNEL_FUNC_VARIANT_SUFFIX _nativeMultiLowReg
+#include "nbnxm_cuda_kernels.cuh"
+#undef NB_KERNEL_FUNC_VARIANT_SUFFIX
+#undef EXACT_RESPA_NATIVE_MULTI_NB_MIN_BLOCKS_PER_MP
+#undef EXACT_RESPA_NATIVE_MULTI_NB_COUNT
+#undef EXACT_RESPA_NATIVE_MULTI_NB_KERNEL
 /** Force & energy **/
 #define CALC_ENERGIES
 #include "nbnxm_cuda_kernels.cuh"
@@ -222,6 +259,177 @@ static const nbnxn_cu_kfunc_ptr_t nb_kfunc_noener_noprune_ptr[c_numElecTypes][c_
 #endif
 };
 
+/*! Force-only native exact r-RESPA multi-contribution kernel function pointers. */
+static const nbnxn_cu_kfunc_ptr_t nb_kfunc_noener_noprune_native_multi_ptr[c_numElecTypes][c_numVdwTypes] = {
+    { nbnxn_kernel_ElecCut_VdwLJ_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJCombLB_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJFsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJPsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJEwCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJEwCombLB_F_cuda_nativeMulti },
+    { nbnxn_kernel_ElecRF_VdwLJ_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJCombLB_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJFsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJPsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJEwCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJEwCombLB_F_cuda_nativeMulti },
+    { nbnxn_kernel_ElecEwQSTab_VdwLJ_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombLB_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJFsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJPsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombLB_F_cuda_nativeMulti },
+    { nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJ_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombLB_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJFsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJPsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombLB_F_cuda_nativeMulti },
+    { nbnxn_kernel_ElecEw_VdwLJ_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJCombLB_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJFsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJPsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJEwCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJEwCombLB_F_cuda_nativeMulti },
+    { nbnxn_kernel_ElecEwTwinCut_VdwLJ_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombLB_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJFsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJPsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombLB_F_cuda_nativeMulti },
+#if GMX_USE_EXT_FMM
+    { nbnxn_kernel_ElecNone_VdwLJ_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJCombLB_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJFsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJPsw_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJEwCombGeom_F_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJEwCombLB_F_cuda_nativeMulti }
+#else
+    { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr }
+#endif
+};
+
+/*! Low-register three-output force-only native exact r-RESPA kernel function pointers. */
+static const nbnxn_cu_kfunc_ptr_t nb_kfunc_noener_noprune_native_multi_lowreg_ptr[c_numElecTypes][c_numVdwTypes] = {
+    { nbnxn_kernel_ElecCut_VdwLJ_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJCombLB_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJFsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJPsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJEwCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJEwCombLB_F_cuda_nativeMultiLowReg },
+    { nbnxn_kernel_ElecRF_VdwLJ_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJCombLB_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJFsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJPsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJEwCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJEwCombLB_F_cuda_nativeMultiLowReg },
+    { nbnxn_kernel_ElecEwQSTab_VdwLJ_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombLB_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJFsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJPsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombLB_F_cuda_nativeMultiLowReg },
+    { nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJ_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombLB_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJFsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJPsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombLB_F_cuda_nativeMultiLowReg },
+    { nbnxn_kernel_ElecEw_VdwLJ_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJCombLB_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJFsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJPsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJEwCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJEwCombLB_F_cuda_nativeMultiLowReg },
+    { nbnxn_kernel_ElecEwTwinCut_VdwLJ_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombLB_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJFsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJPsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombLB_F_cuda_nativeMultiLowReg },
+#if GMX_USE_EXT_FMM
+    { nbnxn_kernel_ElecNone_VdwLJ_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJCombLB_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJFsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJPsw_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJEwCombGeom_F_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJEwCombLB_F_cuda_nativeMultiLowReg }
+#else
+    { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr }
+#endif
+};
+
+/*! Compact two-output force-only native exact r-RESPA kernel function pointers. */
+static const nbnxn_cu_kfunc_ptr_t nb_kfunc_noener_noprune_native_multi2_ptr[c_numElecTypes][c_numVdwTypes] = {
+    { nbnxn_kernel_ElecCut_VdwLJ_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJCombLB_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJFsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJPsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJEwCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJEwCombLB_F_cuda_nativeMulti2 },
+    { nbnxn_kernel_ElecRF_VdwLJ_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJCombLB_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJFsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJPsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJEwCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJEwCombLB_F_cuda_nativeMulti2 },
+    { nbnxn_kernel_ElecEwQSTab_VdwLJ_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombLB_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJFsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJPsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombLB_F_cuda_nativeMulti2 },
+    { nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJ_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombLB_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJFsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJPsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombLB_F_cuda_nativeMulti2 },
+    { nbnxn_kernel_ElecEw_VdwLJ_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJCombLB_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJFsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJPsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJEwCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJEwCombLB_F_cuda_nativeMulti2 },
+    { nbnxn_kernel_ElecEwTwinCut_VdwLJ_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombLB_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJFsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJPsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombLB_F_cuda_nativeMulti2 },
+#if GMX_USE_EXT_FMM
+    { nbnxn_kernel_ElecNone_VdwLJ_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJCombLB_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJFsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJPsw_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJEwCombGeom_F_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJEwCombLB_F_cuda_nativeMulti2 }
+#else
+    { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr }
+#endif
+};
+
 /*! Force + energy kernel function pointers. */
 static const nbnxn_cu_kfunc_ptr_t nb_kfunc_ener_noprune_ptr[c_numElecTypes][c_numVdwTypes] = {
     { nbnxn_kernel_ElecCut_VdwLJ_VF_cuda,
@@ -336,6 +544,177 @@ static const nbnxn_cu_kfunc_ptr_t nb_kfunc_noener_prune_ptr[c_numElecTypes][c_nu
 #endif
 };
 
+/*! Force + pruning native exact r-RESPA multi-contribution kernel function pointers. */
+static const nbnxn_cu_kfunc_ptr_t nb_kfunc_noener_prune_native_multi_ptr[c_numElecTypes][c_numVdwTypes] = {
+    { nbnxn_kernel_ElecCut_VdwLJ_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJCombLB_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJFsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJPsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJEwCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecCut_VdwLJEwCombLB_F_prune_cuda_nativeMulti },
+    { nbnxn_kernel_ElecRF_VdwLJ_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJCombLB_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJFsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJPsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJEwCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecRF_VdwLJEwCombLB_F_prune_cuda_nativeMulti },
+    { nbnxn_kernel_ElecEwQSTab_VdwLJ_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombLB_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJFsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJPsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombLB_F_prune_cuda_nativeMulti },
+    { nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJ_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombLB_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJFsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJPsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombLB_F_prune_cuda_nativeMulti },
+    { nbnxn_kernel_ElecEw_VdwLJ_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJCombLB_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJFsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJPsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJEwCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEw_VdwLJEwCombLB_F_prune_cuda_nativeMulti },
+    { nbnxn_kernel_ElecEwTwinCut_VdwLJ_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombLB_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJFsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJPsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombLB_F_prune_cuda_nativeMulti },
+#if GMX_USE_EXT_FMM
+    { nbnxn_kernel_ElecNone_VdwLJ_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJCombLB_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJFsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJPsw_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJEwCombGeom_F_prune_cuda_nativeMulti,
+      nbnxn_kernel_ElecNone_VdwLJEwCombLB_F_prune_cuda_nativeMulti }
+#else
+    { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr }
+#endif
+};
+
+/*! Low-register three-output force + pruning native exact r-RESPA kernel function pointers. */
+static const nbnxn_cu_kfunc_ptr_t nb_kfunc_noener_prune_native_multi_lowreg_ptr[c_numElecTypes][c_numVdwTypes] = {
+    { nbnxn_kernel_ElecCut_VdwLJ_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJCombLB_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJFsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJPsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJEwCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecCut_VdwLJEwCombLB_F_prune_cuda_nativeMultiLowReg },
+    { nbnxn_kernel_ElecRF_VdwLJ_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJCombLB_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJFsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJPsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJEwCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecRF_VdwLJEwCombLB_F_prune_cuda_nativeMultiLowReg },
+    { nbnxn_kernel_ElecEwQSTab_VdwLJ_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombLB_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJFsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJPsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombLB_F_prune_cuda_nativeMultiLowReg },
+    { nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJ_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombLB_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJFsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJPsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombLB_F_prune_cuda_nativeMultiLowReg },
+    { nbnxn_kernel_ElecEw_VdwLJ_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJCombLB_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJFsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJPsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJEwCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEw_VdwLJEwCombLB_F_prune_cuda_nativeMultiLowReg },
+    { nbnxn_kernel_ElecEwTwinCut_VdwLJ_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombLB_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJFsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJPsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombLB_F_prune_cuda_nativeMultiLowReg },
+#if GMX_USE_EXT_FMM
+    { nbnxn_kernel_ElecNone_VdwLJ_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJCombLB_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJFsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJPsw_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJEwCombGeom_F_prune_cuda_nativeMultiLowReg,
+      nbnxn_kernel_ElecNone_VdwLJEwCombLB_F_prune_cuda_nativeMultiLowReg }
+#else
+    { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr }
+#endif
+};
+
+/*! Compact two-output force + pruning native exact r-RESPA kernel function pointers. */
+static const nbnxn_cu_kfunc_ptr_t nb_kfunc_noener_prune_native_multi2_ptr[c_numElecTypes][c_numVdwTypes] = {
+    { nbnxn_kernel_ElecCut_VdwLJ_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJCombLB_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJFsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJPsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJEwCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecCut_VdwLJEwCombLB_F_prune_cuda_nativeMulti2 },
+    { nbnxn_kernel_ElecRF_VdwLJ_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJCombLB_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJFsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJPsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJEwCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecRF_VdwLJEwCombLB_F_prune_cuda_nativeMulti2 },
+    { nbnxn_kernel_ElecEwQSTab_VdwLJ_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJCombLB_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJFsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJPsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTab_VdwLJEwCombLB_F_prune_cuda_nativeMulti2 },
+    { nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJ_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJCombLB_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJFsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJPsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwQSTabTwinCut_VdwLJEwCombLB_F_prune_cuda_nativeMulti2 },
+    { nbnxn_kernel_ElecEw_VdwLJ_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJCombLB_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJFsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJPsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJEwCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEw_VdwLJEwCombLB_F_prune_cuda_nativeMulti2 },
+    { nbnxn_kernel_ElecEwTwinCut_VdwLJ_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJCombLB_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJFsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJPsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecEwTwinCut_VdwLJEwCombLB_F_prune_cuda_nativeMulti2 },
+#if GMX_USE_EXT_FMM
+    { nbnxn_kernel_ElecNone_VdwLJ_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJCombLB_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJFsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJPsw_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJEwCombGeom_F_prune_cuda_nativeMulti2,
+      nbnxn_kernel_ElecNone_VdwLJEwCombLB_F_prune_cuda_nativeMulti2 }
+#else
+    { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr }
+#endif
+};
+
 /*! Force + energy + pruning kernel function pointers. */
 static const nbnxn_cu_kfunc_ptr_t nb_kfunc_ener_prune_ptr[c_numElecTypes][c_numVdwTypes] = {
     { nbnxn_kernel_ElecCut_VdwLJ_VF_prune_cuda,
@@ -393,11 +772,21 @@ static const nbnxn_cu_kfunc_ptr_t nb_kfunc_ener_prune_ptr[c_numElecTypes][c_numV
 #endif
 };
 
+static bool useHighRegisterExactRespaNativeMultiKernel()
+{
+    static const bool enabled = [] {
+        const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_NATIVE_MULTI_HIGH_REG");
+        return env == nullptr || std::strcmp(env, "0") != 0;
+    }();
+    return enabled;
+}
+
 /*! Return a pointer to the kernel version to be executed at the current step. */
 static inline nbnxn_cu_kfunc_ptr_t select_nbnxn_kernel(enum ElecType elecType,
                                                        enum VdwType  vdwType,
                                                        bool          bDoEne,
                                                        bool          bDoPrune,
+                                                       int exactRespaNativeMultiMask,
                                                        const DeviceInformation gmx_unused* deviceInfo)
 {
     const int elecTypeIdx = static_cast<int>(elecType);
@@ -417,6 +806,8 @@ static inline nbnxn_cu_kfunc_ptr_t select_nbnxn_kernel(enum ElecType elecType,
 
     if (bDoEne)
     {
+        GMX_ASSERT(exactRespaNativeMultiMask == 0,
+                   "Native exact r-RESPA multi-contribution CUDA kernels are force-only");
         if (bDoPrune)
         {
             return nb_kfunc_ener_prune_ptr[elecTypeIdx][vdwTypeIdx];
@@ -428,7 +819,35 @@ static inline nbnxn_cu_kfunc_ptr_t select_nbnxn_kernel(enum ElecType elecType,
     }
     else
     {
-        if (bDoPrune)
+        if (exactRespaNativeMultiMask != 0)
+        {
+            GMX_ASSERT(exactRespaNativeMultiMask == 3 || exactRespaNativeMultiMask == 5
+                               || exactRespaNativeMultiMask == 7,
+                       "Native exact r-RESPA CUDA kernels require two or three contributions");
+            const bool useCompactTwoOutputKernel = exactRespaNativeMultiMask != 7;
+            const bool useHighRegisterKernel = useHighRegisterExactRespaNativeMultiKernel();
+            if (bDoPrune)
+            {
+                if (useCompactTwoOutputKernel)
+                {
+                    return nb_kfunc_noener_prune_native_multi2_ptr[elecTypeIdx][vdwTypeIdx];
+                }
+                return useHighRegisterKernel
+                               ? nb_kfunc_noener_prune_native_multi_ptr[elecTypeIdx][vdwTypeIdx]
+                               : nb_kfunc_noener_prune_native_multi_lowreg_ptr[elecTypeIdx][vdwTypeIdx];
+            }
+            else
+            {
+                if (useCompactTwoOutputKernel)
+                {
+                    return nb_kfunc_noener_noprune_native_multi2_ptr[elecTypeIdx][vdwTypeIdx];
+                }
+                return useHighRegisterKernel
+                               ? nb_kfunc_noener_noprune_native_multi_ptr[elecTypeIdx][vdwTypeIdx]
+                               : nb_kfunc_noener_noprune_native_multi_lowreg_ptr[elecTypeIdx][vdwTypeIdx];
+            }
+        }
+        else if (bDoPrune)
         {
             return nb_kfunc_noener_prune_ptr[elecTypeIdx][vdwTypeIdx];
         }
@@ -586,7 +1005,7 @@ void gpu_launch_kernel(NbnxmGpu* nb, const gmx::StepWorkload& stepWork, const In
         fprintf(debug,
                 "Non-bonded GPU launch configuration:\n\tThread block: %zux%zux%zu\n\t"
                 "\tGrid: %zux%zu\n\t#Super-clusters/clusters: %d/%d (%d)\n"
-                "\tShMem: %zu\n",
+                "\tShMem: %zu\n\tExact r-RESPA native multi mask: %d\n",
                 config.blockSize[0],
                 config.blockSize[1],
                 config.blockSize[2],
@@ -595,7 +1014,8 @@ void gpu_launch_kernel(NbnxmGpu* nb, const gmx::StepWorkload& stepWork, const In
                 plist->numSci * c_superClusterSize,
                 c_superClusterSize,
                 plist->numAtomsPerCluster,
-                config.sharedMemorySize);
+                config.sharedMemorySize,
+                nbp->exactRespaNativeMultiMask);
     }
 
     auto* timingEvent = bDoTime ? timers->interaction[iloc].nb_k.fetchNextEvent() : nullptr;
@@ -605,7 +1025,12 @@ void gpu_launch_kernel(NbnxmGpu* nb, const gmx::StepWorkload& stepWork, const In
      * call to the interaction kernel after a neighbour list step */
     bool       bDoPrune = (plist->haveFreshList && !nb->timers->interaction[iloc].didPrune);
     const auto kernel   = select_nbnxn_kernel(
-            nbp->elecType, nbp->vdwType, stepWork.computeEnergy, bDoPrune, &nb->deviceContext_->deviceInfo());
+            nbp->elecType,
+            nbp->vdwType,
+            stepWork.computeEnergy,
+            bDoPrune,
+            nbp->exactRespaNativeMultiMask,
+            &nb->deviceContext_->deviceInfo());
     const auto kernelArgs =
             prepareGpuKernelArguments(kernel, config, adat, nbp, plist, &stepWork.computeVirial);
     launchGpuKernel(kernel, config, deviceStream, timingEvent, "k_calc_nb", kernelArgs);
@@ -808,6 +1233,8 @@ void cuda_set_cacheconfig()
             cudaFuncSetCacheConfig(nb_kfunc_ener_prune_ptr[i][j], cudaFuncCachePreferEqual);
             cudaFuncSetCacheConfig(nb_kfunc_ener_noprune_ptr[i][j], cudaFuncCachePreferEqual);
             cudaFuncSetCacheConfig(nb_kfunc_noener_prune_ptr[i][j], cudaFuncCachePreferEqual);
+            cudaFuncSetCacheConfig(nb_kfunc_noener_prune_native_multi_ptr[i][j], cudaFuncCachePreferEqual);
+            cudaFuncSetCacheConfig(nb_kfunc_noener_noprune_native_multi_ptr[i][j], cudaFuncCachePreferEqual);
             stat = cudaFuncSetCacheConfig(nb_kfunc_noener_noprune_ptr[i][j], cudaFuncCachePreferEqual);
             CU_RET_ERR(stat, "cudaFuncSetCacheConfig failed");
         }

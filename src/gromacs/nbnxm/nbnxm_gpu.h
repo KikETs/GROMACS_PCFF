@@ -165,7 +165,22 @@ GPU_FUNC_QUALIFIER
 void gpu_launch_cpyback(NbnxmGpu gmx_unused*           nb,
                         nbnxn_atomdata_t gmx_unused*   nbatom,
                         const StepWorkload gmx_unused& stepWork,
-                        AtomLocality gmx_unused        aloc) GPU_FUNC_TERM;
+                        AtomLocality gmx_unused        aloc,
+                        int gmx_unused nativeMultiContributionOutputIndex = -1) GPU_FUNC_TERM;
+
+/*! \brief Allocates and clears device-side force buffers for exact r-RESPA force-only outputs. */
+GPU_FUNC_QUALIFIER
+void gpu_prepare_exact_respa_multi_force_outputs(NbnxmGpu gmx_unused* nb,
+                                                 int gmx_unused       numContributions) GPU_FUNC_TERM;
+
+/*! \brief Routes subsequent NBNXM GPU force output to one exact r-RESPA force-only buffer. */
+GPU_FUNC_QUALIFIER
+void gpu_select_exact_respa_multi_force_output(NbnxmGpu gmx_unused* nb,
+                                               int gmx_unused       contributionOutputIndex) GPU_FUNC_TERM;
+
+/*! \brief Restores NBNXM GPU force output to the default device force buffer. */
+GPU_FUNC_QUALIFIER
+void gpu_restore_default_force_output(NbnxmGpu gmx_unused* nb) GPU_FUNC_TERM;
 
 /*! \brief Attempts to complete nonbonded GPU task.
  *

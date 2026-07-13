@@ -430,6 +430,19 @@ public:
      */
     InteractionDefinitions(const gmx_ffparams_t& ffparams);
 
+    /*! \brief Constructor that copies only selected interaction lists.
+     *
+     * \param[in] source Source interaction definitions whose force-field parameter
+     *                   references are reused.
+     * \param[in] includeInteractionFunction Selection of interaction lists to copy.
+     *
+     * This is intended for short-lived filtered launch definitions where copying
+     * all listed interactions and then clearing most of them would be excessive.
+     */
+    InteractionDefinitions(
+            const InteractionDefinitions&                              source,
+            const gmx::EnumerationArray<InteractionFunction, bool>& includeInteractionFunction);
+
     //! \brief Clears data not read in from ffparams.
     void clear();
 

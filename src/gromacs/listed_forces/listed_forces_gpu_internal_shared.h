@@ -85,6 +85,27 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline bool pcffClass2DebugModeEnabled(const in
     return debugMode != static_cast<int>(PcffClass2DebugMode::None);
 }
 
+GMX_DEVICE_FUNC_ATTRIBUTE static inline void pcffClass2PhaseSinCosGpu(const float phase,
+                                                                      float*      cosPhase,
+                                                                      float*      sinPhase)
+{
+    if (phase == 0.0F)
+    {
+        *cosPhase = 1.0F;
+        *sinPhase = 0.0F;
+        return;
+    }
+    if (phase == c_Pi || phase == -c_Pi)
+    {
+        *cosPhase = -1.0F;
+        *sinPhase = 0.0F;
+        return;
+    }
+
+    *cosPhase = gmxDeviceCos(phase);
+    *sinPhase = gmxDeviceSin(phase);
+}
+
 /* Some SYCL targets have troubles optimizing the dynamic array
  * member access despite the fact that all the loops are unrolled.
  *
@@ -153,6 +174,13 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline float gmxDeviceAsin(float input)
 #else
     return asinf(input);
 #endif
+}
+
+GMX_DEVICE_FUNC_ATTRIBUTE static inline float invCosFromSinArgumentGpu(const float value, const float minCosSq)
+{
+    const float sinValue = clampToRange(value, -1.0F, 1.0F);
+    const float cosSq    = maxFloat(1.0F - sinValue * sinValue, minCosSq);
+    return gmxDeviceRSqrt(cosSq);
 }
 
 GMX_DEVICE_FUNC_ATTRIBUTE static inline float component(const DeviceFloat3& value, const int dim)
@@ -287,7 +315,8 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void bond_class2_gpu(const int          
     DeviceFloat3 dx;
     const int    ki  = pbcDxAiucGpu<calcVir>(pbcAiuc, gm_xq[ai], gm_xq[aj], dx);
     const float  rsq = gmxDeviceNorm2(dx);
-    const float  r   = gmxDeviceSqrt(rsq);
+    const float  invR = (rsq > 0.0F) ? gmxDeviceRSqrt(rsq) : 0.0F;
+    const float  r   = rsq * invR;
     const float  dr  = r - params.r0;
     const float  dr2 = dr * dr;
     const float  dr3 = dr2 * dr;
@@ -312,7 +341,7 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void bond_class2_gpu(const int          
             default: break;
         }
     }
-    const float fbond = (r > 0.0F) ? (-de / r) : 0.0F;
+    const float fbond = -de * invR;
 
     if constexpr (calcEner)
     {
@@ -471,45 +500,50 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
     const int    t2   = pbcDxAiucGpu<calcVir>(pbcAiuc, gm_xq[ak], gm_xq[aj], del2);
     const float  rsq1 = gmxDeviceNorm2(del1);
     const float  rsq2 = gmxDeviceNorm2(del2);
-    const float  r1   = gmxDeviceSqrt(rsq1);
-    const float  r2   = gmxDeviceSqrt(rsq2);
-    const float  r12  = r1 * r2;
+    const float  invR1 = gmxDeviceRSqrt(rsq1);
+    const float  invR2 = gmxDeviceRSqrt(rsq2);
+    const float  invRsq1 = invR1 * invR1;
+    const float  invRsq2 = invR2 * invR2;
+    const float  r1   = rsq1 * invR1;
+    const float  r2   = rsq2 * invR2;
+    const float  invR12 = invR1 * invR2;
 
-    float c = gmxDeviceInternalProd(del1, del2) / r12;
+    float c = gmxDeviceInternalProd(del1, del2) * invR12;
     c       = clampToRange(c, -1.0F, 1.0F);
 
-    float s = gmxDeviceSqrt(maxFloat(1.0F - c * c, 0.0F));
-    if (s < c_small)
-    {
-        s = c_small;
-    }
-    s = 1.0F / s;
+    const float invSinTheta = gmxDeviceRSqrt(maxFloat(1.0F - c * c, c_small * c_small));
 
     const float dtheta  = gmxDeviceAcos(c) - params.theta0;
     const float dtheta2 = dtheta * dtheta;
-    const float dtheta3 = dtheta2 * dtheta;
 
     const bool keepAll = !pcffClass2DebugModeEnabled(pcffClass2DebugMode);
     const bool keepAngleMain =
             keepAll || pcffClass2DebugMode == static_cast<int>(PcffClass2DebugMode::AngleClass2MainOnly);
     const bool keepBondBond =
-            keepAll || pcffClass2DebugMode == static_cast<int>(PcffClass2DebugMode::AngleClass2BondBondOnly);
+            params.bb_k != 0.0F
+            && (keepAll
+                || pcffClass2DebugMode == static_cast<int>(PcffClass2DebugMode::AngleClass2BondBondOnly));
     const bool keepBondAngle1 =
-            keepAll || pcffClass2DebugMode == static_cast<int>(PcffClass2DebugMode::AngleClass2BondAngle1Only);
+            params.ba_k1 != 0.0F
+            && (keepAll
+                || pcffClass2DebugMode == static_cast<int>(PcffClass2DebugMode::AngleClass2BondAngle1Only));
     const bool keepBondAngle2 =
-            keepAll || pcffClass2DebugMode == static_cast<int>(PcffClass2DebugMode::AngleClass2BondAngle2Only);
+            params.ba_k2 != 0.0F
+            && (keepAll
+                || pcffClass2DebugMode == static_cast<int>(PcffClass2DebugMode::AngleClass2BondAngle2Only));
 
     DeviceFloat3 f_i = { 0.0F, 0.0F, 0.0F };
     DeviceFloat3 f_k = { 0.0F, 0.0F, 0.0F };
 
     if (keepAngleMain)
     {
+        const float dtheta3 = dtheta2 * dtheta;
         const float deAngle =
                 2.0F * params.k2 * dtheta + 3.0F * params.k3 * dtheta2 + 4.0F * params.k4 * dtheta3;
-        const float a   = -deAngle * s;
-        const float a11 = a * c / rsq1;
-        const float a12 = -a / r12;
-        const float a22 = a * c / rsq2;
+        const float a   = -deAngle * invSinTheta;
+        const float a11 = a * c * invRsq1;
+        const float a12 = -a * invR12;
+        const float a22 = a * c * invRsq2;
         f_i += a11 * del1 + a12 * del2;
         f_k += a22 * del2 + a12 * del1;
 
@@ -520,15 +554,14 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
         }
     }
 
-    float       dr1 = r1 - params.bb_r1;
-    float       dr2 = r2 - params.bb_r2;
-    const float tk1 = params.bb_k * dr1;
-    const float tk2 = params.bb_k * dr2;
-
     if (keepBondBond)
     {
-        f_i -= (tk2 / r1) * del1;
-        f_k -= (tk1 / r2) * del2;
+        const float dr1 = r1 - params.bb_r1;
+        const float dr2 = r2 - params.bb_r2;
+        const float tk1 = params.bb_k * dr1;
+        const float tk2 = params.bb_k * dr2;
+        f_i -= (tk2 * invR1) * del1;
+        f_k -= (tk1 * invR2) * del2;
 
         if constexpr (calcEner)
         {
@@ -536,48 +569,51 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void angle_class2_gpu(const int         
         }
     }
 
-    dr1 = r1 - params.ba_r1;
-    dr2 = r2 - params.ba_r2;
-
-    const float aa1 = s * dr1 * params.ba_k1;
-    const float aa2 = s * dr2 * params.ba_k2;
-
-    float aa11 = aa1 * c / rsq1;
-    float aa12 = -aa1 / r12;
-    float aa21 = aa2 * c / rsq1;
-    float aa22 = -aa2 / r12;
-
-    const DeviceFloat3 v1 = aa11 * del1 + aa12 * del2;
-    const DeviceFloat3 v2 = aa21 * del1 + aa22 * del2;
-
-    aa11 = aa1 * c / rsq2;
-    aa21 = aa2 * c / rsq2;
-
-    const DeviceFloat3 v3 = aa11 * del2 + aa12 * del1;
-    const DeviceFloat3 v4 = aa21 * del2 + aa22 * del1;
-
-    const float b1 = params.ba_k1 * dtheta / r1;
-    const float b2 = params.ba_k2 * dtheta / r2;
-
-    if (keepBondAngle1)
+    if (keepBondAngle1 || keepBondAngle2)
     {
-        f_i -= v1 + b1 * del1;
-        f_k -= v3;
+        const float dr1 = r1 - params.ba_r1;
+        const float dr2 = r2 - params.ba_r2;
 
-        if constexpr (calcEner)
+        const float aa1 = invSinTheta * dr1 * params.ba_k1;
+        const float aa2 = invSinTheta * dr2 * params.ba_k2;
+
+        float aa11 = aa1 * c * invRsq1;
+        float aa12 = -aa1 * invR12;
+        float aa21 = aa2 * c * invRsq1;
+        float aa22 = -aa2 * invR12;
+
+        const DeviceFloat3 v1 = aa11 * del1 + aa12 * del2;
+        const DeviceFloat3 v2 = aa21 * del1 + aa22 * del2;
+
+        aa11 = aa1 * c * invRsq2;
+        aa21 = aa2 * c * invRsq2;
+
+        const DeviceFloat3 v3 = aa11 * del2 + aa12 * del1;
+        const DeviceFloat3 v4 = aa21 * del2 + aa22 * del1;
+
+        const float b1 = params.ba_k1 * dtheta * invR1;
+        const float b2 = params.ba_k2 * dtheta * invR2;
+
+        if (keepBondAngle1)
         {
-            *vtot_loc += params.ba_k1 * dr1 * dtheta;
+            f_i -= v1 + b1 * del1;
+            f_k -= v3;
+
+            if constexpr (calcEner)
+            {
+                *vtot_loc += params.ba_k1 * dr1 * dtheta;
+            }
         }
-    }
 
-    if (keepBondAngle2)
-    {
-        f_i -= v2;
-        f_k -= v4 + b2 * del2;
-
-        if constexpr (calcEner)
+        if (keepBondAngle2)
         {
-            *vtot_loc += params.ba_k2 * dr2 * dtheta;
+            f_i -= v2;
+            f_k -= v4 + b2 * del2;
+
+            if constexpr (calcEner)
+            {
+                *vtot_loc += params.ba_k2 * dr2 * dtheta;
+            }
         }
     }
 
@@ -1005,8 +1041,7 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void dihedral_class2_gpu(const int      
                                                                  const PbcAiuc&                pbcAiuc,
                                                                  const int                     localId)
 {
-    constexpr float c_tolerance = 0.05F;
-    constexpr float c_small     = 1.0e-7F;
+    constexpr float c_small = 1.0e-7F;
 
     const int type = gm_forceatoms[5 * i];
     const int ai   = gm_forceatoms[5 * i + 1];
@@ -1015,6 +1050,26 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void dihedral_class2_gpu(const int      
     const int al   = gm_forceatoms[5 * i + 4];
 
     const auto& params = gm_forceparams[type].dihedral_class2;
+    const bool  hasPrimaryTorsion2 = params.k2 != 0.0F;
+    const bool  hasPrimaryTorsion3 = params.k3 != 0.0F;
+    const bool  hasMiddleBondTorsion =
+            params.mbt_f1 != 0.0F || params.mbt_f2 != 0.0F || params.mbt_f3 != 0.0F;
+    const bool hasEndBondTorsion1 =
+            params.ebt_f1_1 != 0.0F || params.ebt_f2_1 != 0.0F || params.ebt_f3_1 != 0.0F;
+    const bool hasEndBondTorsion2 =
+            params.ebt_f1_2 != 0.0F || params.ebt_f2_2 != 0.0F || params.ebt_f3_2 != 0.0F;
+    const bool hasAngleTorsion1 =
+            params.at_f1_1 != 0.0F || params.at_f2_1 != 0.0F || params.at_f3_1 != 0.0F;
+    const bool hasAngleTorsion2 =
+            params.at_f1_2 != 0.0F || params.at_f2_2 != 0.0F || params.at_f3_2 != 0.0F;
+    const bool hasAngleAngleTorsion = params.aat_k != 0.0F;
+    const bool needsBondTorsionDerivatives =
+            hasMiddleBondTorsion || hasEndBondTorsion1 || hasEndBondTorsion2;
+    const bool needsAngleTorsionDerivatives =
+            hasAngleTorsion1 || hasAngleTorsion2 || hasAngleAngleTorsion;
+    const bool needsPhiMultiples = hasPrimaryTorsion2 || hasPrimaryTorsion3
+                                   || needsBondTorsionDerivatives
+                                   || needsAngleTorsionDerivatives;
 
     DeviceFloat3 vb1;
     DeviceFloat3 vb2;
@@ -1039,15 +1094,15 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void dihedral_class2_gpu(const int      
     const float r1mag2 = gmxDeviceInternalProd(vb1, vb1);
     const float r2mag2 = gmxDeviceInternalProd(vb2, vb2);
     const float r3mag2 = gmxDeviceInternalProd(vb3, vb3);
-    const float r1     = gmxDeviceSqrt(r1mag2);
-    const float r2     = gmxDeviceSqrt(r2mag2);
-    const float r3     = gmxDeviceSqrt(r3mag2);
-    const float sb1    = 1.0F / r1mag2;
-    const float rb1    = 1.0F / r1;
-    const float sb2    = 1.0F / r2mag2;
-    const float rb2    = 1.0F / r2;
-    const float sb3    = 1.0F / r3mag2;
-    const float rb3    = 1.0F / r3;
+    const float rb1    = gmxDeviceRSqrt(r1mag2);
+    const float rb2    = gmxDeviceRSqrt(r2mag2);
+    const float rb3    = gmxDeviceRSqrt(r3mag2);
+    const float sb1    = rb1 * rb1;
+    const float sb2    = rb2 * rb2;
+    const float sb3    = rb3 * rb3;
+    const float r1     = r1mag2 * rb1;
+    const float r2     = r2mag2 * rb2;
+    const float r3     = r3mag2 * rb3;
 
     float c0      = gmxDeviceInternalProd(vb1, vb3) * rb1 * rb3;
     const float r12c1 = rb1 * rb2;
@@ -1061,40 +1116,24 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void dihedral_class2_gpu(const int      
     costh23 = clampToRange(costh23, -1.0F, 1.0F);
     c0      = costh13;
 
-    float sin2 = maxFloat(1.0F - costh12 * costh12, 0.0F);
-    float sc1  = gmxDeviceSqrt(sin2);
-    if (sc1 < c_small)
-    {
-        sc1 = c_small;
-    }
-    sc1 = 1.0F / sc1;
+    float sin2 = 1.0F - costh12 * costh12;
+    float sc1  = gmxDeviceRSqrt(maxFloat(sin2, c_small * c_small));
 
-    sin2      = maxFloat(1.0F - costh23 * costh23, 0.0F);
-    float sc2 = gmxDeviceSqrt(sin2);
-    if (sc2 < c_small)
-    {
-        sc2 = c_small;
-    }
-    sc2 = 1.0F / sc2;
+    sin2      = 1.0F - costh23 * costh23;
+    float sc2 = gmxDeviceRSqrt(maxFloat(sin2, c_small * c_small));
 
     const float s1  = sc1 * sc1;
     const float s2  = sc2 * sc2;
     const float s12 = sc1 * sc2;
-    float       c   = (c0 + costh12 * costh23) * s12;
-    if (c > 1.0F + c_tolerance || c < -1.0F - c_tolerance)
-    {
-        c = clampToRange(c, -1.0F, 1.0F);
-    }
-    else
-    {
-        c = clampToRange(c, -1.0F, 1.0F);
-    }
+    float c = clampToRange((c0 + costh12 * costh23) * s12, -1.0F, 1.0F);
 
-    float cosphi = c;
-    float phi    = gmxDeviceAcos(c);
+    const float cosphi = c;
 
-    float sinphi = gmxDeviceSqrt(maxFloat(1.0F - c * c, 0.0F));
-    sinphi       = maxFloat(sinphi, c_small);
+    const float sinPhiSq = maxFloat(1.0F - c * c, 0.0F);
+    const float absSinPhi = gmxDeviceSqrt(sinPhiSq);
+    float       sinphi    = maxFloat(absSinPhi, c_small);
+    float       sinphiForMultiples = absSinPhi;
+    float       invSinPhi = gmxDeviceRSqrt(maxFloat(sinPhiSq, c_small * c_small));
 
     const float n123x      = vb1y * vb2z - vb1z * vb2y;
     const float n123y      = vb1z * vb2x - vb1x * vb2z;
@@ -1102,8 +1141,9 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void dihedral_class2_gpu(const int      
     const float n123DotVb3 = n123x * vb3x + n123y * vb3y + n123z * vb3z;
     if (n123DotVb3 > 0.0F)
     {
-        phi    = -phi;
         sinphi = -sinphi;
+        sinphiForMultiples = -sinphiForMultiples;
+        invSinPhi = -invSinPhi;
     }
 
     const float a11 = -c * sb1 * s1;
@@ -1142,24 +1182,54 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void dihedral_class2_gpu(const int      
     {
         for (int dim = 0; dim < DIM; dim++)
         {
-            dphidr[atom][dim] = -dcosphidr[atom][dim] / sinphi;
+            dphidr[atom][dim] = -dcosphidr[atom][dim] * invSinPhi;
         }
     }
 
     DeviceFloat3 fabcd[4] = {};
 
-    const float dphi1 = phi - params.phi1;
-    const float dphi2 = 2.0F * phi - params.phi2;
-    const float dphi3 = 3.0F * phi - params.phi3;
+    const float cos2phi = needsPhiMultiples ? 2.0F * cosphi * cosphi - 1.0F : 0.0F;
+    const float cos3phi = needsPhiMultiples ? cosphi * (4.0F * cosphi * cosphi - 3.0F) : 0.0F;
+    const float sin2phi = needsPhiMultiples ? 2.0F * sinphiForMultiples * cosphi : 0.0F;
+    const float sin3phi =
+            needsPhiMultiples ? sinphiForMultiples * (3.0F - 4.0F * sinphiForMultiples * sinphiForMultiples) : 0.0F;
+    float       dihedralEnergy = 0.0F;
+    float       deDihedral     = 0.0F;
+    if (params.k1 != 0.0F)
+    {
+        float cosPhi1;
+        float sinPhi1;
+        pcffClass2PhaseSinCosGpu(params.phi1, &cosPhi1, &sinPhi1);
+        const float cosD1 = cosphi * cosPhi1 + sinphiForMultiples * sinPhi1;
+        const float sinD1 = sinphiForMultiples * cosPhi1 - cosphi * sinPhi1;
+        dihedralEnergy += params.k1 * (1.0F - cosD1);
+        deDihedral += params.k1 * sinD1;
+    }
+    if (params.k2 != 0.0F)
+    {
+        float cosPhi2;
+        float sinPhi2;
+        pcffClass2PhaseSinCosGpu(params.phi2, &cosPhi2, &sinPhi2);
+        const float cosD2 = cos2phi * cosPhi2 + sin2phi * sinPhi2;
+        const float sinD2 = sin2phi * cosPhi2 - cos2phi * sinPhi2;
+        dihedralEnergy += params.k2 * (1.0F - cosD2);
+        deDihedral += 2.0F * params.k2 * sinD2;
+    }
+    if (params.k3 != 0.0F)
+    {
+        float cosPhi3;
+        float sinPhi3;
+        pcffClass2PhaseSinCosGpu(params.phi3, &cosPhi3, &sinPhi3);
+        const float cosD3 = cos3phi * cosPhi3 + sin3phi * sinPhi3;
+        const float sinD3 = sin3phi * cosPhi3 - cos3phi * sinPhi3;
+        dihedralEnergy += params.k3 * (1.0F - cosD3);
+        deDihedral += 3.0F * params.k3 * sinD3;
+    }
     if constexpr (calcEner)
     {
-        *vtot_loc += params.k1 * (1.0F - gmxDeviceCos(dphi1)) + params.k2 * (1.0F - gmxDeviceCos(dphi2))
-                     + params.k3 * (1.0F - gmxDeviceCos(dphi3));
+        *vtot_loc += dihedralEnergy;
     }
 
-    const float deDihedral =
-            params.k1 * gmxDeviceSin(dphi1) + 2.0F * params.k2 * gmxDeviceSin(dphi2)
-            + 3.0F * params.k3 * gmxDeviceSin(dphi3);
     for (int atom = 0; atom < 4; atom++)
     {
         for (int dim = 0; dim < DIM; dim++)
@@ -1169,187 +1239,221 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void dihedral_class2_gpu(const int      
     }
 
     float dbonddr[3][4][DIM] = {};
-    dbonddr[0][0][XX] = vb1x / r1;
-    dbonddr[0][0][YY] = vb1y / r1;
-    dbonddr[0][0][ZZ] = vb1z / r1;
-    dbonddr[0][1][XX] = -vb1x / r1;
-    dbonddr[0][1][YY] = -vb1y / r1;
-    dbonddr[0][1][ZZ] = -vb1z / r1;
+    if (needsBondTorsionDerivatives)
+    {
+        dbonddr[0][0][XX] = vb1x * rb1;
+        dbonddr[0][0][YY] = vb1y * rb1;
+        dbonddr[0][0][ZZ] = vb1z * rb1;
+        dbonddr[0][1][XX] = -vb1x * rb1;
+        dbonddr[0][1][YY] = -vb1y * rb1;
+        dbonddr[0][1][ZZ] = -vb1z * rb1;
 
-    dbonddr[1][1][XX] = vb2x / r2;
-    dbonddr[1][1][YY] = vb2y / r2;
-    dbonddr[1][1][ZZ] = vb2z / r2;
-    dbonddr[1][2][XX] = -vb2x / r2;
-    dbonddr[1][2][YY] = -vb2y / r2;
-    dbonddr[1][2][ZZ] = -vb2z / r2;
+        dbonddr[1][1][XX] = vb2x * rb2;
+        dbonddr[1][1][YY] = vb2y * rb2;
+        dbonddr[1][1][ZZ] = vb2z * rb2;
+        dbonddr[1][2][XX] = -vb2x * rb2;
+        dbonddr[1][2][YY] = -vb2y * rb2;
+        dbonddr[1][2][ZZ] = -vb2z * rb2;
 
-    dbonddr[2][2][XX] = vb3x / r3;
-    dbonddr[2][2][YY] = vb3y / r3;
-    dbonddr[2][2][ZZ] = vb3z / r3;
-    dbonddr[2][3][XX] = -vb3x / r3;
-    dbonddr[2][3][YY] = -vb3y / r3;
-    dbonddr[2][3][ZZ] = -vb3z / r3;
+        dbonddr[2][2][XX] = vb3x * rb3;
+        dbonddr[2][2][YY] = vb3y * rb3;
+        dbonddr[2][2][ZZ] = vb3z * rb3;
+        dbonddr[2][3][XX] = -vb3x * rb3;
+        dbonddr[2][3][YY] = -vb3y * rb3;
+        dbonddr[2][3][ZZ] = -vb3z * rb3;
+    }
 
     float dthetadr[2][4][DIM] = {};
-    const float t1l           = costh12 / r1mag2;
-    const float t2l           = costh23 / r2mag2;
-    const float t3l           = costh12 / r2mag2;
-    const float t4l           = costh23 / r3mag2;
-
-    dthetadr[0][0][XX] = sc1 * (t1l * vb1x - vb2x * r12c1);
-    dthetadr[0][0][YY] = sc1 * (t1l * vb1y - vb2y * r12c1);
-    dthetadr[0][0][ZZ] = sc1 * (t1l * vb1z - vb2z * r12c1);
-    dthetadr[0][1][XX] = sc1 * ((-t1l * vb1x) + (vb2x * r12c1) + (-t3l * vb2x) + (vb1x * r12c1));
-    dthetadr[0][1][YY] = sc1 * ((-t1l * vb1y) + (vb2y * r12c1) + (-t3l * vb2y) + (vb1y * r12c1));
-    dthetadr[0][1][ZZ] = sc1 * ((-t1l * vb1z) + (vb2z * r12c1) + (-t3l * vb2z) + (vb1z * r12c1));
-    dthetadr[0][2][XX] = sc1 * (t3l * vb2x - vb1x * r12c1);
-    dthetadr[0][2][YY] = sc1 * (t3l * vb2y - vb1y * r12c1);
-    dthetadr[0][2][ZZ] = sc1 * (t3l * vb2z - vb1z * r12c1);
-
-    dthetadr[1][1][XX] = sc2 * (t2l * vb2x + vb3x * r12c2);
-    dthetadr[1][1][YY] = sc2 * (t2l * vb2y + vb3y * r12c2);
-    dthetadr[1][1][ZZ] = sc2 * (t2l * vb2z + vb3z * r12c2);
-    dthetadr[1][2][XX] =
-            sc2 * ((-t2l * vb2x) - (vb3x * r12c2) + (t4l * vb3x) + (vb2x * r12c2));
-    dthetadr[1][2][YY] =
-            sc2 * ((-t2l * vb2y) - (vb3y * r12c2) + (t4l * vb3y) + (vb2y * r12c2));
-    dthetadr[1][2][ZZ] =
-            sc2 * ((-t2l * vb2z) - (vb3z * r12c2) + (t4l * vb3z) + (vb2z * r12c2));
-    dthetadr[1][3][XX] = -sc2 * (t4l * vb3x + vb2x * r12c2);
-    dthetadr[1][3][YY] = -sc2 * (t4l * vb3y + vb2y * r12c2);
-    dthetadr[1][3][ZZ] = -sc2 * (t4l * vb3z + vb2z * r12c2);
-
-    const float cos2phi = gmxDeviceCos(2.0F * phi);
-    const float cos3phi = gmxDeviceCos(3.0F * phi);
-    float       bt1     = params.mbt_f1 * cosphi;
-    float       bt2     = params.mbt_f2 * cos2phi;
-    float       bt3     = params.mbt_f3 * cos3phi;
-    float       sumbte  = bt1 + bt2 + bt3;
-    float       db      = r2 - params.mbt_r0;
-    if constexpr (calcEner)
+    if (needsAngleTorsionDerivatives)
     {
-        *vtot_loc += db * sumbte;
+        const float t1l = costh12 * sb1;
+        const float t2l = costh23 * sb2;
+        const float t3l = costh12 * sb2;
+        const float t4l = costh23 * sb3;
+
+        dthetadr[0][0][XX] = sc1 * (t1l * vb1x - vb2x * r12c1);
+        dthetadr[0][0][YY] = sc1 * (t1l * vb1y - vb2y * r12c1);
+        dthetadr[0][0][ZZ] = sc1 * (t1l * vb1z - vb2z * r12c1);
+        dthetadr[0][1][XX] =
+                sc1 * ((-t1l * vb1x) + (vb2x * r12c1) + (-t3l * vb2x) + (vb1x * r12c1));
+        dthetadr[0][1][YY] =
+                sc1 * ((-t1l * vb1y) + (vb2y * r12c1) + (-t3l * vb2y) + (vb1y * r12c1));
+        dthetadr[0][1][ZZ] =
+                sc1 * ((-t1l * vb1z) + (vb2z * r12c1) + (-t3l * vb2z) + (vb1z * r12c1));
+        dthetadr[0][2][XX] = sc1 * (t3l * vb2x - vb1x * r12c1);
+        dthetadr[0][2][YY] = sc1 * (t3l * vb2y - vb1y * r12c1);
+        dthetadr[0][2][ZZ] = sc1 * (t3l * vb2z - vb1z * r12c1);
+
+        dthetadr[1][1][XX] = sc2 * (t2l * vb2x + vb3x * r12c2);
+        dthetadr[1][1][YY] = sc2 * (t2l * vb2y + vb3y * r12c2);
+        dthetadr[1][1][ZZ] = sc2 * (t2l * vb2z + vb3z * r12c2);
+        dthetadr[1][2][XX] =
+                sc2 * ((-t2l * vb2x) - (vb3x * r12c2) + (t4l * vb3x) + (vb2x * r12c2));
+        dthetadr[1][2][YY] =
+                sc2 * ((-t2l * vb2y) - (vb3y * r12c2) + (t4l * vb3y) + (vb2y * r12c2));
+        dthetadr[1][2][ZZ] =
+                sc2 * ((-t2l * vb2z) - (vb3z * r12c2) + (t4l * vb3z) + (vb2z * r12c2));
+        dthetadr[1][3][XX] = -sc2 * (t4l * vb3x + vb2x * r12c2);
+        dthetadr[1][3][YY] = -sc2 * (t4l * vb3y + vb2y * r12c2);
+        dthetadr[1][3][ZZ] = -sc2 * (t4l * vb3z + vb2z * r12c2);
     }
 
-    bt1 = -params.mbt_f1 * sinphi;
-    bt2 = -2.0F * params.mbt_f2 * gmxDeviceSin(2.0F * phi);
-    bt3 = -3.0F * params.mbt_f3 * gmxDeviceSin(3.0F * phi);
-    float sumbtf = bt1 + bt2 + bt3;
-    for (int atom = 0; atom < 4; atom++)
+    const float theta12 = needsAngleTorsionDerivatives ? gmxDeviceAcos(costh12) : 0.0F;
+    const float theta23 = needsAngleTorsionDerivatives ? gmxDeviceAcos(costh23) : 0.0F;
+    float bt1    = 0.0F;
+    float bt2    = 0.0F;
+    float bt3    = 0.0F;
+    float sumbte = 0.0F;
+    float sumbtf = 0.0F;
+    float db     = 0.0F;
+
+    if (hasMiddleBondTorsion)
     {
-        for (int dim = 0; dim < DIM; dim++)
+        bt1    = params.mbt_f1 * cosphi;
+        bt2    = params.mbt_f2 * cos2phi;
+        bt3    = params.mbt_f3 * cos3phi;
+        sumbte = bt1 + bt2 + bt3;
+        db     = r2 - params.mbt_r0;
+        if constexpr (calcEner)
         {
-            componentRef(fabcd[atom], dim) +=
-                    db * sumbtf * dphidr[atom][dim] + sumbte * dbonddr[1][atom][dim];
+            *vtot_loc += db * sumbte;
+        }
+
+        bt1    = -params.mbt_f1 * sinphi;
+        bt2    = -2.0F * params.mbt_f2 * sin2phi;
+        bt3    = -3.0F * params.mbt_f3 * sin3phi;
+        sumbtf = bt1 + bt2 + bt3;
+        for (int atom = 0; atom < 4; atom++)
+        {
+            for (int dim = 0; dim < DIM; dim++)
+            {
+                componentRef(fabcd[atom], dim) +=
+                        db * sumbtf * dphidr[atom][dim] + sumbte * dbonddr[1][atom][dim];
+            }
         }
     }
 
-    bt1    = params.ebt_f1_1 * cosphi;
-    bt2    = params.ebt_f2_1 * cos2phi;
-    bt3    = params.ebt_f3_1 * cos3phi;
-    sumbte = bt1 + bt2 + bt3;
-    db     = r1 - params.ebt_r0_1;
-    if constexpr (calcEner)
+    if (hasEndBondTorsion1)
     {
-        *vtot_loc += db * sumbte;
-    }
-
-    bt1    = params.ebt_f1_1 * sinphi;
-    bt2    = 2.0F * params.ebt_f2_1 * gmxDeviceSin(2.0F * phi);
-    bt3    = 3.0F * params.ebt_f3_1 * gmxDeviceSin(3.0F * phi);
-    sumbtf = bt1 + bt2 + bt3;
-    for (int atom = 0; atom < 4; atom++)
-    {
-        for (int dim = 0; dim < DIM; dim++)
+        bt1    = params.ebt_f1_1 * cosphi;
+        bt2    = params.ebt_f2_1 * cos2phi;
+        bt3    = params.ebt_f3_1 * cos3phi;
+        sumbte = bt1 + bt2 + bt3;
+        db     = r1 - params.ebt_r0_1;
+        if constexpr (calcEner)
         {
-            componentRef(fabcd[atom], dim) -=
-                    db * sumbtf * dphidr[atom][dim] + sumbte * dbonddr[0][atom][dim];
+            *vtot_loc += db * sumbte;
+        }
+
+        bt1    = params.ebt_f1_1 * sinphi;
+        bt2    = 2.0F * params.ebt_f2_1 * sin2phi;
+        bt3    = 3.0F * params.ebt_f3_1 * sin3phi;
+        sumbtf = bt1 + bt2 + bt3;
+        for (int atom = 0; atom < 4; atom++)
+        {
+            for (int dim = 0; dim < DIM; dim++)
+            {
+                componentRef(fabcd[atom], dim) -=
+                        db * sumbtf * dphidr[atom][dim] + sumbte * dbonddr[0][atom][dim];
+            }
         }
     }
 
-    bt1    = params.ebt_f1_2 * cosphi;
-    bt2    = params.ebt_f2_2 * cos2phi;
-    bt3    = params.ebt_f3_2 * cos3phi;
-    sumbte = bt1 + bt2 + bt3;
-    db     = r3 - params.ebt_r0_2;
-    if constexpr (calcEner)
+    if (hasEndBondTorsion2)
     {
-        *vtot_loc += db * sumbte;
-    }
-
-    bt1    = -params.ebt_f1_2 * sinphi;
-    bt2    = -2.0F * params.ebt_f2_2 * gmxDeviceSin(2.0F * phi);
-    bt3    = -3.0F * params.ebt_f3_2 * gmxDeviceSin(3.0F * phi);
-    sumbtf = bt1 + bt2 + bt3;
-    for (int atom = 0; atom < 4; atom++)
-    {
-        for (int dim = 0; dim < DIM; dim++)
+        bt1    = params.ebt_f1_2 * cosphi;
+        bt2    = params.ebt_f2_2 * cos2phi;
+        bt3    = params.ebt_f3_2 * cos3phi;
+        sumbte = bt1 + bt2 + bt3;
+        db     = r3 - params.ebt_r0_2;
+        if constexpr (calcEner)
         {
-            componentRef(fabcd[atom], dim) +=
-                    db * sumbtf * dphidr[atom][dim] + sumbte * dbonddr[2][atom][dim];
+            *vtot_loc += db * sumbte;
+        }
+
+        bt1    = -params.ebt_f1_2 * sinphi;
+        bt2    = -2.0F * params.ebt_f2_2 * sin2phi;
+        bt3    = -3.0F * params.ebt_f3_2 * sin3phi;
+        sumbtf = bt1 + bt2 + bt3;
+        for (int atom = 0; atom < 4; atom++)
+        {
+            for (int dim = 0; dim < DIM; dim++)
+            {
+                componentRef(fabcd[atom], dim) +=
+                        db * sumbtf * dphidr[atom][dim] + sumbte * dbonddr[2][atom][dim];
+            }
         }
     }
 
-    float at1 = params.at_f1_1 * cosphi;
-    float at2 = params.at_f2_1 * cos2phi;
-    float at3 = params.at_f3_1 * cos3phi;
-    sumbte    = at1 + at2 + at3;
-    float da  = gmxDeviceAcos(costh12) - params.at_theta0_1;
-    if constexpr (calcEner)
+    if (hasAngleTorsion1)
     {
-        *vtot_loc += da * sumbte;
-    }
-
-    bt1    = params.at_f1_1 * sinphi;
-    bt2    = 2.0F * params.at_f2_1 * gmxDeviceSin(2.0F * phi);
-    bt3    = 3.0F * params.at_f3_1 * gmxDeviceSin(3.0F * phi);
-    sumbtf = bt1 + bt2 + bt3;
-    for (int atom = 0; atom < 4; atom++)
-    {
-        for (int dim = 0; dim < DIM; dim++)
+        float at1 = params.at_f1_1 * cosphi;
+        float at2 = params.at_f2_1 * cos2phi;
+        float at3 = params.at_f3_1 * cos3phi;
+        sumbte    = at1 + at2 + at3;
+        float da  = theta12 - params.at_theta0_1;
+        if constexpr (calcEner)
         {
-            componentRef(fabcd[atom], dim) -=
-                    da * sumbtf * dphidr[atom][dim] + sumbte * dthetadr[0][atom][dim];
+            *vtot_loc += da * sumbte;
+        }
+
+        bt1    = params.at_f1_1 * sinphi;
+        bt2    = 2.0F * params.at_f2_1 * sin2phi;
+        bt3    = 3.0F * params.at_f3_1 * sin3phi;
+        sumbtf = bt1 + bt2 + bt3;
+        for (int atom = 0; atom < 4; atom++)
+        {
+            for (int dim = 0; dim < DIM; dim++)
+            {
+                componentRef(fabcd[atom], dim) -=
+                        da * sumbtf * dphidr[atom][dim] + sumbte * dthetadr[0][atom][dim];
+            }
         }
     }
 
-    at1    = params.at_f1_2 * cosphi;
-    at2    = params.at_f2_2 * cos2phi;
-    at3    = params.at_f3_2 * cos3phi;
-    sumbte = at1 + at2 + at3;
-    da     = gmxDeviceAcos(costh23) - params.at_theta0_2;
-    if constexpr (calcEner)
+    if (hasAngleTorsion2)
     {
-        *vtot_loc += da * sumbte;
-    }
-
-    bt1    = -params.at_f1_2 * sinphi;
-    bt2    = -2.0F * params.at_f2_2 * gmxDeviceSin(2.0F * phi);
-    bt3    = -3.0F * params.at_f3_2 * gmxDeviceSin(3.0F * phi);
-    sumbtf = bt1 + bt2 + bt3;
-    for (int atom = 0; atom < 4; atom++)
-    {
-        for (int dim = 0; dim < DIM; dim++)
+        float at1 = params.at_f1_2 * cosphi;
+        float at2 = params.at_f2_2 * cos2phi;
+        float at3 = params.at_f3_2 * cos3phi;
+        sumbte    = at1 + at2 + at3;
+        float da  = theta23 - params.at_theta0_2;
+        if constexpr (calcEner)
         {
-            componentRef(fabcd[atom], dim) +=
-                    da * sumbtf * dphidr[atom][dim] + sumbte * dthetadr[1][atom][dim];
+            *vtot_loc += da * sumbte;
+        }
+
+        bt1    = -params.at_f1_2 * sinphi;
+        bt2    = -2.0F * params.at_f2_2 * sin2phi;
+        bt3    = -3.0F * params.at_f3_2 * sin3phi;
+        sumbtf = bt1 + bt2 + bt3;
+        for (int atom = 0; atom < 4; atom++)
+        {
+            for (int dim = 0; dim < DIM; dim++)
+            {
+                componentRef(fabcd[atom], dim) +=
+                        da * sumbtf * dphidr[atom][dim] + sumbte * dthetadr[1][atom][dim];
+            }
         }
     }
 
-    const float da1 = gmxDeviceAcos(costh12) - params.aat_theta0_1;
-    const float da2 = gmxDeviceAcos(costh23) - params.aat_theta0_2;
-    if constexpr (calcEner)
+    if (hasAngleAngleTorsion)
     {
-        *vtot_loc += params.aat_k * da1 * da2 * cosphi;
-    }
-    for (int atom = 0; atom < 4; atom++)
-    {
-        for (int dim = 0; dim < DIM; dim++)
+        const float da1 = theta12 - params.aat_theta0_1;
+        const float da2 = theta23 - params.aat_theta0_2;
+        if constexpr (calcEner)
         {
-            componentRef(fabcd[atom], dim) -=
-                    params.aat_k
-                    * (cosphi * (da2 * dthetadr[0][atom][dim] - da1 * dthetadr[1][atom][dim])
-                       + sinphi * da1 * da2 * dphidr[atom][dim]);
+            *vtot_loc += params.aat_k * da1 * da2 * cosphi;
+        }
+        for (int atom = 0; atom < 4; atom++)
+        {
+            for (int dim = 0; dim < DIM; dim++)
+            {
+                componentRef(fabcd[atom], dim) -=
+                        params.aat_k
+                        * (cosphi * (da2 * dthetadr[0][atom][dim] - da1 * dthetadr[1][atom][dim])
+                           + sinphi * da1 * da2 * dphidr[atom][dim]);
+            }
         }
     }
 
@@ -1357,8 +1461,8 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void dihedral_class2_gpu(const int      
     {
         const float dr1 = r1 - params.bb13t_r10;
         const float dr2 = r3 - params.bb13t_r30;
-        const float tk1 = -params.bb13t_k * dr1 / r3;
-        const float tk2 = -params.bb13t_k * dr2 / r1;
+        const float tk1 = -params.bb13t_k * dr1 * rb3;
+        const float tk2 = -params.bb13t_k * dr2 * rb1;
 
         if constexpr (calcEner)
         {
@@ -1387,7 +1491,7 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void dihedral_class2_gpu(const int      
     }
 }
 
-template<bool calcVir, bool calcEner>
+template<bool calcVir, bool calcEner, bool allowImproperChiTerm = true>
 GMX_DEVICE_FUNC_ATTRIBUTE static inline void improper_class2_gpu(const int               i,
                                                                  DevicePrivatePtr<float> vtot_loc,
                                                                  const DeviceGlobalPtr<const t_iatom> gm_forceatoms,
@@ -1407,6 +1511,15 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void improper_class2_gpu(const int      
     const int al   = gm_forceatoms[5 * i + 4];
 
     const auto& params = gm_forceparams[type].improper_class2;
+    const bool  hasChiTerm = allowImproperChiTerm && params.k0 != 0.0F;
+    const bool  hasAngleAngleTerm1 = params.aa_k1 != 0.0F;
+    const bool  hasAngleAngleTerm2 = params.aa_k2 != 0.0F;
+    const bool  hasAngleAngleTerm3 = params.aa_k3 != 0.0F;
+    const bool  hasAngleAngleTerm  = hasAngleAngleTerm1 || hasAngleAngleTerm2 || hasAngleAngleTerm3;
+    if (!hasChiTerm && !hasAngleAngleTerm)
+    {
+        return;
+    }
 
     DeviceFloat3 delrVec[3];
     const int    t1 = pbcDxAiucGpu<calcVir>(pbcAiuc, gm_xq[ai], gm_xq[aj], delrVec[0]);
@@ -1424,104 +1537,119 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void improper_class2_gpu(const int      
 
     float fabcd[4][DIM] = {};
 
-    if (params.k0 != 0.0F)
+    float rinvmag[3]  = {};
+    float rinvmag2[3] = {};
+    float rmag2[3]    = {};
+    float costheta[3] = {};
+    float cossqtheta[3] = {};
+    float sinsqtheta[3] = {};
+    float invstheta[3] = {};
+    if (hasChiTerm || hasAngleAngleTerm)
     {
-        float rmag[3], rinvmag[3], rmag2[3];
-        float theta[3], costheta[3], sintheta[3], cossqtheta[3], sinsqtheta[3], invstheta[3];
-        float rABxrCB[DIM], rDBxrAB[DIM], rCBxrDB[DIM];
-        float ddelr[3][4]         = {};
-        float dr[3][4][DIM]       = {};
-        float dinvr[3][4][DIM]    = {};
-        float dthetadr[3][4][DIM] = {};
-        float dinvsth[3][4][DIM]  = {};
-        float dinv3r[4][DIM]      = {};
-        float dinvs3r[3][4][DIM]  = {};
-        float rCBxdrDB[DIM], drCBxrDB[DIM], rDBxdrAB[DIM], drDBxrAB[DIM];
-        float drABxrCB[DIM], rABxdrCB[DIM];
-        float dd[DIM];
-        float fdot[3][4][DIM]   = {};
-        float invs3r[3];
-        float dtotalchi[4][DIM] = {};
-
         for (int interaction = 0; interaction < 3; ++interaction)
         {
-            rmag2[interaction]   = pcffClass2DotGpu(delr[interaction], delr[interaction]);
-            rmag[interaction]    = gmxDeviceSqrt(rmag2[interaction]);
-            rinvmag[interaction] = 1.0F / rmag[interaction];
+            rmag2[interaction]    = pcffClass2DotGpu(delr[interaction], delr[interaction]);
+            rinvmag[interaction]  = gmxDeviceRSqrt(rmag2[interaction]);
+            rinvmag2[interaction] = rinvmag[interaction] * rinvmag[interaction];
         }
 
-        costheta[0] = pcffClass2DotGpu(delr[0], delr[1]) / (rmag[0] * rmag[1]);
-        costheta[1] = pcffClass2DotGpu(delr[1], delr[2]) / (rmag[1] * rmag[2]);
-        costheta[2] = pcffClass2DotGpu(delr[0], delr[2]) / (rmag[0] * rmag[2]);
+        costheta[0] = pcffClass2DotGpu(delr[0], delr[1]) * rinvmag[0] * rinvmag[1];
+        costheta[1] = pcffClass2DotGpu(delr[1], delr[2]) * rinvmag[1] * rinvmag[2];
+        costheta[2] = pcffClass2DotGpu(delr[0], delr[2]) * rinvmag[0] * rinvmag[2];
 
         for (int interaction = 0; interaction < 3; ++interaction)
         {
             costheta[interaction] =
                     clampToRange(costheta[interaction], -1.0F + c_small, 1.0F - c_small);
-            theta[interaction]      = gmxDeviceAcos(costheta[interaction]);
             cossqtheta[interaction] = costheta[interaction] * costheta[interaction];
-            sintheta[interaction]   = maxFloat(gmxDeviceSin(theta[interaction]), c_small);
-            invstheta[interaction]  = 1.0F / sintheta[interaction];
-            sinsqtheta[interaction] = sintheta[interaction] * sintheta[interaction];
+            sinsqtheta[interaction] = maxFloat(1.0F - cossqtheta[interaction], c_small);
+            invstheta[interaction]  = gmxDeviceRSqrt(sinsqtheta[interaction]);
         }
+    }
 
-        pcffClass2CrossGpu(delr[0], delr[1], rABxrCB);
-        pcffClass2CrossGpu(delr[2], delr[0], rDBxrAB);
-        pcffClass2CrossGpu(delr[1], delr[2], rCBxrDB);
-
-        const float dotCBDBAB = pcffClass2DotGpu(rCBxrDB, delr[0]);
-        const float dotDBABCB = pcffClass2DotGpu(rDBxrAB, delr[1]);
-        const float dotABCBDB = pcffClass2DotGpu(rABxrCB, delr[2]);
-
-        const float inv3r = 1.0F / (rmag[0] * rmag[1] * rmag[2]);
-        invs3r[0]         = invstheta[1] * inv3r;
-        invs3r[1]         = invstheta[2] * inv3r;
-        invs3r[2]         = invstheta[0] * inv3r;
-
-        const float chiABCD = gmxDeviceAsin(dotCBDBAB * invs3r[0]);
-        const float chiCBDA = gmxDeviceAsin(dotDBABCB * invs3r[1]);
-        const float chiDBAC = gmxDeviceAsin(dotABCBDB * invs3r[2]);
-        const float deltachi = (chiABCD + chiCBDA + chiDBAC) / 3.0F - params.chi0;
-
-        if constexpr (calcEner)
+    if constexpr (allowImproperChiTerm)
+    {
+        if (hasChiTerm)
         {
-            *vtot_loc += params.k0 * deltachi * deltachi;
-        }
+            float rABxrCB[DIM], rDBxrAB[DIM], rCBxrDB[DIM];
+            float ddelr[3][4]         = {};
+            float dr[3][4][DIM]       = {};
+            float dinvr[3][4][DIM]    = {};
+            float dthetadr[3][4][DIM] = {};
+            float dinvsth[3][4][DIM]  = {};
+            float dinv3r[4][DIM]      = {};
+            float dinvs3r[3][4][DIM]  = {};
+            float rCBxdrDB[DIM], drCBxrDB[DIM], rDBxdrAB[DIM], drDBxrAB[DIM];
+            float drABxrCB[DIM], rABxdrCB[DIM];
+            float dd[DIM];
+            float fdot[3][4][DIM]   = {};
+            float invs3r[3];
+            float dtotalchi[4][DIM] = {};
 
-        ddelr[0][0] = 1.0F;
-        ddelr[0][1] = -1.0F;
-        ddelr[1][1] = -1.0F;
-        ddelr[1][2] = 1.0F;
-        ddelr[2][1] = -1.0F;
-        ddelr[2][3] = 1.0F;
+            pcffClass2CrossGpu(delr[0], delr[1], rABxrCB);
+            pcffClass2CrossGpu(delr[2], delr[0], rDBxrAB);
+            pcffClass2CrossGpu(delr[1], delr[2], rCBxrDB);
 
-        for (int interaction = 0; interaction < 3; ++interaction)
-        {
+            const float dotCBDBAB = pcffClass2DotGpu(rCBxrDB, delr[0]);
+            const float dotDBABCB = pcffClass2DotGpu(rDBxrAB, delr[1]);
+            const float dotABCBDB = pcffClass2DotGpu(rABxrCB, delr[2]);
+
+            const float inv3r = rinvmag[0] * rinvmag[1] * rinvmag[2];
+            invs3r[0]         = invstheta[1] * inv3r;
+            invs3r[1]         = invstheta[2] * inv3r;
+            invs3r[2]         = invstheta[0] * inv3r;
+
+            const float sinChiABCD = dotCBDBAB * invs3r[0];
+            const float sinChiCBDA = dotDBABCB * invs3r[1];
+            const float sinChiDBAC = dotABCBDB * invs3r[2];
+            const float chiABCD    = gmxDeviceAsin(sinChiABCD);
+            const float chiCBDA    = gmxDeviceAsin(sinChiCBDA);
+            const float chiDBAC    = gmxDeviceAsin(sinChiDBAC);
+            const float deltachi = (chiABCD + chiCBDA + chiDBAC) / 3.0F - params.chi0;
+            const float invCosChiABCD = invCosFromSinArgumentGpu(sinChiABCD, c_small);
+            const float invCosChiCBDA = invCosFromSinArgumentGpu(sinChiCBDA, c_small);
+            const float invCosChiDBAC = invCosFromSinArgumentGpu(sinChiDBAC, c_small);
+
+            if constexpr (calcEner)
+            {
+                *vtot_loc += params.k0 * deltachi * deltachi;
+            }
+
+            ddelr[0][0] = 1.0F;
+            ddelr[0][1] = -1.0F;
+            ddelr[1][1] = -1.0F;
+            ddelr[1][2] = 1.0F;
+            ddelr[2][1] = -1.0F;
+            ddelr[2][3] = 1.0F;
+
+            for (int interaction = 0; interaction < 3; ++interaction)
+            {
+                for (int atom = 0; atom < 4; ++atom)
+                {
+                    for (int dim = 0; dim < DIM; ++dim)
+                    {
+                        dr[interaction][atom][dim] =
+                                delr[interaction][dim] * ddelr[interaction][atom] * rinvmag[interaction];
+                        dinvr[interaction][atom][dim] =
+                                -dr[interaction][atom][dim] * rinvmag2[interaction];
+                    }
+                }
+            }
+
             for (int atom = 0; atom < 4; ++atom)
             {
                 for (int dim = 0; dim < DIM; ++dim)
                 {
-                    dr[interaction][atom][dim] =
-                            delr[interaction][dim] * ddelr[interaction][atom] / rmag[interaction];
-                    dinvr[interaction][atom][dim] = -dr[interaction][atom][dim] / rmag2[interaction];
+                    dinv3r[atom][dim] = rinvmag[1]
+                                                * (rinvmag[2] * dinvr[0][atom][dim]
+                                                   + rinvmag[0] * dinvr[2][atom][dim])
+                                        + rinvmag[2] * rinvmag[0] * dinvr[1][atom][dim];
                 }
             }
-        }
 
-        for (int atom = 0; atom < 4; ++atom)
-        {
-            for (int dim = 0; dim < DIM; ++dim)
-            {
-                dinv3r[atom][dim] = rinvmag[1]
-                                            * (rinvmag[2] * dinvr[0][atom][dim]
-                                               + rinvmag[0] * dinvr[2][atom][dim])
-                                    + rinvmag[2] * rinvmag[0] * dinvr[1][atom][dim];
-            }
-        }
-
-        float tt1 = costheta[0] / rmag2[0];
-        float tt3 = costheta[0] / rmag2[1];
-        float sc1 = 1.0F / gmxDeviceSqrt(maxFloat(1.0F - cossqtheta[0], c_small));
+            float tt1 = costheta[0] * rinvmag2[0];
+            float tt3 = costheta[0] * rinvmag2[1];
+            float sc1 = invstheta[0];
 
         dthetadr[0][0][XX] = sc1 * (tt1 * delr[0][XX] - delr[1][XX] * rinvmag[0] * rinvmag[1]);
         dthetadr[0][0][YY] = sc1 * (tt1 * delr[0][YY] - delr[1][YY] * rinvmag[0] * rinvmag[1]);
@@ -1536,9 +1664,9 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void improper_class2_gpu(const int      
         dthetadr[0][2][YY] = sc1 * (tt3 * delr[1][YY] - delr[0][YY] * rinvmag[0] * rinvmag[1]);
         dthetadr[0][2][ZZ] = sc1 * (tt3 * delr[1][ZZ] - delr[0][ZZ] * rinvmag[0] * rinvmag[1]);
 
-        tt1 = costheta[1] / rmag2[1];
-        tt3 = costheta[1] / rmag2[2];
-        sc1 = 1.0F / gmxDeviceSqrt(maxFloat(1.0F - cossqtheta[1], c_small));
+        tt1 = costheta[1] * rinvmag2[1];
+        tt3 = costheta[1] * rinvmag2[2];
+        sc1 = invstheta[1];
 
         dthetadr[1][2][XX] = sc1 * (tt1 * delr[1][XX] - delr[2][XX] * rinvmag[1] * rinvmag[2]);
         dthetadr[1][2][YY] = sc1 * (tt1 * delr[1][YY] - delr[2][YY] * rinvmag[1] * rinvmag[2]);
@@ -1553,9 +1681,9 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void improper_class2_gpu(const int      
         dthetadr[1][3][YY] = sc1 * (tt3 * delr[2][YY] - delr[1][YY] * rinvmag[2] * rinvmag[1]);
         dthetadr[1][3][ZZ] = sc1 * (tt3 * delr[2][ZZ] - delr[1][ZZ] * rinvmag[2] * rinvmag[1]);
 
-        tt1 = costheta[2] / rmag2[0];
-        tt3 = costheta[2] / rmag2[2];
-        sc1 = 1.0F / gmxDeviceSqrt(maxFloat(1.0F - cossqtheta[2], c_small));
+        tt1 = costheta[2] * rinvmag2[0];
+        tt3 = costheta[2] * rinvmag2[2];
+        sc1 = invstheta[2];
 
         dthetadr[2][0][XX] = sc1 * (tt1 * delr[0][XX] - delr[2][XX] * rinvmag[0] * rinvmag[2]);
         dthetadr[2][0][YY] = sc1 * (tt1 * delr[0][YY] - delr[2][YY] * rinvmag[0] * rinvmag[2]);
@@ -1572,7 +1700,7 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void improper_class2_gpu(const int      
 
         for (int interaction = 0; interaction < 3; ++interaction)
         {
-            const float cossin2 = -costheta[interaction] / sinsqtheta[interaction];
+            const float cossin2 = -costheta[interaction] * invstheta[interaction] * invstheta[interaction];
             for (int atom = 0; atom < 4; ++atom)
             {
                 for (int dim = 0; dim < DIM; ++dim)
@@ -1646,19 +1774,24 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void improper_class2_gpu(const int      
             for (int dim = 0; dim < DIM; ++dim)
             {
                 const float f0 =
-                        (fdot[0][atom][dim] * invs3r[0] + dinvs3r[0][atom][dim] * dotCBDBAB) / gmxDeviceCos(chiABCD);
+                        (fdot[0][atom][dim] * invs3r[0] + dinvs3r[0][atom][dim] * dotCBDBAB) * invCosChiABCD;
                 const float f1 =
-                        (fdot[1][atom][dim] * invs3r[1] + dinvs3r[1][atom][dim] * dotDBABCB) / gmxDeviceCos(chiCBDA);
+                        (fdot[1][atom][dim] * invs3r[1] + dinvs3r[1][atom][dim] * dotDBABCB) * invCosChiCBDA;
                 const float f2 =
-                        (fdot[2][atom][dim] * invs3r[2] + dinvs3r[2][atom][dim] * dotABCBDB) / gmxDeviceCos(chiDBAC);
+                        (fdot[2][atom][dim] * invs3r[2] + dinvs3r[2][atom][dim] * dotABCBDB) * invCosChiDBAC;
                 dtotalchi[atom][dim] = (f0 + f1 + f2) / 3.0F;
                 fabcd[atom][dim] += -2.0F * params.k0 * deltachi * dtotalchi[atom][dim];
             }
         }
+        }
     }
 
-    if (params.aa_k1 != 0.0F || params.aa_k2 != 0.0F || params.aa_k3 != 0.0F)
+    if (hasAngleAngleTerm)
     {
+        const bool needsThetaABC = hasAngleAngleTerm1 || hasAngleAngleTerm2;
+        const bool needsThetaCBD = hasAngleAngleTerm1 || hasAngleAngleTerm3;
+        const bool needsThetaABD = hasAngleAngleTerm2 || hasAngleAngleTerm3;
+
         const float delxAB = delr[0][XX];
         const float delyAB = delr[0][YY];
         const float delzAB = delr[0][ZZ];
@@ -1669,93 +1802,111 @@ GMX_DEVICE_FUNC_ATTRIBUTE static inline void improper_class2_gpu(const int      
         const float delyBD = delr[2][YY];
         const float delzBD = delr[2][ZZ];
 
-        const float rABmag2 = delxAB * delxAB + delyAB * delyAB + delzAB * delzAB;
-        const float rBCmag2 = delxBC * delxBC + delyBC * delyBC + delzBC * delzBC;
-        const float rBDmag2 = delxBD * delxBD + delyBD * delyBD + delzBD * delzBD;
-        const float rAB     = gmxDeviceSqrt(rABmag2);
-        const float rBC     = gmxDeviceSqrt(rBCmag2);
-        const float rBD     = gmxDeviceSqrt(rBDmag2);
+        const float invRAB2 = rinvmag[0] * rinvmag[0];
+        const float invRBC2 = rinvmag[1] * rinvmag[1];
+        const float invRBD2 = rinvmag[2] * rinvmag[2];
+        const float costhABC = costheta[0];
+        const float costhABD = costheta[2];
+        const float costhCBD = costheta[1];
 
-        float costhABC = clampToRange((delxAB * delxBC + delyAB * delyBC + delzAB * delzBC) / (rAB * rBC),
-                                      -1.0F + c_small,
-                                      1.0F - c_small);
-        float costhABD = clampToRange((delxAB * delxBD + delyAB * delyBD + delzAB * delzBD) / (rAB * rBD),
-                                      -1.0F + c_small,
-                                      1.0F - c_small);
-        float costhCBD = clampToRange((delxBC * delxBD + delyBC * delyBD + delzBC * delzBD) / (rBC * rBD),
-                                      -1.0F + c_small,
-                                      1.0F - c_small);
-
-        const float thetaABC = gmxDeviceAcos(costhABC);
-        const float thetaABD = gmxDeviceAcos(costhABD);
-        const float thetaCBD = gmxDeviceAcos(costhCBD);
-        const float dthABC   = thetaABC - params.aa_theta0_1;
-        const float dthABD   = thetaABD - params.aa_theta0_2;
-        const float dthCBD   = thetaCBD - params.aa_theta0_3;
+        const float dthABC = needsThetaABC ? gmxDeviceAcos(costhABC) - params.aa_theta0_1 : 0.0F;
+        const float dthABD = needsThetaABD ? gmxDeviceAcos(costhABD) - params.aa_theta0_2 : 0.0F;
+        const float dthCBD = needsThetaCBD ? gmxDeviceAcos(costhCBD) - params.aa_theta0_3 : 0.0F;
 
         if constexpr (calcEner)
         {
-            *vtot_loc += params.aa_k2 * dthABC * dthABD + params.aa_k1 * dthABC * dthCBD
-                         + params.aa_k3 * dthABD * dthCBD;
+            if (hasAngleAngleTerm1)
+            {
+                *vtot_loc += params.aa_k1 * dthABC * dthCBD;
+            }
+            if (hasAngleAngleTerm2)
+            {
+                *vtot_loc += params.aa_k2 * dthABC * dthABD;
+            }
+            if (hasAngleAngleTerm3)
+            {
+                *vtot_loc += params.aa_k3 * dthABD * dthCBD;
+            }
         }
 
         float dthetadr[3][4][DIM] = {};
 
-        float sc1 = gmxDeviceSqrt(1.0F / maxFloat(1.0F - costhABC * costhABC, c_small));
-        float t1l = costhABC / rABmag2;
-        float t3l = costhABC / rBCmag2;
-        float r12 = 1.0F / (rAB * rBC);
+        if (needsThetaABC)
+        {
+            const float sc1 = invstheta[0];
+            const float t1l = costhABC * invRAB2;
+            const float t3l = costhABC * invRBC2;
+            const float r12 = rinvmag[0] * rinvmag[1];
 
-        dthetadr[0][0][XX] = sc1 * (t1l * delxAB - delxBC * r12);
-        dthetadr[0][0][YY] = sc1 * (t1l * delyAB - delyBC * r12);
-        dthetadr[0][0][ZZ] = sc1 * (t1l * delzAB - delzBC * r12);
-        dthetadr[0][1][XX] = sc1 * (-t1l * delxAB + delxBC * r12 - t3l * delxBC + delxAB * r12);
-        dthetadr[0][1][YY] = sc1 * (-t1l * delyAB + delyBC * r12 - t3l * delyBC + delyAB * r12);
-        dthetadr[0][1][ZZ] = sc1 * (-t1l * delzAB + delzBC * r12 - t3l * delzBC + delzAB * r12);
-        dthetadr[0][2][XX] = sc1 * (t3l * delxBC - delxAB * r12);
-        dthetadr[0][2][YY] = sc1 * (t3l * delyBC - delyAB * r12);
-        dthetadr[0][2][ZZ] = sc1 * (t3l * delzBC - delzAB * r12);
+            dthetadr[0][0][XX] = sc1 * (t1l * delxAB - delxBC * r12);
+            dthetadr[0][0][YY] = sc1 * (t1l * delyAB - delyBC * r12);
+            dthetadr[0][0][ZZ] = sc1 * (t1l * delzAB - delzBC * r12);
+            dthetadr[0][1][XX] = sc1 * (-t1l * delxAB + delxBC * r12 - t3l * delxBC + delxAB * r12);
+            dthetadr[0][1][YY] = sc1 * (-t1l * delyAB + delyBC * r12 - t3l * delyBC + delyAB * r12);
+            dthetadr[0][1][ZZ] = sc1 * (-t1l * delzAB + delzBC * r12 - t3l * delzBC + delzAB * r12);
+            dthetadr[0][2][XX] = sc1 * (t3l * delxBC - delxAB * r12);
+            dthetadr[0][2][YY] = sc1 * (t3l * delyBC - delyAB * r12);
+            dthetadr[0][2][ZZ] = sc1 * (t3l * delzBC - delzAB * r12);
+        }
 
-        sc1 = gmxDeviceSqrt(1.0F / maxFloat(1.0F - costhCBD * costhCBD, c_small));
-        t1l = costhCBD / rBCmag2;
-        t3l = costhCBD / rBDmag2;
-        r12 = 1.0F / (rBC * rBD);
+        if (needsThetaCBD)
+        {
+            const float sc1 = invstheta[1];
+            const float t1l = costhCBD * invRBC2;
+            const float t3l = costhCBD * invRBD2;
+            const float r12 = rinvmag[1] * rinvmag[2];
 
-        dthetadr[1][2][XX] = sc1 * (t1l * delxBC - delxBD * r12);
-        dthetadr[1][2][YY] = sc1 * (t1l * delyBC - delyBD * r12);
-        dthetadr[1][2][ZZ] = sc1 * (t1l * delzBC - delzBD * r12);
-        dthetadr[1][1][XX] = sc1 * (-t1l * delxBC + delxBD * r12 - t3l * delxBD + delxBC * r12);
-        dthetadr[1][1][YY] = sc1 * (-t1l * delyBC + delyBD * r12 - t3l * delyBD + delyBC * r12);
-        dthetadr[1][1][ZZ] = sc1 * (-t1l * delzBC + delzBD * r12 - t3l * delzBD + delzBC * r12);
-        dthetadr[1][3][XX] = sc1 * (t3l * delxBD - delxBC * r12);
-        dthetadr[1][3][YY] = sc1 * (t3l * delyBD - delyBC * r12);
-        dthetadr[1][3][ZZ] = sc1 * (t3l * delzBD - delzBC * r12);
+            dthetadr[1][2][XX] = sc1 * (t1l * delxBC - delxBD * r12);
+            dthetadr[1][2][YY] = sc1 * (t1l * delyBC - delyBD * r12);
+            dthetadr[1][2][ZZ] = sc1 * (t1l * delzBC - delzBD * r12);
+            dthetadr[1][1][XX] = sc1 * (-t1l * delxBC + delxBD * r12 - t3l * delxBD + delxBC * r12);
+            dthetadr[1][1][YY] = sc1 * (-t1l * delyBC + delyBD * r12 - t3l * delyBD + delyBC * r12);
+            dthetadr[1][1][ZZ] = sc1 * (-t1l * delzBC + delzBD * r12 - t3l * delzBD + delzBC * r12);
+            dthetadr[1][3][XX] = sc1 * (t3l * delxBD - delxBC * r12);
+            dthetadr[1][3][YY] = sc1 * (t3l * delyBD - delyBC * r12);
+            dthetadr[1][3][ZZ] = sc1 * (t3l * delzBD - delzBC * r12);
+        }
 
-        sc1 = gmxDeviceSqrt(1.0F / maxFloat(1.0F - costhABD * costhABD, c_small));
-        t1l = costhABD / rABmag2;
-        t3l = costhABD / rBDmag2;
-        r12 = 1.0F / (rAB * rBD);
+        if (needsThetaABD)
+        {
+            const float sc1 = invstheta[2];
+            const float t1l = costhABD * invRAB2;
+            const float t3l = costhABD * invRBD2;
+            const float r12 = rinvmag[0] * rinvmag[2];
 
-        dthetadr[2][0][XX] = sc1 * (t1l * delxAB - delxBD * r12);
-        dthetadr[2][0][YY] = sc1 * (t1l * delyAB - delyBD * r12);
-        dthetadr[2][0][ZZ] = sc1 * (t1l * delzAB - delzBD * r12);
-        dthetadr[2][1][XX] = sc1 * (-t1l * delxAB + delxBD * r12 - t3l * delxBD + delxAB * r12);
-        dthetadr[2][1][YY] = sc1 * (-t1l * delyAB + delyBD * r12 - t3l * delyBD + delyAB * r12);
-        dthetadr[2][1][ZZ] = sc1 * (-t1l * delzAB + delzBD * r12 - t3l * delzBD + delzAB * r12);
-        dthetadr[2][3][XX] = sc1 * (t3l * delxBD - delxAB * r12);
-        dthetadr[2][3][YY] = sc1 * (t3l * delyBD - delyAB * r12);
-        dthetadr[2][3][ZZ] = sc1 * (t3l * delzBD - delzAB * r12);
+            dthetadr[2][0][XX] = sc1 * (t1l * delxAB - delxBD * r12);
+            dthetadr[2][0][YY] = sc1 * (t1l * delyAB - delyBD * r12);
+            dthetadr[2][0][ZZ] = sc1 * (t1l * delzAB - delzBD * r12);
+            dthetadr[2][1][XX] = sc1 * (-t1l * delxAB + delxBD * r12 - t3l * delxBD + delxAB * r12);
+            dthetadr[2][1][YY] = sc1 * (-t1l * delyAB + delyBD * r12 - t3l * delyBD + delyAB * r12);
+            dthetadr[2][1][ZZ] = sc1 * (-t1l * delzAB + delzBD * r12 - t3l * delzBD + delzAB * r12);
+            dthetadr[2][3][XX] = sc1 * (t3l * delxBD - delxAB * r12);
+            dthetadr[2][3][YY] = sc1 * (t3l * delyBD - delyAB * r12);
+            dthetadr[2][3][ZZ] = sc1 * (t3l * delzBD - delzAB * r12);
+        }
 
         for (int atom = 0; atom < 4; ++atom)
         {
             for (int dim = 0; dim < DIM; ++dim)
             {
-                fabcd[atom][dim] -=
-                        params.aa_k1 * (dthABC * dthetadr[1][atom][dim] + dthCBD * dthetadr[0][atom][dim])
-                        + params.aa_k2
-                                  * (dthABC * dthetadr[2][atom][dim] + dthABD * dthetadr[0][atom][dim])
-                        + params.aa_k3
-                                  * (dthABD * dthetadr[1][atom][dim] + dthCBD * dthetadr[2][atom][dim]);
+                if (hasAngleAngleTerm1)
+                {
+                    fabcd[atom][dim] -=
+                            params.aa_k1
+                            * (dthABC * dthetadr[1][atom][dim] + dthCBD * dthetadr[0][atom][dim]);
+                }
+                if (hasAngleAngleTerm2)
+                {
+                    fabcd[atom][dim] -=
+                            params.aa_k2
+                            * (dthABC * dthetadr[2][atom][dim] + dthABD * dthetadr[0][atom][dim]);
+                }
+                if (hasAngleAngleTerm3)
+                {
+                    fabcd[atom][dim] -=
+                            params.aa_k3
+                            * (dthABD * dthetadr[1][atom][dim] + dthCBD * dthetadr[2][atom][dim]);
+                }
             }
         }
     }

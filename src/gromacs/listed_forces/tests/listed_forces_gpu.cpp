@@ -146,7 +146,32 @@ TEST(ListedForcesGpuInputSupportTest, ExactRespaPcffClass2WithLennardJones14Pair
     EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
 }
 
-TEST(ListedForcesGpuInputSupportTest, ExactRespaRejectsGpuCapableBondTypesOutsidePair14OnlyMode)
+TEST(ListedForcesGpuInputSupportTest, ExactRespaExplicitClass2WithoutLennardJones14PairsIsAdmitted)
+{
+    t_inputrec  ir;
+    gmx_mtop_t  mtop;
+    std::string error;
+    initializeExactLammpsRespaInputrec(&ir);
+    initializeMixedClass2BondTopology(&mtop);
+
+    gmxSetenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES", "class2", true);
+    EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
+    gmxUnsetenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES");
+}
+
+TEST(ListedForcesGpuInputSupportTest, ExactRespaDefaultClass2WithoutLennardJones14PairsIsAdmitted)
+{
+    t_inputrec  ir;
+    gmx_mtop_t  mtop;
+    std::string error;
+    initializeExactLammpsRespaInputrec(&ir);
+    initializeMixedClass2BondTopology(&mtop);
+
+    gmxUnsetenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES");
+    EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
+}
+
+TEST(ListedForcesGpuInputSupportTest, ExactRespaExplicitGpuBondedOffAdmitsOrdinaryBondTypes)
 {
     t_inputrec  ir;
     gmx_mtop_t  mtop;
@@ -155,8 +180,24 @@ TEST(ListedForcesGpuInputSupportTest, ExactRespaRejectsGpuCapableBondTypesOutsid
     initializeListedPairTopology(&mtop, 9.0);
     mtop.moltype[0].ilist[InteractionFunction::Bonds].iatoms = { 0, 0, 1 };
 
+    gmxSetenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES", "off", true);
+    EXPECT_TRUE(inputSupportsListedForcesGpu(ir, mtop, &error)) << error;
+    gmxUnsetenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES");
+}
+
+TEST(ListedForcesGpuInputSupportTest, ExactRespaExplicitClass2GpuBondedRejectsOrdinaryBondTypes)
+{
+    t_inputrec  ir;
+    gmx_mtop_t  mtop;
+    std::string error;
+    initializeExactLammpsRespaInputrec(&ir);
+    initializeListedPairTopology(&mtop, 9.0);
+    mtop.moltype[0].ilist[InteractionFunction::Bonds].iatoms = { 0, 0, 1 };
+
+    gmxSetenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES", "class2", true);
     EXPECT_FALSE(inputSupportsListedForcesGpu(ir, mtop, &error));
-    EXPECT_NE(error.find("pair14-only narrow mode"), std::string::npos);
+    gmxUnsetenv("GMX_PCFF_EXACT_RESPA_GPU_BONDED_FTYPES");
+    EXPECT_NE(error.find("PCFF class2/listed-pair narrow mode"), std::string::npos);
 }
 
 TEST(ListedForcesGpuInputSupportTest, ExactRespaWideGpuBondedEnvAdmitsGpuCapableBondTypes)

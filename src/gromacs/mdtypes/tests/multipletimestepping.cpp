@@ -389,7 +389,7 @@ TEST(MultipleTimeStepping, ReportsHighestActiveLevelForNestedSchedule)
     EXPECT_EQ(highestActiveMtsLevel(ir.mtsLevels, 4), 2);
 }
 
-TEST(MultipleTimeStepping, RejectsTwoLevelExactLammpsRespaSchedule)
+TEST(MultipleTimeStepping, AcceptsTwoLevelExactLammpsRespaFullPairSchedule)
 {
     GromppMtsOpts mtsOpts;
     mtsOpts.mode         = MtsMode::LammpsRespa;
@@ -410,7 +410,7 @@ TEST(MultipleTimeStepping, RejectsTwoLevelExactLammpsRespaSchedule)
 
     t_inputrec ir;
     configureExactLammpsRespaInputRecord(&ir);
-    setAndCheckMtsLevels(mtsOpts, &ir, 1);
+    setAndCheckMtsLevels(mtsOpts, &ir, 0);
 }
 
 TEST(MultipleTimeStepping, ParsesExactLammpsRespaSchedule)

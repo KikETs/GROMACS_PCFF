@@ -153,7 +153,10 @@ std::vector<ListedForces::InteractionSelection> exactRespaListedForceSelections(
 } // namespace
 
 ForceHelperBuffers::ForceHelperBuffers(bool haveDirectVirialContributions) :
-    haveDirectVirialContributions_(haveDirectVirialContributions)
+    haveDirectVirialContributions_(haveDirectVirialContributions),
+    forceBufferForDirectVirialContributions_(gmx::HostAllocationPolicy(
+            gmx::PinningPolicy::PinnedIfSupported)),
+    shiftForces_(gmx::HostAllocationPolicy(gmx::PinningPolicy::PinnedIfSupported))
 {
     shiftForces_.resize(gmx::c_numShiftVectors);
 }

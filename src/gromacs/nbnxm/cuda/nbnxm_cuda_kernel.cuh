@@ -130,23 +130,41 @@ namespace gmx
  * Note: convenience macros, need to be undef-ed at the end of the file.
  */
 #define NTHREAD_Z (1)
-#define MIN_BLOCKS_PER_MP (16)
+#if defined(EXACT_RESPA_NATIVE_MULTI_NB_MIN_BLOCKS_PER_MP)
+#    define MIN_BLOCKS_PER_MP (EXACT_RESPA_NATIVE_MULTI_NB_MIN_BLOCKS_PER_MP)
+#elif defined(EXACT_RESPA_NATIVE_MULTI_NB_KERNEL) && EXACT_RESPA_NATIVE_MULTI_NB_COUNT == 3
+#    define MIN_BLOCKS_PER_MP (8)
+#else
+#    define MIN_BLOCKS_PER_MP (16)
+#endif
 #define THREADS_PER_BLOCK (c_clusterSize * c_clusterSize * NTHREAD_Z)
 
 /**@}*/
 
+#ifndef NB_KERNEL_FUNC_VARIANT_SUFFIX
+#    define NB_KERNEL_FUNC_VARIANT_SUFFIX
+#    define NB_KERNEL_FUNC_VARIANT_SUFFIX_WAS_UNDEFINED
+#endif
+
+#define NB_KERNEL_FUNC_VARIANT_NAME_IMPL(name, suffix) name##suffix
+#define NB_KERNEL_FUNC_VARIANT_NAME(name, suffix) NB_KERNEL_FUNC_VARIANT_NAME_IMPL(name, suffix)
+
 __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 #ifdef PRUNE_NBL
 #    ifdef CALC_ENERGIES
-        __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _VF_prune_cuda)
+        __global__ void NB_KERNEL_FUNC_VARIANT_NAME(
+                NB_KERNEL_FUNC_NAME(nbnxn_kernel, _VF_prune_cuda), NB_KERNEL_FUNC_VARIANT_SUFFIX)
 #    else
-        __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_prune_cuda)
+        __global__ void NB_KERNEL_FUNC_VARIANT_NAME(
+                NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_prune_cuda), NB_KERNEL_FUNC_VARIANT_SUFFIX)
 #    endif /* CALC_ENERGIES */
 #else
 #    ifdef CALC_ENERGIES
-        __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _VF_cuda)
+        __global__ void NB_KERNEL_FUNC_VARIANT_NAME(
+                NB_KERNEL_FUNC_NAME(nbnxn_kernel, _VF_cuda), NB_KERNEL_FUNC_VARIANT_SUFFIX)
 #    else
-        __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
+        __global__ void NB_KERNEL_FUNC_VARIANT_NAME(
+                NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda), NB_KERNEL_FUNC_VARIANT_SUFFIX)
 #    endif /* CALC_ENERGIES */
 #endif     /* PRUNE_NBL */
                 (NBAtomDataGpu atdat, NBParamGpu nbparam, GpuPairlist plist, bool bCalcFshift)
@@ -175,6 +193,17 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 #    endif
     const float4* xq          = atdat.xq;
     float3*       f           = asFloat3(atdat.f);
+#    if defined(EXACT_RESPA_NATIVE_MULTI_NB_KERNEL) && !defined(CALC_ENERGIES)
+#        if EXACT_RESPA_NATIVE_MULTI_NB_COUNT == 2
+    const bool exactRespaNativeMultiInnerMiddle = nbparam.exactRespaNativeMultiMask == 3;
+    const int exactRespaNativeMultiContribution1 =
+            exactRespaNativeMultiInnerMiddle ? c_exactRespaContributionMiddle
+                                             : c_exactRespaContributionOuter;
+#        elif EXACT_RESPA_NATIVE_MULTI_NB_COUNT != 3
+#            error "Native exact r-RESPA CUDA kernels support two or three contributions"
+#        endif
+    float3* fNativeMulti = asFloat3(atdat.exactRespaMultiF);
+#    endif
     const float3* shift_vec   = asFloat3(atdat.shiftVec);
     float         rcoulomb_sq = nbparam.rcoulomb_sq;
 #    ifdef VDW_CUTOFF_CHECK
@@ -250,8 +279,14 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 #    endif
     unsigned int wexcl, imask, mask_ji;
     float4       xqbuf;
-    float3       xi, xj, rv, f_ij, fcj_buf;
+    float3       xi, xj, rv;
+#    if defined(EXACT_RESPA_NATIVE_MULTI_NB_KERNEL) && !defined(CALC_ENERGIES)
+    float3       fcj_native_multi[EXACT_RESPA_NATIVE_MULTI_NB_COUNT];
+    float3       fci_native_multi[EXACT_RESPA_NATIVE_MULTI_NB_COUNT][c_superClusterSize];
+#    else
+    float3       f_ij, fcj_buf;
     float3       fci_buf[c_superClusterSize]; /* i force buffer */
+#    endif
     nbnxn_sci_t  nb_sci;
 
     /*! i-cluster interaction mask for a super-cluster with all c_superClusterSize=8 bits set */
@@ -366,7 +401,14 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 
     for (i = 0; i < c_superClusterSize; i++)
     {
+#    if defined(EXACT_RESPA_NATIVE_MULTI_NB_KERNEL) && !defined(CALC_ENERGIES)
+        for (int outputIndex = 0; outputIndex < EXACT_RESPA_NATIVE_MULTI_NB_COUNT; outputIndex++)
+        {
+            fci_native_multi[outputIndex][i] = make_float3(0.0F);
+        }
+#    else
         fci_buf[i] = make_float3(0.0F);
+#    endif
     }
 
 #    ifdef LJ_EWALD
@@ -473,7 +515,15 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
                     ljcp_j = lj_comb[aj];
 #    endif
 
+#    if defined(EXACT_RESPA_NATIVE_MULTI_NB_KERNEL) && !defined(CALC_ENERGIES)
+                    for (int outputIndex = 0; outputIndex < EXACT_RESPA_NATIVE_MULTI_NB_COUNT;
+                         outputIndex++)
+                    {
+                        fcj_native_multi[outputIndex] = make_float3(0.0F);
+                    }
+#    else
                     fcj_buf = make_float3(0.0F);
+#    endif
 
 #    if !defined PRUNE_NBL
 #        pragma unroll c_superClusterSize
@@ -545,7 +595,9 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
                                 inv_r6          = inv_r2 * inv_r2 * inv_r2;
                                 float inv_r_rep = (nbparam.repulsionPower == 12.0F)
                                                           ? inv_r6 * inv_r6
-                                                          : powf(inv_r, nbparam.repulsionPower);
+                                                          : ((nbparam.repulsionPower == 9.0F)
+                                                                     ? inv_r6 * inv_r2 * inv_r
+                                                                     : powf(inv_r, nbparam.repulsionPower));
 #        ifdef EXCLUSION_FORCES
                                 /* We could mask inv_r2, but with Ewald
                                  * masking the inverse-power terms and F_invr is faster */
@@ -629,10 +681,97 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 #        endif
 #    endif /* VDW_CUTOFF_CHECK */
 
+#    if defined(EXACT_RESPA_NATIVE_MULTI_NB_KERNEL) && !defined(CALC_ENERGIES)
+                                {
+                                    const float exactRespaLJF = F_invr;
+                                    float       exactRespaCoulombDirectF = 0.0F;
+                                    float       exactRespaCoulombCorrectionF = 0.0F;
+#        ifdef EL_CUTOFF
+                                    {
+#            ifdef EXCLUSION_FORCES
+                                        exactRespaCoulombDirectF = qi * qj_f * int_bit * inv_r2 * inv_r;
+#            else
+                                        exactRespaCoulombDirectF = qi * qj_f * inv_r2 * inv_r;
+#            endif
+                                    }
+#        endif
+#        ifdef EL_RF
+                                    exactRespaCoulombDirectF    = qi * qj_f * int_bit * inv_r2 * inv_r;
+                                    exactRespaCoulombCorrectionF = -qi * qj_f * two_k_rf;
+#        endif
+#        if defined EL_EWALD_ANA
+                                    exactRespaCoulombDirectF    = qi * qj_f * int_bit * inv_r2 * inv_r;
+                                    exactRespaCoulombCorrectionF = qi * qj_f * pmeCorrF(beta2 * r2) * beta3;
+#        elif defined EL_EWALD_TAB
+                                    exactRespaCoulombDirectF    = qi * qj_f * int_bit * inv_r2 * inv_r;
+                                    exactRespaCoulombCorrectionF =
+                                            -qi * qj_f * interpolate_coulomb_force_r(nbparam, r) * inv_r;
+#        endif
+
+#        if EXACT_RESPA_NATIVE_MULTI_NB_COUNT == 3
+                                    const float switchIntoMiddle = exactRespaSwitchIn(
+                                            r, nbparam.exactRespaInnerOff, nbparam.exactRespaInnerOn);
+                                    const float switchIntoOuter = exactRespaSwitchIn(
+                                            r, nbparam.exactRespaOuterOn, nbparam.exactRespaOuterOff);
+                                    const float exactRespaBaseF =
+                                            exactRespaLJF + exactRespaCoulombDirectF;
+                                    const float3 exactRespaInnerF =
+                                            rv * (exactRespaBaseF * (1.0F - switchIntoMiddle));
+                                    const float3 exactRespaMiddleF =
+                                            rv * (exactRespaBaseF * switchIntoMiddle
+                                                  * (1.0F - switchIntoOuter));
+                                    const float3 exactRespaOuterF =
+                                            rv * (exactRespaBaseF * switchIntoOuter
+                                                  + exactRespaCoulombCorrectionF);
+
+                                    fcj_native_multi[0] -= exactRespaInnerF;
+                                    fcj_native_multi[1] -= exactRespaMiddleF;
+                                    fcj_native_multi[2] -= exactRespaOuterF;
+                                    fci_native_multi[0][i] += exactRespaInnerF;
+                                    fci_native_multi[1][i] += exactRespaMiddleF;
+                                    fci_native_multi[2][i] += exactRespaOuterF;
+#        else
+                                    const float exactRespaBaseF =
+                                            exactRespaLJF + exactRespaCoulombDirectF;
+                                    float exactRespaWeight0;
+                                    float exactRespaWeight1;
+                                    float exactRespaCorrection1;
+                                    if (exactRespaNativeMultiInnerMiddle)
+                                    {
+                                        const float switchIntoMiddle = exactRespaSwitchIn(
+                                                r, nbparam.exactRespaInnerOff, nbparam.exactRespaInnerOn);
+                                        const float switchIntoOuter = exactRespaSwitchIn(
+                                                r, nbparam.exactRespaOuterOn, nbparam.exactRespaOuterOff);
+                                        exactRespaWeight0 = 1.0F - switchIntoMiddle;
+                                        exactRespaWeight1 = switchIntoMiddle * (1.0F - switchIntoOuter);
+                                        exactRespaCorrection1 = 0.0F;
+                                    }
+                                    else
+                                    {
+                                        const float switchIntoOuter = exactRespaSwitchIn(
+                                                r, nbparam.exactRespaOuterOn, nbparam.exactRespaOuterOff);
+                                        exactRespaWeight0 = 1.0F - switchIntoOuter;
+                                        exactRespaWeight1 = switchIntoOuter;
+                                        exactRespaCorrection1 = exactRespaCoulombCorrectionF;
+                                    }
+
+                                    const float3 exactRespaF0 = rv * (exactRespaBaseF * exactRespaWeight0);
+                                    const float3 exactRespaF1 =
+                                            rv * (exactRespaBaseF * exactRespaWeight1
+                                                  + exactRespaCorrection1);
+                                    fcj_native_multi[0] -= exactRespaF0;
+                                    fcj_native_multi[1] -= exactRespaF1;
+                                    fci_native_multi[0][i] += exactRespaF0;
+                                    fci_native_multi[1][i] += exactRespaF1;
+#        endif
+                                }
+#    else
                                 const bool  exactRespaSplitLaunch =
                                         (nbparam.exactRespaContribution != c_exactRespaContributionFull);
                                 const bool  exactRespaOuterLaunch =
                                         (nbparam.exactRespaContribution == c_exactRespaContributionOuter);
+                                const bool  exactRespaAppliesCoulombCorrection =
+                                        !exactRespaSplitLaunch || exactRespaOuterLaunch;
                                 const float exactRespaWeight =
                                         exactRespaSplitLaunch ? exactRespaSplitWeight(nbparam, r) : 1.0F;
                                 if (exactRespaSplitLaunch)
@@ -661,50 +800,42 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 #    endif
 #    ifdef EL_RF
                                 {
-                                    float coulombDirectF     = qi * qj_f * int_bit * inv_r2 * inv_r;
-                                    float coulombCorrectionF = -qi * qj_f * two_k_rf;
+                                    float coulombDirectF = qi * qj_f * int_bit * inv_r2 * inv_r;
                                     if (exactRespaSplitLaunch)
                                     {
                                         coulombDirectF *= exactRespaWeight;
-                                        F_invr += coulombDirectF
-                                                  + (exactRespaOuterLaunch ? coulombCorrectionF : 0.0F);
                                     }
-                                    else
+                                    F_invr += coulombDirectF;
+                                    if (exactRespaAppliesCoulombCorrection)
                                     {
-                                        F_invr += coulombDirectF + coulombCorrectionF;
+                                        F_invr += -qi * qj_f * two_k_rf;
                                     }
                                 }
 #    endif
 #    if defined EL_EWALD_ANA
                                 {
                                     float coulombDirectF = qi * qj_f * int_bit * inv_r2 * inv_r;
-                                    float coulombCorrectionF =
-                                            qi * qj_f * pmeCorrF(beta2 * r2) * beta3;
                                     if (exactRespaSplitLaunch)
                                     {
                                         coulombDirectF *= exactRespaWeight;
-                                        F_invr += coulombDirectF
-                                                  + (exactRespaOuterLaunch ? coulombCorrectionF : 0.0F);
                                     }
-                                    else
+                                    F_invr += coulombDirectF;
+                                    if (exactRespaAppliesCoulombCorrection)
                                     {
-                                        F_invr += coulombDirectF + coulombCorrectionF;
+                                        F_invr += qi * qj_f * pmeCorrF(beta2 * r2) * beta3;
                                     }
                                 }
 #    elif defined EL_EWALD_TAB
                                 {
                                     float coulombDirectF = qi * qj_f * int_bit * inv_r2 * inv_r;
-                                    float coulombCorrectionF =
-                                            -qi * qj_f * interpolate_coulomb_force_r(nbparam, r) * inv_r;
                                     if (exactRespaSplitLaunch)
                                     {
                                         coulombDirectF *= exactRespaWeight;
-                                        F_invr += coulombDirectF
-                                                  + (exactRespaOuterLaunch ? coulombCorrectionF : 0.0F);
                                     }
-                                    else
+                                    F_invr += coulombDirectF;
+                                    if (exactRespaAppliesCoulombCorrection)
                                     {
-                                        F_invr += coulombDirectF + coulombCorrectionF;
+                                        F_invr += -qi * qj_f * interpolate_coulomb_force_r(nbparam, r) * inv_r;
                                     }
                                 }
 #    endif /* EL_EWALD_ANA/TAB */
@@ -730,6 +861,7 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 
                                 /* accumulate i forces in registers */
                                 fci_buf[i] += f_ij;
+#    endif
                             }
                         }
 
@@ -737,8 +869,32 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
                         mask_ji += mask_ji;
                     }
 
-                    /* reduce j forces */
-                    reduce_force_j_warp_shfl(fcj_buf, f, tidxi, aj, c_fullWarpMask);
+                        /* reduce j forces */
+#    if defined(EXACT_RESPA_NATIVE_MULTI_NB_KERNEL) && !defined(CALC_ENERGIES)
+                    {
+                        for (int outputIndex = 0; outputIndex < EXACT_RESPA_NATIVE_MULTI_NB_COUNT;
+                             outputIndex++)
+                        {
+#        if EXACT_RESPA_NATIVE_MULTI_NB_COUNT == 2
+                            const int contributionIndex =
+                                    (outputIndex == 0) ? c_exactRespaContributionInner
+                                                       : exactRespaNativeMultiContribution1;
+#        else
+                            const int contributionIndex = outputIndex;
+#        endif
+                            reduce_force_j_warp_shfl(
+                                    fcj_native_multi[outputIndex],
+                                    fNativeMulti + contributionIndex * atdat.numAtomsAlloc,
+                                    tidxi,
+                                    aj,
+                                    c_fullWarpMask);
+                        }
+                    }
+#    else
+                    {
+                        reduce_force_j_warp_shfl(fcj_buf, f, tidxi, aj, c_fullWarpMask);
+                    }
+#    endif
                 }
             }
 #    ifdef PRUNE_NBL
@@ -767,7 +923,34 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
     for (i = 0; i < c_superClusterSize; i++)
     {
         ai = (sci * c_superClusterSize + i) * c_clusterSize + tidxi;
-        reduce_force_i_warp_shfl(fci_buf[i], f, &fshift_buf, bCalcFshift, tidxj, ai, c_fullWarpMask);
+#    if defined(EXACT_RESPA_NATIVE_MULTI_NB_KERNEL) && !defined(CALC_ENERGIES)
+        {
+            for (int outputIndex = 0; outputIndex < EXACT_RESPA_NATIVE_MULTI_NB_COUNT;
+                 outputIndex++)
+            {
+#        if EXACT_RESPA_NATIVE_MULTI_NB_COUNT == 2
+                const int contributionIndex =
+                        (outputIndex == 0) ? c_exactRespaContributionInner
+                                           : exactRespaNativeMultiContribution1;
+#        else
+                const int contributionIndex = outputIndex;
+#        endif
+                float ignoredFShift = 0.0F;
+                reduce_force_i_warp_shfl(
+                        fci_native_multi[outputIndex][i],
+                        fNativeMulti + contributionIndex * atdat.numAtomsAlloc,
+                        &ignoredFShift,
+                        false,
+                        tidxj,
+                        ai,
+                        c_fullWarpMask);
+            }
+        }
+#    else
+        {
+            reduce_force_i_warp_shfl(fci_buf[i], f, &fshift_buf, bCalcFshift, tidxj, ai, c_fullWarpMask);
+        }
+#    endif
     }
 
     /* add up local shift forces into global mem, tidxj indexes x,y,z */
@@ -810,6 +993,13 @@ __launch_bounds__(THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 #undef NTHREAD_Z
 #undef MIN_BLOCKS_PER_MP
 #undef THREADS_PER_BLOCK
+#undef NB_KERNEL_FUNC_VARIANT_NAME
+#undef NB_KERNEL_FUNC_VARIANT_NAME_IMPL
+
+#ifdef NB_KERNEL_FUNC_VARIANT_SUFFIX_WAS_UNDEFINED
+#    undef NB_KERNEL_FUNC_VARIANT_SUFFIX
+#    undef NB_KERNEL_FUNC_VARIANT_SUFFIX_WAS_UNDEFINED
+#endif
 
 #undef EL_EWALD_ANY
 #undef EXCLUSION_FORCES

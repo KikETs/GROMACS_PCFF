@@ -280,9 +280,12 @@ void nbnxn_kernel_gpu_ref(const NbnxnPairlistGpu*    nbl,
 
                                     const real rinvsix   = int_bit * rinvsq * rinvsq * rinvsq;
                                     const real Vvdw_disp = c6 * rinvsix;
-                                    const real Vvdw_rep  = cRepulsive
-                                                          * (repulsionPower == 12 ? rinvsix * rinvsix
-                                                                                  : int_bit * std::pow(rinv, repulsionPower));
+                                    const real rInvRepulsion =
+                                            (repulsionPower == 12)
+                                                    ? rinvsix * rinvsix
+                                                    : ((repulsionPower == 9) ? rinvsix * rinvsq * rinv
+                                                                             : int_bit * std::pow(rinv, repulsionPower));
+                                    const real Vvdw_rep = cRepulsive * rInvRepulsion;
                                     fscal += (Vvdw_rep - Vvdw_disp) * rinvsq;
 
                                     if (stepWork.computeEnergy)

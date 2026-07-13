@@ -798,22 +798,331 @@ bool useExactLammpsRespaForceOnlyContract(const t_inputrec& inputRecord)
 
 bool nestedExactLammpsRespaPrototypeEnabled()
 {
-    const char* value = std::getenv("GMX_EXACT_RESPA_NESTED_PROTOTYPE");
-    return value != nullptr && std::strcmp(value, "0") != 0;
+    static const bool enabled = [] {
+        const char* value = std::getenv("GMX_EXACT_RESPA_NESTED_PROTOTYPE");
+        return value != nullptr && std::strcmp(value, "0") != 0;
+    }();
+    return enabled;
+}
+
+bool exactRespaReuseNextForceForLiveStepEnabled()
+{
+    static const bool enabled = [] {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_REUSE_NEXT_FORCE");
+        if (value == nullptr || *value == '\0')
+        {
+            return true;
+        }
+        return std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0
+               && std::strcmp(value, "FALSE") != 0;
+    }();
+    return enabled;
+}
+
+bool exactRespaReuseNextForceWithGpuEnabled()
+{
+    static const bool enabled = [] {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_REUSE_NEXT_FORCE_GPU");
+        if (value == nullptr || *value == '\0')
+        {
+            return true;
+        }
+        return std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0
+               && std::strcmp(value, "FALSE") != 0;
+    }();
+    return enabled;
+}
+
+bool exactRespaReuseNextForceOnNeighborSearchEnabled()
+{
+    static const bool enabled = [] {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_REUSE_NEXT_FORCE_ON_NS");
+        if (value == nullptr || *value == '\0')
+        {
+            return true;
+        }
+        return std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0
+               && std::strcmp(value, "FALSE") != 0;
+    }();
+    return enabled;
+}
+
+bool exactRespaReuseNextForceForLongRangeEnabled()
+{
+    static const bool enabled = [] {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_REUSE_NEXT_FORCE_LONGRANGE");
+        if (value == nullptr || *value == '\0')
+        {
+            return true;
+        }
+        return std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0
+               && std::strcmp(value, "FALSE") != 0;
+    }();
+    return enabled;
+}
+
+bool exactRespaSkipUnusedCombinedForceRestoreEnabled()
+{
+    static const bool enabled = [] {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_SKIP_UNUSED_COMBINED_RESTORE");
+        if (value == nullptr || *value == '\0')
+        {
+            return true;
+        }
+        return std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0
+               && std::strcmp(value, "FALSE") != 0;
+    }();
+    return enabled;
+}
+
+const char* exactRespaReuseDecisionTraceFilePath()
+{
+    static const char* path = []() -> const char* {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_REUSE_TRACE_FILE");
+        return (value != nullptr && *value != '\0') ? value : nullptr;
+    }();
+    return path;
+}
+
+int exactRespaReuseDecisionTraceMaxStep()
+{
+    static const int maxStep = [] {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_REUSE_TRACE_MAX_STEP");
+        return (value != nullptr && *value != '\0') ? std::atoi(value) : 16;
+    }();
+    return maxStep;
+}
+
+void appendExactRespaReuseDecisionTrace(const int64_t step,
+                                        const bool    canReuse,
+                                        const bool    reuseEnabled,
+                                        const bool    supportedVvRespa,
+                                        const bool    gpuForceWorkPresent,
+                                        const bool    reuseWithGpu,
+                                        const bool    useGpuUpdate,
+                                        const bool    hasForceStore,
+                                        const int     forceStoreLevels,
+                                        const bool    hasLevel0,
+                                        const int     longRangeLevel,
+                                        const bool    hasLongRangeLevel,
+                                        const bool    canReuseNeighborSearchForce,
+                                        const bool    canReuseLongRangeForce,
+                                        const bool    firstStep,
+                                        const bool    bNS,
+                                        const bool    bNStList,
+                                        const bool    exchanged,
+                                        const bool    needRepartition,
+                                        const bool    haveDomainDecomposition,
+                                        const bool    stepDoNeighborSearch,
+                                        const bool    stepComputeEnergy,
+                                        const bool    stepComputeVirial,
+                                        const bool    stepComputeDhdl,
+                                        const bool    stepComputeLongRange,
+                                        const bool    calcEnergy,
+                                        const bool    calcVirial,
+                                        const bool    computeDhdl,
+                                        const bool    stopCenterOfMass,
+                                        const bool    globalStat,
+                                        const bool    haveShellfc,
+                                        const bool    haveAwh,
+                                        const bool    haveEd,
+                                        const bool    haveConstr,
+                                        const bool    haveVirtualSites,
+                                        const bool    haveM2pTrace,
+                                        const bool    haveTotalForceDump,
+                                        const bool    havePerLevelForceDump,
+                                        const bool    haveMtsCombinedForceDump)
+{
+    const char* path = exactRespaReuseDecisionTraceFilePath();
+    if (path == nullptr || step > exactRespaReuseDecisionTraceMaxStep())
+    {
+        return;
+    }
+
+    static std::mutex traceMutex;
+    std::lock_guard<std::mutex> lock(traceMutex);
+
+    const std::filesystem::path tracePath(path);
+    if (!tracePath.parent_path().empty())
+    {
+        std::filesystem::create_directories(tracePath.parent_path());
+    }
+    const bool needHeader = !std::filesystem::exists(tracePath) || std::filesystem::file_size(tracePath) == 0;
+    std::ofstream output(tracePath, std::ios::app);
+    if (!output)
+    {
+        return;
+    }
+    if (needHeader)
+    {
+        output
+                << "step can_reuse reuse_enabled supported_vv_respa gpu_force_work_present reuse_with_gpu"
+                << " use_gpu_update has_force_store force_store_levels has_level0 long_range_level"
+                << " has_long_range_level can_reuse_ns can_reuse_long_range first_step bNS bNStList"
+                << " exchanged need_repartition have_dd step_do_ns step_energy step_virial step_dhdl"
+                << " step_long_range calc_energy calc_virial compute_dhdl stop_cm gstat shellfc awh ed"
+                << " constr virtual_sites m2p_trace total_force_dump per_level_force_dump mts_combined_dump\n";
+    }
+
+    const auto bit = [](const bool value) { return value ? 1 : 0; };
+    output << step << ' ' << bit(canReuse) << ' ' << bit(reuseEnabled) << ' '
+           << bit(supportedVvRespa) << ' ' << bit(gpuForceWorkPresent) << ' ' << bit(reuseWithGpu)
+           << ' ' << bit(useGpuUpdate) << ' ' << bit(hasForceStore) << ' ' << forceStoreLevels
+           << ' ' << bit(hasLevel0) << ' ' << longRangeLevel << ' ' << bit(hasLongRangeLevel)
+           << ' ' << bit(canReuseNeighborSearchForce) << ' ' << bit(canReuseLongRangeForce)
+           << ' ' << bit(firstStep) << ' ' << bit(bNS) << ' ' << bit(bNStList) << ' '
+           << bit(exchanged) << ' ' << bit(needRepartition) << ' ' << bit(haveDomainDecomposition)
+           << ' ' << bit(stepDoNeighborSearch) << ' ' << bit(stepComputeEnergy) << ' '
+           << bit(stepComputeVirial) << ' ' << bit(stepComputeDhdl) << ' '
+           << bit(stepComputeLongRange) << ' ' << bit(calcEnergy) << ' ' << bit(calcVirial)
+           << ' ' << bit(computeDhdl) << ' ' << bit(stopCenterOfMass) << ' ' << bit(globalStat)
+           << ' ' << bit(haveShellfc) << ' ' << bit(haveAwh) << ' ' << bit(haveEd) << ' '
+           << bit(haveConstr) << ' ' << bit(haveVirtualSites) << ' ' << bit(haveM2pTrace)
+           << ' ' << bit(haveTotalForceDump) << ' ' << bit(havePerLevelForceDump) << ' '
+           << bit(haveMtsCombinedForceDump) << '\n';
 }
 
 const char* totalForceDumpFilePath()
 {
-    if (const char* value = std::getenv("GMX_TOTAL_FORCE_DUMP_FILE"))
-    {
-        return value;
-    }
-    return std::getenv("GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE");
+    static const char* path = []() -> const char* {
+        if (const char* value = std::getenv("GMX_TOTAL_FORCE_DUMP_FILE"))
+        {
+            return value;
+        }
+        return std::getenv("GMX_EXACT_RESPA_TOTAL_FORCE_DUMP_FILE");
+    }();
+    return path;
 }
 
 const char* perLevelForceDumpFilePath()
 {
-    return std::getenv("GMX_EXACT_RESPA_PER_LEVEL_FORCE_DUMP_FILE");
+    static const char* path = std::getenv("GMX_EXACT_RESPA_PER_LEVEL_FORCE_DUMP_FILE");
+    return path;
+}
+
+const char* mtsCombinedForceDumpFilePath()
+{
+    static const char* path = std::getenv("GMX_EXACT_RESPA_MTS_COMBINED_FORCE_DUMP_FILE");
+    return path;
+}
+
+void restoreExactRespaForcesFromStore(const t_inputrec&                 inputRecord,
+                                      const gmx::ExactRespaForceStore& exactRespaForceStore,
+                                      gmx::ArrayRef<gmx::RVec>         physicalForce,
+                                      gmx::ArrayRef<gmx::RVec>         combinedForce)
+{
+    GMX_RELEASE_ASSERT(exactRespaForceStore.hasLevel(0),
+                       "Exact r-RESPA force reuse requires a stored fast force level");
+    const gmx::ArrayRef<const gmx::RVec> fastForce = exactRespaForceStore.levelTotal(0);
+    GMX_RELEASE_ASSERT(fastForce.size() == physicalForce.size(),
+                       "Stored exact r-RESPA fast force should match the force buffer size");
+    GMX_RELEASE_ASSERT(combinedForce.empty() || combinedForce.size() == physicalForce.size(),
+                       "Exact r-RESPA combined force buffer should match the physical force size");
+
+    const bool restoreCombinedForce = !combinedForce.empty();
+    const bool skipUnusedCombinedForceRestore =
+            !restoreCombinedForce && exactRespaSkipUnusedCombinedForceRestoreEnabled();
+    if (skipUnusedCombinedForceRestore)
+    {
+        const int numLevels = exactRespaForceStore.numLevels();
+        const auto storedSlowForce = [&exactRespaForceStore, &physicalForce](
+                                             const int level) -> gmx::ArrayRef<const gmx::RVec> {
+            if (!exactRespaForceStore.hasLevel(level))
+            {
+                return {};
+            }
+            const gmx::ArrayRef<const gmx::RVec> slowForce = exactRespaForceStore.levelTotal(level);
+            GMX_RELEASE_ASSERT(slowForce.size() == physicalForce.size(),
+                               "Stored exact r-RESPA slow force should match the force buffer size");
+            return slowForce;
+        };
+        if (numLevels == 1)
+        {
+            std::memcpy(physicalForce.data(), fastForce.data(), physicalForce.size() * sizeof(gmx::RVec));
+            return;
+        }
+        const auto slowForce1 = (numLevels > 1) ? storedSlowForce(1) : gmx::ArrayRef<const gmx::RVec>{};
+        if (numLevels == 2 && !slowForce1.empty())
+        {
+            for (int atom = 0; atom < physicalForce.ssize(); ++atom)
+            {
+                physicalForce[atom][XX] = fastForce[atom][XX] + slowForce1[atom][XX];
+                physicalForce[atom][YY] = fastForce[atom][YY] + slowForce1[atom][YY];
+                physicalForce[atom][ZZ] = fastForce[atom][ZZ] + slowForce1[atom][ZZ];
+            }
+            return;
+        }
+        const auto slowForce2 = (numLevels > 2) ? storedSlowForce(2) : gmx::ArrayRef<const gmx::RVec>{};
+        if (numLevels == 3 && !slowForce1.empty() && !slowForce2.empty())
+        {
+            for (int atom = 0; atom < physicalForce.ssize(); ++atom)
+            {
+                physicalForce[atom][XX] =
+                        fastForce[atom][XX] + slowForce1[atom][XX] + slowForce2[atom][XX];
+                physicalForce[atom][YY] =
+                        fastForce[atom][YY] + slowForce1[atom][YY] + slowForce2[atom][YY];
+                physicalForce[atom][ZZ] =
+                        fastForce[atom][ZZ] + slowForce1[atom][ZZ] + slowForce2[atom][ZZ];
+            }
+            return;
+        }
+
+        std::array<gmx::ArrayRef<const gmx::RVec>, gmx::ExactRespaForceStore::c_numStoredLevels>
+                slowForces;
+        for (int level = 1; level < numLevels; ++level)
+        {
+            slowForces[level] = storedSlowForce(level);
+        }
+        for (int atom = 0; atom < physicalForce.ssize(); ++atom)
+        {
+            gmx::RVec restoredPhysical = fastForce[atom];
+            for (int level = 1; level < numLevels; ++level)
+            {
+                if (slowForces[level].empty())
+                {
+                    continue;
+                }
+                restoredPhysical += slowForces[level][atom];
+            }
+            physicalForce[atom] = restoredPhysical;
+        }
+        return;
+    }
+
+    std::array<gmx::ArrayRef<const gmx::RVec>, gmx::ExactRespaForceStore::c_numStoredLevels> slowForces;
+    std::array<real, gmx::ExactRespaForceStore::c_numStoredLevels> combinedFactors = {};
+    for (int level = 1; level < exactRespaForceStore.numLevels(); ++level)
+    {
+        if (!exactRespaForceStore.hasLevel(level))
+        {
+            continue;
+        }
+        const gmx::ArrayRef<const gmx::RVec> slowForce = exactRespaForceStore.levelTotal(level);
+        GMX_RELEASE_ASSERT(slowForce.size() == physicalForce.size(),
+                           "Stored exact r-RESPA slow force should match the force buffer size");
+        slowForces[level]      = slowForce;
+        combinedFactors[level] = gmx::exactRespaLevelStepFactor(inputRecord, level);
+    }
+
+    for (int atom = 0; atom < physicalForce.ssize(); ++atom)
+    {
+        gmx::RVec restoredPhysical = fastForce[atom];
+        gmx::RVec restoredCombined = fastForce[atom];
+        for (int level = 1; level < exactRespaForceStore.numLevels(); ++level)
+        {
+            if (slowForces[level].empty())
+            {
+                continue;
+            }
+            restoredPhysical += slowForces[level][atom];
+            restoredCombined += combinedFactors[level] * slowForces[level][atom];
+        }
+        physicalForce[atom] = restoredPhysical;
+        if (restoreCombinedForce)
+        {
+            combinedForce[atom] = restoredCombined;
+        }
+    }
 }
 
 int canonicalAtomIndexForForceDumpAtom(const int atomIndex)
@@ -832,20 +1141,23 @@ int canonicalAtomIndexForForceDumpAtom(const int atomIndex)
 
 std::optional<int64_t> exactRespaForceDumpIntervalOverride()
 {
-    const char* value = std::getenv("GMX_EXACT_RESPA_FORCE_DUMP_INTERVAL");
-    if (value == nullptr || *value == '\0')
-    {
-        return std::nullopt;
-    }
+    static const std::optional<int64_t> interval = []() -> std::optional<int64_t> {
+        const char* value = std::getenv("GMX_EXACT_RESPA_FORCE_DUMP_INTERVAL");
+        if (value == nullptr || *value == '\0')
+        {
+            return std::nullopt;
+        }
 
-    char* end = nullptr;
-    const long parsed = std::strtol(value, &end, 10);
-    if (end == value || *end != '\0' || parsed <= 0)
-    {
-        return std::nullopt;
-    }
+        char*      end    = nullptr;
+        const long parsed = std::strtol(value, &end, 10);
+        if (end == value || *end != '\0' || parsed <= 0)
+        {
+            return std::nullopt;
+        }
 
-    return static_cast<int64_t>(parsed);
+        return static_cast<int64_t>(parsed);
+    }();
+    return interval;
 }
 
 bool shouldDumpExactRespaForceDiagnostics(const t_inputrec& inputRecord, const int64_t step)
@@ -990,6 +1302,38 @@ void maybeDumpPerLevelForceForDiagnostics(const t_inputrec&                 inpu
                                             mtsLevel,
                                             exactRespaForceStore->levelTotal(mtsLevel));
     }
+}
+
+void maybeDumpMtsCombinedForceForDiagnostics(const t_inputrec&                 inputRecord,
+                                             const int64_t                     step,
+                                             const real                        time,
+                                             gmx::ForceBuffersView*            forceView,
+                                             const gmx::MdrunScheduleWorkload& runScheduleWork)
+{
+    const char* outputPath = mtsCombinedForceDumpFilePath();
+    if (outputPath == nullptr || *outputPath == '\0'
+        || !shouldDumpExactRespaForceDiagnostics(inputRecord, step))
+    {
+        return;
+    }
+
+    if (!gmx::useExactRespa(inputRecord) || gmx::useMtsSubstepping(inputRecord))
+    {
+        return;
+    }
+
+    GMX_RELEASE_ASSERT(forceView != nullptr, "Need exact r-RESPA force buffers for diagnostic dumps");
+    const gmx::ArrayRef<const gmx::RVec> combinedForce = forceView->forceMtsCombined();
+    if (combinedForce.empty())
+    {
+        return;
+    }
+
+    appendExactRespaTotalForceRecord(outputPath,
+                                     step,
+                                     time,
+                                     runScheduleWork.exactRespaStepWork.highestActiveLevel,
+                                     combinedForce);
 }
 
 struct Tp18eTraceConfig
@@ -1401,7 +1745,11 @@ bool canUseExactLammpsRespaVelocityVerlet(const t_inputrec&                  inp
 
 static const char* activeM2pTraceDirPath()
 {
-    return std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+    static const char* traceDir = [] {
+        const char* value = std::getenv("GMX_PCFF_RESPA_M2P_TRACE_DIR");
+        return (value != nullptr && *value != '\0') ? value : nullptr;
+    }();
+    return traceDir;
 }
 
 static const std::vector<int>& configuredM2pTraceAtomIndices()
@@ -2959,45 +3307,149 @@ void gmx::LegacySimulator::do_md()
                  * Check comments in sim_util.c
                  */
                 {
-                    const char* previousForceContextLabel = g_respaDoForceContextLabel;
-                    g_respaDoForceContextLabel           = "live_main_step";
-                    appendPreDoForceStateTrace(activeM2pTraceDirPath(),
-                                               step,
-                                               g_respaDoForceContextLabel,
-                                               state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
-                                               state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
-                                               "src/gromacs/mdrun/md.cpp:live_main_step_pre_do_force");
-                    do_force(fpLog_,
-                             cr_,
-                             *ir,
-                             mdModulesNotifiers_,
-                             awh.get(),
-                             enforcedRotation_,
-                             imdSession_,
-                             pullWork_,
-                             step,
-                             nrnb_,
-                             wallCycleCounters_,
-                             top_,
-                             state_->box,
-                             state_->x.arrayRefWithPadding(),
-                             state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                             &state_->hist,
-                             &f.view(),
-                             exactRespaForceStorePtr,
-                             force_vir,
-                             md,
-                             enerd_,
-                             state_->lambda,
-                             fr_,
-                             *runScheduleWork_,
-                             virtualSites_,
-                             mu_tot,
-                             t,
-                             ed ? ed->getLegacyED() : nullptr,
-                             fr_->longRangeNonbondeds.get(),
-                             ddBalanceRegionHandler);
-                    g_respaDoForceContextLabel = previousForceContextLabel;
+                    const bool exactRespaGpuForceWorkPresent =
+                            simulationWork.useGpuNonbonded || simulationWork.useGpuBonded
+                            || simulationWork.useGpuPme;
+                    const bool canReuseExactRespaLiveNeighborSearchForce =
+                            exactRespaGpuForceWorkPresent
+                            && exactRespaReuseNextForceOnNeighborSearchEnabled() && bNS && bNStList
+                            && !bExchanged && !bNeedRepartition
+                            && !simulationWork.havePpDomainDecomposition;
+                    const int exactRespaLongRangeLevel =
+                            gmx::useExactRespa(*ir) ? gmx::exactRespaLongrangeNonbondedLevel(*ir) : -1;
+                    const int exactRespaForceStoreLevels =
+                            (exactRespaForceStorePtr != nullptr) ? exactRespaForceStorePtr->numLevels()
+                                                                 : 0;
+                    const bool exactRespaForceStoreHasLevel0 =
+                            exactRespaForceStorePtr != nullptr && exactRespaForceStorePtr->hasLevel(0);
+                    const bool exactRespaForceStoreHasLongRange =
+                            exactRespaForceStorePtr != nullptr && exactRespaLongRangeLevel >= 0
+                            && exactRespaLongRangeLevel < exactRespaForceStorePtr->numLevels()
+                            && exactRespaForceStorePtr->hasLevel(exactRespaLongRangeLevel);
+                    const bool canReuseExactRespaLiveLongRangeForce =
+                            exactRespaReuseNextForceForLongRangeEnabled() && !bNS
+                            && exactRespaForceStoreHasLongRange;
+                    const bool haveM2pTrace              = activeM2pTraceDirPath() != nullptr;
+                    const bool haveTotalForceDump        = totalForceDumpFilePath() != nullptr;
+                    const bool havePerLevelForceDump     = perLevelForceDumpFilePath() != nullptr;
+                    const bool haveMtsCombinedForceDump  = mtsCombinedForceDumpFilePath() != nullptr;
+                    const bool canReuseExactRespaLiveForce =
+                            exactRespaReuseNextForceForLiveStepEnabled()
+                            && useSupportedExactVelocityVerletRespa
+                            && (!exactRespaGpuForceWorkPresent
+                                || exactRespaReuseNextForceWithGpuEnabled())
+                            && !simulationWork.useGpuUpdate
+                            && exactRespaForceStorePtr != nullptr
+                            && exactRespaForceStoreHasLevel0
+                            && exactRespaForceStoreLevels > 0
+                            && !bFirstStep
+                            && (!bNS || canReuseExactRespaLiveNeighborSearchForce)
+                            && (!runScheduleWork_->stepWork.doNeighborSearch
+                                || canReuseExactRespaLiveNeighborSearchForce)
+                            && !runScheduleWork_->stepWork.computeEnergy
+                            && !runScheduleWork_->stepWork.computeVirial
+                            && !runScheduleWork_->stepWork.computeDhdl
+                            && (!runScheduleWork_->stepWork.computeLongRangeNonbondedForces
+                                || canReuseExactRespaLiveNeighborSearchForce
+                                || canReuseExactRespaLiveLongRangeForce)
+                            && !bCalcEner && !bCalcVir && !computeDHDL && !bStopCM
+                            && shellfc == nullptr
+                            && awh == nullptr && ed == nullptr && constr_ == nullptr
+                            && virtualSites_ == nullptr && !haveM2pTrace && !haveTotalForceDump
+                            && !havePerLevelForceDump && !haveMtsCombinedForceDump;
+                    appendExactRespaReuseDecisionTrace(
+                            step,
+                            canReuseExactRespaLiveForce,
+                            exactRespaReuseNextForceForLiveStepEnabled(),
+                            useSupportedExactVelocityVerletRespa,
+                            exactRespaGpuForceWorkPresent,
+                            exactRespaReuseNextForceWithGpuEnabled(),
+                            simulationWork.useGpuUpdate,
+                            exactRespaForceStorePtr != nullptr,
+                            exactRespaForceStoreLevels,
+                            exactRespaForceStoreHasLevel0,
+                            exactRespaLongRangeLevel,
+                            exactRespaForceStoreHasLongRange,
+                            canReuseExactRespaLiveNeighborSearchForce,
+                            canReuseExactRespaLiveLongRangeForce,
+                            bFirstStep,
+                            bNS,
+                            bNStList,
+                            bExchanged,
+                            bNeedRepartition,
+                            simulationWork.havePpDomainDecomposition,
+                            runScheduleWork_->stepWork.doNeighborSearch,
+                            runScheduleWork_->stepWork.computeEnergy,
+                            runScheduleWork_->stepWork.computeVirial,
+                            runScheduleWork_->stepWork.computeDhdl,
+                            runScheduleWork_->stepWork.computeLongRangeNonbondedForces,
+                            bCalcEner,
+                            bCalcVir,
+                            computeDHDL,
+                            bStopCM,
+                            bGStat,
+                            shellfc != nullptr,
+                            awh != nullptr,
+                            ed != nullptr,
+                            constr_ != nullptr,
+                            virtualSites_ != nullptr,
+                            haveM2pTrace,
+                            haveTotalForceDump,
+                            havePerLevelForceDump,
+                            haveMtsCombinedForceDump);
+                    if (canReuseExactRespaLiveForce)
+                    {
+                        const bool restoreCombinedForce =
+                                runScheduleWork_->exactRespaStepWork.haveSlowForceLevels
+                                && runScheduleWork_->stepWork.computeSlowForces;
+                        restoreExactRespaForcesFromStore(
+                                *ir,
+                                *exactRespaForceStorePtr,
+                                f.view().force(),
+                                restoreCombinedForce ? f.view().forceMtsCombined() : gmx::ArrayRef<gmx::RVec>{});
+                    }
+                    else
+                    {
+                        const char* previousForceContextLabel = g_respaDoForceContextLabel;
+                        g_respaDoForceContextLabel           = "live_main_step";
+                        appendPreDoForceStateTrace(activeM2pTraceDirPath(),
+                                                   step,
+                                                   g_respaDoForceContextLabel,
+                                                   state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                   state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                   "src/gromacs/mdrun/md.cpp:live_main_step_pre_do_force");
+                        do_force(fpLog_,
+                                 cr_,
+                                 *ir,
+                                 mdModulesNotifiers_,
+                                 awh.get(),
+                                 enforcedRotation_,
+                                 imdSession_,
+                                 pullWork_,
+                                 step,
+                                 nrnb_,
+                                 wallCycleCounters_,
+                                 top_,
+                                 state_->box,
+                                 state_->x.arrayRefWithPadding(),
+                                 state_->v.arrayRefWithPadding().unpaddedArrayRef(),
+                                 &state_->hist,
+                                 &f.view(),
+                                 exactRespaForceStorePtr,
+                                 force_vir,
+                                 md,
+                                 enerd_,
+                                 state_->lambda,
+                                 fr_,
+                                 *runScheduleWork_,
+                                 virtualSites_,
+                                 mu_tot,
+                                 t,
+                                 ed ? ed->getLegacyED() : nullptr,
+                                 fr_->longRangeNonbondeds.get(),
+                                 ddBalanceRegionHandler);
+                        g_respaDoForceContextLabel = previousForceContextLabel;
+                    }
                 }
             }
 
@@ -3027,6 +3479,7 @@ void gmx::LegacySimulator::do_md()
             maybeDumpTotalForceForDiagnostics(*ir, step, t, &f.view(), *runScheduleWork_);
             maybeDumpPerLevelForceForDiagnostics(
                     *ir, step, t, &f.view(), exactRespaForceStorePtr, *runScheduleWork_);
+            maybeDumpMtsCombinedForceForDiagnostics(*ir, step, t, &f.view(), *runScheduleWork_);
 
             // VV integrators do not need the following velocity half step
             // if it is the first step after starting from a checkpoint.
