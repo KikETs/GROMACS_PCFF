@@ -3330,7 +3330,22 @@ static ForceOutputs makeExactRespaForceOnlyOutput(ArrayRefWithPadding<RVec> forc
     return ForceOutputs(forceWithShiftForces, false, forceWithVirial);
 }
 
+static bool exactRespaDeferredSelectiveScratchEnabled()
+{
+    static const bool enabled = [] {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_DEFER_SELECTIVE_SCRATCH");
+        if (value == nullptr || *value == '\0')
+        {
+            return true;
+        }
+        return std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0
+               && std::strcmp(value, "FALSE") != 0 && std::strcmp(value, "off") != 0;
+    }();
+    return enabled;
+}
+
 static void setupExactRespaListedForceScratch(const ExactRespaForceOutputs& source,
+                                              const ExactRespaDeferredGpuNonbonded& deferred,
                                               ExactRespaListedForceScratch* scratch)
 {
     GMX_RELEASE_ASSERT(scratch != nullptr, "Need listed-force scratch storage");
@@ -3347,13 +3362,39 @@ static void setupExactRespaListedForceScratch(const ExactRespaForceOutputs& sour
         {
             continue;
         }
+        const auto sourceForce = sourceOutputs->forceWithShiftForces().force();
+        const bool needsScratch = !exactRespaDeferredSelectiveScratchEnabled()
+                                  || std::any_of(deferred.targets.begin(),
+                                                 deferred.targets.begin() + deferred.targetCount,
+                                                 [&](const auto& target) {
+                                                     return target.force.data() == sourceForce.data();
+                                                 });
+        if (!needsScratch)
+        {
+            scratch->outputs.levelOutputs[level] = sourceOutputs;
+            continue;
+        }
         scratch->forceBuffers[level].resizeWithPadding(
-                sourceOutputs->forceWithShiftForces().force().size());
+                sourceForce.size());
         clearRVecs(scratch->forceBuffers[level].arrayRefWithPadding().unpaddedArrayRef(), true);
         scratch->outputStorage[level].emplace(
                 makeExactRespaForceOnlyOutput(scratch->forceBuffers[level].arrayRefWithPadding()));
         scratch->outputs.levelOutputs[level] = &scratch->outputStorage[level].value();
     }
+}
+
+static bool exactRespaDeferredListedForceScratchEnabled()
+{
+    static const bool enabled = [] {
+        const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_DEFER_LISTED_SCRATCH");
+        if (value == nullptr || *value == '\0')
+        {
+            return true;
+        }
+        return std::strcmp(value, "0") != 0 && std::strcmp(value, "false") != 0
+               && std::strcmp(value, "FALSE") != 0 && std::strcmp(value, "off") != 0;
+    }();
+    return enabled;
 }
 
 static void addExactRespaListedForceScratchToOutputs(const ExactRespaListedForceScratch& scratch,
@@ -3365,7 +3406,8 @@ static void addExactRespaListedForceScratchToOutputs(const ExactRespaListedForce
     {
         ForceOutputs* scratchOutputs     = scratch.outputs.levelOrNull(level);
         ForceOutputs* destinationOutputs = destination.levelOrNull(level);
-        if (scratchOutputs == nullptr || destinationOutputs == nullptr)
+        if (!scratch.outputStorage[level].has_value() || scratchOutputs == nullptr
+            || destinationOutputs == nullptr)
         {
             continue;
         }
@@ -11260,6 +11302,19 @@ static bool exactRespaGpuDeferNativeMultiNbWaitEnabled()
     return enabled;
 }
 
+static int exactRespaGpuDeferredNbMaxAtoms()
+{
+    static const int maxAtoms = [] {
+        const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_DEFER_NB_MAX_ATOMS");
+        if (env == nullptr || *env == '\0')
+        {
+            return 10000;
+        }
+        return std::max(0, std::atoi(env));
+    }();
+    return maxAtoms;
+}
+
 #if GMX_GPU
 static int exactRespaGpuContributionIndex(const MtsNonbondedRespaContribution hostContribution)
 {
@@ -11469,7 +11524,10 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
     {
         nbv->nbat().ensureNativeMultiContributionOutputBuffers(3);
     }
-    else if (exactRespaGpuBatchForceOnlyCopybackRequested())
+    else if ((deferredGpuNonbonded != nullptr && activeTargetCount == 1
+              && stepWork.computeForces && !stepWork.computeEnergy && !stepWork.computeVirial
+              && !stepWork.computeDhdl)
+             || exactRespaGpuBatchForceOnlyCopybackRequested())
     {
         for (int activeTargetIndex = 0; activeTargetIndex < activeTargetCount; ++activeTargetIndex)
         {
@@ -11696,6 +11754,38 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
         }
         gpu_restore_default_force_output(gpu);
         wallcycle_stop(wcycle, WallCycleCounter::ExactRespaGpuD2HF);
+
+        if (deferredGpuNonbonded != nullptr)
+        {
+            GMX_RELEASE_ASSERT(!deferredGpuNonbonded->pending,
+                               "Only one deferred exact r-RESPA GPU nonbonded launch can be active");
+            GMX_RELEASE_ASSERT(activeTargetCount
+                                       <= static_cast<int>(deferredGpuNonbonded->targets.size()),
+                               "Too many deferred exact r-RESPA GPU nonbonded output targets");
+
+            StepWorkload deferredWaitWork = nativeCopybackWaitWork;
+            deferredWaitWork.computeEnergy = false;
+            deferredWaitWork.computeVirial = false;
+            deferredWaitWork.computeDhdl   = false;
+            deferredGpuNonbonded->pending     = true;
+            deferredGpuNonbonded->gpu         = gpu;
+            deferredGpuNonbonded->nbv         = nbv;
+            deferredGpuNonbonded->waitWork    = deferredWaitWork;
+            deferredGpuNonbonded->step        = step;
+            deferredGpuNonbonded->targetCount = activeTargetCount;
+            for (int activeTargetIndex = 0; activeTargetIndex < activeTargetCount; ++activeTargetIndex)
+            {
+                const auto& target = activeTargets[activeTargetIndex];
+                deferredGpuNonbonded->targets[activeTargetIndex] = {
+                    target.nativeMultiOutputIndex, target.force
+                };
+            }
+
+            setExactRespaGpuLaunchParameters(gpu, inputrec, MtsNonbondedRespaContribution::Full);
+            replayExactRespaNonbondedTraceShadow(
+                    inputrec, idef, fr, mdatoms, coordinates, enerd, stepWork, exactRespaStepWork, step);
+            return;
+        }
 
         StepWorkload batchWaitWork = nativeCopybackWaitWork;
         batchWaitWork.computeEnergy = false;
@@ -13893,7 +13983,8 @@ void do_force(FILE*                         fplog,
     ExactRespaDeferredGpuNonbonded  deferredExactRespaGpuNonbonded;
     ExactRespaDeferredGpuNonbonded* deferredExactRespaGpuNonbondedPtr =
             (exactRespaGpuDeferNativeMultiNbWaitEnabled() && useExactLammpsRespaGpuNonbonded
-             && !simulationWork.useGpuBonded && useExactRespaForceOutputs && stepWork.computeListedForces
+             && useExactRespaForceOutputs && stepWork.computeListedForces
+             && x.unpaddedArrayRef().ssize() <= exactRespaGpuDeferredNbMaxAtoms()
              && stepWork.computeForces && !stepWork.computeEnergy && !stepWork.computeVirial
              && !stepWork.computeDhdl
              && activeM2pTraceDirPath() == nullptr && !traceForceComponents
@@ -14186,13 +14277,16 @@ void do_force(FILE*                         fplog,
         }
     }
 
-    ExactRespaListedForceScratch  deferredListedForceScratch;
-    ExactRespaForceOutputs*       exactRespaListedForceOutputs = &exactRespaForceOutputs;
+    ExactRespaListedForceScratch deferredListedForceScratch;
+    ExactRespaForceOutputs*      exactRespaListedForceOutputs = &exactRespaForceOutputs;
 #if GMX_GPU
-    const bool useDeferredListedForceScratch = deferredExactRespaGpuNonbonded.pending;
+    const bool useDeferredListedForceScratch = deferredExactRespaGpuNonbonded.pending
+                                               && exactRespaDeferredListedForceScratchEnabled();
     if (useDeferredListedForceScratch)
     {
-        setupExactRespaListedForceScratch(exactRespaForceOutputs, &deferredListedForceScratch);
+        setupExactRespaListedForceScratch(exactRespaForceOutputs,
+                                          deferredExactRespaGpuNonbonded,
+                                          &deferredListedForceScratch);
         exactRespaListedForceOutputs = &deferredListedForceScratch.outputs;
     }
 #else
