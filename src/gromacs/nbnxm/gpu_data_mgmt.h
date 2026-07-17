@@ -157,6 +157,17 @@ NBAtomDataGpu* gpuGetNBAtomData(NbnxmGpu gmx_unused* nb) GPU_FUNC_TERM_WITH_RETU
 GPU_FUNC_QUALIFIER
 DeviceBuffer<RVec> gpu_get_f(NbnxmGpu gmx_unused* nb) GPU_FUNC_TERM_WITH_RETURN(DeviceBuffer<RVec>{});
 
+/** Returns the default NBNXM force device buffer, independent of temporary output routing. */
+GPU_FUNC_QUALIFIER
+DeviceBuffer<RVec> gpu_get_default_f(NbnxmGpu gmx_unused* nb)
+        GPU_FUNC_TERM_WITH_RETURN(DeviceBuffer<RVec>{});
+
+/** Returns one exact r-RESPA multi-contribution force device buffer. */
+GPU_FUNC_QUALIFIER
+DeviceBuffer<RVec> gpu_get_exact_respa_multi_f(NbnxmGpu gmx_unused* nb,
+                                               int gmx_unused       contributionOutputIndex)
+        GPU_FUNC_TERM_WITH_RETURN(DeviceBuffer<RVec>{});
+
 /*! \brief Calculates working memory required for exclusive sum, used in neighbour list sorting on GPU.
  *
  * This is only used for CUDA/HIP, where the actual size is calculate based on the list.

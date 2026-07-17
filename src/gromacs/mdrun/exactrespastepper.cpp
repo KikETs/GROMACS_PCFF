@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cmath>
 #include <array>
+#include <cstdio>
 #include <cstdlib>
 #include <cstdint>
 #include <cstring>
@@ -28,6 +29,8 @@
 
 #include "gromacs/domdec/collect.h"
 #include "gromacs/domdec/domdec_struct.h"
+#include "gromacs/ewald/pme.h"
+#include "gromacs/gpu_utils/devicebuffer.h"
 #include "gromacs/math/functions.h"
 #include "gromacs/mdtypes/commrec.h"
 #include "gromacs/gpu_utils/gpueventsynchronizer.h"
@@ -40,6 +43,8 @@
 #include "gromacs/mdtypes/state_propagator_data_gpu.h"
 #include "gromacs/mdlib/vcm.h"
 #include "gromacs/nbnxm/nbnxm.h"
+#include "gromacs/nbnxm/gpu_data_mgmt.h"
+#include "gromacs/nbnxm/gpu_types_common.h"
 #include "gromacs/mdtypes/enerdata.h"
 #include "gromacs/mdtypes/exactrespaforcestore.h"
 #include "gromacs/mdtypes/exactrespaschedule.h"
@@ -115,6 +120,104 @@ static bool exactRespaFusedUpdateVectorEnabled()
     }();
     return enabled;
 }
+
+static bool exactRespaGpuResidentXProbeEnabled()
+{
+    static const bool enabled =
+            std::getenv("GMX_PCFF_EXACT_RESPA_GPU_RESIDENT_X_PROBE") != nullptr;
+    return enabled;
+}
+
+static bool exactRespaGpuDeviceKickProbeEnabled()
+{
+    static const bool enabled =
+            std::getenv("GMX_PCFF_EXACT_RESPA_GPU_DEVICE_KICK_PROBE") != nullptr;
+    return enabled;
+}
+
+static bool exactRespaGpuDeviceKickForceAuditEnabled()
+{
+    static const bool enabled =
+            std::getenv("GMX_PCFF_EXACT_RESPA_GPU_DEVICE_KICK_FORCE_AUDIT") != nullptr;
+    return enabled;
+}
+
+#if GMX_GPU_CUDA
+static void auditExactRespaGpuDeviceKickForces(const ExactRespaForceStore& forceStore,
+                                              nonbonded_verlet_t*         nbv,
+                                              StatePropagatorDataGpu*     stateGpu,
+                                              DeviceBuffer<RVec>          level0Force,
+                                              DeviceBuffer<RVec>          level1Force,
+                                              DeviceBuffer<RVec>          level2Force,
+                                              const int                   numAtoms)
+{
+    if (!exactRespaGpuDeviceKickForceAuditEnabled())
+    {
+        return;
+    }
+
+    const DeviceStream* stream = stateGpu->getUpdateStream();
+    GMX_RELEASE_ASSERT(stream != nullptr, "Exact r-RESPA force audit requires an update stream");
+    const int nbnxmAtoms = gpuGetNBAtomData(nbv->gpuNbv())->numAtomsAlloc;
+    std::vector<RVec> deviceLevel0(nbnxmAtoms);
+    std::vector<RVec> deviceLevel1(nbnxmAtoms);
+    std::vector<RVec> deviceLevel2(numAtoms);
+    copyFromDeviceBuffer(deviceLevel0.data(),
+                         &level0Force,
+                         0,
+                         nbnxmAtoms,
+                         *stream,
+                         GpuApiCallBehavior::Sync,
+                         nullptr);
+    copyFromDeviceBuffer(deviceLevel1.data(),
+                         &level1Force,
+                         0,
+                         nbnxmAtoms,
+                         *stream,
+                         GpuApiCallBehavior::Sync,
+                         nullptr);
+    copyFromDeviceBuffer(deviceLevel2.data(),
+                         &level2Force,
+                         0,
+                         numAtoms,
+                         *stream,
+                         GpuApiCallBehavior::Sync,
+                         nullptr);
+
+    const auto stateToNbnxm = nbv->getGridIndices();
+    std::fprintf(stderr,
+                 "exact-respa device force audit order_matches=%d mapped0=%d mapped1=%d\n",
+                 nbv->localAtomOrderMatchesNbnxmOrder(),
+                 stateToNbnxm.empty() ? -1 : stateToNbnxm[0],
+                 stateToNbnxm.ssize() < 2 ? -1 : stateToNbnxm[1]);
+    for (int level = 0; level < forceStore.numLevels(); ++level)
+    {
+        const auto hostForce = forceStore.levelTotal(level);
+        double     sumSquaredDifference = 0;
+        double     sumSquaredReference  = 0;
+        double     maxAbsoluteDifference = 0;
+        for (int atom = 0; atom < numAtoms; ++atom)
+        {
+            const int nbnxmAtom = stateToNbnxm[atom];
+            const RVec& deviceForce = level == 0   ? deviceLevel0[nbnxmAtom]
+                                      : level == 1 ? deviceLevel1[nbnxmAtom]
+                                                   : deviceLevel2[atom];
+            for (int dim = 0; dim < DIM; ++dim)
+            {
+                const double difference = deviceForce[dim] - hostForce[atom][dim];
+                sumSquaredDifference += difference * difference;
+                sumSquaredReference += hostForce[atom][dim] * hostForce[atom][dim];
+                maxAbsoluteDifference = std::max(maxAbsoluteDifference, std::abs(difference));
+            }
+        }
+        std::fprintf(stderr,
+                     "exact-respa device force audit level=%d rel_l2=%.9g max_abs=%.9g\n",
+                     level,
+                     std::sqrt(sumSquaredDifference / std::max(sumSquaredReference, 1.0e-300)),
+                     maxAbsoluteDifference);
+    }
+}
+#endif
 
 static bool exactRespaReturnNextVirialEnabled()
 {
@@ -2019,6 +2122,13 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                        "Exact r-RESPA MTTK propagation currently requires CPU update.");
     const bool        traceState = shouldRecordExactRespaStateTrace(exactRespaStep.step);
     const bool        tracePositions = exactRespaStateTraceConfig().includePositions;
+#if GMX_GPU_CUDA
+    const bool useGpuDeviceKicks = useGpuUpdate && exactRespaGpuDeviceKickProbeEnabled() && !traceState;
+#else
+    const bool useGpuDeviceKicks = false;
+    GMX_RELEASE_ASSERT(!useGpuUpdate || !exactRespaGpuDeviceKickProbeEnabled(),
+                       "Exact r-RESPA direct GPU kicks currently require CUDA");
+#endif
     bool              copiedCoordinatesFromGpuAfterDrift = false;
     const int*        ddGlobalAtomIndices =
             haveDDAtomOrdering(*cr_) ? cr_->dd->globalAtomIndices.data() : nullptr;
@@ -2043,6 +2153,12 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                                                                  nextStep,
                                                                  nextRunSchedule.domainWork,
                                                                  nextRunSchedule.simulationWork);
+    if (useGpuDeviceKicks && nextRunSchedule.stepWork.computeLongRangeNonbondedForces
+        && !nextRunSchedule.stepWork.computeEnergy && !nextRunSchedule.stepWork.computeVirial
+        && !nextRunSchedule.stepWork.computeDhdl)
+    {
+        nextRunSchedule.stepWork.useGpuPmeFReduction = true;
+    }
 
     if (traceState)
     {
@@ -2056,19 +2172,22 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
 
     if (useGpuUpdate)
     {
-        applyRespaHalfKicks(inputRecord,
-                            exactRespaStep.step,
-                            RespaKickPhase::Initial,
-                            exactRespaStep.mdatoms.homenr,
-                            exactRespaStep.mdatoms.ptype,
-                            exactRespaStep.mdatoms.invMassPerDim,
-                            &exactRespaStep.exactRespaForceStore,
-                            ddGlobalAtomIndices,
-                            ddGlobalAtomIndicesCount,
-                            fr_->nbv.get(),
-                            exactRespaStep.forceBuffers,
-                            extendedUpdate,
-                            state_->v.arrayRefWithPadding().unpaddedArrayRef());
+        if (!useGpuDeviceKicks)
+        {
+            applyRespaHalfKicks(inputRecord,
+                                exactRespaStep.step,
+                                RespaKickPhase::Initial,
+                                exactRespaStep.mdatoms.homenr,
+                                exactRespaStep.mdatoms.ptype,
+                                exactRespaStep.mdatoms.invMassPerDim,
+                                &exactRespaStep.exactRespaForceStore,
+                                ddGlobalAtomIndices,
+                                ddGlobalAtomIndicesCount,
+                                fr_->nbv.get(),
+                                exactRespaStep.forceBuffers,
+                                extendedUpdate,
+                                state_->v.arrayRefWithPadding().unpaddedArrayRef());
+        }
         if (traceState)
         {
             appendExactRespaStateTraceRows(exactRespaStep.step,
@@ -2093,9 +2212,63 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
         GMX_RELEASE_ASSERT(fr_->stateGpu != nullptr,
                            "Exact r-RESPA GPU update requires GPU state buffers.");
 
-        fr_->stateGpu->copyVelocitiesToGpu(state_->v.arrayRefWithPadding().unpaddedArrayRef(),
-                                           AtomLocality::Local);
-        driftRespaPositionsOnGpu(fr_->stateGpu, exactRespaGpuUpdater_, inputRecord.delta_t);
+#if GMX_GPU_CUDA
+        if (useGpuDeviceKicks)
+        {
+            GMX_RELEASE_ASSERT(fr_->nbv != nullptr && fr_->nbv->gpuNbv() != nullptr,
+                               "Exact r-RESPA direct GPU kicks require GPU NBNXM state");
+            const bool refreshAtomOrder = exactRespaStep.step == inputRecord.init_step
+                                          || (inputRecord.nstlist > 0
+                                              && exactRespaStep.step % inputRecord.nstlist == 0);
+            if (refreshAtomOrder)
+            {
+                exactRespaGpuUpdater_->setExactRespaNbnxmAtomOrder(fr_->nbv->getGridIndices());
+            }
+
+            NbnxmGpu* const nbnxmGpu = fr_->nbv->gpuNbv();
+            const auto level0Force = gpu_get_exact_respa_multi_f(nbnxmGpu, 0);
+            const auto level1Force = exactRespaNumLevels(inputRecord) > 1
+                                             ? gpu_get_exact_respa_multi_f(nbnxmGpu, 1)
+                                             : DeviceBuffer<RVec>{};
+            const auto level2Force = exactRespaNumLevels(inputRecord) > 2
+                                             ? pme_gpu_get_device_f(fr_->pmedata)
+                                             : DeviceBuffer<RVec>{};
+            const real level0HalfDt = 0.5_real * inputRecord.delta_t;
+            const real level1HalfDt = exactRespaNumLevels(inputRecord) > 1
+                                              ? 0.5_real * inputRecord.delta_t
+                                                        * exactRespaLevelStepFactor(inputRecord.exactRespa, 1)
+                                              : 0;
+            const real level2HalfDt = exactRespaNumLevels(inputRecord) > 2
+                                              ? 0.5_real * inputRecord.delta_t
+                                                        * exactRespaLevelStepFactor(inputRecord.exactRespa, 2)
+                                              : 0;
+            if (exactRespaStep.step == inputRecord.init_step)
+            {
+                auditExactRespaGpuDeviceKickForces(exactRespaStep.exactRespaForceStore,
+                                                   fr_->nbv.get(),
+                                                   fr_->stateGpu,
+                                                   level0Force,
+                                                   level1Force,
+                                                   level2Force,
+                                                   exactRespaStep.mdatoms.homenr);
+            }
+            exactRespaGpuUpdater_->exactRespaKickAndDrift(
+                    level0Force,
+                    level1Force,
+                    level2Force,
+                    highestActiveExactRespaLevel(inputRecord.exactRespa, exactRespaStep.step),
+                    level0HalfDt,
+                    level1HalfDt,
+                    level2HalfDt,
+                    inputRecord.delta_t);
+        }
+        else
+#endif
+        {
+            fr_->stateGpu->copyVelocitiesToGpu(state_->v.arrayRefWithPadding().unpaddedArrayRef(),
+                                               AtomLocality::Local);
+            driftRespaPositionsOnGpu(fr_->stateGpu, exactRespaGpuUpdater_, inputRecord.delta_t);
+        }
         fr_->stateGpu->setXUpdatedOnDeviceEventExpectedConsumptionCount(1);
         if (traceState && tracePositions)
         {
@@ -2228,7 +2401,17 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                                        fr_->nbv.get());
     }
 
-    if (useGpuUpdate && !copiedCoordinatesFromGpuAfterDrift)
+    const bool pressureTrotterNeedsHostCoordinates =
+            inputrecNptTrotter(&inputRecord) || inputrecNphTrotter(&inputRecord);
+    const bool residentXHostRefresh = nextStepIsNsStep
+                                      || (pressureTrotterNeedsHostCoordinates
+                                          && inputRecord.nsttcouple > 0
+                                          && nextStep % inputRecord.nsttcouple == 0)
+                                      || (inputRecord.nstxout > 0 && nextStep % inputRecord.nstxout == 0)
+                                      || (inputRecord.nstxout_compressed > 0
+                                          && nextStep % inputRecord.nstxout_compressed == 0);
+    if (useGpuUpdate && !copiedCoordinatesFromGpuAfterDrift
+        && (!exactRespaGpuResidentXProbeEnabled() || residentXHostRefresh))
     {
         // Exact r-RESPA still refreshes forces through do_force() using host-visible coordinates.
         // GPU drift therefore has to materialize updated x on the host before every nested force step,
@@ -2312,19 +2495,80 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
 
     recordExactRespaRefreshEventsForTesting(inputRecord.exactRespa, exactRespaStep.step);
 
-    applyRespaHalfKicks(inputRecord,
-                        exactRespaStep.step,
-                        RespaKickPhase::Final,
-                        exactRespaStep.mdatoms.homenr,
-                        exactRespaStep.mdatoms.ptype,
-                        exactRespaStep.mdatoms.invMassPerDim,
-                        &exactRespaStep.exactRespaForceStore,
-                        ddGlobalAtomIndices,
-                        ddGlobalAtomIndicesCount,
-                        fr_->nbv.get(),
-                        exactRespaStep.forceBuffers,
-                        extendedUpdate,
-                        state_->v.arrayRefWithPadding().unpaddedArrayRef());
+    if (!useGpuDeviceKicks)
+    {
+        applyRespaHalfKicks(inputRecord,
+                            exactRespaStep.step,
+                            RespaKickPhase::Final,
+                            exactRespaStep.mdatoms.homenr,
+                            exactRespaStep.mdatoms.ptype,
+                            exactRespaStep.mdatoms.invMassPerDim,
+                            &exactRespaStep.exactRespaForceStore,
+                            ddGlobalAtomIndices,
+                            ddGlobalAtomIndicesCount,
+                            fr_->nbv.get(),
+                            exactRespaStep.forceBuffers,
+                            extendedUpdate,
+                            state_->v.arrayRefWithPadding().unpaddedArrayRef());
+    }
+#if GMX_GPU_CUDA
+    else
+    {
+        NbnxmGpu* const nbnxmGpu = fr_->nbv->gpuNbv();
+        const auto level0Force = gpu_get_exact_respa_multi_f(nbnxmGpu, 0);
+        const auto level1Force = exactRespaNumLevels(inputRecord) > 1
+                                         ? gpu_get_exact_respa_multi_f(nbnxmGpu, 1)
+                                         : DeviceBuffer<RVec>{};
+        const auto level2Force = exactRespaNumLevels(inputRecord) > 2
+                                         ? pme_gpu_get_device_f(fr_->pmedata)
+                                         : DeviceBuffer<RVec>{};
+        const real level0HalfDt = 0.5_real * inputRecord.delta_t;
+        const real level1HalfDt = exactRespaNumLevels(inputRecord) > 1
+                                          ? 0.5_real * inputRecord.delta_t
+                                                    * exactRespaLevelStepFactor(inputRecord.exactRespa, 1)
+                                          : 0;
+        const real level2HalfDt = exactRespaNumLevels(inputRecord) > 2
+                                          ? 0.5_real * inputRecord.delta_t
+                                                    * exactRespaLevelStepFactor(inputRecord.exactRespa, 2)
+                                          : 0;
+        const int highestActiveLevel =
+                highestActiveExactRespaLevel(inputRecord.exactRespa, nextStep);
+        if (nextStepIsNsStep)
+        {
+            exactRespaGpuUpdater_->setExactRespaNbnxmAtomOrder(fr_->nbv->getGridIndices());
+        }
+        const DeviceStream* updateStream = fr_->stateGpu->getUpdateStream();
+        GMX_RELEASE_ASSERT(updateStream != nullptr && fr_->exactRespaLocalForcesReady != nullptr,
+                           "Exact r-RESPA direct GPU kicks require local-force completion events");
+        fr_->exactRespaLocalForcesReady->enqueueWaitEvent(*updateStream);
+        if (highestActiveLevel >= 2)
+        {
+            GpuEventSynchronizer* pmeForcesReady =
+                    pme_gpu_get_f_ready_synchronizer(fr_->pmedata);
+            GMX_RELEASE_ASSERT(pmeForcesReady != nullptr,
+                               "Exact r-RESPA direct GPU kicks require a PME-force completion event");
+            pmeForcesReady->enqueueWaitEvent(*updateStream);
+        }
+        if (exactRespaStep.step == inputRecord.init_step)
+        {
+            auditExactRespaGpuDeviceKickForces(exactRespaStep.exactRespaForceStore,
+                                               fr_->nbv.get(),
+                                               fr_->stateGpu,
+                                               level0Force,
+                                               level1Force,
+                                               level2Force,
+                                               exactRespaStep.mdatoms.homenr);
+        }
+        exactRespaGpuUpdater_->exactRespaKick(
+                level0Force,
+                level1Force,
+                level2Force,
+                highestActiveLevel,
+                level0HalfDt,
+                level1HalfDt,
+                level2HalfDt);
+    }
+#endif
     if (traceState)
     {
         appendExactRespaStateTraceRows(exactRespaStep.step,
@@ -2334,12 +2578,12 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                                        ddGlobalAtomIndicesCount,
                                        fr_->nbv.get());
     }
-    if (useGpuUpdate)
+    if (useGpuUpdate && !useGpuDeviceKicks)
     {
         fr_->stateGpu->copyVelocitiesToGpu(state_->v.arrayRefWithPadding().unpaddedArrayRef(),
                                            AtomLocality::Local);
-        GMX_UNUSED_VALUE(nextStepIsNsStep);
     }
+    GMX_UNUSED_VALUE(nextStepIsNsStep);
 }
 
 void LegacySimulator::doExactRespaNestedPrototypeStep(const ExactRespaStepContext& exactRespaStep)

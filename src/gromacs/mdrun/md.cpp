@@ -833,6 +833,48 @@ bool exactRespaReuseNextForceWithGpuEnabled()
     return enabled;
 }
 
+bool exactRespaResidentXGpuUpdateProbeEnabled()
+{
+    static const bool enabled =
+            std::getenv("GMX_PCFF_EXACT_RESPA_GPU_RESIDENT_X_PROBE") != nullptr;
+    return enabled;
+}
+
+bool exactRespaDeviceKickGpuUpdateProbeEnabled()
+{
+    static const bool enabled =
+            std::getenv("GMX_PCFF_EXACT_RESPA_GPU_DEVICE_KICK_PROBE") != nullptr;
+    return enabled;
+}
+
+bool exactRespaFusedNvtTrotterGpuUpdateProbeEnabled()
+{
+    static const bool enabled =
+            std::getenv("GMX_PCFF_EXACT_RESPA_GPU_FUSED_NVT_TROTTER") != nullptr;
+    return enabled;
+}
+
+bool exactRespaSparseNvtObservablesGpuUpdateProbeEnabled()
+{
+    static const bool enabled =
+            std::getenv("GMX_PCFF_EXACT_RESPA_GPU_SPARSE_NVT_OBSERVABLES") != nullptr;
+    return enabled;
+}
+
+bool exactRespaGpuNvtKineticReductionProbeEnabled()
+{
+    static const bool enabled =
+            std::getenv("GMX_PCFF_EXACT_RESPA_GPU_NVT_KINETIC_REDUCTION") != nullptr;
+    return enabled;
+}
+
+bool exactRespaGpuDeferNvtPostTrotterProbeEnabled()
+{
+    static const bool enabled =
+            std::getenv("GMX_PCFF_EXACT_RESPA_GPU_DEFER_NVT_POST_TROTTER") != nullptr;
+    return enabled;
+}
+
 bool exactRespaReuseNextForceOnNeighborSearchEnabled()
 {
     static const bool enabled = [] {
@@ -1988,6 +2030,11 @@ void gmx::LegacySimulator::do_md()
     char      sbuf[STEPSTRSIZE], sbuf2[STEPSTRSIZE];
 
     bool bInteractiveMDstep = false;
+    bool exactRespaDeviceKickHostVelocitiesCurrent = true;
+    bool exactRespaGpuNvtKineticReadyForPreTrotter = false;
+    bool exactRespaGpuNvtPostTrotterPending = false;
+    int64_t exactRespaGpuNvtPostTrotterStep = -1;
+    float exactRespaDeviceKickPendingPostTrotterScale = 1.0F;
 
     SimulationSignals signals;
     // Most global communication stages don't propagate mdrun
@@ -2229,7 +2276,7 @@ void gmx::LegacySimulator::do_md()
         GMX_RELEASE_ASSERT(!exactRespaGpuUpdate || constr_ == nullptr || constr_->numConstraintsTotal() == 0,
                            "Standalone exact r-RESPA GPU update currently supports unconstrained systems only.\n");
         GMX_RELEASE_ASSERT(
-                ir->etc != TemperatureCoupling::NoseHoover,
+                exactRespaGpuUpdate || ir->etc != TemperatureCoupling::NoseHoover,
                 "Nose-Hoover temperature coupling is not supported with the GPU update.\n");
         GMX_RELEASE_ASSERT(
                 ir->pressureCouplingOptions.epc == PressureCoupling::No
@@ -2757,6 +2804,71 @@ void gmx::LegacySimulator::do_md()
 
     const DDBalanceRegionHandler ddBalanceRegionHandler(cr_->dd);
 
+    const auto completeExactRespaPendingGpuNvtPostTrotter = [&](const bool calcGlobalStats)
+    {
+        if (!exactRespaGpuNvtPostTrotterPending)
+        {
+            return;
+        }
+#if GMX_GPU_CUDA
+        GMX_RELEASE_ASSERT(exactRespaGpuUpdater_ != nullptr,
+                           "Exact r-RESPA deferred GPU kinetic reduction needs an updater");
+        const real kineticEnergy = exactRespaGpuUpdater_->finishExactRespaKineticEnergy();
+        GMX_RELEASE_ASSERT(std::isfinite(kineticEnergy) && kineticEnergy >= 0,
+                           "Exact r-RESPA GPU kinetic energy is invalid");
+
+        t_grp_tcstat& tcstat = ekind_->tcstat[0];
+        clear_mat(tcstat.ekinf);
+        tcstat.ekinf[XX][XX]   = kineticEnergy;
+        tcstat.ekinscalef_nhc = 1.0;
+        ekind_->dekindl_old   = ekind_->dekindl;
+        ekind_->dekindl       = 0;
+        real dvdlKinetic      = 0;
+        enerd_->term[InteractionFunction::Temperature] =
+                sum_ekin(&ir->opts, ekind_, &dvdlKinetic, true, true);
+        enerd_->dvdl_lin[FreeEnergyPerturbationCouplingType::Mass] =
+                static_cast<double>(dvdlKinetic);
+        enerd_->term[InteractionFunction::KineticEnergy] = ::trace(ekind_->ekin);
+        ekind_->lastComputeGlobalsStep = exactRespaGpuNvtPostTrotterStep + 1;
+        bSumEkinhOld                   = calcGlobalStats ? FALSE : TRUE;
+        saved_conserved_quantity      = 0;
+        last_ekin = enerd_->term[InteractionFunction::KineticEnergy];
+
+        trotter_update(ir,
+                       exactRespaGpuNvtPostTrotterStep,
+                       ekind_,
+                       state_,
+                       total_vir,
+                       0,
+                       md->cTC,
+                       md->invmass,
+                       &MassQ,
+                       trotter_seq,
+                       TrotterSequence::Three);
+        GMX_RELEASE_ASSERT(exactRespaDeviceKickPendingPostTrotterScale == 1.0F,
+                           "Exact r-RESPA deferred post-Trotter scale was not consumed");
+        exactRespaDeviceKickPendingPostTrotterScale =
+                static_cast<float>(ekind_->tcstat[0].vscale_nhc);
+        exactRespaGpuNvtPostTrotterPending = false;
+        exactRespaGpuNvtPostTrotterStep    = -1;
+#else
+        GMX_RELEASE_ASSERT(false, "Deferred exact r-RESPA GPU kinetic reduction needs CUDA");
+#endif
+    };
+
+    const auto applyExactRespaPendingPostTrotterScaleToDevice = [&]()
+    {
+#if GMX_GPU_CUDA
+        if (useGpuForUpdate && exactRespaGpuUpdater_ != nullptr
+            && exactRespaDeviceKickPendingPostTrotterScale != 1.0F)
+        {
+            exactRespaGpuUpdater_->exactRespaScaleVelocities(
+                    static_cast<real>(exactRespaDeviceKickPendingPostTrotterScale));
+            exactRespaDeviceKickPendingPostTrotterScale = 1.0F;
+        }
+#endif
+    };
+
     if (isMainRank && isMultiSim(ms_) && !useReplicaExchange)
     {
         logInitialMultisimStatus(*ms_, cr_, mdLog_, simulationsShareState, ir->nsteps, ir->init_step);
@@ -2885,9 +2997,24 @@ void gmx::LegacySimulator::do_md()
                 // Wait on coordinates produced from GPU graph
                 stateGpu->waitCoordinatesUpdatedOnDevice();
             }
-            stateGpu->copyVelocitiesFromGpu(state_->v, AtomLocality::Local);
+            const bool searchStepRequiresHostVelocities =
+                    do_per_step(step, ir->nstvout) || checkpointHandler->isCheckpointingStep();
+            if (exactRespaGpuNvtKineticReadyForPreTrotter
+                && searchStepRequiresHostVelocities)
+            {
+                completeExactRespaPendingGpuNvtPostTrotter(false);
+                applyExactRespaPendingPostTrotterScaleToDevice();
+            }
+            if (!(exactRespaGpuNvtKineticReadyForPreTrotter
+                  && !searchStepRequiresHostVelocities)
+                && (!exactRespaDeviceKickGpuUpdateProbeEnabled()
+                    || !exactRespaDeviceKickHostVelocitiesCurrent))
+            {
+                stateGpu->copyVelocitiesFromGpu(state_->v, AtomLocality::Local);
+                stateGpu->waitVelocitiesReadyOnHost(AtomLocality::Local);
+                exactRespaDeviceKickHostVelocitiesCurrent = true;
+            }
             stateGpu->copyCoordinatesFromGpu(state_->x, AtomLocality::Local);
-            stateGpu->waitVelocitiesReadyOnHost(AtomLocality::Local);
             stateGpu->waitCoordinatesReadyOnHost(AtomLocality::Local);
         }
 
@@ -3156,6 +3283,16 @@ void gmx::LegacySimulator::do_md()
                                                         constr_,
                                                         virtualSites_,
                                                         useReplicaExchange);
+        const bool useExactRespaGpuNvtKineticReduction =
+                useSupportedExactVelocityVerletRespa && useGpuForUpdate
+                && exactRespaDeviceKickGpuUpdateProbeEnabled()
+                && exactRespaFusedNvtTrotterGpuUpdateProbeEnabled()
+                && exactRespaSparseNvtObservablesGpuUpdateProbeEnabled()
+                && exactRespaGpuNvtKineticReductionProbeEnabled() && inputrecNvtTrotter(ir)
+                && ir->opts.ngtc == 1 && cr_->commMySim.isSerial()
+                && ir->comm_mode == ComRemovalAlgorithm::No && !fr_->haveBoxDeformation
+                && md->nMassPerturbed == 0 && sizeof(real) == sizeof(float)
+                && exactRespaGpuUpdater_ != nullptr;
         if (useExactVelocityVerletRespa && !useSupportedExactVelocityVerletRespa)
         {
             gmx_fatal(FARGS,
@@ -3338,7 +3475,8 @@ void gmx::LegacySimulator::do_md()
                             && useSupportedExactVelocityVerletRespa
                             && (!exactRespaGpuForceWorkPresent
                                 || exactRespaReuseNextForceWithGpuEnabled())
-                            && !simulationWork.useGpuUpdate
+                            && (!simulationWork.useGpuUpdate
+                                || exactRespaResidentXGpuUpdateProbeEnabled())
                             && exactRespaForceStorePtr != nullptr
                             && exactRespaForceStoreHasLevel0
                             && exactRespaForceStoreLevels > 0
@@ -3489,26 +3627,57 @@ void gmx::LegacySimulator::do_md()
             {
                 if (useSupportedExactVelocityVerletRespa)
                 {
-                    prepareExactRespaVelocityVerletObservablesForStep(*ir,
-                                                                      step,
-                                                                      cr_->commMyGroup,
-                                                                      *mdAtoms_->mdatoms(),
-                                                                      nrnb_,
-                                                                      &vcm,
-                                                                      enerd_,
-                                                                      gstat,
-                                                                      &nullSignaller,
-                                                                      &observablesReducer,
-                                                                      force_vir,
-                                                                      shake_vir,
-                                                                      total_vir,
-                                                                      pres,
-                                                                      bCalcEner,
-                                                                      bCalcVir,
-                                                                      bGStat,
-                                                                      &bSumEkinhOld,
-                                                                      &saved_conserved_quantity,
-                                                                      &last_ekin);
+                    const PcffExactRespaTrotterReplay upcomingPreTrotterReplay =
+                            pcffExactRespaTrotterReplayFromEnv(
+                                    "GMX_PCFF_EXACT_RESPA_PRE_TROTTER",
+                                    PcffExactRespaTrotterReplay::Two);
+                    const bool upcomingPreTrotterCouples =
+                            bTrotter
+                            && pcffExactRespaTrotterReplayCouplesThisStep(
+                                    *ir, step, upcomingPreTrotterReplay);
+                    const bool useSparseNvtObservables =
+                            useGpuForUpdate && exactRespaDeviceKickGpuUpdateProbeEnabled()
+                            && exactRespaSparseNvtObservablesGpuUpdateProbeEnabled()
+                            && inputrecNvtTrotter(ir);
+                    const bool prepareCpuVelocityVerletObservables =
+                            !useSparseNvtObservables || bFirstStep || bCalcEner || bCalcVir
+                            || (upcomingPreTrotterCouples
+                                && !exactRespaGpuNvtKineticReadyForPreTrotter);
+                    if (prepareCpuVelocityVerletObservables
+                        && useGpuForUpdate && exactRespaDeviceKickGpuUpdateProbeEnabled()
+                        && !exactRespaDeviceKickHostVelocitiesCurrent)
+                    {
+                        completeExactRespaPendingGpuNvtPostTrotter(bGStat);
+                        applyExactRespaPendingPostTrotterScaleToDevice();
+                        stateGpu->copyVelocitiesFromGpu(state_->v, AtomLocality::Local);
+                        stateGpu->waitVelocitiesReadyOnHost(AtomLocality::Local);
+                        exactRespaDeviceKickHostVelocitiesCurrent = true;
+                    }
+                    if (prepareCpuVelocityVerletObservables)
+                    {
+                        prepareExactRespaVelocityVerletObservablesForStep(
+                                *ir,
+                                step,
+                                cr_->commMyGroup,
+                                *mdAtoms_->mdatoms(),
+                                nrnb_,
+                                &vcm,
+                                enerd_,
+                                gstat,
+                                &nullSignaller,
+                                &observablesReducer,
+                                force_vir,
+                                shake_vir,
+                                total_vir,
+                                pres,
+                                bCalcEner,
+                                bCalcVir,
+                                bGStat,
+                                &bSumEkinhOld,
+                                &saved_conserved_quantity,
+                                &last_ekin);
+                        exactRespaGpuNvtKineticReadyForPreTrotter = false;
+                    }
                 }
                 else
                 {
@@ -3602,10 +3771,15 @@ void gmx::LegacySimulator::do_md()
             // Copy velocities if needed for the output/checkpointing.
             // NOTE: Copy on the search steps is done at the beginning of the step.
             if (useGpuForUpdate && !bNS
-                && (do_per_step(step, ir->nstvout) || checkpointHandler->isCheckpointingStep()))
+                && (do_per_step(step, ir->nstvout) || checkpointHandler->isCheckpointingStep())
+                && (!exactRespaDeviceKickGpuUpdateProbeEnabled()
+                    || !exactRespaDeviceKickHostVelocitiesCurrent))
             {
+                completeExactRespaPendingGpuNvtPostTrotter(bGStat);
+                applyExactRespaPendingPostTrotterScaleToDevice();
                 stateGpu->copyVelocitiesFromGpu(state_->v, AtomLocality::Local);
                 stateGpu->waitVelocitiesReadyOnHost(AtomLocality::Local);
+                exactRespaDeviceKickHostVelocitiesCurrent = true;
             }
             // Copy forces for the output if the forces were reduced on the GPU (not the case on virial steps)
             // and update is offloaded hence forces are kept on the GPU for update and have not been
@@ -3729,8 +3903,10 @@ void gmx::LegacySimulator::do_md()
                         step, t, "before_pre_trotter", *ir, state_, pres, total_vir, enerd_);
             }
             /* UPDATE PRESSURE VARIABLES IN TROTTER FORMULATION WITH CONSTRAINTS */
-            const auto replayExactRespaTrotter = [&](const PcffExactRespaTrotterReplay replay)
+            const auto replayExactRespaTrotter = [&](const PcffExactRespaTrotterReplay replay,
+                                                     const bool skipHostVelocityScaling)
             {
+                double velocityScale = 1.0;
                 const auto runTrotterPart = [&](const TrotterSequence sequence)
                 {
                     trotter_update(ir,
@@ -3738,12 +3914,16 @@ void gmx::LegacySimulator::do_md()
                                    ekind_,
                                    state_,
                                    total_vir,
-                                   md->homenr,
+                                   skipHostVelocityScaling ? 0 : md->homenr,
                                    md->cTC,
                                    md->invmass,
                                    &MassQ,
                                    trotter_seq,
                                    sequence);
+                    if (ekind_->numTemperatureCouplingGroups() == 1)
+                    {
+                        velocityScale *= ekind_->tcstat[0].vscale_nhc;
+                    }
                 };
 
                 switch (replay)
@@ -3760,7 +3940,11 @@ void gmx::LegacySimulator::do_md()
                         runTrotterPart(TrotterSequence::Two);
                         break;
                 }
+                return velocityScale;
             };
+
+            float  exactRespaDeviceKickPreTrotterScale = 1.0F;
+            bool   useExactRespaFusedNvtTrotterScaling = false;
 
             if (bTrotter)
             {
@@ -3770,7 +3954,55 @@ void gmx::LegacySimulator::do_md()
                                           "GMX_PCFF_EXACT_RESPA_PRE_TROTTER",
                                           PcffExactRespaTrotterReplay::Two)
                                 : PcffExactRespaTrotterReplay::Three;
-                replayExactRespaTrotter(preTrotterReplay);
+                const bool preTrotterCouplesThisStep =
+                        pcffExactRespaTrotterReplayCouplesThisStep(
+                                *ir, step, preTrotterReplay);
+                useExactRespaFusedNvtTrotterScaling =
+                        useSupportedExactVelocityVerletRespa && useGpuForUpdate
+                        && exactRespaDeviceKickGpuUpdateProbeEnabled()
+                        && exactRespaFusedNvtTrotterGpuUpdateProbeEnabled()
+                        && inputrecNvtTrotter(ir) && ir->opts.ngtc == 1
+                        && (preTrotterReplay == PcffExactRespaTrotterReplay::Two
+                            || preTrotterReplay == PcffExactRespaTrotterReplay::Three);
+                const bool gpuStateWillBeResetFromHost =
+                        bNS && (bFirstStep || haveDDAtomOrdering(*cr_) || bExchanged);
+                const bool skipPreTrotterHostVelocityScaling =
+                        useExactRespaGpuNvtKineticReduction && !gpuStateWillBeResetFromHost;
+                if (useSupportedExactVelocityVerletRespa && useGpuForUpdate
+                    && exactRespaDeviceKickGpuUpdateProbeEnabled()
+                    && preTrotterCouplesThisStep && !bFirstStep
+                    && !exactRespaGpuNvtKineticReadyForPreTrotter
+                    && !exactRespaDeviceKickHostVelocitiesCurrent)
+                {
+                    stateGpu->copyVelocitiesFromGpu(state_->v, AtomLocality::Local);
+                    stateGpu->waitVelocitiesReadyOnHost(AtomLocality::Local);
+                    exactRespaDeviceKickHostVelocitiesCurrent = true;
+                }
+                if (preTrotterCouplesThisStep && exactRespaGpuNvtPostTrotterPending)
+                {
+                    completeExactRespaPendingGpuNvtPostTrotter(bGStat);
+                }
+                const double preTrotterVelocityScale =
+                        replayExactRespaTrotter(preTrotterReplay,
+                                               skipPreTrotterHostVelocityScaling);
+                if (useSupportedExactVelocityVerletRespa && useGpuForUpdate
+                    && exactRespaDeviceKickGpuUpdateProbeEnabled()
+                    && preTrotterCouplesThisStep)
+                {
+                    if (useExactRespaFusedNvtTrotterScaling)
+                    {
+                        exactRespaDeviceKickPreTrotterScale =
+                                static_cast<float>(preTrotterVelocityScale);
+                    }
+                    else
+                    {
+                        stateGpu->copyVelocitiesToGpu(state_->v, AtomLocality::Local);
+                        exactRespaDeviceKickPendingPostTrotterScale = 1.0F;
+                    }
+                    exactRespaDeviceKickHostVelocitiesCurrent =
+                            !skipPreTrotterHostVelocityScaling;
+                    exactRespaGpuNvtKineticReadyForPreTrotter = false;
+                }
                 if (isMainRank)
                 {
                     appendPcffMttkStateTraceRow(
@@ -3815,6 +4047,9 @@ void gmx::LegacySimulator::do_md()
                             // Search steps may reallocate GPU state buffers; velocities must be
                             // recopied so the half-kick starts from the current host state.
                             stateGpu->copyVelocitiesToGpu(state_->v, AtomLocality::Local);
+                            exactRespaDeviceKickPendingPostTrotterScale = 1.0F;
+                            exactRespaDeviceKickPreTrotterScale        = 1.0F;
+                            exactRespaGpuNvtKineticReadyForPreTrotter = false;
 
                             if (!(runScheduleWork_->stepWork.haveGpuPmeOnThisRank
                                   || runScheduleWork_->stepWork.useGpuXBufferOps))
@@ -3824,6 +4059,14 @@ void gmx::LegacySimulator::do_md()
                             }
                         }
                     }
+#if GMX_GPU_CUDA
+                    if (useGpuForUpdate && useExactRespaFusedNvtTrotterScaling)
+                    {
+                        exactRespaGpuUpdater_->setExactRespaVelocityScaling(
+                                exactRespaDeviceKickPendingPostTrotterScale,
+                                exactRespaDeviceKickPreTrotterScale);
+                    }
+#endif
                     dispatchExactRespaVelocityVerletStep(*ir,
                                                          step,
                                                          t,
@@ -3838,6 +4081,11 @@ void gmx::LegacySimulator::do_md()
                                                          awh.get(),
                                                          ed ? ed->getLegacyED() : nullptr,
                                                          ddBalanceRegionHandler);
+                    exactRespaDeviceKickPendingPostTrotterScale = 1.0F;
+                    if (useGpuForUpdate && exactRespaDeviceKickGpuUpdateProbeEnabled())
+                    {
+                        exactRespaDeviceKickHostVelocitiesCurrent = false;
+                    }
                     if (isMainRank)
                     {
                         appendPcffMttkStateTraceRow(
@@ -3851,50 +4099,104 @@ void gmx::LegacySimulator::do_md()
                             pcffExactRespaTrotterReplayCouplesThisStep(*ir, step, postTrotterReplay);
                     if (bTrotter && postTrotterCouplesThisStep)
                     {
-                        prepareExactRespaVelocityVerletObservablesForStep(*ir,
-                                                                          step + 1,
-                                                                          cr_->commMyGroup,
-                                                                          *mdAtoms_->mdatoms(),
-                                                                          nrnb_,
-                                                                          &vcm,
-                                                                          enerd_,
-                                                                          gstat,
-                                                                          &nullSignaller,
-                                                                          &observablesReducer,
-                                                                          force_vir,
-                                                                          shake_vir,
-                                                                          total_vir,
-                                                                          pres,
-                                                                          bCalcEner,
-                                                                          bCalcVir
-                                                                                  || postTrotterCouplesThisStep,
-                                                                          bGStat,
-                                                                          &bSumEkinhOld,
-                                                                          &saved_conserved_quantity,
-                                                                          &last_ekin);
-                        m_add(force_vir, shake_vir, total_vir);
-                        if (isMainRank)
+                        const bool useGpuNvtKineticForPostTrotter =
+                                useExactRespaGpuNvtKineticReduction && !bCalcEner && !bCalcVir
+                                && postTrotterReplay == PcffExactRespaTrotterReplay::Three;
+                        const bool deferGpuNvtPostTrotter =
+                                useGpuNvtKineticForPostTrotter
+                                && exactRespaGpuDeferNvtPostTrotterProbeEnabled() && !bLastStep;
+                        if (useGpuNvtKineticForPostTrotter)
                         {
-                            appendPcffMttkStateTraceRow(step,
-                                                        t,
-                                                        "before_post_trotter",
-                                                        *ir,
-                                                        state_,
-                                                        pres,
-                                                        total_vir,
-                                                        enerd_);
+                            GMX_RELEASE_ASSERT(!exactRespaGpuNvtPostTrotterPending,
+                                               "Exact r-RESPA GPU post-Trotter work is already pending");
+                            GMX_RELEASE_ASSERT(exactRespaDeviceKickPendingPostTrotterScale == 1.0F,
+                                               "Exact r-RESPA post-Trotter scale is still pending");
+                            exactRespaGpuUpdater_->launchExactRespaKineticEnergy();
+                            exactRespaGpuNvtPostTrotterPending = true;
+                            exactRespaGpuNvtPostTrotterStep    = step;
+                            exactRespaGpuNvtKineticReadyForPreTrotter = true;
+                            exactRespaDeviceKickHostVelocitiesCurrent = false;
+
+                            if (!deferGpuNvtPostTrotter)
+                            {
+                                completeExactRespaPendingGpuNvtPostTrotter(bGStat);
+                                applyExactRespaPendingPostTrotterScaleToDevice();
+                            }
                         }
-                        replayExactRespaTrotter(postTrotterReplay);
-                        if (isMainRank)
+                        else
                         {
-                            appendPcffMttkStateTraceRow(step,
-                                                        t,
-                                                        "after_post_trotter",
-                                                        *ir,
-                                                        state_,
-                                                        pres,
-                                                        total_vir,
-                                                        enerd_);
+                            if (useGpuForUpdate && exactRespaDeviceKickGpuUpdateProbeEnabled())
+                            {
+                                stateGpu->copyVelocitiesFromGpu(state_->v, AtomLocality::Local);
+                                stateGpu->waitVelocitiesReadyOnHost(AtomLocality::Local);
+                                exactRespaDeviceKickHostVelocitiesCurrent = true;
+                            }
+                            prepareExactRespaVelocityVerletObservablesForStep(
+                                    *ir,
+                                    step + 1,
+                                    cr_->commMyGroup,
+                                    *mdAtoms_->mdatoms(),
+                                    nrnb_,
+                                    &vcm,
+                                    enerd_,
+                                    gstat,
+                                    &nullSignaller,
+                                    &observablesReducer,
+                                    force_vir,
+                                    shake_vir,
+                                    total_vir,
+                                    pres,
+                                    bCalcEner,
+                                    bCalcVir || postTrotterCouplesThisStep,
+                                    bGStat,
+                                    &bSumEkinhOld,
+                                    &saved_conserved_quantity,
+                                    &last_ekin);
+                            m_add(force_vir, shake_vir, total_vir);
+                            if (isMainRank)
+                            {
+                                appendPcffMttkStateTraceRow(step,
+                                                            t,
+                                                            "before_post_trotter",
+                                                            *ir,
+                                                            state_,
+                                                            pres,
+                                                            total_vir,
+                                                            enerd_);
+                            }
+                            const double postTrotterVelocityScale =
+                                    replayExactRespaTrotter(postTrotterReplay, false);
+                            if (useGpuForUpdate && exactRespaDeviceKickGpuUpdateProbeEnabled())
+                            {
+                                const bool fusePostTrotterVelocityScale =
+                                        useExactRespaFusedNvtTrotterScaling
+                                        && (postTrotterReplay == PcffExactRespaTrotterReplay::Two
+                                            || postTrotterReplay
+                                                       == PcffExactRespaTrotterReplay::Three);
+                                if (fusePostTrotterVelocityScale)
+                                {
+                                    exactRespaDeviceKickPendingPostTrotterScale =
+                                            static_cast<float>(postTrotterVelocityScale);
+                                }
+                                else
+                                {
+                                    stateGpu->copyVelocitiesToGpu(state_->v, AtomLocality::Local);
+                                    exactRespaDeviceKickPendingPostTrotterScale = 1.0F;
+                                }
+                                exactRespaDeviceKickHostVelocitiesCurrent = true;
+                                exactRespaGpuNvtKineticReadyForPreTrotter = false;
+                            }
+                            if (isMainRank)
+                            {
+                                appendPcffMttkStateTraceRow(step,
+                                                            t,
+                                                            "after_post_trotter",
+                                                            *ir,
+                                                            state_,
+                                                            pres,
+                                                            total_vir,
+                                                            enerd_);
+                            }
                         }
                     }
                 }
@@ -4225,10 +4527,23 @@ void gmx::LegacySimulator::do_md()
                 // - Temperature is needed for the next step.
                 // - This is a replica exchange step (even though we will only need
                 //     the velocities if an exchange succeeds)
-                if (bGStat || needHalfStepKineticEnergy || bDoReplEx)
+                const bool exactRespaSparseNvtObservables =
+                        useSupportedExactVelocityVerletRespa
+                        && exactRespaDeviceKickGpuUpdateProbeEnabled()
+                        && exactRespaSparseNvtObservablesGpuUpdateProbeEnabled()
+                        && inputrecNvtTrotter(ir);
+                const bool globalsRequireHostVelocities =
+                        needHalfStepKineticEnergy || bDoReplEx
+                        || (bGStat && !exactRespaSparseNvtObservables);
+                if (globalsRequireHostVelocities
+                    && (!exactRespaDeviceKickGpuUpdateProbeEnabled()
+                        || !exactRespaDeviceKickHostVelocitiesCurrent))
                 {
+                    completeExactRespaPendingGpuNvtPostTrotter(bGStat);
+                    applyExactRespaPendingPostTrotterScaleToDevice();
                     stateGpu->copyVelocitiesFromGpu(state_->v, AtomLocality::Local);
                     stateGpu->waitVelocitiesReadyOnHost(AtomLocality::Local);
+                    exactRespaDeviceKickHostVelocitiesCurrent = true;
                 }
             }
 

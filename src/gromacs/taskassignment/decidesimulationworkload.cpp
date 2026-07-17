@@ -127,6 +127,9 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
             && (pmeRunMode == PmeRunMode::GPU);
     const bool useExactLammpsRespaHybridGpuUpdate =
             useExactLammpsRespaHybridGpuPme && useGpuForBonded && useGpuForUpdate;
+    const bool useExactLammpsRespaResidentXProbe =
+            useExactLammpsRespaHybridGpuUpdate
+            && std::getenv("GMX_PCFF_EXACT_RESPA_GPU_RESIDENT_X_PROBE") != nullptr;
     const bool disableGpuForExactLammpsRespa =
             useExactLammpsRespa && !useExactLammpsRespaHybridGpuNonbonded;
 
@@ -208,7 +211,7 @@ SimulationWorkload createSimulationWorkload(const gmx::MDLogger& mdlog,
     // x/f transform is done on GPU by default unless it is not unsupported (with MTS) or disabled (with the env. var.)
     simulationWorkload.useGpuXBufferOpsWhenAllowed =
             GpuConfigurationCapabilities::BufferOps && useGpuForNonbonded
-            && !useAnySubsteps
+            && (!useAnySubsteps || useExactLammpsRespaResidentXProbe)
             && !(useReplicaExchange && !useGpuForUpdate) && !disableGpuBufferOps;
     simulationWorkload.useGpuFBufferOpsWhenAllowed =
             GpuConfigurationCapabilities::BufferOps && useGpuForNonbonded

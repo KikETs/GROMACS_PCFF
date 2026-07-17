@@ -126,6 +126,37 @@ public:
     /*! \brief Advance coordinates using the current device velocities without touching forces. */
     void driftOnly(real dt);
 
+#if GMX_GPU_CUDA
+    void setExactRespaNbnxmAtomOrder(ArrayRef<const int> stateToNbnxm);
+
+    void setExactRespaVelocityScaling(float velocityScaleFirst, float velocityScaleSecond);
+
+    void exactRespaKickAndDrift(DeviceBuffer<Float3> d_level0Force,
+                               DeviceBuffer<Float3> d_level1Force,
+                               DeviceBuffer<Float3> d_level2Force,
+                               int                  highestActiveLevel,
+                               real                 level0HalfDt,
+                               real                 level1HalfDt,
+                               real                 level2HalfDt,
+                               real                 dt);
+
+    void exactRespaKick(DeviceBuffer<Float3> d_level0Force,
+                       DeviceBuffer<Float3> d_level1Force,
+                       DeviceBuffer<Float3> d_level2Force,
+                       int                  highestActiveLevel,
+                       real                 level0HalfDt,
+                       real                 level1HalfDt,
+                       real                 level2HalfDt);
+
+    real exactRespaKineticEnergy();
+
+    void launchExactRespaKineticEnergy();
+
+    real finishExactRespaKineticEnergy();
+
+    void exactRespaScaleVelocities(real velocityScale);
+#endif
+
     /*! \brief Scale coordinates on the GPU for the pressure coupling.
      *
      * After pressure coupling step, the box size may change. Hence, the coordinates should be
@@ -215,6 +246,10 @@ private:
 
     //! Leap-Frog integrator
     std::unique_ptr<LeapFrogGpu> integrator_;
+#if GMX_GPU_CUDA
+    float exactRespaVelocityScaleFirst_  = 1.0F;
+    float exactRespaVelocityScaleSecond_ = 1.0F;
+#endif
     //! LINCS GPU object to use for non-water constraints
     std::unique_ptr<LincsGpu> lincsGpu_;
     //! SETTLE GPU object for water constrains

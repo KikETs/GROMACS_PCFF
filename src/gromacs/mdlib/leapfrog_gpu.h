@@ -57,6 +57,7 @@
 #include <memory>
 
 #include "gromacs/gpu_utils/devicebuffer_datatype.h"
+#include "gromacs/gpu_utils/gpueventsynchronizer.h"
 #include "gromacs/gpu_utils/hostallocator.h"
 #include "gromacs/math/matrix.h"
 #include "gromacs/utility/arrayref.h"
@@ -175,6 +176,48 @@ public:
      */
     void driftOnly(DeviceBuffer<Float3> d_x, DeviceBuffer<Float3> d_v, float dt);
 
+#if GMX_GPU_CUDA
+    /*! \brief Upload the state-index to NBNXM-index mapping used by exact r-RESPA forces. */
+    void setExactRespaNbnxmAtomOrder(ArrayRef<const int> stateToNbnxm);
+
+    /*! \brief Apply an exact r-RESPA initial half-kick and drift on the GPU. */
+    void exactRespaKickAndDrift(DeviceBuffer<Float3> d_x,
+                               DeviceBuffer<Float3> d_v,
+                               DeviceBuffer<Float3> d_level0Force,
+                               DeviceBuffer<Float3> d_level1Force,
+                               DeviceBuffer<Float3> d_level2Force,
+                               int                  highestActiveLevel,
+                               float                level0HalfDt,
+                               float                level1HalfDt,
+                               float                level2HalfDt,
+                               float                dt,
+                               float                velocityScaleFirst,
+                               float                velocityScaleSecond);
+
+    /*! \brief Apply an exact r-RESPA final half-kick on the GPU. */
+    void exactRespaKick(DeviceBuffer<Float3> d_x,
+                       DeviceBuffer<Float3> d_v,
+                       DeviceBuffer<Float3> d_level0Force,
+                       DeviceBuffer<Float3> d_level1Force,
+                       DeviceBuffer<Float3> d_level2Force,
+                       int                  highestActiveLevel,
+                       float                level0HalfDt,
+                       float                level1HalfDt,
+                       float                level2HalfDt);
+
+    /*! \brief Return full-step kinetic energy reduced from current device velocities. */
+    float exactRespaKineticEnergy(DeviceBuffer<Float3> d_v);
+
+    /*! \brief Launch kinetic-energy reduction and scalar readback without waiting. */
+    void launchExactRespaKineticEnergy(DeviceBuffer<Float3> d_v);
+
+    /*! \brief Wait for and return a previously launched kinetic-energy reduction. */
+    float finishExactRespaKineticEnergy();
+
+    /*! \brief Apply one scalar Nose-Hoover scale to current device velocities. */
+    void exactRespaScaleVelocities(DeviceBuffer<Float3> d_v, float velocityScale);
+#endif
+
     /*! \brief Set the integrator
      *
      * Allocates memory for inverse masses, and, if needed for temperature scaling factor(s)
@@ -183,9 +226,13 @@ public:
      *
      * \param[in] numAtoms        Number of atoms in the system.
      * \param[in] inverseMasses   Inverse masses of atoms.
+     * \param[in] masses          Masses of atoms.
      * \param[in] tempScaleGroups Maps the atom index to temperature scale value.
      */
-    void set(int numAtoms, ArrayRef<const real> inverseMasses, ArrayRef<const unsigned short> tempScaleGroups);
+    void set(int                            numAtoms,
+             ArrayRef<const real>           inverseMasses,
+             ArrayRef<const real>           masses,
+             ArrayRef<const unsigned short> tempScaleGroups);
 
     /*! \brief Class with hardware-specific interfaces and implementations.*/
     class Impl;
@@ -205,6 +252,27 @@ private:
     int numInverseMasses_ = -1;
     //! Maximum size of the reciprocal masses array
     int numInverseMassesAlloc_ = -1;
+
+#if GMX_GPU_CUDA
+    //! State-index to NBNXM-index mapping for direct exact r-RESPA device kicks.
+    DeviceBuffer<int> d_exactRespaStateToNbnxm_ = nullptr;
+    int               exactRespaStateToNbnxmSize_      = -1;
+    int               exactRespaStateToNbnxmSizeAlloc_ = -1;
+
+    //! Masses and reduction storage for the exact r-RESPA device kinetic-energy path.
+    DeviceBuffer<float> d_exactRespaMasses_                = nullptr;
+    DeviceBuffer<float> d_exactRespaKineticEnergyPartials_ = nullptr;
+    DeviceBuffer<float> d_exactRespaKineticEnergy_         = nullptr;
+    int                 exactRespaMassesSize_               = -1;
+    int                 exactRespaMassesSizeAlloc_          = -1;
+    int                 exactRespaKineticPartialsSize_      = -1;
+    int                 exactRespaKineticPartialsSizeAlloc_ = -1;
+    int                 exactRespaKineticEnergySize_        = -1;
+    int                 exactRespaKineticEnergySizeAlloc_   = -1;
+    HostVector<float>   h_exactRespaKineticEnergy_;
+    GpuEventSynchronizer exactRespaKineticEnergyReadyOnHost_;
+    bool                 exactRespaKineticEnergyPending_ = false;
+#endif
 
     //! Number of temperature coupling groups (zero = no coupling)
     int numTempScaleValues_ = 0;

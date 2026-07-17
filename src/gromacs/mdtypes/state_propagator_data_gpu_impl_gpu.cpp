@@ -72,6 +72,11 @@ static bool exactRespaFullPairLevelGpuUpdateProbeEnabled()
     return std::getenv("GMX_PCFF_EXACT_RESPA_GPU_UPDATE_FULL_PAIRLEVEL_PROBE") != nullptr;
 }
 
+static bool exactRespaResidentXGpuUpdateProbeEnabled()
+{
+    return std::getenv("GMX_PCFF_EXACT_RESPA_GPU_RESIDENT_X_PROBE") != nullptr;
+}
+
 StatePropagatorDataGpu::Impl::Impl(const DeviceStreamManager& deviceStreamManager,
                                    GpuApiCallBehavior         transferKind,
                                    int                        allocationBlockSizeDivisor,
@@ -424,7 +429,8 @@ GpuEventSynchronizer* StatePropagatorDataGpu::Impl::getCoordinatesReadyOnDeviceE
         return gpuCoordinateHaloLaunched;
     }
     if (atomLocality == AtomLocality::Local && simulationWork.useGpuUpdate && !stepWork.doNeighborSearch
-        && !(simulationWork.useExactRespa && exactRespaFullPairLevelGpuUpdateProbeEnabled()))
+        && !(simulationWork.useExactRespa && exactRespaFullPairLevelGpuUpdateProbeEnabled()
+             && !exactRespaResidentXGpuUpdateProbeEnabled()))
     {
         GMX_ASSERT(xUpdatedOnDeviceEvent_ != nullptr, "The event synchronizer can not be nullptr.");
         return xUpdatedOnDeviceEvent_;

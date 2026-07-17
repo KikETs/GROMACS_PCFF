@@ -93,6 +93,7 @@ LeapFrogTestData::LeapFrogTestData(int        numAtoms,
     numTCoupleGroups_(numTCoupleGroups)
 {
     mdAtoms_.nr = numAtoms_;
+    mdAtoms_.massT.resize(numAtoms_);
 
     for (int i = 0; i < numAtoms_; i++)
     {
@@ -113,7 +114,8 @@ LeapFrogTestData::LeapFrogTestData(int        numAtoms,
             v0_[i][d] = v_[i][d];
         }
         // Atom masses are ~1-100 g/mol
-        inverseMasses_[i] = 1.0 / (1.0 + i % 100);
+        mdAtoms_.massT[i] = 1.0 + i % 100;
+        inverseMasses_[i] = 1.0 / mdAtoms_.massT[i];
         for (int d = 0; d < DIM; d++)
         {
             inverseMassesPerDim_[i][d] = inverseMasses_[i];

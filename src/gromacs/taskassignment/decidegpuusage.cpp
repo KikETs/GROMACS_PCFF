@@ -851,7 +851,7 @@ bool decideWhetherToUseGpuForUpdate(const bool           isDomainDecomposition,
     }
     errorReasons.appendIf((!exactLammpsRespa && inputrec.eI != IntegrationAlgorithm::MD),
                           "Only the md integrator is supported.");
-    errorReasons.appendIf((inputrec.etc == TemperatureCoupling::NoseHoover),
+    errorReasons.appendIf((!exactLammpsRespa && inputrec.etc == TemperatureCoupling::NoseHoover),
                           "Nose-Hoover temperature coupling is not supported.");
     errorReasons.appendIf((!(inputrec.pressureCouplingOptions.epc == PressureCoupling::No
                              || inputrec.pressureCouplingOptions.epc == PressureCoupling::ParrinelloRahman

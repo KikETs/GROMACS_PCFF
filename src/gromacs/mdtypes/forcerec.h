@@ -55,6 +55,7 @@
 struct gmx_pme_t;
 struct bonded_threading_t;
 class DispersionCorrection;
+class GpuEventSynchronizer;
 class ListedForces;
 class CpuPpLongRangeNonbondeds;
 struct t_fcdata;
@@ -288,6 +289,9 @@ struct t_forcerec
     gmx::StatePropagatorDataGpu* stateGpu = nullptr;
     // TODO: Should not be here. This is here only to pass the pointer around.
     gmx::DeviceStreamManager* deviceStreamManager = nullptr;
+
+    // Completion point for exact r-RESPA force producers consumed by the GPU update stream.
+    std::unique_ptr<GpuEventSynchronizer> exactRespaLocalForcesReady;
 
     /* For PME-PP GPU communication */
     std::unique_ptr<gmx::PmePpCommGpu> pmePpCommGpu;

@@ -1302,6 +1302,30 @@ void gpu_prepare_exact_respa_multi_force_outputs(NbnxmGpu* nb, const int numCont
 #endif
 }
 
+void gpu_clear_exact_respa_multi_force_output(NbnxmGpu* nb, const int contributionOutputIndex)
+{
+    GMX_ASSERT(nb != nullptr && nb->atdat != nullptr, "Need initialized GPU atom data");
+#if GMX_GPU_CUDA || GMX_GPU_HIP
+    NBAtomDataGpu* adat = nb->atdat;
+    GMX_RELEASE_ASSERT(contributionOutputIndex >= 0
+                               && contributionOutputIndex < adat->exactRespaMultiFCount,
+                       "Invalid exact r-RESPA multi-force output index");
+    const DeviceStream& localStream = *nb->deviceStreams[InteractionLocality::Local];
+    clearDeviceBufferAsync(&adat->exactRespaMultiF,
+                           contributionOutputIndex * adat->numAtomsAlloc,
+                           adat->numAtomsAlloc,
+                           localStream);
+    clearDeviceBufferAsync(&adat->exactRespaMultiFShift,
+                           contributionOutputIndex * c_numShiftVectors,
+                           c_numShiftVectors,
+                           localStream);
+    issueClFlushInStream(localStream);
+#else
+    GMX_UNUSED_VALUE(contributionOutputIndex);
+    GMX_RELEASE_ASSERT(false, "Exact r-RESPA multi-force GPU outputs are implemented for CUDA/HIP only");
+#endif
+}
+
 void gpu_select_exact_respa_multi_force_output(NbnxmGpu* nb, const int contributionOutputIndex)
 {
     GMX_ASSERT(nb != nullptr && nb->atdat != nullptr, "Need initialized GPU atom data");
@@ -1907,6 +1931,24 @@ DeviceBuffer<RVec> gpu_get_f(NbnxmGpu* nb)
     GMX_ASSERT(nb != nullptr, "nb pointer must be valid");
 
     return nb->atdat->f;
+}
+
+DeviceBuffer<RVec> gpu_get_default_f(NbnxmGpu* nb)
+{
+    GMX_ASSERT(nb != nullptr, "nb pointer must be valid");
+
+    return nb->atdat->fDefault;
+}
+
+DeviceBuffer<RVec> gpu_get_exact_respa_multi_f(NbnxmGpu* nb, const int contributionOutputIndex)
+{
+    GMX_ASSERT(nb != nullptr, "nb pointer must be valid");
+    GMX_RELEASE_ASSERT(contributionOutputIndex >= 0
+                               && contributionOutputIndex < nb->atdat->exactRespaMultiFCount,
+                       "Invalid exact r-RESPA multi-force output index");
+
+    return nb->atdat->exactRespaMultiF
+           + contributionOutputIndex * nb->atdat->numAtomsAlloc;
 }
 
 } // namespace gmx

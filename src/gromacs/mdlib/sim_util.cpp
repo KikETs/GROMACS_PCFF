@@ -3587,6 +3587,25 @@ static bool allowExactRespaFullPairLevelGpuUpdateProbe()
     return std::getenv("GMX_PCFF_EXACT_RESPA_GPU_UPDATE_FULL_PAIRLEVEL_PROBE") != nullptr;
 }
 
+static bool allowExactRespaResidentXGpuUpdateProbe()
+{
+    return std::getenv("GMX_PCFF_EXACT_RESPA_GPU_RESIDENT_X_PROBE") != nullptr;
+}
+
+static bool allowExactRespaDeviceKickGpuUpdateProbe()
+{
+    const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_GPU_DEVICE_KICK_PROBE");
+    return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+}
+
+static bool useExactRespaDeviceOnlyForceStep(const StepWorkload& stepWork)
+{
+    return allowExactRespaDeviceKickGpuUpdateProbe() && g_respaDoForceContextLabel != nullptr
+           && std::strcmp(g_respaDoForceContextLabel, "exact_respa_next_step_force") == 0
+           && stepWork.computeForces && !stepWork.computeEnergy && !stepWork.computeVirial
+           && !stepWork.computeDhdl;
+}
+
 static bool isSupportedExactRespaHybridGpuUpdateSimulation(const t_inputrec&         inputrec,
                                                            const SimulationWorkload& simulationWork)
 {
@@ -3597,7 +3616,8 @@ static bool isSupportedExactRespaHybridGpuUpdateSimulation(const t_inputrec&    
            && simulationWork.useGpuPmeFft && simulationWork.useGpuUpdate
            && !simulationWork.havePpDomainDecomposition && !simulationWork.haveSeparatePmeRank
            && !simulationWork.useGpuNonbondedFE && !simulationWork.useGpuForeignNonbondedFE
-           && !simulationWork.useGpuXBufferOpsWhenAllowed
+           && (!simulationWork.useGpuXBufferOpsWhenAllowed
+               || allowExactRespaResidentXGpuUpdateProbe())
            && !simulationWork.useGpuFBufferOpsWhenAllowed && !simulationWork.useGpuHaloExchange
            && !simulationWork.useGpuPmePpCommunication
            && !simulationWork.useGpuDirectCommunication
@@ -3616,8 +3636,10 @@ static bool isExactRespaHybridGpuRuntime(const t_inputrec&         inputrec,
                                          const StepWorkload&       stepWork)
 {
     return isSupportedExactRespaHybridGpuSimulation(inputrec, simulationWork)
-           && !stepWork.useGpuXBufferOps && !stepWork.useGpuFBufferOps
-           && !stepWork.useGpuPmeFReduction && !stepWork.useGpuXHalo && !stepWork.useGpuFHalo
+           && (!stepWork.useGpuXBufferOps || allowExactRespaResidentXGpuUpdateProbe())
+           && !stepWork.useGpuFBufferOps
+           && (!stepWork.useGpuPmeFReduction || useExactRespaDeviceOnlyForceStep(stepWork))
+           && !stepWork.useGpuXHalo && !stepWork.useGpuFHalo
            && !stepWork.computePmeOnSeparateRank && !stepWork.combineMtsForcesBeforeHaloExchange;
 }
 
@@ -11335,6 +11357,11 @@ static bool exactRespaGpuBatchForceOnlyCopybackRequested()
     return requested;
 }
 
+static bool exactRespaGpuDeviceForceStoreRequested()
+{
+    return allowExactRespaDeviceKickGpuUpdateProbe();
+}
+
 static bool exactRespaGpuDirectPairKernelRequested()
 {
     static const bool requested = [] {
@@ -11596,14 +11623,15 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
     *fusedPair14WithNonbonded = false;
     GMX_RELEASE_ASSERT(fr != nullptr && fr->nbv != nullptr && fr->nbv->gpuNbv() != nullptr,
                        "Exact LAMMPS-style r-RESPA HG3 narrow mode requires initialized GPU nonbonded state");
-    GMX_RELEASE_ASSERT(!stepWork.useGpuXBufferOps && !stepWork.useGpuFBufferOps,
-                       "Exact LAMMPS-style r-RESPA HG3 narrow mode does not support GPU buffer ops");
+    GMX_RELEASE_ASSERT(!stepWork.useGpuFBufferOps,
+                       "Exact LAMMPS-style r-RESPA HG3 narrow mode does not support GPU force buffer ops");
     GMX_RELEASE_ASSERT(ic != nullptr && ic->vdw.type == VanDerWaalsType::Cut
                                && ic->vdw.modifier == InteractionModifiers::None
                                && (usingPmeOrEwald(ic->coulomb.type)
                                    || ic->coulomb.type == CoulombInteractionType::Cut)
                                && ic->coulomb.modifier == InteractionModifiers::None,
                        "Exact LAMMPS-style r-RESPA HG3 narrow mode supports only cut-off LJ with PME/Ewald or Cut-off Coulomb");
+    const bool useDeviceOnlyForceStep = useExactRespaDeviceOnlyForceStep(stepWork);
 
     struct ContributionTarget
     {
@@ -11648,6 +11676,16 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
 
     nonbonded_verlet_t* nbv = fr->nbv.get();
     NbnxmGpu*           gpu = nbv->gpuNbv();
+    const auto finalizeDeviceOnlyGpuTask = [&]()
+    {
+        StepWorkload completionWork = stepWork;
+        completionWork.useGpuFBufferOps = true;
+        completionWork.computeEnergy    = false;
+        completionWork.computeVirial    = false;
+        completionWork.computeDhdl      = false;
+        gpu_wait_finish_task(
+                gpu, completionWork, AtomLocality::Local, false, enerd, ArrayRef<RVec>{}, wcycle);
+    };
     const auto tryLaunchFusedPair14 = [&](const ContributionTarget& target,
                                           const StepWorkload&       contributionWork)
     {
@@ -11684,7 +11722,8 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
     int                 nativeMultiNbMask = 0;
     bool                canUseNativeMultiNbLaunch =
             exactRespaGpuNativeMultiNbEnabled() && activeTargetCount > 1 && stepWork.computeForces
-            && !stepWork.computeEnergy && !stepWork.computeVirial && !stepWork.computeDhdl;
+            && !stepWork.computeEnergy && !stepWork.computeVirial && !stepWork.computeDhdl
+            && !exactRespaGpuDeviceForceStoreRequested();
     if (canUseNativeMultiNbLaunch)
     {
         for (int activeTargetIndex = 0; activeTargetIndex < activeTargetCount; ++activeTargetIndex)
@@ -11708,7 +11747,8 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
     else if ((deferredGpuNonbonded != nullptr && activeTargetCount == 1
               && stepWork.computeForces && !stepWork.computeEnergy && !stepWork.computeVirial
               && !stepWork.computeDhdl)
-             || exactRespaGpuBatchForceOnlyCopybackRequested())
+             || exactRespaGpuBatchForceOnlyCopybackRequested()
+             || exactRespaGpuDeviceForceStoreRequested())
     {
         for (int activeTargetIndex = 0; activeTargetIndex < activeTargetCount; ++activeTargetIndex)
         {
@@ -11716,12 +11756,19 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
                     stepWork.withExactNonbondedContribution(activeTargets[activeTargetIndex].contribution);
             if (!contributionWork.computeEnergy && !contributionWork.computeDhdl)
             {
-                activeTargets[activeTargetIndex].nativeMultiOutputIndex = nativeCopybackTargetCount++;
+                activeTargets[activeTargetIndex].nativeMultiOutputIndex =
+                        exactRespaGpuDeviceForceStoreRequested()
+                                ? activeTargets[activeTargetIndex].mtsLevel
+                                : nativeCopybackTargetCount;
+                ++nativeCopybackTargetCount;
             }
         }
         if (nativeCopybackTargetCount > 0)
         {
-            nbv->nbat().ensureNativeMultiContributionOutputBuffers(nativeCopybackTargetCount);
+            const int outputBufferCount = exactRespaGpuDeviceForceStoreRequested()
+                                                  ? exactRespaForceOutputs.numLevels
+                                                  : nativeCopybackTargetCount;
+            nbv->nbat().ensureNativeMultiContributionOutputBuffers(outputBufferCount);
         }
     }
 
@@ -11735,12 +11782,19 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
         }
         return false;
     }();
+    GMX_RELEASE_ASSERT(!useDeviceOnlyForceStep
+                               || (nativeCopybackTargetCount == activeTargetCount
+                                   && !haveCpuListedForActiveLevels),
+                       "Exact r-RESPA device-only nonbonded work requires native device outputs and no CPU-listed forces");
 
     wallcycle_start(wcycle, WallCycleCounter::LaunchGpuPp);
     wallcycle_sub_start(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
     wallcycle_start(wcycle, WallCycleCounter::ExactRespaGpuH2DX);
     gpu_upload_shiftvec(gpu, &nbv->nbat());
-    gpu_copy_xq_to_gpu(gpu, &nbv->nbat(), AtomLocality::Local);
+    if (!stepWork.useGpuXBufferOps)
+    {
+        gpu_copy_xq_to_gpu(gpu, &nbv->nbat(), AtomLocality::Local);
+    }
     wallcycle_stop(wcycle, WallCycleCounter::ExactRespaGpuH2DX);
     wallcycle_sub_stop(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
     wallcycle_stop(wcycle, WallCycleCounter::LaunchGpuPp);
@@ -11748,7 +11802,22 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
     if (nativeCopybackTargetCount > 0)
     {
         wallcycle_start(wcycle, WallCycleCounter::ExactRespaGpuClear);
-        gpu_prepare_exact_respa_multi_force_outputs(gpu, nativeCopybackTargetCount);
+        if (exactRespaGpuDeviceForceStoreRequested()
+            && gpuGetNBAtomData(gpu)->exactRespaMultiFCount == exactRespaForceOutputs.numLevels)
+        {
+            for (int activeTargetIndex = 0; activeTargetIndex < activeTargetCount; ++activeTargetIndex)
+            {
+                gpu_clear_exact_respa_multi_force_output(
+                        gpu, activeTargets[activeTargetIndex].nativeMultiOutputIndex);
+            }
+        }
+        else
+        {
+            gpu_prepare_exact_respa_multi_force_outputs(
+                    gpu,
+                    exactRespaGpuDeviceForceStoreRequested() ? exactRespaForceOutputs.numLevels
+                                                              : nativeCopybackTargetCount);
+        }
         wallcycle_stop(wcycle, WallCycleCounter::ExactRespaGpuClear);
     }
 
@@ -11766,6 +11835,19 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
         wallcycle_start(wcycle, WallCycleCounter::ExactRespaGpuLaunchNb);
         do_nb_verlet(fr, ic, enerd, stepWork, InteractionLocality::Local, enbvClearFNo, step, nrnb, wcycle);
         wallcycle_stop(wcycle, WallCycleCounter::ExactRespaGpuLaunchNb);
+
+        if (useDeviceOnlyForceStep)
+        {
+            finalizeDeviceOnlyGpuTask();
+            gpu_restore_default_force_output(gpu);
+            gpu->nbparam->exactRespaNativeMultiMask = 0;
+            setExactRespaGpuLaunchParameters(gpu, inputrec, MtsNonbondedRespaContribution::Full);
+            wallcycle_sub_stop(wcycle, WallCycleSubCounter::LaunchGpuNonBonded);
+            wallcycle_stop(wcycle, WallCycleCounter::LaunchGpuPp);
+            replayExactRespaNonbondedTraceShadow(
+                    inputrec, idef, fr, mdatoms, coordinates, enerd, stepWork, exactRespaStepWork, step);
+            return;
+        }
 
         wallcycle_start(wcycle, WallCycleCounter::ExactRespaGpuD2HF);
         for (int activeTargetIndex = 0; activeTargetIndex < activeTargetCount; ++activeTargetIndex)
@@ -11934,6 +12016,14 @@ static void computeExactRespaNonbondedGpuNarrow(const t_inputrec&             in
         }
     }
     gpu_restore_default_force_output(gpu);
+    if (useDeviceOnlyForceStep)
+    {
+        finalizeDeviceOnlyGpuTask();
+        replayExactRespaNonbondedTraceShadow(
+                inputrec, idef, fr, mdatoms, coordinates, enerd, stepWork, exactRespaStepWork, step);
+        setExactRespaGpuLaunchParameters(gpu, inputrec, MtsNonbondedRespaContribution::Full);
+        return;
+    }
     const bool delayCopybackForGpuListedForceFusion =
             nativeCopybackTargetCount == 1 && activeTargetCount == 1
             && deferredGpuNonbonded != nullptr && exactRespaGpuListedForceFusionRequested()
@@ -12716,7 +12806,9 @@ static int getExpectedLocalXReadyOnDeviceConsumptionCount(const SimulationWorklo
             result++;
         }
     }
-    if (stepWork.computeNonbondedForces && stepWork.useGpuXBufferOps)
+    if ((stepWork.computeNonbondedForces
+         || (simulationWork.useExactRespa && simulationWork.useGpuBonded))
+        && stepWork.useGpuXBufferOps)
     {
         // Event is consumed by convertCoordinatesGpu for GPU non-bonded work, including
         // exact-r-RESPA inner steps that skip long-range electrostatics.
@@ -13608,7 +13700,7 @@ void do_force(FILE*                         fplog,
         // 2. The buffers were reinitialized on search step
         if (!simulationWork.useGpuUpdate || stepWork.doNeighborSearch
             || (simulationWork.useExactRespa && simulationWork.useGpuUpdate
-                && allowExactRespaFullPairLevelGpuUpdateProbe()))
+                && allowExactRespaFullPairLevelGpuUpdateProbe() && !stepWork.useGpuXBufferOps))
         {
             stateGpu->copyCoordinatesToGpu(x.unpaddedArrayRef(),
                                            AtomLocality::Local,
@@ -13674,7 +13766,9 @@ void do_force(FILE*                         fplog,
     }
 
 
-    if (!stepWork.doNeighborSearch && !EI_TPI(inputrec.eI) && stepWork.computeNonbondedForces)
+    if (!stepWork.doNeighborSearch && !EI_TPI(inputrec.eI)
+        && (stepWork.computeNonbondedForces
+            || (simulationWork.useExactRespa && simulationWork.useGpuBonded)))
     {
         const bool useExactLammpsRespaNonbondedLocal =
                 stepWork.computeNonbondedForces && useExactLammpsRespaPairSplitting;
@@ -14196,11 +14290,23 @@ void do_force(FILE*                         fplog,
             && !stepWork.computeEnergy && !stepWork.computeVirial && !stepWork.computeDhdl
             && !traceForceComponents && activeM2pTraceDirPath() == nullptr
             && !shouldTraceExactRespaForceStoreSummaryStep(step);
+    const bool useExactRespaDeviceOnlyForcePipeline =
+            useExactRespaDeviceOnlyForceStep(stepWork) && useExactRespaForceOutputs
+            && exactRespaForceStore != nullptr && simulationWork.useGpuNonbonded
+            && simulationWork.useGpuBonded && simulationWork.useGpuPme
+            && simulationWork.useGpuUpdate && !simulationWork.havePpDomainDecomposition
+            && !domainWork.haveSpecialForces && vsite == nullptr && !traceForceComponents
+            && activeM2pTraceDirPath() == nullptr
+            && !shouldTraceExactRespaForceStoreSummaryStep(step);
+    GMX_RELEASE_ASSERT(!useExactRespaDeviceOnlyForceStep(stepWork)
+                               || useExactRespaDeviceOnlyForcePipeline,
+                       "Exact r-RESPA device-only forces require the audited single-rank all-GPU path");
 
     ExactRespaDeferredGpuNonbonded  deferredExactRespaGpuNonbonded;
     bool                            fusedPair14WithExactGpuNonbonded = false;
     ExactRespaDeferredGpuNonbonded* deferredExactRespaGpuNonbondedPtr =
-            (exactRespaGpuDeferNativeMultiNbWaitEnabled() && useExactLammpsRespaGpuNonbonded
+            (!useExactRespaDeviceOnlyForcePipeline
+             && exactRespaGpuDeferNativeMultiNbWaitEnabled() && useExactLammpsRespaGpuNonbonded
              && useExactRespaForceOutputs && stepWork.computeListedForces
              && x.unpaddedArrayRef().ssize() <= exactRespaGpuDeferredNbMaxAtoms()
              && stepWork.computeForces && !stepWork.computeEnergy && !stepWork.computeVirial
@@ -14696,6 +14802,9 @@ void do_force(FILE*                         fplog,
                 needMolPbc = needMolPbc || fr->bMolPBC;
             }
         }
+        GMX_RELEASE_ASSERT(!useExactRespaDeviceOnlyForcePipeline
+                                   || !haveExactRespaCpuListedForces,
+                           "Exact r-RESPA device-only forces require all active listed forces on the GPU");
 
         t_pbc pbc;
         t_pbc* pbcPtr = nullptr;
@@ -14832,7 +14941,9 @@ void do_force(FILE*                         fplog,
 
             bool uploadedExactRespaGpuBondedCoordinates = exactGpuNonbondedCoordinatesReady;
             const bool useExactGpuBondedForceOnlyBatch =
-                    exactRespaGpuBatchForceOnlyCopybackRequested() && !stepWork.computeEnergy
+                    (exactRespaGpuBatchForceOnlyCopybackRequested()
+                     || exactRespaGpuDeviceForceStoreRequested())
+                    && !stepWork.computeEnergy
                     && !stepWork.computeDhdl && !traceForceComponents
                     && !traceExactGpuBondedDeviceForce && !traceExactGpuBondedMixedVsSequential
                     && !traceExactGpuListedFtypeSplit && !traceExactGpuListedClass2SubtermSplit;
@@ -14883,11 +14994,23 @@ void do_force(FILE*                         fplog,
                     {
                         if (!exactGpuBondedBatchPrepared)
                         {
-                            nbv->nbat().ensureNativeMultiContributionOutputBuffers(
-                                    exactRespaListedForceOutputs->numActiveLevels());
+                            const int outputBufferCount = exactRespaGpuDeviceForceStoreRequested()
+                                                                  ? exactRespaListedForceOutputs->numLevels
+                                                                  : exactRespaListedForceOutputs->numActiveLevels();
+                            nbv->nbat().ensureNativeMultiContributionOutputBuffers(outputBufferCount);
                             wallcycle_start(wcycle, WallCycleCounter::ExactRespaGpuBondedClear);
-                            gpu_prepare_exact_respa_multi_force_outputs(
-                                    nbv->gpuNbv(), exactRespaListedForceOutputs->numActiveLevels());
+                            if (exactRespaGpuDeviceForceStoreRequested()
+                                && gpuGetNBAtomData(nbv->gpuNbv())->exactRespaMultiFCount
+                                           == outputBufferCount)
+                            {
+                                gpu_clear_exact_respa_multi_force_output(
+                                        nbv->gpuNbv(), nativeBatchOutputIndex);
+                            }
+                            else
+                            {
+                                gpu_prepare_exact_respa_multi_force_outputs(
+                                        nbv->gpuNbv(), outputBufferCount);
+                            }
                             wallcycle_stop(wcycle, WallCycleCounter::ExactRespaGpuBondedClear);
                             exactGpuBondedBatchPrepared = true;
                         }
@@ -14981,7 +15104,7 @@ void do_force(FILE*                         fplog,
             }
 
             gpu_restore_default_force_output(nbv->gpuNbv());
-            if (exactGpuBondedBatchPrepared)
+            if (exactGpuBondedBatchPrepared && !useExactRespaDeviceOnlyForcePipeline)
             {
                 wallcycle_start(wcycle, WallCycleCounter::ExactRespaGpuBondedD2HF);
                 for (int exactLevel = 0; exactLevel < exactRespaListedForceOutputs->numActiveLevels(); ++exactLevel)
@@ -15096,7 +15219,9 @@ void do_force(FILE*                         fplog,
             }
 #endif
             const bool useExactGpuBondedForceOnlyBatch =
-                    exactRespaGpuBatchForceOnlyCopybackRequested() && !stepWork.computeEnergy
+                    (exactRespaGpuBatchForceOnlyCopybackRequested()
+                     || exactRespaGpuDeviceForceStoreRequested())
+                    && !stepWork.computeEnergy
                     && !stepWork.computeDhdl && !traceForceComponents
                     && !traceExactGpuBondedDeviceForce && !traceExactGpuBondedMixedVsSequential
                     && !traceExactGpuListedFtypeSplit && !traceExactGpuListedClass2SubtermSplit;
@@ -15297,11 +15422,23 @@ void do_force(FILE*                         fplog,
                         {
                             if (!exactGpuBondedBatchPrepared)
                             {
-                                nbv->nbat().ensureNativeMultiContributionOutputBuffers(
-                                        exactRespaListedForceOutputs->numActiveLevels());
+                                const int outputBufferCount = exactRespaGpuDeviceForceStoreRequested()
+                                                                      ? exactRespaListedForceOutputs->numLevels
+                                                                      : exactRespaListedForceOutputs->numActiveLevels();
+                                nbv->nbat().ensureNativeMultiContributionOutputBuffers(outputBufferCount);
                                 wallcycle_start(wcycle, WallCycleCounter::ExactRespaGpuBondedClear);
-                                gpu_prepare_exact_respa_multi_force_outputs(
-                                        nbv->gpuNbv(), exactRespaListedForceOutputs->numActiveLevels());
+                                if (exactRespaGpuDeviceForceStoreRequested()
+                                    && gpuGetNBAtomData(nbv->gpuNbv())->exactRespaMultiFCount
+                                               == outputBufferCount)
+                                {
+                                    gpu_clear_exact_respa_multi_force_output(
+                                            nbv->gpuNbv(), nativeBatchOutputIndex);
+                                }
+                                else
+                                {
+                                    gpu_prepare_exact_respa_multi_force_outputs(
+                                            nbv->gpuNbv(), outputBufferCount);
+                                }
                                 wallcycle_stop(wcycle, WallCycleCounter::ExactRespaGpuBondedClear);
                                 exactGpuBondedBatchPrepared = true;
                             }
@@ -15806,7 +15943,7 @@ void do_force(FILE*                         fplog,
             }
 
             gpu_restore_default_force_output(nbv->gpuNbv());
-            if (exactGpuBondedBatchPrepared)
+            if (exactGpuBondedBatchPrepared && !useExactRespaDeviceOnlyForcePipeline)
             {
                 wallcycle_start(wcycle, WallCycleCounter::ExactRespaGpuBondedD2HF);
                 for (int exactLevel = 0; exactLevel < exactRespaListedForceOutputs->numActiveLevels(); ++exactLevel)
@@ -15947,6 +16084,13 @@ void do_force(FILE*                         fplog,
     {
         addExactRespaListedForceScratchToOutputs(
                 deferredListedForceScratch, exactRespaForceOutputs, wcycle);
+    }
+    if (useExactRespaDeviceOnlyForcePipeline)
+    {
+        GMX_RELEASE_ASSERT(fr->deviceStreamManager != nullptr
+                                   && fr->exactRespaLocalForcesReady != nullptr,
+                           "Exact r-RESPA device-only forces require a local GPU completion event");
+        fr->exactRespaLocalForcesReady->markEvent(fr->deviceStreamManager->bondedStream());
     }
 #endif
 
@@ -16583,7 +16727,7 @@ void do_force(FILE*                         fplog,
                                       outputs->forceWithVirial().force_);
         }
     };
-    if (stepWork.computeForces)
+    if (stepWork.computeForces && !useExactRespaDeviceOnlyForcePipeline)
     {
         postProcessForceWithShiftForces(
                 nrnb, wcycle, box, x.unpaddedArrayRef(), &forceOutMtsLevel0, vir_force, *mdatoms, *fr, vsite, stepWork);
@@ -17213,7 +17357,7 @@ void do_force(FILE*                         fplog,
                                       false);
     }
 
-    if (exactRespaForceStore != nullptr)
+    if (exactRespaForceStore != nullptr && !useExactRespaDeviceOnlyForcePipeline)
     {
         GMX_RELEASE_ASSERT(gmx::useExactRespa(inputrec),
                            "Exact force-store updates should only be active for exact r-RESPA");

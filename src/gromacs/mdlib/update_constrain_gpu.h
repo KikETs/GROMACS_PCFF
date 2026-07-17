@@ -128,6 +128,45 @@ public:
      */
     void driftOnly(real dt);
 
+#if GMX_GPU_CUDA
+    /*! \brief Upload the state-to-NBNXM atom mapping for direct exact r-RESPA device kicks. */
+    void setExactRespaNbnxmAtomOrder(gmx::ArrayRef<const int> stateToNbnxm);
+
+    /*! \brief Fuse up to two pending NVT velocity scales into the next initial device kick. */
+    void setExactRespaVelocityScaling(float velocityScaleFirst, float velocityScaleSecond);
+
+    /*! \brief Apply an exact r-RESPA initial half-kick and drift on the GPU. */
+    void exactRespaKickAndDrift(DeviceBuffer<RVec> d_level0Force,
+                               DeviceBuffer<RVec> d_level1Force,
+                               DeviceBuffer<RVec> d_level2Force,
+                               int                  highestActiveLevel,
+                               real                 level0HalfDt,
+                               real                 level1HalfDt,
+                               real                 level2HalfDt,
+                               real                 dt);
+
+    /*! \brief Apply an exact r-RESPA final half-kick on the GPU. */
+    void exactRespaKick(DeviceBuffer<RVec> d_level0Force,
+                       DeviceBuffer<RVec> d_level1Force,
+                       DeviceBuffer<RVec> d_level2Force,
+                       int                  highestActiveLevel,
+                       real                 level0HalfDt,
+                       real                 level1HalfDt,
+                       real                 level2HalfDt);
+
+    /*! \brief Return full-step kinetic energy reduced from current device velocities. */
+    real exactRespaKineticEnergy();
+
+    /*! \brief Launch kinetic-energy reduction and scalar readback without waiting. */
+    void launchExactRespaKineticEnergy();
+
+    /*! \brief Wait for and return a previously launched kinetic-energy reduction. */
+    real finishExactRespaKineticEnergy();
+
+    /*! \brief Apply one scalar Nose-Hoover scale to current device velocities. */
+    void exactRespaScaleVelocities(real velocityScale);
+#endif
+
     /*! \brief Scale coordinates on the GPU for the pressure coupling.
      *
      * After pressure coupling step, the box size may change. Hence, the coordinates should be

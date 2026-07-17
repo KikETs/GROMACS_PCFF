@@ -136,6 +136,135 @@ void UpdateConstrainGpu::Impl::driftOnly(const real dt)
     wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
 }
 
+#if GMX_GPU_CUDA
+void UpdateConstrainGpu::Impl::setExactRespaNbnxmAtomOrder(const ArrayRef<const int> stateToNbnxm)
+{
+    integrator_->setExactRespaNbnxmAtomOrder(stateToNbnxm);
+}
+
+void UpdateConstrainGpu::Impl::setExactRespaVelocityScaling(const float velocityScaleFirst,
+                                                            const float velocityScaleSecond)
+{
+    exactRespaVelocityScaleFirst_  = velocityScaleFirst;
+    exactRespaVelocityScaleSecond_ = velocityScaleSecond;
+}
+
+void UpdateConstrainGpu::Impl::exactRespaKickAndDrift(DeviceBuffer<Float3> d_level0Force,
+                                                      DeviceBuffer<Float3> d_level1Force,
+                                                      DeviceBuffer<Float3> d_level2Force,
+                                                      const int highestActiveLevel,
+                                                      const real level0HalfDt,
+                                                      const real level1HalfDt,
+                                                      const real level2HalfDt,
+                                                      const real dt)
+{
+    wallcycle_start_nocount(wcycle_, WallCycleCounter::LaunchGpuPp);
+    wallcycle_sub_start(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+
+    if (numAtoms_ != 0)
+    {
+        integrator_->exactRespaKickAndDrift(d_x_,
+                                            d_v_,
+                                            d_level0Force,
+                                            d_level1Force,
+                                            d_level2Force,
+                                            highestActiveLevel,
+                                            level0HalfDt,
+                                            level1HalfDt,
+                                            level2HalfDt,
+                                            dt,
+                                            exactRespaVelocityScaleFirst_,
+                                            exactRespaVelocityScaleSecond_);
+        exactRespaVelocityScaleFirst_  = 1.0F;
+        exactRespaVelocityScaleSecond_ = 1.0F;
+    }
+    xUpdatedOnDeviceEvent_.markEvent(deviceStream_);
+
+    wallcycle_sub_stop(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+    wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
+}
+
+void UpdateConstrainGpu::Impl::exactRespaKick(DeviceBuffer<Float3> d_level0Force,
+                                              DeviceBuffer<Float3> d_level1Force,
+                                              DeviceBuffer<Float3> d_level2Force,
+                                              const int highestActiveLevel,
+                                              const real level0HalfDt,
+                                              const real level1HalfDt,
+                                              const real level2HalfDt)
+{
+    wallcycle_start_nocount(wcycle_, WallCycleCounter::LaunchGpuPp);
+    wallcycle_sub_start(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+
+    if (numAtoms_ != 0)
+    {
+        integrator_->exactRespaKick(d_x_,
+                                   d_v_,
+                                   d_level0Force,
+                                   d_level1Force,
+                                   d_level2Force,
+                                   highestActiveLevel,
+                                   level0HalfDt,
+                                   level1HalfDt,
+                                   level2HalfDt);
+    }
+
+    wallcycle_sub_stop(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+    wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
+}
+
+real UpdateConstrainGpu::Impl::exactRespaKineticEnergy()
+{
+    wallcycle_start_nocount(wcycle_, WallCycleCounter::LaunchGpuPp);
+    wallcycle_sub_start(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+
+    const real kineticEnergy = numAtoms_ != 0 ? integrator_->exactRespaKineticEnergy(d_v_) : 0;
+
+    wallcycle_sub_stop(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+    wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
+    return kineticEnergy;
+}
+
+void UpdateConstrainGpu::Impl::launchExactRespaKineticEnergy()
+{
+    wallcycle_start_nocount(wcycle_, WallCycleCounter::LaunchGpuPp);
+    wallcycle_sub_start(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+
+    if (numAtoms_ != 0)
+    {
+        integrator_->launchExactRespaKineticEnergy(d_v_);
+    }
+
+    wallcycle_sub_stop(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+    wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
+}
+
+real UpdateConstrainGpu::Impl::finishExactRespaKineticEnergy()
+{
+    wallcycle_start_nocount(wcycle_, WallCycleCounter::LaunchGpuPp);
+    wallcycle_sub_start(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+
+    const real kineticEnergy = numAtoms_ != 0 ? integrator_->finishExactRespaKineticEnergy() : 0;
+
+    wallcycle_sub_stop(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+    wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
+    return kineticEnergy;
+}
+
+void UpdateConstrainGpu::Impl::exactRespaScaleVelocities(const real velocityScale)
+{
+    wallcycle_start_nocount(wcycle_, WallCycleCounter::LaunchGpuPp);
+    wallcycle_sub_start(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+
+    if (numAtoms_ != 0)
+    {
+        integrator_->exactRespaScaleVelocities(d_v_, velocityScale);
+    }
+
+    wallcycle_sub_stop(wcycle_, WallCycleSubCounter::LaunchGpuUpdateConstrain);
+    wallcycle_stop(wcycle_, WallCycleCounter::LaunchGpuPp);
+}
+#endif
+
 void UpdateConstrainGpu::Impl::scaleCoordinates(const Matrix3x3& scalingMatrix)
 {
     if (numAtoms_ == 0)
@@ -225,7 +354,7 @@ void UpdateConstrainGpu::Impl::set(DeviceBuffer<Float3>          d_x,
             &d_inverseMasses_, numAtoms_, &numInverseMasses_, &numInverseMassesAlloc_, deviceContext_);
 
     // Integrator should also update something, but it does not even have a method yet
-    integrator_->set(numAtoms_, md.invmass, md.cTC);
+    integrator_->set(numAtoms_, md.invmass, md.massT, md.cTC);
     if constexpr (GpuConfigurationCapabilities::Update)
     {
         wallcycle_sub_start(wcycle_, WallCycleSubCounter::GpuSetLincs);
@@ -294,6 +423,75 @@ void UpdateConstrainGpu::driftOnly(const real dt)
 {
     impl_->driftOnly(dt);
 }
+
+#if GMX_GPU_CUDA
+void UpdateConstrainGpu::setExactRespaNbnxmAtomOrder(const gmx::ArrayRef<const int> stateToNbnxm)
+{
+    impl_->setExactRespaNbnxmAtomOrder(stateToNbnxm);
+}
+
+void UpdateConstrainGpu::setExactRespaVelocityScaling(const float velocityScaleFirst,
+                                                      const float velocityScaleSecond)
+{
+    impl_->setExactRespaVelocityScaling(velocityScaleFirst, velocityScaleSecond);
+}
+
+void UpdateConstrainGpu::exactRespaKickAndDrift(DeviceBuffer<Float3> d_level0Force,
+                                               DeviceBuffer<Float3> d_level1Force,
+                                               DeviceBuffer<Float3> d_level2Force,
+                                               const int highestActiveLevel,
+                                               const real level0HalfDt,
+                                               const real level1HalfDt,
+                                               const real level2HalfDt,
+                                               const real dt)
+{
+    impl_->exactRespaKickAndDrift(d_level0Force,
+                                 d_level1Force,
+                                 d_level2Force,
+                                 highestActiveLevel,
+                                 level0HalfDt,
+                                 level1HalfDt,
+                                 level2HalfDt,
+                                 dt);
+}
+
+void UpdateConstrainGpu::exactRespaKick(DeviceBuffer<Float3> d_level0Force,
+                                       DeviceBuffer<Float3> d_level1Force,
+                                       DeviceBuffer<Float3> d_level2Force,
+                                       const int highestActiveLevel,
+                                       const real level0HalfDt,
+                                       const real level1HalfDt,
+                                       const real level2HalfDt)
+{
+    impl_->exactRespaKick(d_level0Force,
+                         d_level1Force,
+                         d_level2Force,
+                         highestActiveLevel,
+                         level0HalfDt,
+                         level1HalfDt,
+                         level2HalfDt);
+}
+
+real UpdateConstrainGpu::exactRespaKineticEnergy()
+{
+    return impl_->exactRespaKineticEnergy();
+}
+
+void UpdateConstrainGpu::launchExactRespaKineticEnergy()
+{
+    impl_->launchExactRespaKineticEnergy();
+}
+
+real UpdateConstrainGpu::finishExactRespaKineticEnergy()
+{
+    return impl_->finishExactRespaKineticEnergy();
+}
+
+void UpdateConstrainGpu::exactRespaScaleVelocities(const real velocityScale)
+{
+    impl_->exactRespaScaleVelocities(velocityScale);
+}
+#endif
 
 void UpdateConstrainGpu::scaleCoordinates(const gmx::Matrix3x3& scalingMatrix)
 {

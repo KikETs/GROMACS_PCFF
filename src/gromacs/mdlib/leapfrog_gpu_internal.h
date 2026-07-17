@@ -95,6 +95,47 @@ void launchLeapFrogDriftOnlyKernel(int                  numAtoms,
                                    float                dt,
                                    const DeviceStream&  deviceStream);
 
+#if GMX_GPU_CUDA
+//! Fixed number of partial sums used by the exact r-RESPA kinetic-energy reduction.
+inline constexpr int c_exactRespaKineticReductionBlocks = 32;
+
+/*! \brief Launch one exact r-RESPA half-kick, optionally followed by drift.
+ *
+ * Level 0 and 1 forces use NBNXM ordering and level 2 uses state ordering.
+ */
+void launchExactRespaKickKernel(int                  numAtoms,
+                               DeviceBuffer<Float3> d_x,
+                               DeviceBuffer<Float3> d_v,
+                               DeviceBuffer<Float3> d_level0Force,
+                               DeviceBuffer<Float3> d_level1Force,
+                               DeviceBuffer<Float3> d_level2Force,
+                               DeviceBuffer<float>  d_inverseMasses,
+                               DeviceBuffer<int>    d_stateToNbnxm,
+                               int                  highestActiveLevel,
+                               float                level0HalfDt,
+                               float                level1HalfDt,
+                               float                level2HalfDt,
+                               float                driftDt,
+                               float                velocityScaleFirst,
+                               float                velocityScaleSecond,
+                               bool                 initialPhase,
+                               const DeviceStream&  deviceStream);
+
+/*! \brief Reduce full-step kinetic energy from device velocities to one scalar. */
+void launchExactRespaKineticEnergyKernel(int                  numAtoms,
+                                         DeviceBuffer<Float3> d_v,
+                                         DeviceBuffer<float>  d_masses,
+                                         DeviceBuffer<float>  d_partialKineticEnergy,
+                                         DeviceBuffer<float>  d_kineticEnergy,
+                                         const DeviceStream&  deviceStream);
+
+/*! \brief Apply one scalar Nose-Hoover scale to device velocities. */
+void launchExactRespaScaleVelocityKernel(int                  numAtoms,
+                                         DeviceBuffer<Float3> d_v,
+                                         float                velocityScale,
+                                         const DeviceStream&  deviceStream);
+#endif
+
 
 } // namespace gmx
 

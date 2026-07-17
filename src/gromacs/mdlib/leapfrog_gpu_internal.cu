@@ -170,6 +170,176 @@ __launch_bounds__(c_maxThreadsPerBlock) __global__
     }
 }
 
+template<bool initialPhase>
+__launch_bounds__(c_maxThreadsPerBlock) __global__
+        void exactRespaKickKernel(const int numAtoms,
+                                 float3* __restrict__ gm_x,
+                                 float3* __restrict__ gm_v,
+                                 const float3* __restrict__ gm_level0Force,
+                                 const float3* __restrict__ gm_level1Force,
+                                 const float3* __restrict__ gm_level2Force,
+                                 const float* __restrict__ gm_inverseMasses,
+                                 const int* __restrict__ gm_stateToNbnxm,
+                                 const int   highestActiveLevel,
+                                 const float level0HalfDt,
+                                 const float level1HalfDt,
+                                 const float level2HalfDt,
+                                 const float driftDt,
+                                 const float velocityScaleFirst,
+                                 const float velocityScaleSecond)
+{
+    const int atom = blockIdx.x * blockDim.x + threadIdx.x;
+    if (atom >= numAtoms)
+    {
+        return;
+    }
+
+    const int    nbnxmAtom = gm_stateToNbnxm[atom];
+    const float  invMass   = gm_inverseMasses[atom];
+    float3       velocity  = gm_v[atom];
+    const float3 force0    = gm_level0Force[nbnxmAtom];
+
+    if constexpr (initialPhase)
+    {
+        const auto applyVelocityScale = [&](const float scale)
+        {
+            if (scale != 1.0F)
+            {
+                velocity.x = __fmul_rn(velocity.x, scale);
+                velocity.y = __fmul_rn(velocity.y, scale);
+                velocity.z = __fmul_rn(velocity.z, scale);
+            }
+        };
+        applyVelocityScale(velocityScaleFirst);
+        applyVelocityScale(velocityScaleSecond);
+    }
+
+    const auto applyKick = [&](const float3 force, const float halfDt)
+    {
+        const float scale = __fmul_rn(invMass, halfDt);
+        velocity.x        = __fadd_rn(velocity.x, __fmul_rn(scale, force.x));
+        velocity.y        = __fadd_rn(velocity.y, __fmul_rn(scale, force.y));
+        velocity.z        = __fadd_rn(velocity.z, __fmul_rn(scale, force.z));
+    };
+
+    if constexpr (initialPhase)
+    {
+        if (highestActiveLevel >= 2)
+        {
+            applyKick(gm_level2Force[atom], level2HalfDt);
+        }
+        if (highestActiveLevel >= 1)
+        {
+            applyKick(gm_level1Force[nbnxmAtom], level1HalfDt);
+        }
+        applyKick(force0, level0HalfDt);
+    }
+    else
+    {
+        applyKick(force0, level0HalfDt);
+        if (highestActiveLevel >= 1)
+        {
+            applyKick(gm_level1Force[nbnxmAtom], level1HalfDt);
+        }
+        if (highestActiveLevel >= 2)
+        {
+            applyKick(gm_level2Force[atom], level2HalfDt);
+        }
+    }
+
+    gm_v[atom] = velocity;
+    if constexpr (initialPhase)
+    {
+        const float3 position = gm_x[atom];
+        gm_x[atom] = make_float3(__fadd_rn(position.x, __fmul_rn(velocity.x, driftDt)),
+                                 __fadd_rn(position.y, __fmul_rn(velocity.y, driftDt)),
+                                 __fadd_rn(position.z, __fmul_rn(velocity.z, driftDt)));
+    }
+}
+
+__launch_bounds__(c_maxThreadsPerBlock) __global__
+        void exactRespaKineticEnergyPartialKernel(const int numAtoms,
+                                                  const float3* __restrict__ gm_v,
+                                                  const float* __restrict__ gm_masses,
+                                                  float* __restrict__ gm_partialKineticEnergy)
+{
+    const int thread = threadIdx.x;
+    int       atom   = blockIdx.x * blockDim.x + thread;
+    float     kineticEnergy = 0.0F;
+
+    while (atom < numAtoms)
+    {
+        const float3 velocity = gm_v[atom];
+        const float  halfMass = __fmul_rn(0.5F, gm_masses[atom]);
+        kineticEnergy = __fadd_rn(
+                kineticEnergy, __fmul_rn(__fmul_rn(halfMass, velocity.x), velocity.x));
+        kineticEnergy = __fadd_rn(
+                kineticEnergy, __fmul_rn(__fmul_rn(halfMass, velocity.y), velocity.y));
+        kineticEnergy = __fadd_rn(
+                kineticEnergy, __fmul_rn(__fmul_rn(halfMass, velocity.z), velocity.z));
+        atom += gridDim.x * blockDim.x;
+    }
+
+    __shared__ float reduction[c_threadsPerBlock];
+    reduction[thread] = kineticEnergy;
+    __syncthreads();
+
+    for (int stride = c_threadsPerBlock / 2; stride > 0; stride /= 2)
+    {
+        if (thread < stride)
+        {
+            reduction[thread] = __fadd_rn(reduction[thread], reduction[thread + stride]);
+        }
+        __syncthreads();
+    }
+
+    if (thread == 0)
+    {
+        gm_partialKineticEnergy[blockIdx.x] = reduction[0];
+    }
+}
+
+__launch_bounds__(c_maxThreadsPerBlock) __global__
+        void exactRespaKineticEnergyFinalizeKernel(const float* __restrict__ gm_partialKineticEnergy,
+                                                   float* __restrict__ gm_kineticEnergy)
+{
+    const int thread = threadIdx.x;
+    __shared__ float reduction[c_threadsPerBlock];
+    reduction[thread] = thread < c_exactRespaKineticReductionBlocks
+                                ? gm_partialKineticEnergy[thread]
+                                : 0.0F;
+    __syncthreads();
+
+    for (int stride = c_threadsPerBlock / 2; stride > 0; stride /= 2)
+    {
+        if (thread < stride)
+        {
+            reduction[thread] = __fadd_rn(reduction[thread], reduction[thread + stride]);
+        }
+        __syncthreads();
+    }
+
+    if (thread == 0)
+    {
+        gm_kineticEnergy[0] = reduction[0];
+    }
+}
+
+__launch_bounds__(c_maxThreadsPerBlock) __global__
+        void exactRespaScaleVelocityKernel(const int numAtoms,
+                                           float3* __restrict__ gm_v,
+                                           const float velocityScale)
+{
+    const int atom = blockIdx.x * blockDim.x + threadIdx.x;
+    if (atom < numAtoms)
+    {
+        const float3 velocity = gm_v[atom];
+        gm_v[atom] = make_float3(__fmul_rn(velocity.x, velocityScale),
+                                 __fmul_rn(velocity.y, velocityScale),
+                                 __fmul_rn(velocity.z, velocityScale));
+    }
+}
+
 void launchLeapFrogKernel(const int                             numAtoms,
                           DeviceBuffer<Float3>                  d_x,
                           DeviceBuffer<Float3>                  d_xp,
@@ -245,6 +415,153 @@ void launchLeapFrogDriftOnlyKernel(const int        numAtoms,
                     deviceStream,
                     nullptr,
                     "leapfrog_drift_only_kernel",
+                    kernelArgs);
+}
+
+void launchExactRespaKickKernel(const int                  numAtoms,
+                               DeviceBuffer<Float3>        d_x,
+                               DeviceBuffer<Float3>        d_v,
+                               const DeviceBuffer<Float3>  d_level0Force,
+                               const DeviceBuffer<Float3>  d_level1Force,
+                               const DeviceBuffer<Float3>  d_level2Force,
+                               const DeviceBuffer<float>   d_inverseMasses,
+                               const DeviceBuffer<int>     d_stateToNbnxm,
+                               const int                   highestActiveLevel,
+                               const float                 level0HalfDt,
+                               const float                 level1HalfDt,
+                               const float                 level2HalfDt,
+                               const float                 driftDt,
+                               const float                 velocityScaleFirst,
+                               const float                 velocityScaleSecond,
+                               const bool                  initialPhase,
+                               const DeviceStream&         deviceStream)
+{
+    GMX_RELEASE_ASSERT(highestActiveLevel >= 0 && highestActiveLevel <= 2,
+                       "Exact r-RESPA device kick supports 1-3 levels");
+    GMX_RELEASE_ASSERT(d_level0Force != nullptr, "Exact r-RESPA level-0 device force is missing");
+    GMX_RELEASE_ASSERT(highestActiveLevel < 1 || d_level1Force != nullptr,
+                       "Exact r-RESPA level-1 device force is missing");
+    GMX_RELEASE_ASSERT(highestActiveLevel < 2 || d_level2Force != nullptr,
+                       "Exact r-RESPA level-2 device force is missing");
+
+    KernelLaunchConfig config;
+    config.gridSize[0]      = divideRoundUp(numAtoms, c_threadsPerBlock);
+    config.blockSize[0]     = c_threadsPerBlock;
+    config.blockSize[1]     = 1;
+    config.blockSize[2]     = 1;
+    config.sharedMemorySize = 0;
+
+    const auto launch = [&](auto kernelPtr)
+    {
+        const auto kernelArgs = prepareGpuKernelArguments(kernelPtr,
+                                                          config,
+                                                          &numAtoms,
+                                                          asFloat3Pointer(&d_x),
+                                                          asFloat3Pointer(&d_v),
+                                                          asFloat3Pointer(&d_level0Force),
+                                                          asFloat3Pointer(&d_level1Force),
+                                                          asFloat3Pointer(&d_level2Force),
+                                                          &d_inverseMasses,
+                                                          &d_stateToNbnxm,
+                                                          &highestActiveLevel,
+                                                          &level0HalfDt,
+                                                          &level1HalfDt,
+                                                          &level2HalfDt,
+                                                          &driftDt,
+                                                          &velocityScaleFirst,
+                                                          &velocityScaleSecond);
+        launchGpuKernel(kernelPtr,
+                        config,
+                        deviceStream,
+                        nullptr,
+                        initialPhase ? "exact_respa_kick_drift" : "exact_respa_kick",
+                        kernelArgs);
+    };
+
+    if (initialPhase)
+    {
+        launch(exactRespaKickKernel<true>);
+    }
+    else
+    {
+        launch(exactRespaKickKernel<false>);
+    }
+}
+
+void launchExactRespaKineticEnergyKernel(const int                  numAtoms,
+                                         DeviceBuffer<Float3>        d_v,
+                                         const DeviceBuffer<float>   d_masses,
+                                         DeviceBuffer<float>         d_partialKineticEnergy,
+                                         DeviceBuffer<float>         d_kineticEnergy,
+                                         const DeviceStream&         deviceStream)
+{
+    GMX_RELEASE_ASSERT(d_v != nullptr, "Exact r-RESPA device velocities are missing");
+    GMX_RELEASE_ASSERT(d_masses != nullptr, "Exact r-RESPA device masses are missing");
+    GMX_RELEASE_ASSERT(d_partialKineticEnergy != nullptr,
+                       "Exact r-RESPA kinetic partial buffer is missing");
+    GMX_RELEASE_ASSERT(d_kineticEnergy != nullptr,
+                       "Exact r-RESPA kinetic result buffer is missing");
+
+    KernelLaunchConfig partialConfig;
+    partialConfig.gridSize[0]      = c_exactRespaKineticReductionBlocks;
+    partialConfig.blockSize[0]     = c_threadsPerBlock;
+    partialConfig.blockSize[1]     = 1;
+    partialConfig.blockSize[2]     = 1;
+    partialConfig.sharedMemorySize = 0;
+    const auto partialArgs = prepareGpuKernelArguments(exactRespaKineticEnergyPartialKernel,
+                                                       partialConfig,
+                                                       &numAtoms,
+                                                       asFloat3Pointer(&d_v),
+                                                       &d_masses,
+                                                       &d_partialKineticEnergy);
+    launchGpuKernel(exactRespaKineticEnergyPartialKernel,
+                    partialConfig,
+                    deviceStream,
+                    nullptr,
+                    "exact_respa_kinetic_partial",
+                    partialArgs);
+
+    KernelLaunchConfig finalizeConfig;
+    finalizeConfig.gridSize[0]      = 1;
+    finalizeConfig.blockSize[0]     = c_threadsPerBlock;
+    finalizeConfig.blockSize[1]     = 1;
+    finalizeConfig.blockSize[2]     = 1;
+    finalizeConfig.sharedMemorySize = 0;
+    const auto finalizeArgs = prepareGpuKernelArguments(exactRespaKineticEnergyFinalizeKernel,
+                                                        finalizeConfig,
+                                                        &d_partialKineticEnergy,
+                                                        &d_kineticEnergy);
+    launchGpuKernel(exactRespaKineticEnergyFinalizeKernel,
+                    finalizeConfig,
+                    deviceStream,
+                    nullptr,
+                    "exact_respa_kinetic_finalize",
+                    finalizeArgs);
+}
+
+void launchExactRespaScaleVelocityKernel(const int                  numAtoms,
+                                         DeviceBuffer<Float3>        d_v,
+                                         const float                 velocityScale,
+                                         const DeviceStream&         deviceStream)
+{
+    GMX_RELEASE_ASSERT(d_v != nullptr, "Exact r-RESPA device velocities are missing");
+
+    KernelLaunchConfig config;
+    config.gridSize[0]      = divideRoundUp(numAtoms, c_threadsPerBlock);
+    config.blockSize[0]     = c_threadsPerBlock;
+    config.blockSize[1]     = 1;
+    config.blockSize[2]     = 1;
+    config.sharedMemorySize = 0;
+    const auto kernelArgs = prepareGpuKernelArguments(exactRespaScaleVelocityKernel,
+                                                      config,
+                                                      &numAtoms,
+                                                      asFloat3Pointer(&d_v),
+                                                      &velocityScale);
+    launchGpuKernel(exactRespaScaleVelocityKernel,
+                    config,
+                    deviceStream,
+                    nullptr,
+                    "exact_respa_scale_velocity",
                     kernelArgs);
 }
 

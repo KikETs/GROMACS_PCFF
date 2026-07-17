@@ -173,6 +173,11 @@ GPU_FUNC_QUALIFIER
 void gpu_prepare_exact_respa_multi_force_outputs(NbnxmGpu gmx_unused* nb,
                                                  int gmx_unused       numContributions) GPU_FUNC_TERM;
 
+/*! \brief Clears one persistent exact r-RESPA force-only output buffer. */
+GPU_FUNC_QUALIFIER
+void gpu_clear_exact_respa_multi_force_output(NbnxmGpu gmx_unused* nb,
+                                              int gmx_unused       contributionOutputIndex) GPU_FUNC_TERM;
+
 /*! \brief Routes subsequent NBNXM GPU force output to one exact r-RESPA force-only buffer. */
 GPU_FUNC_QUALIFIER
 void gpu_select_exact_respa_multi_force_output(NbnxmGpu gmx_unused* nb,

@@ -56,6 +56,7 @@
 #include "gromacs/ewald/pme_pp_comm_gpu.h"
 #include "gromacs/fileio/filetypes.h"
 #include "gromacs/gmxlib/network.h"
+#include "gromacs/gpu_utils/gpueventsynchronizer.h"
 #include "gromacs/gpu_utils/gpu_utils.h"
 #include "gromacs/hardware/hw_info.h"
 #include "gromacs/listed_forces/listed_forces.h"
@@ -1299,6 +1300,7 @@ void init_forcerec(FILE*                            fplog,
 }
 
 t_forcerec::t_forcerec(const bool useGpuPmePpCommunication) :
+    exactRespaLocalForcesReady{ std::make_unique<GpuEventSynchronizer>() },
     pmeForceReceiveBuffer{ gmx::HostAllocationPolicy{ useGpuPmePpCommunication
                                                               ? gmx::PinningPolicy::PinnedIfSupported
                                                               : gmx::PinningPolicy::CannotBePinned } }
