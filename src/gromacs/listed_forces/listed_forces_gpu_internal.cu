@@ -85,11 +85,13 @@ constexpr int c_bondClass2GpuIndex     = 1;
 constexpr int c_angleClass2GpuIndex    = 4;
 constexpr int c_dihedralClass2GpuIndex = 7;
 constexpr int c_improperClass2GpuIndex = 9;
+constexpr int c_lennardJones14GpuIndex = 11;
 
 static_assert(fTypesOnGpu[c_bondClass2GpuIndex] == InteractionFunction::BondClass2);
 static_assert(fTypesOnGpu[c_angleClass2GpuIndex] == InteractionFunction::AngleClass2);
 static_assert(fTypesOnGpu[c_dihedralClass2GpuIndex] == InteractionFunction::DihedralClass2);
 static_assert(fTypesOnGpu[c_improperClass2GpuIndex] == InteractionFunction::ImproperClass2);
+static_assert(fTypesOnGpu[c_lennardJones14GpuIndex] == InteractionFunction::LennardJones14);
 
 bool useSpecializedPcffClass2ForceKernel(const BondedGpuKernelParameters& kernelParams)
 {
@@ -103,7 +105,7 @@ bool useSpecializedPcffClass2ForceKernel(const BondedGpuKernelParameters& kernel
         return false;
     }
 
-    bool haveClass2Interaction = false;
+    bool haveSpecializedInteraction = false;
     for (int gpuIndex = 0; gpuIndex < numFTypesOnGpu; ++gpuIndex)
     {
         if (kernelParams.numFTypeBonds[gpuIndex] == 0)
@@ -111,17 +113,18 @@ bool useSpecializedPcffClass2ForceKernel(const BondedGpuKernelParameters& kernel
             continue;
         }
         const InteractionFunction fType = kernelParams.fTypesOnGpu[gpuIndex];
-        const bool isClass2 = fType == InteractionFunction::BondClass2
-                              || fType == InteractionFunction::AngleClass2
-                              || fType == InteractionFunction::DihedralClass2
-                              || fType == InteractionFunction::ImproperClass2;
-        if (!isClass2)
+        const bool isSpecializedType = fType == InteractionFunction::BondClass2
+                                       || fType == InteractionFunction::AngleClass2
+                                       || fType == InteractionFunction::DihedralClass2
+                                       || fType == InteractionFunction::ImproperClass2
+                                       || fType == InteractionFunction::LennardJones14;
+        if (!isSpecializedType)
         {
             return false;
         }
-        haveClass2Interaction = true;
+        haveSpecializedInteraction = true;
     }
-    return haveClass2Interaction;
+    return haveSpecializedInteraction;
 }
 
 } // namespace
@@ -442,6 +445,29 @@ __device__ __forceinline__ void pcffClass2ForceKernelBody(BondedGpuKernelParamet
                     nullptr,
                     kernelParams.pbcAiuc,
                     threadIdx.x);
+        }
+        return;
+    }
+    if (tid >= kernelParams.fTypeRangeStart[c_lennardJones14GpuIndex]
+        && tid <= kernelParams.fTypeRangeEnd[c_lennardJones14GpuIndex])
+    {
+        const int fTypeTid = tid - kernelParams.fTypeRangeStart[c_lennardJones14GpuIndex];
+        if (fTypeTid < kernelParams.numFTypeBonds[c_lennardJones14GpuIndex])
+        {
+            float ignoredVdwEnergy  = 0.0F;
+            float ignoredElecEnergy = 0.0F;
+            pairs_gpu<false, false>(fTypeTid,
+                                    kernelBuffers.d_iatoms[c_lennardJones14GpuIndex],
+                                    kernelBuffers.d_forceParams,
+                                    gm_xq,
+                                    gm_f,
+                                    nullptr,
+                                    kernelParams.pbcAiuc,
+                                    kernelParams.repulsionPower,
+                                    kernelParams.electrostaticsScaleFactor,
+                                    &ignoredVdwEnergy,
+                                    &ignoredElecEnergy,
+                                    threadIdx.x);
         }
     }
 }

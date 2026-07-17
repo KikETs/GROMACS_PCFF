@@ -386,6 +386,15 @@ struct nbnxn_atomdata_t
                                   ArrayRef<RVec>                totalForce,
                                   bool                          preferSmallSerialAdd = false);
 
+    /*! \brief Add two single-buffer NBNXM force outputs to separate force arrays. */
+    void reduceTwoForceOutputBuffers(
+            AtomLocality locality,
+            const GridSet& gridSet,
+            ArrayRef<const nbnxn_atomdata_output_t> firstOutputBuffers,
+            ArrayRef<RVec> firstForce,
+            ArrayRef<const nbnxn_atomdata_output_t> secondOutputBuffers,
+            ArrayRef<RVec> secondForce);
+
     /*! \brief Clears the force buffer.
      *
      * Either the whole buffer is cleared or only the parts used

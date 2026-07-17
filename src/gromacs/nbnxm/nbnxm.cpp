@@ -233,6 +233,33 @@ void nonbonded_verlet_t::atomdata_add_native_multi_nbat_f_to_f(
     wallcycle_stop(wcycle_, WallCycleCounter::NbXFBufOps);
 }
 
+void nonbonded_verlet_t::atomdata_add_native_multi_and_nbat_f_to_f(
+        const int contributionOutputIndex,
+        const AtomLocality locality,
+        const ArrayRef<RVec> nativeForce,
+        const ArrayRef<RVec> defaultForce)
+{
+    if (!pairlistIsSimple() && !haveGpuShortRangeWork(gpuNbv_, atomToInteractionLocality(locality)))
+    {
+        return;
+    }
+
+    wallcycle_start(wcycle_, WallCycleCounter::NbXFBufOps);
+    wallcycle_sub_start(wcycle_, WallCycleSubCounter::NBFBufOps);
+
+    const auto nativeOutputBuffers =
+            nbat_->nativeMultiContributionOutputBuffers(contributionOutputIndex);
+    nbat_->reduceTwoForceOutputBuffers(locality,
+                                       pairSearch_->gridSet(),
+                                       nativeOutputBuffers,
+                                       nativeForce,
+                                       nbat_->outputBuffers(),
+                                       defaultForce);
+
+    wallcycle_sub_stop(wcycle_, WallCycleSubCounter::NBFBufOps);
+    wallcycle_stop(wcycle_, WallCycleCounter::NbXFBufOps);
+}
+
 namespace
 {
 

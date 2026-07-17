@@ -109,6 +109,8 @@ static bool exactRespaGpuBondedModeOffloadsFtype(const InteractionFunction fType
     if (mode != nullptr
         && (std::strcmp(mode, "class2-pair14") == 0
             || std::strcmp(mode, "class2_pair14") == 0 || std::strcmp(mode, "pcff") == 0
+            || std::strcmp(mode, "class2-pair14-fused") == 0
+            || std::strcmp(mode, "class2_pair14_fused") == 0
             || std::strcmp(mode, "pcff-class2-pair14") == 0
             || std::strcmp(mode, "pcff_class2_pair14") == 0))
     {

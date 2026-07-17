@@ -552,6 +552,12 @@ public:
                                                AtomLocality   locality,
                                                ArrayRef<RVec> force);
 
+    /*! \brief Add native exact r-RESPA and default NBNXM outputs to separate force sinks. */
+    void atomdata_add_native_multi_and_nbat_f_to_f(int            contributionOutputIndex,
+                                                   AtomLocality   locality,
+                                                   ArrayRef<RVec> nativeForce,
+                                                   ArrayRef<RVec> defaultForce);
+
     /*! \brief Reduce one exact r-RESPA contribution into the matching nbnxm output sink.
      *
      * This contract currently supports one reduced sink per contribution. It

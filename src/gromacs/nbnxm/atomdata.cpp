@@ -1607,6 +1607,89 @@ static void addNbatFPackedToFPart(const nbnxn_atomdata_output_t& out,
     }
 }
 
+template<int forceStride>
+static void addTwoNbatFXYZToFPart(const nbnxn_atomdata_output_t& firstOut,
+                                  const nbnxn_atomdata_output_t& secondOut,
+                                  const int                      a0,
+                                  const int                      a1,
+                                  const int*                     cellIndices,
+                                  ArrayRef<RVec>                 firstForces,
+                                  ArrayRef<RVec>                 secondForces)
+{
+    const real* gmx_restrict firstNbat  = firstOut.f.data();
+    const real* gmx_restrict secondNbat = secondOut.f.data();
+    RVec* gmx_restrict       first      = firstForces.data();
+    RVec* gmx_restrict       second     = secondForces.data();
+
+    for (int atom = a0; atom < a1; ++atom)
+    {
+        const int nbatAtom   = (cellIndices == nullptr) ? atom : cellIndices[atom];
+        const int atomOffset = nbatAtom * forceStride;
+
+        first[atom][XX] += firstNbat[atomOffset + XX];
+        first[atom][YY] += firstNbat[atomOffset + YY];
+        first[atom][ZZ] += firstNbat[atomOffset + ZZ];
+        second[atom][XX] += secondNbat[atomOffset + XX];
+        second[atom][YY] += secondNbat[atomOffset + YY];
+        second[atom][ZZ] += secondNbat[atomOffset + ZZ];
+    }
+}
+
+template<int packSize>
+static void addTwoNbatFPackedToFPart(const nbnxn_atomdata_output_t& firstOut,
+                                     const nbnxn_atomdata_output_t& secondOut,
+                                     const int                      a0,
+                                     const int                      a1,
+                                     const int*                     cellIndices,
+                                     ArrayRef<RVec>                 firstForces,
+                                     ArrayRef<RVec>                 secondForces)
+{
+    GMX_ASSERT(cellIndices != nullptr || a0 % packSize == 0,
+               "Start atom should be a multiple of pack size");
+    GMX_ASSERT(cellIndices != nullptr || a1 % packSize == 0,
+               "End atom should be a multiple of pack size");
+
+    const real* gmx_restrict firstNbat  = firstOut.f.data();
+    const real* gmx_restrict secondNbat = secondOut.f.data();
+    RVec* gmx_restrict       first      = firstForces.data();
+    RVec* gmx_restrict       second     = secondForces.data();
+
+    if (cellIndices == nullptr)
+    {
+        for (int iPack = a0; iPack < a1; iPack += packSize)
+        {
+            const int offset  = iPack * DIM;
+            const int xOffset = offset + XX * packSize;
+            const int yOffset = offset + YY * packSize;
+            const int zOffset = offset + ZZ * packSize;
+
+            for (int lane = 0; lane < packSize; ++lane)
+            {
+                const int atom = iPack + lane;
+                first[atom][XX] += firstNbat[xOffset + lane];
+                first[atom][YY] += firstNbat[yOffset + lane];
+                first[atom][ZZ] += firstNbat[zOffset + lane];
+                second[atom][XX] += secondNbat[xOffset + lane];
+                second[atom][YY] += secondNbat[yOffset + lane];
+                second[atom][ZZ] += secondNbat[zOffset + lane];
+            }
+        }
+    }
+    else
+    {
+        for (int atom = a0; atom < a1; ++atom)
+        {
+            const int nbatIndex = atom_to_x_index<packSize>(cellIndices[atom]);
+            first[atom][XX] += firstNbat[nbatIndex + XX * packSize];
+            first[atom][YY] += firstNbat[nbatIndex + YY * packSize];
+            first[atom][ZZ] += firstNbat[nbatIndex + ZZ * packSize];
+            second[atom][XX] += secondNbat[nbatIndex + XX * packSize];
+            second[atom][YY] += secondNbat[nbatIndex + YY * packSize];
+            second[atom][ZZ] += secondNbat[nbatIndex + ZZ * packSize];
+        }
+    }
+}
+
 void nbnxn_atomdata_t::reduceForcesOverThreads(ArrayRef<nbnxn_atomdata_output_t> outputBuffers)
 {
     // The number of output buffers should match the number of OpenMP threads
@@ -1818,6 +1901,101 @@ void nbnxn_atomdata_t::reduceForceOutputBuffers(const AtomLocality              
             }
             GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
         }
+    }
+}
+
+void nbnxn_atomdata_t::reduceTwoForceOutputBuffers(
+        const AtomLocality locality,
+        const GridSet& gridSet,
+        const ArrayRef<const nbnxn_atomdata_output_t> firstOutputBuffers,
+        const ArrayRef<RVec> firstForce,
+        const ArrayRef<const nbnxn_atomdata_output_t> secondOutputBuffers,
+        const ArrayRef<RVec> secondForce)
+{
+    const auto atomRange = getAtomRange(locality, gridSet);
+    if (atomRange.empty())
+    {
+        return;
+    }
+
+    GMX_RELEASE_ASSERT(firstOutputBuffers.size() == 1 && secondOutputBuffers.size() == 1,
+                       "Fused NBNXM force addition requires one output buffer per source");
+    GMX_ASSERT(ssize(firstForce) >= atomRange.size() && ssize(secondForce) >= atomRange.size(),
+               "The force buffers need to be sufficiently large");
+    GMX_RELEASE_ASSERT(firstForce.data() != secondForce.data(),
+                       "Fused NBNXM force addition requires distinct force sinks");
+
+    const int* binIndices =
+            gridSet.localAtomOrderMatchesNbnxmOrder() ? nullptr : gridSet.bins().data();
+    const int atomSplit =
+            gridSet.localAtomOrderMatchesNbnxmOrder() ? (FFormat == nbatX8 ? 8 : 4) : 1;
+    GMX_ASSERT(atomRange.size() % atomSplit == 0, "atomRange should be divisible by atomSplit");
+
+    const auto addForceRange = [&](const int atomStart, const int atomEnd)
+    {
+        switch (FFormat)
+        {
+            case nbatXYZ:
+                addTwoNbatFXYZToFPart<STRIDE_XYZ>(firstOutputBuffers[0],
+                                                  secondOutputBuffers[0],
+                                                  atomStart,
+                                                  atomEnd,
+                                                  binIndices,
+                                                  firstForce,
+                                                  secondForce);
+                break;
+            case nbatXYZQ:
+                addTwoNbatFXYZToFPart<STRIDE_XYZQ>(firstOutputBuffers[0],
+                                                   secondOutputBuffers[0],
+                                                   atomStart,
+                                                   atomEnd,
+                                                   binIndices,
+                                                   firstForce,
+                                                   secondForce);
+                break;
+            case nbatX4:
+                addTwoNbatFPackedToFPart<c_packX4>(firstOutputBuffers[0],
+                                                   secondOutputBuffers[0],
+                                                   atomStart,
+                                                   atomEnd,
+                                                   binIndices,
+                                                   firstForce,
+                                                   secondForce);
+                break;
+            case nbatX8:
+                addTwoNbatFPackedToFPart<c_packX8>(firstOutputBuffers[0],
+                                                   secondOutputBuffers[0],
+                                                   atomStart,
+                                                   atomEnd,
+                                                   binIndices,
+                                                   firstForce,
+                                                   secondForce);
+                break;
+            default: GMX_RELEASE_ASSERT(false, "Unsupported force format");
+        }
+    };
+
+    const int addWorkers = gmx_omp_nthreads_get(ModuleMultiThread::Nonbonded);
+    if (addWorkers == 1)
+    {
+        addForceRange(*atomRange.begin(), *atomRange.end());
+        return;
+    }
+
+#pragma omp parallel for num_threads(addWorkers) schedule(static)
+    for (int th = 0; th < addWorkers; ++th)
+    {
+        try
+        {
+            const int atomStart = *atomRange.begin()
+                                  + ((th + 0) * atomRange.size() / atomSplit) / addWorkers
+                                            * atomSplit;
+            const int atomEnd = *atomRange.begin()
+                                + ((th + 1) * atomRange.size() / atomSplit) / addWorkers
+                                          * atomSplit;
+            addForceRange(atomStart, atomEnd);
+        }
+        GMX_CATCH_ALL_AND_EXIT_WITH_FATAL_ERROR
     }
 }
 
