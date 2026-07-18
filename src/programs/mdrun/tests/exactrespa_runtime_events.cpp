@@ -365,6 +365,21 @@ class ExactRespaRuntimeEventOrderTest :
 {
 };
 
+TEST(ExactRespaPostTrotterReplayTest, DefaultReplayRequestsNextVirial)
+{
+    EXPECT_TRUE(exactRespaPostTrotterReplayNeedsNextVirialForTesting(nullptr));
+    EXPECT_TRUE(exactRespaPostTrotterReplayNeedsNextVirialForTesting(""));
+}
+
+TEST(ExactRespaPostTrotterReplayTest, ExplicitReplayRequestsVirialOnlyForFinalHalf)
+{
+    EXPECT_TRUE(exactRespaPostTrotterReplayNeedsNextVirialForTesting("two"));
+    EXPECT_TRUE(exactRespaPostTrotterReplayNeedsNextVirialForTesting("three"));
+    EXPECT_TRUE(exactRespaPostTrotterReplayNeedsNextVirialForTesting("2,3"));
+    EXPECT_FALSE(exactRespaPostTrotterReplayNeedsNextVirialForTesting("none"));
+    EXPECT_FALSE(exactRespaPostTrotterReplayNeedsNextVirialForTesting("0"));
+}
+
 TEST_P(ExactRespaRuntimeEventOrderTest, MatchesLAMMPSReferenceEventOrder)
 {
     const auto [systemIdRaw, level2Factor, level3Factor, outerCycles] = GetParam();

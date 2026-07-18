@@ -160,6 +160,7 @@ set(exename "mdrun-non-integrator-test")
 gmx_add_gtest_executable(${exename}
     CPP_SOURCE_FILES
         # files with code for tests
+        exactrespa_soft_start.cpp
         exactrespa_runtime_events.cpp
         nonbonded_bench.cpp
         pcff_short_md.cpp

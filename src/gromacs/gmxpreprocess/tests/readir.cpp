@@ -217,6 +217,24 @@ TEST_F(GetIrTest, AcceptsEmptyLines)
     runTest(inputMdpFile);
 }
 
+TEST_F(GetIrTest, AcceptsAnnealingStartingAtNonzeroInitStepTime)
+{
+    const char* inputMdpFile[] = { "integrator = md-vv",
+                                   "dt = 0.0005",
+                                   "nsteps = 264000",
+                                   "tinit = 0",
+                                   "init-step = 400000",
+                                   "tcoupl = nose-hoover",
+                                   "tc-grps = System",
+                                   "tau-t = 0.2",
+                                   "ref-t = 453",
+                                   "annealing = single",
+                                   "annealing-npoints = 2",
+                                   "annealing-time = 200 332",
+                                   "annealing-temp = 413.240964 453" };
+    runTest(joinStrings(inputMdpFile, "\n"), TestBehavior::NoErrorAndDoNotCompareOutput);
+}
+
 TEST_F(GetIrTest, MtsCheckNstcalcenergy)
 {
     const char* inputMdpFile[] = {

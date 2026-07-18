@@ -3676,6 +3676,17 @@ void gmx::LegacySimulator::do_md()
                                 &bSumEkinhOld,
                                 &saved_conserved_quantity,
                                 &last_ekin);
+                        // integrateVVFirstStep() normally preserves the current virial in the
+                        // checkpoint state for the first step after an MTTK restart. The exact
+                        // r-RESPA path bypasses that routine, so mirror its checkpoint hand-off
+                        // here whenever this step actually produced a virial. Without this, the
+                        // restart kludge below restores an all-zero tensor and writes a
+                        // kinetic-only pressure for the checkpoint-boundary energy frame.
+                        if (bCalcVir && (inputrecNptTrotter(ir) || inputrecNphTrotter(ir)))
+                        {
+                            copy_mat(shake_vir, state_->svir_prev);
+                            copy_mat(force_vir, state_->fvir_prev);
+                        }
                         exactRespaGpuNvtKineticReadyForPreTrotter = false;
                     }
                 }
@@ -4111,7 +4122,12 @@ void gmx::LegacySimulator::do_md()
                                                "Exact r-RESPA GPU post-Trotter work is already pending");
                             GMX_RELEASE_ASSERT(exactRespaDeviceKickPendingPostTrotterScale == 1.0F,
                                                "Exact r-RESPA post-Trotter scale is still pending");
+#if GMX_GPU
                             exactRespaGpuUpdater_->launchExactRespaKineticEnergy();
+#else
+                            GMX_RELEASE_ASSERT(false,
+                                               "Exact r-RESPA GPU kinetic reduction requires a GPU build");
+#endif
                             exactRespaGpuNvtPostTrotterPending = true;
                             exactRespaGpuNvtPostTrotterStep    = step;
                             exactRespaGpuNvtKineticReadyForPreTrotter = true;

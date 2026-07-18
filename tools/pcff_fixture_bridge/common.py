@@ -145,6 +145,75 @@ def molecule_label(system_meta: dict, molecule: dict, template_index: int) -> tu
     return (label, label)
 
 
+def generate_topological_one_four_pairs(local_bonds: list[dict], local_dihedrals: list[dict]) -> list[dict]:
+    """Return the shortest-path 1-4 pairs used by LAMMPS special_bonds."""
+
+    adjacency: dict[int, set[int]] = {}
+    bond_by_pair: dict[tuple[int, int], dict] = {}
+    for bond in local_bonds:
+        ai, aj = bond["atoms"]
+        adjacency.setdefault(ai, set()).add(aj)
+        adjacency.setdefault(aj, set()).add(ai)
+        bond_by_pair[tuple(sorted((ai, aj)))] = bond
+
+    distance_three_paths: dict[tuple[int, int], list[int]] = {}
+    for source in sorted(adjacency):
+        distance = {source: 0}
+        path = {source: [source]}
+        queue = [source]
+        for current in queue:
+            if distance[current] == 3:
+                continue
+            for neighbor in sorted(adjacency[current]):
+                if neighbor in distance:
+                    continue
+                distance[neighbor] = distance[current] + 1
+                path[neighbor] = [*path[current], neighbor]
+                queue.append(neighbor)
+        for target, separation in distance.items():
+            if separation == 3 and source < target:
+                distance_three_paths[(source, target)] = path[target]
+
+    generated_pairs = []
+    seen_pairs = set()
+    for dihedral in local_dihedrals:
+        ai, aj = dihedral["atoms"][0], dihedral["atoms"][3]
+        pair = tuple(sorted((ai, aj)))
+        if pair not in distance_three_paths or pair in seen_pairs:
+            continue
+        seen_pairs.add(pair)
+        generated_pairs.append(
+            {
+                "ai": ai,
+                "aj": aj,
+                "funct": 1,
+                "topological_distance_bonds": 3,
+                "derived_from_dihedral_id": dihedral["id"],
+                "source": dihedral["source"],
+            }
+        )
+
+    for pair in sorted(distance_three_paths.keys() - seen_pairs):
+        atom_path = distance_three_paths[pair]
+        bond_path = [
+            bond_by_pair[tuple(sorted((left, right)))]
+            for left, right in zip(atom_path, atom_path[1:])
+        ]
+        generated_pairs.append(
+            {
+                "ai": pair[0],
+                "aj": pair[1],
+                "funct": 1,
+                "topological_distance_bonds": 3,
+                "derived_from_dihedral_id": None,
+                "derived_from_bond_ids": [bond["id"] for bond in bond_path],
+                "source": bond_path[0]["source"],
+            }
+        )
+
+    return generated_pairs
+
+
 def parse_lammps_data(path: Path) -> dict:
     count_keywords = {"atoms", "bonds", "angles", "dihedrals", "impropers"}
     type_keywords = {"atom types", "bond types", "angle types", "dihedral types", "improper types"}
@@ -212,6 +281,11 @@ def parse_lammps_data(path: Path) -> dict:
                 }
                 current_section = None
                 continue
+            if len(tokens) == 6 and tokens[3:] == ["xy", "xz", "yz"]:
+                raise BridgeError(
+                    f"Restricted-triclinic LAMMPS boxes are not supported by the GRO bridge at "
+                    f"{path}:{line_number}; refusing to discard xy/xz/yz tilt factors"
+                )
 
             section_name = stripped.split(" #", 1)[0].strip()
             if section_name in section_names:
@@ -380,6 +454,10 @@ def parse_lammps_data(path: Path) -> dict:
                 )
             elif current_section == "Atoms":
                 require(len(data_tokens) >= 7, f"Malformed Atoms line at {path}:{line_number}")
+                require(
+                    len(data_tokens) == 7 or len(data_tokens) >= 10,
+                    f"Incomplete LAMMPS image flags on Atoms line at {path}:{line_number}",
+                )
                 image_flags = (
                     {
                         "ix": int(data_tokens[7]),
@@ -849,22 +927,7 @@ def build_typed_ir(system_record: dict, root: Path | None = None) -> dict:
         local_angles = localize("angles")
         local_dihedrals = localize("dihedrals")
         local_impropers = localize("impropers")
-        generated_pairs = []
-        seen_pairs = set()
-        for dihedral in local_dihedrals:
-            pair = (dihedral["atoms"][0], dihedral["atoms"][3])
-            if pair in seen_pairs:
-                continue
-            seen_pairs.add(pair)
-            generated_pairs.append(
-                {
-                    "ai": pair[0],
-                    "aj": pair[1],
-                    "funct": 1,
-                    "derived_from_dihedral_id": dihedral["id"],
-                    "source": dihedral["source"],
-                }
-            )
+        generated_pairs = generate_topological_one_four_pairs(local_bonds, local_dihedrals)
 
         base_name, residue_name = molecule_label(meta, molecule, template_index)
         signature_payload = {
@@ -965,7 +1028,7 @@ def build_typed_ir(system_record: dict, root: Path | None = None) -> dict:
         "molecule_instances": molecule_instances,
         "diagnostics": {
             "supported_gromacs_export": True,
-            "generated_pair_rule": "Each unique 1-4 pair is derived from the first and fourth atom of each Class2 dihedral because special_bonds is 0 0 1 and GROMACS needs explicit [ pairs ].",
+            "generated_pair_rule": "Each unique shortest-path 1-4 pair is derived from the bond graph because LAMMPS special_bonds is 0 0 1 and GROMACS needs explicit [ pairs ]; explicit dihedrals provide provenance when present.",
             "notes": [
                 "This IR is frozen in LAMMPS real units and retains source line provenance for every typed record.",
                 "The current exporter supports only the repository fixture style subset and fails on any unsupported command or missing coefficient family.",
@@ -1131,22 +1194,7 @@ def build_typed_ir_from_lammps_data(
         local_angles = localize("angles")
         local_dihedrals = localize("dihedrals")
         local_impropers = localize("impropers")
-        generated_pairs = []
-        seen_pairs = set()
-        for dihedral in local_dihedrals:
-            pair = (dihedral["atoms"][0], dihedral["atoms"][3])
-            if pair in seen_pairs:
-                continue
-            seen_pairs.add(pair)
-            generated_pairs.append(
-                {
-                    "ai": pair[0],
-                    "aj": pair[1],
-                    "funct": 1,
-                    "derived_from_dihedral_id": dihedral["id"],
-                    "source": dihedral["source"],
-                }
-            )
+        generated_pairs = generate_topological_one_four_pairs(local_bonds, local_dihedrals)
 
         base_name, residue = molecule_label(meta, molecule, template_index)
         signature_payload = {
@@ -1254,7 +1302,7 @@ def build_typed_ir_from_lammps_data(
                 "LAMMPS data files do not encode units, pair_modify, special_bonds, or kspace_style commands; "
                 "the CLI records those assumptions explicitly."
             ),
-            "generated_pair_rule": "Each unique 1-4 pair is derived from the first and fourth atom of each Class2 dihedral because special_bonds is 0 0 1 and GROMACS needs explicit [ pairs ].",
+            "generated_pair_rule": "Each unique shortest-path 1-4 pair is derived from the bond graph because LAMMPS special_bonds is 0 0 1 and GROMACS needs explicit [ pairs ]; explicit dihedrals provide provenance when present.",
             "notes": [
                 "This IR is frozen in LAMMPS real units and retains source line provenance for every typed record.",
                 "Missing Class2 cross-term families abort export instead of silently degrading the topology.",
@@ -1288,6 +1336,14 @@ def render_gromacs_gro_from_lammps_data(
     box_x = (parsed_data["box"]["x"]["hi"] - parsed_data["box"]["x"]["lo"]) * ANGSTROM_TO_NM
     box_y = (parsed_data["box"]["y"]["hi"] - parsed_data["box"]["y"]["lo"]) * ANGSTROM_TO_NM
     box_z = (parsed_data["box"]["z"]["hi"] - parsed_data["box"]["z"]["lo"]) * ANGSTROM_TO_NM
+    box_lengths_angstrom = {
+        axis: parsed_data["box"][axis]["hi"] - parsed_data["box"][axis]["lo"]
+        for axis in ("x", "y", "z")
+    }
+    require(
+        all(length > 0.0 and math.isfinite(length) for length in box_lengths_angstrom.values()),
+        "LAMMPS box lengths must be finite and positive for GRO export",
+    )
     origin = {
         axis: parsed_data["box"][axis]["lo"] if shift_to_origin else 0.0
         for axis in ("x", "y", "z")
@@ -1296,16 +1352,23 @@ def render_gromacs_gro_from_lammps_data(
 
     lines = [title[:80], f"{len(parsed_data['atoms']):>5d}"]
     for atom in parsed_data["atoms"]:
-        x = (atom["x_angstrom"] - origin["x"]) * ANGSTROM_TO_NM
-        y = (atom["y_angstrom"] - origin["y"]) * ANGSTROM_TO_NM
-        z = (atom["z_angstrom"] - origin["z"]) * ANGSTROM_TO_NM
+        # LAMMPS `velocity ... zero angular` uses the unwrapped coordinates
+        # reconstructed from atom image flags.  Preserve that same periodic
+        # image in the initial GROMACS state so later gen-vel stages (Eq04)
+        # inherit the representation rather than recomputing with wrapped x.
+        x_unwrapped = atom["x_angstrom"] + atom.get("ix", 0) * box_lengths_angstrom["x"]
+        y_unwrapped = atom["y_angstrom"] + atom.get("iy", 0) * box_lengths_angstrom["y"]
+        z_unwrapped = atom["z_angstrom"] + atom.get("iz", 0) * box_lengths_angstrom["z"]
+        x = (x_unwrapped - origin["x"]) * ANGSTROM_TO_NM
+        y = (y_unwrapped - origin["y"]) * ANGSTROM_TO_NM
+        z = (z_unwrapped - origin["z"]) * ANGSTROM_TO_NM
         residue_id = atom["molecule_id"] % 100000
         atom_name_value = atom_names[atom["id"]]
         lines.append(
             f"{residue_id:>5d}{residue_name[:5]:<5s}{atom_name_value[:5]:>5s}{atom['id'] % 100000:>5d}"
-            f"{x:15.7f}{y:15.7f}{z:15.7f}"
+            f"{x:18.12f}{y:18.12f}{z:18.12f}"
         )
-    lines.append(f"{box_x:15.7f}{box_y:15.7f}{box_z:15.7f}")
+    lines.append(f"{box_x:18.12f}{box_y:18.12f}{box_z:18.12f}")
     return "\n".join(lines) + "\n"
 
 

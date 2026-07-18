@@ -49,6 +49,7 @@
 #include "gromacs/utility/real.h"
 
 #include "exactrespastepper.h"
+#include "exactrespasoftstart.h"
 #include "isimulator.h"
 
 namespace gmx
@@ -76,7 +77,8 @@ using SimulatorFunctionType = void();
 class LegacySimulator : public ISimulator, private LegacySimulatorData
 {
 private:
-    UpdateConstrainGpu* exactRespaGpuUpdater_ = nullptr;
+    UpdateConstrainGpu*        exactRespaGpuUpdater_ = nullptr;
+    ExactRespaSoftStartState   exactRespaSoftStartState_;
 
     void prepareExactRespaVelocityVerletObservablesForStep(const t_inputrec& inputRecord,
                                                            int64_t           step,

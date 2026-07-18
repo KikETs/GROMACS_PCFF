@@ -607,6 +607,27 @@ static void molinfo2mtop(gmx::ArrayRef<const MoleculeInformation> mi, gmx_mtop_t
     }
 }
 
+static bool pcffUseLammpsGenVelMomRot()
+{
+    const char* value = std::getenv("GMX_PCFF_GEN_VEL_LAMMPS_MOM_ROT");
+    if (value == nullptr || *value == '\0' || std::strcmp(value, "0") == 0
+        || std::strcmp(value, "off") == 0 || std::strcmp(value, "no") == 0
+        || std::strcmp(value, "false") == 0 || std::strcmp(value, "FALSE") == 0)
+    {
+        return false;
+    }
+    if (std::strcmp(value, "1") == 0 || std::strcmp(value, "on") == 0
+        || std::strcmp(value, "yes") == 0 || std::strcmp(value, "true") == 0
+        || std::strcmp(value, "TRUE") == 0)
+    {
+        return true;
+    }
+    gmx_fatal(FARGS,
+              "GMX_PCFF_GEN_VEL_LAMMPS_MOM_ROT must be 0/1, off/on, no/yes, or "
+              "false/true; got '%s'",
+              value);
+}
+
 static void new_status(const char*                                 topfile,
                        const std::optional<std::filesystem::path>& topppfile,
                        const char*                                 confin,
@@ -828,7 +849,24 @@ static void new_status(const char*                                 topfile,
                            "Generate velocities only makes sense when they are used");
         maxwell_speed(opts->tempi, opts->seed, sys, state->v.rvec_array(), logger);
 
-        stop_cm(logger, state->numAtoms(), mass.data(), state->x.rvec_array(), state->v.rvec_array());
+        if (pcffUseLammpsGenVelMomRot())
+        {
+            lammps_mom_rot_velocity_scale(opts->tempi,
+                                          state->numAtoms(),
+                                          mass.data(),
+                                          state->x.rvec_array(),
+                                          state->v.rvec_array(),
+                                          logger);
+        }
+        else
+        {
+            // Preserve the existing gen-vel path bit-for-bit unless explicitly opted in.
+            stop_cm(logger,
+                    state->numAtoms(),
+                    mass.data(),
+                    state->x.rvec_array(),
+                    state->v.rvec_array());
+        }
     }
     else if (EI_STATE_VELOCITY(ir->eI))
     {

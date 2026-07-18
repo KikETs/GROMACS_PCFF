@@ -77,23 +77,27 @@ interaction_const_t::SoftCoreParameters::SoftCoreParameters(const t_lambda& fepv
     GMX_RELEASE_ASSERT(fepvals.sc_r_power == 6.0, "We only support soft-core r-power 6");
 }
 
-static std::optional<real> pcffExactRespaEwaldCoeffOverride(const t_inputrec& ir)
+static std::optional<real> pcffEwaldCoeffOverride(const t_inputrec& ir)
 {
     const char* value = std::getenv("GMX_PCFF_EWALD_BETA_INV_A");
     if (value == nullptr || *value == '\0')
     {
         return std::nullopt;
     }
-    if (!gmx::useExactRespa(ir) || !usingPmeOrEwald(ir.coulombtype))
+    const bool supported = usingPmeOrEwald(ir.coulombtype)
+                           && (gmx::useExactRespa(ir)
+                               || ir.eI == IntegrationAlgorithm::CG);
+    if (!supported)
     {
         gmx_fatal(FARGS,
                   "GMX_PCFF_EWALD_BETA_INV_A is only supported for exact r-RESPA "
-                  "with PME/Ewald Coulomb.");
+                  "or CG energy minimization with PME/Ewald Coulomb.");
     }
 
     char*        end      = nullptr;
     const double betaInvA = std::strtod(value, &end);
-    if (end == value || (end != nullptr && *end != '\0') || betaInvA <= 0.0)
+    if (end == value || (end != nullptr && *end != '\0') || !std::isfinite(betaInvA)
+        || betaInvA <= 0.0)
     {
         gmx_fatal(FARGS,
                   "Invalid GMX_PCFF_EWALD_BETA_INV_A='%s'; expected a positive "
@@ -146,13 +150,13 @@ static void initCoulombEwaldParameters(FILE*                                 fp,
     }
 
     coulombSettings->ewaldCoeff = calc_ewaldcoeff_q(ir.rcoulomb, ir.ewald_rtol);
-    if (const auto betaOverride = pcffExactRespaEwaldCoeffOverride(ir))
+    if (const auto betaOverride = pcffEwaldCoeffOverride(ir))
     {
         coulombSettings->ewaldCoeff = *betaOverride;
         if (fp)
         {
             fprintf(fp,
-                    "PCFF exact r-RESPA overriding Coulomb Ewald beta from "
+                    "PCFF overriding Coulomb Ewald beta from "
                     "GMX_PCFF_EWALD_BETA_INV_A: %g A^-1 (%g nm^-1)\n",
                     coulombSettings->ewaldCoeff / 10.0,
                     coulombSettings->ewaldCoeff);

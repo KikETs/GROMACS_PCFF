@@ -35,7 +35,10 @@
 
 #include "gen_maxwell_velocities.h"
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <limits>
 
 #include "gromacs/math/units.h"
 #include "gromacs/random/seed.h"
@@ -185,4 +188,185 @@ void stop_cm(const gmx::MDLogger gmx_unused& logger, int natoms, real mass[], rv
             v[i][m] -= vcm[m];
         }
     }
+}
+
+void lammps_mom_rot_velocity_scale(const real           tempi,
+                                   const int            natoms,
+                                   const real           mass[],
+                                   const rvec           x[],
+                                   rvec                 v[],
+                                   const gmx::MDLogger& logger)
+{
+    if (!(tempi > 0) || !std::isfinite(tempi))
+    {
+        gmx_fatal(FARGS, "LAMMPS-style velocity creation requires a finite positive temperature");
+    }
+    if (natoms <= 1 || mass == nullptr || x == nullptr || v == nullptr)
+    {
+        gmx_fatal(FARGS, "LAMMPS-style mom/rot velocity creation requires at least two atoms");
+    }
+
+    std::array<double, DIM> centerOfMass         = { 0, 0, 0 };
+    std::array<double, DIM> centerOfMassVelocity = { 0, 0, 0 };
+    double                  totalMass            = 0;
+    int                     numMobileAtoms       = 0;
+    for (int atom = 0; atom < natoms; ++atom)
+    {
+        const double atomMass = mass[atom];
+        if (!(atomMass > 0))
+        {
+            continue;
+        }
+        ++numMobileAtoms;
+        totalMass += atomMass;
+        for (int dimension = 0; dimension < DIM; ++dimension)
+        {
+            centerOfMass[dimension] += atomMass * x[atom][dimension];
+            centerOfMassVelocity[dimension] += atomMass * v[atom][dimension];
+        }
+    }
+    if (numMobileAtoms <= 1 || !(totalMass > 0) || !std::isfinite(totalMass))
+    {
+        gmx_fatal(FARGS,
+                  "LAMMPS-style mom/rot velocity creation requires at least two mobile atoms");
+    }
+    for (int dimension = 0; dimension < DIM; ++dimension)
+    {
+        centerOfMass[dimension] /= totalMass;
+        centerOfMassVelocity[dimension] /= totalMass;
+    }
+    for (int atom = 0; atom < natoms; ++atom)
+    {
+        if (mass[atom] <= 0)
+        {
+            continue;
+        }
+        for (int dimension = 0; dimension < DIM; ++dimension)
+        {
+            v[atom][dimension] -= static_cast<real>(centerOfMassVelocity[dimension]);
+        }
+    }
+
+    // Symmetric inertia tensor [a b c; b d e; c e f] and L=sum m*(r x v).
+    double a = 0;
+    double b = 0;
+    double c = 0;
+    double d = 0;
+    double e = 0;
+    double f = 0;
+    std::array<double, DIM> angularMomentum = { 0, 0, 0 };
+    for (int atom = 0; atom < natoms; ++atom)
+    {
+        const double atomMass = mass[atom];
+        if (!(atomMass > 0))
+        {
+            continue;
+        }
+        const double rx = static_cast<double>(x[atom][XX]) - centerOfMass[XX];
+        const double ry = static_cast<double>(x[atom][YY]) - centerOfMass[YY];
+        const double rz = static_cast<double>(x[atom][ZZ]) - centerOfMass[ZZ];
+        const double vx = v[atom][XX];
+        const double vy = v[atom][YY];
+        const double vz = v[atom][ZZ];
+
+        a += atomMass * (ry * ry + rz * rz);
+        b -= atomMass * rx * ry;
+        c -= atomMass * rx * rz;
+        d += atomMass * (rx * rx + rz * rz);
+        e -= atomMass * ry * rz;
+        f += atomMass * (rx * rx + ry * ry);
+        angularMomentum[XX] += atomMass * (ry * vz - rz * vy);
+        angularMomentum[YY] += atomMass * (rz * vx - rx * vz);
+        angularMomentum[ZZ] += atomMass * (rx * vy - ry * vx);
+    }
+
+    const double determinant = a * (d * f - e * e) - b * (b * f - c * e)
+                               + c * (b * e - c * d);
+    const double inertiaScale = std::max({ std::abs(a),
+                                           std::abs(b),
+                                           std::abs(c),
+                                           std::abs(d),
+                                           std::abs(e),
+                                           std::abs(f) });
+    const double singularTolerance = 256.0 * std::numeric_limits<double>::epsilon()
+                                     * inertiaScale * inertiaScale * inertiaScale;
+    if (!(inertiaScale > 0) || !std::isfinite(determinant)
+        || std::abs(determinant) <= singularTolerance)
+    {
+        gmx_fatal(FARGS,
+                  "LAMMPS-style mom/rot velocity creation has a singular inertia tensor "
+                  "(determinant=%g, scale=%g)",
+                  determinant,
+                  inertiaScale);
+    }
+
+    const double cofactor00 = d * f - e * e;
+    const double cofactor01 = c * e - b * f;
+    const double cofactor02 = b * e - c * d;
+    const double cofactor11 = a * f - c * c;
+    const double cofactor12 = b * c - a * e;
+    const double cofactor22 = a * d - b * b;
+    const std::array<double, DIM> omega = {
+        (cofactor00 * angularMomentum[XX] + cofactor01 * angularMomentum[YY]
+         + cofactor02 * angularMomentum[ZZ])
+                / determinant,
+        (cofactor01 * angularMomentum[XX] + cofactor11 * angularMomentum[YY]
+         + cofactor12 * angularMomentum[ZZ])
+                / determinant,
+        (cofactor02 * angularMomentum[XX] + cofactor12 * angularMomentum[YY]
+         + cofactor22 * angularMomentum[ZZ])
+                / determinant
+    };
+
+    for (int atom = 0; atom < natoms; ++atom)
+    {
+        if (mass[atom] <= 0)
+        {
+            continue;
+        }
+        const double rx = static_cast<double>(x[atom][XX]) - centerOfMass[XX];
+        const double ry = static_cast<double>(x[atom][YY]) - centerOfMass[YY];
+        const double rz = static_cast<double>(x[atom][ZZ]) - centerOfMass[ZZ];
+        v[atom][XX] -= static_cast<real>(omega[YY] * rz - omega[ZZ] * ry);
+        v[atom][YY] -= static_cast<real>(omega[ZZ] * rx - omega[XX] * rz);
+        v[atom][ZZ] -= static_cast<real>(omega[XX] * ry - omega[YY] * rx);
+    }
+
+    double kineticEnergy = 0;
+    for (int atom = 0; atom < natoms; ++atom)
+    {
+        if (mass[atom] <= 0)
+        {
+            continue;
+        }
+        kineticEnergy += 0.5 * static_cast<double>(mass[atom])
+                         * (static_cast<double>(v[atom][XX]) * v[atom][XX]
+                            + static_cast<double>(v[atom][YY]) * v[atom][YY]
+                            + static_cast<double>(v[atom][ZZ]) * v[atom][ZZ]);
+    }
+    const int    degreesOfFreedom = DIM * numMobileAtoms - DIM;
+    const double targetKineticEnergy =
+            0.5 * degreesOfFreedom * static_cast<double>(gmx::c_boltz) * tempi;
+    if (!(kineticEnergy > 0) || !std::isfinite(kineticEnergy))
+    {
+        gmx_fatal(FARGS,
+                  "LAMMPS-style mom/rot velocity creation cannot rescale zero kinetic energy");
+    }
+    const real scale = static_cast<real>(std::sqrt(targetKineticEnergy / kineticEnergy));
+    for (int atom = 0; atom < natoms; ++atom)
+    {
+        if (mass[atom] <= 0)
+        {
+            continue;
+        }
+        for (int dimension = 0; dimension < DIM; ++dimension)
+        {
+            v[atom][dimension] *= scale;
+        }
+    }
+
+    GMX_LOG(logger.info)
+            .asParagraph()
+            .appendTextFormatted("Applied LAMMPS velocity-create mom/rot removal and rescaled to %g K",
+                                 tempi);
 }

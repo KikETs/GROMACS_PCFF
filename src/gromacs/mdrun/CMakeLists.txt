@@ -36,6 +36,7 @@ gmx_add_libgromacs_sources(
     binary_information.cpp
     legacymdrunoptions.cpp
     legacysimulator.cpp
+    exactrespasoftstart.cpp
     exactrespastepper.cpp
     md.cpp
     mdmodules.cpp

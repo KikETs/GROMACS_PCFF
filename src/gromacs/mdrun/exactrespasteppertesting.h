@@ -37,6 +37,9 @@ public:
 
 void setExactRespaRuntimeEventSinkForTesting(ExactRespaRuntimeEventSink* sink);
 
+//! Returns whether a post-Trotter replay setting requires the next-step virial.
+bool exactRespaPostTrotterReplayNeedsNextVirialForTesting(const char* value);
+
 } // namespace gmx
 
 #endif

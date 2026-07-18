@@ -56,6 +56,7 @@
 #include "gromacs/math/multidimarray.h"
 #include "gromacs/math/units.h"
 #include "gromacs/mdlib/boxdeformation.h"
+#include "gromacs/mdlib/couplingtesting.h"
 #include "gromacs/mdlib/expanded.h"
 #include "gromacs/mdlib/gmx_omp_nthreads.h"
 #include "gromacs/mdlib/stat.h"
@@ -210,6 +211,86 @@ static double pcffReadPositiveEnvRealOrDefault(const char* name, const double de
 static double pcffReadPositiveEnvRealRequired(const char* name)
 {
     return pcffReadPositiveEnvRealOrDefault(name, -1.0);
+}
+
+namespace gmx
+{
+
+double pcffLammpsMttkDragFromText(const char* value)
+{
+    if (value == nullptr || *value == '\0' || std::strcmp(value, "0") == 0
+        || std::strcmp(value, "off") == 0 || std::strcmp(value, "false") == 0
+        || std::strcmp(value, "FALSE") == 0)
+    {
+        return 0.0;
+    }
+
+    char*        end    = nullptr;
+    const double parsed = std::strtod(value, &end);
+    if (end == value || (end != nullptr && *end != '\0') || !std::isfinite(parsed) || parsed < 0)
+    {
+        gmx_fatal(FARGS,
+                  "GMX_PCFF_MTTK_LAMMPS_DRAG must be a finite non-negative floating point "
+                  "value, got '%s'.",
+                  value);
+    }
+    return parsed;
+}
+
+double pcffLammpsMttkDragFactor(const double outerDtPs,
+                                const double frequencyPerPs,
+                                const double drag,
+                                const int    chainSubcycles)
+{
+    GMX_RELEASE_ASSERT(std::isfinite(outerDtPs) && outerDtPs > 0,
+                       "The LAMMPS FixNH drag timestep must be finite and positive");
+    GMX_RELEASE_ASSERT(std::isfinite(frequencyPerPs) && frequencyPerPs > 0,
+                       "The LAMMPS FixNH drag frequency must be finite and positive");
+    GMX_RELEASE_ASSERT(std::isfinite(drag) && drag >= 0,
+                       "The LAMMPS FixNH drag value must be finite and non-negative");
+    GMX_RELEASE_ASSERT(chainSubcycles > 0, "The LAMMPS FixNH chain subcycle count must be positive");
+    return 1.0 - outerDtPs * frequencyPerPs * drag / chainSubcycles;
+}
+
+double pcffLammpsMttkChainVelocityAfterKick(const double velocity,
+                                            const double forceIncrement,
+                                            const double exponentialFactor,
+                                            const bool   useLammpsFixNhOrder,
+                                            const double dragFactor)
+{
+    if (!useLammpsFixNhOrder)
+    {
+        // Keep the pre-existing arithmetic and operation order bit-for-bit for
+        // the non-LAMMPS chain integrator.
+        return exponentialFactor * (velocity + forceIncrement) * exponentialFactor;
+    }
+
+    // FixNH applies exp(), then the force kick, then the (possibly unit) drag
+    // factor, then the second exp(). This order also matters when drag is zero.
+    double updatedVelocity = velocity * exponentialFactor;
+    updatedVelocity += forceIncrement;
+    updatedVelocity *= dragFactor;
+    updatedVelocity *= exponentialFactor;
+    return updatedVelocity;
+}
+
+double pcffLammpsMttkBarostatVelocityAfterKick(const double velocity,
+                                               const double forceIncrement,
+                                               const bool   useLammpsDragPath,
+                                               const double dragFactor)
+{
+    if (!useLammpsDragPath)
+    {
+        return velocity + forceIncrement;
+    }
+    return (velocity + forceIncrement) * dragFactor;
+}
+
+} // namespace gmx
+
+static double pcffLammpsMttkDrag()
+{
+    return gmx::pcffLammpsMttkDragFromText(std::getenv("GMX_PCFF_MTTK_LAMMPS_DRAG"));
 }
 
 static double pcffLammpsFixNhPdampPs(const t_inputrec& ir)
@@ -627,7 +708,7 @@ extern bool update_randomize_velocities(const t_inputrec*                   ir,
 }
 
 /* these integration routines are only referenced inside this file */
-static void NHC_trotter(const t_grpopts*      opts,
+static void NHC_trotter(const t_inputrec*     ir,
                         int                   nvar,
                         const gmx_ekindata_t* ekind,
                         real                  dtfull,
@@ -636,11 +717,13 @@ static void NHC_trotter(const t_grpopts*      opts,
                         double                scalefac[],
                         real*                 veta,
                         const t_extmass*      MassQ,
-                        bool                  bEkinAveVel)
+                        bool                  bEkinAveVel,
+                        double                lammpsDrag)
 
 {
     /* general routine for both barostat and thermostat nose hoover chains */
 
+    const t_grpopts* opts = &ir->opts;
     int     i, j, mi, mj;
     double  Ekin, Efac, reft, kT, nd;
     double  dt;
@@ -714,15 +797,27 @@ static void NHC_trotter(const t_grpopts*      opts,
             const double dt8     = 0.125 * dtfull;
             const double dt4     = 0.25 * dtfull;
             const double dthalf  = 0.5 * dtfull;
+            // The successful 1474101 Eq09 FixNH input used the LAMMPS defaults
+            // tloop=ploop=1, matching this one-pass chain integrator.
+            double dragFactor = 1.0;
+            if (lammpsDrag > 0)
+            {
+                const double chainPeriodPs =
+                        useBarostatChain ? pcffLammpsFixNhPdampPs(*ir) : opts->tau_t[i];
+                dragFactor = gmx::pcffLammpsMttkDragFactor(
+                        dtfull, 1.0 / chainPeriodPs, lammpsDrag, 1);
+            }
             for (j = nh - 1; j > 0; j--)
             {
                 const double nextVxi = (j + 1 < nh) ? ivxi[j + 1] : 0.0;
                 Efac                 = std::exp(-dt8 * nextVxi);
-                ivxi[j]              = Efac * (ivxi[j] + dt4 * lammpsGQ[j]) * Efac;
+                ivxi[j] = gmx::pcffLammpsMttkChainVelocityAfterKick(
+                        ivxi[j], dt4 * lammpsGQ[j], Efac, true, dragFactor);
             }
 
             Efac    = std::exp(-dt8 * ((nh > 1) ? ivxi[1] : 0.0));
-            ivxi[0] = Efac * (ivxi[0] + dt4 * lammpsGQ[0]) * Efac;
+            ivxi[0] = gmx::pcffLammpsMttkChainVelocityAfterKick(
+                    ivxi[0], dt4 * lammpsGQ[0], Efac, true, dragFactor);
 
             if (useBarostatChain)
             {
@@ -755,13 +850,17 @@ static void NHC_trotter(const t_grpopts*      opts,
                 }
             }
 
-            ivxi[0] = Efac * (ivxi[0] + dt4 * lammpsGQ[0]) * Efac;
+            // FixNH does not apply drag on the return kick, but retain its
+            // exp/kick/exp ordering for every LAMMPS chain-integrator stage.
+            ivxi[0] = gmx::pcffLammpsMttkChainVelocityAfterKick(
+                    ivxi[0], dt4 * lammpsGQ[0], Efac, true, 1.0);
             for (j = 1; j < nh; j++)
             {
                 const double nextVxi = (j + 1 < nh) ? ivxi[j + 1] : 0.0;
                 Efac                 = std::exp(-dt8 * nextVxi);
                 lammpsGQ[j] = pcffLammpsNhcOuterForce(iQinv, ivxi, j, kT);
-                ivxi[j]     = Efac * (ivxi[j] + dt4 * lammpsGQ[j]) * Efac;
+                ivxi[j] = gmx::pcffLammpsMttkChainVelocityAfterKick(
+                        ivxi[j], dt4 * lammpsGQ[j], Efac, true, 1.0);
             }
         }
         return;
@@ -1013,7 +1112,8 @@ static void boxv_trotter(const t_inputrec*     ir,
                          const tensor         box,
                          const gmx_ekindata_t* ekind,
                          const tensor         vir,
-                         const t_extmass*     MassQ)
+                         const t_extmass*     MassQ,
+                         double              lammpsDrag)
 {
 
     real   pscal;
@@ -1099,7 +1199,18 @@ static void boxv_trotter(const t_inputrec*     ir,
     }
 
     const real vetaBefore = *veta;
-    *veta += 0.5 * delta_t * GW;
+    if (lammpsDrag > 0 && pcffUseLammpsFixNhBoxvIntegrator())
+    {
+        const double pdragFactor = gmx::pcffLammpsMttkDragFactor(
+                delta_t, 1.0 / pcffLammpsFixNhPdampPs(*ir), lammpsDrag, 1);
+        *veta = gmx::pcffLammpsMttkBarostatVelocityAfterKick(
+                *veta, 0.5 * delta_t * GW, true, pdragFactor);
+    }
+    else
+    {
+        // Preserve the original arithmetic when the opt-in is disabled.
+        *veta += 0.5 * delta_t * GW;
+    }
     pcffAppendMttkBoxvTrace(step,
                             sequence,
                             part,
@@ -2011,6 +2122,19 @@ void trotter_update(const t_inputrec*                   ir,
     double *         scalefac, dtc;
     rvec             sumv = { 0, 0, 0 };
     bool             bCouple;
+    const double     lammpsDrag = pcffLammpsMttkDrag();
+
+    if (lammpsDrag > 0
+        && (!(ir->exactRespa.enabled() && ir->eI == IntegrationAlgorithm::VV
+              && inputrecNptTrotter(ir))
+            || !pcffUseLammpsFixNhChainIntegrator() || !pcffUseLammpsFixNhBoxvIntegrator()
+            || (pcffLammpsFixNhMassMask() & pcffFixNhAllMasses) != pcffFixNhAllMasses))
+    {
+        gmx_fatal(FARGS,
+                  "GMX_PCFF_MTTK_LAMMPS_DRAG is restricted to the PCFF exact-rRESPA "
+                  "md-vv/MTTK path with the LAMMPS FixNH chain, box-velocity, and mass "
+                  "modes enabled.");
+    }
 
     if (ir->exactRespa.enabled() && ir->eI == IntegrationAlgorithm::VV
         && (inputrecNvtTrotter(ir) || inputrecNptTrotter(ir) || inputrecNphTrotter(ir)))
@@ -2080,11 +2204,12 @@ void trotter_update(const t_inputrec*                   ir,
                              state->box,
                              ekind,
                              vir,
-                             MassQ);
+                             MassQ,
+                             lammpsDrag);
                 break;
             case etrtBARONHC:
             case etrtBARONHC2:
-                NHC_trotter(opts,
+                NHC_trotter(ir,
                             state->nnhpres,
                             ekind,
                             dt,
@@ -2093,11 +2218,12 @@ void trotter_update(const t_inputrec*                   ir,
                             nullptr,
                             &(state->veta),
                             MassQ,
-                            FALSE);
+                            FALSE,
+                            lammpsDrag);
                 break;
             case etrtNHC:
             case etrtNHC2:
-                NHC_trotter(opts,
+                NHC_trotter(ir,
                             opts->ngtc,
                             ekind,
                             dt,
@@ -2106,7 +2232,8 @@ void trotter_update(const t_inputrec*                   ir,
                             scalefac,
                             nullptr,
                             MassQ,
-                            (ir->eI == IntegrationAlgorithm::VV));
+                            (ir->eI == IntegrationAlgorithm::VV),
+                            lammpsDrag);
                 /* need to rescale the kinetic energies and velocities here.  Could
                    scale the velocities later, but we need them scaled in order to
                    produce the correct outputs, so we'll scale them here. */

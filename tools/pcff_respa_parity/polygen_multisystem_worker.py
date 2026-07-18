@@ -4,9 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import importlib
+import inspect
 import json
+import math
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -22,17 +26,32 @@ DEFAULT_OUTDIR = Path("GROMACS_PCFF/output/polygen_multisystem_validation_202605
 DEFAULT_MANIFEST = DEFAULT_OUTDIR / "manifest/jobs.csv"
 DEFAULT_SYSTEMS = DEFAULT_OUTDIR / "manifest/systems.csv"
 LANES = ("lammps_cpu", "gmx_cpu", "gmx_gpu")
-BRIDGE_REPO_NAME = "GROMACS_PCFF-lunar-data-bridge"
 DEFAULT_SMOKE_EQFACTOR = 0.00005
 MOLALITY_BASIS_MIXTURE = "salt_mol_per_kg_total_mixture"
 GMX_PCFF_RUNTIME_ENV = (
+    # Single-rank CPU PME otherwise enables a 1x1x1 DD grid whose initial
+    # distribution wraps every atom into the primary cell.  The no-DD force
+    # setup has a separate put_atoms_in_box path, so disable that as well.
+    # Together these retain the LAMMPS image-unwrapped representation from
+    # Eq01 through the second `velocity ... mom yes rot yes` at Eq04.
+    "GMX_DD_SINGLE_RANK=0;"
+    "GMX_PCFF_LAMMPS_CG_EM_SKIP_PUT_ATOMS_IN_BOX=1;"
     "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT=1;"
     "GMX_PCFF_MIXED_CLASS2_LINEAR_ANGLE_SIN_FLOOR=0.00038;"
     "GMX_PCFF_MTTK_MASS_MODE=lammps;"
     "GMX_PCFF_NVT_MASS_MODE=lammps_tchain;"
     "GMX_PCFF_MTTK_BOXV_INTEGRATOR=lammps;"
-    "GMX_PCFF_MTTK_EXTENDED_UPDATE_MODE=velocity-lammps-remap;"
+    # Match LAMMPS FixNH velocity scaling and box remapping. The earlier
+    # apparent box explosion came from invalid 1-4 pairs and a mismatched
+    # r-RESPA contribution layout, not from this remap path.
+    "GMX_PCFF_EXACT_RESPA_MTTK_EXTENDED_UPDATE=velocity-lammps-remap;"
+    "GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP=1;"
+    "GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP_PME=1;"
     "GMX_PCFF_NHC_INTEGRATOR=lammps;"
+    # `comm-mode = Linear` supplies the LAMMPS 3N-3 thermostat DOF.  The MDP
+    # uses an effectively one-shot nstcomm, and exact r-RESPA requires an
+    # explicit opt-in for this supported linear COM-removal path.
+    "GMX_PCFF_EXACT_RESPA_ALLOW_LINEAR_COM_REMOVAL=1;"
     "GMX_PCFF_EXACT_RESPA_PRE_TROTTER=two;"
     "GMX_PCFF_EXACT_RESPA_POST_TROTTER=three;"
     "GMX_PCFF_ALLOW_LONG_EXCLUDED=1"
@@ -120,12 +139,19 @@ def resolve_binary_path(binary: str | None, workspace: Path) -> str | None:
 
 
 def lane_mdrun_settings(lane: str, workspace: Path, gmx_binary: str | None) -> dict[str, str]:
+    pair14_level = os.environ.get("GROMACS_BATCH_EXACT_RESPA_PAIR14_LEVEL", "2").strip()
+    if pair14_level not in {"1", "2"}:
+        raise ValueError(
+            "GROMACS_BATCH_EXACT_RESPA_PAIR14_LEVEL must be 1 or 2; "
+            f"got {pair14_level!r}"
+        )
     if lane == "gmx_cpu":
         binary = resolve_binary_path(gmx_binary, workspace) or default_gmx_binary(workspace, lane) or ""
         return {
             "GROMACS_BATCH_GMX_BINARY": binary,
             "GROMACS_BATCH_SCHEDULE": "polygen_em_handoff",
-            "GROMACS_BATCH_GROMPP_EXTRA_ARGS": "-maxwarn 2",
+            "GROMACS_BATCH_EXACT_RESPA_PAIR14_LEVEL": pair14_level,
+            "GROMACS_BATCH_GROMPP_EXTRA_ARGS": "-maxwarn 10",
             "GROMACS_BATCH_MDRUN_EXTRA_ARGS": "-nb cpu -pme cpu -bonded cpu -update cpu -pin off",
             "GROMACS_BATCH_MDRUN_ENV": GMX_PCFF_RUNTIME_ENV,
         }
@@ -134,8 +160,9 @@ def lane_mdrun_settings(lane: str, workspace: Path, gmx_binary: str | None) -> d
         return {
             "GROMACS_BATCH_GMX_BINARY": binary,
             "GROMACS_BATCH_SCHEDULE": "polygen_em_handoff",
+            "GROMACS_BATCH_EXACT_RESPA_PAIR14_LEVEL": pair14_level,
             "GROMACS_BATCH_PME_ORDER": "5",
-            "GROMACS_BATCH_GROMPP_EXTRA_ARGS": "-maxwarn 2",
+            "GROMACS_BATCH_GROMPP_EXTRA_ARGS": "-maxwarn 10",
             "GROMACS_BATCH_MDRUN_EXTRA_ARGS": "-nb gpu -pme cpu -bonded gpu -update cpu -pin off -dlb no -notunepme",
             "GROMACS_BATCH_MDRUN_EM_EXTRA_ARGS": "-nb cpu -pme cpu -bonded cpu -update cpu -pin off",
             "GROMACS_BATCH_MDRUN_ENV": GMX_PCFF_RUNTIME_ENV,
@@ -213,7 +240,11 @@ def load_gromacs_stage_layouts(path: Path | None) -> dict[str, dict[str, object]
 
 
 def bridge_script(workspace: Path) -> Path:
-    path = workspace / BRIDGE_REPO_NAME / "tools/pcff_fixture_bridge/lammps_data_bridge.py"
+    # The bridge is part of the engine branch.  Resolving it relative to this
+    # worker prevents a remote run from silently using an unrelated dirty
+    # checkout that cannot be reproduced by pulling the branch.
+    del workspace
+    path = Path(__file__).resolve().parents[2] / "tools/pcff_fixture_bridge/lammps_data_bridge.py"
     if not path.exists():
         raise FileNotFoundError(f"LAMMPS-data bridge script not found: {path}")
     return path
@@ -526,6 +557,328 @@ def _ensure_lammps_em_data(lmp_proj: Path, *, lmp_binary: str | None = None) -> 
     return em_data
 
 
+_LAMMPS_THERMO_HEADER_RE = re.compile(r"^\s*Step\s+(?:v_time|Time)\b")
+_LAMMPS_THERMO_ROW_RE = re.compile(
+    r"^\s*([0-9]+)\s+([0-9.eE+-]+)(?:\s|$)"
+)
+
+
+def _lammps_production_log_endpoint(log_path: Path) -> tuple[float | None, bool]:
+    """Return the largest production time in fs and normal-exit marker state."""
+
+    if not log_path.is_file():
+        return None, False
+    max_time_fs: float | None = None
+    in_thermo = False
+    normal_exit = False
+    with log_path.open(encoding="utf-8", errors="ignore") as handle:
+        for line in handle:
+            if _LAMMPS_THERMO_HEADER_RE.match(line):
+                in_thermo = True
+                continue
+            if "Total wall time:" in line:
+                normal_exit = True
+            if not in_thermo:
+                continue
+            if line.lstrip().startswith("Loop time of"):
+                in_thermo = False
+                continue
+            match = _LAMMPS_THERMO_ROW_RE.match(line)
+            if match is None:
+                continue
+            try:
+                time_fs = float(match.group(2))
+            except ValueError:
+                continue
+            if math.isfinite(time_fs):
+                max_time_fs = (
+                    time_fs if max_time_fs is None else max(max_time_fs, time_fs)
+                )
+    return max_time_fs, normal_exit
+
+
+def _declared_lammps_production_ns(lmp_proj: Path) -> float | None:
+    for metadata_path in (
+        lmp_proj / "prepared_lammps_inputs.json",
+        lmp_proj / "MD/meta.json",
+    ):
+        if not metadata_path.is_file():
+            continue
+        try:
+            payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+            value = float(payload["production_total_ns"])
+        except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
+            continue
+        if math.isfinite(value) and value > 0.0:
+            return value
+    return None
+
+
+def _assert_sibling_lammps_lane_ok(
+    lmp_proj: Path,
+    traj_id: int,
+    *,
+    expected_production_ns: float,
+) -> None:
+    """Require terminal sibling LAMMPS production evidence before bridging.
+
+    A lane-level ``batch_status.csv`` is written only after every trajectory in
+    that worker has returned.  Therefore a completed leading trajectory in an
+    active remote batch legitimately has no status row yet.  It may proceed
+    only when its own production log proves the requested endpoint and the
+    terminal restart exists.  Conversely, a stale ``status=ok`` row alone is
+    never completion evidence.
+    """
+
+    try:
+        expected_ns = float(expected_production_ns)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"Invalid expected LAMMPS production duration: {expected_production_ns!r}"
+        ) from exc
+    if not math.isfinite(expected_ns) or expected_ns <= 0.0:
+        raise ValueError(
+            f"Expected LAMMPS production duration must be positive: {expected_ns!r}"
+        )
+
+    status_path = lmp_proj.parent / "batch_status.csv"
+    if status_path.exists():
+        with status_path.open(newline="", encoding="utf-8") as handle:
+            rows = list(csv.DictReader(handle))
+        matched = next(
+            (
+                row
+                for row in rows
+                if batch_project_id(row.get("Trajectory ID"), -1) == traj_id
+            ),
+            None,
+        )
+        if matched is None:
+            raise RuntimeError(
+                f"Refusing GROMACS bridge for Traj_{traj_id}: {status_path} exists "
+                "but has no matching trajectory row"
+            )
+        status = str(matched.get("status", "")).strip().lower()
+        if status != "ok":
+            failed_phase = str(matched.get("failed_phase", "")).strip()
+            error = str(matched.get("error", "")).strip()
+            raise RuntimeError(
+                f"Refusing GROMACS bridge for Traj_{traj_id}: sibling LAMMPS lane "
+                f"is not ok (status={matched.get('status')!r}, "
+                f"failed_phase={failed_phase!r}, error={error[:500]!r})"
+            )
+
+    final_restart = lmp_proj / "MD/final.restart"
+    if not final_restart.is_file() or final_restart.stat().st_size <= 0:
+        raise RuntimeError(
+            f"Refusing GROMACS bridge for Traj_{traj_id}: missing non-empty "
+            f"LAMMPS terminal restart {final_restart}"
+        )
+
+    expected_time_fs = expected_ns * 1.0e6
+    stage_log = lmp_proj / "logs/lammps_prod_stage00_nvt_cpu.log"
+    # The dedicated stage log is authoritative when present.  Do not let an
+    # older aggregate MD/log.lammps mask an incomplete production rerun.
+    log_candidates = (
+        (stage_log,)
+        if stage_log.is_file()
+        else (lmp_proj / "MD/log.lammps",)
+    )
+    seen_logs: list[str] = []
+    latest_log_mtime_ns = -1
+    for log_path in log_candidates:
+        if not log_path.is_file():
+            continue
+        latest_log_mtime_ns = max(latest_log_mtime_ns, log_path.stat().st_mtime_ns)
+        endpoint_fs, normal_exit = _lammps_production_log_endpoint(log_path)
+        seen_logs.append(
+            f"{log_path}:endpoint_fs={endpoint_fs!r},normal_exit={normal_exit}"
+        )
+        if (
+            normal_exit
+            and endpoint_fs is not None
+            and endpoint_fs + 0.5 >= expected_time_fs
+        ):
+            return
+
+    completion_flags = (
+        lmp_proj / "MD/production_complete.flag",
+        lmp_proj / "MD/lammps_production_complete.flag",
+    )
+    declared_ns = _declared_lammps_production_ns(lmp_proj)
+    for flag_path in completion_flags:
+        if not flag_path.is_file() or flag_path.stat().st_size <= 0:
+            continue
+        # A newer production log can invalidate a stale completion flag when a
+        # trajectory has been restarted.  Accept a flag only when it is at
+        # least as recent as every production log that is present, and only
+        # when persisted metadata proves which duration the flag represents.
+        if (
+            declared_ns is not None
+            and declared_ns + 1.0e-12 >= expected_ns
+            and flag_path.stat().st_mtime_ns >= latest_log_mtime_ns
+        ):
+            return
+
+    evidence = "; ".join(seen_logs) if seen_logs else "no production log"
+    raise RuntimeError(
+        f"Refusing GROMACS bridge for Traj_{traj_id}: sibling LAMMPS production "
+        f"has no terminal evidence for {expected_ns:g} ns ({evidence})"
+    )
+
+
+_LAMMPS_G_VECTOR_RE = re.compile(
+    r"G vector \(1/distance\) =\s*([0-9.eE+-]+)"
+)
+
+
+def _first_lammps_g_vector(log_path: Path) -> float | None:
+    if not log_path.is_file():
+        return None
+    match = _LAMMPS_G_VECTOR_RE.search(
+        log_path.read_text(encoding="utf-8", errors="ignore")
+    )
+    return float(match.group(1)) if match is not None else None
+
+
+def _lammps_log_gromacs_stage_keys(log_path: Path) -> tuple[str, ...]:
+    name = log_path.name
+    if name == "lammps_lammps_equil_01_eq01_nvt_0p5fs_50ps_chunk0001_cpu.log":
+        return ("eq01_soft_langevin_10ps", "eq01_nvt_40ps")
+    if name == "lammps_lammps_equil_03_minimize_cpu.log":
+        return ("eq03_pre_2fs_minimize",)
+    if name == "lammps_lammps_equil_12_npt_avg_cell_1200ps_cpu.log":
+        return ("eq12_npt_1200ps",)
+    if name == "lammps_prod_stage00_nvt_cpu.log":
+        return ("prod_nvt",)
+
+    match = re.fullmatch(
+        r"lammps_lammps_equil_(?:02|04|05|06|07|08|09|10|11|13)_"
+        r"(eq\d{2}_.+?)_cpu\.log",
+        name,
+    )
+    if match is None or "_retry" in name:
+        return ()
+    stage = match.group(1).replace("_0p5fs_", "_")
+    if stage.startswith("eq02_npt_100ps_"):
+        stage = stage.replace("eq02_npt_100ps_", "eq02_npt_compress_100ps_", 1)
+    return (stage,)
+
+
+def lammps_beta_stage_layouts(
+    lmp_proj: Path,
+    base_layouts: dict[str, dict[str, object]] | None,
+) -> dict[str, dict[str, object]]:
+    """Attach each trajectory's static LAMMPS PPPM beta to its GROMACS stage.
+
+    LAMMPS reinitializes PPPM at the start of every generated stage.  A single
+    host-level layout is therefore insufficient when several replicas have
+    different cells.  Preserve explicit run-specific values and fill only
+    missing values from the sibling trajectory's stage logs.
+    """
+
+    layouts = json.loads(json.dumps(base_layouts or {}))
+    logs_dir = lmp_proj / "logs"
+    derived: dict[str, float] = {}
+    if logs_dir.is_dir():
+        for log_path in sorted(logs_dir.glob("*.log")):
+            stage_keys = _lammps_log_gromacs_stage_keys(log_path)
+            if not stage_keys:
+                continue
+            beta = _first_lammps_g_vector(log_path)
+            if beta is None:
+                continue
+            for stage_key in stage_keys:
+                derived[stage_key] = beta
+
+    for stage_key, beta in derived.items():
+        entry = dict(layouts.get(stage_key, {}))
+        stage_env = dict(entry.get("env", {}))
+        stage_env.setdefault("GMX_PCFF_EWALD_BETA_INV_A", f"{beta:.9g}")
+        entry["env"] = stage_env
+        layouts[stage_key] = entry
+
+    # A default beta is an explicit stage-layout decision and is valid
+    # coverage.  Materialize it into any stage-specific entry that otherwise
+    # shadows ``default`` in the runtime layout selector.
+    default_entry = layouts.get("default", {})
+    default_env = (
+        dict(default_entry.get("env", {}))
+        if isinstance(default_entry, dict)
+        else {}
+    )
+    default_beta = default_env.get("GMX_PCFF_EWALD_BETA_INV_A")
+    if default_beta is not None:
+        for stage_key, raw_entry in list(layouts.items()):
+            if stage_key == "default" or not isinstance(raw_entry, dict):
+                continue
+            entry = dict(raw_entry)
+            stage_env = dict(entry.get("env", {}))
+            stage_env.setdefault("GMX_PCFF_EWALD_BETA_INV_A", str(default_beta))
+            entry["env"] = stage_env
+            layouts[stage_key] = entry
+    return layouts
+
+
+def _layout_lammps_beta(
+    layouts: object,
+    stage_name: str,
+) -> tuple[object | None, str]:
+    if not isinstance(layouts, dict):
+        return None, "missing layouts"
+    raw = layouts.get(stage_name) or layouts.get("default")
+    if not isinstance(raw, dict):
+        return None, "missing stage/default layout"
+    env = raw.get("env", {})
+    if not isinstance(env, dict):
+        return None, "layout env is not an object"
+    value = env.get("GMX_PCFF_EWALD_BETA_INV_A")
+    return value, "stage" if layouts.get(stage_name) else "default"
+
+
+def _assert_gromacs_beta_coverage(runtime_ctx: dict[str, object]) -> None:
+    """Fail before mdrun if any exact-rRESPA/CG stage lacks LAMMPS beta."""
+
+    if str(runtime_ctx.get("schedule", "")) != "polygen_em_handoff":
+        return
+    layouts = runtime_ctx.get("gromacs_stage_layouts", {})
+    stages = runtime_ctx.get("stages", [])
+    if not isinstance(stages, list):
+        raise RuntimeError("GROMACS runtime context has no generated stage list")
+
+    missing: list[str] = []
+    invalid: list[str] = []
+    for raw_stage in stages:
+        if not isinstance(raw_stage, dict):
+            continue
+        if str(raw_stage.get("kind", "")) not in {"md", "em"}:
+            continue
+        stage_name = str(raw_stage.get("name", "")).strip()
+        value, source = _layout_lammps_beta(layouts, stage_name)
+        if value is None or not str(value).strip():
+            missing.append(stage_name or "<unnamed>")
+            continue
+        try:
+            beta = float(value)
+        except (TypeError, ValueError):
+            invalid.append(f"{stage_name}={value!r}({source})")
+            continue
+        if not math.isfinite(beta) or beta <= 0.0:
+            invalid.append(f"{stage_name}={value!r}({source})")
+
+    if missing or invalid:
+        details: list[str] = []
+        if missing:
+            details.append("missing=" + ",".join(missing))
+        if invalid:
+            details.append("invalid=" + ",".join(invalid))
+        raise RuntimeError(
+            "Refusing exact-rRESPA/CG GROMACS start: every generated stage "
+            "requires a finite positive LAMMPS G-vector beta; "
+            + "; ".join(details)
+        )
+
+
 def _synthetic_gromacs_prepare_report(
     *,
     proj: Path,
@@ -614,7 +967,11 @@ def run_gromacs_bridge_lane(
     batch_dir = workspace / "MY_PAPER_RELATED/GROMACS_PCFF_BATCH"
     prepend_sys_path(batch_dir)
     from batch_utils.gromacs_analysis_utils import run_gromacs_analysis
-    from batch_utils.gromacs_md_utils import (
+    # Keep the validation protocol versioned with the patched engine.  The
+    # surrounding batch workspace still supplies assembly/analysis helpers,
+    # but stage generation and checkpoint semantics must come from this branch
+    # so local and remote workers execute the same protocol after git pull.
+    from polygen_gromacs_runtime import (
         run_gromacs_equilibration,
         run_gromacs_production,
         setup_gromacs_environment,
@@ -641,6 +998,12 @@ def run_gromacs_bridge_lane(
                 replica_seed = int(row.get("replica_seed", traj_id))
                 os.environ["GROMACS_BATCH_GEN_SEED"] = str(replica_seed)
                 lmp_proj = lammps_lane_root(outdir, run_group, role) / f"Traj_{traj_id}"
+                failed_phase = "lammps_source_status"
+                _assert_sibling_lammps_lane_ok(
+                    lmp_proj,
+                    traj_id,
+                    expected_production_ns=float(production_ns),
+                )
                 source_data = _ensure_lammps_em_data(lmp_proj, lmp_binary=lmp_binary)
 
                 bridge_dir = proj / "build/lammps_data_bridge"
@@ -679,6 +1042,10 @@ def run_gromacs_bridge_lane(
                 report_path = proj / "build/gromacs_pcff/gromacs_pcff_prepare_report.json"
                 report_path.parent.mkdir(parents=True, exist_ok=True)
                 report_path.write_text(json.dumps(prepare_report, indent=2) + "\n", encoding="utf-8")
+                trajectory_stage_layouts = lammps_beta_stage_layouts(
+                    lmp_proj,
+                    dict(gromacs_stage_layouts or {}),
+                )
                 runtime_ctx = setup_gromacs_environment(
                     proj,
                     base_dir=batch_dir / "BASE",
@@ -687,7 +1054,14 @@ def run_gromacs_bridge_lane(
                     eqfactor=float(eqfactor),
                     production_total_ns=float(production_ns),
                     nproc=int(nproc),
-                    gromacs_stage_layouts=dict(gromacs_stage_layouts or {}),
+                    gromacs_stage_layouts=trajectory_stage_layouts,
+                )
+                failed_phase = "gromacs_beta_coverage"
+                _assert_gromacs_beta_coverage(runtime_ctx)
+                runtime_ctx["resume_existing_effective"] = bool(resume_existing and not force_restart)
+                (md_dir / "gromacs_runtime_context.json").write_text(
+                    json.dumps(runtime_ctx, indent=2) + "\n",
+                    encoding="utf-8",
                 )
                 if float(production_ns) <= 0.01:
                     _patch_smoke_mdp_lengths(runtime_ctx)
@@ -997,6 +1371,8 @@ def preflight(
     *,
     workspace: Path,
     outdir: Path,
+    jobs_csv: Path | None = None,
+    systems_csv: Path | None = None,
     role: str,
     run_group: str,
     lanes: list[str],
@@ -1007,8 +1383,16 @@ def preflight(
 ) -> dict[str, object]:
     """Check whether a worker is ready to run the selected lane jobs."""
     pd = require_pandas()
-    jobs_csv = outdir / "manifest/jobs.csv"
-    systems_csv = outdir / "manifest/systems.csv"
+    jobs_csv = (
+        Path(jobs_csv).expanduser().resolve()
+        if jobs_csv is not None
+        else outdir / "manifest/jobs.csv"
+    )
+    systems_csv = (
+        Path(systems_csv).expanduser().resolve()
+        if systems_csv is not None
+        else outdir / "manifest/systems.csv"
+    )
 
     checks: list[dict[str, object]] = []
 
@@ -1019,7 +1403,7 @@ def preflight(
     add("workspace_has_MY_PAPER_RELATED", (workspace / "MY_PAPER_RELATED").is_dir(), detail=str(workspace / "MY_PAPER_RELATED"))
     add("jobs_csv_exists", jobs_csv.is_file(), detail=str(jobs_csv))
     add("systems_csv_exists", systems_csv.is_file(), detail=str(systems_csv))
-    add("bridge_script_exists", (workspace / BRIDGE_REPO_NAME / "tools/pcff_fixture_bridge/lammps_data_bridge.py").is_file())
+    add("bridge_script_exists", bridge_script(workspace).is_file())
 
     if jobs_csv.is_file():
         jobs = pd.read_csv(jobs_csv)
@@ -1133,6 +1517,7 @@ def run_batch_lane(
     lammps_cpu_omp_threads: int = 1,
     lammps_thermo_flush: bool = True,
     lammps_resume_from_checkpoint: bool = False,
+    lammps_stop_after_stage: str | None = None,
     lammps_stage_layouts: dict[str, dict[str, object]] | None = None,
     gromacs_stage_layouts: dict[str, dict[str, object]] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -1160,28 +1545,34 @@ def run_batch_lane(
         prepend_sys_path(batch_dir)
         from batch_utils import BatchRunConfig, run_batch_pipeline
 
-        cfg = BatchRunConfig(
-            base_dir=batch_dir / "BASE",
-            lunar_dir=batch_dir / "extern/LUNAR",
-            output_root=output_root,
-            production_total_ns=float(production_ns),
-            analysis_begin_ns=analysis_begin_ns,
-            analysis_end_ns=analysis_end_ns,
-            nproc=int(nproc),
-            use_kokkos=False,
-            resume_existing=bool(resume_existing),
-            force_restart=bool(force_restart),
-            scan_incomplete_only=False,
-            eqfactor=float(eqfactor),
-            lammps_binary=str(Path(lmp_binary).expanduser().resolve()) if lmp_binary else None,
-            mpirun_binary=str(Path(mpirun_binary).expanduser().resolve()) if mpirun_binary else None,
-            lammps_thermo_flush=bool(lammps_thermo_flush),
-            lammps_resume_from_checkpoint=bool(lammps_resume_from_checkpoint),
-            lammps_cpu_openmp=bool(lammps_cpu_openmp),
-            lammps_cpu_mpi_ranks=int(lammps_cpu_mpi_ranks),
-            lammps_cpu_omp_threads=int(lammps_cpu_omp_threads),
-            lammps_stage_layouts=dict(lammps_stage_layouts or {}),
-        )
+        cfg_kwargs = {
+            "base_dir": batch_dir / "BASE",
+            "lunar_dir": batch_dir / "extern/LUNAR",
+            "output_root": output_root,
+            "production_total_ns": float(production_ns),
+            "analysis_begin_ns": analysis_begin_ns,
+            "analysis_end_ns": analysis_end_ns,
+            "nproc": int(nproc),
+            "use_kokkos": False,
+            "resume_existing": bool(resume_existing),
+            "force_restart": bool(force_restart),
+            "scan_incomplete_only": False,
+            "eqfactor": float(eqfactor),
+            "lammps_binary": str(Path(lmp_binary).expanduser().resolve()) if lmp_binary else None,
+            "mpirun_binary": str(Path(mpirun_binary).expanduser().resolve()) if mpirun_binary else None,
+            "lammps_thermo_flush": bool(lammps_thermo_flush),
+            "lammps_resume_from_checkpoint": bool(lammps_resume_from_checkpoint),
+            "lammps_stop_after_stage": str(lammps_stop_after_stage).strip() if lammps_stop_after_stage else None,
+            "lammps_cpu_openmp": bool(lammps_cpu_openmp),
+            "lammps_cpu_mpi_ranks": int(lammps_cpu_mpi_ranks),
+            "lammps_cpu_omp_threads": int(lammps_cpu_omp_threads),
+            "lammps_stage_layouts": dict(lammps_stage_layouts or {}),
+        }
+        supported_cfg_args = set(inspect.signature(BatchRunConfig).parameters)
+        skipped_cfg_args = sorted(k for k in cfg_kwargs if k not in supported_cfg_args)
+        if skipped_cfg_args:
+            print(f"[lammps_cpu] BatchRunConfig does not support args; skipping: {skipped_cfg_args}")
+        cfg = BatchRunConfig(**{k: v for k, v in cfg_kwargs.items() if k in supported_cfg_args})
     elif lane in {"gmx_cpu", "gmx_gpu"}:
         return run_gromacs_bridge_lane(
             selected_csv,
@@ -1210,6 +1601,20 @@ def run_batch_lane(
     print("status:", output_root / "batch_status.csv")
     print("metrics:", output_root / "batch_metrics.csv")
     return status_df, metrics_df
+
+
+def raise_for_failed_lane_status(status_df: object, lane: str) -> None:
+    if getattr(status_df, "empty", True) or "status" not in status_df.columns:
+        return
+    failed_rows = status_df[status_df["status"].astype(str).str.lower() == "failed"]
+    if failed_rows.empty:
+        return
+    failed_ids = ",".join(str(value) for value in failed_rows["Trajectory ID"].tolist())
+    print(
+        f"run-lane failed: lane={lane} count={len(failed_rows)} trajectory_ids={failed_ids}",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
 
 
 def parse_args() -> argparse.Namespace:
@@ -1260,6 +1665,11 @@ def parse_args() -> argparse.Namespace:
             sp.add_argument("--gromacs-stage-layout-file", type=Path, default=None)
             sp.add_argument("--no-lammps-thermo-flush", action="store_true")
             sp.add_argument("--lammps-resume-from-checkpoint", action="store_true")
+            sp.add_argument(
+                "--lammps-stop-after-stage",
+                default=None,
+                help="Stop a LAMMPS CPU lane after this exact equilibration stage and skip production/analysis.",
+            )
             sp.add_argument("--max-systems", type=int, default=None)
         if name in {"make-selected", "prepare-inputs"}:
             sp.add_argument(
@@ -1292,6 +1702,8 @@ def main() -> None:
         result = preflight(
             workspace=workspace,
             outdir=args.outdir,
+            jobs_csv=args.jobs_csv,
+            systems_csv=args.systems_csv,
             role=args.role,
             run_group=args.run_group,
             lanes=lanes,
@@ -1369,7 +1781,7 @@ def main() -> None:
         output_run_group = smoke_run_group if smoke_selection else args.run_group
         lammps_stage_layouts = load_lammps_stage_layouts(args.lammps_stage_layout_file)
         gromacs_stage_layouts = load_gromacs_stage_layouts(args.gromacs_stage_layout_file)
-        run_batch_lane(
+        status_df, _ = run_batch_lane(
             selected_csv,
             workspace=workspace,
             outdir=args.outdir,
@@ -1389,9 +1801,11 @@ def main() -> None:
             lammps_cpu_omp_threads=args.lammps_cpu_omp_threads,
             lammps_thermo_flush=not bool(args.no_lammps_thermo_flush),
             lammps_resume_from_checkpoint=bool(args.lammps_resume_from_checkpoint),
+            lammps_stop_after_stage=args.lammps_stop_after_stage,
             lammps_stage_layouts=lammps_stage_layouts,
             gromacs_stage_layouts=gromacs_stage_layouts,
         )
+        raise_for_failed_lane_status(status_df, args.lane)
 
 
 if __name__ == "__main__":

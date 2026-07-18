@@ -4437,9 +4437,19 @@ void do_index(const char*                                 mdparin,
                         ir->opts.anneal_temp[i][j] = allSimulatedAnnealingTemperatures[k];
                         if (j == 0)
                         {
-                            if (ir->opts.anneal_time[i][0] > (ir->init_t + GMX_REAL_EPS))
+                            // init-step advances the first simulation time even when tinit is
+                            // left at zero.  Chunked continuation runs commonly use this form,
+                            // so validate the annealing schedule against the actual first time
+                            // represented by the input record.
+                            const double initialSimulationTime =
+                                    ir->init_t
+                                    + static_cast<double>(ir->init_step) * ir->delta_t;
+                            if (ir->opts.anneal_time[i][0]
+                                > (initialSimulationTime + GMX_REAL_EPS))
                             {
-                                gmx_fatal(FARGS, "First time point for annealing > init_t.\n");
+                                gmx_fatal(FARGS,
+                                          "First time point for annealing > initial simulation "
+                                          "time.\n");
                             }
                         }
                         else

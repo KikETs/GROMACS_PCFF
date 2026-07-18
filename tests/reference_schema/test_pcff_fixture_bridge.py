@@ -6,6 +6,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+from tools.pcff_fixture_bridge.common import (
+    BridgeError,
+    generate_topological_one_four_pairs,
+    parse_lammps_data,
+)
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BRIDGE = REPO_ROOT / "tools" / "pcff_fixture_bridge" / "generate.py"
@@ -119,6 +127,24 @@ def test_pcff_bridge_emits_traceable_ir(tmp_path: Path) -> None:
     assert first_dihedral_type["bb13"]["source"]["file"] == "system.in"
     assert first_pair["derived_from_dihedral_id"] == 1
     assert first_pair["source"]["file"] == "system.data"
+
+
+def test_one_four_pairs_follow_shortest_bond_topology_not_dihedral_endpoints() -> None:
+    source = {"file": "ring.data", "line": 1, "text": "test"}
+    bonds = [
+        {"id": 1, "atoms": [1, 2], "source": source},
+        {"id": 2, "atoms": [2, 3], "source": source},
+        {"id": 3, "atoms": [3, 4], "source": source},
+        {"id": 4, "atoms": [4, 5], "source": source},
+        {"id": 5, "atoms": [1, 4], "source": source},
+    ]
+    dihedrals = [{"id": 1, "atoms": [1, 2, 3, 4], "source": source}]
+
+    pairs = generate_topological_one_four_pairs(bonds, dihedrals)
+
+    assert [(pair["ai"], pair["aj"]) for pair in pairs] == [(2, 5)]
+    assert pairs[0]["derived_from_dihedral_id"] is None
+    assert pairs[0]["derived_from_bond_ids"] == [1, 5, 4]
 
 
 def test_pcff_bridge_matches_representative_reference_topologies(tmp_path: Path) -> None:
@@ -239,7 +265,7 @@ BondBond13 Coeffs  # class2
 
 Atoms # full
 
-1 1 1 0.25 -0.5 0.0 0.0
+1 1 1 0.25 -0.5 0.0 0.0 1 -1 1
 2 1 2 -0.25 -0.1 0.1 0.0
 3 1 1 0.25 0.2 -0.1 0.0
 4 1 2 -0.25 0.6 0.0 0.1
@@ -293,4 +319,46 @@ Dihedrals
     assert "[ pairs ]" in topology
     assert " 13 " in topology
     assert gro_lines[1].strip() == "4"
-    assert gro_lines[-1].split() == ["0.2000000", "0.2000000", "0.2000000"]
+    assert [float(value) for value in gro_lines[2].split()[-3:]] == pytest.approx(
+        [0.25, -0.1, 0.3], abs=1.0e-12
+    )
+    assert [float(value) for value in gro_lines[-1].split()] == [0.2, 0.2, 0.2]
+
+
+def test_lammps_data_bridge_rejects_triclinic_tilts_instead_of_dropping_them(
+    tmp_path: Path,
+) -> None:
+    data_path = tmp_path / "triclinic.data"
+    data_path.write_text(
+        """LAMMPS data file
+
+1 atoms
+0 bonds
+0 angles
+0 dihedrals
+0 impropers
+
+1 atom types
+0 bond types
+0 angle types
+0 dihedral types
+0 improper types
+
+0.0 10.0 xlo xhi
+0.0 10.0 ylo yhi
+0.0 10.0 zlo zhi
+1.0 0.5 -0.25 xy xz yz
+
+Masses
+
+1 12.0
+
+Atoms # full
+
+1 1 1 0.0 1.0 2.0 3.0 0 0 0
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(BridgeError, match="refusing to discard xy/xz/yz tilt factors"):
+        parse_lammps_data(data_path)

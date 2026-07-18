@@ -1300,7 +1300,9 @@ void init_forcerec(FILE*                            fplog,
 }
 
 t_forcerec::t_forcerec(const bool useGpuPmePpCommunication) :
+#if GMX_GPU
     exactRespaLocalForcesReady{ std::make_unique<GpuEventSynchronizer>() },
+#endif
     pmeForceReceiveBuffer{ gmx::HostAllocationPolicy{ useGpuPmePpCommunication
                                                               ? gmx::PinningPolicy::PinnedIfSupported
                                                               : gmx::PinningPolicy::CannotBePinned } }

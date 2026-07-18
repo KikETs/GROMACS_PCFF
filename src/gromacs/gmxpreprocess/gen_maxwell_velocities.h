@@ -70,4 +70,25 @@ void maxwell_speed(real tempi, int seed, gmx_mtop_t* mtop, rvec v[], const gmx::
  */
 void stop_cm(const gmx::MDLogger& logger, int natoms, real mass[], rvec x[], rvec v[]);
 
+/*! \brief Apply LAMMPS `velocity create ... mom yes rot yes` post-processing.
+ *
+ * Removes linear and angular momentum about the mass-weighted center of mass,
+ * then rescales the mobile atoms to \p tempi using LAMMPS compute-temp's
+ * default `3*N_mobile-3` degrees of freedom. A fatal error is raised when the
+ * inertia tensor is singular and the rotational correction is not unique.
+ *
+ * \param[in]  tempi  Target temperature
+ * \param[in]  natoms Number of atoms
+ * \param[in]  mass   Atomic masses; non-positive masses are not integrated
+ * \param[in]  x      Coordinates
+ * \param[out] v      Velocities
+ * \param[in]  logger Handle to logging interface
+ */
+void lammps_mom_rot_velocity_scale(real                 tempi,
+                                   int                  natoms,
+                                   const real           mass[],
+                                   const rvec           x[],
+                                   rvec                 v[],
+                                   const gmx::MDLogger& logger);
+
 #endif

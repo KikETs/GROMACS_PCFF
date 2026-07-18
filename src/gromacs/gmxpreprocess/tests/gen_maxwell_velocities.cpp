@@ -42,6 +42,9 @@
 
 #include "gromacs/gmxpreprocess/gen_maxwell_velocities.h"
 
+#include <array>
+#include <cmath>
+#include <limits>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -49,6 +52,7 @@
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
 
+#include "gromacs/math/units.h"
 #include "gromacs/topology/atoms.h"
 #include "gromacs/topology/mtop_util.h"
 #include "gromacs/topology/topology.h"
@@ -141,6 +145,158 @@ INSTANTIATE_TEST_SUITE_P(CorrectVelocity,
                          ::testing::Combine(::testing::Values(150, 298, 313, 350),
                                             ::testing::Values(1, 42),
                                             ::testing::Values(23, 42)));
+
+TEST(LammpsMomRotVelocityScaleTest, RemovesLinearAndAngularMomentumAndRestoresTargetTemperature)
+{
+    constexpr int  c_numAtoms   = 4;
+    constexpr real c_targetTemp = 353.0_real;
+    std::array<real, c_numAtoms> mass = { 1.0_real, 2.0_real, 3.0_real, 4.0_real };
+    std::array<RVec, c_numAtoms> position = { RVec{ 0.0, 0.0, 0.0 },
+                                               RVec{ 1.0, 0.0, 0.0 },
+                                               RVec{ 0.0, 2.0, 0.0 },
+                                               RVec{ 0.0, 0.0, 3.0 } };
+    std::array<RVec, c_numAtoms> velocity = { RVec{ 1.0, 2.0, 3.0 },
+                                               RVec{ -2.0, 0.5, 1.0 },
+                                               RVec{ 0.25, -1.0, 2.5 },
+                                               RVec{ 3.0, -2.0, 0.75 } };
+
+    MDLogger logger;
+    lammps_mom_rot_velocity_scale(c_targetTemp,
+                                  c_numAtoms,
+                                  mass.data(),
+                                  as_rvec_array(position.data()),
+                                  as_rvec_array(velocity.data()),
+                                  logger);
+
+    double totalMass = 0;
+    RVec   centerOfMass{ 0, 0, 0 };
+    RVec   linearMomentum{ 0, 0, 0 };
+    for (int atom = 0; atom < c_numAtoms; ++atom)
+    {
+        totalMass += mass[atom];
+        for (int dimension = 0; dimension < DIM; ++dimension)
+        {
+            centerOfMass[dimension] += mass[atom] * position[atom][dimension];
+            linearMomentum[dimension] += mass[atom] * velocity[atom][dimension];
+        }
+    }
+    for (int dimension = 0; dimension < DIM; ++dimension)
+    {
+        centerOfMass[dimension] /= totalMass;
+    }
+
+    RVec   angularMomentum{ 0, 0, 0 };
+    double kineticEnergy = 0;
+    for (int atom = 0; atom < c_numAtoms; ++atom)
+    {
+        const double rx = position[atom][XX] - centerOfMass[XX];
+        const double ry = position[atom][YY] - centerOfMass[YY];
+        const double rz = position[atom][ZZ] - centerOfMass[ZZ];
+        const double vx = velocity[atom][XX];
+        const double vy = velocity[atom][YY];
+        const double vz = velocity[atom][ZZ];
+        angularMomentum[XX] += mass[atom] * (ry * vz - rz * vy);
+        angularMomentum[YY] += mass[atom] * (rz * vx - rx * vz);
+        angularMomentum[ZZ] += mass[atom] * (rx * vy - ry * vx);
+        kineticEnergy += 0.5 * mass[atom] * (vx * vx + vy * vy + vz * vz);
+    }
+    const double temperature =
+            2.0 * kineticEnergy / ((DIM * c_numAtoms - DIM) * c_boltz);
+    const double momentumTolerance =
+            5000.0 * std::numeric_limits<real>::epsilon();
+    for (int dimension = 0; dimension < DIM; ++dimension)
+    {
+        EXPECT_NEAR(linearMomentum[dimension], 0.0, momentumTolerance);
+        EXPECT_NEAR(angularMomentum[dimension], 0.0, momentumTolerance);
+    }
+    EXPECT_NEAR(temperature,
+                c_targetTemp,
+                5000.0 * std::numeric_limits<real>::epsilon() * c_targetTemp);
+}
+
+TEST(LammpsMomRotVelocityScaleTest, PreservesAngularMomentumRemovalForImageUnwrappedCoordinates)
+{
+    constexpr int  c_numAtoms   = 4;
+    constexpr real c_targetTemp = 353.0_real;
+    std::array<real, c_numAtoms> mass = { 1.0_real, 2.0_real, 3.0_real, 4.0_real };
+    // These are periodic-image-unwrapped coordinates reconstructed from a
+    // 1 nm orthorhombic box. Atoms 1, 2, and 3 carry ix=-1, iy=+1, and iz=-1.
+    std::array<RVec, c_numAtoms> position = { RVec{ 0.1, 0.2, 0.3 },
+                                               RVec{ -0.1, 0.25, 0.4 },
+                                               RVec{ 0.2, 1.85, 0.45 },
+                                               RVec{ 0.3, 0.4, -0.05 } };
+    std::array<RVec, c_numAtoms> velocity = { RVec{ 1.0, 2.0, 3.0 },
+                                               RVec{ -2.0, 0.5, 1.0 },
+                                               RVec{ 0.25, -1.0, 2.5 },
+                                               RVec{ 3.0, -2.0, 0.75 } };
+
+    MDLogger logger;
+    lammps_mom_rot_velocity_scale(c_targetTemp,
+                                  c_numAtoms,
+                                  mass.data(),
+                                  as_rvec_array(position.data()),
+                                  as_rvec_array(velocity.data()),
+                                  logger);
+
+    double totalMass = 0;
+    RVec   centerOfMass{ 0, 0, 0 };
+    RVec   linearMomentum{ 0, 0, 0 };
+    for (int atom = 0; atom < c_numAtoms; ++atom)
+    {
+        totalMass += mass[atom];
+        for (int dimension = 0; dimension < DIM; ++dimension)
+        {
+            centerOfMass[dimension] += mass[atom] * position[atom][dimension];
+            linearMomentum[dimension] += mass[atom] * velocity[atom][dimension];
+        }
+    }
+    for (int dimension = 0; dimension < DIM; ++dimension)
+    {
+        centerOfMass[dimension] /= totalMass;
+    }
+
+    RVec angularMomentum{ 0, 0, 0 };
+    for (int atom = 0; atom < c_numAtoms; ++atom)
+    {
+        const double rx = position[atom][XX] - centerOfMass[XX];
+        const double ry = position[atom][YY] - centerOfMass[YY];
+        const double rz = position[atom][ZZ] - centerOfMass[ZZ];
+        const double vx = velocity[atom][XX];
+        const double vy = velocity[atom][YY];
+        const double vz = velocity[atom][ZZ];
+        angularMomentum[XX] += mass[atom] * (ry * vz - rz * vy);
+        angularMomentum[YY] += mass[atom] * (rz * vx - rx * vz);
+        angularMomentum[ZZ] += mass[atom] * (rx * vy - ry * vx);
+    }
+
+    const double momentumTolerance = 5000.0 * std::numeric_limits<real>::epsilon();
+    for (int dimension = 0; dimension < DIM; ++dimension)
+    {
+        EXPECT_NEAR(linearMomentum[dimension], 0.0, momentumTolerance);
+        EXPECT_NEAR(angularMomentum[dimension], 0.0, momentumTolerance);
+    }
+}
+
+TEST(LammpsMomRotVelocityScaleTest, RejectsSingularInertiaTensor)
+{
+    constexpr int c_numAtoms = 3;
+    std::array<real, c_numAtoms> mass = { 1.0_real, 1.0_real, 1.0_real };
+    std::array<RVec, c_numAtoms> position = {
+        RVec{ 0.0, 0.0, 0.0 }, RVec{ 1.0, 0.0, 0.0 }, RVec{ 2.0, 0.0, 0.0 }
+    };
+    std::array<RVec, c_numAtoms> velocity = {
+        RVec{ 1.0, 2.0, 3.0 }, RVec{ -1.0, 0.5, 1.0 }, RVec{ 0.25, -1.0, 2.5 }
+    };
+    MDLogger logger;
+
+    EXPECT_DEATH_IF_SUPPORTED(lammps_mom_rot_velocity_scale(353.0_real,
+                                                            c_numAtoms,
+                                                            mass.data(),
+                                                            as_rvec_array(position.data()),
+                                                            as_rvec_array(velocity.data()),
+                                                            logger),
+                              "singular inertia tensor");
+}
 
 } // namespace
 } // namespace test

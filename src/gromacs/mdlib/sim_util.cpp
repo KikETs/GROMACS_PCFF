@@ -14999,9 +14999,14 @@ void do_force(FILE*                         fplog,
                                                                   : exactRespaListedForceOutputs->numActiveLevels();
                             nbv->nbat().ensureNativeMultiContributionOutputBuffers(outputBufferCount);
                             wallcycle_start(wcycle, WallCycleCounter::ExactRespaGpuBondedClear);
+                            bool haveMatchingDeviceForceOutputs = false;
+#if GMX_GPU
+                            haveMatchingDeviceForceOutputs =
+                                    gpuGetNBAtomData(nbv->gpuNbv())->exactRespaMultiFCount
+                                    == outputBufferCount;
+#endif
                             if (exactRespaGpuDeviceForceStoreRequested()
-                                && gpuGetNBAtomData(nbv->gpuNbv())->exactRespaMultiFCount
-                                           == outputBufferCount)
+                                && haveMatchingDeviceForceOutputs)
                             {
                                 gpu_clear_exact_respa_multi_force_output(
                                         nbv->gpuNbv(), nativeBatchOutputIndex);
@@ -15427,9 +15432,14 @@ void do_force(FILE*                         fplog,
                                                                       : exactRespaListedForceOutputs->numActiveLevels();
                                 nbv->nbat().ensureNativeMultiContributionOutputBuffers(outputBufferCount);
                                 wallcycle_start(wcycle, WallCycleCounter::ExactRespaGpuBondedClear);
+                                bool haveMatchingDeviceForceOutputs = false;
+#if GMX_GPU
+                                haveMatchingDeviceForceOutputs =
+                                        gpuGetNBAtomData(nbv->gpuNbv())->exactRespaMultiFCount
+                                        == outputBufferCount;
+#endif
                                 if (exactRespaGpuDeviceForceStoreRequested()
-                                    && gpuGetNBAtomData(nbv->gpuNbv())->exactRespaMultiFCount
-                                               == outputBufferCount)
+                                    && haveMatchingDeviceForceOutputs)
                                 {
                                     gpu_clear_exact_respa_multi_force_output(
                                             nbv->gpuNbv(), nativeBatchOutputIndex);

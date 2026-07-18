@@ -39,6 +39,7 @@ gmx_add_unit_test(MdlibUnitTest mdlib-test HARDWARE_DETECTION
         constraintgroupsize.cpp
         constrtestdata.cpp
         constrtestrunners.cpp
+        coupling_pcff_mttk_drag.cpp
         ebin.cpp
         energydrifttracker.cpp
         energyoutput.cpp

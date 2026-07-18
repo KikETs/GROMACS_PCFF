@@ -9,6 +9,7 @@
 #include "gmxpre.h"
 
 #include "legacysimulator.h"
+#include "exactrespasoftstart.h"
 #include "exactrespasteppertesting.h"
 
 #include <algorithm>
@@ -30,7 +31,9 @@
 #include "gromacs/domdec/collect.h"
 #include "gromacs/domdec/domdec_struct.h"
 #include "gromacs/ewald/pme.h"
-#include "gromacs/gpu_utils/devicebuffer.h"
+#if GMX_GPU
+#    include "gromacs/gpu_utils/devicebuffer.h"
+#endif
 #include "gromacs/math/functions.h"
 #include "gromacs/mdtypes/commrec.h"
 #include "gromacs/gpu_utils/gpueventsynchronizer.h"
@@ -44,7 +47,9 @@
 #include "gromacs/mdlib/vcm.h"
 #include "gromacs/nbnxm/nbnxm.h"
 #include "gromacs/nbnxm/gpu_data_mgmt.h"
-#include "gromacs/nbnxm/gpu_types_common.h"
+#if GMX_GPU
+#    include "gromacs/nbnxm/gpu_types_common.h"
+#endif
 #include "gromacs/mdtypes/enerdata.h"
 #include "gromacs/mdtypes/exactrespaforcestore.h"
 #include "gromacs/mdtypes/exactrespaschedule.h"
@@ -229,18 +234,26 @@ static bool exactRespaReturnNextVirialEnabled()
     return enabled;
 }
 
+bool exactRespaPostTrotterReplayNeedsNextVirialForTesting(const char* value)
+{
+    // md.cpp defaults an unset post-Trotter replay to sequence Three. Both
+    // sequences Two and Three consume the pressure tensor from the newly
+    // evaluated coordinates, so their replay requires the next-step virial.
+    if (value == nullptr || *value == '\0')
+    {
+        return true;
+    }
+    return std::strcmp(value, "2") == 0 || std::strcmp(value, "two") == 0
+           || std::strcmp(value, "3") == 0 || std::strcmp(value, "three") == 0
+           || std::strcmp(value, "2,3") == 0 || std::strcmp(value, "two-three") == 0
+           || std::strcmp(value, "3,2") == 0 || std::strcmp(value, "three-two") == 0;
+}
+
 static bool exactRespaPostTrotterReplayIncludesFinalHalf()
 {
     static const bool enabled = [] {
         const char* value = std::getenv("GMX_PCFF_EXACT_RESPA_POST_TROTTER");
-        if (value == nullptr || *value == '\0')
-        {
-            return false;
-        }
-        return std::strcmp(value, "2") == 0 || std::strcmp(value, "two") == 0
-               || std::strcmp(value, "3") == 0 || std::strcmp(value, "three") == 0
-               || std::strcmp(value, "2,3") == 0 || std::strcmp(value, "two-three") == 0
-               || std::strcmp(value, "3,2") == 0 || std::strcmp(value, "three-two") == 0;
+        return exactRespaPostTrotterReplayNeedsNextVirialForTesting(value);
     }();
     return enabled;
 }
@@ -1922,6 +1935,84 @@ void applyRespaHalfKicks(const t_inputrec&                 inputRecord,
     applyPreparedRespaHalfKicks(homenr, ptype, invMassPerDim, preparedHalfKicks, extendedUpdate, velocity);
 }
 
+void applySoftStartPreparedRespaHalfKicks(
+        const t_inputrec&                  inputRecord,
+        const int64_t                      baseStep,
+        const RespaKickPhase               phase,
+        const int                           homenr,
+        const ArrayRef<const ParticleType> ptype,
+        const ArrayRef<const RVec>         invMassPerDim,
+        const ExactRespaPreparedHalfKicks& preparedHalfKicks,
+        const t_mdatoms&                   mdatoms,
+        const int*                         globalAtomIndices,
+        const int                          globalAtomIndicesCount,
+        const MpiComm&                     mpiComm,
+        ExactRespaSoftStartState*          softStartState,
+        ArrayRef<RVec>                     velocity)
+{
+    GMX_RELEASE_ASSERT(softStartState != nullptr && softStartState->config.enabled,
+                       "Soft-start half-kicks require enabled soft-start state");
+    GMX_RELEASE_ASSERT(velocity.ssize() >= homenr && ptype.ssize() >= homenr
+                               && invMassPerDim.ssize() >= homenr,
+                       "Soft-start half-kicks require all home-atom state");
+
+    for (int kickIndex = 0; kickIndex < preparedHalfKicks.numKicks; ++kickIndex)
+    {
+        const int  level       = preparedHalfKicks.levelPerKick[kickIndex];
+        const auto force       = preparedHalfKicks.forcesPerKick[kickIndex];
+        const bool isOuterKick = level == softStartState->outerLevel;
+        if (isOuterKick)
+        {
+            const int64_t boundaryStep =
+                    (phase == RespaKickPhase::Initial) ? baseStep : baseStep + 1;
+            GMX_RELEASE_ASSERT(
+                    exactRespaSoftStartIsOuterBoundary(boundaryStep,
+                                                       inputRecord.init_step,
+                                                       softStartState->outerStepFactor),
+                    "Soft-start slow half-kick must occur on a slowest-level boundary");
+            const int64_t expectedBoundary =
+                    (boundaryStep - inputRecord.init_step) / softStartState->outerStepFactor;
+            if (phase == RespaKickPhase::Final)
+            {
+                // LAMMPS's recursive r-RESPA applies lower-level final kicks
+                // before post_force_respa() evaluates fix langevin at the
+                // slowest level. Refresh here, not immediately after do_force,
+                // so the drag term sees the same boundary velocity.
+                refreshExactRespaSoftStartLangevinForce(softStartState,
+                                                         expectedBoundary,
+                                                         mdatoms,
+                                                         velocity,
+                                                         globalAtomIndices,
+                                                         globalAtomIndicesCount,
+                                                         mpiComm);
+            }
+            GMX_RELEASE_ASSERT(softStartState->cachedBoundary == expectedBoundary,
+                               "Soft-start slow half-kicks must reuse the Langevin force from their boundary refresh");
+            GMX_RELEASE_ASSERT(softStartState->cachedLangevinForce.size()
+                                       >= static_cast<size_t>(homenr),
+                               "Soft-start slow half-kick requires a cached Langevin force per home atom");
+        }
+
+        exactRespaUpdateForAtoms(homenr, [&](const int atom)
+        {
+            if (ptype[atom] == ParticleType::Shell
+                || (invMassPerDim[atom][XX] == 0 && invMassPerDim[atom][YY] == 0
+                    && invMassPerDim[atom][ZZ] == 0))
+            {
+                return;
+            }
+            const RVec* langevinForce =
+                    isOuterKick ? &softStartState->cachedLangevinForce[atom] : nullptr;
+            applyExactRespaSoftStartHalfKick(preparedHalfKicks.dtPerKick[kickIndex],
+                                             invMassPerDim[atom],
+                                             force[atom],
+                                             langevinForce,
+                                             softStartState->maximumSpeedNmPerPs,
+                                             &velocity[atom]);
+        });
+    }
+}
+
 } // namespace
 
 void prepareExactRespaVelocityVerletObservables(
@@ -2134,6 +2225,35 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
             haveDDAtomOrdering(*cr_) ? cr_->dd->globalAtomIndices.data() : nullptr;
     const int         ddGlobalAtomIndicesCount =
             haveDDAtomOrdering(*cr_) ? static_cast<int>(cr_->dd->globalAtomIndices.size()) : 0;
+    initializeExactRespaSoftStartState(
+            inputRecord, useGpuUpdate, exactRespaStep.step, &exactRespaSoftStartState_);
+    const bool softStartEnabled = exactRespaSoftStartState_.config.enabled;
+    if (softStartEnabled && exactRespaSoftStartState_.cachedLangevinForce.empty())
+    {
+        refreshExactRespaSoftStartLangevinForce(
+                &exactRespaSoftStartState_,
+                0,
+                exactRespaStep.mdatoms,
+                state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                ddGlobalAtomIndices,
+                ddGlobalAtomIndicesCount,
+                cr_->commMyGroup);
+        if (cr_->isSimulationMainRank())
+        {
+            FILE* report = (fpLog_ != nullptr) ? fpLog_ : stderr;
+            std::fprintf(report,
+                         "Exact r-RESPA LAMMPS-style soft-start enabled: xlimit=%g nm, "
+                         "outer-dt=%g ps, vmax=%g nm/ps, T=%g K, damp=%g ps, "
+                         "seed=%llu, zero-random=%s, update=CPU\n",
+                         static_cast<double>(exactRespaSoftStartState_.config.xlimitNm),
+                         static_cast<double>(exactRespaSoftStartState_.outerDtPs),
+                         static_cast<double>(exactRespaSoftStartState_.maximumSpeedNmPerPs),
+                         static_cast<double>(exactRespaSoftStartState_.config.temperatureK),
+                         static_cast<double>(exactRespaSoftStartState_.config.dampingTimePs),
+                         static_cast<unsigned long long>(exactRespaSoftStartState_.config.seed),
+                         exactRespaSoftStartState_.config.zeroRandomForce ? "yes" : "no");
+        }
+    }
     const int64_t nextStep         = exactRespaStep.step + 1;
     const bool    nextStepIsNsStep = (inputRecord.nstlist > 0 && nextStep % inputRecord.nstlist == 0);
     const bool    nextStepNeedsVirialForMttkPost =
@@ -2282,7 +2402,59 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
     }
     else
     {
-        if (traceState)
+        if (softStartEnabled)
+        {
+            const ExactRespaPreparedHalfKicks preparedHalfKicks = prepareRespaHalfKicks(
+                    inputRecord,
+                    exactRespaStep.step,
+                    RespaKickPhase::Initial,
+                    &exactRespaStep.exactRespaForceStore,
+                    ddGlobalAtomIndices,
+                    ddGlobalAtomIndicesCount,
+                    fr_->nbv.get());
+            applySoftStartPreparedRespaHalfKicks(
+                    inputRecord,
+                    exactRespaStep.step,
+                    RespaKickPhase::Initial,
+                    exactRespaStep.mdatoms.homenr,
+                    exactRespaStep.mdatoms.ptype,
+                    exactRespaStep.mdatoms.invMassPerDim,
+                    preparedHalfKicks,
+                    exactRespaStep.mdatoms,
+                    ddGlobalAtomIndices,
+                    ddGlobalAtomIndicesCount,
+                    cr_->commMyGroup,
+                    &exactRespaSoftStartState_,
+                    state_->v.arrayRefWithPadding().unpaddedArrayRef());
+            if (traceState)
+            {
+                appendExactRespaStateTraceRows(exactRespaStep.step,
+                                               "post_initial_kick_velocity",
+                                               state_->v.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                               ddGlobalAtomIndices,
+                                               ddGlobalAtomIndicesCount,
+                                               fr_->nbv.get());
+                if (tracePositions)
+                {
+                    appendExactRespaStateTraceRows(exactRespaStep.step,
+                                                   "pre_drift_position",
+                                                   state_->x.arrayRefWithPadding().unpaddedConstArrayRef(),
+                                                   ddGlobalAtomIndices,
+                                                   ddGlobalAtomIndicesCount,
+                                                   fr_->nbv.get());
+                }
+            }
+            recordExactRespaRuntimeEventForTesting(
+                    exactRespaStep.step, ExactRespaRuntimeEventType::Drift, 0);
+            driftRespaPositions(exactRespaStep.mdatoms.homenr,
+                                exactRespaStep.mdatoms.ptype,
+                                exactRespaStep.mdatoms.invMassPerDim,
+                                inputRecord.delta_t,
+                                extendedUpdate,
+                                state_->x.arrayRefWithPadding().unpaddedArrayRef(),
+                                state_->v.arrayRefWithPadding().unpaddedArrayRef());
+        }
+        else if (traceState)
         {
             applyRespaHalfKicks(inputRecord,
                                 exactRespaStep.step,
@@ -2495,7 +2667,36 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
 
     recordExactRespaRefreshEventsForTesting(inputRecord.exactRespa, exactRespaStep.step);
 
-    if (!useGpuDeviceKicks)
+    if (softStartEnabled)
+    {
+        const int* finalGlobalAtomIndices =
+                haveDDAtomOrdering(*cr_) ? cr_->dd->globalAtomIndices.data() : nullptr;
+        const int finalGlobalAtomIndicesCount =
+                haveDDAtomOrdering(*cr_) ? static_cast<int>(cr_->dd->globalAtomIndices.size()) : 0;
+        const ExactRespaPreparedHalfKicks preparedHalfKicks = prepareRespaHalfKicks(
+                inputRecord,
+                exactRespaStep.step,
+                RespaKickPhase::Final,
+                &exactRespaStep.exactRespaForceStore,
+                finalGlobalAtomIndices,
+                finalGlobalAtomIndicesCount,
+                fr_->nbv.get());
+        applySoftStartPreparedRespaHalfKicks(
+                inputRecord,
+                exactRespaStep.step,
+                RespaKickPhase::Final,
+                exactRespaStep.mdatoms.homenr,
+                exactRespaStep.mdatoms.ptype,
+                exactRespaStep.mdatoms.invMassPerDim,
+                preparedHalfKicks,
+                exactRespaStep.mdatoms,
+                finalGlobalAtomIndices,
+                finalGlobalAtomIndicesCount,
+                cr_->commMyGroup,
+                &exactRespaSoftStartState_,
+                state_->v.arrayRefWithPadding().unpaddedArrayRef());
+    }
+    else if (!useGpuDeviceKicks)
     {
         applyRespaHalfKicks(inputRecord,
                             exactRespaStep.step,
@@ -2590,6 +2791,8 @@ void LegacySimulator::doExactRespaNestedPrototypeStep(const ExactRespaStepContex
 {
     const t_inputrec& inputRecord = exactRespaStep.inputRecord;
     const bool        useGpuUpdate = exactRespaStep.simulationWork.useGpuUpdate;
+    initializeExactRespaSoftStartState(
+            inputRecord, useGpuUpdate, exactRespaStep.step, &exactRespaSoftStartState_);
     const ExactRespaExtendedVvUpdate extendedUpdate =
             exactRespaExtendedVvUpdateFromState(inputRecord, *state_);
     const int*        ddGlobalAtomIndices =
