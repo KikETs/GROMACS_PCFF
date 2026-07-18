@@ -22,6 +22,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -37,6 +38,7 @@
 #include "gromacs/math/functions.h"
 #include "gromacs/mdtypes/commrec.h"
 #include "gromacs/gpu_utils/gpueventsynchronizer.h"
+#include "gromacs/mdlib/exactrespaimagetracker.h"
 #include "gromacs/mdlib/force.h"
 #include "gromacs/mdlib/force_flags.h"
 #include "gromacs/mdlib/gmx_omp_nthreads.h"
@@ -2202,6 +2204,26 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
 {
     const t_inputrec& inputRecord = exactRespaStep.inputRecord;
     const bool        useGpuUpdate = exactRespaStep.simulationWork.useGpuUpdate;
+    const bool        trackExactImages = exactRespaImageTrackerEnabled();
+    int64_t           imageSidecarFinalStep = 0;
+    if (trackExactImages)
+    {
+        GMX_RELEASE_ASSERT(!haveDDAtomOrdering(*cr_),
+                           "Exact r-RESPA image sidecars require fixed no-DD global atom order");
+        GMX_RELEASE_ASSERT(fr_->pbcType != PbcType::No,
+                           "Exact r-RESPA image sidecars require periodic boundaries");
+        GMX_RELEASE_ASSERT(inputRecord.nsteps >= 0,
+                           "Exact r-RESPA image sidecars require a finite stage");
+        GMX_RELEASE_ASSERT(inputRecord.init_step
+                                   <= std::numeric_limits<int64_t>::max() - inputRecord.nsteps,
+                           "Exact r-RESPA image sidecar final step overflow");
+        imageSidecarFinalStep = inputRecord.init_step + inputRecord.nsteps;
+        ensureExactRespaImageTrackerInitialized(
+                exactRespaStep.step,
+                state_->box,
+                state_->x.arrayRefWithPadding().unpaddedConstArrayRef().subArray(
+                        0, exactRespaStep.mdatoms.homenr));
+    }
     const ExactRespaExtendedVvUpdate extendedUpdate =
             exactRespaExtendedVvUpdateFromState(inputRecord, *state_);
     const bool inlineMttkBoxRemap =
@@ -2600,15 +2622,32 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
     {
         // Diagnostic-only path: per-atom wrapping can split bonded molecules
         // across PBC and make listed 1-4 distances exceed the table range.
-        put_atoms_in_box_omp(fr_->pbcType,
-                             state_->box,
-                             fr_->haveBoxDeformation,
-                             inputRecord.deform,
-                             state_->x.arrayRefWithPadding().unpaddedArrayRef().subArray(
-                                     0, exactRespaStep.mdatoms.homenr),
-                             state_->v.arrayRefWithPadding().unpaddedArrayRef().subArray(
-                                     0, exactRespaStep.mdatoms.homenr),
-                             gmx_omp_nthreads_get(ModuleMultiThread::Default));
+        auto statePositions = state_->x.arrayRefWithPadding().unpaddedArrayRef().subArray(
+                0, exactRespaStep.mdatoms.homenr);
+        auto stateVelocities = state_->v.arrayRefWithPadding().unpaddedArrayRef().subArray(
+                0, exactRespaStep.mdatoms.homenr);
+        const int numThreads = gmx_omp_nthreads_get(ModuleMultiThread::Default);
+        if (trackExactImages)
+        {
+            putAtomsInBoxAndTrackExactRespaImages(nextStep,
+                                                  fr_->pbcType,
+                                                  state_->box,
+                                                  fr_->haveBoxDeformation,
+                                                  inputRecord.deform,
+                                                  statePositions,
+                                                  stateVelocities,
+                                                  numThreads);
+        }
+        else
+        {
+            put_atoms_in_box_omp(fr_->pbcType,
+                                 state_->box,
+                                 fr_->haveBoxDeformation,
+                                 inputRecord.deform,
+                                 statePositions,
+                                 stateVelocities,
+                                 numThreads);
+        }
     }
 
     tensor         nextForceVir = { { 0 } };
@@ -2654,6 +2693,15 @@ void LegacySimulator::doExactRespaVelocityVerletStep(const ExactRespaStepContext
                  fr_->longRangeNonbondeds.get(),
                  exactRespaStep.ddBalanceRegionHandler);
         g_respaDoForceContextLabel = previousForceContextLabel;
+    }
+    if (trackExactImages)
+    {
+        maybeWriteFinalExactRespaImageSidecar(
+                nextStep,
+                imageSidecarFinalStep,
+                state_->box,
+                state_->x.arrayRefWithPadding().unpaddedConstArrayRef().subArray(
+                        0, exactRespaStep.mdatoms.homenr));
     }
     if (exactRespaReturnNextVirialEnabled() || nextStepNeedsVirialForMttkPost)
     {

@@ -29,13 +29,11 @@ LANES = ("lammps_cpu", "gmx_cpu", "gmx_gpu")
 DEFAULT_SMOKE_EQFACTOR = 0.00005
 MOLALITY_BASIS_MIXTURE = "salt_mol_per_kg_total_mixture"
 GMX_PCFF_RUNTIME_ENV = (
-    # Single-rank CPU PME otherwise enables a 1x1x1 DD grid whose initial
-    # distribution wraps every atom into the primary cell.  The no-DD force
-    # setup has a separate put_atoms_in_box path, so disable that as well.
-    # Together these retain the LAMMPS image-unwrapped representation from
-    # Eq01 through the second `velocity ... mom yes rot yes` at Eq04.
+    # Exact r-RESPA currently requires the single-rank no-DD path. Coordinates
+    # must still be wrapped before pair-grid construction; the exact-r-RESPA
+    # image tracker preserves the corresponding LAMMPS-continuous positions.
     "GMX_DD_SINGLE_RANK=0;"
-    "GMX_PCFF_LAMMPS_CG_EM_SKIP_PUT_ATOMS_IN_BOX=1;"
+    "GMX_PCFF_EXACT_RESPA_IMAGE_HANDOFF=1;"
     "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT=1;"
     "GMX_PCFF_MIXED_CLASS2_LINEAR_ANGLE_SIN_FLOOR=0.00038;"
     "GMX_PCFF_MTTK_MASS_MODE=lammps;"
@@ -56,6 +54,34 @@ GMX_PCFF_RUNTIME_ENV = (
     "GMX_PCFF_EXACT_RESPA_POST_TROTTER=three;"
     "GMX_PCFF_ALLOW_LONG_EXCLUDED=1"
 )
+
+
+def _should_outer_skip_gromacs_equilibration(
+    *,
+    resume_existing: bool,
+    force_restart: bool,
+    completion_flag_exists: bool,
+    lineage_rebuild_state: str | None,
+) -> bool:
+    # Always enter the runtime.  It performs the cheap completion checks and,
+    # critically, validates the complete protocol contract even while a
+    # production rebuild is pending.
+    return False
+
+
+def _should_outer_skip_gromacs_production(
+    *,
+    resume_existing: bool,
+    force_restart: bool,
+    completion_flag_exists: bool,
+    lineage_rebuild_state: str | None,
+) -> bool:
+    return (
+        resume_existing
+        and not force_restart
+        and completion_flag_exists
+        and lineage_rebuild_state is None
+    )
 
 
 def require_pandas():
@@ -972,6 +998,7 @@ def run_gromacs_bridge_lane(
     # but stage generation and checkpoint semantics must come from this branch
     # so local and remote workers execute the same protocol after git pull.
     from polygen_gromacs_runtime import (
+        gromacs_exact_image_lineage_rebuild_state,
         run_gromacs_equilibration,
         run_gromacs_production,
         setup_gromacs_environment,
@@ -1071,13 +1098,25 @@ def run_gromacs_bridge_lane(
                     )
 
                 failed_phase = "gromacs_equil"
-                if resume_existing and not force_restart and (md_dir / "equilibration_complete.flag").exists():
+                lineage_rebuild_state = gromacs_exact_image_lineage_rebuild_state(md_dir)
+                if _should_outer_skip_gromacs_equilibration(
+                    resume_existing=bool(resume_existing),
+                    force_restart=bool(force_restart),
+                    completion_flag_exists=(md_dir / "equilibration_complete.flag").exists(),
+                    lineage_rebuild_state=lineage_rebuild_state,
+                ):
                     skipped.append("gromacs_equil")
                 else:
                     run_gromacs_equilibration(runtime_ctx)
 
                 failed_phase = "gromacs_prod"
-                if resume_existing and not force_restart and (md_dir / "production_complete.flag").exists():
+                lineage_rebuild_state = gromacs_exact_image_lineage_rebuild_state(md_dir)
+                if _should_outer_skip_gromacs_production(
+                    resume_existing=bool(resume_existing),
+                    force_restart=bool(force_restart),
+                    completion_flag_exists=(md_dir / "production_complete.flag").exists(),
+                    lineage_rebuild_state=lineage_rebuild_state,
+                ):
                     skipped.append("gromacs_prod")
                 else:
                     run_gromacs_production(runtime_ctx)

@@ -85,6 +85,7 @@
 #include "gromacs/mdlib/ebin.h"
 #include "gromacs/mdlib/enerdata_utils.h"
 #include "gromacs/mdlib/energyoutput.h"
+#include "gromacs/mdlib/exactrespaimagetracker.h"
 #include "gromacs/mdlib/force.h"
 #include "gromacs/mdlib/force_flags.h"
 #include "gromacs/mdlib/forcerec.h"
@@ -892,6 +893,22 @@ static void write_em_traj(FILE*               fplog,
                 do_pbc_mtop(ir->pbcType, state->s.box, &top_global, state_global->x.rvec_array());
             }
 
+            if (gmx::exactRespaImageTrackerEnabled())
+            {
+                GMX_RELEASE_ASSERT(!haveDDAtomOrdering(*cr),
+                                   "Exact r-RESPA image sidecars require fixed no-DD global atom order");
+                const auto finalStatePositions =
+                        state_global->x.arrayRefWithPadding().unpaddedConstArrayRef().subArray(
+                                0, top_global.natoms);
+                gmx::ensureExactRespaImageTrackerInitialized(
+                        step, state->s.box, finalStatePositions);
+                // The final EM sidecar is written from the exact state passed to
+                // write_sto_conf_mtop() below. Convergence can end before nsteps,
+                // so the actual final EM step is authoritative here.
+                gmx::maybeWriteFinalExactRespaImageSidecar(
+                        step, step, state->s.box, finalStatePositions);
+            }
+
             write_sto_conf_mtop(confout,
                                 *top_global.name,
                                 top_global,
@@ -1010,6 +1027,15 @@ static bool do_em_step(const t_commrec*                          cr,
                 s2->cg_gl[i] = s1->cg_gl[i];
             }
         }
+    }
+
+    if (gmx::exactRespaImageTrackerEnabled())
+    {
+        GMX_RELEASE_ASSERT(!haveDDAtomOrdering(*cr),
+                           "Exact r-RESPA image sidecars require fixed no-DD global atom order");
+        gmx::inheritExactRespaImagesForCoordinateBuffer(
+                s1->x.arrayRefWithPadding().unpaddedConstArrayRef().subArray(0, end),
+                s2->x.arrayRefWithPadding().unpaddedConstArrayRef().subArray(0, end));
     }
 
     // Copy the DD or pair search counters
@@ -1565,6 +1591,20 @@ void LegacySimulator::do_cg()
     const bool isMainRank = cr_->commMyGroup.isMainRank();
     const bool pcffLammpsCgEm = pcffLammpsCgEmRequested();
     const bool pcffLammpsCgEmTrace = pcffLammpsCgEmTraceRequested();
+    const bool restoreTrialCoords = pcffLammpsCgEmRestoreTrialCoordsRequested();
+    const bool resetStartCoordsAfterPbc = pcffLammpsCgEmPbcResetRequested();
+    const bool resetStartCoordsAfterBoxCrossing = pcffLammpsCgEmBoxCrossResetRequested();
+
+    if (exactRespaImageTrackerEnabled()
+        && (restoreTrialCoords || resetStartCoordsAfterPbc || resetStartCoordsAfterBoxCrossing))
+    {
+        GMX_THROW(InvalidInputError(
+                "Exact r-RESPA image sidecars cannot be combined with "
+                "GMX_PCFF_LAMMPS_CG_EM_RESTORE_TRIAL_X, "
+                "GMX_PCFF_LAMMPS_CG_EM_PBC_RESET_X0, or "
+                "GMX_PCFF_LAMMPS_CG_EM_BOX_CROSS_RESET_X0 because those options "
+                "replace tracked coordinate representations after PBC evaluation"));
+    }
 
     gmx_global_stat_t gstat;
     double            tmp, minstep;
@@ -1920,10 +1960,6 @@ void LegacySimulator::do_cg()
             constexpr double epsQuad        = 1.0e-28;
             constexpr int    maxLineSteps   = 100;
             const double     emach          = pcffLammpsCgEmLineSearchEmach();
-            const bool       restoreTrialCoords = pcffLammpsCgEmRestoreTrialCoordsRequested();
-            const bool       resetStartCoordsAfterPbc = pcffLammpsCgEmPbcResetRequested();
-            const bool       resetStartCoordsAfterBoxCrossing =
-                    pcffLammpsCgEmBoxCrossResetRequested();
             std::vector<RVec> savedTrialCoords;
 
             auto evaluateLammpsCgTrial = [&](em_state_t* trialState) {

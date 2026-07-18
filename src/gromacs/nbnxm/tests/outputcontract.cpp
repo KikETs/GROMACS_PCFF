@@ -26,6 +26,7 @@
 #include "gromacs/mdtypes/multipletimestepping.h"
 #include "gromacs/mdlib/gmx_omp_nthreads.h"
 #include "gromacs/nbnxm/atomdata.h"
+#include "gromacs/nbnxm/grid.h"
 #include "gromacs/nbnxm/nbnxm.h"
 #include "gromacs/nbnxm/nbnxm_enums.h"
 #include "gromacs/nbnxm/pairlistparams.h"
@@ -169,6 +170,32 @@ std::unique_ptr<nonbonded_verlet_t> makeMinimalNbnxm(const int numOutputBuffers)
                         nullptr);
 
     return nbv;
+}
+
+TEST(GridBoundsDeathTest, RejectsHomeAtomBelowLowerCorner)
+{
+    GridDimensions dimensions{};
+    dimensions.lowerCorner       = RVec{ 0.0_real, 0.0_real, 0.0_real };
+    dimensions.invCellSize[XX]   = 1.0_real;
+    dimensions.invCellSize[YY]   = 1.0_real;
+    dimensions.numCells[XX]      = 2;
+    dimensions.numCells[YY]      = 2;
+    const std::vector<RVec> x     = { RVec{ -3.0_real, 0.0_real, 0.0_real } };
+    std::vector<int>        bins(1);
+    std::vector<int>        numAtomsPerCell(5);
+
+    GMX_EXPECT_DEATH_IF_SUPPORTED(
+            Grid::calcCellIndices(dimensions,
+                                  nullptr,
+                                  Range<int>(0, 1),
+                                  x,
+                                  0,
+                                  nullptr,
+                                  0,
+                                  1,
+                                  bins,
+                                  numAtomsPerCell),
+            "grid cell cx -3 cy 0 out of range");
 }
 
 TEST_F(NbnxmOutputContractTest, ResolvesActiveContributionSinkWithoutGpuState)

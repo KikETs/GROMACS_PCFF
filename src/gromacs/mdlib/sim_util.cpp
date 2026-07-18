@@ -94,6 +94,7 @@
 #include "gromacs/mdlib/dispersioncorrection.h"
 #include "gromacs/mdlib/enerdata_utils.h"
 #include "gromacs/mdlib/exactrespa_nonbonded_gpu.h"
+#include "gromacs/mdlib/exactrespaimagetracker.h"
 #include "gromacs/mdlib/force.h"
 #include "gromacs/mdlib/force_flags.h"
 #include "gromacs/mdlib/forcerec.h"
@@ -13124,6 +13125,9 @@ static void doPairSearch(const t_commrec*             cr,
                          t_forcerec*                  fr,
                          const MdrunScheduleWorkload& runScheduleWork)
 {
+    GMX_RELEASE_ASSERT(!exactRespaImageTrackerEnabled() || !haveDDAtomOrdering(*cr),
+                       "Exact r-RESPA image sidecars require fixed no-DD global atom order");
+
     nonbonded_verlet_t* nbv = fr->nbv.get();
 
     StatePropagatorDataGpu* stateGpu = fr->stateGpu;
@@ -13160,21 +13164,39 @@ static void doPairSearch(const t_commrec*             cr,
 
     if (fr->pbcType != PbcType::No)
     {
-        static const bool skipPutAtomsInBoxForPcffCg = [] {
-            const char* env = std::getenv("GMX_PCFF_LAMMPS_CG_EM_SKIP_PUT_ATOMS_IN_BOX");
-            return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
-        }();
-        const bool calcCGCM =
-                (stepWork.stateChanged && !haveDDAtomOrdering(*cr) && !skipPutAtomsInBoxForPcffCg);
+        const bool calcCGCM = stepWork.stateChanged && !haveDDAtomOrdering(*cr);
         if (calcCGCM)
         {
-            put_atoms_in_box_omp(fr->pbcType,
-                                 box,
-                                 fr->haveBoxDeformation,
-                                 inputrec.deform,
-                                 x.unpaddedArrayRef().subArray(0, mdatoms.homenr),
-                                 v.empty() ? ArrayRef<RVec>{} : v.subArray(0, mdatoms.homenr),
-                                 gmx_omp_nthreads_get(ModuleMultiThread::Default));
+            auto statePositions = x.unpaddedArrayRef().subArray(0, mdatoms.homenr);
+            auto stateVelocities =
+                    v.empty() ? ArrayRef<RVec>{} : v.subArray(0, mdatoms.homenr);
+            const int numThreads = gmx_omp_nthreads_get(ModuleMultiThread::Default);
+            if (exactRespaImageTrackerEnabled())
+            {
+                // CG/L-BFGS use -1 for their initial force evaluation even
+                // though the input state is at init_step. Normalize only that
+                // pre-step sentinel so the sidecar has a stable stage-start
+                // contract across MD and all EM algorithms.
+                const int64_t imageTrackingStep = std::max(step, inputrec.init_step);
+                putAtomsInBoxAndTrackExactRespaImages(imageTrackingStep,
+                                                      fr->pbcType,
+                                                      box,
+                                                      fr->haveBoxDeformation,
+                                                      inputrec.deform,
+                                                      statePositions,
+                                                      stateVelocities,
+                                                      numThreads);
+            }
+            else
+            {
+                put_atoms_in_box_omp(fr->pbcType,
+                                     box,
+                                     fr->haveBoxDeformation,
+                                     inputrec.deform,
+                                     statePositions,
+                                     stateVelocities,
+                                     numThreads);
+            }
             if (shouldTraceRespaStateXChainStep(step))
             {
                 appendStateXChainTracePair(activeM2pTraceDirPath(),
@@ -16343,7 +16365,7 @@ void do_force(FILE*                         fplog,
 
     GMX_ASSERT(!(simulationWork.nonbondedSubstepLevel > 0 && stepWork.useGpuFBufferOps),
                "The schedule below does not allow for nonbonded MTS with GPU buffer ops");
-    GMX_ASSERT(!(nonbondedAtMtsNonzeroLevel && stepWork.useGpuFHalo),
+    GMX_ASSERT(!(simulationWork.nonbondedSubstepLevel > 0 && stepWork.useGpuFHalo),
                "The schedule below does not allow for nonbonded MTS with GPU halo exchange");
     // Will store the amount of cycles spent waiting for the GPU that
     // will be later used in the DLB accounting.
@@ -16626,7 +16648,7 @@ void do_force(FILE*                         fplog,
 
     /* Do the nonbonded GPU (or emulation) force buffer reduction
      * on the non-alternating path. */
-    GMX_ASSERT(!(nonbondedAtMtsNonzeroLevel && stepWork.useGpuFBufferOps),
+    GMX_ASSERT(!(simulationWork.nonbondedSubstepLevel > 0 && stepWork.useGpuFBufferOps),
                "The schedule below does not allow for nonbonded MTS with GPU buffer ops");
     if (useOrEmulateGpuNb && !alternateGpuWait && !useExactLammpsRespaNonbonded)
     {

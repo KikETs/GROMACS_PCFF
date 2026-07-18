@@ -11,6 +11,8 @@ from tools.pcff_respa_parity.polygen_multisystem_worker import (
     _first_lammps_g_vector,
     _lammps_production_log_endpoint,
     _lammps_log_gromacs_stage_keys,
+    _should_outer_skip_gromacs_equilibration,
+    _should_outer_skip_gromacs_production,
     bridge_script,
     lammps_beta_stage_layouts,
 )
@@ -60,7 +62,7 @@ def test_worker_uses_the_bridge_versioned_in_its_own_checkout(tmp_path: Path) ->
     assert "GROMACS_PCFF-lunar-data-bridge" not in str(bridge_script(tmp_path))
 
 
-def test_runtime_disables_coordinate_wrapping_that_would_drop_lammps_images() -> None:
+def test_runtime_uses_no_dd_but_keeps_pair_grid_coordinates_wrapped() -> None:
     env = dict(
         item.split("=", 1)
         for item in GMX_PCFF_RUNTIME_ENV.split(";")
@@ -68,7 +70,52 @@ def test_runtime_disables_coordinate_wrapping_that_would_drop_lammps_images() ->
     )
 
     assert env["GMX_DD_SINGLE_RANK"] == "0"
-    assert env["GMX_PCFF_LAMMPS_CG_EM_SKIP_PUT_ATOMS_IN_BOX"] == "1"
+    assert env["GMX_PCFF_EXACT_RESPA_IMAGE_HANDOFF"] == "1"
+    assert "GMX_PCFF_LAMMPS_CG_EM_SKIP_PUT_ATOMS_IN_BOX" not in env
+
+
+@pytest.mark.parametrize(
+    ("lineage_state", "expected"),
+    [
+        (None, False),
+        ("active_equil", False),
+        ("production_pending", False),
+    ],
+)
+def test_worker_always_reenters_equilibration_for_protocol_validation(
+    lineage_state: str | None, expected: bool
+) -> None:
+    assert (
+        _should_outer_skip_gromacs_equilibration(
+            resume_existing=True,
+            force_restart=False,
+            completion_flag_exists=True,
+            lineage_rebuild_state=lineage_state,
+        )
+        is expected
+    )
+
+
+@pytest.mark.parametrize(
+    ("lineage_state", "expected"),
+    [
+        (None, True),
+        ("active_equil", False),
+        ("production_pending", False),
+    ],
+)
+def test_worker_never_outer_skips_production_while_lineage_rebuild_is_pending(
+    lineage_state: str | None, expected: bool
+) -> None:
+    assert (
+        _should_outer_skip_gromacs_production(
+            resume_existing=True,
+            force_restart=False,
+            completion_flag_exists=True,
+            lineage_rebuild_state=lineage_state,
+        )
+        is expected
+    )
 
 
 def test_lammps_log_names_map_to_expanded_gromacs_stage_keys() -> None:

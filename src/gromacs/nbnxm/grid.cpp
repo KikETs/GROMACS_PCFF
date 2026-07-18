@@ -1329,7 +1329,6 @@ void Grid::calcCellIndices(const GridDimensions&  gridDims,
                 int cy = static_cast<int>((coord[YY] - gridDims.lowerCorner[YY])
                                           * gridDims.invCellSize[YY]);
 
-#ifndef NDEBUG
                 if (cx < 0 || cx > gridDims.numCells[XX] || cy < 0 || cy > gridDims.numCells[YY])
                 {
                     gmx_fatal(FARGS,
@@ -1339,13 +1338,12 @@ void Grid::calcCellIndices(const GridDimensions&  gridDims,
                               cy,
                               gridDims.numCells[XX],
                               gridDims.numCells[YY],
-                              x[i][XX],
-                              x[i][YY],
-                              x[i][ZZ],
+                              coord[XX],
+                              coord[YY],
+                              coord[ZZ],
                               gridDims.lowerCorner[XX],
                               gridDims.lowerCorner[YY]);
                 }
-#endif
                 /* Take care of potential rounding issues */
                 cx = std::min(cx, gridDims.numCells[XX] - 1);
                 cy = std::min(cy, gridDims.numCells[YY] - 1);

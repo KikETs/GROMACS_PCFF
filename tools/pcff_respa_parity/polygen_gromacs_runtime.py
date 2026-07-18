@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -14,6 +15,9 @@ from typing import Any, Callable, Mapping
 
 ATM_TO_BAR = 1.01325
 POLYGEN_EQ_CHUNK_STEPS = 100_000
+GROMACS_EXACT_IMAGE_LINEAGE_REBUILD_MARKER = (
+    ".exact_image_lineage_rebuild_pending.json"
+)
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -23,6 +27,49 @@ def _read_json(path: Path) -> dict[str, Any]:
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def _write_json_atomically(path: Path, payload: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp.{os.getpid()}")
+    if temporary.exists():
+        raise RuntimeError(f"Temporary JSON file already exists: {temporary}")
+    with temporary.open("x", encoding="utf-8") as handle:
+        handle.write(
+            json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+        )
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, path)
+
+
+def gromacs_exact_image_lineage_rebuild_pending(md_dir: Path | str) -> bool:
+    return gromacs_exact_image_lineage_rebuild_state(md_dir) is not None
+
+
+def gromacs_exact_image_lineage_rebuild_state(md_dir: Path | str) -> str | None:
+    marker_path = Path(md_dir) / GROMACS_EXACT_IMAGE_LINEAGE_REBUILD_MARKER
+    if not marker_path.exists():
+        return None
+    marker = _read_json(marker_path)
+    if (
+        marker.get("schema_name") != "gromacs_exact_image_lineage_rebuild"
+        or int(marker.get("schema_version", 0)) != 1
+    ):
+        raise RuntimeError(f"Invalid GROMACS lineage invalidation marker: {marker_path}")
+    if not re.fullmatch(
+        r"[0-9a-f]{64}", str(marker.get("equil_protocol_contract_sha256", ""))
+    ):
+        raise RuntimeError(
+            f"GROMACS lineage invalidation marker has no valid protocol contract: "
+            f"{marker_path}"
+        )
+    state = str(marker.get("state", ""))
+    if state not in {"active_equil", "production_pending"}:
+        raise RuntimeError(
+            f"Invalid GROMACS lineage invalidation marker state {state!r}: {marker_path}"
+        )
+    return state
 
 
 def _render_template(text: str, replacements: Mapping[str, str]) -> str:
@@ -1405,6 +1452,615 @@ def _box_discrete_sample_average(
     }
 
 
+def _read_exact_handoff_gro(path: Path) -> dict[str, Any]:
+    """Read the 8.3 output, 18.12 bridge, or 23.17 handoff GRO layouts."""
+
+    lines = path.read_text(encoding="utf-8", errors="strict").splitlines()
+    if len(lines) < 4:
+        raise RuntimeError(f"Malformed GRO file: {path}")
+    try:
+        natoms = int(lines[1].strip())
+    except ValueError as exc:
+        raise RuntimeError(f"Invalid GRO atom count in {path}: {lines[1]!r}") from exc
+    if natoms <= 0 or len(lines) < natoms + 3:
+        raise RuntimeError(f"Truncated GRO file: {path}")
+
+    atoms: list[dict[str, Any]] = []
+    layout_by_length = {
+        24: (3, 8),
+        48: (6, 8),
+        54: (3, 18),
+        108: (6, 18),
+        69: (3, 23),
+        138: (6, 23),
+    }
+    for atom_index, raw in enumerate(lines[2 : 2 + natoms], start=1):
+        if len(raw) < 20:
+            raise RuntimeError(
+                f"Malformed GRO atom line {atom_index} in {path}: {raw!r}"
+            )
+        numeric = raw[20:].rstrip()
+        layout = layout_by_length.get(len(numeric))
+        if layout is None:
+            raise RuntimeError(
+                f"Unsupported GRO numeric layout on atom line {atom_index} in "
+                f"{path}: {len(numeric)} columns"
+            )
+        field_count, width = layout
+        try:
+            values = [
+                float(numeric[offset : offset + width])
+                for offset in range(0, field_count * width, width)
+            ]
+        except ValueError as exc:
+            raise RuntimeError(
+                f"Cannot parse GRO atom line {atom_index} in {path}: {raw!r}"
+            ) from exc
+        if any(not math.isfinite(value) for value in values):
+            raise RuntimeError(
+                f"Non-finite GRO value on atom line {atom_index} in {path}"
+            )
+        atoms.append(
+            {
+                "identity": raw[:20],
+                "coordinates_nm": values[:3],
+                "velocities_nm_ps": values[3:] if field_count == 6 else None,
+            }
+        )
+
+    try:
+        box_values = [float(value) for value in lines[2 + natoms].split()]
+    except ValueError as exc:
+        raise RuntimeError(f"Cannot parse GRO box record in {path}") from exc
+    if len(box_values) not in (3, 9):
+        raise RuntimeError(f"Unsupported GRO box record in {path}: {box_values}")
+    if len(box_values) == 9 and any(abs(value) > 1.0e-12 for value in box_values[3:]):
+        raise RuntimeError(
+            f"Exact image handoff currently requires an orthorhombic box: "
+            f"{path}: {box_values}"
+        )
+    box = box_values[:3]
+    if any(not math.isfinite(value) or value <= 0.0 for value in box):
+        raise RuntimeError(f"Invalid GRO box in {path}: {box_values}")
+    return {
+        "title": lines[0],
+        "natoms": natoms,
+        "atoms": atoms,
+        "box_nm": box,
+    }
+
+
+def _write_text_atomically_without_overwrite(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        if path.read_text(encoding="utf-8", errors="strict") != text:
+            raise RuntimeError(f"Refusing to overwrite non-matching handoff file {path}")
+        return
+    temporary = path.with_name(f".{path.name}.tmp.{os.getpid()}")
+    if temporary.exists():
+        raise RuntimeError(f"Exact image handoff temporary file already exists: {temporary}")
+    with temporary.open("x", encoding="utf-8") as handle:
+        handle.write(text)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, path)
+
+
+def _render_exact_respa_image_sidecar(
+    *,
+    step: int,
+    box_nm: list[float],
+    atoms: list[Mapping[str, Any]],
+) -> str:
+    if len(box_nm) != 3 or any(
+        not math.isfinite(float(value)) or float(value) <= 0.0 for value in box_nm
+    ):
+        raise RuntimeError(f"Invalid exact image sidecar box: {box_nm}")
+    if not atoms:
+        raise RuntimeError("Exact image sidecar requires at least one atom")
+    lines = [
+        "GMX_PCFF_EXACT_RESPA_IMAGE_SIDECAR 1",
+        f"step {int(step)}",
+        f"natoms {len(atoms)}",
+        "box",
+        f"{float(box_nm[0]):.17g} 0 0",
+        f"0 {float(box_nm[1]):.17g} 0",
+        f"0 0 {float(box_nm[2]):.17g}",
+        "atoms",
+    ]
+    for atom_index, atom in enumerate(atoms):
+        image = [int(value) for value in atom["image"]]
+        state = [float(value) for value in atom["state_position_nm"]]
+        continuous = [float(value) for value in atom["continuous_position_nm"]]
+        if len(image) != 3 or len(state) != 3 or len(continuous) != 3:
+            raise RuntimeError(f"Invalid exact image sidecar atom {atom_index}")
+        values = [*state, *continuous]
+        if any(not math.isfinite(value) for value in values):
+            raise RuntimeError(f"Non-finite exact image sidecar atom {atom_index}")
+        lines.append(
+            " ".join(
+                [
+                    str(atom_index),
+                    *(str(value) for value in image),
+                    *(f"{value:.17g}" for value in values),
+                ]
+            )
+        )
+    lines.append("end")
+    return "\n".join(lines) + "\n"
+
+
+def _read_exact_respa_image_sidecar(path: Path) -> dict[str, Any]:
+    tokens = path.read_text(encoding="utf-8", errors="strict").split()
+    cursor = 0
+
+    def take(expected: str | None = None) -> str:
+        nonlocal cursor
+        if cursor >= len(tokens):
+            raise RuntimeError(f"Truncated exact image sidecar {path}")
+        value = tokens[cursor]
+        cursor += 1
+        if expected is not None and value != expected:
+            raise RuntimeError(
+                f"Invalid exact image sidecar {path}: expected {expected!r}, got {value!r}"
+            )
+        return value
+
+    take("GMX_PCFF_EXACT_RESPA_IMAGE_SIDECAR")
+    if int(take()) != 1:
+        raise RuntimeError(f"Unsupported exact image sidecar version in {path}")
+    take("step")
+    step = int(take())
+    take("natoms")
+    natoms = int(take())
+    if natoms <= 0:
+        raise RuntimeError(f"Invalid exact image sidecar atom count in {path}")
+    take("box")
+    matrix = [[float(take()) for _ in range(3)] for _ in range(3)]
+    if any(abs(matrix[row][column]) > 1.0e-12 for row in range(3) for column in range(3) if row != column):
+        raise RuntimeError(f"Exact image handoff requires an orthorhombic sidecar: {path}")
+    box_nm = [matrix[index][index] for index in range(3)]
+    take("atoms")
+    atoms: list[dict[str, Any]] = []
+    for atom_index in range(natoms):
+        if int(take()) != atom_index:
+            raise RuntimeError(f"Exact image sidecar atom order mismatch in {path}")
+        image = [int(take()) for _ in range(3)]
+        state = [float(take()) for _ in range(3)]
+        continuous = [float(take()) for _ in range(3)]
+        reconstructed = [state[axis] + image[axis] * box_nm[axis] for axis in range(3)]
+        tolerance = 256.0 * max(1.0e-15, float.fromhex("0x1.0p-52"))
+        if any(
+            not math.isclose(
+                reconstructed[axis],
+                continuous[axis],
+                rel_tol=2.0e-5,
+                abs_tol=tolerance * max(1.0, abs(continuous[axis])),
+            )
+            for axis in range(3)
+        ):
+            raise RuntimeError(f"Inconsistent exact image sidecar atom {atom_index} in {path}")
+        atoms.append(
+            {
+                "image": image,
+                "state_position_nm": state,
+                "continuous_position_nm": continuous,
+            }
+        )
+    take("end")
+    if cursor != len(tokens):
+        raise RuntimeError(f"Unexpected trailing data in exact image sidecar {path}")
+    return {"step": step, "natoms": natoms, "box_nm": box_nm, "atoms": atoms}
+
+
+def _write_initial_exact_respa_image_sidecar(
+    source_gro: Path, destination: Path, *, step: int
+) -> Path:
+    frame = _read_exact_handoff_gro(source_gro)
+    atoms = [
+        {
+            "image": [0, 0, 0],
+            "state_position_nm": list(atom["coordinates_nm"]),
+            "continuous_position_nm": list(atom["coordinates_nm"]),
+        }
+        for atom in frame["atoms"]
+    ]
+    _write_text_atomically_without_overwrite(
+        destination,
+        _render_exact_respa_image_sidecar(
+            step=step,
+            box_nm=list(frame["box_nm"]),
+            atoms=atoms,
+        ),
+    )
+    return destination
+
+
+def _rebase_exact_respa_image_sidecar_step(
+    source: Path, destination: Path, *, step: int
+) -> Path:
+    sidecar = _read_exact_respa_image_sidecar(source)
+    _write_text_atomically_without_overwrite(
+        destination,
+        _render_exact_respa_image_sidecar(
+            step=step,
+            box_nm=list(sidecar["box_nm"]),
+            atoms=list(sidecar["atoms"]),
+        ),
+    )
+    return destination
+
+
+def _materialize_exact_respa_continuous_gro(
+    source_gro: Path, sidecar_path: Path, destination: Path
+) -> Path:
+    frame = _read_exact_handoff_gro(source_gro)
+    sidecar = _read_exact_respa_image_sidecar(sidecar_path)
+    if int(frame["natoms"]) != int(sidecar["natoms"]):
+        raise RuntimeError(
+            f"Exact image handoff atom count mismatch: {source_gro} vs {sidecar_path}"
+        )
+    for axis, (gro_length, sidecar_length) in enumerate(
+        zip(frame["box_nm"], sidecar["box_nm"])
+    ):
+        if not math.isclose(
+            float(gro_length), float(sidecar_length), rel_tol=0.0, abs_tol=5.1e-4
+        ):
+            raise RuntimeError(
+                f"Exact image handoff box mismatch on axis {axis}: "
+                f"GRO {gro_length}, sidecar {sidecar_length}"
+            )
+
+    for atom_index, (gro_atom, sidecar_atom) in enumerate(
+        zip(frame["atoms"], sidecar["atoms"]), start=1
+    ):
+        for axis, box_length in enumerate(sidecar["box_nm"]):
+            difference = (
+                float(gro_atom["coordinates_nm"][axis])
+                - float(sidecar_atom["state_position_nm"][axis])
+            )
+            lattice_shift = round(difference / float(box_length))
+            residual = difference - lattice_shift * float(box_length)
+            if abs(residual) > 5.1e-4:
+                raise RuntimeError(
+                    f"Exact image handoff state mismatch at atom {atom_index}, "
+                    f"axis {axis}: GRO={gro_atom['coordinates_nm'][axis]}, "
+                    f"sidecar={sidecar_atom['state_position_nm'][axis]}"
+                )
+
+    out = [f"{frame['title']} | exact image-continuous handoff", f"{frame['natoms']:5d}"]
+    for atom, sidecar_atom in zip(frame["atoms"], sidecar["atoms"]):
+        rendered = str(atom["identity"]) + "".join(
+            f"{float(value):23.17f}"
+            for value in sidecar_atom["continuous_position_nm"]
+        )
+        velocities = atom.get("velocities_nm_ps")
+        if velocities is not None:
+            rendered += "".join(f"{float(value):23.17f}" for value in velocities)
+        out.append(rendered)
+    out.append("".join(f"{float(value):23.17f}" for value in sidecar["box_nm"]))
+    _write_text_atomically_without_overwrite(destination, "\n".join(out) + "\n")
+    return destination
+
+
+def _stage_requires_exact_image_handoff(stage: Mapping[str, Any]) -> bool:
+    name = str(stage.get("name", ""))
+    return name.startswith("eq01_") or name.startswith("eq02_") or name == "eq03_pre_2fs_minimize"
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _canonical_command_output(output: str) -> str:
+    lines = [line.rstrip() for line in output.replace("\r\n", "\n").split("\n")]
+    while lines and not lines[-1]:
+        lines.pop()
+    return "\n".join(lines) + ("\n" if lines else "")
+
+
+def _gromacs_runtime_identity(
+    *, gmx: str, cwd: Path, env: Mapping[str, str]
+) -> dict[str, Any]:
+    executable = Path(gmx)
+    if not executable.is_absolute():
+        resolved = shutil.which(gmx, path=env.get("PATH"))
+        if resolved is None:
+            raise RuntimeError(f"Cannot resolve GROMACS executable {gmx!r}")
+        executable = Path(resolved)
+    executable = executable.resolve()
+    if not executable.is_file():
+        raise RuntimeError(f"GROMACS executable is not a file: {executable}")
+
+    version = subprocess.run(
+        [str(executable), "--version"],
+        cwd=str(cwd),
+        env=dict(env),
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    canonical_version = _canonical_command_output(version.stdout)
+    linked = subprocess.run(
+        ["ldd", str(executable)],
+        cwd=str(cwd),
+        env=dict(env),
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    libgromacs_path: Path | None = None
+    for raw_line in linked.stdout.splitlines():
+        line = raw_line.strip()
+        if "libgromacs" not in line:
+            continue
+        match = re.search(r"=>\s+(\S+)", line)
+        candidate = match.group(1) if match else line.split()[0]
+        path = Path(candidate)
+        if path.is_file():
+            libgromacs_path = path.resolve()
+            break
+    if libgromacs_path is None:
+        raise RuntimeError(
+            f"Cannot resolve the libgromacs loaded by executable {executable}"
+        )
+    return {
+        "executable": {
+            "path": str(executable),
+            "sha256": _sha256_file(executable),
+        },
+        "version_output": canonical_version,
+        "version_output_sha256": hashlib.sha256(
+            canonical_version.encode("utf-8")
+        ).hexdigest(),
+        "libgromacs": {
+            "path": str(libgromacs_path),
+            "sha256": _sha256_file(libgromacs_path),
+        },
+    }
+
+
+def _filtered_material_stage_env(env: Mapping[str, str]) -> dict[str, str]:
+    excluded = {
+        "GMX_PCFF_EXACT_RESPA_IMAGE_SIDECAR_IN",
+        "GMX_PCFF_EXACT_RESPA_IMAGE_SIDECAR_OUT",
+    }
+    return {
+        str(key): str(value)
+        for key, value in sorted(env.items())
+        if key not in excluded
+        and (
+            key.startswith("GMX")
+            or key.startswith("OMP")
+            or key == "CUDA_VISIBLE_DEVICES"
+        )
+    }
+
+
+def _stage_execution_contract(
+    *,
+    runtime_identity: Mapping[str, Any],
+    stage_env: Mapping[str, str],
+    layout: Mapping[str, Any],
+    merged_mdrun_args: list[str],
+    grompp_extra_args: list[str],
+) -> dict[str, Any]:
+    return {
+        "gromacs_runtime": dict(runtime_identity),
+        "material_stage_env": _filtered_material_stage_env(stage_env),
+        "layout": {
+            "ntmpi": int(layout.get("ntmpi", 1)),
+            "ntomp": int(layout.get("ntomp", 1)),
+            "env": {
+                str(key): str(value)
+                for key, value in sorted(dict(layout.get("env", {})).items())
+            },
+            "extra_args": [str(value) for value in layout.get("extra_args", [])],
+            "source": str(layout.get("source", "")),
+        },
+        "merged_mdrun_args": [str(value) for value in merged_mdrun_args],
+        "grompp_extra_args": [str(value) for value in grompp_extra_args],
+    }
+
+
+def _exact_image_completion_manifest_path(md_dir: Path, deffnm: str) -> Path:
+    return md_dir / f"{deffnm}.image_handoff_complete.json"
+
+
+def _canonical_exact_image_stage_spec(stage: Mapping[str, Any]) -> str:
+    def encode_path(value: Any) -> str:
+        if isinstance(value, Path):
+            return str(value)
+        raise TypeError(
+            f"Exact image stage specification contains a non-JSON value: {value!r}"
+        )
+
+    return json.dumps(
+        dict(stage),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=encode_path,
+    )
+
+
+def _exact_image_stage_input_binding(
+    *,
+    stage: Mapping[str, Any],
+    stage_image_input: Path,
+    upstream_state: Path,
+    upstream_state_kind: str,
+    mdp_path: Path,
+    topology_path: Path,
+    execution_contract: Mapping[str, Any],
+) -> dict[str, Any]:
+    artifacts: dict[str, dict[str, str]] = {}
+    for key, path in (
+        ("image_input", stage_image_input),
+        ("upstream_state", upstream_state),
+        ("mdp", mdp_path),
+        ("topology", topology_path),
+    ):
+        if not path.exists():
+            raise RuntimeError(
+                f"Cannot bind exact image handoff input: missing {key} artifact {path}"
+            )
+        artifacts[key] = {"path": str(path), "sha256": _sha256_file(path)}
+    artifacts["upstream_state"]["kind"] = str(upstream_state_kind)
+
+    stage_spec = _canonical_exact_image_stage_spec(stage)
+    return {
+        "stage_spec_json": stage_spec,
+        "stage_spec_sha256": hashlib.sha256(stage_spec.encode("utf-8")).hexdigest(),
+        "execution_contract": dict(execution_contract),
+        "artifacts": artifacts,
+    }
+
+
+def _write_exact_image_completion_manifest(
+    *,
+    md_dir: Path,
+    stage: Mapping[str, Any],
+    deffnm: str,
+    gro_path: Path,
+    sidecar_path: Path,
+    tpr_path: Path,
+    checkpoint_path: Path | None,
+    input_binding: Mapping[str, Any],
+) -> Path:
+    sidecar = _read_exact_respa_image_sidecar(sidecar_path)
+    expected_step = int(stage.get("init_step", 0) or 0) + int(
+        stage.get("nsteps", 0) or 0
+    )
+    if str(stage.get("kind", "")) == "md" and int(sidecar["step"]) != expected_step:
+        raise RuntimeError(
+            f"Exact image sidecar step mismatch for {stage['name']}: "
+            f"got {sidecar['step']}, expected {expected_step}"
+        )
+    if str(stage.get("kind", "")) == "em" and int(sidecar["step"]) < int(
+        stage.get("init_step", 0) or 0
+    ):
+        raise RuntimeError(f"Invalid EM exact image sidecar step for {stage['name']}")
+    _materialize_exact_respa_continuous_gro(
+        gro_path,
+        sidecar_path,
+        md_dir / f"{deffnm}.continuous.gro",
+    )
+    artifacts: dict[str, dict[str, str]] = {}
+    for key, path in (
+        ("gro", gro_path),
+        ("sidecar", sidecar_path),
+        ("tpr", tpr_path),
+        ("checkpoint", checkpoint_path),
+    ):
+        if path is not None:
+            if not path.exists():
+                raise RuntimeError(
+                    f"Cannot complete exact image handoff: missing {key} artifact {path}"
+                )
+            artifacts[key] = {"path": str(path), "sha256": _sha256_file(path)}
+    payload = {
+        "schema_name": "gromacs_exact_image_handoff_completion",
+        "schema_version": 2,
+        "stage": str(stage.get("name", "")),
+        "deffnm": str(deffnm),
+        "kind": str(stage.get("kind", "")),
+        "sidecar_step": int(sidecar["step"]),
+        "expected_md_step": expected_step,
+        "natoms": int(sidecar["natoms"]),
+        "inputs": dict(input_binding),
+        "artifacts": artifacts,
+    }
+    destination = _exact_image_completion_manifest_path(md_dir, deffnm)
+    _write_text_atomically_without_overwrite(
+        destination,
+        json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+    )
+    return destination
+
+
+def _validate_exact_image_completion_manifest(
+    *,
+    md_dir: Path,
+    stage: Mapping[str, Any],
+    deffnm: str,
+    gro_path: Path,
+    sidecar_path: Path,
+    tpr_path: Path,
+    checkpoint_path: Path | None,
+    input_binding: Mapping[str, Any],
+) -> bool:
+    manifest_path = _exact_image_completion_manifest_path(md_dir, deffnm)
+    if not manifest_path.exists():
+        return False
+    try:
+        payload = _read_json(manifest_path)
+        if (
+            payload.get("schema_name") != "gromacs_exact_image_handoff_completion"
+            or int(payload.get("schema_version", 0)) != 2
+            or str(payload.get("stage")) != str(stage.get("name", ""))
+            or str(payload.get("deffnm")) != str(deffnm)
+        ):
+            return False
+        expected_step = int(stage.get("init_step", 0) or 0) + int(
+            stage.get("nsteps", 0) or 0
+        )
+        stage_kind = str(stage.get("kind", ""))
+        if (
+            str(payload.get("kind")) != stage_kind
+            or int(payload.get("expected_md_step", -1)) != expected_step
+            or payload.get("inputs") != dict(input_binding)
+        ):
+            return False
+        expected_paths = {
+            "gro": gro_path,
+            "sidecar": sidecar_path,
+            "tpr": tpr_path,
+        }
+        if checkpoint_path is not None:
+            expected_paths["checkpoint"] = checkpoint_path
+        artifacts = payload.get("artifacts")
+        if not isinstance(artifacts, Mapping):
+            return False
+        if set(artifacts) != set(expected_paths):
+            return False
+        for key, path in expected_paths.items():
+            record = artifacts.get(key)
+            if (
+                not isinstance(record, Mapping)
+                or str(record.get("path")) != str(path)
+                or not path.exists()
+                or str(record.get("sha256")) != _sha256_file(path)
+            ):
+                return False
+        sidecar = _read_exact_respa_image_sidecar(sidecar_path)
+        if (
+            int(payload.get("sidecar_step", -1)) != int(sidecar["step"])
+            or int(payload.get("natoms", -1)) != int(sidecar["natoms"])
+        ):
+            return False
+        if stage_kind == "md" and int(sidecar["step"]) != expected_step:
+            return False
+        if stage_kind == "em" and int(sidecar["step"]) < int(
+            stage.get("init_step", 0) or 0
+        ):
+            return False
+        _materialize_exact_respa_continuous_gro(
+            gro_path,
+            sidecar_path,
+            md_dir / f"{deffnm}.continuous.gro",
+        )
+    except (OSError, TypeError, ValueError, RuntimeError):
+        return False
+    return True
+
+
 def _write_isotropically_remapped_gro(source: Path, destination: Path, target_box_nm: float) -> dict[str, Any]:
     lines = source.read_text(encoding="utf-8", errors="strict").splitlines()
     if len(lines) < 4:
@@ -2146,6 +2802,92 @@ def _stage_runtime_env(env: dict[str, str], stage: Mapping[str, Any]) -> dict[st
     return out
 
 
+def _apply_exact_image_stage_env_guards(
+    env: dict[str, str], *, track_stage_images: bool
+) -> dict[str, str]:
+    out = dict(env)
+    if track_stage_images:
+        for key in (
+            "GMX_PCFF_LAMMPS_CG_EM_RESTORE_TRIAL_X",
+            "GMX_PCFF_LAMMPS_CG_EM_PBC_RESET_X0",
+            "GMX_PCFF_LAMMPS_CG_EM_BOX_CROSS_RESET_X0",
+        ):
+            out[key] = "0"
+    return out
+
+
+def _equilibration_protocol_contract(
+    *,
+    context: Mapping[str, Any],
+    stages: list[Mapping[str, Any]],
+    md_dir: Path,
+    topology_path: Path,
+    base_env: Mapping[str, str],
+    runtime_identity: Mapping[str, Any],
+    exact_image_handoff: bool,
+    grompp_extra_args: list[str],
+) -> dict[str, Any]:
+    stage_entries: list[dict[str, Any]] = []
+    execution_by_stage: dict[str, dict[str, Any]] = {}
+    for stage in stages:
+        name = str(stage.get("name", ""))
+        layout = _gromacs_layout_for_stage(context, name)
+        track_stage_images = exact_image_handoff and _stage_requires_exact_image_handoff(stage)
+        stage_env = _apply_exact_image_stage_env_guards(
+            _merge_stage_layout_env(
+                _stage_runtime_env(dict(base_env), stage), stage, layout["env"]
+            ),
+            track_stage_images=track_stage_images,
+        )
+        merged_mdrun_args = _merge_mdrun_layout_args(
+            _mdrun_extra_args_for_stage(stage), layout["extra_args"]
+        )
+        execution_contract = _stage_execution_contract(
+            runtime_identity=runtime_identity,
+            stage_env=stage_env,
+            layout=layout,
+            merged_mdrun_args=merged_mdrun_args,
+            grompp_extra_args=grompp_extra_args,
+        )
+        execution_by_stage[name] = execution_contract
+        mdp_path = Path(str(stage["mdp_path"]))
+        if not mdp_path.is_absolute():
+            mdp_path = md_dir / mdp_path
+        mdp_path = mdp_path.resolve()
+        if not mdp_path.exists():
+            raise RuntimeError(f"Missing GROMACS stage MDP for protocol contract: {mdp_path}")
+        canonical_stage = _canonical_exact_image_stage_spec(stage)
+        stage_entries.append(
+            {
+                "name": name,
+                "canonical_stage_spec": canonical_stage,
+                "canonical_stage_spec_sha256": hashlib.sha256(
+                    canonical_stage.encode("utf-8")
+                ).hexdigest(),
+                "mdp": {"path": str(mdp_path), "sha256": _sha256_file(mdp_path)},
+                "execution_contract": execution_contract,
+            }
+        )
+    payload = {
+        "schema_name": "gromacs_equilibration_protocol_contract",
+        "schema_version": 1,
+        "topology": {
+            "path": str(topology_path),
+            "sha256": _sha256_file(topology_path),
+        },
+        "gromacs_runtime": dict(runtime_identity),
+        "stages": stage_entries,
+    }
+    canonical = json.dumps(
+        payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    )
+    return {
+        "sha256": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+        "canonical_json": canonical,
+        "execution_by_stage": execution_by_stage,
+    }
+
+
 def _merge_stage_layout_env(
     env: dict[str, str],
     stage: Mapping[str, Any],
@@ -2177,27 +2919,15 @@ def _is_exact_soft_start_stage(stage: Mapping[str, Any]) -> bool:
     )
 
 
-def _archive_incomplete_gromacs_stage_outputs(
-    *,
-    md_dir: Path,
-    stage: Mapping[str, Any],
-    deffnm: str,
-    original_structure: Path,
-    original_state_trr: Path | None,
-) -> Path:
-    """Move one incomplete stage's outputs aside before a clean restart.
-
-    Exact soft-start dynamics are stochastic and deliberately reject ``-cpi``.
-    Restarting them therefore requires regenerating the TPR from the same input
-    structure/state used on the first attempt.  Moving all deffnm-owned files
-    out of ``md_dir`` prevents GROMACS from appending to, backing up, or otherwise
-    mixing the new attempt with the partial one.  The stage MDP is an input and
-    remains in place.
-    """
-
+def _gromacs_stage_owned_output_candidates(
+    *, md_dir: Path, stage: Mapping[str, Any], deffnm: str
+) -> list[Path]:
     md_dir = md_dir.resolve()
-    mdp_path = Path(str(stage["mdp_path"])).resolve()
-    candidates = sorted(
+    mdp_path = Path(str(stage["mdp_path"]))
+    if not mdp_path.is_absolute():
+        mdp_path = md_dir / mdp_path
+    mdp_path = mdp_path.resolve()
+    return sorted(
         (
             path
             for path in md_dir.iterdir()
@@ -2210,9 +2940,44 @@ def _archive_incomplete_gromacs_stage_outputs(
         ),
         key=lambda path: path.name,
     )
+
+
+def _archive_incomplete_gromacs_stage_outputs(
+    *,
+    md_dir: Path,
+    stage: Mapping[str, Any],
+    deffnm: str,
+    original_structure: Path,
+    original_state_trr: Path | None,
+    extra_candidates: tuple[Path, ...] = (),
+    restart_kind: str = "soft_start",
+    reason: str = (
+        "incomplete exact soft-start checkpoints cannot be resumed; "
+        "restart from the original stage input state"
+    ),
+) -> Path:
+    """Move one incomplete stage's outputs aside before a clean restart.
+
+    Non-checkpointable protocol state requires regenerating the TPR from the
+    same input structure/state used on the first attempt. Moving all
+    deffnm-owned files out of ``md_dir`` prevents GROMACS from appending to,
+    backing up, or otherwise mixing the new attempt with the partial one. The
+    stage MDP is an input and remains in place.
+    """
+
+    md_dir = md_dir.resolve()
+    candidates = _gromacs_stage_owned_output_candidates(
+        md_dir=md_dir,
+        stage=stage,
+        deffnm=deffnm,
+    )
+    for candidate in extra_candidates:
+        if candidate.exists() and candidate not in candidates:
+            candidates.append(candidate)
+    candidates.sort(key=lambda path: path.name)
     if not candidates:
         raise RuntimeError(
-            f"Cannot archive incomplete soft-start stage {stage.get('name')}: "
+            f"Cannot archive incomplete stage {stage.get('name')}: "
             f"no {deffnm}-owned output files were found in {md_dir}"
         )
 
@@ -2234,15 +2999,13 @@ def _archive_incomplete_gromacs_stage_outputs(
         _write_json(
             archive_dir / "restart_manifest.json",
             {
-                "schema_name": "gromacs_incomplete_soft_stage_restart",
+                "schema_name": "gromacs_incomplete_stage_restart",
                 "schema_version": 1,
                 "timestamp": datetime.now().isoformat(timespec="microseconds"),
                 "stage": str(stage.get("name", "")),
                 "deffnm": str(deffnm),
-                "reason": (
-                    "incomplete exact soft-start checkpoints cannot be resumed; "
-                    "restart from the original stage input state"
-                ),
+                "restart_kind": str(restart_kind),
+                "reason": str(reason),
                 "original_structure": str(original_structure),
                 "original_state_trr": (
                     str(original_state_trr)
@@ -2281,6 +3044,20 @@ def run_gromacs_equilibration(
     md_dir = Path(context["md_dir"]).resolve()
     gmx = str(context["gmx_binary"])
     stages = [stage for stage in context["stages"] if stage["phase"] == "equilibration"]
+    lineage_marker = md_dir / GROMACS_EXACT_IMAGE_LINEAGE_REBUILD_MARKER
+    lineage_marker_state = gromacs_exact_image_lineage_rebuild_state(md_dir)
+    pending_trigger_index: int | None = None
+    if lineage_marker_state is not None:
+        marker = _read_json(lineage_marker)
+        trigger_stage = str(marker.get("origin_stage", ""))
+        stage_names = [str(stage.get("name", "")) for stage in stages]
+        if trigger_stage not in stage_names:
+            raise RuntimeError(
+                f"Lineage rebuild origin stage {trigger_stage!r} is not present in "
+                "the current equilibration protocol"
+            )
+        if lineage_marker_state == "active_equil":
+            pending_trigger_index = stage_names.index(trigger_stage)
     env = dict(os.environ)
     if context.get("gmxlib"):
         env["GMXLIB"] = str(context["gmxlib"])
@@ -2295,39 +3072,266 @@ def run_gromacs_equilibration(
             "equilibration requires assembled conf.gro/topol.top in MD_GMX; mixed-system assembly is not implemented"
         )
 
+    exact_image_handoff = str(
+        env.get("GMX_PCFF_EXACT_RESPA_IMAGE_HANDOFF", "0")
+    ).strip().lower() not in {"", "0", "false", "no", "off"}
+    runtime_identity = _gromacs_runtime_identity(gmx=gmx, cwd=md_dir, env=env)
+    grompp_extra_args = _grompp_extra_args()
+    protocol_contract_changed = False
+    protocol_contract = _equilibration_protocol_contract(
+        context=context,
+        stages=stages,
+        md_dir=md_dir,
+        topology_path=current_topology,
+        base_env=env,
+        runtime_identity=runtime_identity,
+        exact_image_handoff=exact_image_handoff,
+        grompp_extra_args=grompp_extra_args,
+    )
+    if lineage_marker_state is not None:
+        marker = _read_json(lineage_marker)
+        stored_contract = str(marker.get("equil_protocol_contract_sha256", ""))
+        if not re.fullmatch(r"[0-9a-f]{64}", stored_contract):
+            raise RuntimeError(
+                f"Lineage rebuild marker has no valid protocol contract: {lineage_marker}"
+            )
+        if stored_contract != protocol_contract["sha256"]:
+            if not stages:
+                raise RuntimeError(
+                    "Cannot invalidate a changed equilibration protocol with no stages"
+                )
+            pending_trigger_index = 0
+            lineage_marker_state = "active_equil"
+            protocol_contract_changed = True
+            _write_json_atomically(
+                lineage_marker,
+                {
+                    "schema_name": "gromacs_exact_image_lineage_rebuild",
+                    "schema_version": 1,
+                    "state": "active_equil",
+                    "timestamp": datetime.now().isoformat(timespec="microseconds"),
+                    "origin_stage": str(stages[0].get("name", "")),
+                    "equil_protocol_contract_sha256": protocol_contract["sha256"],
+                    "reason": "equilibration protocol contract changed",
+                },
+            )
+    current_image_sidecar: Path | None = None
+    if exact_image_handoff:
+        first_tracked_stage = next(
+            (stage for stage in stages if _stage_requires_exact_image_handoff(stage)),
+            None,
+        )
+        if first_tracked_stage is None:
+            raise RuntimeError(
+                "Exact image handoff was enabled but no Eq01-Eq03 stage was generated"
+            )
+        current_image_sidecar = _write_initial_exact_respa_image_sidecar(
+            current_structure,
+            md_dir / "exact_respa_images_initial.sidecar",
+            step=int(first_tracked_stage.get("init_step", 0) or 0),
+        )
+
     previous_stage: Mapping[str, Any] | None = None
     current_checkpoint: Path | None = None
     current_state_trr: Path | None = None
-    for stage in stages:
+    downstream_lineage_invalidated = protocol_contract_changed
+
+    def record_lineage_invalidation(stage_index: int, stage: Mapping[str, Any]) -> None:
+        nonlocal downstream_lineage_invalidated, lineage_marker_state, pending_trigger_index
+        downstream_lineage_invalidated = True
+        if pending_trigger_index is None or stage_index < pending_trigger_index:
+            pending_trigger_index = stage_index
+            lineage_marker_state = "active_equil"
+            _write_json_atomically(
+                lineage_marker,
+                {
+                    "schema_name": "gromacs_exact_image_lineage_rebuild",
+                    "schema_version": 1,
+                    "state": "active_equil",
+                    "timestamp": datetime.now().isoformat(timespec="microseconds"),
+                    "origin_stage": str(stage.get("name", "")),
+                    "equil_protocol_contract_sha256": protocol_contract["sha256"],
+                    "reason": (
+                        "an exact-image stage was rebuilt; every downstream stage "
+                        "must be regenerated from the current handoff state"
+                    ),
+                },
+            )
+
+    for stage_index, stage in enumerate(stages):
+        cascade_rebuild_stage = downstream_lineage_invalidated or (
+            pending_trigger_index is not None
+            and stage_index > pending_trigger_index
+        )
         tpr_name, deffnm = _md_stage_output_names(stage["name"])
         tpr_path = md_dir / tpr_name
         gro_path = md_dir / f"{deffnm}.gro"
         layout = _gromacs_layout_for_stage(context, str(stage["name"]))
-        stage_env = _merge_stage_layout_env(
-            _stage_runtime_env(env, stage), stage, layout["env"]
+        track_stage_images = exact_image_handoff and _stage_requires_exact_image_handoff(stage)
+        stage_env = _apply_exact_image_stage_env_guards(
+            _merge_stage_layout_env(
+                _stage_runtime_env(env, stage), stage, layout["env"]
+            ),
+            track_stage_images=track_stage_images,
         )
+        stage_execution_contract = protocol_contract["execution_by_stage"][
+            str(stage["name"])
+        ]
+        merged_mdrun_args = list(stage_execution_contract["merged_mdrun_args"])
+        same_base_stage = (
+            previous_stage is not None
+            and stage.get("base_index") == previous_stage.get("base_index")
+            and int(stage.get("segment_index", 1)) > 1
+        )
+        pre_stage_structure = current_structure
+        pre_stage_state_trr = current_state_trr
+        pre_stage_checkpoint = current_checkpoint
+        stage_image_input: Path | None = None
+        stage_image_output: Path | None = None
+        stage_input_binding: dict[str, Any] | None = None
+        if track_stage_images:
+            if current_image_sidecar is None or not current_image_sidecar.exists():
+                raise RuntimeError(
+                    f"Missing exact image handoff input for stage {stage['name']}"
+                )
+            stage_image_input = _rebase_exact_respa_image_sidecar_step(
+                current_image_sidecar,
+                md_dir
+                / "exact_image_handoff_inputs"
+                / f"{deffnm}.{_sha256_file(current_image_sidecar)[:16]}.sidecar",
+                step=int(stage.get("init_step", 0) or 0),
+            )
+            stage_image_output = md_dir / f"{deffnm}.image_out.sidecar"
+            stage_env["GMX_PCFF_EXACT_RESPA_IMAGE_SIDECAR_IN"] = str(stage_image_input)
+            stage_env["GMX_PCFF_EXACT_RESPA_IMAGE_SIDECAR_OUT"] = str(stage_image_output)
+
+            if same_base_stage:
+                if pre_stage_checkpoint is None or not pre_stage_checkpoint.exists():
+                    raise RuntimeError(
+                        f"Cannot bind exact image lineage for {stage.get('name')}: "
+                        "the previous same-base checkpoint is missing"
+                    )
+                upstream_state = pre_stage_checkpoint
+                upstream_state_kind = "checkpoint"
+            elif pre_stage_state_trr is not None:
+                upstream_state = pre_stage_state_trr
+                upstream_state_kind = "state_trr"
+            else:
+                upstream_state = pre_stage_structure
+                upstream_state_kind = "structure"
+            stage_mdp_path = Path(str(stage["mdp_path"]))
+            if not stage_mdp_path.is_absolute():
+                stage_mdp_path = md_dir / stage_mdp_path
+            stage_input_binding = _exact_image_stage_input_binding(
+                stage=stage,
+                stage_image_input=stage_image_input,
+                upstream_state=upstream_state,
+                upstream_state_kind=upstream_state_kind,
+                mdp_path=stage_mdp_path.resolve(),
+                topology_path=current_topology,
+                execution_contract=stage_execution_contract,
+            )
+        else:
+            stage_env.pop("GMX_PCFF_EXACT_RESPA_IMAGE_SIDECAR_IN", None)
+            stage_env.pop("GMX_PCFF_EXACT_RESPA_IMAGE_SIDECAR_OUT", None)
         stage_checkpoint = md_dir / f"{deffnm}.cpt"
         output_stem = deffnm
+        if cascade_rebuild_stage:
+            cascade_candidates = _gromacs_stage_owned_output_candidates(
+                md_dir=md_dir,
+                stage=stage,
+                deffnm=deffnm,
+            )
+            if cascade_candidates:
+                archive_dir = _archive_incomplete_gromacs_stage_outputs(
+                    md_dir=md_dir,
+                    stage=stage,
+                    deffnm=deffnm,
+                    original_structure=pre_stage_structure,
+                    original_state_trr=pre_stage_state_trr,
+                    restart_kind="upstream_lineage_invalidation",
+                    reason=(
+                        "an upstream exact-image stage was rebuilt; downstream outputs "
+                        "must be regenerated from the current handoff state"
+                    ),
+                )
+                _write_gromacs_stage_status(
+                    md_dir=md_dir,
+                    stage=stage,
+                    phase="equilibration",
+                    status="restart_after_upstream_lineage_invalidation",
+                    deffnm=deffnm,
+                    layout=layout,
+                )
+                print(
+                    "[gromacs-stage]",
+                    f"archived lineage-invalidated downstream outputs at {archive_dir}",
+                    flush=True,
+                )
         completed_output = gro_path.exists()
+        unverified_image_stage = False
         if (
             resume_existing_effective
             and completed_output
             and str(stage.get("kind", "")) == "md"
         ):
             if not stage_checkpoint.exists():
-                raise RuntimeError(
-                    f"Cannot verify existing MD output {gro_path}: missing checkpoint "
-                    f"{stage_checkpoint}"
+                if track_stage_images:
+                    completed_output = False
+                    unverified_image_stage = True
+                else:
+                    raise RuntimeError(
+                        f"Cannot verify existing MD output {gro_path}: missing checkpoint "
+                        f"{stage_checkpoint}"
+                    )
+            else:
+                checkpoint_step = _gromacs_checkpoint_step(
+                    gmx=gmx,
+                    checkpoint=stage_checkpoint,
+                    cwd=md_dir,
+                    env=stage_env,
                 )
-            checkpoint_step = _gromacs_checkpoint_step(
-                gmx=gmx,
-                checkpoint=stage_checkpoint,
-                cwd=md_dir,
-                env=stage_env,
-            )
-            completed_output = checkpoint_step >= _stage_expected_checkpoint_step(stage)
+                completed_output = checkpoint_step >= _stage_expected_checkpoint_step(stage)
+        if resume_existing_effective and completed_output and track_stage_images:
+            if (
+                stage_image_output is None
+                or stage_input_binding is None
+                or not _validate_exact_image_completion_manifest(
+                    md_dir=md_dir,
+                    stage=stage,
+                    deffnm=deffnm,
+                    gro_path=gro_path,
+                    sidecar_path=stage_image_output,
+                    tpr_path=tpr_path,
+                    checkpoint_path=(
+                        stage_checkpoint
+                        if str(stage.get("kind", "")) == "md"
+                        else None
+                    ),
+                    input_binding=stage_input_binding,
+                )
+            ):
+                completed_output = False
+                unverified_image_stage = True
+                record_lineage_invalidation(stage_index, stage)
+        if (
+            resume_existing_effective
+            and track_stage_images
+            and not completed_output
+            and stage_image_output is not None
+            and stage_image_output.exists()
+        ):
+            unverified_image_stage = True
         if resume_existing_effective and completed_output:
-            current_structure = gro_path
+            if track_stage_images:
+                current_structure = _materialize_exact_respa_continuous_gro(
+                    gro_path,
+                    stage_image_output,
+                    md_dir / f"{deffnm}.continuous.gro",
+                )
+                current_image_sidecar = stage_image_output
+            else:
+                current_structure = gro_path
             if str(stage.get("kind", "")) == "md":
                 current_state_trr = _materialize_final_state_trr(
                     gmx=gmx,
@@ -2379,11 +3383,6 @@ def run_gromacs_equilibration(
             continue
         try:
             stage_state_trr: Path | None = None
-            same_base_stage = (
-                previous_stage is not None
-                and stage.get("base_index") == previous_stage.get("base_index")
-                and int(stage.get("segment_index", 1)) > 1
-            )
             resume_incomplete_stage = (
                 resume_existing_effective
                 and tpr_path.exists()
@@ -2396,30 +3395,59 @@ def run_gromacs_equilibration(
                 and not completed_output
                 and _is_exact_soft_start_stage(stage)
             )
-            if restart_incomplete_soft_stage:
-                if same_base_stage:
+            restart_incomplete_image_stage = (
+                resume_existing_effective
+                and not completed_output
+                and track_stage_images
+                and (stage_checkpoint.exists() or unverified_image_stage)
+            )
+            restart_incomplete_noncheckpointable_stage = (
+                restart_incomplete_soft_stage or restart_incomplete_image_stage
+            )
+            if restart_incomplete_noncheckpointable_stage:
+                if restart_incomplete_soft_stage and same_base_stage:
                     raise RuntimeError(
                         f"Cannot safely restart chunked soft-start stage {stage.get('name')}; "
                         "the current protocol requires soft-start stages to be standalone"
                     )
+                restart_kind = (
+                    "soft_start_and_exact_image_handoff"
+                    if restart_incomplete_soft_stage and restart_incomplete_image_stage
+                    else "soft_start"
+                    if restart_incomplete_soft_stage
+                    else "exact_image_handoff"
+                )
+                restart_reason = (
+                    "an incomplete stage has no exact image sidecar at its checkpoint; "
+                    "restart from the previous completed handoff state"
+                    if restart_incomplete_image_stage
+                    else "incomplete exact soft-start checkpoints cannot be resumed; "
+                    "restart from the original stage input state"
+                )
+                if restart_incomplete_image_stage:
+                    # Persist the cascade boundary before moving any files so a
+                    # process crash during archival cannot lose downstream invalidation.
+                    record_lineage_invalidation(stage_index, stage)
                 archive_dir = _archive_incomplete_gromacs_stage_outputs(
                     md_dir=md_dir,
                     stage=stage,
                     deffnm=deffnm,
                     original_structure=current_structure,
                     original_state_trr=current_state_trr,
+                    restart_kind=restart_kind,
+                    reason=restart_reason,
                 )
                 _write_gromacs_stage_status(
                     md_dir=md_dir,
                     stage=stage,
                     phase="equilibration",
-                    status="restart_incomplete_soft_stage",
+                    status="restart_incomplete_noncheckpointable_stage",
                     deffnm=deffnm,
                     layout=layout,
                 )
                 print(
                     "[gromacs-stage]",
-                    f"archived incomplete soft-start outputs at {archive_dir}",
+                    f"archived incomplete non-checkpointable outputs at {archive_dir}",
                     flush=True,
                 )
                 # Regenerate this stage from current_structure/current_state_trr.
@@ -2480,7 +3508,7 @@ def run_gromacs_equilibration(
                             f"{stage.get('name')}: full-precision state TRR is missing"
                         )
                     grompp_cmd.extend(["-t", str(current_state_trr)])
-                grompp_cmd.extend(_grompp_extra_args())
+                grompp_cmd.extend(grompp_extra_args)
                 _run_cmd(grompp_cmd, cwd=md_dir, env=stage_env)
             _write_gromacs_stage_status(
                 md_dir=md_dir,
@@ -2490,9 +3518,6 @@ def run_gromacs_equilibration(
                 deffnm=deffnm,
                 output_stem=output_stem,
                 layout=layout,
-            )
-            merged_mdrun_args = _merge_mdrun_layout_args(
-                _mdrun_extra_args_for_stage(stage), layout["extra_args"]
             )
             mdrun_cmd = [
                     gmx,
@@ -2547,6 +3572,30 @@ def run_gromacs_equilibration(
                 raise RuntimeError(
                     f"GROMACS stage returned without the required final structure {gro_path}"
                 )
+            if track_stage_images:
+                if (
+                    stage_image_output is None
+                    or not stage_image_output.exists()
+                    or stage_input_binding is None
+                ):
+                    raise RuntimeError(
+                        f"GROMACS stage {stage['name']} returned without exact image "
+                        f"sidecar/input binding ({stage_image_output})"
+                    )
+                _write_exact_image_completion_manifest(
+                    md_dir=md_dir,
+                    stage=stage,
+                    deffnm=deffnm,
+                    gro_path=gro_path,
+                    sidecar_path=stage_image_output,
+                    tpr_path=tpr_path,
+                    checkpoint_path=(
+                        stage_checkpoint
+                        if str(stage.get("kind", "")) == "md"
+                        else None
+                    ),
+                    input_binding=stage_input_binding,
+                )
         except Exception as exc:
             _write_gromacs_stage_status(
                 md_dir=md_dir,
@@ -2560,6 +3609,18 @@ def run_gromacs_equilibration(
             )
             raise
         current_structure = md_dir / f"{deffnm}.gro"
+        if track_stage_images:
+            if stage_image_output is None or not stage_image_output.exists():
+                raise RuntimeError(
+                    f"GROMACS stage {stage['name']} returned without exact image "
+                    f"sidecar {stage_image_output}"
+                )
+            current_structure = _materialize_exact_respa_continuous_gro(
+                current_structure,
+                stage_image_output,
+                md_dir / f"{deffnm}.continuous.gro",
+            )
+            current_image_sidecar = stage_image_output
         current_state_trr = stage_state_trr
         if str(stage["name"]) == "eq12_npt_1200ps":
             current_structure = _apply_eq12_average_cell(
@@ -2589,6 +3650,13 @@ def run_gromacs_equilibration(
             progress_hook(stage["name"], stage)
 
     (md_dir / "equilibration_complete.flag").write_text("done\n", encoding="utf-8")
+    if lineage_marker_state == "active_equil":
+        marker = _read_json(lineage_marker)
+        marker["state"] = "production_pending"
+        marker["equilibration_completed_at"] = datetime.now().isoformat(
+            timespec="microseconds"
+        )
+        _write_json_atomically(lineage_marker, marker)
     return {
         "status": "ok",
         "final_structure": str(current_structure),
@@ -2607,6 +3675,27 @@ def run_gromacs_production(
     md_dir = Path(context["md_dir"]).resolve()
     gmx = str(context["gmx_binary"])
     stages = [stage for stage in context["stages"] if stage["phase"] == "production"]
+    lineage_marker = md_dir / GROMACS_EXACT_IMAGE_LINEAGE_REBUILD_MARKER
+    lineage_marker_state = gromacs_exact_image_lineage_rebuild_state(md_dir)
+    lineage_marker_payload: dict[str, Any] | None = None
+    if lineage_marker_state is not None:
+        lineage_marker_payload = _read_json(lineage_marker)
+        origin_stage = str(lineage_marker_payload.get("origin_stage", ""))
+        equilibration_stage_names = {
+            str(stage.get("name", ""))
+            for stage in context.get("stages", [])
+            if stage.get("phase") == "equilibration"
+        }
+        if origin_stage not in equilibration_stage_names:
+            raise RuntimeError(
+                f"Lineage rebuild origin stage {origin_stage!r} is not present in "
+                "the current equilibration protocol"
+            )
+    if lineage_marker_state == "active_equil":
+        raise RuntimeError(
+            "Cannot rebuild production while equilibration lineage invalidation is still active"
+        )
+    force_lineage_rebuild = lineage_marker_state == "production_pending"
     env = dict(os.environ)
     if context.get("gmxlib"):
         env["GMXLIB"] = str(context["gmxlib"])
@@ -2633,6 +3722,36 @@ def run_gromacs_production(
             "production requires relaxed GROMACS structure/topology in MD_GMX; equilibration or mixed-system assembly is incomplete"
         )
 
+    if force_lineage_rebuild:
+        assert lineage_marker_payload is not None
+        equil_stages = [
+            stage
+            for stage in context.get("stages", [])
+            if stage.get("phase") == "equilibration"
+        ]
+        exact_image_handoff = str(
+            env.get("GMX_PCFF_EXACT_RESPA_IMAGE_HANDOFF", "0")
+        ).strip().lower() not in {"", "0", "false", "no", "off"}
+        runtime_identity = _gromacs_runtime_identity(gmx=gmx, cwd=md_dir, env=env)
+        protocol_contract = _equilibration_protocol_contract(
+            context=context,
+            stages=equil_stages,
+            md_dir=md_dir,
+            topology_path=current_topology,
+            base_env=env,
+            runtime_identity=runtime_identity,
+            exact_image_handoff=exact_image_handoff,
+            grompp_extra_args=_grompp_extra_args(),
+        )
+        if (
+            lineage_marker_payload["equil_protocol_contract_sha256"]
+            != protocol_contract["sha256"]
+        ):
+            raise RuntimeError(
+                "Equilibration protocol changed while production rebuild was pending; "
+                "run equilibration validation before production"
+            )
+
     for stage in stages:
         tpr_name, deffnm = _md_stage_output_names(stage["name"])
         tpr_path = md_dir / tpr_name
@@ -2642,6 +3761,47 @@ def run_gromacs_production(
         stage_env = _merge_stage_layout_env(
             _stage_runtime_env(env, stage), stage, layout["env"]
         )
+        if force_lineage_rebuild:
+            production_complete_flag = md_dir / "production_complete.flag"
+            analysis_dir = md_dir / "analysis"
+            analysis_done_flag = md_dir / "analysis_done.flag"
+            lineage_candidates = _gromacs_stage_owned_output_candidates(
+                md_dir=md_dir,
+                stage=stage,
+                deffnm=deffnm,
+            )
+            lineage_extras = (
+                production_complete_flag,
+                analysis_dir,
+                analysis_done_flag,
+            )
+            if lineage_candidates or any(path.exists() for path in lineage_extras):
+                archive_dir = _archive_incomplete_gromacs_stage_outputs(
+                    md_dir=md_dir,
+                    stage=stage,
+                    deffnm=deffnm,
+                    original_structure=current_structure,
+                    original_state_trr=current_state_trr,
+                    extra_candidates=lineage_extras,
+                    restart_kind="upstream_lineage_invalidation",
+                    reason=(
+                        "equilibration lineage changed; production must be regenerated "
+                        "from the current final equilibration state"
+                    ),
+                )
+                _write_gromacs_stage_status(
+                    md_dir=md_dir,
+                    stage=stage,
+                    phase="production",
+                    status="restart_after_upstream_lineage_invalidation",
+                    deffnm=deffnm,
+                    layout=layout,
+                )
+                print(
+                    "[gromacs-stage]",
+                    f"archived lineage-invalidated production outputs at {archive_dir}",
+                    flush=True,
+                )
         completed_output = gro_path.exists()
         if resume_existing_effective and completed_output:
             if not cpt_path.exists():
@@ -2773,6 +3933,8 @@ def run_gromacs_production(
         if progress_hook is not None:
             progress_hook(stage["name"], stage)
 
+    if force_lineage_rebuild:
+        lineage_marker.unlink(missing_ok=True)
     (md_dir / "production_complete.flag").write_text("done\n", encoding="utf-8")
     return {"status": "ok", "final_structure": str(current_structure)}
 
