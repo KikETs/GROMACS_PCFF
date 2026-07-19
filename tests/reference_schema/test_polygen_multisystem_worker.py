@@ -11,6 +11,7 @@ from tools.pcff_respa_parity.polygen_multisystem_worker import (
     _first_lammps_g_vector,
     _lammps_production_log_endpoint,
     _lammps_log_gromacs_stage_keys,
+    _write_gro_with_lammps_velocities,
     _should_outer_skip_gromacs_equilibration,
     _should_outer_skip_gromacs_production,
     bridge_script,
@@ -71,7 +72,40 @@ def test_runtime_uses_no_dd_but_keeps_pair_grid_coordinates_wrapped() -> None:
 
     assert env["GMX_DD_SINGLE_RANK"] == "0"
     assert env["GMX_PCFF_EXACT_RESPA_IMAGE_HANDOFF"] == "1"
+    assert env["GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT"] == "0"
     assert "GMX_PCFF_LAMMPS_CG_EM_SKIP_PUT_ATOMS_IN_BOX" not in env
+
+
+def test_lammps_common_state_handoff_preserves_velocities(tmp_path: Path) -> None:
+    gro = tmp_path / "system.gro"
+    gro.write_text(
+        "bridge\n"
+        "2\n"
+        "    1POL     C    1   0.100   0.200   0.300\n"
+        "    1POL     H    2   0.400   0.500   0.600\n"
+        "   1.00000   1.00000   1.00000\n",
+        encoding="utf-8",
+    )
+    data = tmp_path / "relaxed.lmp"
+    data.write_text(
+        "LAMMPS data\n\n"
+        "Velocities\n\n"
+        "1 0.001 -0.002 0.003\n"
+        "2 -0.004 0.005 -0.006\n\n"
+        "Bonds\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "system_with_velocities.gro"
+
+    _write_gro_with_lammps_velocities(gro, data, output)
+
+    lines = output.read_text(encoding="utf-8").splitlines()
+    assert [float(value) for value in lines[2][20:].split()] == pytest.approx(
+        [0.1, 0.2, 0.3, 0.1, -0.2, 0.3]
+    )
+    assert [float(value) for value in lines[3][20:].split()] == pytest.approx(
+        [0.4, 0.5, 0.6, -0.4, 0.5, -0.6]
+    )
 
 
 @pytest.mark.parametrize(

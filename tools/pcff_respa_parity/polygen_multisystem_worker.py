@@ -34,14 +34,17 @@ GMX_PCFF_RUNTIME_ENV = (
     # image tracker preserves the corresponding LAMMPS-continuous positions.
     "GMX_DD_SINGLE_RANK=0;"
     "GMX_PCFF_EXACT_RESPA_IMAGE_HANDOFF=1;"
-    "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT=1;"
+    # The fused initial drift is still an experimental speed path.  It changes
+    # the NPT volume trajectory measurably and must not be the validation
+    # default until it passes the exact-rRESPA trajectory gates.
+    "GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT=0;"
     "GMX_PCFF_MIXED_CLASS2_LINEAR_ANGLE_SIN_FLOOR=0.00038;"
     "GMX_PCFF_MTTK_MASS_MODE=lammps;"
     "GMX_PCFF_NVT_MASS_MODE=lammps_tchain;"
     "GMX_PCFF_MTTK_BOXV_INTEGRATOR=lammps;"
-    # Match LAMMPS FixNH velocity scaling and box remapping. The earlier
-    # apparent box explosion came from invalid 1-4 pairs and a mismatched
-    # r-RESPA contribution layout, not from this remap path.
+    # Match LAMMPS FixNH velocity scaling and box remapping for workflows that
+    # intentionally run the independent GROMACS NPT schedule. Validation jobs
+    # can instead use the explicit LAMMPS-equilibrated common-state handoff.
     "GMX_PCFF_EXACT_RESPA_MTTK_EXTENDED_UPDATE=velocity-lammps-remap;"
     "GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP=1;"
     "GMX_PCFF_EXACT_RESPA_MTTK_INLINE_BOX_REMAP_PME=1;"
@@ -54,6 +57,8 @@ GMX_PCFF_RUNTIME_ENV = (
     "GMX_PCFF_EXACT_RESPA_POST_TROTTER=three;"
     "GMX_PCFF_ALLOW_LONG_EXCLUDED=1"
 )
+
+_LAMMPS_VELOCITY_TO_GROMACS = 100.0
 
 
 def _should_outer_skip_gromacs_equilibration(
@@ -583,6 +588,137 @@ def _ensure_lammps_em_data(lmp_proj: Path, *, lmp_binary: str | None = None) -> 
     return em_data
 
 
+def _materialize_lammps_relaxed_data(
+    lmp_proj: Path,
+    handoff_dir: Path,
+    *,
+    lmp_binary: str | None = None,
+) -> Path:
+    """Export the LAMMPS production-start restart without mutating its lane."""
+
+    relaxed_restart = lmp_proj / "MD/relaxed.restart"
+    if not relaxed_restart.is_file() or relaxed_restart.stat().st_size <= 0:
+        raise FileNotFoundError(
+            "LAMMPS-equilibrated GROMACS handoff requires the non-empty production "
+            f"start restart {relaxed_restart}"
+        )
+
+    handoff_dir.mkdir(parents=True, exist_ok=True)
+    relaxed_data = handoff_dir / "lammps_relaxed_state.lmp"
+    if (
+        relaxed_data.is_file()
+        and relaxed_data.stat().st_size > 0
+        and relaxed_data.stat().st_mtime_ns >= relaxed_restart.stat().st_mtime_ns
+    ):
+        return relaxed_data
+
+    lmp = _resolve_lammps_binary(lmp_binary)
+    script = handoff_dir / "write_lammps_relaxed_state.in"
+    script.write_text(
+        "\n".join(
+            [
+                "echo both",
+                "units real",
+                "boundary p p p",
+                "atom_style full",
+                "pair_style lj/class2/coul/long 9.5",
+                "kspace_style pppm 0.0001",
+                "pair_modify mix sixthpower",
+                "pair_modify tail yes",
+                "bond_style class2",
+                "angle_style class2",
+                "dihedral_style class2",
+                "improper_style class2",
+                f"read_restart {relaxed_restart.resolve()}",
+                "special_bonds lj/coul 0.0 0.0 1.0",
+                f"write_data {relaxed_data.resolve()}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    log = handoff_dir / "write_lammps_relaxed_state.stdout.log"
+    with log.open("w", encoding="utf-8") as handle:
+        subprocess.run(
+            [lmp, "-nonbuf", "-in", script.name],
+            cwd=str(handoff_dir),
+            stdout=handle,
+            stderr=subprocess.STDOUT,
+            check=True,
+        )
+    if not relaxed_data.is_file() or relaxed_data.stat().st_size <= 0:
+        raise FileNotFoundError(
+            "LAMMPS relaxed restart conversion finished without a non-empty "
+            f"data file: {relaxed_data}"
+        )
+    return relaxed_data
+
+
+def _lammps_data_velocities(data_path: Path) -> dict[int, tuple[float, float, float]]:
+    velocities: dict[int, tuple[float, float, float]] = {}
+    in_velocities = False
+    for raw in data_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        stripped = raw.strip()
+        if stripped == "Velocities":
+            in_velocities = True
+            continue
+        if not in_velocities:
+            continue
+        if not stripped or stripped.startswith("#"):
+            continue
+        if re.match(r"^[A-Za-z]", stripped):
+            break
+        fields = stripped.split()
+        if len(fields) >= 4 and fields[0].lstrip("-").isdigit():
+            velocities[int(fields[0])] = tuple(
+                float(value) * _LAMMPS_VELOCITY_TO_GROMACS
+                for value in fields[1:4]
+            )
+    if not velocities:
+        raise RuntimeError(f"No Velocities section found in {data_path}")
+    return velocities
+
+
+def _write_gro_with_lammps_velocities(
+    source_gro: Path,
+    lammps_data: Path,
+    output_gro: Path,
+) -> None:
+    """Attach restart velocities to the atom-ID ordered bridge GRO."""
+
+    velocities = _lammps_data_velocities(lammps_data)
+    lines = source_gro.read_text(encoding="utf-8", errors="ignore").splitlines()
+    if len(lines) < 3:
+        raise RuntimeError(f"Malformed bridge GRO: {source_gro}")
+    natoms = int(lines[1].strip())
+    if len(lines) < natoms + 3:
+        raise RuntimeError(
+            f"Truncated bridge GRO {source_gro}: expected {natoms} atoms"
+        )
+    output_lines = [lines[0], lines[1]]
+    missing: list[int] = []
+    for raw in lines[2 : 2 + natoms]:
+        atom_id = int(raw[15:20])
+        fields = raw[20:].split()
+        x, y, z = (float(fields[index]) for index in range(3))
+        velocity = velocities.get(atom_id)
+        if velocity is None:
+            missing.append(atom_id)
+            velocity = (0.0, 0.0, 0.0)
+        vx, vy, vz = velocity
+        output_lines.append(
+            f"{raw[:20]}{x:18.12f}{y:18.12f}{z:18.12f}"
+            f"{vx:18.12f}{vy:18.12f}{vz:18.12f}"
+        )
+    if missing:
+        raise RuntimeError(
+            f"Missing {len(missing)} LAMMPS velocities in {lammps_data}; "
+            f"first atom IDs: {missing[:10]}"
+        )
+    output_lines.extend(lines[2 + natoms :])
+    output_gro.write_text("\n".join(output_lines) + "\n", encoding="utf-8")
+
+
 _LAMMPS_THERMO_HEADER_RE = re.compile(r"^\s*Step\s+(?:v_time|Time)\b")
 _LAMMPS_THERMO_ROW_RE = re.compile(
     r"^\s*([0-9]+)\s+([0-9.eE+-]+)(?:\s|$)"
@@ -975,6 +1111,7 @@ def run_gromacs_bridge_lane(
     gmx_binary: str | None,
     lmp_binary: str | None = None,
     gromacs_stage_layouts: dict[str, dict[str, object]] | None = None,
+    gromacs_from_lammps_equilibrated_state: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     pd = require_pandas()
     selected_df = pd.read_csv(selected_csv).reset_index(drop=True)
@@ -1031,11 +1168,21 @@ def run_gromacs_bridge_lane(
                     traj_id,
                     expected_production_ns=float(production_ns),
                 )
-                source_data = _ensure_lammps_em_data(lmp_proj, lmp_binary=lmp_binary)
-
                 bridge_dir = proj / "build/lammps_data_bridge"
                 md_dir = proj / "MD_GMX"
                 md_dir.mkdir(parents=True, exist_ok=True)
+                if gromacs_from_lammps_equilibrated_state:
+                    failed_phase = "lammps_relaxed_state_handoff"
+                    source_data = _materialize_lammps_relaxed_data(
+                        lmp_proj,
+                        proj / "build/lammps_relaxed_handoff",
+                        lmp_binary=lmp_binary,
+                    )
+                else:
+                    source_data = _ensure_lammps_em_data(
+                        lmp_proj,
+                        lmp_binary=lmp_binary,
+                    )
                 if (
                     resume_existing
                     and not force_restart
@@ -1052,7 +1199,31 @@ def run_gromacs_bridge_lane(
                         traj_id=traj_id,
                     )
 
-                for src_name, dst_name in (("system.gro", "conf.gro"), ("topol.top", "topol.top")):
+                bridge_structure_name = "system.gro"
+                if gromacs_from_lammps_equilibrated_state:
+                    failed_phase = "lammps_relaxed_state_velocities"
+                    bridge_structure_name = "system_with_velocities.gro"
+                    bridge_structure = bridge_dir / bridge_structure_name
+                    if (
+                        force_restart
+                        or not resume_existing
+                        or not bridge_structure.is_file()
+                        or bridge_structure.stat().st_mtime_ns
+                        < max(
+                            (bridge_dir / "system.gro").stat().st_mtime_ns,
+                            source_data.stat().st_mtime_ns,
+                        )
+                    ):
+                        _write_gro_with_lammps_velocities(
+                            bridge_dir / "system.gro",
+                            source_data,
+                            bridge_structure,
+                        )
+
+                for src_name, dst_name in (
+                    (bridge_structure_name, "conf.gro"),
+                    ("topol.top", "topol.top"),
+                ):
                     src = bridge_dir / src_name
                     dst = md_dir / dst_name
                     if not src.exists():
@@ -1086,6 +1257,15 @@ def run_gromacs_bridge_lane(
                 failed_phase = "gromacs_beta_coverage"
                 _assert_gromacs_beta_coverage(runtime_ctx)
                 runtime_ctx["resume_existing_effective"] = bool(resume_existing and not force_restart)
+                if gromacs_from_lammps_equilibrated_state:
+                    runtime_ctx["production_start_structure"] = "conf.gro"
+                    runtime_ctx["production_start_state_trr"] = None
+                    runtime_ctx["equilibration_source"] = {
+                        "mode": "lammps_relaxed_restart_common_state",
+                        "restart": str((lmp_proj / "MD/relaxed.restart").resolve()),
+                        "data": str(source_data.resolve()),
+                        "structure": str((md_dir / "conf.gro").resolve()),
+                    }
                 (md_dir / "gromacs_runtime_context.json").write_text(
                     json.dumps(runtime_ctx, indent=2) + "\n",
                     encoding="utf-8",
@@ -1098,16 +1278,23 @@ def run_gromacs_bridge_lane(
                     )
 
                 failed_phase = "gromacs_equil"
-                lineage_rebuild_state = gromacs_exact_image_lineage_rebuild_state(md_dir)
-                if _should_outer_skip_gromacs_equilibration(
-                    resume_existing=bool(resume_existing),
-                    force_restart=bool(force_restart),
-                    completion_flag_exists=(md_dir / "equilibration_complete.flag").exists(),
-                    lineage_rebuild_state=lineage_rebuild_state,
-                ):
-                    skipped.append("gromacs_equil")
+                if gromacs_from_lammps_equilibrated_state:
+                    skipped.append("gromacs_equil_lammps_common_state")
+                    (md_dir / "equilibration_complete.flag").write_text(
+                        "lammps_relaxed_restart_common_state\n",
+                        encoding="utf-8",
+                    )
                 else:
-                    run_gromacs_equilibration(runtime_ctx)
+                    lineage_rebuild_state = gromacs_exact_image_lineage_rebuild_state(md_dir)
+                    if _should_outer_skip_gromacs_equilibration(
+                        resume_existing=bool(resume_existing),
+                        force_restart=bool(force_restart),
+                        completion_flag_exists=(md_dir / "equilibration_complete.flag").exists(),
+                        lineage_rebuild_state=lineage_rebuild_state,
+                    ):
+                        skipped.append("gromacs_equil")
+                    else:
+                        run_gromacs_equilibration(runtime_ctx)
 
                 failed_phase = "gromacs_prod"
                 lineage_rebuild_state = gromacs_exact_image_lineage_rebuild_state(md_dir)
@@ -1559,6 +1746,7 @@ def run_batch_lane(
     lammps_stop_after_stage: str | None = None,
     lammps_stage_layouts: dict[str, dict[str, object]] | None = None,
     gromacs_stage_layouts: dict[str, dict[str, object]] | None = None,
+    gromacs_from_lammps_equilibrated_state: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     pd = require_pandas()
     selected_df = pd.read_csv(selected_csv)
@@ -1628,6 +1816,9 @@ def run_batch_lane(
             gmx_binary=gmx_binary,
             lmp_binary=lmp_binary,
             gromacs_stage_layouts=gromacs_stage_layouts,
+            gromacs_from_lammps_equilibrated_state=(
+                gromacs_from_lammps_equilibrated_state
+            ),
         )
     else:
         raise ValueError(f"Unsupported lane: {lane}")
@@ -1702,6 +1893,15 @@ def parse_args() -> argparse.Namespace:
             sp.add_argument("--lammps-cpu-omp-threads", type=int, default=1)
             sp.add_argument("--lammps-stage-layout-file", type=Path, default=None)
             sp.add_argument("--gromacs-stage-layout-file", type=Path, default=None)
+            sp.add_argument(
+                "--gromacs-from-lammps-equilibrated-state",
+                action="store_true",
+                help=(
+                    "Skip independent GROMACS equilibration and start GROMACS NVT "
+                    "production from the sibling LAMMPS relaxed.restart coordinates, "
+                    "box, velocities, and converted topology."
+                ),
+            )
             sp.add_argument("--no-lammps-thermo-flush", action="store_true")
             sp.add_argument("--lammps-resume-from-checkpoint", action="store_true")
             sp.add_argument(
@@ -1843,6 +2043,9 @@ def main() -> None:
             lammps_stop_after_stage=args.lammps_stop_after_stage,
             lammps_stage_layouts=lammps_stage_layouts,
             gromacs_stage_layouts=gromacs_stage_layouts,
+            gromacs_from_lammps_equilibrated_state=bool(
+                args.gromacs_from_lammps_equilibrated_state
+            ),
         )
         raise_for_failed_lane_status(status_df, args.lane)
 
