@@ -61,6 +61,15 @@ GMX_PCFF_RUNTIME_ENV = (
 _LAMMPS_VELOCITY_TO_GROMACS = 100.0
 
 
+def _environment_flag(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
 def _should_outer_skip_gromacs_equilibration(
     *,
     resume_existing: bool,
@@ -913,7 +922,6 @@ def _lammps_log_gromacs_stage_keys(log_path: Path) -> tuple[str, ...]:
         return ("eq12_npt_1200ps",)
     if name == "lammps_prod_stage00_nvt_cpu.log":
         return ("prod_nvt",)
-
     match = re.fullmatch(
         r"lammps_lammps_equil_(?:02|04|05|06|07|08|09|10|11|13)_"
         r"(eq\d{2}_.+?)_cpu\.log",
@@ -1324,8 +1332,20 @@ def run_gromacs_bridge_lane(
                     )
 
                 failed_phase = "analysis"
-                if float(production_ns) <= 0.01:
-                    skipped.append("analysis_smoke_short_window")
+                skip_analysis = _environment_flag(
+                    "GROMACS_BATCH_SKIP_ANALYSIS"
+                )
+                if float(production_ns) <= 0.01 or skip_analysis:
+                    analysis_note = (
+                        "deferred by GROMACS_BATCH_SKIP_ANALYSIS"
+                        if skip_analysis
+                        else "skipped for smoke window"
+                    )
+                    skipped.append(
+                        "analysis_deferred"
+                        if skip_analysis
+                        else "analysis_smoke_short_window"
+                    )
                     metrics.append(
                         {
                             "Trajectory ID": traj_id,
@@ -1335,7 +1355,7 @@ def run_gromacs_bridge_lane(
                             "D_an_cm2s": float("nan"),
                             "bucket": row.get("_bucket"),
                             "rank_value": row.get("CONDUCTIVITY"),
-                            "analysis_note": "skipped for smoke window",
+                            "analysis_note": analysis_note,
                         }
                     )
                 else:

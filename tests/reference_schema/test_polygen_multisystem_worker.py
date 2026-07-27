@@ -8,6 +8,7 @@ from tools.pcff_respa_parity.polygen_multisystem_worker import (
     GMX_PCFF_RUNTIME_ENV,
     _assert_gromacs_beta_coverage,
     _assert_sibling_lammps_lane_ok,
+    _environment_flag,
     _first_lammps_g_vector,
     _lammps_production_log_endpoint,
     _lammps_log_gromacs_stage_keys,
@@ -20,6 +21,23 @@ from tools.pcff_respa_parity.polygen_multisystem_worker import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("1", True),
+        ("true", True),
+        ("yes", True),
+        ("on", True),
+        ("0", False),
+        ("false", False),
+        ("", False),
+    ],
+)
+def test_environment_flag(monkeypatch: pytest.MonkeyPatch, value: str, expected: bool) -> None:
+    monkeypatch.setenv("TEST_POLYGEN_FLAG", value)
+    assert _environment_flag("TEST_POLYGEN_FLAG") is expected
 
 
 def _write_g_vector(log_path: Path, value: float) -> None:
@@ -174,6 +192,9 @@ def test_lammps_log_names_map_to_expanded_gromacs_stage_keys() -> None:
 
     assert not _lammps_log_gromacs_stage_keys(
         Path("lammps_lammps_equil_09_eq09_npt_compress_300ps_chunk0001_retry1_cpu.log")
+    )
+    assert not _lammps_log_gromacs_stage_keys(
+        Path("lammps_lammps_equil_09_eq09_npt_compress_300ps_chunk0001_retry2_cpu.log")
     )
 
 

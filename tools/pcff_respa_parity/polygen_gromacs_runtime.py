@@ -207,7 +207,14 @@ def _polygen_md_mdp(
         raise ValueError(
             f"PolyGen MD stage {name} has invalid final step {final_state_interval}"
         )
-    sample = 40000
+    # Keep at least ten observable intervals in shortened final chunks.  A
+    # fixed 40,000-step cadence leaves chunks such as the 30,000-step Eq04
+    # suffix with no usable EDR window under -noappend.
+    sample = (
+        40000
+        if nsteps >= 40000
+        else max(4, ((nsteps // 10) // 4) * 4)
+    )
     energy_sample = sample
     if name == "eq12_npt_1200ps":
         # LAMMPS fix ave/time samples lx on every 2 fs outer step. Store the
@@ -660,7 +667,12 @@ def _setup_polygen_em_handoff_environment(
             },
         ]
         for segment_index, (pressure_start, pressure_end) in enumerate(
-            ((1.0, 500.0), (500.0, 1500.0), (1500.0, 2500.0), (2500.0, 3213.04819)),
+            (
+                (1.0, 500.0),
+                (500.0, 1500.0),
+                (1500.0, 2500.0),
+                (2500.0, 3213.04819),
+            ),
             start=1,
         ):
             eq09_specs.append(
@@ -869,7 +881,6 @@ def _setup_polygen_em_handoff_environment(
                 "eq12_legacy_average_window": spec.get("eq12_legacy_average_window"),
             }
         )
-
     final_equil_stage = next(
         (stage for stage in reversed(rendered_stages) if stage["phase"] == "equilibration"),
         None,
@@ -1100,11 +1111,10 @@ def _materialize_final_state_trr(
 ) -> Path:
     """Export only x/v/box from a verified final checkpoint to one-frame TRR.
 
-    A checkpoint also contains Nose-Hoover/MTTK extended state, which must not
-    leak across different LAMMPS base stages because those stages recreate
-    their fixes.  A TRR frame carries the full-precision physical state but no
-    thermostat/barostat history, making it the appropriate ``grompp -t``
-    handoff alongside the ordinary ``-c`` structure.
+    A checkpoint also contains Nose-Hoover/MTTK extended state. LAMMPS restores
+    that state only for an intra-stage chunk restart written before ``unfix``.
+    Final base-stage restarts are written after ``unfix`` and therefore hand
+    off only the physical state through this TRR.
     """
 
     checkpoint_state = _gromacs_checkpoint_state(
