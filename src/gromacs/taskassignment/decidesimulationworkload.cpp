@@ -380,7 +380,8 @@ ExactRespaStepWork setupExactRespaStepWork(const int                   legacyFla
                                            const t_inputrec&           inputrec,
                                            const int64_t               step,
                                            const DomainLifetimeWorkload& domainWork,
-                                           const SimulationWorkload&   simulationWork)
+                                           const SimulationWorkload&   simulationWork,
+                                           const bool                  forceAllLevels)
 {
     GMX_RELEASE_ASSERT(useExactRespa(inputrec),
                        "Exact step workload should only be queried for exact r-RESPA");
@@ -390,7 +391,9 @@ ExactRespaStepWork setupExactRespaStepWork(const int                   legacyFla
     GMX_UNUSED_VALUE(simulationWork);
 
     ExactRespaStepWork flags;
-    flags.highestActiveLevel  = highestActiveExactRespaLevel(inputrec.exactRespa, step);
+    flags.highestActiveLevel =
+            forceAllLevels ? exactRespaNumLevels(inputrec) - 1
+                           : highestActiveExactRespaLevel(inputrec.exactRespa, step);
     flags.haveSlowForceLevels = (flags.highestActiveLevel > 0);
     // The legacy early-combine path reads StepWorkload MTS buffers. Standalone
     // exact r-RESPA keeps its slow forces in ExactRespaForceOutputs/Store and
@@ -404,13 +407,16 @@ StepWorkload setupExactRespaStepWorkload(const int                   legacyFlags
                                          const t_inputrec&           inputrec,
                                          const int64_t               step,
                                          const DomainLifetimeWorkload& domainWork,
-                                         const SimulationWorkload&   simulationWork)
+                                         const SimulationWorkload&   simulationWork,
+                                         const bool                  forceAllLevels)
 {
     GMX_RELEASE_ASSERT(useExactRespa(inputrec),
                        "Exact step workload should only be queried for exact r-RESPA");
     assertExactRespaOwnsNoLegacyMtsState(inputrec);
 
-    const int  highestActiveLevel             = highestActiveExactRespaLevel(inputrec.exactRespa, step);
+    const int highestActiveLevel =
+            forceAllLevels ? exactRespaNumLevels(inputrec) - 1
+                           : highestActiveExactRespaLevel(inputrec.exactRespa, step);
     const bool haveSlowForceLevels            = (highestActiveLevel > 0);
     const bool haveLongRangeNonbonded =
             !exactRespaEwaldRealOnlyRequested(inputrec)

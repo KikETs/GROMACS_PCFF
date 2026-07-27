@@ -152,13 +152,15 @@ ExactRespaStepWork setupExactRespaStepWork(int                       legacyFlags
                                            const t_inputrec&         inputrec,
                                            int64_t                   step,
                                            const DomainLifetimeWorkload& domainWork,
-                                           const SimulationWorkload& simulationWork);
+                                           const SimulationWorkload& simulationWork,
+                                           bool                      forceAllLevels = false);
 
 StepWorkload setupExactRespaStepWorkload(int                       legacyFlags,
                                          const t_inputrec&         inputrec,
                                          int64_t                   step,
                                          const DomainLifetimeWorkload& domainWork,
-                                         const SimulationWorkload& simulationWork);
+                                         const SimulationWorkload& simulationWork,
+                                         bool                      forceAllLevels = false);
 
 } // namespace gmx
 

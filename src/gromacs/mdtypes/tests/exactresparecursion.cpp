@@ -296,6 +296,34 @@ TEST(ExactRespaStandalone, ExactRespaStepWorkUsesStandaloneExactSchedule)
     EXPECT_FALSE(exactStepWork.combineForcesBeforeHaloExchange);
 }
 
+TEST(ExactRespaStandalone, ForceStoreRestartBootstrapActivatesAllLevelsWithoutChangingStep)
+{
+    t_inputrec ir;
+    configureExactRespaInputRecord(&ir);
+    ir.exactRespa = threeLevelExactRespa();
+
+    SimulationWorkload simulationWork;
+    simulationWork.useExactRespa = true;
+
+    constexpr int64_t innerOnlyStep = 5;
+    const StepWorkload scheduledStepWork = setupExactRespaStepWorkload(
+            GMX_FORCE_ALLFORCES, ir, innerOnlyStep, DomainLifetimeWorkload{}, simulationWork);
+    const ExactRespaStepWork scheduledExactStepWork = setupExactRespaStepWork(
+            GMX_FORCE_ALLFORCES, ir, innerOnlyStep, DomainLifetimeWorkload{}, simulationWork);
+    const StepWorkload bootstrapStepWork = setupExactRespaStepWorkload(
+            GMX_FORCE_ALLFORCES, ir, innerOnlyStep, DomainLifetimeWorkload{}, simulationWork, true);
+    const ExactRespaStepWork bootstrapExactStepWork = setupExactRespaStepWork(
+            GMX_FORCE_ALLFORCES, ir, innerOnlyStep, DomainLifetimeWorkload{}, simulationWork, true);
+
+    EXPECT_FALSE(scheduledStepWork.computeLongRangeNonbondedForces);
+    EXPECT_EQ(scheduledExactStepWork.highestActiveLevel, 0);
+    EXPECT_FALSE(scheduledExactStepWork.haveSlowForceLevels);
+
+    EXPECT_TRUE(bootstrapStepWork.computeLongRangeNonbondedForces);
+    EXPECT_EQ(bootstrapExactStepWork.highestActiveLevel, 2);
+    EXPECT_TRUE(bootstrapExactStepWork.haveSlowForceLevels);
+}
+
 TEST(ExactRespaStandalone, SimulationWorkloadSeparatesLegacyMtsAndExactSubsteps)
 {
     SimulationWorkload simulationWork;

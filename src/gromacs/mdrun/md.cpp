@@ -3265,6 +3265,42 @@ void gmx::LegacySimulator::do_md()
                                             runScheduleWork_->domainWork,
                                             simulationWork);
         }
+        const bool reconstructExactRespaForceStore =
+                gmx::useExactRespa(*ir) && bFirstStep
+                && startingBehavior_ != StartingBehavior::NewSimulation
+                && exactRespaForceStorePtr != nullptr && !exactRespaForceStorePtr->hasLevel(0);
+        MdrunScheduleWorkload forceRunScheduleWork = *runScheduleWork_;
+        if (reconstructExactRespaForceStore)
+        {
+            // ExactRespaForceStore is process-local and is not serialized in checkpoints.
+            // A continuation can start on an inner-only step, where the normal workload
+            // assumes that the slow level totals from the previous outer step still exist.
+            // Recompute every force level once at the checkpoint coordinates to rebuild the
+            // store. Keep runScheduleWork_ unchanged so the resumed kick cadence still follows
+            // the actual checkpoint step.
+            forceRunScheduleWork.stepWork =
+                    setupExactRespaStepWorkload(legacyForceFlags,
+                                                *ir,
+                                                step,
+                                                forceRunScheduleWork.domainWork,
+                                                simulationWork,
+                                                true);
+            forceRunScheduleWork.exactRespaStepWork =
+                    setupExactRespaStepWork(legacyForceFlags,
+                                            *ir,
+                                            step,
+                                            forceRunScheduleWork.domainWork,
+                                            simulationWork,
+                                            true);
+            if (isMainRank)
+            {
+                FILE* report = (fpLog_ != nullptr) ? fpLog_ : stderr;
+                std::fprintf(report,
+                             "Reconstructing all exact r-RESPA force levels after checkpoint "
+                             "restart at step %lld.\n",
+                             static_cast<long long>(step));
+            }
+        }
         appendPreDoForceStateTrace(activeM2pTraceDirPath(),
                                    step,
                                    "after_stepwork_setup",
@@ -3579,7 +3615,7 @@ void gmx::LegacySimulator::do_md()
                                  enerd_,
                                  state_->lambda,
                                  fr_,
-                                 *runScheduleWork_,
+                                 forceRunScheduleWork,
                                  virtualSites_,
                                  mu_tot,
                                  t,
