@@ -249,6 +249,7 @@ def _validate_completion_fixture(
     *,
     stage: dict[str, object] | None = None,
     input_binding: dict[str, object] | None = None,
+    allow_runtime_drift: bool = False,
 ) -> bool:
     return _validate_exact_image_completion_manifest(
         md_dir=tmp_path,
@@ -259,6 +260,7 @@ def _validate_completion_fixture(
         tpr_path=fixture["tpr"],
         checkpoint_path=fixture["checkpoint"],
         input_binding=input_binding or fixture["input_binding"],
+        allow_runtime_drift=allow_runtime_drift,
     )
 
 
@@ -362,6 +364,52 @@ def test_completion_manifest_rejects_changed_execution_contract(
     )
 
 
+def test_completion_manifest_can_allow_only_gromacs_runtime_drift(
+    tmp_path: Path,
+) -> None:
+    fixture = _completion_manifest_fixture(tmp_path)
+    contract = copy.deepcopy(fixture["execution_contract"])
+    contract["gromacs_runtime"]["executable"]["path"] = "/opt/new/bin/gmx"
+    contract["gromacs_runtime"]["executable"]["sha256"] = "d" * 64
+    contract["gromacs_runtime"]["libgromacs"]["sha256"] = "e" * 64
+    contract["layout"]["source"] = "/new/provenance-only/layout.json"
+    current_binding = _exact_image_stage_input_binding(
+        stage=fixture["stage"],
+        stage_image_input=fixture["image_input"],
+        upstream_state=fixture["upstream_state"],
+        upstream_state_kind="state_trr",
+        mdp_path=fixture["mdp"],
+        topology_path=fixture["topology"],
+        execution_contract=contract,
+    )
+    assert not _validate_completion_fixture(
+        tmp_path, fixture, input_binding=current_binding
+    )
+    assert _validate_completion_fixture(
+        tmp_path,
+        fixture,
+        input_binding=current_binding,
+        allow_runtime_drift=True,
+    )
+
+    contract["layout"]["ntomp"] = 6
+    changed_layout_binding = _exact_image_stage_input_binding(
+        stage=fixture["stage"],
+        stage_image_input=fixture["image_input"],
+        upstream_state=fixture["upstream_state"],
+        upstream_state_kind="state_trr",
+        mdp_path=fixture["mdp"],
+        topology_path=fixture["topology"],
+        execution_contract=contract,
+    )
+    assert not _validate_completion_fixture(
+        tmp_path,
+        fixture,
+        input_binding=changed_layout_binding,
+        allow_runtime_drift=True,
+    )
+
+
 def test_stage_execution_contract_captures_material_env_and_final_args() -> None:
     contract = runtime._stage_execution_contract(
         runtime_identity=_execution_contract()["gromacs_runtime"],
@@ -457,6 +505,21 @@ def test_lineage_marker_schema_state_and_contract_fail_closed(
 
     with pytest.raises(RuntimeError):
         runtime.gromacs_exact_image_lineage_rebuild_state(tmp_path)
+
+
+def test_explicit_protocol_change_rebuild_boundary_is_validated(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    stages = ["eq01", "eq07", "eq08"]
+
+    assert runtime._requested_protocol_change_rebuild_index(stages) is None
+
+    monkeypatch.setenv("GROMACS_BATCH_LINEAGE_REBUILD_FROM_STAGE", "eq07")
+    assert runtime._requested_protocol_change_rebuild_index(stages) == 1
+
+    monkeypatch.setenv("GROMACS_BATCH_LINEAGE_REBUILD_FROM_STAGE", "missing")
+    with pytest.raises(RuntimeError, match="unknown equilibration stage"):
+        runtime._requested_protocol_change_rebuild_index(stages)
 
 
 def test_eq03_lineage_failure_forces_existing_eq04_clean_rebuild(

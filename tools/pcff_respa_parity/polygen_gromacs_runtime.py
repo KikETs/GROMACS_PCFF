@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import math
@@ -2005,6 +2006,7 @@ def _validate_exact_image_completion_manifest(
     tpr_path: Path,
     checkpoint_path: Path | None,
     input_binding: Mapping[str, Any],
+    allow_runtime_drift: bool = False,
 ) -> bool:
     manifest_path = _exact_image_completion_manifest_path(md_dir, deffnm)
     if not manifest_path.exists():
@@ -2022,10 +2024,37 @@ def _validate_exact_image_completion_manifest(
             stage.get("nsteps", 0) or 0
         )
         stage_kind = str(stage.get("kind", ""))
+        stored_inputs = payload.get("inputs")
+        current_inputs = dict(input_binding)
+        inputs_match = stored_inputs == current_inputs
+        if (
+            not inputs_match
+            and allow_runtime_drift
+            and isinstance(stored_inputs, Mapping)
+        ):
+            stored_without_runtime = copy.deepcopy(dict(stored_inputs))
+            current_without_runtime = copy.deepcopy(current_inputs)
+            comparable = True
+            for binding in (stored_without_runtime, current_without_runtime):
+                execution_contract = binding.get("execution_contract")
+                if not isinstance(execution_contract, dict):
+                    comparable = False
+                    break
+                execution_contract.pop("gromacs_runtime", None)
+                layout_contract = execution_contract.get("layout")
+                if not isinstance(layout_contract, dict):
+                    comparable = False
+                    break
+                # The file path is provenance only.  All material layout fields
+                # remain bound and must compare equal.
+                layout_contract.pop("source", None)
+            inputs_match = (
+                comparable and stored_without_runtime == current_without_runtime
+            )
         if (
             str(payload.get("kind")) != stage_kind
             or int(payload.get("expected_md_step", -1)) != expected_step
-            or payload.get("inputs") != dict(input_binding)
+            or not inputs_match
         ):
             return False
         expected_paths = {
@@ -3045,6 +3074,29 @@ def _require_ready(context: Mapping[str, Any]) -> None:
         raise RuntimeError(f"GROMACS runtime context is blocked: {context.get('failure_reason')}")
 
 
+def _requested_protocol_change_rebuild_index(stage_names: list[str]) -> int | None:
+    """Return an explicitly trusted partial-rebuild boundary, if configured.
+
+    The default remains fail-closed: any equilibration contract change rebuilds
+    from the first stage.  A recovery launcher may name a later stage only when
+    it has independently preserved and validated every upstream handoff.  The
+    selected stage and all downstream stages are then rebuilt under the new
+    contract.
+    """
+
+    requested = os.environ.get(
+        "GROMACS_BATCH_LINEAGE_REBUILD_FROM_STAGE", ""
+    ).strip()
+    if not requested:
+        return None
+    if requested not in stage_names:
+        raise RuntimeError(
+            "GROMACS_BATCH_LINEAGE_REBUILD_FROM_STAGE names an unknown "
+            f"equilibration stage {requested!r}; available stages: {stage_names}"
+        )
+    return stage_names.index(requested)
+
+
 def run_gromacs_equilibration(
     context: Mapping[str, Any],
     *,
@@ -3074,6 +3126,9 @@ def run_gromacs_equilibration(
     env = _apply_batch_mdrun_env(env)
     env = _apply_project_atom_count_env(env, md_dir)
     resume_existing_effective = bool(context.get("resume_existing_effective", False))
+    allow_completed_stage_runtime_drift = str(
+        env.get("GROMACS_BATCH_ALLOW_COMPLETED_STAGE_RUNTIME_DRIFT", "0")
+    ).strip().lower() not in {"", "0", "false", "no", "off"}
 
     current_structure = md_dir / "conf.gro"
     current_topology = md_dir / "topol.top"
@@ -3088,6 +3143,7 @@ def run_gromacs_equilibration(
     runtime_identity = _gromacs_runtime_identity(gmx=gmx, cwd=md_dir, env=env)
     grompp_extra_args = _grompp_extra_args()
     protocol_contract_changed = False
+    requested_protocol_rebuild_index: int | None = None
     protocol_contract = _equilibration_protocol_contract(
         context=context,
         stages=stages,
@@ -3098,6 +3154,32 @@ def run_gromacs_equilibration(
         exact_image_handoff=exact_image_handoff,
         grompp_extra_args=grompp_extra_args,
     )
+    stage_names = [str(stage.get("name", "")) for stage in stages]
+    requested_protocol_rebuild_index = (
+        _requested_protocol_change_rebuild_index(stage_names)
+    )
+    if (
+        lineage_marker_state is None
+        and requested_protocol_rebuild_index is not None
+    ):
+        pending_trigger_index = requested_protocol_rebuild_index
+        lineage_marker_state = "active_equil"
+        origin_stage = stage_names[pending_trigger_index]
+        _write_json_atomically(
+            lineage_marker,
+            {
+                "schema_name": "gromacs_exact_image_lineage_rebuild",
+                "schema_version": 1,
+                "state": "active_equil",
+                "timestamp": datetime.now().isoformat(timespec="microseconds"),
+                "origin_stage": origin_stage,
+                "equil_protocol_contract_sha256": protocol_contract["sha256"],
+                "reason": (
+                    "recovery launcher explicitly selected rebuild boundary "
+                    f"{origin_stage}"
+                ),
+            },
+        )
     if lineage_marker_state is not None:
         marker = _read_json(lineage_marker)
         stored_contract = str(marker.get("equil_protocol_contract_sha256", ""))
@@ -3110,9 +3192,14 @@ def run_gromacs_equilibration(
                 raise RuntimeError(
                     "Cannot invalidate a changed equilibration protocol with no stages"
                 )
-            pending_trigger_index = 0
+            pending_trigger_index = (
+                requested_protocol_rebuild_index
+                if requested_protocol_rebuild_index is not None
+                else 0
+            )
             lineage_marker_state = "active_equil"
-            protocol_contract_changed = True
+            protocol_contract_changed = pending_trigger_index == 0
+            origin_stage = str(stages[pending_trigger_index].get("name", ""))
             _write_json_atomically(
                 lineage_marker,
                 {
@@ -3120,9 +3207,14 @@ def run_gromacs_equilibration(
                     "schema_version": 1,
                     "state": "active_equil",
                     "timestamp": datetime.now().isoformat(timespec="microseconds"),
-                    "origin_stage": str(stages[0].get("name", "")),
+                    "origin_stage": origin_stage,
                     "equil_protocol_contract_sha256": protocol_contract["sha256"],
-                    "reason": "equilibration protocol contract changed",
+                    "reason": (
+                        "equilibration protocol contract changed; recovery "
+                        f"launcher explicitly selected rebuild boundary {origin_stage}"
+                        if requested_protocol_rebuild_index is not None
+                        else "equilibration protocol contract changed"
+                    ),
                 },
             )
     current_image_sidecar: Path | None = None
@@ -3171,7 +3263,7 @@ def run_gromacs_equilibration(
     for stage_index, stage in enumerate(stages):
         cascade_rebuild_stage = downstream_lineage_invalidated or (
             pending_trigger_index is not None
-            and stage_index > pending_trigger_index
+            and stage_index >= pending_trigger_index
         )
         tpr_name, deffnm = _md_stage_output_names(stage["name"])
         tpr_path = md_dir / tpr_name
@@ -3261,8 +3353,9 @@ def run_gromacs_equilibration(
                     original_state_trr=pre_stage_state_trr,
                     restart_kind="upstream_lineage_invalidation",
                     reason=(
-                        "an upstream exact-image stage was rebuilt; downstream outputs "
-                        "must be regenerated from the current handoff state"
+                        "the current lineage boundary or an upstream stage was "
+                        "invalidated; this output must be regenerated from the "
+                        "accepted handoff state"
                     ),
                 )
                 _write_gromacs_stage_status(
@@ -3319,6 +3412,11 @@ def run_gromacs_equilibration(
                         else None
                     ),
                     input_binding=stage_input_binding,
+                    allow_runtime_drift=(
+                        allow_completed_stage_runtime_drift
+                        and requested_protocol_rebuild_index is not None
+                        and stage_index < requested_protocol_rebuild_index
+                    ),
                 )
             ):
                 completed_output = False
