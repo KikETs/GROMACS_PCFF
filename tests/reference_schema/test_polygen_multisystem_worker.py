@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from tools.pcff_respa_parity import polygen_gromacs_runtime as runtime
 from tools.pcff_respa_parity.polygen_multisystem_worker import (
     GMX_PCFF_RUNTIME_ENV,
     _assert_gromacs_beta_coverage,
@@ -16,6 +17,7 @@ from tools.pcff_respa_parity.polygen_multisystem_worker import (
     _should_outer_skip_gromacs_equilibration,
     _should_outer_skip_gromacs_production,
     bridge_script,
+    lane_mdrun_settings,
     lammps_beta_stage_layouts,
 )
 
@@ -92,6 +94,58 @@ def test_runtime_uses_no_dd_but_keeps_pair_grid_coordinates_wrapped() -> None:
     assert env["GMX_PCFF_EXACT_RESPA_IMAGE_HANDOFF"] == "1"
     assert env["GMX_PCFF_EXACT_RESPA_FUSED_INITIAL_DRIFT"] == "0"
     assert "GMX_PCFF_LAMMPS_CG_EM_SKIP_PUT_ATOMS_IN_BOX" not in env
+
+
+def test_gpu_lane_uses_cuda_compatible_pme_order_and_full_pme_offload(
+    tmp_path: Path,
+) -> None:
+    settings = lane_mdrun_settings("gmx_gpu", tmp_path, "/bin/true")
+
+    assert settings["GROMACS_BATCH_PME_ORDER"] == "4"
+    assert settings["GROMACS_BATCH_MDRUN_EXTRA_ARGS"].split()[:8] == [
+        "-nb",
+        "gpu",
+        "-pme",
+        "gpu",
+        "-bonded",
+        "gpu",
+        "-update",
+        "cpu",
+    ]
+
+
+def test_real_only_stages_force_all_gpu_offload_options_back_to_cpu(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(
+        "GROMACS_BATCH_MDRUN_EXTRA_ARGS",
+        "-nb gpu -pme gpu -bonded gpu -update cpu -pin off -dlb no -notunepme",
+    )
+
+    assert runtime._mdrun_extra_args_for_stage(
+        {"name": "prod_nvt", "kspace_compute": ""}
+    )[:8] == [
+        "-nb",
+        "gpu",
+        "-pme",
+        "gpu",
+        "-bonded",
+        "gpu",
+        "-update",
+        "cpu",
+    ]
+    assert runtime._mdrun_extra_args_for_stage(
+        {"name": "eq01_nvt_40ps", "kspace_compute": "no"}
+    )[:8] == [
+        "-nb",
+        "cpu",
+        "-pme",
+        "cpu",
+        "-bonded",
+        "cpu",
+        "-update",
+        "cpu",
+    ]
 
 
 def test_lammps_common_state_handoff_preserves_velocities(tmp_path: Path) -> None:

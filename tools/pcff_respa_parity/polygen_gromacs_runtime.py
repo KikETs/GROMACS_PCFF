@@ -2681,7 +2681,15 @@ def _mdrun_extra_args_for_stage(stage: Mapping[str, Any]) -> list[str]:
         return args
     out = list(args)
     for i, value in enumerate(out[:-1]):
-        if value == "-pme" and out[i + 1] == "gpu":
+        # Exact real-only Coulomb stages do not have a reciprocal-space task,
+        # and the GPU short-range path currently includes the Ewald self term
+        # in the reported energy.  Force the complete early-stage execution
+        # shape to CPU so force/virial and energy accounting all use the
+        # validated path.  Per-stage layouts may still add non-offload flags.
+        if (
+            value in {"-nb", "-pme", "-bonded", "-update"}
+            and out[i + 1] == "gpu"
+        ):
             out[i + 1] = "cpu"
     return out
 

@@ -201,9 +201,12 @@ def lane_mdrun_settings(lane: str, workspace: Path, gmx_binary: str | None) -> d
             "GROMACS_BATCH_GMX_BINARY": binary,
             "GROMACS_BATCH_SCHEDULE": "polygen_em_handoff",
             "GROMACS_BATCH_EXACT_RESPA_PAIR14_LEVEL": pair14_level,
-            "GROMACS_BATCH_PME_ORDER": "5",
+            # CUDA PME only supports interpolation order 4.  Keeping order 5
+            # here silently forced every nominal GPU lane to run PME on the
+            # CPU, even when the launcher requested full PME offload.
+            "GROMACS_BATCH_PME_ORDER": "4",
             "GROMACS_BATCH_GROMPP_EXTRA_ARGS": "-maxwarn 10",
-            "GROMACS_BATCH_MDRUN_EXTRA_ARGS": "-nb gpu -pme cpu -bonded gpu -update cpu -pin off -dlb no -notunepme",
+            "GROMACS_BATCH_MDRUN_EXTRA_ARGS": "-nb gpu -pme gpu -bonded gpu -update cpu -pin off -dlb no -notunepme",
             "GROMACS_BATCH_MDRUN_EM_EXTRA_ARGS": "-nb cpu -pme cpu -bonded cpu -update cpu -pin off",
             "GROMACS_BATCH_MDRUN_ENV": GMX_PCFF_RUNTIME_ENV,
         }
