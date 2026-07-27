@@ -850,13 +850,37 @@ def _assert_sibling_lammps_lane_ok(
         )
 
     expected_time_fs = expected_ns * 1.0e6
-    stage_log = lmp_proj / "logs/lammps_prod_stage00_nvt_cpu.log"
-    # The dedicated stage log is authoritative when present.  Do not let an
-    # older aggregate MD/log.lammps mask an incomplete production rerun.
+    stage_logs = tuple(
+        path
+        for path in (lmp_proj / "logs").glob(
+            "lammps_prod_stage00_nvt*_cpu.log"
+        )
+        if path.is_file()
+    )
+    authoritative_log = (
+        max(stage_logs, key=lambda path: path.stat().st_mtime_ns)
+        if stage_logs
+        else None
+    )
+    aggregate_log = lmp_proj / "MD/log.lammps"
+    if aggregate_log.is_file():
+        aggregate_endpoint_fs, _ = _lammps_production_log_endpoint(aggregate_log)
+        # MD/log.lammps is reused by the post-production cluster analysis.  A
+        # newer aggregate log is authoritative only when it contains actual
+        # production-time thermo rows.  This lets an interrupted/resumed run
+        # supersede an older stage log without mistaking a later analysis log
+        # for production evidence.
+        if (
+            authoritative_log is None
+            or (
+                aggregate_endpoint_fs is not None
+                and aggregate_log.stat().st_mtime_ns
+                > authoritative_log.stat().st_mtime_ns
+            )
+        ):
+            authoritative_log = aggregate_log
     log_candidates = (
-        (stage_log,)
-        if stage_log.is_file()
-        else (lmp_proj / "MD/log.lammps",)
+        (authoritative_log,) if authoritative_log is not None else ()
     )
     seen_logs: list[str] = []
     latest_log_mtime_ns = -1

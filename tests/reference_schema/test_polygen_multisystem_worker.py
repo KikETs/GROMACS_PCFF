@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -350,16 +351,20 @@ def test_partial_stage_log_is_not_masked_by_stale_aggregate_log(
 ) -> None:
     lmp_proj = tmp_path / "lammps_cpu/Traj_1475302"
     _write_final_restart(lmp_proj)
+    stage_log = lmp_proj / "logs/lammps_prod_stage00_nvt_cpu.log"
+    aggregate_log = lmp_proj / "MD/log.lammps"
     _write_lammps_production_log(
-        lmp_proj / "logs/lammps_prod_stage00_nvt_cpu.log",
+        stage_log,
         endpoint_fs=12_480_000.0,
         normal_exit=False,
     )
     _write_lammps_production_log(
-        lmp_proj / "MD/log.lammps",
+        aggregate_log,
         endpoint_fs=20_000_000.0,
         normal_exit=True,
     )
+    os.utime(aggregate_log, ns=(100, 100))
+    os.utime(stage_log, ns=(200, 200))
 
     with pytest.raises(RuntimeError, match="endpoint_fs=12480000.0"):
         _assert_sibling_lammps_lane_ok(
@@ -367,6 +372,118 @@ def test_partial_stage_log_is_not_masked_by_stale_aggregate_log(
             1475302,
             expected_production_ns=20.0,
         )
+
+
+def test_newer_resumed_stage_log_supersedes_old_failed_stage(
+    tmp_path: Path,
+) -> None:
+    lmp_proj = tmp_path / "lammps_cpu/Traj_2899001"
+    _write_final_restart(lmp_proj)
+    failed_log = lmp_proj / "logs/lammps_prod_stage00_nvt_cpu.log"
+    resumed_log = lmp_proj / "logs/lammps_prod_stage00_nvt_resume_cpu.log"
+    _write_lammps_production_log(
+        failed_log,
+        endpoint_fs=1.0,
+        normal_exit=False,
+    )
+    _write_lammps_production_log(
+        resumed_log,
+        endpoint_fs=20_000_000.0,
+        normal_exit=True,
+    )
+    os.utime(failed_log, ns=(100, 100))
+    os.utime(resumed_log, ns=(200, 200))
+
+    _assert_sibling_lammps_lane_ok(
+        lmp_proj,
+        2899001,
+        expected_production_ns=20.0,
+    )
+
+
+def test_newer_partial_resumed_stage_invalidates_old_success(
+    tmp_path: Path,
+) -> None:
+    lmp_proj = tmp_path / "lammps_cpu/Traj_2899003"
+    _write_final_restart(lmp_proj)
+    completed_log = lmp_proj / "logs/lammps_prod_stage00_nvt_cpu.log"
+    resumed_log = lmp_proj / "logs/lammps_prod_stage00_nvt_resume_cpu.log"
+    _write_lammps_production_log(
+        completed_log,
+        endpoint_fs=20_000_000.0,
+        normal_exit=True,
+    )
+    _write_lammps_production_log(
+        resumed_log,
+        endpoint_fs=10_120_000.0,
+        normal_exit=False,
+    )
+    os.utime(completed_log, ns=(100, 100))
+    os.utime(resumed_log, ns=(200, 200))
+
+    with pytest.raises(RuntimeError, match="endpoint_fs=10120000.0"):
+        _assert_sibling_lammps_lane_ok(
+            lmp_proj,
+            2899003,
+            expected_production_ns=20.0,
+        )
+
+
+def test_newer_aggregate_production_log_supersedes_old_partial_stage(
+    tmp_path: Path,
+) -> None:
+    lmp_proj = tmp_path / "lammps_cpu/Traj_2899003"
+    _write_final_restart(lmp_proj)
+    stage_log = lmp_proj / "logs/lammps_prod_stage00_nvt_cpu.log"
+    aggregate_log = lmp_proj / "MD/log.lammps"
+    _write_lammps_production_log(
+        stage_log,
+        endpoint_fs=19_000_000.0,
+        normal_exit=False,
+    )
+    _write_lammps_production_log(
+        aggregate_log,
+        endpoint_fs=20_000_000.0,
+        normal_exit=True,
+    )
+    os.utime(stage_log, ns=(100, 100))
+    os.utime(aggregate_log, ns=(200, 200))
+
+    _assert_sibling_lammps_lane_ok(
+        lmp_proj,
+        2899003,
+        expected_production_ns=20.0,
+    )
+
+
+def test_newer_nonproduction_aggregate_log_does_not_mask_resumed_success(
+    tmp_path: Path,
+) -> None:
+    lmp_proj = tmp_path / "lammps_cpu/Traj_2899002"
+    _write_final_restart(lmp_proj)
+    resumed_log = lmp_proj / "logs/lammps_prod_stage00_nvt_resume_cpu.log"
+    aggregate_log = lmp_proj / "MD/log.lammps"
+    _write_lammps_production_log(
+        resumed_log,
+        endpoint_fs=20_000_000.0,
+        normal_exit=True,
+    )
+    aggregate_log.write_text(
+        "   Step          Temp          E_pair\n"
+        "         0   353.0         -1000.0\n"
+        "  20000000   353.0         -1000.0\n"
+        "Loop time of 10 on 12 procs for 10001 steps\n"
+        "Total wall time: 0:00:10\n",
+        encoding="utf-8",
+    )
+    os.utime(resumed_log, ns=(100, 100))
+    os.utime(aggregate_log, ns=(200, 200))
+
+    _assert_sibling_lammps_lane_ok(
+        lmp_proj,
+        2899002,
+        expected_production_ns=20.0,
+    )
 
 
 def test_status_ok_alone_is_not_lammps_completion_evidence(tmp_path: Path) -> None:
