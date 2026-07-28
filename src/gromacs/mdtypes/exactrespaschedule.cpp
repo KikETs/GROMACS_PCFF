@@ -159,6 +159,20 @@ int highestActiveExactRespaLevel(const ExactRespaParameters& exactRespa, const i
     return highestActiveLevel(exactRespa.levelStepFactors, step);
 }
 
+bool exactRespaRestartRequiresForceStoreReconstruction(const ExactRespaParameters& exactRespa,
+                                                       const int64_t               step)
+{
+    if (!exactRespa.enabled())
+    {
+        return false;
+    }
+
+    GMX_RELEASE_ASSERT(!exactRespa.levelStepFactors.empty(),
+                       "Exact r-RESPA restart scheduling requires standalone level step factors");
+    return highestActiveExactRespaLevel(exactRespa, step)
+           < static_cast<int>(exactRespa.levelStepFactors.size()) - 1;
+}
+
 int exactRespaLevelStepFactor(const ExactRespaParameters& exactRespa, const int level)
 {
     GMX_RELEASE_ASSERT(exactRespa.enabled(), "Exact r-RESPA level step factors require enabled metadata");

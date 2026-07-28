@@ -48,6 +48,10 @@ struct ExactRespaBaseStepTrace
 //! Returns the highest active exact-r-RESPA level at \p step or 0 without standalone metadata.
 int highestActiveExactRespaLevel(const ExactRespaParameters& exactRespa, int64_t step);
 
+//! Returns whether a restart at \p step needs missing slow force levels reconstructed.
+bool exactRespaRestartRequiresForceStoreReconstruction(const ExactRespaParameters& exactRespa,
+                                                       int64_t                     step);
+
 //! Returns the step factor for \p level from standalone exact-r-RESPA metadata.
 int exactRespaLevelStepFactor(const ExactRespaParameters& exactRespa, int level);
 

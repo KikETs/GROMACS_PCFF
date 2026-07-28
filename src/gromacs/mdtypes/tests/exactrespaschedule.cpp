@@ -78,6 +78,19 @@ TEST(ExactRespaSchedule, ReportsHighestActiveLevelForNestedSchedule)
     EXPECT_EQ(highestActiveExactRespaLevel(exactRespa, 4), 2);
 }
 
+TEST(ExactRespaSchedule, ReconstructsRestartStoreOnlyAwayFromOuterBoundary)
+{
+    const auto exactRespa = threeLevelExactRespa();
+
+    EXPECT_FALSE(exactRespaRestartRequiresForceStoreReconstruction(exactRespa, 0));
+    EXPECT_TRUE(exactRespaRestartRequiresForceStoreReconstruction(exactRespa, 1));
+    EXPECT_TRUE(exactRespaRestartRequiresForceStoreReconstruction(exactRespa, 2));
+    EXPECT_TRUE(exactRespaRestartRequiresForceStoreReconstruction(exactRespa, 3));
+    EXPECT_FALSE(exactRespaRestartRequiresForceStoreReconstruction(exactRespa, 4));
+
+    EXPECT_FALSE(exactRespaRestartRequiresForceStoreReconstruction(ExactRespaParameters{}, 1));
+}
+
 TEST(ExactRespaSchedule, ReportsBaseStepTraceForThreeLevelSchedule)
 {
     const auto exactRespa = threeLevelExactRespa();

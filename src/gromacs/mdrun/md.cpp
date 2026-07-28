@@ -3268,7 +3268,8 @@ void gmx::LegacySimulator::do_md()
         const bool reconstructExactRespaForceStore =
                 gmx::useExactRespa(*ir) && bFirstStep
                 && startingBehavior_ != StartingBehavior::NewSimulation
-                && exactRespaForceStorePtr != nullptr && !exactRespaForceStorePtr->hasLevel(0);
+                && exactRespaForceStorePtr != nullptr && !exactRespaForceStorePtr->hasLevel(0)
+                && gmx::exactRespaRestartRequiresForceStoreReconstruction(ir->exactRespa, step);
         MdrunScheduleWorkload forceRunScheduleWork = *runScheduleWork_;
         if (reconstructExactRespaForceStore)
         {
@@ -3276,8 +3277,9 @@ void gmx::LegacySimulator::do_md()
             // A continuation can start on an inner-only step, where the normal workload
             // assumes that the slow level totals from the previous outer step still exist.
             // Recompute every force level once at the checkpoint coordinates to rebuild the
-            // store. Keep runScheduleWork_ unchanged so the resumed kick cadence still follows
-            // the actual checkpoint step.
+            // store. An outer-boundary restart already schedules every level and must use that
+            // normal path without a redundant bootstrap workload. Keep runScheduleWork_
+            // unchanged so the resumed kick cadence still follows the actual checkpoint step.
             forceRunScheduleWork.stepWork =
                     setupExactRespaStepWorkload(legacyForceFlags,
                                                 *ir,
