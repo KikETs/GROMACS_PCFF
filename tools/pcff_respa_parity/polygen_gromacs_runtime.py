@@ -125,8 +125,11 @@ def _polygen_common_nonbonded(*, ewald_rtol: float = 4.47100039e-03, nstlist: in
     # reference rebuilt every 22.5 outer steps on average with `check yes`.
     rlist_nm = float(os.environ.get("GROMACS_BATCH_RLIST_NM", "1.250"))
     # LAMMPS compute temp removes the three translational center-of-mass DOF.
-    # A very large nstcomm gives GROMACS the same 3N-3 thermostat DOF without
-    # periodically perturbing the trajectory after the initial COM cleanup.
+    # A very large nstcomm gives GROMACS the same 3N-3 thermostat DOF while
+    # effectively disabling periodic COM removal. It does not guarantee that
+    # imported continuation velocities receive an initial COM cleanup.
+    # With a binary implementing exact-rRESPA COM removal, NSTCOMM=400 enables
+    # the 0.2 ps removal interval tested with the 0.5 fs production base step.
     nstcomm = int(os.environ.get("GROMACS_BATCH_NSTCOMM", "1000000000"))
     return [
         "constraints             = none",

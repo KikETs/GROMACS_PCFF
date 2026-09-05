@@ -38,6 +38,7 @@
 #include <cinttypes>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 
 #include <filesystem>
 #include <string>
@@ -87,6 +88,22 @@ DispersionCorrection::TopologyParams::TopologyParams(const gmx_mtop_t& mtop,
                                                      const t_inputrec& inputrec,
                                                      const bool        useBuckingham)
 {
+    const char* lammpsTailSetting = std::getenv("GMX_PCFF_LAMMPS_DISPERSION_CORRECTION");
+    const bool lammpsTail = lammpsTailSetting != nullptr && std::string(lammpsTailSetting) == "1";
+    if (lammpsTail
+        && (useBuckingham || mtop.ffparams.reppow != 9.0
+            || inputrec.vdwtype != VanDerWaalsType::Cut
+            || inputrec.vdw_modifier != InteractionModifiers::None
+            || EI_TPI(inputrec.eI) || inputrec.efep != FreeEnergyPerturbationType::No))
+    {
+        gmx_fatal(FARGS,
+                  "GMX_PCFF_LAMMPS_DISPERSION_CORRECTION requires non-FEP PCFF 9-6 "
+                  "cutoff interactions without test-particle insertion");
+    }
+    if (lammpsTail)
+    {
+        fprintf(stderr, "PCFF dispersion correction: LAMMPS all-type-pair population weighting\n");
+    }
     const int ntp = mtop.ffparams.atnr;
 
     std::vector<real> nbfp =
@@ -137,7 +154,14 @@ DispersionCorrection::TopologyParams::TopologyParams(const gmx_mtop_t& mtop,
                     const int64_t iCount = typecount[tpi];
                     const int64_t jCount = typecount[tpj];
                     int64_t       npair_ij;
-                    if (tpi != tpj)
+                    if (lammpsTail)
+                    {
+                        // LAMMPS tail coefficients use Ni*Nj, including the diagonal
+                        // population term and without subtracting bonded exclusions.
+                        // Count ordered pairs so odd Ni never loses a half-pair.
+                        npair_ij = iCount * jCount * (tpi == tpj ? 1 : 2);
+                    }
+                    else if (tpi != tpj)
                     {
                         npair_ij = iCount * jCount;
                     }
@@ -165,31 +189,34 @@ DispersionCorrection::TopologyParams::TopologyParams(const gmx_mtop_t& mtop,
              * any value. These unused values should not influence the dispersion
              * correction.
              */
-            for (const gmx_molblock_t& molb : mtop.molblock)
+            if (!lammpsTail)
             {
-                const int      nmol  = molb.nmol;
-                const t_atoms* atoms = &mtop.moltype[molb.type].atoms;
-                const auto&    excl  = mtop.moltype[molb.type].excls;
-                for (int i = 0; (i < atoms->nr); i++)
+                for (const gmx_molblock_t& molb : mtop.molblock)
                 {
-                    const int tpi = atomtypeAOrB(atoms->atom[i], q);
-                    for (const int k : excl[i])
+                    const int      nmol  = molb.nmol;
+                    const t_atoms* atoms = &mtop.moltype[molb.type].atoms;
+                    const auto&    excl  = mtop.moltype[molb.type].excls;
+                    for (int i = 0; (i < atoms->nr); i++)
                     {
-                        if (k > i)
+                        const int tpi = atomtypeAOrB(atoms->atom[i], q);
+                        for (const int k : excl[i])
                         {
-                            const int tpj = atomtypeAOrB(atoms->atom[k], q);
-                            if (useBuckingham)
+                            if (k > i)
                             {
-                                /* nbfp now includes the 6.0 derivative prefactor */
-                                csix -= nmol * BHAMC(nbfp, ntp, tpi, tpj) / 6.0;
+                                const int tpj = atomtypeAOrB(atoms->atom[k], q);
+                                if (useBuckingham)
+                                {
+                                    /* nbfp now includes the 6.0 derivative prefactor */
+                                    csix -= nmol * BHAMC(nbfp, ntp, tpi, tpj) / 6.0;
+                                }
+                                else
+                                {
+                                    /* nbfp now includes the derivative prefactors 6.0 and repulsionPower. */
+                                    csix -= nmol * C6(nbfp, ntp, tpi, tpj) / 6.0;
+                                    ctwelve -= nmol * C12(nbfp, ntp, tpi, tpj) / mtop.ffparams.reppow;
+                                }
+                                nexcl += molb.nmol;
                             }
-                            else
-                            {
-                                /* nbfp now includes the derivative prefactors 6.0 and repulsionPower. */
-                                csix -= nmol * C6(nbfp, ntp, tpi, tpj) / 6.0;
-                                ctwelve -= nmol * C12(nbfp, ntp, tpi, tpj) / mtop.ffparams.reppow;
-                            }
-                            nexcl += molb.nmol;
                         }
                     }
                 }

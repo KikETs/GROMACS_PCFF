@@ -8647,8 +8647,9 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
                 if (isExcludedPairlist)
                 {
-                    GMX_RELEASE_ASSERT(outerAccumulator != nullptr,
-                                       "Exact r-RESPA excluded-pair scalar path requires an outer accumulator");
+                    // Exclusion corrections belong only to the outer contribution.
+                    // On inner/middle-only steps that contribution is inactive;
+                    // the null-aware accumulator must leave its stored force alone.
                     accumulateProductionOuterContribution(outerAccumulator, effectiveOuterScalar);
                     continue;
                 }
@@ -9035,8 +9036,8 @@ static void computeExactRespaNonbondedCpu(const t_inputrec&                 inpu
 
                 if (isExcludedPairlist)
                 {
-                    GMX_RELEASE_ASSERT(outerAccumulator != nullptr,
-                                       "Exact r-RESPA excluded-pair scalar path requires an outer accumulator");
+                    // The outer contribution need not be active on this substep.
+                    // accumulateSimpleOuterContribution already handles nullptr.
                     accumulateSimpleOuterContribution(outerAccumulator, effectiveOuterScalar);
                     if (needPairOrdinal)
                     {

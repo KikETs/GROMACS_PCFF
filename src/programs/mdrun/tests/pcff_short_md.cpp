@@ -2941,49 +2941,6 @@ TEST_P(PcffRespaHybridAdmissionDeathTest, ExactRespaHybridGpuRequestsFailWithAud
             expectedExactRespaHybridAdmissionReason(request));
 }
 
-TEST_P(PcffRespaHybridThreadShapeSmokeTest, ExactRespaHybridForceOnlyStartsExploratoryOpenMpThreadShapes)
-{
-    const auto skipMessages = getExactRespaHybridAdmissionSkipMessages(
-            ExactRespaHybridAdmissionRequest::NonbondedGpu);
-    if (!skipMessages.isEmpty())
-    {
-        GTEST_SKIP() << skipMessages.toString();
-    }
-
-    const std::string systemId(GetParam());
-    const auto        fixtureRoot = repoRoot() / "tests" / "reference_results" / "m6_respa" / systemId;
-
-    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
-    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
-    runner_.useStringAsMdpFile(makeRespaHybridNbGpuForceOnlyMdp());
-    runner_.setMaxWarn(1);
-    runner_.tprFileName_ =
-            fileManager_.getTemporaryFilePath(systemId + "-exact-hybrid-thread-shape-admission.tpr").string();
-
-    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " exact hybrid thread-shape admission";
-
-    const ScopedEnvironmentVariable disableSingleRankDomainDecomposition("GMX_DD_SINGLE_RANK",
-                                                                         std::string("0"));
-
-    for (const int candidateThreads : { 1, 3 })
-    {
-        SCOPED_TRACE(formatString("system=%s ntomp=%d", systemId.c_str(), candidateThreads));
-        {
-            const ScopedMdrunTestOpenMPThreads threadOverride(candidateThreads);
-            const auto result = runExactRespaOpenMpParitySimulation(&runner_,
-                                                                    &fileManager_,
-                                                                    systemId
-                                                                            + formatString("-exact-hybrid-nb-gpu-smoke-%d",
-                                                                                           candidateThreads),
-                                                                    makeExactRespaHybridNbGpuCaller("off"),
-                                                                    systemId);
-            EXPECT_NE(result.logContents.find("lammps-respa"), std::string::npos)
-                    << systemId << " candidate log is missing the exact r-RESPA mode marker";
-            EXPECT_TRUE(exactRespaLogMentionsOpenMPThreads(result.logContents, candidateThreads))
-                    << systemId << " candidate log does not report ntomp=" << candidateThreads;
-        }
-    }
-}
 
 #endif
 
@@ -3431,31 +3388,31 @@ std::string requireExactRespaOpenMpParityField(
 ExactRespaTotalForceDumpRecord parseExactRespaTotalForceDumpLine(const std::string& line)
 {
     const auto fields = parseExactRespaOpenMpParityDiagnosticLine(line, true);
-    GMX_RELEASE_ASSERT(fields.size() == 7, "Expected exact r-RESPA total-force TSV diagnostics format");
+    GMX_RELEASE_ASSERT(fields.size() == 8, "Expected exact r-RESPA total-force TSV diagnostics format including global atom index");
 
     ExactRespaTotalForceDumpRecord record;
     record.key.step              = parseExactRespaOpenMpParityIntegerField(fields[0].second);
     record.key.highestActiveLevel = static_cast<int>(parseExactRespaOpenMpParityIntegerField(fields[2].second));
-    record.key.atom              = static_cast<int>(parseExactRespaOpenMpParityIntegerField(fields[3].second));
-    record.force[XX]             = parseExactRespaOpenMpParityRequiredNumberField(fields[4].second);
-    record.force[YY]             = parseExactRespaOpenMpParityRequiredNumberField(fields[5].second);
-    record.force[ZZ]             = parseExactRespaOpenMpParityRequiredNumberField(fields[6].second);
+    record.key.atom              = static_cast<int>(parseExactRespaOpenMpParityIntegerField(fields[4].second));
+    record.force[XX]             = parseExactRespaOpenMpParityRequiredNumberField(fields[5].second);
+    record.force[YY]             = parseExactRespaOpenMpParityRequiredNumberField(fields[6].second);
+    record.force[ZZ]             = parseExactRespaOpenMpParityRequiredNumberField(fields[7].second);
     return record;
 }
 
 ExactRespaPerLevelForceDumpRecord parseExactRespaPerLevelForceDumpLine(const std::string& line)
 {
     const auto fields = parseExactRespaOpenMpParityDiagnosticLine(line, true);
-    GMX_RELEASE_ASSERT(fields.size() == 8, "Expected exact r-RESPA per-level TSV diagnostics format");
+    GMX_RELEASE_ASSERT(fields.size() == 9, "Expected exact r-RESPA per-level TSV diagnostics format including global atom index");
 
     ExactRespaPerLevelForceDumpRecord record;
     record.key.step               = parseExactRespaOpenMpParityIntegerField(fields[0].second);
     record.key.highestActiveLevel = static_cast<int>(parseExactRespaOpenMpParityIntegerField(fields[2].second));
     record.mtsLevel               = static_cast<int>(parseExactRespaOpenMpParityIntegerField(fields[3].second));
-    record.key.atom               = static_cast<int>(parseExactRespaOpenMpParityIntegerField(fields[4].second));
-    record.force[XX]              = parseExactRespaOpenMpParityRequiredNumberField(fields[5].second);
-    record.force[YY]              = parseExactRespaOpenMpParityRequiredNumberField(fields[6].second);
-    record.force[ZZ]              = parseExactRespaOpenMpParityRequiredNumberField(fields[7].second);
+    record.key.atom               = static_cast<int>(parseExactRespaOpenMpParityIntegerField(fields[5].second));
+    record.force[XX]              = parseExactRespaOpenMpParityRequiredNumberField(fields[6].second);
+    record.force[YY]              = parseExactRespaOpenMpParityRequiredNumberField(fields[7].second);
+    record.force[ZZ]              = parseExactRespaOpenMpParityRequiredNumberField(fields[8].second);
     return record;
 }
 
@@ -3985,9 +3942,9 @@ void expectExactRespaHybridPair14ForceVisibility(const std::string&             
 void expectExactRespaHybridPair14GpuUsageReport(const std::string& systemId, const std::string& logContents)
 {
     EXPECT_NE(logContents.find(
-                      "PP tasks will do non-perturbed short-ranged and Lennard-Jones 1-4 listed-pair interactions on the GPU"),
+                      "PP tasks will do non-perturbed short-ranged and PCFF class2 bonded interactions on the GPU"),
               std::string::npos)
-            << systemId << " exact HG4 narrow GPU usage report is missing the pair14-only wording";
+            << systemId << " exact GPU usage report is missing the implemented PCFF class2 bonded path";
     EXPECT_EQ(logContents.find("most bonded"), std::string::npos)
             << systemId << " exact HG4 narrow GPU usage report must not over-claim bonded GPU support";
 }
@@ -4117,6 +4074,54 @@ void expectExactRespaOpenMpParityAgainstOracle(const std::string&               
     EXPECT_LE(velocityRms, velocityRmsToleranceNmPerPs) << systemId << " exact r-RESPA velocity RMS drift";
     EXPECT_LE(velocityMax, velocityMaxToleranceNmPerPs) << systemId << " exact r-RESPA velocity max drift";
 }
+
+// The helper returns a complete result type; define this GPU test after it.
+#if GMX_GPU_CUDA
+TEST_P(PcffRespaHybridThreadShapeSmokeTest, ExactRespaHybridForceOnlyStartsExploratoryOpenMpThreadShapes)
+{
+    const auto skipMessages = getExactRespaHybridAdmissionSkipMessages(
+            ExactRespaHybridAdmissionRequest::NonbondedGpu);
+    if (!skipMessages.isEmpty())
+    {
+        GTEST_SKIP() << skipMessages.toString();
+    }
+
+    const std::string systemId(GetParam());
+    const auto        fixtureRoot = repoRoot() / "tests" / "reference_results" / "m6_respa" / systemId;
+
+    runner_.topFileName_ = (fixtureRoot / "topol.top").string();
+    runner_.groFileName_ = (fixtureRoot / "initial_nve.gro").string();
+    runner_.useStringAsMdpFile(makeRespaHybridNbGpuForceOnlyMdp());
+    runner_.setMaxWarn(1);
+    runner_.tprFileName_ =
+            fileManager_.getTemporaryFilePath(systemId + "-exact-hybrid-thread-shape-admission.tpr").string();
+
+    ASSERT_EQ(0, runner_.callGrompp()) << "grompp failed for " << systemId << " exact hybrid thread-shape admission";
+
+    const ScopedEnvironmentVariable disableSingleRankDomainDecomposition("GMX_DD_SINGLE_RANK",
+                                                                         std::string("0"));
+
+    for (const int candidateThreads : { 1, 3 })
+    {
+        SCOPED_TRACE(formatString("system=%s ntomp=%d", systemId.c_str(), candidateThreads));
+        {
+            const ScopedMdrunTestOpenMPThreads threadOverride(candidateThreads);
+            const auto result = runExactRespaOpenMpParitySimulation(&runner_,
+                                                                    &fileManager_,
+                                                                    systemId
+                                                                            + formatString("-exact-hybrid-nb-gpu-smoke-%d",
+                                                                                           candidateThreads),
+                                                                    makeExactRespaHybridNbGpuCaller("off"),
+                                                                    systemId);
+            EXPECT_NE(result.logContents.find("lammps-respa"), std::string::npos)
+                    << systemId << " candidate log is missing the exact r-RESPA mode marker";
+            EXPECT_TRUE(exactRespaLogMentionsOpenMPThreads(result.logContents, candidateThreads))
+                    << systemId << " candidate log does not report ntomp=" << candidateThreads;
+        }
+    }
+}
+
+#endif
 
 TEST_P(PcffRespaObservableDumpTest, ExactRespaCpuSimdMatchesPlainCReference)
 {

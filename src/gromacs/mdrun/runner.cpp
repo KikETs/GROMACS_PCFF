@@ -2096,9 +2096,20 @@ int Mdrunner::mdrunner()
             return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
         }();
 
+        const bool exactRespaForceScalarCpuNonbonded = []()
+        {
+            const char* env = std::getenv("GMX_PCFF_EXACT_RESPA_DISABLE_NBNXM_NARROW");
+            return env != nullptr && *env != '\0' && std::strcmp(env, "0") != 0;
+        }();
+
+        // The scalar diagnostic path also needs excluded pairs in its complete
+        // list when real-space interactions occupy a single, unsplit level.
+        // Selecting it in do_force without this setup aborts at the first force.
         if (gmx::useExactRespa(*inputrec)
             && (gmx::exactRespaHasPairSplitting(*inputrec) || exactRespaTraceForceComponents
-                || exactRespaEwaldRealOnly))
+                || exactRespaEwaldRealOnly
+                || (exactRespaForceScalarCpuNonbonded
+                    && !runScheduleWork.simulationWork.useGpuNonbonded)))
         {
             const real requiredCompletePairlistRange = std::max(fr->ic->coulomb.cutoff, fr->ic->vdw.cutoff);
             fr->completePairlistRange =

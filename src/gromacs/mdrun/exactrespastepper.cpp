@@ -47,6 +47,7 @@
 #include "gromacs/mdlib/update.h"
 #include "gromacs/mdtypes/state_propagator_data_gpu.h"
 #include "gromacs/mdlib/vcm.h"
+#include "gromacs/gmxlib/nrnb.h"
 #include "gromacs/nbnxm/nbnxm.h"
 #include "gromacs/nbnxm/gpu_data_mgmt.h"
 #if GMX_GPU
@@ -2039,7 +2040,11 @@ void prepareExactRespaVelocityVerletObservables(
     GMX_RELEASE_ASSERT(context.lastEkin != nullptr,
                        "Exact r-RESPA VV observables require kinetic-energy storage");
 
-    int cgloFlags = (context.calcGlobalStats ? CGLO_GSTAT : 0) | CGLO_TEMPERATURE | CGLO_SCALEEKIN;
+    // The exact path bypasses integrateVVFirstStep(), including its COM work.
+    // Collect the group momentum before subtracting it from the full-step velocities.
+    int cgloFlags = ((context.calcGlobalStats || context.stopCenterOfMass) ? CGLO_GSTAT : 0)
+                    | CGLO_TEMPERATURE | CGLO_SCALEEKIN
+                    | (context.stopCenterOfMass ? CGLO_STOPCM : 0);
     if (context.calcEner)
     {
         cgloFlags |= CGLO_ENERGY;
@@ -2073,6 +2078,16 @@ void prepareExactRespaVelocityVerletObservables(
                     context.step,
                     context.observablesReducer);
 
+    if (context.stopCenterOfMass)
+    {
+        process_and_stopcm_grp(nullptr,
+                               context.vcm,
+                               *context.mdatoms,
+                               makeArrayRef(context.state->x),
+                               makeArrayRef(context.state->v));
+        inc_nrnb(context.nrnb, eNR_STOPCM, context.mdatoms->homenr);
+    }
+
     *context.savedConservedQuantity = 0;
     *context.lastEkin               = context.enerd->term[InteractionFunction::KineticEnergy];
 }
@@ -2094,6 +2109,7 @@ void LegacySimulator::prepareExactRespaVelocityVerletObservablesForStep(const t_
                                                                         const bool        calcEner,
                                                                         const bool        calcVir,
                                                                         const bool        calcGlobalStats,
+                                                                        const bool        stopCenterOfMass,
                                                                         gmx_bool*         sumEkinhOld,
                                                                         real*             savedConservedQuantity,
                                                                         real*             lastEkin)
@@ -2120,6 +2136,7 @@ void LegacySimulator::prepareExactRespaVelocityVerletObservablesForStep(const t_
             calcEner,
             calcVir,
             calcGlobalStats,
+            stopCenterOfMass,
             sumEkinhOld,
             savedConservedQuantity,
             lastEkin };

@@ -3677,8 +3677,13 @@ void gmx::LegacySimulator::do_md()
                             useGpuForUpdate && exactRespaDeviceKickGpuUpdateProbeEnabled()
                             && exactRespaSparseNvtObservablesGpuUpdateProbeEnabled()
                             && inputrecNvtTrotter(ir);
+                    // Match VV's initial/checkpoint boundary: the supplied full-step
+                    // velocities are retained on the first iteration. COM removal is
+                    // applied once on subsequent scheduled full-step boundaries.
+                    const bool stopExactRespaCenterOfMass = bStopCM && !bInitStep;
                     const bool prepareCpuVelocityVerletObservables =
                             !useSparseNvtObservables || bFirstStep || bCalcEner || bCalcVir
+                            || stopExactRespaCenterOfMass
                             || (upcomingPreTrotterCouples
                                 && !exactRespaGpuNvtKineticReadyForPreTrotter);
                     if (prepareCpuVelocityVerletObservables
@@ -3711,9 +3716,17 @@ void gmx::LegacySimulator::do_md()
                                 bCalcEner,
                                 bCalcVir,
                                 bGStat,
+                                stopExactRespaCenterOfMass,
                                 &bSumEkinhOld,
                                 &saved_conserved_quantity,
                                 &last_ekin);
+                        if (stopExactRespaCenterOfMass && useGpuForUpdate)
+                        {
+                            // A resident device kick must consume the corrected velocities.
+                            stateGpu->copyVelocitiesToGpu(state_->v, AtomLocality::Local);
+                            exactRespaDeviceKickPendingPostTrotterScale = 1.0F;
+                            exactRespaDeviceKickHostVelocitiesCurrent = true;
+                        }
                         // integrateVVFirstStep() normally preserves the current virial in the
                         // checkpoint state for the first step after an MTTK restart. The exact
                         // r-RESPA path bypasses that routine, so mirror its checkpoint hand-off
@@ -4203,6 +4216,7 @@ void gmx::LegacySimulator::do_md()
                                     bCalcEner,
                                     bCalcVir || postTrotterCouplesThisStep,
                                     bGStat,
+                                    false, // COM removal belongs to the next full-step boundary.
                                     &bSumEkinhOld,
                                     &saved_conserved_quantity,
                                     &last_ekin);

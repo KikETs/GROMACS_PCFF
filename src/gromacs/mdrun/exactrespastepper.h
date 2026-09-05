@@ -80,6 +80,7 @@ struct ExactRespaVelocityVerletObservablesContext
     bool                 calcEner = false;
     bool                 calcVir = false;
     bool                 calcGlobalStats = false;
+    bool                 stopCenterOfMass = false;
     gmx_bool*            sumEkinhOld = nullptr;
     real*                savedConservedQuantity = nullptr;
     real*                lastEkin = nullptr;

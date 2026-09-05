@@ -9,6 +9,7 @@ cluster-resolved cNE diagnostics, and collective Einstein conductivity.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import math
 import os
@@ -38,10 +39,9 @@ CENTIMETER = 1.0e-2
 PICOSECOND = 1.0e-12
 
 DEFAULT_ROOT = Path("output/polygen_pcff_gromacs_initial_em_notebook")
-ION_TYPES = {90, 91, 92, 93, 94, 95}
-CAT_TYPE = 90
-ANION_TRACE_TYPES = {93, 94, 95}
-ANION_REF_TYPE = 93
+NITROGEN_MASS = 14.0067
+ANION_TRACE_MASSES = (14.0067, 15.9994, 32.064)
+ELEMENT_MASS_TOLERANCE = 0.2
 
 
 @dataclass(frozen=True)
@@ -133,10 +133,14 @@ def parse_first_lammps_frame(path: Path) -> Topology:
     if len(cat_mols) == 0 or len(anion_mols) == 0:
         raise RuntimeError("Could not identify charged molecules from first dump frame")
 
-    ion_mask = np.isin(types, sorted(ION_TYPES))
+    # Atom type ids are assigned after the polymer types and therefore vary
+    # between generated systems.  Select ions by charged-molecule membership
+    # instead of the legacy fixed type ids 90-95.
+    cat_mol_set = set(map(int, cat_mols))
+    anion_mol_set = set(map(int, anion_mols))
+    ion_mask = np.isin(mol_ids, np.concatenate((cat_mols, anion_mols)))
     ion_indices0 = np.nonzero(ion_mask)[0].astype(np.int32)
     ion_atom_ids = atom_ids[ion_indices0]
-    sel_pos_by_atom = {int(atom_id): i for i, atom_id in enumerate(ion_atom_ids)}
 
     mol_to_sel: dict[int, list[int]] = defaultdict(list)
     anion_trace_sel_by_mol: dict[int, list[int]] = defaultdict(list)
@@ -144,14 +148,34 @@ def parse_first_lammps_frame(path: Path) -> Topology:
     anion_ref_atom_sel = []
     for sel_i, atom_i in enumerate(ion_indices0):
         mol = int(mol_ids[atom_i])
-        typ = int(types[atom_i])
+        mass = float(masses[atom_i])
         mol_to_sel[mol].append(sel_i)
-        if typ == CAT_TYPE:
+        if mol in cat_mol_set:
             cat_atom_sel.append(sel_i)
-        if typ == ANION_REF_TYPE:
+        if mol in anion_mol_set and abs(mass - NITROGEN_MASS) <= ELEMENT_MASS_TOLERANCE:
             anion_ref_atom_sel.append(sel_i)
-        if typ in ANION_TRACE_TYPES and mol in set(map(int, anion_mols)):
+        if mol in anion_mol_set and any(
+            abs(mass - target) <= ELEMENT_MASS_TOLERANCE for target in ANION_TRACE_MASSES
+        ):
             anion_trace_sel_by_mol[mol].append(sel_i)
+
+    bad_cations = [mol for mol in cat_mols if len(mol_to_sel[int(mol)]) != 1]
+    bad_anion_refs = [
+        mol
+        for mol in anion_mols
+        if sum(
+            abs(float(masses[ion_indices0[sel_i]]) - NITROGEN_MASS) <= ELEMENT_MASS_TOLERANCE
+            for sel_i in mol_to_sel[int(mol)]
+        )
+        != 1
+    ]
+    bad_anion_traces = [mol for mol in anion_mols if not anion_trace_sel_by_mol[int(mol)]]
+    if bad_cations:
+        raise RuntimeError(f"Expected monatomic cations, invalid molecule ids: {bad_cations[:10]}")
+    if bad_anion_refs:
+        raise RuntimeError(f"Expected one TFSI nitrogen reference atom, invalid molecule ids: {bad_anion_refs[:10]}")
+    if bad_anion_traces:
+        raise RuntimeError(f"Missing TFSI N/O/S trace atoms for molecule ids: {bad_anion_traces[:10]}")
 
     return Topology(
         atom_ids=atom_ids,
@@ -392,6 +416,24 @@ def save_cache(
     )
 
 
+def validate_cache_topology(cache, topology: Topology):
+    """Reject old type-ID based selections instead of reusing the wrong ions."""
+    expected = {
+        "ion_atom_ids": topology.ion_atom_ids,
+        "ion_mol_ids": topology.mol_ids[topology.ion_indices0],
+        "ion_masses": topology.masses[topology.ion_indices0],
+        "ion_charges": topology.charges[topology.ion_indices0],
+        "cat_mols": topology.cat_mols,
+        "anion_mols": topology.anion_mols,
+    }
+    for key, values in expected.items():
+        if key not in cache or not np.array_equal(cache[key], values):
+            raise ValueError(
+                f"Trajectory cache {key} does not match the current ion topology; "
+                "rebuild the cache with --force-cache before analysis."
+            )
+
+
 def load_or_build_cache(
     lane: LaneSpec,
     topology: Topology,
@@ -403,6 +445,8 @@ def load_or_build_cache(
     suffix = f"_{max_chunks}chunks" if max_chunks else ""
     cache_path = outdir / "cache" / f"{lane.key}{suffix}_ion_trajectory.npz"
     if cache_path.exists() and not force:
+        with np.load(cache_path) as cache:
+            validate_cache_topology(cache, topology)
         return cache_path
     if lane.kind == "lammps":
         load_lammps_cache(lane, topology, cache_path, stride_ps, max_chunks)
@@ -534,12 +578,28 @@ def min_image_delta(a: np.ndarray, b: np.ndarray, box: np.ndarray) -> np.ndarray
     return delta
 
 
+def population_matrix_size(topology: Topology, requested: int | None) -> int:
+    """Include every possible ion composition by default; size is exclusive."""
+    if requested is None:
+        return max(len(topology.cat_mols), len(topology.anion_mols)) + 1
+    if requested < 1:
+        raise ValueError("--max-cluster must be a positive matrix dimension")
+    return requested
+
+
 def htp_atom_population_matrix(cache, topology: Topology, max_cluster: int, cutoff_nm: float, sample_stride: int):
+    max_cluster = population_matrix_size(topology, max_cluster)
+    if sample_stride < 1:
+        raise ValueError("cluster sample stride must be positive")
     wrapped = cache["wrapped_nm"].astype(np.float64)
     boxes = cache["box_nm"].astype(np.float64)
-    types = cache["ion_types"].astype(np.int16)
-    trace_sel = np.nonzero((types == CAT_TYPE) | np.isin(types, sorted(ANION_TRACE_TYPES)))[0]
-    trace_types = types[trace_sel]
+    cat_sel = np.asarray(topology.cat_atom_sel, dtype=np.int32)
+    anion_trace_sel = np.concatenate(
+        [topology.anion_trace_sel_by_mol[int(mol)] for mol in topology.anion_mols]
+    )
+    trace_sel = np.concatenate((cat_sel, anion_trace_sel))
+    cat_sel_set = set(map(int, cat_sel))
+    anion_ref_sel_set = set(map(int, topology.anion_ref_atom_sel))
     pop = np.zeros((max_cluster, max_cluster), dtype=np.float64)
     frame_count = 0
     for frame_i in range(0, wrapped.shape[0], sample_stride):
@@ -550,18 +610,30 @@ def htp_atom_population_matrix(cache, topology: Topology, max_cluster: int, cuto
         for i, j in tree.query_pairs(cutoff_nm):
             uf.union(int(i), int(j))
         counts: dict[int, list[int]] = defaultdict(lambda: [0, 0])
-        for i, typ in enumerate(trace_types):
+        for i, sel_i in enumerate(trace_sel):
             root = uf.find(i)
-            if int(typ) == CAT_TYPE:
+            if int(sel_i) in cat_sel_set:
                 counts[root][0] += 1
-            elif int(typ) == ANION_REF_TYPE:
+            elif int(sel_i) in anion_ref_sel_set:
                 counts[root][1] += 1
         for ncat, nani in counts.values():
-            if ncat < max_cluster and nani < max_cluster:
-                pop[ncat, nani] += 1.0
+            if ncat >= max_cluster or nani >= max_cluster:
+                required = max(ncat, nani) + 1
+                raise ValueError(
+                    f"Cluster ({ncat} cations, {nani} anions) in frame {frame_i} "
+                    f"does not fit --max-cluster {max_cluster}; refusing to drop ions. "
+                    f"Use automatic sizing or --max-cluster >= {required}."
+                )
+            pop[ncat, nani] += 1.0
         frame_count += 1
-    if frame_count:
-        pop /= frame_count
+    if not frame_count:
+        raise ValueError("No frames available for cluster population analysis")
+    pop /= frame_count
+    i, j = np.indices(pop.shape)
+    retained = np.array([(pop * i).sum(), (pop * j).sum()])
+    expected = np.array([len(topology.cat_mols), len(topology.anion_mols)])
+    if not np.allclose(retained, expected, rtol=0, atol=1e-8):
+        raise RuntimeError(f"Cluster population lost ions: retained {retained}, expected {expected}")
     return pop, frame_count
 
 
@@ -665,19 +737,17 @@ def collective_conductivity(cat_com_nm, anion_com_nm, time_ps, volume_nm3, tempe
 def cne_lifetime_diagnostic(cache, topology: Topology, cat_com_nm, anion_com_nm, time_ps, volume_nm3, temperature, z, max_cluster, cutoff_nm, sample_stride):
     wrapped = cache["wrapped_nm"].astype(np.float64)
     boxes = cache["box_nm"].astype(np.float64)
-    mol_ids = cache["ion_mol_ids"].astype(np.int32)
-    types = cache["ion_types"].astype(np.int16)
     cat_mols = list(map(int, topology.cat_mols))
     anion_mols = list(map(int, topology.anion_mols))
     cat_li_sel = []
     for mol in cat_mols:
-        idx = np.nonzero((mol_ids == mol) & (types == CAT_TYPE))[0]
+        idx = topology.mol_to_sel_indices[mol]
         if len(idx) != 1:
             raise RuntimeError(f"Cation mol {mol} has {len(idx)} Li atoms")
         cat_li_sel.append(int(idx[0]))
     an_trace = []
     for mol in anion_mols:
-        idx = np.nonzero((mol_ids == mol) & np.isin(types, sorted(ANION_TRACE_TYPES)))[0]
+        idx = topology.anion_trace_sel_by_mol[mol]
         if len(idx) == 0:
             raise RuntimeError(f"Anion mol {mol} has no trace atoms")
         an_trace.append(idx)
@@ -754,7 +824,10 @@ def cne_lifetime_diagnostic(cache, topology: Topology, cat_com_nm, anion_com_nm,
 
 
 def analyze_cache(cache_path: Path, topology: Topology, args, outdir: Path):
+    args = copy.copy(args)
+    args.max_cluster = population_matrix_size(topology, args.max_cluster)
     cache = np.load(cache_path)
+    validate_cache_topology(cache, topology)
     lane = str(cache["lane"])
     time_ps = cache["time_ps"].astype(np.float64)
     box_nm = cache["box_nm"].astype(np.float64)
@@ -839,6 +912,8 @@ def analyze_cache(cache_path: Path, topology: Topology, args, outdir: Path):
         "cluster_cutoff_angstrom": float(args.cluster_cutoff_angstrom),
         "cluster_sample_stride_frames": int(args.cluster_sample_stride),
         "cluster_population_frames": int(pop_frames),
+        "cluster_population_matrix_dimension": int(pop_mat.shape[0]),
+        "cluster_population_retains_all_ions": True,
         "diffusion_msd_fit_drift_removed": {
             "cation": cat_fit,
             "anion": an_fit,
@@ -856,7 +931,7 @@ def analyze_cache(cache_path: Path, topology: Topology, args, outdir: Path):
         "cNE0_htpmd": {
             "conductivity_s_cm": float(cne0_sigma),
             "t_plus": float(cne0_tplus),
-            "basis": "HTP-MD polymer.compute_conductivity style: atom-level 3.4 A population matrix, type90/type93 endpoint diffusivity, max_cluster cutoff",
+            "basis": "HTP-MD polymer.compute_conductivity style: atom-level 3.4 A population matrix, monatomic-cation/TFSI nitrogen-reference endpoint diffusivity; population retains all ions",
         },
         "cNE0_msd_fit": {
             "conductivity_s_cm": float(cne0_msd_sigma),
@@ -945,7 +1020,7 @@ def parse_args():
     p.add_argument("--stride-ps", type=float, default=2.0)
     p.add_argument("--temperature", type=float, default=353.0)
     p.add_argument("--z", type=float, default=1.0)
-    p.add_argument("--max-cluster", type=int, default=10)
+    p.add_argument("--max-cluster", type=int, default=None, help="Population matrix dimension (exclusive); default includes all ions. Too-small values fail if a cluster would be dropped.")
     p.add_argument("--cluster-cutoff-angstrom", type=float, default=3.4)
     p.add_argument("--cluster-sample-stride", type=int, default=1, help="Use every Nth frame for cluster population/lifetime work")
     p.add_argument("--msd-lags", type=int, default=220)
@@ -964,6 +1039,7 @@ def main():
     if not first_dump.exists():
         raise RuntimeError(f"Missing first LAMMPS prod dump: {first_dump}")
     topology = parse_first_lammps_frame(first_dump)
+    args.max_cluster = population_matrix_size(topology, args.max_cluster)
     if len(topology.atom_ids) != 7075:
         raise RuntimeError(f"Unexpected atom count from production dump: {len(topology.atom_ids)}")
     if len(topology.cat_mols) != len(topology.anion_mols):

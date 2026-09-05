@@ -1,5 +1,9 @@
 # GROMACS-PCFF Bridge
 
+The 2026-09-05 feature freeze and implementation-paper claim are documented in
+[Implementation paper scope](docs/implementation_paper_scope_20260905.md).
+This bounds the new validation work; historical reports below remain historical evidence.
+
 This repository tracks an evidence-backed PCFF/Class2 bridge between frozen LAMMPS fixtures and a specialized GROMACS fork. Broad PCFF chemistry, generic charged dense-box readiness, and charged transport readiness are still not claimed. One explicit charged dense-box subset is validated on a strict-PCFF-qualified paired artifact path; see the M11.1 and M11.2 reports below. M11.3 adds one workflow-level chemistry expansion with an acyclic alkane neutral additive in a charged Li/TFSI assembly. M11.4 upgrades M2 dense charged parity from the old one-system 10 ps result to a two-system, 100 ps / final 50 ps high-pressure `250 bar` campaign. M11.5 records diagnostic root-cause evidence for the still-unresolved direct ambient `1 bar` dense-parity failure. M11.6 adds a pressure-preconditioned staged `250 bar -> 1 bar` dense-parity pass, but it is not an ambient `1 bar` equilibrium PASS. The historical TP1 `dense_salt_polymer` thermal-runaway blocker is separately superseded by a corrected 5 ns exact-system NPT rerun, but that endpoint is not transport-entry-ready because the final box is smaller than twice the 0.9 nm cutoff.
 
 ## Current Status

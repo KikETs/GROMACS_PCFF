@@ -97,6 +97,7 @@ private:
                                                            bool              calcEner,
                                                            bool              calcVir,
                                                            bool              calcGlobalStats,
+                                                           bool              stopCenterOfMass,
                                                            gmx_bool*         sumEkinhOld,
                                                            real*             savedConservedQuantity,
                                                            real*             lastEkin);
