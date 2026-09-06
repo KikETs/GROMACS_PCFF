@@ -1,0 +1,65 @@
+{
+  "mapping_contract": "LUNAR embedded Class2 coefficient sections -> GROMACS PCFF class2 topology terms",
+  "molecule_scope": {
+    "generated_pair14_count": 876,
+    "instance_count": 1,
+    "net_charge_e": 0.0,
+    "polymer_only_single_chain_data": true,
+    "separate_ion_or_salt_molecules": false,
+    "template_atom_count_total": 352,
+    "template_count": 1
+  },
+  "parameter_fallbacks": [],
+  "schema_name": "lunar_gromacs_pcff_database_lunar_mapping_summary",
+  "schema_version": 1,
+  "smiles": "C=CCCC(CN(CC)CCN*)OC(=O)*",
+  "status": "PASS",
+  "styles": {
+    "angle_style": "class2",
+    "atom_style": "full",
+    "bond_style": "class2",
+    "dihedral_style": "class2",
+    "improper_style": "class2",
+    "kspace_style": {
+      "source": {
+        "file": "source_lunar_pcff.data",
+        "line": 33,
+        "text": "Pair Coeffs  # lj/class2/coul/long"
+      },
+      "value": "pppm 1.0e-4"
+    },
+    "pair_modify": {
+      "source": {
+        "file": "source_lunar_pcff.data",
+        "line": 33,
+        "text": "Pair Coeffs  # lj/class2/coul/long"
+      },
+      "value": "mix sixthpower"
+    },
+    "pair_style": {
+      "args": [],
+      "kind": "lj/class2/coul/long",
+      "source": {
+        "file": "source_lunar_pcff.data",
+        "line": 33,
+        "text": "Pair Coeffs  # lj/class2/coul/long"
+      }
+    },
+    "special_bonds": {
+      "source": {
+        "file": "source_lunar_pcff.data",
+        "line": 1,
+        "text": "HEADER,  chain_fixed.mol2  read w/ mol2SYBYL2lmp > atom_typing v1.11 / 14 April 2025 w/PCFF atom-types > all2lmp: v1.22 / 14 April 2025  Class: 2"
+      },
+      "value": "lj/coul 0.0 0.0 1.0 angle no dihedral no"
+    },
+    "units": "real"
+  },
+  "trajectory_id": "14692",
+  "unsupported_by_this_mapping_claim": [
+    "charged Li/TFSI or salt molecule conversion",
+    "dense polymer-electrolyte assembly",
+    "physical parameter-completion claims for smoke-only fallback atom types",
+    "database-wide success unless every selected row has a PASS grompp smoke report"
+  ]
+}

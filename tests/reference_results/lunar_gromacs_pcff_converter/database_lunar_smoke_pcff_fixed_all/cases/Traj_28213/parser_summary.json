@@ -1,0 +1,51 @@
+{
+  "coefficient_counts": {
+    "angle_coeffs": 40,
+    "bond_coeffs": 24,
+    "dihedral_coeffs": 51,
+    "improper_coeffs": 24,
+    "pair_coeffs": 17
+  },
+  "original_source_lunar_data": {
+    "path": "MY_PAPER_RELATED/LAMMPS_BATCH/batch_runs/Traj_28213/build/lunar_pcff/chain_fixed_typed_nodup_IFF_nodup.data",
+    "sha256": "9b94d47019f2db36ffc56489896777fe088964c1a0a00b10911418a7102bd9fb"
+  },
+  "parsed_counts": {
+    "angle_types": 40,
+    "angles": 550,
+    "atom_types": 17,
+    "atoms": 312,
+    "bond_types": 24,
+    "bonds": 311,
+    "dihedral_types": 51,
+    "dihedrals": 748,
+    "improper_types": 24,
+    "impropers": 310
+  },
+  "schema_name": "lunar_gromacs_pcff_database_lunar_parser_summary",
+  "schema_version": 1,
+  "smiles": "C#CCC(C)(C)C(=O)NCC(CO*)OC(=O)*",
+  "source_line_samples": {
+    "atoms": {
+      "file": "source_lunar_pcff.data",
+      "line": 595,
+      "text": "1 1 7 -0.205200 5.284251282 11.804408013 -6.608757372 0 0 0 #  ct/C"
+    },
+    "header": {
+      "file": "source_lunar_pcff.data",
+      "line": 1,
+      "text": "HEADER,  chain_fixed.mol2  read w/ mol2SYBYL2lmp > atom_typing v1.11 / 14 April 2025 w/PCFF atom-types > all2lmp: v1.22 / 14 April 2025  Class: 2"
+    },
+    "pair_coeffs": {
+      "file": "source_lunar_pcff.data",
+      "line": 39,
+      "text": "Pair Coeffs  # lj/class2/coul/long"
+    }
+  },
+  "source_lunar_data": {
+    "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_28213/source_lunar_pcff.data",
+    "sha256": "9b94d47019f2db36ffc56489896777fe088964c1a0a00b10911418a7102bd9fb"
+  },
+  "status": "PASS",
+  "trajectory_id": "28213"
+}

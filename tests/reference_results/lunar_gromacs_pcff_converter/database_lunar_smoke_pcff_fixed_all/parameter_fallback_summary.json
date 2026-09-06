@@ -1,0 +1,42 @@
+{
+  "claim_status_as_of": "2026-05-28",
+  "fallback_case_count": 870,
+  "fallback_field_event_counts": {
+    "S-type-yourself:mass_amu": 7,
+    "S-type-yourself:pair_coeff": 7,
+    "c4o:mass_amu": 806,
+    "c4o:pair_coeff": 806,
+    "s_m:mass_amu": 58,
+    "s_m:pair_coeff": 58
+  },
+  "fallback_label_case_counts": {
+    "S-type-yourself": 7,
+    "c4o": 806,
+    "s_m": 58
+  },
+  "fallback_label_examples": {
+    "S-type-yourself": {
+      "mapping_summary": "GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_13898/mapping_summary.json",
+      "trajectory_id": "13898"
+    },
+    "c4o": {
+      "mapping_summary": "GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_13305/mapping_summary.json",
+      "trajectory_id": "13305"
+    },
+    "s_m": {
+      "mapping_summary": "GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_13298/mapping_summary.json",
+      "trajectory_id": "13298"
+    }
+  },
+  "interpretation": [
+    "These fallbacks unblock grompp preprocessing for source LUNAR zero-parameter atom labels.",
+    "c4o and s_m are recovered from pcff_interface_v1_6mBN.frc reference values.",
+    "S-type-yourself is a smoke-only sulfur fallback for a LUNAR atom-typing failure and is not physical parameter-completion evidence.",
+    "Passing grompp smoke does not imply charged Li/TFSI support, mdrun stability, or transport validity."
+  ],
+  "pass_count": 6270,
+  "schema_name": "lunar_gromacs_pcff_parameter_fallback_summary",
+  "schema_version": 1,
+  "selected_row_count": 6270,
+  "source_summary": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/database_lunar_smoke_summary.json"
+}

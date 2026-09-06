@@ -1,0 +1,21 @@
+                    :-) GROMACS - gmx grompp, 2027.0-dev (-:
+
+Executable:   /home/lab/Desktop/test/GROMACS_PCFF/build_pcff_cpu/bin/gmx
+Data prefix:  /home/lab/Desktop/test/GROMACS_PCFF (source tree)
+Working dir:  /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_9644
+Command line:
+  gmx grompp -f /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_9644/grompp/smoke.mdp -c /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_9644/system.gro -p /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_9644/topol.top -o /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_9644/grompp/smoke.tpr -po /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_9644/grompp/mdout.mdp
+
+Generating 1-4 interactions: fudge = 1
+Number of degrees of freedom in T-Coupling group rest is 894.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 1 [file /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_9644/grompp/smoke.mdp]:
+  NVE simulation: will use the initial temperature of 300.000 K for
+  determining the Verlet buffer size
+
+
+There was 1 NOTE
+
+Thanx for Using GROMACS - Have a Nice Day
+

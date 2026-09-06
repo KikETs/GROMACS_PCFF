@@ -1,0 +1,28 @@
+                    :-) GROMACS - gmx grompp, 2027.0-dev (-:
+
+Executable:   /home/lab/Desktop/test/GROMACS_PCFF/build_pcff_cpu/bin/gmx
+Data prefix:  /home/lab/Desktop/test/GROMACS_PCFF (source tree)
+Working dir:  /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_27114
+Command line:
+  gmx grompp -f /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_27114/grompp/smoke.mdp -c /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_27114/system.gro -p /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_27114/topol.top -o /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_27114/grompp/smoke.tpr -po /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_27114/grompp/mdout.mdp
+
+Generating 1-4 interactions: fudge = 1
+Number of degrees of freedom in T-Coupling group rest is 1059.00
+The integrator does not provide a ensemble temperature, there is no system ensemble temperature
+
+NOTE 1 [file /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_27114/grompp/smoke.mdp]:
+  NVE simulation: will use the initial temperature of 300.000 K for
+  determining the Verlet buffer size
+
+
+NOTE 2 [file /home/lab/Desktop/test/GROMACS_PCFF/tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_27114/grompp/smoke.mdp]:
+  The optimal PME mesh load for parallel simulations is below 0.5
+  and for highly parallel simulations between 0.25 and 0.33,
+  for higher performance, increase the cut-off and the PME grid spacing.
+
+
+
+There were 2 NOTEs
+
+Thanx for Using GROMACS - Have a Nice Day
+

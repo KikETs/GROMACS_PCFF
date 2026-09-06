@@ -1,0 +1,55 @@
+{
+  "claim_evaluation": {
+    "database_wide_converter_success_status": "claimable",
+    "reasons": [],
+    "rejected_overclaim": null,
+    "strongest_supported_database_statement": "The aligned CSV snapshot identity is evidenced and all selected LUNAR PCFF single-chain rows have parser->mapping->emission->grompp PASS artifacts in the repository smoke summary."
+  },
+  "claim_status_as_of": "2026-05-28",
+  "items": [
+    {
+      "claimable_statement": "The aligned CSV database snapshot identity is fixed by path, hash, schema, and counts.",
+      "evidence": [
+        "tests/reference_results/lunar_gromacs_pcff_converter/database_scope/database_scope_snapshot.json"
+      ],
+      "id": "database_scope.aligned_csv_snapshot_identity",
+      "status": "exact"
+    },
+    {
+      "claimable_statement": "The aligned CSV has the same unique SMILES set as the existing checked-in CSV scope snapshot.",
+      "evidence": [
+        "tests/reference_results/lunar_gromacs_pcff_converter/database_scope/database_scope_snapshot.json",
+        "data_manifests/simulation_trajectory_aggregate_unique_smiles.json"
+      ],
+      "id": "database_scope.unique_smiles_equivalence_to_existing_scope",
+      "status": "exact"
+    },
+    {
+      "claimable_statement": "The current public artifacts support a polymer-only database-wide grompp smoke claim for the aligned CSV.",
+      "evidence": [
+        "tests/reference_results/lunar_gromacs_pcff_converter/database_scope/database_claim_audit.json"
+      ],
+      "id": "database_scope.database_wide_converter_success",
+      "status": "exact"
+    },
+    {
+      "claimable_statement": "Repository database_lunar_smoke artifacts support all selected LUNAR PCFF single-chain rows.",
+      "evidence": [
+        "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/database_lunar_smoke_summary.json",
+        "tests/reference_results/lunar_gromacs_pcff_converter/database_scope/database_claim_audit.json"
+      ],
+      "id": "database_scope.repository_lunar_smoke_coverage",
+      "status": "exact"
+    },
+    {
+      "claimable_statement": "Electrolyte/charged support for this database requires a separate charged parser->mapping->emission->grompp chain.",
+      "evidence": [
+        "tests/reference_results/lunar_gromacs_pcff_converter/database_scope/database_claim_audit.json"
+      ],
+      "id": "database_scope.charged_ion_extension",
+      "status": "gated"
+    }
+  ],
+  "schema_name": "lunar_gromacs_pcff_database_scope_support_matrix_extension",
+  "schema_version": 1
+}

@@ -1,0 +1,23 @@
+{
+  "emitted_topology": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/cases/Traj_24832/topol.top",
+  "grompp_required_for_viability_claim": true,
+  "schema_name": "lunar_gromacs_pcff_database_lunar_emission_summary",
+  "schema_version": 1,
+  "sections": [
+    "defaults",
+    "atomtypes",
+    "moleculetype",
+    "atoms",
+    "bonds",
+    "pairs",
+    "angles",
+    "dihedrals",
+    "system",
+    "molecules"
+  ],
+  "smiles": "COC(CNC(=O)*)C(=O)N(C)CCCN*",
+  "status": "PASS",
+  "topology_line_count": 3089,
+  "topology_sha256": "7ef83521fef56b1bb6c4237c5bb967721f55b82fdab3c6ed066c0471bc31a0db",
+  "trajectory_id": "24832"
+}

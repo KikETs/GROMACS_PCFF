@@ -1,0 +1,128 @@
+{
+  "available_gromacs_cases": {
+    "14748": {
+      "case_dir": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_14748",
+      "grompp_smoke_report_count": 0,
+      "grompp_smoke_report_paths": [],
+      "prepare_report": {
+        "exists": false,
+        "failure_reason": null,
+        "overall_status": null,
+        "path": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_14748/build/gromacs_pcff/gromacs_pcff_prepare_report.json",
+        "polymer_topology_status": null,
+        "polymer_typing_status": null
+      },
+      "topol_top_count": 0,
+      "topol_top_paths": [],
+      "tpr_count": 0,
+      "tpr_paths": []
+    },
+    "14764": {
+      "case_dir": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_14764",
+      "grompp_smoke_report_count": 0,
+      "grompp_smoke_report_paths": [],
+      "prepare_report": {
+        "exists": true,
+        "failure_reason": "unsupported PT0 component family: no supported PT3 component-family rule matched",
+        "overall_status": "blocked",
+        "path": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_14764/build/gromacs_pcff/gromacs_pcff_prepare_report.json",
+        "polymer_topology_status": "not_started",
+        "polymer_typing_status": "unsupported"
+      },
+      "topol_top_count": 0,
+      "topol_top_paths": [],
+      "tpr_count": 0,
+      "tpr_paths": []
+    },
+    "14768": {
+      "case_dir": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_14768",
+      "grompp_smoke_report_count": 0,
+      "grompp_smoke_report_paths": [],
+      "prepare_report": {
+        "exists": false,
+        "failure_reason": null,
+        "overall_status": null,
+        "path": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_14768/build/gromacs_pcff/gromacs_pcff_prepare_report.json",
+        "polymer_topology_status": null,
+        "polymer_typing_status": null
+      },
+      "topol_top_count": 0,
+      "topol_top_paths": [],
+      "tpr_count": 0,
+      "tpr_paths": []
+    },
+    "14769": {
+      "case_dir": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_14769",
+      "grompp_smoke_report_count": 0,
+      "grompp_smoke_report_paths": [],
+      "prepare_report": {
+        "exists": false,
+        "failure_reason": null,
+        "overall_status": null,
+        "path": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_14769/build/gromacs_pcff/gromacs_pcff_prepare_report.json",
+        "polymer_topology_status": null,
+        "polymer_typing_status": null
+      },
+      "topol_top_count": 0,
+      "topol_top_paths": [],
+      "tpr_count": 0,
+      "tpr_paths": []
+    },
+    "27624": {
+      "case_dir": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_27624",
+      "grompp_smoke_report_count": 0,
+      "grompp_smoke_report_paths": [],
+      "prepare_report": {
+        "exists": false,
+        "failure_reason": null,
+        "overall_status": null,
+        "path": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs/Traj_27624/build/gromacs_pcff/gromacs_pcff_prepare_report.json",
+        "polymer_topology_status": null,
+        "polymer_typing_status": null
+      },
+      "topol_top_count": 0,
+      "topol_top_paths": [],
+      "tpr_count": 0,
+      "tpr_paths": []
+    }
+  },
+  "batch_roots": {
+    "gromacs_pcff": "MY_PAPER_RELATED/GROMACS_PCFF_BATCH/batch_runs",
+    "lammps": "MY_PAPER_RELATED/LAMMPS_BATCH/batch_runs"
+  },
+  "charged_ion_boundary": {
+    "reason": "The database contains electrolyte-context columns and batch templates mention Li/TFSI, but no charged parser->mapping->emission->grompp evidence chain was found for the database.",
+    "status": "closed_to_claim_until_separate_evidence_exists"
+  },
+  "claim_evaluation": {
+    "database_wide_converter_success_status": "claimable",
+    "reasons": [],
+    "rejected_overclaim": null,
+    "strongest_supported_database_statement": "The aligned CSV snapshot identity is evidenced and all selected LUNAR PCFF single-chain rows have parser->mapping->emission->grompp PASS artifacts in the repository smoke summary."
+  },
+  "coverage": {
+    "csv_row_count": 6270,
+    "csv_unique_smiles_count": 6042,
+    "gromacs_batch_ids_in_csv_count": 5,
+    "gromacs_batch_trajectory_dir_count": 5,
+    "gromacs_pcff_prepare_report_count": 1,
+    "gromacs_topol_top_count": 0,
+    "gromacs_tpr_count": 0,
+    "grompp_smoke_report_count": 0,
+    "lammps_batch_ids_in_csv_count": 716,
+    "lammps_batch_trajectory_dir_count": 716,
+    "repo_database_lunar_smoke_missing_lunar_pcff_data_count": 0,
+    "repo_database_lunar_smoke_pass_count": 6270,
+    "repo_database_lunar_smoke_selected_row_count": 6270,
+    "repo_database_lunar_smoke_summary_exists": true
+  },
+  "repo_database_lunar_smoke_summary": {
+    "database_wide_converter_success_status": "claimable",
+    "exists": true,
+    "path": "tests/reference_results/lunar_gromacs_pcff_converter/database_lunar_smoke_pcff_fixed_all/database_lunar_smoke_summary.json"
+  },
+  "schema_name": "lunar_gromacs_pcff_database_claim_audit",
+  "schema_version": 1,
+  "scope_id": "simulation_trajectory_aggregate_aligned_csv_snapshot",
+  "source_csv_sha256": "d4a804b3322463a2edf45be6949f3e85478668dc8bce631023f94c2673d71223"
+}
