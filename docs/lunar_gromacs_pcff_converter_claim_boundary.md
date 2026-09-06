@@ -4,6 +4,10 @@ This note freezes the current public boundary for the LUNAR/all2lmp PCFF `.data`
 
 It is intentionally narrower than charged polymer-electrolyte support and narrower than any production MD or transport claim.
 
+## Source revision note (2026-09-06)
+
+The 6270-row reports below are historical evidence imported from commit `1e0e40be45a80fc15ef83e9797f5a5f9e678473c`. The consolidated `main` subsequently corrects 1–4 pair generation to use shortest bond paths and verifies that correction with a focused ring regression test. The full database smoke campaign has not been rerun on this corrected converter. Do not attribute the old 6270-row PASS count to a fresh run of current `main`. See [the consolidation record](pcff_main_consolidation_20260906.md).
+
 ## Narrow Claim
 
 Use this sentence for the current state:

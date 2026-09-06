@@ -19,6 +19,7 @@ if str(BRIDGE_ROOT) not in sys.path:
 from common import (  # noqa: E402
     ANGSTROM_TO_NM,
     BridgeError,
+    generate_topological_one_four_pairs,
     render_gromacs_topology,
     source_ref,
     type_name,
@@ -612,7 +613,7 @@ def build_typed_ir_from_lunar_data(
         "molecule_instances": [],
         "diagnostics": {
             "supported_gromacs_export": True,
-            "generated_pair_rule": "Each unique 1-4 pair is derived from the first and fourth atom of each Class2 dihedral because special_bonds is 0 0 1 and GROMACS needs explicit [ pairs ].",
+            "generated_pair_rule": "Each unique shortest-path 1-4 pair is derived from the bond graph because LAMMPS special_bonds is 0 0 1 and GROMACS needs explicit [ pairs ]; explicit dihedrals provide provenance when present.",
             "notes": [
                 "This path handles LUNAR data files with embedded Class2 coefficient sections.",
                 "It is polymer-only until charged ion/salt components have separate public evidence.",
@@ -680,22 +681,7 @@ def _populate_molecule_templates(typed_ir: dict, parsed_data: dict, masses_by_ty
         local_angles = localize("angles")
         local_dihedrals = localize("dihedrals")
         local_impropers = localize("impropers")
-        generated_pairs = []
-        seen_pairs = set()
-        for dihedral in local_dihedrals:
-            pair = tuple(sorted((dihedral["atoms"][0], dihedral["atoms"][3])))
-            if pair in seen_pairs:
-                continue
-            seen_pairs.add(pair)
-            generated_pairs.append(
-                {
-                    "ai": pair[0],
-                    "aj": pair[1],
-                    "funct": 1,
-                    "derived_from_dihedral_id": dihedral["id"],
-                    "source": dihedral["source"],
-                }
-            )
+        generated_pairs = generate_topological_one_four_pairs(local_bonds, local_dihedrals)
 
         base_name = "POL" if len(local_atoms) > 1 else "MOL"
         signature_payload = {

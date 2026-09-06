@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from tools.lunar_gromacs_pcff_converter.lunar_data_converter import _populate_molecule_templates
+
 from tools.pcff_fixture_bridge.common import (
     BridgeError,
     generate_topological_one_four_pairs,
@@ -362,3 +364,41 @@ Atoms # full
 
     with pytest.raises(BridgeError, match="refusing to discard xy/xz/yz tilt factors"):
         parse_lammps_data(data_path)
+
+
+def test_lunar_converter_uses_shortest_bond_topology_for_one_four_pairs() -> None:
+    source = {"file": "ring.data", "line": 1, "text": "test"}
+    atoms = [
+        {
+            "id": atom_id,
+            "molecule_id": 1,
+            "type_id": 1,
+            "charge_e": 0.0,
+            "x_angstrom": float(atom_id),
+            "y_angstrom": 0.0,
+            "z_angstrom": 0.0,
+            "source": source,
+        }
+        for atom_id in range(1, 6)
+    ]
+    bonds = [
+        {"id": 1, "type_id": 1, "atoms": [1, 2], "source": source},
+        {"id": 2, "type_id": 1, "atoms": [2, 3], "source": source},
+        {"id": 3, "type_id": 1, "atoms": [3, 4], "source": source},
+        {"id": 4, "type_id": 1, "atoms": [4, 5], "source": source},
+        {"id": 5, "type_id": 1, "atoms": [1, 4], "source": source},
+    ]
+    parsed_data = {
+        "atoms": atoms,
+        "bonds": bonds,
+        "angles": [],
+        "dihedrals": [{"id": 1, "type_id": 1, "atoms": [1, 2, 3, 4], "source": source}],
+        "impropers": [],
+    }
+    typed_ir = {"molecule_templates": [], "molecule_instances": []}
+
+    _populate_molecule_templates(typed_ir, parsed_data, {1: {"mass_amu": 12.0}})
+
+    pairs = typed_ir["molecule_templates"][0]["generated_pairs"]
+    assert [(pair["ai"], pair["aj"]) for pair in pairs] == [(2, 5)]
+    assert pairs[0]["derived_from_dihedral_id"] is None
